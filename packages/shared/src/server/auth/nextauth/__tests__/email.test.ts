@@ -28,20 +28,13 @@ describe('sendCodeEmail', () => {
     );
   });
 
-  it('refuses outside development without SMTP_URL, and never logs the code', async () => {
+  it('refuses without SMTP_URL, in development too, and never logs the code', async () => {
     vi.stubEnv('SMTP_URL', '');
-    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NODE_ENV', 'development');
     await expect(sendCodeEmail('a@example.test', '123456')).resolves.toBe(false);
     expect(createTransport).not.toHaveBeenCalled();
     const logged = [...vi.mocked(console.info).mock.calls, ...vi.mocked(console.error).mock.calls].flat().join(' ');
     expect(logged).not.toContain('123456');
-  });
-
-  it('prints the code in development without SMTP_URL', async () => {
-    vi.stubEnv('SMTP_URL', '');
-    vi.stubEnv('NODE_ENV', 'development');
-    await expect(sendCodeEmail('a@example.test', '123456')).resolves.toBe(true);
-    expect(vi.mocked(console.info).mock.calls.flat().join(' ')).toContain('123456');
   });
 
   it('reports a refused message without logging its contents', async () => {

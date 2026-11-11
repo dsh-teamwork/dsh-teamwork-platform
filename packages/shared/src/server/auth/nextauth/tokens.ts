@@ -16,7 +16,7 @@ import 'server-only';
 
 import { createHash } from 'node:crypto';
 
-import { normalizeEmail, type Identity, type SignInMethod } from '../../../auth';
+import { normalizeEmail, signInMethod, type Identity, type SignInMethod } from '../../../auth';
 import { decode, encode } from 'next-auth/jwt';
 
 const CODE_SALT = 'dsh-teamwork.plugin-handoff';
@@ -76,7 +76,7 @@ export async function identityFromBearer(token: string): Promise<Identity | null
     strategy: 'nextauth',
     subject: claims.sub,
     email: normalizeEmail(claims.email),
-    via: claims.via === 'google' ? 'google' : 'email',
+    via: signInMethod(claims.via),
     ...(claims.name ? { name: claims.name } : {}),
     ...(claims.picture ? { image: claims.picture } : {}),
   };

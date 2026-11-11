@@ -24,7 +24,11 @@
     "codeSent": "We sent a six-digit code to {email}.",
     "code": "Code",
     "verify": "Sign in",
-    "useAnotherEmail": "Use another email"
+    "useAnotherEmail": "Use another email",
+    "subtitlePassword": "Sign in with your email and password.",
+    "subtitlePasswordGoogle": "Use Google, or your email and password.",
+    "password": "Password",
+    "noAccount": "No account yet? Your team admin creates one for you."
   },
   "authErrors": {
     "invalid_email": "That doesn't look like an email address.",
@@ -32,7 +36,10 @@
     "code_expired": "That code has expired. Ask for a new one.",
     "too_many_attempts": "Too many attempts. Wait a minute and try again.",
     "not_allowed": "This account can't sign in here.",
-    "unavailable": "Sign-in isn't available right now."
+    "unavailable": "Sign-in isn't available right now.",
+    "invalid_credentials": "That email and password don't match.",
+    "weak_password": "Use at least 10 characters.",
+    "setup_closed": "This instance already has its first account. Sign in instead."
   },
   "account": {
     "title": "Account",
@@ -121,7 +128,15 @@
       "title": "Members",
       "remove": "Remove",
       "removeConfirm": "Remove this member?",
-      "removed": "Member removed."
+      "removed": "Member removed.",
+      "addEmail": "Their email",
+      "addSubmit": "Create account",
+      "added": "Account created.",
+      "existing": "{email} already has an account and was added to the team. They sign in with their own password.",
+      "firstPassword": "Give {email} this password now. It is not shown again, and they must change it when they first sign in:",
+      "reset": "Reset password",
+      "resetConfirm": "Reset this member's password? Their current one stops working.",
+      "resetDone": "Password reset."
     },
     "invites": {
       "create": "Create a single-use invitation",
@@ -153,7 +168,11 @@
     "invalid_request": "Some fields are not valid. Check them and try again.",
     "unauthorized": "Your session has ended. Sign in again.",
     "not_found": "Not found.",
-    "internal_error": "Something went wrong. Try again."
+    "internal_error": "Something went wrong. Try again.",
+    "passwords_off": "On this instance people join by invitation.",
+    "member_in_team": "That person is already in a team.",
+    "not_a_member": "That person is not in your team.",
+    "cannot_reset_self": "Change your own password from the password page."
   },
   "plugin": {
     "title": "Authorize the DSH plugin",
@@ -163,5 +182,20 @@
     "copy": "Paste this into DSH:",
     "expiry": "The code works once, for two minutes, and only for the DSH that asked for it.",
     "failed": "Authorization failed. Sign in again, or run /team login in DSH again."
+  },
+  "setup": {
+    "title": "Create the first account",
+    "description": "This instance has no account yet. Create yours, then create your team and add the others.",
+    "closed": "This link no longer works: the first account already exists.",
+    "submit": "Create account"
+  },
+  "password": {
+    "title": "Change your password",
+    "mustChange": "Your team admin set this password for you. Choose your own before you continue.",
+    "current": "Current password",
+    "next": "New password",
+    "hint": "At least 10 characters. A few unrelated words are easy to remember and hard to guess.",
+    "submit": "Change password",
+    "change": "Change password"
   }
 }

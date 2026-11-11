@@ -1,4 +1,5 @@
 import { PLUGIN_CHALLENGE } from '@dsh-teamwork/shared';
+import { mustChangePassword } from '@dsh-teamwork/shared/server/passwords';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -6,6 +7,7 @@ import { getTranslations } from 'next-intl/server';
 import { PluginAuthorize } from '@/components/plugin-authorize';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { currentUser } from '@/lib/auth';
+import { strategy } from '@/lib/auth/strategy';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('plugin'))('title'), robots: { index: false } };
@@ -15,7 +17,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PluginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { challenge } = await searchParams;
   const valid = typeof challenge === 'string' && PLUGIN_CHALLENGE.test(challenge);
-  if (valid && !(await currentUser())) redirect(`/sign-in?next=${encodeURIComponent(`/plugin?challenge=${challenge}`)}`);
+  if (valid) {
+    const here = `/plugin?challenge=${challenge}`;
+    const user = await currentUser();
+    if (!user) redirect(`/sign-in?next=${encodeURIComponent(here)}`);
+    if (strategy.passwords && (await mustChangePassword(user.id))) redirect(`/password?next=${encodeURIComponent(here)}`);
+  }
   const t = await getTranslations('plugin');
 
   return (

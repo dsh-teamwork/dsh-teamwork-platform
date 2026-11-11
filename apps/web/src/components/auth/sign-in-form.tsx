@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * The sign-in form, written once for either strategy: Google, or an email and
- * then a six-digit code. It calls the four actions by name from
+ * The sign-in form, written once for either strategy: Google, and either an
+ * email and then a six-digit code or, where the instance sends no email, an
+ * email and a password (ADR 0006). It calls the actions by name from
  * `@/lib/auth/actions`, which is where the strategy is chosen, and words each
  * `AuthError` code in the reader's language.
  */
@@ -14,7 +15,7 @@ import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { sendCode, startGoogle, verifyCode } from '@/lib/auth/actions';
+import { sendCode, signInWithPassword, startGoogle, verifyCode } from '@/lib/auth/actions';
 
 /**
  * An `?error=` the page was sent back with. Ours are `AuthError` codes; an
@@ -26,10 +27,21 @@ function fromQuery(value: string | undefined): AuthError | null {
   return (AUTH_ERRORS as readonly string[]).includes(value) ? (value as AuthError) : 'unavailable';
 }
 
-export function SignInForm({ next, google, initialError }: { next: string; google: boolean; initialError?: string }) {
+export function SignInForm({
+  next,
+  google,
+  passwords,
+  initialError,
+}: {
+  next: string;
+  google: boolean;
+  passwords: boolean;
+  initialError?: string;
+}) {
   const t = useTranslations('signIn');
   const te = useTranslations('authErrors');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [error, setError] = useState<AuthError | null>(fromQuery(initialError));
@@ -62,7 +74,39 @@ export function SignInForm({ next, google, initialError }: { next: string; googl
         </>
       )}
 
-      {!codeSent ? (
+      {passwords ? (
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            run(() => signInWithPassword(email, password, next));
+          }}
+        >
+          <Label htmlFor="email">{t('email')}</Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="username"
+            required
+            placeholder={t('emailPlaceholder')}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+          <Label htmlFor="password">{t('password')}</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <Button type="submit" disabled={pending}>
+            {t('verify')}
+          </Button>
+          <p className="text-xs text-muted-foreground">{t('noAccount')}</p>
+        </form>
+      ) : !codeSent ? (
         <form
           className="flex flex-col gap-3"
           onSubmit={(event) => {

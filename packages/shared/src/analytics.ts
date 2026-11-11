@@ -41,7 +41,7 @@ export const ANALYTICS_EVENTS = {
   user_signed_up: {
     description: 'Server: the first authenticated request of an account created the profile row.',
     properties: z.strictObject({
-      via: z.enum(['google', 'email']) satisfies z.ZodType<SignInMethod>,
+      via: z.enum(['google', 'email', 'password']) satisfies z.ZodType<SignInMethod>,
       client,
     }),
   },

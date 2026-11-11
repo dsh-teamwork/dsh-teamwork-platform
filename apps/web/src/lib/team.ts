@@ -11,19 +11,24 @@ import { createHash, randomBytes } from 'node:crypto';
 
 import { Prisma, type Membership, type TeamConfig } from '@dsh-teamwork/db';
 import {
+  AddMemberSchema,
   ConfigInputSchema,
   CreateTeamSchema,
   RedeemInviteSchema,
   UpdateConfigSchema,
+  type AddedMember,
   type ConfigInput,
   type ConfigSnapshot,
   type CreatedInvite,
   type InviteView,
+  type ResetPassword,
   type TeamConfigView,
   type TeamErrorCode,
   type TeamView,
 } from '@dsh-teamwork/shared';
+import { generatePassword, hashPassword, setPassword } from '@dsh-teamwork/shared/server/passwords';
 
+import { strategy } from '@/lib/auth/strategy';
 import { prisma } from '@/lib/prisma';
 
 /** A refusal with a status and a `TEAM_ERRORS` code; `handleRouteError` answers it as `{ error }`. */
@@ -107,6 +112,50 @@ export async function removeMember(userId: string, target: string) {
   const admin = await requireMembership(userId, true);
   if (target === userId) throw new TeamError(400, 'cannot_remove_self');
   await prisma.membership.deleteMany({ where: { userId: target, teamId: admin.teamId, role: 'member' } });
+}
+
+// ─── Accounts, where the instance holds passwords (ADR 0006) ────────────────
+
+/**
+ * An admin adds someone by email. A new account gets a first password, shown
+ * once, which its owner must change at first sign-in; an existing account
+ * without a team keeps its own. Where the instance sends email, people join
+ * by invitation instead.
+ */
+export async function addMember(userId: string, input: unknown): Promise<AddedMember> {
+  if (!strategy.passwords) throw new TeamError(400, 'passwords_off');
+  const admin = await requireMembership(userId, true);
+  const { email } = AddMemberSchema.parse(input);
+  const password = generatePassword();
+  const hash = await hashPassword(password);
+  return unique('member_in_team', () => prisma.$transaction(async (tx) => {
+    const user = await tx.user.upsert({
+      where: { authId: email },
+      create: { authId: email, email },
+      update: {},
+      include: { password: true, membership: true },
+    });
+    if (user.membership) throw new TeamError(409, 'member_in_team');
+    if (!user.password) await tx.password.create({ data: { userId: user.id, hash, mustChange: true } });
+    await tx.membership.create({ data: { userId: user.id, teamId: admin.teamId, role: 'member' } });
+    return { userId: user.id, email, password: user.password ? null : password };
+  }));
+}
+
+/**
+ * An admin replaces a member's password with a new first one, shown once.
+ * Only for a member of the admin's own team, and never the admin's own:
+ * that one is changed knowing the current password.
+ */
+export async function resetMemberPassword(userId: string, target: string): Promise<ResetPassword> {
+  if (!strategy.passwords) throw new TeamError(400, 'passwords_off');
+  const admin = await requireMembership(userId, true);
+  if (target === userId) throw new TeamError(400, 'cannot_reset_self');
+  const member = await prisma.membership.findFirst({ where: { userId: target, teamId: admin.teamId } });
+  if (!member) throw new TeamError(404, 'not_a_member');
+  const password = generatePassword();
+  await setPassword(target, password, true);
+  return { password };
 }
 
 // ─── Invitations ────────────────────────────────────────────────────────────

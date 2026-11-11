@@ -32,7 +32,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server/index.ts",
-    "./server/nextauth": "./src/server/auth/nextauth/index.ts"
+    "./server/nextauth": "./src/server/auth/nextauth/index.ts",
+    "./server/passwords": "./src/server/auth/nextauth/passwords.ts"
   },
   "peerDependencies": {
     "next": "16.3.2",

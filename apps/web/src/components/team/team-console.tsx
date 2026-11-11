@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { callApi } from '@/lib/api-client';
-import type { CreatedInvite } from '@dsh-teamwork/shared';
+import type { AddedMember, CreatedInvite, ResetPassword } from '@dsh-teamwork/shared';
 
 import { ConfigForm } from './config-form';
 import { ConsoleHeader } from './console-header';
@@ -19,9 +19,11 @@ interface Props {
   team: TeamView;
   configs: TeamConfigView[];
   invites: InviteView[];
+  /** The instance holds passwords: an admin creates accounts instead of sending invitations. */
+  passwords: boolean;
 }
 
-export function TeamConsole({ me, team, configs, invites }: Props) {
+export function TeamConsole({ me, team, configs, invites, passwords }: Props) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();
   const admin = team.role === 'admin';
@@ -29,7 +31,7 @@ export function TeamConsole({ me, team, configs, invites }: Props) {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 px-6 py-10">
-      <ConsoleHeader email={me.email} />
+      <ConsoleHeader email={me.email} passwords={passwords} />
 
       <Card>
         <CardHeader className="flex-row flex-wrap items-start justify-between gap-4">
@@ -88,7 +90,7 @@ export function TeamConsole({ me, team, configs, invites }: Props) {
         )}
       </div>
 
-      <Members me={me} team={team} invites={invites} />
+      <Members me={me} team={team} invites={invites} passwords={passwords} />
     </main>
   );
 }
@@ -165,11 +167,14 @@ function ConfigItem({
   );
 }
 
-function Members({ me, team, invites }: { me: Props['me']; team: TeamView; invites: InviteView[] }) {
+function Members({ me, team, invites, passwords }: { me: Props['me']; team: TeamView; invites: InviteView[]; passwords: boolean }) {
   const t = useTranslations('team');
   const format = useFormatter();
   const { pending, run } = useMutation();
   const [link, setLink] = useState('');
+  const [email, setEmail] = useState('');
+  // A first password is shown once, beside whose it is, and gone on reload.
+  const [handover, setHandover] = useState<{ email: string; password: string | null } | null>(null);
   const admin = team.role === 'admin';
 
   return (
@@ -185,21 +190,74 @@ function Members({ me, team, invites }: { me: Props['me']; team: TeamView; invit
                 {m.email} · <span className="text-muted-foreground">{t(`role.${m.role}`)}</span>
               </span>
               {admin && m.userId !== me.id && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={pending}
-                  onClick={() => {
-                    if (confirm(t('members.removeConfirm'))) run(() => callApi(`team/members/${m.userId}`, 'DELETE'), t('members.removed'));
-                  }}
-                >
-                  {t('members.remove')}
-                </Button>
+                <span className="flex gap-1">
+                  {passwords && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={pending}
+                      onClick={() => {
+                        if (!confirm(t('members.resetConfirm'))) return;
+                        run(async () => {
+                          const reset = await callApi<ResetPassword>(`team/members/${m.userId}/password`, 'POST');
+                          setHandover({ email: m.email, password: reset.password });
+                        }, t('members.resetDone'));
+                      }}
+                    >
+                      {t('members.reset')}
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={pending}
+                    onClick={() => {
+                      if (confirm(t('members.removeConfirm'))) run(() => callApi(`team/members/${m.userId}`, 'DELETE'), t('members.removed'));
+                    }}
+                  >
+                    {t('members.remove')}
+                  </Button>
+                </span>
               )}
             </li>
           ))}
         </ul>
-        {admin && (
+        {admin && passwords && (
+          <div className="flex flex-col gap-2 border-t pt-3">
+            <form
+              className="flex flex-wrap items-end gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                run(async () => {
+                  const added = await callApi<AddedMember>('team/members', 'POST', { email });
+                  setHandover({ email: added.email, password: added.password });
+                  setEmail('');
+                }, t('members.added'));
+              }}
+            >
+              <label className="flex flex-1 flex-col gap-1">
+                <span className="text-muted-foreground">{t('members.addEmail')}</span>
+                <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </label>
+              <Button type="submit" variant="outline" disabled={pending}>
+                {t('members.addSubmit')}
+              </Button>
+            </form>
+            {handover && (
+              <div className="flex flex-col gap-1">
+                {handover.password ? (
+                  <>
+                    <span className="text-muted-foreground">{t('members.firstPassword', { email: handover.email })}</span>
+                    <Input readOnly value={handover.password} className="font-mono" onFocus={(e) => e.currentTarget.select()} />
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">{t('members.existing', { email: handover.email })}</span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {admin && !passwords && (
           <div className="flex flex-col gap-2 border-t pt-3">
             <Button
               className="self-start"

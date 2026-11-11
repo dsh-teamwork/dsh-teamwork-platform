@@ -27,10 +27,12 @@ export default async function SignInPage({
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>{t('title')}</CardTitle>
-          <CardDescription>{t(strategy.google ? 'subtitle' : 'subtitleEmailOnly')}</CardDescription>
+          <CardDescription>
+            {t(strategy.passwords ? (strategy.google ? 'subtitlePasswordGoogle' : 'subtitlePassword') : strategy.google ? 'subtitle' : 'subtitleEmailOnly')}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <SignInForm next={next} google={strategy.google} initialError={typeof params.error === 'string' ? params.error : undefined} />
+          <SignInForm next={next} google={strategy.google} passwords={strategy.passwords} initialError={typeof params.error === 'string' ? params.error : undefined} />
         </CardContent>
       </Card>
     </main>

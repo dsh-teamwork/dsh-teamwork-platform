@@ -28,6 +28,10 @@ export const TEAM_ERRORS = [
   'upstream_unavailable',
   'upstream_rate_limited',
   'payload_too_large',
+  'passwords_off',
+  'member_in_team',
+  'not_a_member',
+  'cannot_reset_self',
 ] as const;
 export type TeamErrorCode = (typeof TEAM_ERRORS)[number];
 
@@ -136,6 +140,24 @@ export interface InviteView {
 /** `POST /api/team/invites` — the only time the token itself is seen. */
 export interface CreatedInvite extends InviteView {
   token: string;
+}
+
+/** `POST /api/team/members`: an admin adds someone by email, where the instance holds passwords. */
+export const AddMemberSchema = z.object({ email: z.string().trim().toLowerCase().pipe(z.email()) });
+
+/**
+ * The added member, with the first password the only time it is seen — or
+ * null when the address already had an account, whose own password stands.
+ */
+export interface AddedMember {
+  userId: string;
+  email: string;
+  password: string | null;
+}
+
+/** `POST /api/team/members/:userId/password`: a new first password, seen once. */
+export interface ResetPassword {
+  password: string;
 }
 
 /** `GET /api/team/model-catalog`: the configured providers, or one provider's models. */

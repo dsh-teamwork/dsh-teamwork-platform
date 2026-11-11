@@ -14,8 +14,17 @@ import { z } from 'zod';
 
 export type AuthStrategy = 'supabase' | 'nextauth';
 
-/** Which door the session came through. Unknown is read as `email`, never as `google`. */
-export type SignInMethod = 'google' | 'email';
+/**
+ * Which door the session came through: Google, an emailed code, or a password
+ * where the instance sends no email. Unknown is read as `email`, never as
+ * `google`.
+ */
+export type SignInMethod = 'google' | 'email' | 'password';
+
+/** A stored or claimed door, read safely: anything unknown is `email`. */
+export function signInMethod(value: unknown): SignInMethod {
+  return value === 'google' || value === 'password' ? value : 'email';
+}
 
 export interface Identity {
   strategy: AuthStrategy;
@@ -88,6 +97,18 @@ export const VerifyCodeSchema = z.object({
 });
 
 /**
+ * A password a person chooses: long rather than complicated (NIST SP 800-63B),
+ * and bounded so hashing it costs what it should. Never trimmed: a space is
+ * part of it.
+ */
+export const PASSWORD_MIN = 10;
+export const PasswordSchema = z.string().min(PASSWORD_MIN).max(256);
+/** Signing in checks the stored hash, not today's rules for a new password. */
+export const PasswordSignInSchema = z.object({ email, password: z.string().min(1).max(256) });
+export const SetupSchema = z.object({ token: z.string().min(1).max(128), email, password: PasswordSchema });
+export const ChangePasswordSchema = z.object({ current: z.string().min(1).max(256), next: PasswordSchema });
+
+/**
  * What a sign-in action answers with when it did not work. Codes, not
  * sentences: each surface words them in its own language.
  */
@@ -98,6 +119,9 @@ export const AUTH_ERRORS = [
   'too_many_attempts',
   'not_allowed',
   'unavailable',
+  'invalid_credentials',
+  'weak_password',
+  'setup_closed',
 ] as const;
 export type AuthError = (typeof AUTH_ERRORS)[number];
 

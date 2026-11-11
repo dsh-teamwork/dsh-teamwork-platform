@@ -1,6 +1,6 @@
 # Analytics
 
-> **Status:** Current · **Updated:** 2026-09-29
+> **Status:** Current · **Updated:** 2026-11-11
 
 What reaches PostHog, from where, under which identity, and how to query it
 without the source.
@@ -51,7 +51,7 @@ list disagree.
 
 | Event | Source | Fires when | Properties |
 | --- | --- | --- | --- |
-| `user_signed_up` | server | The first authenticated request of a new account to `apps/web` creates its profile row; exactly once per account | `via` (`google`, `email`), `client` (`web`, `plugin`) |
+| `user_signed_up` | server | The first authenticated request of a new account to `apps/web` creates its profile row; exactly once per account | `via` (`google`, `email`, `password`), `client` (`web`, `plugin`) |
 | `profile_updated` | server | `PATCH /api/profile` changes the profile | `fields` (any of `name`, `locale`; never their values), `client` |
 
 No property carries anything a person typed. Server events have GeoIP turned

@@ -5,6 +5,20 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-11 — Passwords when SMTP_URL is unset
+
+- **What:**
+  - Without `SMTP_URL`, sign-in is an email and a password instead of an emailed code. Passwords are kept as scrypt in a new `passwords` table, with ten guesses per account per fifteen minutes.
+  - The server prints a link at start that claims the first account.
+  - A team admin creates members with a first password, shown once, which they must change before `/team` or `/plugin` open, and resets it the same way.
+  - New routes: `POST /api/team/members` and `POST /api/team/members/:userId/password`.
+  - A session's `via` can be `password`; the console refuses it.
+  - The development fallback that printed a code to the console without SMTP is gone.
+- **Why:** ADR 0006, Phase 4 step 3 of `docs/tech/community-edition.md`: an instance with no mail server still has a way in.
+- **Breaking:** A development server without `SMTP_URL` now asks for a password instead of printing a code.
+- **Upgrade:** Migration `20261111143836_passwords` (`pnpm db:deploy`, or automatic on PGlite). An instance with `SMTP_URL` set needs nothing else.
+- **Refs:** ADR 0006, `packages/shared/src/server/auth/nextauth/passwords.ts`.
+
 ## 2026-11-11 — PGlite when DATABASE_URL is unset
 
 - **What:** Without `DATABASE_URL`, the apps run on PGlite, an in-process Postgres. Its data directory is `PGLITE_DIR` (default `~/.dsh-teamwork/db`). It applies the committed migrations on first connect and records them as Prisma does. The suites that needed Postgres now always run, on PGlite in memory, and CI runs them on both databases. The apps no longer fall back to the `pnpm dev:setup` stack; the Prisma CLI still does. New exact dependencies: `@electric-sql/pglite` 0.5.16 and `pglite-prisma-adapter` 0.7.2.

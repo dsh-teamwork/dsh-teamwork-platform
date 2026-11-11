@@ -13,9 +13,11 @@ export interface AuthOptions {
   /** The app's sign-in page, where a failed provider round-trip is sent back to. */
   signInPath: string;
   /**
-   * Whether the email one-time code is offered. The console turns it off: a
-   * code is only as strong as the mailbox it lands in, so there Google's own
-   * second factor is the only door.
+   * Whether the email door is offered: a one-time code, or a password where
+   * the instance sends no email (`passwordsConfigured`). The console turns it
+   * off: a code is only as strong as the mailbox it lands in, and a password
+   * only as strong as its owner, so there Google's own second factor is the
+   * only door.
    */
   emailCodes: boolean;
 }
@@ -28,6 +30,14 @@ export interface AuthOptions {
 export function admitted(options: Pick<AuthOptions, 'emailCodes'>, identity: Identity | null): Identity | null {
   if (!identity) return null;
   return options.emailCodes || identity.via === 'google' ? identity : null;
+}
+
+/**
+ * Without SMTP the email door is a password instead of a code (ADR 0006): an
+ * instance that cannot send a code still has a way in.
+ */
+export function passwordsConfigured(env: Record<string, string | undefined> = process.env): boolean {
+  return !env.SMTP_URL?.trim();
 }
 
 /**

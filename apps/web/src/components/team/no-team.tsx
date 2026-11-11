@@ -21,7 +21,7 @@ function tokenFrom(value: string): string {
   }
 }
 
-export function NoTeam({ email, invite }: { email: string; invite: string }) {
+export function NoTeam({ email, invite, passwords }: { email: string; invite: string; passwords: boolean }) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();
   const [name, setName] = useState('');
@@ -29,7 +29,7 @@ export function NoTeam({ email, invite }: { email: string; invite: string }) {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-6 px-6 py-10">
-      <ConsoleHeader email={email} />
+      <ConsoleHeader email={email} passwords={passwords} />
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -50,25 +50,28 @@ export function NoTeam({ email, invite }: { email: string; invite: string }) {
             </form>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('join.title')}</CardTitle>
-            <CardDescription>{t('join.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="flex flex-col gap-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                run(() => callApi('invites/redeem', 'POST', { token: tokenFrom(token) }), t('join.done'));
-              }}
-            >
-              <Label htmlFor="invite-token">{t('join.token')}</Label>
-              <Input id="invite-token" value={token} onChange={(e) => setToken(e.target.value)} required />
-              <Button disabled={pending}>{t('join.submit')}</Button>
-            </form>
-          </CardContent>
-        </Card>
+        {/* Where the instance holds passwords, an admin adds people: there is no invitation to join by. */}
+        {!passwords && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('join.title')}</CardTitle>
+              <CardDescription>{t('join.description')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                className="flex flex-col gap-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  run(() => callApi('invites/redeem', 'POST', { token: tokenFrom(token) }), t('join.done'));
+                }}
+              >
+                <Label htmlFor="invite-token">{t('join.token')}</Label>
+                <Input id="invite-token" value={token} onChange={(e) => setToken(e.target.value)} required />
+                <Button disabled={pending}>{t('join.submit')}</Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </main>
   );
