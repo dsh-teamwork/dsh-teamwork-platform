@@ -1,0 +1,167 @@
+{
+  "common": {
+    "appName": "DSH Teamwork",
+    "signIn": "登录",
+    "signOut": "退出登录",
+    "account": "账户",
+    "language": "语言",
+    "backHome": "返回首页"
+  },
+  "home": {
+    "title": "一套团队配置，覆盖每个人的 DSH。",
+    "tagline": "模型、预设和插件版本只需发布一次，每位成员的 DeepSeek Harness 都会自动获取。",
+    "openConsole": "打开团队控制台"
+  },
+  "signIn": {
+    "title": "登录",
+    "subtitle": "无需密码。使用 Google，或通过邮箱获取一次性验证码。",
+    "subtitleEmailOnly": "无需密码。通过邮箱获取一次性验证码。",
+    "google": "使用 Google 继续",
+    "or": "或",
+    "email": "邮箱",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "发送验证码",
+    "codeSent": "六位验证码已发送至 {email}。",
+    "code": "验证码",
+    "verify": "登录",
+    "useAnotherEmail": "换一个邮箱"
+  },
+  "authErrors": {
+    "invalid_email": "邮箱地址格式不正确。",
+    "invalid_code": "验证码不正确，请检查后重试。",
+    "code_expired": "验证码已过期，请重新获取。",
+    "too_many_attempts": "尝试次数过多，请稍后再试。",
+    "not_allowed": "此账户无法在这里登录。",
+    "unavailable": "登录服务暂时不可用。"
+  },
+  "account": {
+    "title": "账户",
+    "email": "邮箱",
+    "name": "名字",
+    "noName": "未设置"
+  },
+  "team": {
+    "title": "团队控制台",
+    "overview": "团队配置与成员的本地配置并存；团队模型由平台代理，供应商密钥只保存在服务端。",
+    "role": {
+      "admin": "管理员",
+      "member": "成员"
+    },
+    "kind": {
+      "model": "团队模型",
+      "preset": "模型预设",
+      "plugin": "团队插件"
+    },
+    "create": {
+      "title": "创建团队",
+      "description": "创建后你将成为管理员。",
+      "name": "团队名称",
+      "submit": "创建团队",
+      "done": "团队已创建。"
+    },
+    "join": {
+      "title": "加入团队",
+      "description": "粘贴管理员发给你的邀请链接或邀请码。",
+      "token": "邀请链接或邀请码",
+      "submit": "加入团队",
+      "done": "已加入团队。"
+    },
+    "leave": {
+      "submit": "退出团队",
+      "confirm": "确定退出团队？下次同步时团队配置会从你的 DSH 中移除。",
+      "done": "已退出团队。"
+    },
+    "configs": {
+      "title": "团队配置",
+      "empty": "暂无配置。",
+      "usesModel": "团队模型：{name}",
+      "missing": "已删除",
+      "details": "详情",
+      "edit": "编辑",
+      "delete": "删除",
+      "deleteConfirm": "删除此团队配置？",
+      "deleted": "配置已删除。",
+      "presetNote": "工具可用性在 DSH 会话内检查，预设不会自动安装或授权工具。已有对话要使用新版本，请新建会话。"
+    },
+    "form": {
+      "newTitle": "发布配置",
+      "editTitle": "编辑配置",
+      "kind": "类型",
+      "name": "名称",
+      "package": "npm 包名",
+      "version": "固定版本",
+      "description": "简介",
+      "providesTools": "提供的工具（DSH 注册名称，每行一个）",
+      "provider": "提供商",
+      "model": "模型标识",
+      "fetchModels": "获取模型列表",
+      "catalogUnavailable": "无法获取供应商模型列表，请手动填写模型标识。",
+      "catalogEmpty": "供应商没有返回模型，请手动填写模型标识。",
+      "contextWindow": "上下文长度（tokens）",
+      "maxTokens": "最大输出（tokens）",
+      "limitsHint": "供应商未说明的限制可留空。",
+      "modelRef": "引用团队模型",
+      "chooseModel": "请选择团队模型",
+      "keepOwnRoute": "保留此预设独立的提供商和模型",
+      "noModels": "请先发布一个团队模型。",
+      "instructions": "使用说明",
+      "outputDescription": "输出要求（供成员阅读）",
+      "plugins": "必需插件",
+      "noPlugins": "暂无团队插件。",
+      "pluginsHint": "仅为团队声明，不会安装或授权任何插件。在 DSH 中运行 /team tools 查看实际工具名。",
+      "requiredTools": "必需工具（每行一个）",
+      "optionalTools": "可选工具（每行一个）",
+      "systemPrompt": "团队追加系统提示词",
+      "systemPromptHint": "需要模型遵循的规则写在这里；上面几项是给成员看的说明。",
+      "save": "保存",
+      "cancel": "取消",
+      "saved": "已保存，成员下次同步后生效。"
+    },
+    "members": {
+      "title": "成员",
+      "remove": "移除",
+      "removeConfirm": "移除此成员？",
+      "removed": "成员已移除。"
+    },
+    "invites": {
+      "create": "生成一次性邀请",
+      "created": "邀请已生成。请立即复制链接，之后不会再显示。",
+      "link": "邀请链接（24 小时内有效）",
+      "expires": "未使用的邀请，{at} 过期",
+      "revoke": "撤销",
+      "revoked": "邀请已撤销。"
+    }
+  },
+  "teamErrors": {
+    "no_team": "你还没有加入团队。",
+    "admin_required": "只有团队管理员可以执行此操作。",
+    "already_in_team": "你已经加入了一个团队。",
+    "admin_cannot_leave": "管理员不能退出团队。",
+    "cannot_remove_self": "不能移除自己。",
+    "invite_invalid": "邀请无效或已过期。",
+    "invite_used": "邀请已被使用。",
+    "config_conflict": "配置已被他人修改，请刷新后重试。",
+    "config_exists": "同类型下已有同名配置。",
+    "model_not_found": "引用的团队模型已不存在。",
+    "plugin_dependency_invalid": "必需插件已删除或版本已变化。",
+    "max_tokens_exceeds_context": "最大输出不能超过上下文长度。",
+    "model_forbidden": "你的团队无权使用此模型。",
+    "provider_not_configured": "平台尚未配置此模型供应商。",
+    "upstream_unavailable": "模型服务暂不可用。",
+    "upstream_rate_limited": "模型服务限流中，请稍后再试。",
+    "payload_too_large": "请求过大。",
+    "invalid_request": "部分字段无效，请检查后重试。",
+    "unauthorized": "登录已失效，请重新登录。",
+    "not_found": "未找到。",
+    "internal_error": "出了点问题，请重试。"
+  },
+  "plugin": {
+    "title": "授权 DSH 插件",
+    "description": "仅在你刚在自己的 DSH 中运行 /team login 时继续。",
+    "invalid": "链接不完整，请在 DSH 中重新运行 /team login。",
+    "confirm": "确认授权",
+    "copy": "将以下内容粘贴到 DSH：",
+    "expiry": "授权码两分钟内有效、只能使用一次，且只对发起请求的 DSH 有效。",
+    "failed": "授权失败。请重新登录，或在 DSH 中重新运行 /team login。"
+  }
+}

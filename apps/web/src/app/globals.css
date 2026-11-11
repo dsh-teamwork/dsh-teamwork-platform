@@ -1,0 +1,99 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* `.dark` on <html> (next-themes, attribute="class") swaps the whole scale. */
+@custom-variant dark (&:is(.dark, .dark *));
+
+/*
+ * Every colour is a variable, so light and dark are kept in step in one place
+ * and a page never names a Tailwind palette step (`text-gray-600`).
+ *
+ * The palette is the brand's (docs/design.md): warm paper grounds and indigo
+ * ink in light, indigo-black grounds and paper text in dark. The brand hue is
+ * `--brand`, and it is NOT `--accent`: `accent` is the subtle hover surface
+ * every shadcn-shaped primitive uses, so a brand colour there tints every
+ * hover. Brand chrome opts in with `bg-brand`; `--primary` stays a neutral ink.
+ */
+:root {
+  --background: oklch(0.985 0.004 85);
+  --foreground: oklch(0.2 0.03 268);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.03 268);
+  --muted: oklch(0.96 0.006 85);
+  --muted-foreground: oklch(0.47 0.025 268);
+  --primary: oklch(0.23 0.035 268);
+  --primary-foreground: oklch(0.985 0.004 85);
+  --secondary: oklch(0.96 0.006 85);
+  --secondary-foreground: oklch(0.23 0.035 268);
+  --accent: oklch(0.95 0.008 85);
+  --accent-foreground: oklch(0.23 0.035 268);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --brand: oklch(0.33 0.11 268);
+  --brand-foreground: oklch(0.97 0.008 85);
+  --border: oklch(0.91 0.008 85);
+  --input: oklch(0.91 0.008 85);
+  --ring: oklch(0.62 0.08 268);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: oklch(0.17 0.03 268);
+  --foreground: oklch(0.96 0.006 85);
+  --card: oklch(0.21 0.035 268);
+  --card-foreground: oklch(0.96 0.006 85);
+  --muted: oklch(0.26 0.035 268);
+  --muted-foreground: oklch(0.74 0.025 268);
+  --primary: oklch(0.94 0.008 85);
+  --primary-foreground: oklch(0.21 0.035 268);
+  --secondary: oklch(0.26 0.035 268);
+  --secondary-foreground: oklch(0.96 0.006 85);
+  --accent: oklch(0.26 0.035 268);
+  --accent-foreground: oklch(0.96 0.006 85);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --brand: oklch(0.8 0.085 268);
+  --brand-foreground: oklch(0.19 0.035 268);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.55 0.08 268);
+}
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}

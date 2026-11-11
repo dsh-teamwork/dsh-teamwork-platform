@@ -1,0 +1,80 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build", "^db:generate"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "web-build/**"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "test": {
+      "outputs": [],
+      "dependsOn": ["^build", "^db:generate"]
+    },
+    "typecheck": {
+      "outputs": [],
+      "dependsOn": ["^build", "^db:generate"]
+    },
+    "db:generate": {
+      "cache": false,
+      "outputs": []
+    },
+    // Cacheable, unlike the generic entry above: the schema names its own output
+    // directory (`prisma/schema/schema.prisma` -> `../../src/generated/prisma`), so the
+    // client lands inside the package where turbo can own it, and it is a pure
+    // function of the schema plus the pinned prisma version — which the
+    // lockfile already puts in turbo's global hash.
+    "@dsh-teamwork/db#db:generate": {
+      "inputs": ["prisma/schema/**"],
+      "outputs": ["src/generated/**"]
+    },
+    "db:deploy": {
+      "cache": false,
+      "outputs": []
+    },
+    "db:drift": {
+      "cache": false,
+      "outputs": []
+    },
+    "db:push": {
+      "cache": false,
+      "outputs": []
+    },
+    "db:migrate": {
+      "cache": false,
+      "outputs": []
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:reset": {
+      "cache": false,
+      "outputs": []
+    },
+    "db:seed": {
+      "cache": false,
+      "outputs": []
+    }
+  },
+  // turbo runs every task in strict env mode: a variable not named here never
+  // reaches the task. DATABASE_URL has to be, or `db:deploy` and `db:drift`
+  // would silently fall back to prisma.config.ts's local default and act on a
+  // database nobody pointed them at. It also changes a test's *result* (the
+  // Postgres suites skip without it), so it belongs in every cache key.
+  "globalEnv": [
+    "DATABASE_URL",
+    "SHADOW_DATABASE_URL"
+  ],
+  // Read by the db:* scripts but not part of any result, so passed through
+  // rather than hashed. Without this, turbo's strict env mode strips
+  // ALLOW_REMOTE_MIGRATE_DEV and the documented escape hatch never reaches
+  // assert-local-database.mjs.
+  "globalPassThroughEnv": ["ALLOW_REMOTE_MIGRATE_DEV", "DRIFT_SHADOW_DATABASE_URL"],
+  "ui": "tui"
+}

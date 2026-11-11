@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+
+# turborepo
+.turbo/
+
+# build output
+dist/
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macos
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+.env
+
+# typescript
+*.tsbuildinfo
+
+# output
+output/
+# agent tooling
+.claude/
+.gemini/
+
+# Prisma generated client
+**/src/generated/prisma

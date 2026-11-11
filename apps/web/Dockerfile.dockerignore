@@ -1,0 +1,8 @@
+.git
+**/node_modules
+**/.next
+**/.turbo
+**/src/generated
+**/.env
+**/.env.*
+!**/.env.example

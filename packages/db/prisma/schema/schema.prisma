@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+  // Generated inside the package rather than into node_modules, so the result
+  // is something turbo can declare as an output and cache — see the
+  // `@dsh-teamwork/db#db:generate` entry in turbo.json. Everything downstream imports
+  // the client through `@dsh-teamwork/db`, never from '@prisma/client'.
+  output   = "../../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// The profile. Identity itself lives with the sign-in strategy — Supabase's
+// `auth.users`, or the verified email under NextAuth — and `authId` is the one
+// column that names it. The row is created on the first authenticated request
+// (`ensureUser`), because neither strategy tells this application when an
+// account is minted.
+model User {
+  id        String   @id @default(dbgenerated("nanoid()"))
+  // Supabase: `auth.users.id`. NextAuth: the lower-cased verified email.
+  authId    String   @unique @map("auth_id")
+  email     String
+  name      String?
+  image     String?
+  // The interface language, when the user chose one. Null means "follow the
+  // device or the browser" — the locale is never in the URL.
+  locale    String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  membership Membership?
+
+  @@map("users")
+}
+
+// ─── Teams ──────────────────────────────────────────────────────────────────
+// A team publishes configuration (models, presets, plugin pins) that every
+// member's DSH plugin pulls. docs/tech/architecture.md, "Data model".
+
+enum TeamRole {
+  admin
+  member
+
+  @@map("team_role")
+}
+
+enum ConfigKind {
+  model
+  preset
+  plugin
+
+  @@map("config_kind")
+}
+
+model Team {
+  id        String   @id @default(dbgenerated("nanoid()"))
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  members Membership[]
+  configs TeamConfig[]
+  invites Invite[]
+
+  @@map("teams")
+}
+
+// One team per person: the user is the key, so a second membership cannot
+// exist rather than being checked for.
+model Membership {
+  userId    String   @id @map("user_id")
+  teamId    String   @map("team_id")
+  role      TeamRole
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@map("memberships")
+}
+
+// `data` is the kind's own shape, parsed by `ConfigInputSchema` in
+// @dsh-teamwork/shared on every write. `version` is the optimistic lock an
+// edit names: a write against a stale version is refused, not merged.
+model TeamConfig {
+  id        String     @id @default(dbgenerated("nanoid()"))
+  teamId    String     @map("team_id")
+  kind      ConfigKind
+  name      String
+  data      Json
+  version   Int        @default(1)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, kind, name])
+  @@map("team_configs")
+}
+
+// A single-use invitation. The token is shown once, to the admin who made it;
+// only its SHA-256 is stored, so a read of this table admits nobody.
+model Invite {
+  id        String    @id @default(dbgenerated("nanoid()"))
+  teamId    String    @map("team_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@map("invites")
+}
+
+// Email sign-in codes under the NextAuth strategy only — Supabase keeps its
+// own. `pnpm rename` deletes this model and its migration when a product keeps
+// Supabase. The code itself is never stored: `codeHash` is keyed by
+// AUTH_SECRET, so a read of this table mints no sessions.
+model VerificationCode {
+  id        String   @id @default(dbgenerated("nanoid()"))
+  email     String
+  codeHash  String   @map("code_hash")
+  attempts  Int      @default(0)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([email, createdAt])
+  @@map("verification_codes")
+}

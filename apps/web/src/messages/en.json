@@ -1,0 +1,167 @@
+{
+  "common": {
+    "appName": "DSH Teamwork",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "account": "Account",
+    "language": "Language",
+    "backHome": "Back home"
+  },
+  "home": {
+    "title": "One team setup for every DSH.",
+    "tagline": "Publish models, presets and plugin pins once; every member's DeepSeek Harness picks them up.",
+    "openConsole": "Open team console"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "subtitle": "No password. Use Google, or get a one-time code by email.",
+    "subtitleEmailOnly": "No password. Get a one-time code by email.",
+    "google": "Continue with Google",
+    "or": "or",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "Email me a code",
+    "codeSent": "We sent a six-digit code to {email}.",
+    "code": "Code",
+    "verify": "Sign in",
+    "useAnotherEmail": "Use another email"
+  },
+  "authErrors": {
+    "invalid_email": "That doesn't look like an email address.",
+    "invalid_code": "That code didn't work. Check it and try again.",
+    "code_expired": "That code has expired. Ask for a new one.",
+    "too_many_attempts": "Too many attempts. Wait a minute and try again.",
+    "not_allowed": "This account can't sign in here.",
+    "unavailable": "Sign-in isn't available right now."
+  },
+  "account": {
+    "title": "Account",
+    "email": "Email",
+    "name": "Name",
+    "noName": "Not set"
+  },
+  "team": {
+    "title": "Team console",
+    "overview": "Team configuration lives beside each member's local setup; team models run through the platform and provider keys stay on the server.",
+    "role": {
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "kind": {
+      "model": "Team model",
+      "preset": "Preset",
+      "plugin": "Plugin"
+    },
+    "create": {
+      "title": "Create a team",
+      "description": "You become its admin.",
+      "name": "Team name",
+      "submit": "Create team",
+      "done": "Team created."
+    },
+    "join": {
+      "title": "Join a team",
+      "description": "Paste the invitation link or token an admin gave you.",
+      "token": "Invitation link or token",
+      "submit": "Join team",
+      "done": "You joined the team."
+    },
+    "leave": {
+      "submit": "Leave team",
+      "confirm": "Leave this team? Its configuration disappears from your DSH at the next sync.",
+      "done": "You left the team."
+    },
+    "configs": {
+      "title": "Team configuration",
+      "empty": "Nothing published yet.",
+      "usesModel": "Team model: {name}",
+      "missing": "deleted",
+      "details": "Details",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this configuration?",
+      "deleted": "Configuration deleted.",
+      "presetNote": "DSH checks tool availability inside the session; a preset never installs or authorizes a tool. Start a new session to use a new version."
+    },
+    "form": {
+      "newTitle": "Publish configuration",
+      "editTitle": "Edit configuration",
+      "kind": "Type",
+      "name": "Name",
+      "package": "npm package",
+      "version": "Pinned version",
+      "description": "Summary",
+      "providesTools": "Tools it provides (DSH names, one per line)",
+      "provider": "Provider",
+      "model": "Model id",
+      "fetchModels": "Fetch model list",
+      "catalogUnavailable": "The provider's model list is unavailable; type the model id.",
+      "catalogEmpty": "The provider returned no models; type the model id.",
+      "contextWindow": "Context window (tokens)",
+      "maxTokens": "Max output (tokens)",
+      "limitsHint": "Leave a limit empty when the provider does not state it.",
+      "modelRef": "Team model",
+      "chooseModel": "Choose a team model",
+      "keepOwnRoute": "Keep this preset's own provider and model",
+      "noModels": "Publish a team model first.",
+      "instructions": "How to use it",
+      "outputDescription": "What it produces (for people)",
+      "plugins": "Required plugins",
+      "noPlugins": "No team plugins yet.",
+      "pluginsHint": "A team declaration only: it does not install or authorize anything. Run /team tools in DSH to see real tool names.",
+      "requiredTools": "Required tools (one per line)",
+      "optionalTools": "Optional tools (one per line)",
+      "systemPrompt": "Team system prompt",
+      "systemPromptHint": "Rules the model must follow go here; the fields above describe the preset to people.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saved": "Saved. Members get it at their next sync."
+    },
+    "members": {
+      "title": "Members",
+      "remove": "Remove",
+      "removeConfirm": "Remove this member?",
+      "removed": "Member removed."
+    },
+    "invites": {
+      "create": "Create a single-use invitation",
+      "created": "Invitation created. Copy the link now; it is not shown again.",
+      "link": "Invitation link (valid for 24 hours)",
+      "expires": "Open invitation, expires {at}",
+      "revoke": "Revoke",
+      "revoked": "Invitation revoked."
+    }
+  },
+  "teamErrors": {
+    "no_team": "You are not in a team yet.",
+    "admin_required": "Only the team admin can do that.",
+    "already_in_team": "You are already in a team.",
+    "admin_cannot_leave": "The admin cannot leave the team.",
+    "cannot_remove_self": "You cannot remove yourself.",
+    "invite_invalid": "That invitation is invalid or has expired.",
+    "invite_used": "That invitation has already been used.",
+    "config_conflict": "Someone changed this configuration. Reload and try again.",
+    "config_exists": "A configuration of this type already has that name.",
+    "model_not_found": "The referenced team model no longer exists.",
+    "plugin_dependency_invalid": "A required plugin was deleted or its version changed.",
+    "max_tokens_exceeds_context": "Max output cannot exceed the context window.",
+    "model_forbidden": "That model is not available to your team.",
+    "provider_not_configured": "That provider is not configured on the platform.",
+    "upstream_unavailable": "The model provider is unavailable right now.",
+    "upstream_rate_limited": "The model provider is rate-limiting requests.",
+    "payload_too_large": "The request is too large.",
+    "invalid_request": "Some fields are not valid. Check them and try again.",
+    "unauthorized": "Your session has ended. Sign in again.",
+    "not_found": "Not found.",
+    "internal_error": "Something went wrong. Try again."
+  },
+  "plugin": {
+    "title": "Authorize the DSH plugin",
+    "description": "Only continue if you just ran /team login in your own DSH.",
+    "invalid": "This link is incomplete. Run /team login in DSH again.",
+    "confirm": "Authorize",
+    "copy": "Paste this into DSH:",
+    "expiry": "The code works once, for two minutes, and only for the DSH that asked for it.",
+    "failed": "Authorization failed. Sign in again, or run /team login in DSH again."
+  }
+}

@@ -1,0 +1,32 @@
+# The standalone local stack: `pnpm dev:setup`. The same database names and
+# credentials as the shared ~/code/shushuo/dev stack (`pnpm dev:shared`), so
+# every .env works unchanged against either — but both bind 5432, so only one
+# runs at a time. No object store: nothing in this product stores files.
+name: dsh-teamwork-dev
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: dsh_teamwork
+      POSTGRES_DEV_INSECURE: 'true'
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dsh_teamwork -q"]
+      timeout: 60s
+      interval: 5s
+      start_period: 60s
+    ports:
+      - 5432:5432
+    volumes:
+      - type: volume
+        source: pgdata
+        target: /var/lib/postgresql/data/
+      - type: bind
+        source: ./initdb.d
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+
+volumes:
+  pgdata: {}

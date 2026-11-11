@@ -1,0 +1,133 @@
+name: CI
+
+# CI runs on a merge into main, on every pull request and on demand. Every step
+# of `build` is the same gate `.husky/pre-push` runs before a branch leaves the
+# machine; a pull request runs it too, because a contributor's machine is not
+# ours to trust. A push to a feature branch alone runs nothing.
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # A mocked Prisma cannot see what Postgres decides, so the suites that need
+    # a database skip themselves when none answers. This service is what stops
+    # that from meaning "never actually runs".
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Matches the `pnpm dev:setup` stack, so a suite talks to the same URL
+      # locally and here.
+      DATABASE_URL: postgresql://postgres:postgres_password@localhost:5432/postgres
+      SHADOW_DATABASE_URL: postgresql://postgres:postgres_password@localhost:5432/prisma_shadow
+
+    steps:
+      - uses: actions/checkout@v4
+      # The version lives in `.nvmrc`, which Railpack reads too — one Node for
+      # CI, the deploy and a contributor's shell, rather than three that drift.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+
+      - name: Install node modules
+        run: pnpm install --frozen-lockfile
+
+      # Turbo's own cache, carried between runs. The key is unique per run on
+      # purpose: a hit on the primary key skips the post-job save and freezes
+      # the cache at whichever run wrote it first; `restore-keys` is what
+      # actually matches, and takes the most recent entry.
+      - name: Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+
+      - name: Type check
+        run: pnpm tsc
+
+      - name: Language check
+        run: pnpm lint:lang
+
+      - name: Docs check
+        run: pnpm lint:docs
+
+      - name: Icons check
+        run: pnpm assets:icons --check
+
+      - name: Lint
+        run: pnpm lint
+
+      # Bring the schema up with the committed migrations, not `db:push`: applying
+      # them to an empty database is also the check that they apply cleanly.
+      - name: Apply migrations
+        run: pnpm db:deploy
+
+      # Replays every migration into a scratch database and compares the result
+      # with the schema, so a column that reached a database only through
+      # `db:push` cannot land unnoticed.
+      - name: Migration drift
+        run: |
+          PGPASSWORD=postgres_password psql -h localhost -U postgres -c 'CREATE DATABASE prisma_shadow'
+          pnpm db:drift
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  # Self-hosting as README.md describes it: build apps/web/Dockerfile, start
+  # compose.yaml with nothing but its .env, and check the web app answers after
+  # applying its migrations. No Google, PostHog or SMTP account is involved.
+  self-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write the instance's .env
+        run: |
+          {
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
+            echo "APP_URL=http://localhost:3000"
+            echo "AUTH_SECRET=$(openssl rand -base64 32)"
+          } > .env
+
+      - name: Build and start
+        run: docker compose up -d --build --wait --wait-timeout 300
+
+      # The container starts serving once its migrations are applied, so the
+      # first request is retried for up to two minutes.
+      - name: The web app answers
+        run: |
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 2; done
+          for path in / /sign-in /robots.txt; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:3000$path")
+            echo "$path $status"
+            test "$status" = 200
+          done
+          docker compose logs web | grep -E 'All migrations have been successfully applied|No pending migrations'
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs
+

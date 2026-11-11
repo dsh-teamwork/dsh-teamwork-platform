@@ -1,0 +1,144 @@
+/**
+ * The team API's wire shapes: what the console and the DSH plugin send, and
+ * what the web API answers. The server parses every write with these; the
+ * console builds its forms from the same types.
+ */
+
+import { z } from 'zod';
+
+/**
+ * A failure the team API names, each one a stable code a client branches on
+ * and words in its own language (`teamErrors.*` in the web app's messages).
+ */
+export const TEAM_ERRORS = [
+  'no_team',
+  'admin_required',
+  'already_in_team',
+  'admin_cannot_leave',
+  'cannot_remove_self',
+  'invite_invalid',
+  'invite_used',
+  'config_conflict',
+  'config_exists',
+  'model_not_found',
+  'plugin_dependency_invalid',
+  'max_tokens_exceeds_context',
+  'model_forbidden',
+  'provider_not_configured',
+  'upstream_unavailable',
+  'upstream_rate_limited',
+  'payload_too_large',
+] as const;
+export type TeamErrorCode = (typeof TEAM_ERRORS)[number];
+
+const name = z.string().trim().min(1).max(100);
+const tokens = z.number().int().min(1).max(10_000_000);
+const semver = z.string().regex(/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/);
+const toolList = z.array(z.string().trim().min(1).max(100)).max(50).default([]);
+
+/** A provider's model, addressed the way the provider names it. */
+const ModelRoute = { provider: name, model: name, contextWindow: tokens.optional(), maxTokens: tokens.optional() };
+
+export const ModelDataSchema = z.strictObject(ModelRoute);
+
+/**
+ * A preset either references a team model (`modelConfigId`) or carries a
+ * whole provider/model pair of its own — never a mix of the two.
+ */
+export const PresetDataSchema = z
+  .strictObject({
+    provider: name.optional(),
+    model: name.optional(),
+    contextWindow: tokens.optional(),
+    maxTokens: tokens.optional(),
+    modelConfigId: z.string().min(1).max(100).optional(),
+    description: z.string().max(500).default(''),
+    instructions: z.string().max(4000).default(''),
+    outputDescription: z.string().max(2000).default(''),
+    pluginDependencies: z
+      .array(z.strictObject({ pluginConfigId: z.string().min(1).max(100), version: semver }))
+      .max(30)
+      .default([]),
+    requiredTools: toolList,
+    optionalTools: toolList,
+    systemPrompt: z.string().max(20_000).default(''),
+  })
+  .superRefine((data, ctx) => {
+    const ownRoute = [data.provider, data.model, data.contextWindow, data.maxTokens].some((v) => v !== undefined);
+    if (data.modelConfigId ? ownRoute : !data.provider || !data.model) {
+      ctx.addIssue({ code: 'custom', message: 'A preset references a team model or names its own provider and model, not both.' });
+    }
+    if (new Set(data.pluginDependencies.map((d) => d.pluginConfigId)).size !== data.pluginDependencies.length) {
+      ctx.addIssue({ code: 'custom', path: ['pluginDependencies'], message: 'A plugin is listed twice.' });
+    }
+    const tools = [...data.requiredTools, ...data.optionalTools];
+    if (new Set(tools).size !== tools.length) {
+      ctx.addIssue({ code: 'custom', path: ['requiredTools'], message: 'A tool is listed twice.' });
+    }
+  });
+
+/** A plugin pinned by the team: an npm package at one exact version. Installing it stays the member's decision. */
+export const PluginDataSchema = z.strictObject({
+  package: z.string().regex(/^(?:@[a-z0-9-]+\/)?[a-z0-9][a-z0-9._-]*$/),
+  version: semver,
+  providesTools: z.array(z.string().trim().min(1).max(100)).max(100).default([]),
+  description: z.string().max(1000).default(''),
+});
+
+export const ConfigInputSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('model'), name, data: ModelDataSchema }),
+  z.object({ kind: z.literal('preset'), name, data: PresetDataSchema }),
+  z.object({ kind: z.literal('plugin'), name, data: PluginDataSchema }),
+]);
+export type ConfigInput = z.infer<typeof ConfigInputSchema>;
+export type ConfigKind = ConfigInput['kind'];
+export type ModelData = z.infer<typeof ModelDataSchema>;
+export type PresetData = z.infer<typeof PresetDataSchema>;
+export type PluginData = z.infer<typeof PluginDataSchema>;
+
+/** An edit names the version it was made against; a stale one is `config_conflict`. */
+export const UpdateConfigSchema = z.intersection(ConfigInputSchema, z.object({ version: z.number().int().positive() }));
+
+/** A stored configuration as the API answers it. `data` is the kind's shape. */
+export type TeamConfigView = ConfigInput & { id: string; version: number; updatedAt: string };
+
+/** `GET /api/team/configs` — the snapshot the plugin caches. */
+export interface ConfigSnapshot {
+  teamId: string;
+  configs: TeamConfigView[];
+}
+
+export const CreateTeamSchema = z.object({ name });
+export const RedeemInviteSchema = z.object({ token: z.string().min(32).max(100) });
+
+export type TeamRole = 'admin' | 'member';
+
+export interface TeamMemberView {
+  userId: string;
+  email: string;
+  role: TeamRole;
+}
+
+/** `GET /api/team` — the caller's team, their role in it and who else is in it. */
+export interface TeamView {
+  id: string;
+  name: string;
+  role: TeamRole;
+  members: TeamMemberView[];
+}
+
+export interface InviteView {
+  id: string;
+  expiresAt: string;
+  usedAt: string | null;
+}
+
+/** `POST /api/team/invites` — the only time the token itself is seen. */
+export interface CreatedInvite extends InviteView {
+  token: string;
+}
+
+/** `GET /api/team/model-catalog`: the configured providers, or one provider's models. */
+export type ModelCatalog =
+  | { providers: string[] }
+  | { provider: string; models: { id: string; name: string; contextWindow?: number; maxTokens?: number }[] };

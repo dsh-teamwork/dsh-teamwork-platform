@@ -1,0 +1,44 @@
+packages:
+  - apps/*
+  - packages/*
+  # The closed editions' apps and packages (docs/tech/community-edition.md);
+  # absent from the public repository, where the globs match nothing.
+  - premium/apps/*
+  - premium/packages/*
+
+# Build-script policy and dependency resolution live here, not in package.json's
+# `pnpm` field — pnpm 11 no longer reads that field, and a setting left behind
+# there is ignored silently rather than reported. See https://pnpm.io/settings.
+
+# React is pinned rather than ranged so the two Next.js apps resolve one
+# React instance through this store.
+overrides:
+  '@types/react': '19.2.18'
+  '@types/react-dom': '19.1.0'
+  react: '19.2.0'
+  react-dom: '19.2.0'
+
+# next-intl brings in @parcel/watcher and @swc/core; allowed as router9 and
+# vizfor allow them, so an install says nothing about them.
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@swc/core'
+  - esbuild
+  - prisma
+  - supabase
+  - unrs-resolver
+
+# sharp is deliberately NOT allowed to run its install script. sharp <= 0.34
+# ships `install: node install/check.js || npm run build`, and check.js exits
+# non-zero whenever it finds a system libvips — which makes pnpm compile sharp
+# from source instead of using the prebuilt `@img/sharp-<platform>` binary it
+# already installed. That compile needs node-addon-api and node-gyp, which
+# nothing here depends on, so on any machine with libvips (an EAS macOS worker,
+# or a laptop that ever ran `brew install vips`) `pnpm install --frozen-lockfile`
+# died before anything was built. The prebuilt binaries are ordinary optional
+# dependencies and need no install step. The entry stays after any upgrade, so
+# a future sharp that reinstates a script is blocked without a prompt.
+ignoredBuiltDependencies:
+  - sharp
