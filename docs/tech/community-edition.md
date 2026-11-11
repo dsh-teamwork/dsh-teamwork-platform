@@ -1,13 +1,15 @@
 # Community edition split
 
-> **Status:** Plan — Phases 0 to 2 done · **Updated:** 2026-11-10
+> **Status:** Plan — Phases 0 to 2 done · **Updated:** 2026-11-11
 
 How the open part of this repository becomes the public
-`dsh-teamwork/dsh-teamwork-platform` (ADR 0005). The plan covers:
+`dsh-teamwork/dsh-teamwork-platform` (ADR 0005), and how it then runs from
+one command (ADR 0006). The plan covers:
 
 - what moves where;
 - the three experiments that come first;
 - the one-time split;
+- running from `npx` with nothing else installed;
 - how the two repositories stay in step afterwards.
 
 ## The route in one paragraph
@@ -382,9 +384,137 @@ Done on 2026-11-10.
 7. **Hosted deploy unchanged.** Railway keeps deploying this repository.
    Redeploy once to confirm nothing moved.
 
-### Phase 4: the first release
+### Phase 4: one command, nothing else to install
 
-This phase is gated on the plugin's wire having settled.
+**Goal:** `npx @dsh-teamwork/server` on a machine with Node 24 starts a
+working instance. Nothing else is installed or configured (ADR 0006).
+
+**Non-goals:**
+
+- a desktop app;
+- several processes sharing one data directory;
+- a tool that moves PGlite data to Postgres (a `pg_dump` is the documented
+  path);
+- providers shared across teams;
+- revoking sessions when a password changes.
+
+The steps, in order. Each lands on its own, through the public repository,
+and keeps the gate green.
+
+1. **Experiment, thrown away afterwards: can it be packaged?** Build the
+   Next.js standalone output with PGlite and the migrations, pack it as an
+   npm tarball, and run it with `npx` from a clean directory. It answers four
+   questions:
+   - whether Next.js bundles PGlite's WebAssembly, or needs it in
+     `serverExternalPackages`;
+   - how the migrations are applied without the Prisma CLI's schema engine
+     in the package: through PGlite's socket server during start, or by
+     replaying `migration.sql` files into `_prisma_migrations` directly;
+   - the package size and the install time;
+   - the time from command to first page.
+
+   **This gates the rest.** If the package cannot be made reasonable (an
+   install over about 150 MB, or a first page after more than about 30
+   seconds), the decision goes back to the developer before any other step
+   lands.
+   **Done 2026-11-11, on Node 24.19: the package works, well inside the
+   limits.**
+   - **What went in.** A Next.js standalone build with PGlite bundled, the
+     migrations, a launcher, and the traced dependencies shipped inside the
+     tarball (`bundleDependencies`).
+   - **Size.** 36 MB to download, 111 MB installed, no native binary, so one
+     package serves every platform.
+   - **Time.** From a clean cache to the first page took 14.8 s. Most of it
+     was npx unpacking a local tarball; started directly, the server answers
+     in 1.7 s. A published package should start much faster than 14.8 s,
+     because npx reuses an unpacked version it already has. That was not
+     measured: it needs a publish.
+   - **Data.** A signed-in session created a user and a team; both survived a
+     restart.
+   - **Memory.** About 520–580 MiB.
+
+   The step settled the open questions and showed what step 6 must do:
+   - **Next.js bundles PGlite with no configuration.** Its WebAssembly, data
+     file, `initdb` and the `pgcrypto` extension land in the server assets,
+     though also, needlessly, in `static/media`.
+   - **The launcher applies the migrations itself.** It replays each
+     `migration.sql` into `_prisma_migrations` the way Prisma records it, in
+     0.6 s with nothing to apply and 2.6 s for all four. The Prisma CLI is not
+     shipped.
+   - **Do not depend on `next` from the registry.** That installs 421 MB,
+     including `@next/swc` compilers nothing runs. Ship the traced
+     dependencies instead.
+   - **Drop `sharp`.** It is the only native code, and only `next/image`
+     optimisation uses it.
+   - **Recreate Turbopack's external links.** Turbopack loads `pg` through a
+     hashed alias in `.next/node_modules`, which `npm pack` drops. The
+     launcher has to recreate it, or the build has to stop importing `pg`
+     when it runs on PGlite.
+2. **PGlite when `DATABASE_URL` is unset.**
+   - `packages/db/src/index.ts` chooses the adapter, keeps one PGlite per
+     process, and closes it on shutdown.
+   - CI runs every database suite on both PGlite and Postgres.
+   - `pglite-prisma-adapter` is pinned to an exact version.
+3. **Passwords when `SMTP_URL` is unset.**
+   - The hashes are scrypt, held in an open table of their own.
+   - Guesses are limited per address under the existing advisory lock.
+   - A one-time setup link, printed at start, claims the first account.
+   - In `/team`, an admin creates a member with a generated first password
+     and resets it; the member must change it at first sign-in.
+   - Invite links remain the flow when email is configured.
+4. **Providers per team.**
+   - An open `TeamProvider` table holds each provider's name, base URL and
+     key, encrypted under `PROVIDER_KEYS_SECRET`.
+   - `/team` adds, replaces and removes providers. A key is write-only.
+   - The gateway resolves routes from the caller's team.
+   - `ALLOW_PRIVATE_PROVIDERS` gates loopback and private addresses.
+     Where they are refused, the gateway connects to the address it checked.
+   - `LLM_ROUTES_JSON` and its key variables are deleted from code,
+     `.env.example`, `compose.yaml` and the README.
+5. **The plugin accepts `http://` to private addresses** with a warning
+   (`../dsh-teamwork`, `src/client.ts`). It ships with its own release.
+6. **The `npx` package.**
+   - `@dsh-teamwork/server` has a `bin` that:
+     - creates the data directory (`~/.dsh-teamwork`, or `--data`);
+     - writes `AUTH_SECRET` and `PROVIDER_KEYS_SECRET` there on first start,
+       readable only by the user;
+     - applies the migrations, prints the setup link, and serves.
+   - The address is loopback by default; `--host` opens it to the network.
+   - CI publishes it on a release tag.
+7. **The README, `CLAUDE.md` and `.env.example` describe both paths:**
+   - `npx` for a first team;
+   - `compose.yaml` with Postgres and SMTP when it grows.
+
+**Open question, for the developer:** whether `--host` defaults to loopback.
+The plan says yes: a first run then exposes nothing, and a team adds one flag.
+The npm package is scoped because `dsh-teamwork` on npm is someone else's; the
+`dsh-teamwork` organisation on npm is ours.
+
+**How done is verified:**
+
+- A CI job on a clean runner does the whole run with only Node and a stub
+  provider:
+  1. `npx` the packed tarball;
+  2. claim the first account with the printed link;
+  3. create a member and change their password;
+  4. add the stub provider;
+  5. sign the plugin in and sync;
+  6. get one answer through the gateway;
+  7. stop the server, start it again, and find the team still there.
+- Every database suite passes on both PGlite and Postgres.
+- Tests pin the boundaries:
+  - a password guess beyond the limit is refused, even under a concurrent
+    burst;
+  - a provider key never appears in a response;
+  - a private provider address is refused without
+    `ALLOW_PRIVATE_PROVIDERS`;
+  - the plugin refuses `http://` to a public address.
+- On `alpha.dshteamwork.com`, sign-in is still the emailed code and Google,
+  and a team calls models with its own provider key.
+
+### Phase 5: the first release
+
+This phase is gated on the plugin's wire having settled, and on Phase 4.
 
 - Tag `v0.1.0` in the public repository, write its first `CHANGELOG.md`
   entry and publish a GitHub release.

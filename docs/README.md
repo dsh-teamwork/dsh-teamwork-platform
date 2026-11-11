@@ -13,7 +13,7 @@ How documents are laid out, named and kept is the "Documentation" section of
 ## Technical
 
 - [Architecture](tech/architecture.md) — components, data model, the team API, both sign-in flows and the model gateway.
-- [Community edition split](tech/community-edition.md) — how the open part becomes its own public repository, and stays in step.
+- [Community edition split](tech/community-edition.md) — how the open part becomes its own repository, runs from `npx`, and stays in step.
 
 ## Decisions
 
