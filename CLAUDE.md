@@ -234,7 +234,8 @@ pnpm dev:web
 
 pnpm tsc              # the gate, in CI's order: tsc → lint:lang → lint:docs →
 pnpm lint:lang        #   assets:icons --check → lint → db:drift → test → build.
-pnpm lint:docs        #   The husky pre-push hook runs all eight before every push.
+pnpm lint:docs        #   The husky pre-push hook runs all eight before every push,
+                      #   plus, where premium/ exists, the edition boundary.
 pnpm assets:icons --check
 pnpm lint
 pnpm db:drift

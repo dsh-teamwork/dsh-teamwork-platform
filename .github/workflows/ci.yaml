@@ -96,6 +96,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # The closed edition only: every open path must equal the community
+      # edition it last merged (docs/tech/community-edition.md).
+      - name: Edition boundary
+        if: hashFiles('premium/scripts/lint-edition.mjs') != ''
+        run: node premium/scripts/lint-edition.mjs
+
   # Self-hosting as README.md describes it: build apps/web/Dockerfile, start
   # compose.yaml with nothing but its .env, and check the web app answers after
   # applying its migrations. No Google, PostHog or SMTP account is involved.

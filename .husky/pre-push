@@ -48,4 +48,10 @@ run 'Test            (pnpm test)' pnpm test
 
 run 'Build           (pnpm build)' pnpm build
 
+# The closed edition only: every open path must equal the community edition
+# it last merged (docs/tech/community-edition.md, "How the two stay in step").
+if [ -f premium/scripts/lint-edition.mjs ]; then
+  run 'Edition boundary (premium/scripts/lint-edition.mjs)' node premium/scripts/lint-edition.mjs
+fi
+
 printf '\n\033[1;32m✓ CI passed locally — pushing.\033[0m\n\n'

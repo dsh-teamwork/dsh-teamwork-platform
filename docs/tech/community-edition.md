@@ -336,8 +336,8 @@ Done on 2026-11-10.
 
 ### Phase 3: the split
 
-1. **Freeze `main`** and run the full gate. The tree outside the closed paths
-   is the public edition.
+1. **Done: freeze `main`** (`99a4eb7`) and run the full gate. The tree outside
+   the closed paths is the public edition.
 2. **Done: scan that tree.** Gitleaks (v8.28.0) over the 167 tracked open
    files found no secret. A search for internal names, hosts and addresses
    found three kinds of finding, and the developer decided each on 2026-11-11:
@@ -350,16 +350,21 @@ Done on 2026-11-10.
    - **Open files may mention `premium/` in plain text** (`premium/CLAUDE.md`,
      "The boundary"). The one script naming a premium package, `dev:manage`,
      is gone.
-3. **Create the public repository.** Make `dsh-teamwork/dsh-teamwork-platform`
-   from that tree, as one commit: "Initial community edition". The commit is
-   built from the tracked files themselves (`git ls-files` outside the closed
-   paths), never by `git add -A`, which drops tracked files that `.gitignore`
-   covers.
-4. **Record it as merged here.** Add the `upstream` remote, then run
-   `git merge --allow-unrelated-histories -s ours upstream/main`.
-   `pnpm lint:edition` checks the boundary: `git diff upstream/main -- .`
-   excluding the closed paths and `pnpm-lock.yaml` must be empty. It joins
-   this repository's gate.
+3. **Done: create the public repository.** `dsh-teamwork/dsh-teamwork-platform`
+   holds the tree as one commit, "Initial community edition" (`49a2bb4`), on
+   top of the commit GitHub made with the repository (an identical Apache
+   `LICENSE` and a stub README). The commit was built from the tracked files
+   themselves (`git archive` of `git ls-files` outside the closed paths),
+   never by `git add -A`, which drops tracked files that `.gitignore` covers.
+   It regenerated its own lockfile and passed the full gate on its own.
+4. **Done: record it as merged in the closed repository**, with
+   `git merge --allow-unrelated-histories -s ours upstream/main`. The
+   boundary check is `premium/scripts/lint-edition.mjs`. It finds the last
+   upstream commit merged into `HEAD`, and every open path must equal it,
+   leaving out the closed paths and `pnpm-lock.yaml`. Measuring against the
+   last merged commit, not upstream's tip, keeps the check green while a new
+   upstream commit waits to be merged. The pre-push hook and CI run it
+   wherever that script exists.
 5. **Done: license the tree.**
    - `LICENSE` is Apache-2.0, at the root of both repositories, since it is
      an open file.

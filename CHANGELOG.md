@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-11 — The community edition is public
+
+- **What:** This repository, `dsh-teamwork/dsh-teamwork-platform`, is the community edition's own home and the upstream of the closed edition. Open changes are made here and merged there. The pre-push hook and CI also run the edition boundary check wherever the closed edition's script exists, which is never in this repository.
+- **Why:** ADR 0005; Phase 3 of `docs/tech/community-edition.md`.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `docs/tech/community-edition.md`.
+
 ## 2026-11-11 — Apache-2.0, and CI on pull requests
 
 - **What:** The repository is licensed Apache-2.0 (`LICENSE`), with a `NOTICE` keeping the name and the whale mark out of the licence, and a README section asking for a `Signed-off-by:` line on every commit (the DCO). CI runs on every pull request as well as on `main`, and a `self-host` job builds `apps/web/Dockerfile`, starts `compose.yaml` and checks the web app answers. The root `dev:manage` script is gone.
