@@ -417,6 +417,39 @@ and keeps the gate green.
    install over about 150 MB, or a first page after more than about 30
    seconds), the decision goes back to the developer before any other step
    lands.
+   **Done 2026-11-11, on Node 24.19: the package works, well inside the
+   limits.**
+   - **What went in.** A Next.js standalone build with PGlite bundled, the
+     migrations, a launcher, and the traced dependencies shipped inside the
+     tarball (`bundleDependencies`).
+   - **Size.** 36 MB to download, 111 MB installed, no native binary, so one
+     package serves every platform.
+   - **Time.** From a clean cache to the first page took 14.8 s. Most of it
+     was npx unpacking a local tarball; started directly, the server answers
+     in 1.7 s. A published package should start much faster than 14.8 s,
+     because npx reuses an unpacked version it already has. That was not
+     measured: it needs a publish.
+   - **Data.** A signed-in session created a user and a team; both survived a
+     restart.
+   - **Memory.** About 520–580 MiB.
+
+   The step settled the open questions and showed what step 6 must do:
+   - **Next.js bundles PGlite with no configuration.** Its WebAssembly, data
+     file, `initdb` and the `pgcrypto` extension land in the server assets,
+     though also, needlessly, in `static/media`.
+   - **The launcher applies the migrations itself.** It replays each
+     `migration.sql` into `_prisma_migrations` the way Prisma records it, in
+     0.6 s with nothing to apply and 2.6 s for all four. The Prisma CLI is not
+     shipped.
+   - **Do not depend on `next` from the registry.** That installs 421 MB,
+     including `@next/swc` compilers nothing runs. Ship the traced
+     dependencies instead.
+   - **Drop `sharp`.** It is the only native code, and only `next/image`
+     optimisation uses it.
+   - **Recreate Turbopack's external links.** Turbopack loads `pg` through a
+     hashed alias in `.next/node_modules`, which `npm pack` drops. The
+     launcher has to recreate it, or the build has to stop importing `pg`
+     when it runs on PGlite.
 2. **PGlite when `DATABASE_URL` is unset.**
    - `packages/db/src/index.ts` chooses the adapter, keeps one PGlite per
      process, and closes it on shutdown.
