@@ -271,9 +271,11 @@ before a branch leaves your machine. `git push
 --no-verify` is for a work-in-progress branch nobody will merge yet, not for
 landing a red `main`. The `@claude` workflow (`.github/workflows/claude.yml`)
 needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret (`claude setup-token`);
-without it that workflow fails and nothing else is affected. Suites that need Postgres skip without `DATABASE_URL`, and
-`db:drift` skips without `SHADOW_DATABASE_URL` (see `packages/db/.env.example`);
-CI provides both, so skipped locally never means skipped everywhere.
+without it that workflow fails and nothing else is affected. Suites that need a
+database run on PGlite in memory without `DATABASE_URL` and on Postgres with it;
+CI runs them both ways. `db:drift` skips without `SHADOW_DATABASE_URL` (see
+`packages/db/.env.example`); CI provides it, so skipped locally never means
+skipped everywhere.
 
 **Every vitest workspace names its own `include` and excludes `dist`** (Vitest 4
 dropped `**/dist/**` from its default exclude). Next.js apps default to the
@@ -292,17 +294,28 @@ any non-local host (`ALLOW_REMOTE_MIGRATE_DEV=1` is the deliberate escape hatch)
 result to the schema (`prisma/schema/`), so a column that reached a database only through
 `db:push` cannot land unnoticed.
 
-`DATABASE_URL` is resolved in one place, `packages/db/prisma.config.ts`: a real
-environment variable first, then the first of `packages/db/.env`, the root
-`.env`, `apps/web/.env`; with nothing set, the `pnpm dev:setup` stack. The guard
-reads the same list in the same order.
+**With no `DATABASE_URL` the apps run on PGlite** (ADR 0006): Postgres compiled
+to WebAssembly, inside the process, in `PGLITE_DIR` (default
+`~/.dsh-teamwork/db`; `memory://` for a throwaway). `packages/db/src/pglite.ts`
+opens it on first connect, applies the committed migrations there — recorded in
+`_prisma_migrations` exactly as `prisma migrate deploy` records them — and
+closes it on `$disconnect()`. One process owns a data directory. The Prisma CLI
+cannot reach it, so `db:migrate`, `db:drift` and `db:studio` need Postgres.
+
+For those commands `DATABASE_URL` is resolved in one place,
+`packages/db/prisma.config.ts`: a real environment variable first, then the
+first of `packages/db/.env`, the root `.env`, `apps/web/.env`; with nothing
+set, the `pnpm dev:setup` stack. The guard reads the same list in the same
+order.
 
 Every `prisma` / `@prisma/*` dependency is pinned to an **exact** `7.9.1` (as is
 `vitest` at `4.1.11`): what a caret resolves to is decided by the day the
 lockfile was written. The client is generated into `packages/db/src/generated`
 (gitignored, turbo-cacheable); import `PrismaClient`, `Prisma` and model types
 from `@dsh-teamwork/db`, never from `@prisma/client`. Primary keys are `nanoid()`,
-generated in Postgres by the first migration.
+generated in Postgres by the first migration. `@electric-sql/pglite` and
+`pglite-prisma-adapter` are exact too, and `apps/web` loads both unbundled
+(`serverExternalPackages`): bundled, PGlite cannot initialise a new directory.
 
 ## Architecture
 

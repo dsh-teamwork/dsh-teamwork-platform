@@ -1,7 +1,7 @@
 /**
- * Team rules against a real Postgres: what a mocked Prisma cannot show —
- * unique indexes, transactions and two requests racing for one row. Skips
- * without DATABASE_URL; CI provides one.
+ * Team rules against a real database: what a mocked Prisma cannot show —
+ * unique indexes, transactions and two requests racing for one row. PGlite in
+ * memory without DATABASE_URL, Postgres with it; CI runs both.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -13,7 +13,6 @@ vi.mock('@/lib/auth/strategy', () => ({ strategy: { identity: async () => null }
 const { prisma } = await import('@/lib/prisma');
 const team = await import('../team');
 
-const hasDatabase = Boolean(process.env.DATABASE_URL);
 const suffix = randomUUID();
 /** Every team this file makes, so cleanup touches nothing else in a shared database. */
 const made: string[] = [];
@@ -23,7 +22,7 @@ async function makeUser(label: string) {
   return (await prisma.user.create({ data: { authId: email, email } })).id;
 }
 
-describe.skipIf(!hasDatabase)('teams against Postgres', () => {
+describe('teams against the database', () => {
   let admin: string, member: string, outsider: string, teamId: string;
   const model = { kind: 'model', name: 'Protected', data: { provider: 'deepseek', model: 'chat' } } as const;
 

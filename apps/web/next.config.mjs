@@ -9,6 +9,9 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const config = {
   // Workspace packages ship TypeScript source, not a build.
   transpilePackages: ['@dsh-teamwork/db', '@dsh-teamwork/shared'],
+  // Loaded by Node, not bundled: bundled, PGlite's initdb loses its own
+  // `instantiateWasm` and a new data directory never initialises (ADR 0006).
+  serverExternalPackages: ['@electric-sql/pglite', 'pglite-prisma-adapter'],
   // Nothing a visitor needs, and a free hint about what to attack.
   poweredByHeader: false,
   async headers() {

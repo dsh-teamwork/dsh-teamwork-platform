@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-10
+> **Status:** Current · **Updated:** 2026-11-11
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -9,7 +9,7 @@ live in `CLAUDE.md`; this file shows the mechanism behind them.
 ## Data flow
 
 ```
-DSH + plugin ──Bearer──► apps/web /api/team*, /api/llm/*  ──► @dsh-teamwork/db (Prisma) ──► Postgres
+DSH + plugin ──Bearer──► apps/web /api/team*, /api/llm/*  ──► @dsh-teamwork/db (Prisma) ──► Postgres, or PGlite in-process
                                │
                                └── /api/llm/chat/completions ──► model provider (key from the server's env)
 
@@ -30,7 +30,7 @@ and sends every team-model call to the gateway with its Bearer token.
 | Team rules | Membership, invitations, configuration and its references | `apps/web/src/lib/team.ts` |
 | Model gateway | Resolving a configuration id to a provider call | `apps/web/src/lib/llm-gateway.ts` |
 | Operator console | Google + `ADMIN_EMAILS`; `/api/admin/*` | `premium/apps/manage` |
-| Schema | Every table and migration | `packages/db` |
+| Schema | Every table and migration; Postgres or, without `DATABASE_URL`, PGlite migrated on first connect | `packages/db` |
 | Wire schemas, sign-in | `ConfigInputSchema` and the team API's types; NextAuth | `packages/shared` |
 
 ## Data model
@@ -150,3 +150,6 @@ Railway: `web` (`alpha.dshteamwork.com`) and `manage`
 - **`team_configs.data`**: stored JSON written by older schemas has to stay
   readable once teams depend on it.
 - **One team per person**: `memberships.user_id` as the key.
+- **A PGlite data directory**: a team's whole database in one directory, owned
+  by one process. Its `_prisma_migrations` rows match Prisma's, so a dump
+  restored into Postgres keeps migrating with `pnpm db:deploy`.

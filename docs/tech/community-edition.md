@@ -450,11 +450,24 @@ and keeps the gate green.
      hashed alias in `.next/node_modules`, which `npm pack` drops. The
      launcher has to recreate it, or the build has to stop importing `pg`
      when it runs on PGlite.
-2. **PGlite when `DATABASE_URL` is unset.**
-   - `packages/db/src/index.ts` chooses the adapter, keeps one PGlite per
-     process, and closes it on shutdown.
-   - CI runs every database suite on both PGlite and Postgres.
-   - `pglite-prisma-adapter` is pinned to an exact version.
+2. **PGlite when `DATABASE_URL` is unset. Done 2026-11-11.**
+   - `packages/db/src/pglite.ts` does three things:
+     - opens PGlite in `PGLITE_DIR` on first connect, so `next build` creates
+       nothing;
+     - applies the migrations, recorded with Prisma's own checksums;
+     - closes it on `$disconnect()`.
+   - The database suites always run, on PGlite in memory, and CI runs them
+     on Postgres too.
+   - Both packages are pinned to exact versions.
+   - **What the build taught step 6:**
+     - **Bundled, PGlite cannot initialise a new directory**: Turbopack breaks
+       its `initdb`'s `instantiateWasm`. So `apps/web` loads it unbundled
+       (`serverExternalPackages`), as it does `pg`. The package then ships
+       PGlite and the adapter as hashed external links in `.next/node_modules`,
+       beside `pg`'s.
+     - **The migrations path compiles to the repository-relative
+       `packages/db/src/pglite.ts`**, so the package keeps
+       `packages/db/prisma/migrations` at that path.
 3. **Passwords when `SMTP_URL` is unset.**
    - The hashes are scrypt, held in an open table of their own.
    - Guesses are limited per address under the existing advisory lock.

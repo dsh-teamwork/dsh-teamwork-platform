@@ -11,17 +11,19 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
 import { PrismaClient } from './generated/prisma/index.js';
+import { pgliteAdapter } from './pglite';
 
 export { Prisma, PrismaClient } from './generated/prisma/index.js';
 export type { ConfigKind, Invite, Membership, Team, TeamConfig, TeamRole, User } from './generated/prisma/index.js';
 export { ensureUser, type EnsuredUser, type VerifiedIdentity } from './users';
 
-/** The `pnpm dev:setup` stack, used only when nothing supplies DATABASE_URL. */
-export const DEV_DATABASE_URL = 'postgresql://postgres:postgres_password@localhost:5432/dsh_teamwork';
-
-/** A client over its own connection pool. Tests and scripts use this directly. */
-export function createPrismaClient(connectionString = process.env.DATABASE_URL ?? DEV_DATABASE_URL): PrismaClient {
-  const adapter = new PrismaPg(new Pool({ connectionString }));
+/**
+ * A client of its own. With a connection string — DATABASE_URL by default —
+ * it is Postgres over a pool of its own; with none, it is this process's
+ * PGlite in `PGLITE_DIR` (ADR 0006). Tests and scripts use this directly.
+ */
+export function createPrismaClient(connectionString = process.env.DATABASE_URL || undefined): PrismaClient {
+  const adapter = connectionString ? new PrismaPg(new Pool({ connectionString })) : pgliteAdapter();
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],

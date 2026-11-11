@@ -17,8 +17,6 @@ vi.mock('react', async (original) => ({ ...(await original<object>()), cache: <T
 const { GET, PATCH } = await import('../route');
 const { prisma } = await import('@/lib/prisma');
 
-const hasDatabase = Boolean(process.env.DATABASE_URL);
-
 describe('/api/profile without an identity', () => {
   beforeEach(() => {
     who.current = null;
@@ -31,7 +29,7 @@ describe('/api/profile without an identity', () => {
   });
 });
 
-describe.skipIf(!hasDatabase)('/api/profile with an identity', () => {
+describe('/api/profile with an identity', () => {
   const subject = `test:${Date.now()}`;
 
   beforeEach(() => {

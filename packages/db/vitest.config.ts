@@ -8,7 +8,10 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     exclude: ['**/node_modules/**', '**/dist/**'],
     environment: 'node',
-    // The database suites share one Postgres and clear the tables they touch.
+    // Without DATABASE_URL the database suites run on a PGlite of their own,
+    // in memory, so they never touch the developer's data directory.
+    env: { PGLITE_DIR: process.env.PGLITE_DIR || 'memory://' },
+    // The database suites share one database and clear the tables they touch.
     fileParallelism: false,
   },
 });
