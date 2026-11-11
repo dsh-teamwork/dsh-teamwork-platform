@@ -261,8 +261,8 @@ with the same credentials, so `cp apps/web/.env.example apps/web/.env` (and
 while another stack holds the port. Each keeps its own data: switching stacks
 means `pnpm db:deploy` again. There is no object store, because nothing here
 stores files.
-With no `SMTP_URL` in development, a sign-in code is printed to the web app's
-console.
+With no `SMTP_URL`, sign-in is an email and a password, and the web app prints
+a link that claims the first account when it starts.
 
 **CI runs on a push to `main`** — a merge — **and on every pull request**, plus
 by hand from the Actions tab: the gate above, and a `self-host` job that builds
@@ -364,14 +364,27 @@ upstream headers. Nothing a caller sends can name a URL, a header or a key.
 
 ### Sign-in
 
-NextAuth (Auth.js v5, JWT sessions, no adapter): Google, or a code emailed
-over `SMTP_URL` — the hosted service uses Resend's endpoint — and stored as an
-HMAC under `AUTH_SECRET` (ten minutes, at most five checks — each spent
-before the comparison — and five per address per fifteen minutes, counted
-under an advisory lock). Verifying a request ends in an
-`Identity` (`@dsh-teamwork/shared`); `User.authId` is the lower-cased verified
-email, so Google and a code for one address are one account. An app built with
-`emailCodes: false` — the console — admits only Google sessions.
+NextAuth (Auth.js v5, JWT sessions, no adapter): Google, and one email door
+decided by `SMTP_URL` (ADR 0006):
+
+- **With it**, a code emailed over SMTP — the hosted service uses Resend's
+  endpoint — and stored as an HMAC under `AUTH_SECRET` (ten minutes, at most
+  five checks — each spent before the comparison — and five per address per
+  fifteen minutes, counted under an advisory lock). People join a team by
+  single-use invitation.
+- **Without it**, a password, stored as scrypt with its parameters
+  (`@dsh-teamwork/shared/server/passwords`, the `passwords` table). Ten wrong
+  guesses per account per fifteen minutes, each spent before the comparison. A
+  team admin creates a member's account with a first password, shown once,
+  which its owner must change before `/team` or `/plugin` open; the admin
+  resets it the same way. The first account is claimed at
+  `/setup?token=…`, a link the server prints at start, derived from
+  `AUTH_SECRET` and dead once any password exists.
+
+Verifying a request ends in an `Identity` (`@dsh-teamwork/shared`), whose `via`
+names the door; `User.authId` is the lower-cased email, so every door for one
+address is one account. An app built with `emailCodes: false` — the console —
+admits only Google sessions.
 
 **The DSH plugin signs in through the website** (`docs/adr/0001-plugin-sign-in.md`).
 `/team login` in DSH prints `/plugin?challenge=…`; the signed-in person

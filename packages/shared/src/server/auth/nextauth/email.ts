@@ -8,17 +8,13 @@ import nodemailer from 'nodemailer';
  * deployment — the hosted service points it at Resend's SMTP endpoint, a
  * self-hosted instance at whatever mail server it has.
  *
- * Without SMTP_URL a development server prints the code to its own console so
- * sign-in works on a laptop; anywhere else that is a refusal, because a code
- * logged in production is a code anybody with log access can use.
+ * Codes are the door only where SMTP_URL is set; without it the door is a
+ * password (ADR 0006). The code itself is never logged: a code in a log is a
+ * code anybody with log access can use.
  */
 export async function sendCodeEmail(to: string, code: string): Promise<boolean> {
   const url = process.env.SMTP_URL;
   if (!url) {
-    if (process.env.NODE_ENV === 'development') {
-      console.info(`[auth] sign-in code for ${to}: ${code} (SMTP_URL unset, not emailed)`);
-      return true;
-    }
     console.error('[auth] SMTP_URL is not set; no sign-in code can be sent');
     return false;
   }

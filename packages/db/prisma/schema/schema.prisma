@@ -30,8 +30,27 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   membership Membership?
+  password   Password?
 
   @@map("users")
+}
+
+// A password, where the instance sends no email (ADR 0006). `hash` carries
+// its own parameters (`scrypt$N$r$p$salt$key`), so they can rise without a
+// migration. An admin sets a first password the member must change.
+// `failures` counts wrong guesses since `failures_since`; the guess limit
+// lives in @dsh-teamwork/shared, `server/auth/nextauth/passwords.ts`.
+model Password {
+  userId        String    @id @map("user_id")
+  hash          String
+  mustChange    Boolean   @map("must_change")
+  failures      Int       @default(0)
+  failuresSince DateTime? @map("failures_since") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("passwords")
 }
 
 // ─── Teams ──────────────────────────────────────────────────────────────────

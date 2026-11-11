@@ -468,13 +468,23 @@ and keeps the gate green.
      - **The migrations path compiles to the repository-relative
        `packages/db/src/pglite.ts`**, so the package keeps
        `packages/db/prisma/migrations` at that path.
-3. **Passwords when `SMTP_URL` is unset.**
-   - The hashes are scrypt, held in an open table of their own.
-   - Guesses are limited per address under the existing advisory lock.
-   - A one-time setup link, printed at start, claims the first account.
+3. **Passwords when `SMTP_URL` is unset. Done 2026-11-11.**
+   - The hashes are scrypt with their parameters, in an open `passwords`
+     table. The code is `@dsh-teamwork/shared/server/passwords`, apart from
+     the NextAuth entry so a test can load it without `next-auth`.
+   - Ten guesses per account per fifteen minutes. Each is spent before the
+     comparison, in two conditional updates rather than a lock.
+   - `/setup?token=…`, printed by `src/instrumentation.ts` at start, claims
+     the first account:
+     - the token is derived from `AUTH_SECRET`, so nothing stores it;
+     - it is dead once any password exists, and two racing claims get one
+       account between them.
    - In `/team`, an admin creates a member with a generated first password
-     and resets it; the member must change it at first sign-in.
+     and resets it. `/team`, `/plugin` and the plugin's code stay closed to
+     its owner until they change it at `/password`.
    - Invite links remain the flow when email is configured.
+   - The development fallback that printed a code without SMTP is gone:
+     without SMTP the door is a password.
 4. **Providers per team.**
    - An open `TeamProvider` table holds each provider's name, base URL and
      key, encrypted under `PROVIDER_KEYS_SECRET`.

@@ -26,7 +26,8 @@ pnpm dev                # web :3800
 
 `compose.yaml` runs one team's instance: Postgres and the web app, which
 applies every migration before it starts. No Google, PostHog or Resend account
-is needed.
+is needed, and no mail server either: without `SMTP_URL`, people sign in with
+an email and a password.
 
 1. Beside `compose.yaml`, write a `.env` (`apps/web/.env.example` explains each
    variable):
@@ -35,11 +36,10 @@ is needed.
    POSTGRES_PASSWORD=…                        # openssl rand -hex 16
    APP_URL=https://teamwork.example.com       # the address members open
    AUTH_SECRET=…                              # openssl rand -base64 32
-   SMTP_URL=smtps://user:password@smtp.example.com:465
-   AUTH_EMAIL_FROM=DSH Teamwork <no-reply@example.com>
    LLM_ROUTES_JSON={"deepseek":{"baseURL":"https://api.deepseek.com/v1","apiKeyEnv":"DEEPSEEK_API_KEY"}}
    DEEPSEEK_API_KEY=…
-   # Optional: AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET add a Google button;
+   # Optional: SMTP_URL and AUTH_EMAIL_FROM send sign-in codes instead of
+   # using passwords; AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET add a Google button;
    # WEB_PORT changes the host port (3000).
    ```
 
@@ -52,7 +52,12 @@ is needed.
 3. **Serve it over HTTPS.** A member's DSH plugin refuses plain HTTP anywhere
    but on loopback, so put a TLS proxy in front, for example
    `caddy reverse-proxy --from teamwork.example.com --to localhost:3000`.
-4. Point each member's plugin at `APP_URL` (`apiEndpoint` in the DSH profile's
+4. **Claim the first account.** The web app prints
+   `Create the first one at …/setup?token=…` when it starts
+   (`docker compose logs web`). Open it, then create your team and add the
+   others by email in `/team`: each gets a first password to change when they
+   first sign in.
+5. Point each member's plugin at `APP_URL` (`apiEndpoint` in the DSH profile's
    `cordis.patch.yml`). Then `/team login` signs them in.
 
 A model the team serves itself on the same private network can be reached

@@ -43,6 +43,7 @@ and sends every team-model call to the gateway with its Bearer token.
 | `team_configs` | `kind` (`model`, `preset`, `plugin`), `name`, `data`, `version` | Unique per team, kind and name; `data` parsed by `ConfigInputSchema` on every write; an edit names its `version` |
 | `invites` | A SHA-256 of a single-use token, its expiry and use | The token itself is never stored |
 | `verification_codes` | NextAuth email codes, as an HMAC | — |
+| `passwords` | One scrypt hash per user, a must-change mark and the guesses counted against it | Only where `SMTP_URL` is unset; the hash names its own parameters |
 
 A preset references a team model by id (`modelConfigId`) or names its own
 provider and model, never both; its `pluginDependencies` pin plugin entries of
@@ -79,12 +80,19 @@ the same team at their exact version, checked when the preset is written.
 - **Google.** `startGoogle(next)` redirects to Google, which returns to
   `/api/auth/callback/google` and lands on `returnPath(next)` — only ever a
   path on this origin.
-- **Email code.** `sendCode(email)` stores an HMAC of a six-digit code (10
-  minutes, at most 5 checks, 5 codes per address per 15 minutes — both limits
-  hold under concurrent requests) and mails it over SMTP (`SMTP_URL`; the hosted
-  service uses Resend's endpoint); in development without `SMTP_URL` it is
-  printed to the console.
+- **Email code**, where `SMTP_URL` is set. `sendCode(email)` stores an HMAC
+  of a six-digit code (10 minutes, at most 5 checks, 5 codes per address per
+  15 minutes — both limits hold under concurrent requests) and mails it over
+  SMTP (the hosted service uses Resend's endpoint).
   `verifyCode(email, code, next)` signs in and redirects.
+- **Password**, where it is not (ADR 0006). `signInWithPassword(email,
+  password, next)` checks a scrypt hash, after spending one of ten guesses per
+  account per 15 minutes. `/setup?token=…`, printed by
+  `src/instrumentation.ts` at start, claims the first account while no
+  password exists. `POST /api/team/members` and
+  `POST /api/team/members/:userId/password` give an admin's member a first
+  password, shown once; `/team` and `/plugin` send its owner to `/password`
+  until it is changed.
 
 ## Signing in from the plugin
 

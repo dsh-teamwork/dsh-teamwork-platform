@@ -24,7 +24,11 @@
     "codeSent": "六位验证码已发送至 {email}。",
     "code": "验证码",
     "verify": "登录",
-    "useAnotherEmail": "换一个邮箱"
+    "useAnotherEmail": "换一个邮箱",
+    "subtitlePassword": "使用邮箱和密码登录。",
+    "subtitlePasswordGoogle": "使用 Google，或邮箱和密码登录。",
+    "password": "密码",
+    "noAccount": "还没有账号？请团队管理员为你创建。"
   },
   "authErrors": {
     "invalid_email": "邮箱地址格式不正确。",
@@ -32,7 +36,10 @@
     "code_expired": "验证码已过期，请重新获取。",
     "too_many_attempts": "尝试次数过多，请稍后再试。",
     "not_allowed": "此账户无法在这里登录。",
-    "unavailable": "登录服务暂时不可用。"
+    "unavailable": "登录服务暂时不可用。",
+    "invalid_credentials": "邮箱或密码不正确。",
+    "weak_password": "密码至少需要 10 个字符。",
+    "setup_closed": "此实例已经有第一个账号了，请直接登录。"
   },
   "account": {
     "title": "账户",
@@ -121,7 +128,15 @@
       "title": "成员",
       "remove": "移除",
       "removeConfirm": "移除此成员？",
-      "removed": "成员已移除。"
+      "removed": "成员已移除。",
+      "addEmail": "成员邮箱",
+      "addSubmit": "创建账号",
+      "added": "账号已创建。",
+      "existing": "{email} 已有账号，已加入团队。他们用自己的密码登录。",
+      "firstPassword": "请现在把这个密码交给 {email}。它不会再显示，对方首次登录时必须修改：",
+      "reset": "重置密码",
+      "resetConfirm": "确定重置该成员的密码？对方当前的密码将立即失效。",
+      "resetDone": "密码已重置。"
     },
     "invites": {
       "create": "生成一次性邀请",
@@ -153,7 +168,11 @@
     "invalid_request": "部分字段无效，请检查后重试。",
     "unauthorized": "登录已失效，请重新登录。",
     "not_found": "未找到。",
-    "internal_error": "出了点问题，请重试。"
+    "internal_error": "出了点问题，请重试。",
+    "passwords_off": "此实例通过邀请链接加入团队。",
+    "member_in_team": "对方已经在一个团队中了。",
+    "not_a_member": "对方不在你的团队中。",
+    "cannot_reset_self": "请在修改密码页面修改你自己的密码。"
   },
   "plugin": {
     "title": "授权 DSH 插件",
@@ -163,5 +182,20 @@
     "copy": "将以下内容粘贴到 DSH：",
     "expiry": "授权码两分钟内有效、只能使用一次，且只对发起请求的 DSH 有效。",
     "failed": "授权失败。请重新登录，或在 DSH 中重新运行 /team login。"
+  },
+  "setup": {
+    "title": "创建第一个账号",
+    "description": "此实例还没有任何账号。先创建你自己的账号，再创建团队并添加其他成员。",
+    "closed": "此链接已失效：第一个账号已经创建。",
+    "submit": "创建账号"
+  },
+  "password": {
+    "title": "修改密码",
+    "mustChange": "这个密码是团队管理员为你设置的，请先设置你自己的密码再继续。",
+    "current": "当前密码",
+    "next": "新密码",
+    "hint": "至少 10 个字符。几个不相关的词组合起来，既好记又难猜。",
+    "submit": "修改密码",
+    "change": "修改密码"
   }
 }

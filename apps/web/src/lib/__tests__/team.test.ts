@@ -8,10 +8,13 @@ import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/auth/strategy', () => ({ strategy: { identity: async () => null } }));
+// No SMTP here, so the instance holds passwords and admins create accounts (ADR 0006).
+vi.mock('@/lib/auth/strategy', () => ({ strategy: { identity: async () => null, passwords: true } }));
 
+process.env.AUTH_SECRET ??= 'test-secret-that-is-long-enough-for-a-key';
 const { prisma } = await import('@/lib/prisma');
 const team = await import('../team');
+const { checkPassword } = await import('@dsh-teamwork/shared/server/passwords');
 
 const suffix = randomUUID();
 /** Every team this file makes, so cleanup touches nothing else in a shared database. */
@@ -104,5 +107,47 @@ describe('teams against the database', () => {
     ).rejects.toMatchObject({ code: 'plugin_dependency_invalid' });
     const ok = await team.createConfig(admin, preset({ modelConfigId: target.id, pluginDependencies: [{ pluginConfigId: plugin.id, version: '1.0.0' }] }));
     expect(ok.kind).toBe('preset');
+  });
+});
+
+describe('accounts an admin creates, where the instance holds passwords', () => {
+  let admin: string;
+
+  beforeAll(async () => {
+    admin = await makeUser('accounts-admin');
+    made.push((await team.createTeam(admin, { name: 'Accounts team' })).id);
+  });
+
+  it('creates a member with a first password, shown once, that signs in and must be changed', async () => {
+    const email = `new-${suffix}@example.test`;
+    const added = await team.addMember(admin, { email: email.toUpperCase() });
+    expect(added).toMatchObject({ email, password: expect.stringMatching(/^[\w-]{20}$/) });
+    await expect(checkPassword(email, added.password!)).resolves.toEqual({ userId: added.userId, mustChange: true });
+    expect((await team.teamOf(added.userId))?.role).toBe('member');
+    await expect(team.addMember(admin, { email })).rejects.toMatchObject({ code: 'member_in_team' });
+  });
+
+  it('adds an existing account without a team as it is, keeping its own password', async () => {
+    const email = `existing-${suffix}@example.test`;
+    const first = await team.addMember(admin, { email });
+    await team.removeMember(admin, first.userId);
+    const again = await team.addMember(admin, { email });
+    expect(again).toEqual({ userId: first.userId, email, password: null });
+    await expect(checkPassword(email, first.password!)).resolves.toMatchObject({ userId: first.userId });
+  });
+
+  it('resets only a member of the admin’s own team, and the old password stops working', async () => {
+    const email = `reset-${suffix}@example.test`;
+    const added = await team.addMember(admin, { email });
+    const reset = await team.resetMemberPassword(admin, added.userId);
+    expect(reset.password).not.toBe(added.password);
+    await expect(checkPassword(email, added.password!)).resolves.toEqual({ error: 'invalid_credentials' });
+    await expect(checkPassword(email, reset.password)).resolves.toEqual({ userId: added.userId, mustChange: true });
+
+    await expect(team.resetMemberPassword(admin, admin)).rejects.toMatchObject({ code: 'cannot_reset_self' });
+    await expect(team.resetMemberPassword(added.userId, admin)).rejects.toMatchObject({ code: 'admin_required' });
+    const stranger = await makeUser('accounts-stranger');
+    await expect(team.resetMemberPassword(admin, stranger)).rejects.toMatchObject({ code: 'not_a_member' });
+    await expect(team.addMember(added.userId, { email: `x-${suffix}@example.test` })).rejects.toMatchObject({ code: 'admin_required' });
   });
 });
