@@ -452,12 +452,10 @@ and keeps the gate green.
    - `npx` for a first team;
    - `compose.yaml` with Postgres and SMTP when it grows.
 
-**Open questions, for the developer:**
-
-- **The npm scope.** `dsh-teamwork` on npm is someone else's package, so the
-  plan assumes the `@dsh-teamwork` organisation can be claimed.
-- **Whether `--host` defaults to loopback.** The plan says yes: a first run
-  then exposes nothing, and a team adds one flag.
+**Open question, for the developer:** whether `--host` defaults to loopback.
+The plan says yes: a first run then exposes nothing, and a team adds one flag.
+The npm package is scoped because `dsh-teamwork` on npm is someone else's; the
+`dsh-teamwork` organisation on npm is ours.
 
 **How done is verified:**
 
