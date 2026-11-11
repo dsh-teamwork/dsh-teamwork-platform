@@ -123,6 +123,7 @@ jobs:
             echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
             echo "APP_URL=http://localhost:3000"
             echo "AUTH_SECRET=$(openssl rand -base64 32)"
+            echo "PROVIDER_KEYS_SECRET=$(openssl rand -base64 32)"
           } > .env
 
       - name: Build and start

@@ -5,6 +5,26 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-11 — Providers belong to teams
+
+- **What:**
+  - A team's admin adds its model providers in `/team`: a name, an OpenAI-compatible base URL and a key. They are stored in a new `team_providers` table, the key sealed with AES-256-GCM under `PROVIDER_KEYS_SECRET`, write-only.
+  - The gateway calls the caller's team's provider. A team model must name one, and a provider in use cannot be removed.
+  - `LLM_ROUTES_JSON` and its key variables are removed.
+  - New `ALLOW_PRIVATE_PROVIDERS`: without it, only public https addresses; with it, loopback and private networks too, plain http only there. It is checked on save, before each call, and in the connection's own DNS lookup.
+  - New routes: `GET`/`POST /api/team/providers` and `PUT`/`DELETE /api/team/providers/:id`.
+  - New exact dependency: `undici` 7.30.1.
+- **Why:** ADR 0006, Phase 4 step 4 of `docs/tech/community-edition.md`. A team brings its own keys, and an instance needs no operator to write provider routes.
+- **Breaking:**
+  - Every deployment: team models stop answering (`provider_not_configured`) until the team's admin adds a provider of the same name.
+  - The hosted service becomes bring-your-own-key.
+  - A self-hosted instance calling a private-network model needs `ALLOW_PRIVATE_PROVIDERS=true`, which `compose.yaml` now sets.
+- **Upgrade:**
+  - Migration `20261111145658_team_providers`.
+  - Set `PROVIDER_KEYS_SECRET` (`openssl rand -base64 32`) and drop `LLM_ROUTES_JSON` and its key variables.
+  - Each team's admin adds its providers in `/team`.
+- **Refs:** ADR 0006, `apps/web/src/lib/provider-network.ts`, `apps/web/src/lib/provider-keys.ts`.
+
 ## 2026-11-11 — Passwords when SMTP_URL is unset
 
 - **What:**

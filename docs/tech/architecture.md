@@ -43,6 +43,7 @@ and sends every team-model call to the gateway with its Bearer token.
 | `team_configs` | `kind` (`model`, `preset`, `plugin`), `name`, `data`, `version` | Unique per team, kind and name; `data` parsed by `ConfigInputSchema` on every write; an edit names its `version` |
 | `invites` | A SHA-256 of a single-use token, its expiry and use | The token itself is never stored |
 | `verification_codes` | NextAuth email codes, as an HMAC | — |
+| `team_providers` | A team's provider: `name`, `base_url`, and `key_cipher`, its key sealed under `PROVIDER_KEYS_SECRET` | Unique per team and name; the key is never stored in clear or answered; a provider a team model calls cannot be removed |
 | `passwords` | One scrypt hash per user, a must-change mark and the guesses counted against it | Only where `SMTP_URL` is unset; the hash names its own parameters |
 
 A preset references a team model by id (`modelConfigId`) or names its own
@@ -124,10 +125,15 @@ person presses Authorize. Why it is shaped this way:
    (a preset follows its `modelConfigId` to the team model);
 2. caps output: `max_tokens` defaults to the model's `maxTokens`, and a caller
    asking for more is `400`;
-3. takes the provider's base URL and the *name* of its key variable from
-   `LLM_ROUTES_JSON` — https, or plain http only to a host that resolves to
-   loopback or private addresses (a self-hosted model), and no credentials,
-   query or fragment in the URL;
+3. takes the team's provider of that name from `team_providers` — the base
+   URL its admin entered, with no credentials, query or fragment, and the key
+   decrypted from `key_cipher` (AES-256-GCM under `PROVIDER_KEYS_SECRET`,
+   bound to the team and the name). The address must pass the network rule of
+   `src/lib/provider-network.ts` (ADR 0006): public https, or with
+   `ALLOW_PRIVATE_PROVIDERS=true` loopback and private networks too, plain
+   http only there. Link-local, carrier-grade NAT and unspecified addresses
+   count as private. The rule is checked on save, before the call, and by the
+   connection's own DNS lookup, so a rebinding answer is refused;
 4. forwards only the inference fields (`messages`, `tools`, `stream`,
    `temperature`, …) with `redirect: 'error'` and a 120 s timeout, and answers
    the provider's body with none of its headers. A provider failure is `502`
@@ -146,7 +152,9 @@ never calls `ensureUser`, so signing in to it creates no `User` row.
 
 Railway: `web` (`alpha.dshteamwork.com`) and `manage`
 (`manage.dshteamwork.com`) services from this repository, one Postgres
-(`premium/docs/ops/deployment.md`). Provider keys are variables on `web` only.
+(`premium/docs/ops/deployment.md`). Provider keys are each team's, in the
+database; `PROVIDER_KEYS_SECRET`, which seals them, is a variable on `web`
+only.
 
 ## What is expensive to change
 
@@ -158,6 +166,8 @@ Railway: `web` (`alpha.dshteamwork.com`) and `manage`
 - **`team_configs.data`**: stored JSON written by older schemas has to stay
   readable once teams depend on it.
 - **One team per person**: `memberships.user_id` as the key.
+- **`PROVIDER_KEYS_SECRET`**: every stored provider key is sealed under it.
+  Losing or changing it means every team enters its keys again.
 - **A PGlite data directory**: a team's whole database in one directory, owned
   by one process. Its `_prisma_migrations` rows match Prisma's, so a dump
   restored into Postgres keeps migrating with `pnpm db:deploy`.

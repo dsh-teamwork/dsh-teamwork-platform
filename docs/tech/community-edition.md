@@ -485,15 +485,27 @@ and keeps the gate green.
    - Invite links remain the flow when email is configured.
    - The development fallback that printed a code without SMTP is gone:
      without SMTP the door is a password.
-4. **Providers per team.**
-   - An open `TeamProvider` table holds each provider's name, base URL and
-     key, encrypted under `PROVIDER_KEYS_SECRET`.
-   - `/team` adds, replaces and removes providers. A key is write-only.
+4. **Providers per team. Done 2026-11-11.**
+   - An open `team_providers` table holds each provider's name, base URL and
+     key, sealed with AES-256-GCM under `PROVIDER_KEYS_SECRET` and bound to
+     the team and the name (`src/lib/provider-keys.ts`).
+   - `/team` adds, moves, re-keys and removes providers; a key is write-only,
+     the name is fixed, and a provider a team model calls cannot be removed.
+     A team model must name a provider the team has.
    - The gateway resolves routes from the caller's team.
-   - `ALLOW_PRIVATE_PROVIDERS` gates loopback and private addresses.
-     Where they are refused, the gateway connects to the address it checked.
-   - `LLM_ROUTES_JSON` and its key variables are deleted from code,
-     `.env.example`, `compose.yaml` and the README.
+   - `src/lib/provider-network.ts` holds the address rule:
+     - public https, unless `ALLOW_PRIVATE_PROVIDERS=true` also admits
+       loopback and private networks;
+     - plain http only to those;
+     - link-local, carrier-grade NAT and unspecified addresses count as
+       private.
+   - The rule runs on save, before each call, and inside the connection's
+     lookup. An undici `Agent` carries the guarded lookup (`undici` 7.30.1,
+     exact), so the socket opens only to addresses that passed. The plan
+     wrote "connects to the address it checked"; checking the socket's own
+     answer gives the same guarantee and keeps TLS name checks intact.
+   - `compose.yaml` sets `ALLOW_PRIVATE_PROVIDERS=true`.
+   - `LLM_ROUTES_JSON` and its key variables are gone.
 5. **The plugin accepts `http://` to private addresses** with a warning
    (`../dsh-teamwork`, `src/client.ts`). It ships with its own release.
 6. **The `npx` package.**
@@ -582,9 +594,8 @@ None remain. The developer settled these on 2026-11-10:
 5. **The gateway may call a provider over plain HTTP only on loopback and
    private networks** (raised by experiment 3). A self-hosted team can then
    use a model it serves itself (Ollama, vLLM). A public host still needs
-   `https://`. The address comes from the operator's `LLM_ROUTES_JSON`, never
-   from a caller, so the only new exposure is the key crossing that private
-   network in clear text.
+   `https://`. ADR 0006 has since moved the address to each team's admin, and
+   with it the rule behind `ALLOW_PRIVATE_PROVIDERS` (Phase 4 step 4).
 
 ## How done is verified
 

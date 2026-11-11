@@ -32,6 +32,10 @@ export const TEAM_ERRORS = [
   'member_in_team',
   'not_a_member',
   'cannot_reset_self',
+  'provider_exists',
+  'provider_in_use',
+  'provider_address_refused',
+  'provider_keys_unavailable',
 ] as const;
 export type TeamErrorCode = (typeof TEAM_ERRORS)[number];
 
@@ -140,6 +144,32 @@ export interface InviteView {
 /** `POST /api/team/invites` — the only time the token itself is seen. */
 export interface CreatedInvite extends InviteView {
   token: string;
+}
+
+/**
+ * A team's provider as an admin enters it (ADR 0006). The address is an
+ * OpenAI-compatible base URL with nothing hidden in it; where it may point is
+ * the gateway's network rule, checked again on every call. The key is
+ * write-only: it is never in an answer.
+ */
+const baseUrl = z
+  .url({ protocol: /^https?$/ })
+  .max(500)
+  .refine((value) => {
+    const url = new URL(value);
+    return !url.username && !url.password && !url.search && !url.hash;
+  }, 'A base URL carries no credentials, query or fragment');
+const apiKey = z.string().trim().min(1).max(4096);
+export const ProviderInputSchema = z.object({ name, baseUrl, apiKey });
+/** An edit keeps the name, which team models refer to; a key left out stays as it was. */
+export const ProviderUpdateSchema = z.object({ baseUrl, apiKey: apiKey.optional() });
+
+/** `GET /api/team/providers` — never the key. */
+export interface ProviderView {
+  id: string;
+  name: string;
+  baseUrl: string;
+  updatedAt: string;
 }
 
 /** `POST /api/team/members`: an admin adds someone by email, where the instance holds passwords. */

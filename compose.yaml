@@ -29,6 +29,8 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/dsh_teamwork
+      # One team on its own network: its models may live beside it (ADR 0006).
+      ALLOW_PRIVATE_PROVIDERS: ${ALLOW_PRIVATE_PROVIDERS:-true}
     ports:
       - ${WEB_PORT:-3000}:3000
     restart: unless-stopped

@@ -145,6 +145,24 @@
       "expires": "Open invitation, expires {at}",
       "revoke": "Revoke",
       "revoked": "Invitation revoked."
+    },
+    "providers": {
+      "title": "Providers",
+      "description": "Where your team's models are called. A key is stored encrypted on this server and never shown again.",
+      "empty": "No providers yet. Add one before publishing a team model.",
+      "name": "Name",
+      "baseUrl": "Base URL (OpenAI-compatible)",
+      "apiKey": "API key",
+      "apiKeyKeep": "Leave empty to keep the current key",
+      "add": "Add provider",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "remove": "Remove",
+      "removeConfirm": "Remove this provider? Team models must stop using it first.",
+      "added": "Provider added.",
+      "saved": "Provider saved.",
+      "removed": "Provider removed."
     }
   },
   "teamErrors": {
@@ -161,7 +179,7 @@
     "plugin_dependency_invalid": "A required plugin was deleted or its version changed.",
     "max_tokens_exceeds_context": "Max output cannot exceed the context window.",
     "model_forbidden": "That model is not available to your team.",
-    "provider_not_configured": "That provider is not configured on the platform.",
+    "provider_not_configured": "Add that provider to your team first.",
     "upstream_unavailable": "The model provider is unavailable right now.",
     "upstream_rate_limited": "The model provider is rate-limiting requests.",
     "payload_too_large": "The request is too large.",
@@ -172,7 +190,11 @@
     "passwords_off": "On this instance people join by invitation.",
     "member_in_team": "That person is already in a team.",
     "not_a_member": "That person is not in your team.",
-    "cannot_reset_self": "Change your own password from the password page."
+    "cannot_reset_self": "Change your own password from the password page.",
+    "provider_exists": "Your team already has a provider with that name.",
+    "provider_in_use": "A team model or preset still uses this provider.",
+    "provider_address_refused": "This server may not call that address.",
+    "provider_keys_unavailable": "Provider keys cannot be read or stored on this server: PROVIDER_KEYS_SECRET is missing or has changed."
   },
   "plugin": {
     "title": "Authorize the DSH plugin",
