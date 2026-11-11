@@ -11,6 +11,10 @@ export default defineConfig({
     // Without DATABASE_URL the database suites run on a PGlite of their own,
     // in memory, so they never touch the developer's data directory.
     env: { PGLITE_DIR: process.env.PGLITE_DIR || 'memory://' },
+    // A run's first query initialises that PGlite and applies every migration:
+    // two seconds alone, past Vitest's five-second default on a loaded machine.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
     // The database suites share one database and clear the tables they touch.
     fileParallelism: false,
   },
