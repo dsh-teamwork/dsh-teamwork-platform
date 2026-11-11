@@ -8,6 +8,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0001](0001-plugin-sign-in.md) — the DSH plugin signs in through the website with a pasted PKCE code.
 - [0002](0002-platform-from-seed.md) — the platform is rebuilt from seed: one Next.js app on Railway.
 - [0005](0005-open-core.md) — open core: a self-hosted community edition for one team; company features stay closed.
+- [0006](0006-one-command-community-edition.md) — the community edition runs from one `npx` command: PGlite, passwords, team-owned provider keys.
 
 The template:
 
