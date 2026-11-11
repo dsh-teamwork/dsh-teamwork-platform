@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-11 — PGlite when DATABASE_URL is unset
+
+- **What:** Without `DATABASE_URL`, the apps run on PGlite, an in-process Postgres. Its data directory is `PGLITE_DIR` (default `~/.dsh-teamwork/db`). It applies the committed migrations on first connect and records them as Prisma does. The suites that needed Postgres now always run, on PGlite in memory, and CI runs them on both databases. The apps no longer fall back to the `pnpm dev:setup` stack; the Prisma CLI still does. New exact dependencies: `@electric-sql/pglite` 0.5.16 and `pglite-prisma-adapter` 0.7.2.
+- **Why:** ADR 0006: the community edition runs from one command; Phase 4 step 2 of `docs/tech/community-edition.md`.
+- **Breaking:** A process started with no `DATABASE_URL` now opens a PGlite directory instead of connecting to `localhost:5432`.
+- **Upgrade:** `pnpm install`. Keep `DATABASE_URL` set (as `apps/web/.env.example` does) to stay on Postgres.
+- **Refs:** ADR 0006, `packages/db/src/pglite.ts`.
+
 ## 2026-11-11 — The community edition is public
 
 - **What:** This repository, `dsh-teamwork/dsh-teamwork-platform`, is the community edition's own home and the upstream of the closed edition. Open changes are made here and merged there. The pre-push hook and CI also run the edition boundary check wherever the closed edition's script exists, which is never in this repository.

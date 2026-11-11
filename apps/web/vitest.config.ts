@@ -10,6 +10,9 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**'],
     environment: 'node',
+    // Without DATABASE_URL the database suites run on a PGlite of their own,
+    // in memory, so they never touch the developer's data directory.
+    env: { PGLITE_DIR: process.env.PGLITE_DIR || 'memory://' },
   },
   resolve: {
     alias: {

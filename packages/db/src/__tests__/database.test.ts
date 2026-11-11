@@ -2,16 +2,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createPrismaClient, ensureUser, type PrismaClient } from '../index';
 
-// Needs the migrated database CI provides (and `pnpm dev:setup` locally). It
-// skips rather than fails without one, so the pre-push hook runs anywhere;
-// CI's Postgres service is what stops that from meaning "never runs".
-const url = process.env.DATABASE_URL;
-
-describe.skipIf(!url)('the migrated database', () => {
+// The migrated database: PGlite in memory without DATABASE_URL, which applies
+// the committed migrations as it opens, or Postgres with one, which
+// `pnpm db:deploy` migrated. CI runs both.
+describe('the migrated database', () => {
   let prisma: PrismaClient;
 
   beforeAll(() => {
-    prisma = createPrismaClient(url);
+    prisma = createPrismaClient();
   });
 
   afterAll(async () => {

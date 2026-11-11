@@ -1,8 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-const hasDatabase = Boolean(process.env.DATABASE_URL);
-
-describe.skipIf(!hasDatabase)('email sign-in codes', async () => {
+describe('email sign-in codes', async () => {
   process.env.AUTH_SECRET = 'test-secret-that-is-long-enough-for-a-key';
   const { consumeCode, issueCode, MAX_ATTEMPTS, MAX_CODES_PER_WINDOW, CODE_TTL_MS } = await import('../codes');
   const { getPrisma } = await import('@dsh-teamwork/db');

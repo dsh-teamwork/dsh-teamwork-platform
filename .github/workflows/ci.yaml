@@ -14,9 +14,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # A mocked Prisma cannot see what Postgres decides, so the suites that need
-    # a database skip themselves when none answers. This service is what stops
-    # that from meaning "never actually runs".
+    # A mocked Prisma cannot see what a database decides, so the suites that
+    # need one run on a real one: Postgres here, and PGlite in the step after
+    # them (ADR 0006).
     services:
       postgres:
         image: postgres:16
@@ -92,6 +92,13 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      # The same suites without DATABASE_URL: each workspace then runs on a
+      # PGlite of its own, in memory, which applies the migrations as it opens.
+      - name: Test on PGlite
+        run: pnpm test
+        env:
+          DATABASE_URL: ""
 
       - name: Build
         run: pnpm build

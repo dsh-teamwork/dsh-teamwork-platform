@@ -65,11 +65,13 @@
   // turbo runs every task in strict env mode: a variable not named here never
   // reaches the task. DATABASE_URL has to be, or `db:deploy` and `db:drift`
   // would silently fall back to prisma.config.ts's local default and act on a
-  // database nobody pointed them at. It also changes a test's *result* (the
-  // Postgres suites skip without it), so it belongs in every cache key.
+  // database nobody pointed them at. It also changes which database a test
+  // runs on (PGlite without it, Postgres with it), so it belongs in every
+  // cache key, as does PGLITE_DIR, the PGlite data directory.
   "globalEnv": [
     "DATABASE_URL",
-    "SHADOW_DATABASE_URL"
+    "SHADOW_DATABASE_URL",
+    "PGLITE_DIR"
   ],
   // Read by the db:* scripts but not part of any result, so passed through
   // rather than hashed. Without this, turbo's strict env mode strips
