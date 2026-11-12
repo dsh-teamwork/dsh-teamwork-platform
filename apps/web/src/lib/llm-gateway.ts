@@ -3,80 +3,33 @@
  * server, naming a team configuration id as the model, and the server forwards
  * the call to the provider with a key only it holds.
  *
- * Where a provider lives and which variable holds its key is the deployment's
- * decision (`LLM_ROUTES_JSON`); nothing a caller sends can name a URL, a
- * header or a credential.
+ * Where a provider lives and its key are the team's (ADR 0006): its admin
+ * enters them in `/team`, the key is kept encrypted (`provider-keys.ts`), and
+ * where the address may point is `provider-network.ts`'s rule. Nothing a
+ * caller sends can name a URL, a header or a credential.
  */
 
 import 'server-only';
-
-import { lookup } from 'node:dns/promises';
-import { BlockList, isIP } from 'node:net';
 
 import { z } from 'zod';
 
 import { readJson } from '@/lib/api';
 import { prisma } from '@/lib/prisma';
+import { decryptProviderKey } from '@/lib/provider-keys';
+import { checkProviderAddress, providerFetch, type ProviderRequest } from '@/lib/provider-network';
 import { requireMembership, TeamError } from '@/lib/team';
 
-const RoutesSchema = z.record(
-  z.string(),
-  z.strictObject({ baseURL: z.url(), apiKeyEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/) }),
-);
-
-function routes() {
-  return RoutesSchema.parse(JSON.parse(process.env.LLM_ROUTES_JSON || '{}'));
-}
-
-/** Loopback and private networks: where a self-hosted model lives (RFC 1918, RFC 4193). */
-const PRIVATE_NETWORKS = new BlockList();
-PRIVATE_NETWORKS.addSubnet('127.0.0.0', 8, 'ipv4');
-PRIVATE_NETWORKS.addSubnet('10.0.0.0', 8, 'ipv4');
-PRIVATE_NETWORKS.addSubnet('172.16.0.0', 12, 'ipv4');
-PRIVATE_NETWORKS.addSubnet('192.168.0.0', 16, 'ipv4');
-PRIVATE_NETWORKS.addAddress('::1', 'ipv6');
-PRIVATE_NETWORKS.addSubnet('fc00::', 7, 'ipv6');
-
-function isPrivateAddress(address: string): boolean {
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address)?.[1];
-  if (mapped) return PRIVATE_NETWORKS.check(mapped, 'ipv4');
-  const family = isIP(address);
-  return family !== 0 && PRIVATE_NETWORKS.check(address, family === 6 ? 'ipv6' : 'ipv4');
-}
-
 /**
- * Plain http only where every address the host resolves to is private, so a
- * team can use a model it serves itself (Ollama, vLLM) while a public host
- * still needs https. The host is the operator's own `LLM_ROUTES_JSON`, never a
- * caller's, so the check guards against a misconfigured route sending the key
- * in clear text across the internet, not against an attacker choosing the host.
+ * A team provider's base URL and key, or `provider_not_configured` when the
+ * team has none by that name. The address is checked against the network rule
+ * here, and again by `providerFetch` as it connects.
  */
-async function plainHttpAllowed(hostname: string): Promise<boolean> {
-  const host = hostname.replace(/^\[|\]$/g, '');
-  if (isIP(host)) return isPrivateAddress(host);
-  try {
-    const addresses = await lookup(host, { all: true, verbatim: true });
-    return addresses.length > 0 && addresses.every((a) => isPrivateAddress(a.address));
-  } catch {
-    return false;
-  }
-}
-
-/**
- * A provider's base URL and key, or `provider_not_configured`: https, or http to
- * a private network, and nothing smuggled into the URL.
- */
-export async function routeFor(provider: string): Promise<{ url: string; key: string }> {
-  const route = routes()[provider];
-  if (!route) throw new TeamError(503, 'provider_not_configured');
-  const url = new URL(route.baseURL);
-  if (url.username || url.password || url.search || url.hash) throw new TeamError(503, 'provider_not_configured');
-  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && (await plainHttpAllowed(url.hostname)))) {
-    throw new TeamError(503, 'provider_not_configured');
-  }
-  const key = process.env[route.apiKeyEnv];
-  if (!key) throw new TeamError(503, 'provider_not_configured');
-  return { url: url.href.replace(/\/$/, ''), key };
+async function routeFor(teamId: string, provider: string): Promise<{ url: string; key: string }> {
+  const row = await prisma.teamProvider.findUnique({ where: { teamId_name: { teamId, name: provider } } });
+  if (!row) throw new TeamError(503, 'provider_not_configured');
+  const url = new URL(row.baseUrl);
+  await checkProviderAddress(url);
+  return { url: url.href.replace(/\/$/, ''), key: decryptProviderKey(teamId, row.name, row.keyCipher) };
 }
 
 const limit = z.number().int().positive().max(10_000_000);
@@ -95,10 +48,13 @@ const CatalogItem = z.object({
  * provider's `/models`. A limit the provider does not report stays absent —
  * never a guessed capability.
  */
-export async function modelCatalog(userId: string, provider: string | null, signal: AbortSignal, request: typeof fetch = fetch) {
-  await requireMembership(userId, true);
-  if (!provider) return { providers: Object.keys(routes()) };
-  const route = await routeFor(provider);
+export async function modelCatalog(userId: string, provider: string | null, signal: AbortSignal, request: ProviderRequest = providerFetch) {
+  const admin = await requireMembership(userId, true);
+  if (!provider) {
+    const rows = await prisma.teamProvider.findMany({ where: { teamId: admin.teamId }, orderBy: { name: 'asc' }, select: { name: true } });
+    return { providers: rows.map((row) => row.name) };
+  }
+  const route = await routeFor(admin.teamId, provider);
   let list: z.infer<typeof CatalogItem>[];
   try {
     const response = await request(`${route.url}/models`, {
@@ -163,7 +119,7 @@ async function resolveModel(teamId: string, configId: string) {
   return RouteData.parse(config.data);
 }
 
-export async function proxyCompletion(userId: string, input: unknown, signal: AbortSignal, request: typeof fetch = fetch): Promise<Response> {
+export async function proxyCompletion(userId: string, input: unknown, signal: AbortSignal, request: ProviderRequest = providerFetch): Promise<Response> {
   const body = CompletionRequest.parse(input);
   const member = await requireMembership(userId);
   const target = await resolveModel(member.teamId, body.model);
@@ -182,7 +138,7 @@ export async function proxyCompletion(userId: string, input: unknown, signal: Ab
     body.max_tokens = target.maxTokens;
   }
 
-  const route = await routeFor(target.provider);
+  const route = await routeFor(member.teamId, target.provider);
   const payload = Object.fromEntries(FORWARDED.filter((key) => key in body).map((key) => [key, body[key]]));
   let upstream: Response;
   try {

@@ -77,11 +77,32 @@ model Team {
   name      String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  members Membership[]
-  configs TeamConfig[]
-  invites Invite[]
+  members   Membership[]
+  configs   TeamConfig[]
+  invites   Invite[]
+  providers TeamProvider[]
 
   @@map("teams")
+}
+
+// Where a team's models are called, and the key they carry (ADR 0006). A team
+// model or preset names its provider by `name`. `key_cipher` is AES-256-GCM
+// under PROVIDER_KEYS_SECRET, bound to the team and the name
+// (`apps/web/src/lib/provider-keys.ts`); the key itself is never stored or
+// returned.
+model TeamProvider {
+  id        String   @id @default(dbgenerated("nanoid()"))
+  teamId    String   @map("team_id")
+  name      String
+  baseUrl   String   @map("base_url")
+  keyCipher String   @map("key_cipher")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, name])
+  @@map("team_providers")
 }
 
 // One team per person: the user is the key, so a second membership cannot

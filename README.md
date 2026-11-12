@@ -36,8 +36,7 @@ an email and a password.
    POSTGRES_PASSWORD=…                        # openssl rand -hex 16
    APP_URL=https://teamwork.example.com       # the address members open
    AUTH_SECRET=…                              # openssl rand -base64 32
-   LLM_ROUTES_JSON={"deepseek":{"baseURL":"https://api.deepseek.com/v1","apiKeyEnv":"DEEPSEEK_API_KEY"}}
-   DEEPSEEK_API_KEY=…
+   PROVIDER_KEYS_SECRET=…                     # openssl rand -base64 32
    # Optional: SMTP_URL and AUTH_EMAIL_FROM send sign-in codes instead of
    # using passwords; AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET add a Google button;
    # WEB_PORT changes the host port (3000).
@@ -60,11 +59,12 @@ an email and a password.
 5. Point each member's plugin at `APP_URL` (`apiEndpoint` in the DSH profile's
    `cordis.patch.yml`). Then `/teamwork login` signs them in.
 
-A model the team serves itself on the same private network can be reached
-over plain HTTP. The gateway allows `http://` only to a host that resolves to
-loopback or private addresses. For example, for an `ollama` service:
-`{"ollama":{"baseURL":"http://ollama:11434/v1","apiKeyEnv":"OLLAMA_API_KEY"}}`.
-`OLLAMA_API_KEY` must be set to some value even though Ollama ignores it.
+Providers and their keys are the team's own: its admin adds them in `/team`,
+and the keys are stored encrypted under `PROVIDER_KEYS_SECRET`. A model the
+team serves itself on the same network (Ollama, vLLM) can be added by its
+private address, over plain HTTP too: `compose.yaml` sets
+`ALLOW_PRIVATE_PROVIDERS=true`. Set it to `false` if people you do not trust
+share the instance.
 
 The documents — architecture, the community edition, decisions, analytics — are indexed
 in [`docs/README.md`](docs/README.md).

@@ -1,6 +1,6 @@
 'use client';
 
-import type { InviteView, TeamConfigView, TeamView } from '@dsh-teamwork/shared';
+import type { InviteView, ProviderView, TeamConfigView, TeamView } from '@dsh-teamwork/shared';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -12,6 +12,7 @@ import type { AddedMember, CreatedInvite, ResetPassword } from '@dsh-teamwork/sh
 
 import { ConfigForm } from './config-form';
 import { ConsoleHeader } from './console-header';
+import { Providers } from './providers';
 import { useMutation } from './use-mutation';
 
 interface Props {
@@ -19,11 +20,13 @@ interface Props {
   team: TeamView;
   configs: TeamConfigView[];
   invites: InviteView[];
+  /** The team's providers; empty for a member, who does not see them. */
+  providers: ProviderView[];
   /** The instance holds passwords: an admin creates accounts instead of sending invitations. */
   passwords: boolean;
 }
 
-export function TeamConsole({ me, team, configs, invites, passwords }: Props) {
+export function TeamConsole({ me, team, configs, invites, providers, passwords }: Props) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();
   const admin = team.role === 'admin';
@@ -89,6 +92,8 @@ export function TeamConsole({ me, team, configs, invites, passwords }: Props) {
           </Card>
         )}
       </div>
+
+      {admin && <Providers providers={providers} />}
 
       <Members me={me} team={team} invites={invites} passwords={passwords} />
     </main>

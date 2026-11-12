@@ -357,10 +357,15 @@ person is in at most one team (`Membership.userId` is the key). A failure is a
 `apps/web/src/lib/llm-gateway.ts` is the model gateway
 (`POST /api/llm/chat/completions`, OpenAI Chat Completions). The wire `model`
 is a team configuration id; the server resolves it within the caller's team,
-picks the provider from `LLM_ROUTES_JSON` (https, or plain http only to a
-host that resolves to loopback or private addresses) and its key from the
-variable that names, forwards an allow-list of inference fields and none of the
-upstream headers. Nothing a caller sends can name a URL, a header or a key.
+calls the team's own provider of that name (`team_providers`: the admin's
+address, and a key sealed under `PROVIDER_KEYS_SECRET` by
+`src/lib/provider-keys.ts`), forwards an allow-list of inference fields and
+none of the upstream headers. Nothing a caller sends can name a URL, a header
+or a key. **Where an address may point is `src/lib/provider-network.ts`**
+(ADR 0006): public https, unless `ALLOW_PRIVATE_PROVIDERS=true` also admits
+loopback and private networks, and plain http only to them; it is checked when
+an address is saved, before each call, and by the socket's own lookup, so a
+DNS answer that changes in between is refused.
 
 ### Sign-in
 

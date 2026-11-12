@@ -7,7 +7,7 @@ import { NoTeam } from '@/components/team/no-team';
 import { TeamConsole } from '@/components/team/team-console';
 import { currentUser } from '@/lib/auth';
 import { strategy } from '@/lib/auth/strategy';
-import { listConfigs, listInvites, teamOf } from '@/lib/team';
+import { listConfigs, listInvites, listProviders, teamOf } from '@/lib/team';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('team'))('title'), robots: { index: false } };
@@ -23,11 +23,13 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const team = await teamOf(user.id);
   if (!team) return <NoTeam email={user.email} invite={invite} passwords={strategy.passwords} />;
 
-  const [{ configs }, invites] = await Promise.all([
+  const admin = team.role === 'admin';
+  const [{ configs }, invites, providers] = await Promise.all([
     listConfigs(user.id),
-    team.role === 'admin' ? listInvites(user.id) : Promise.resolve([]),
+    admin ? listInvites(user.id) : Promise.resolve([]),
+    admin ? listProviders(user.id) : Promise.resolve([]),
   ]);
   return (
-    <TeamConsole me={{ id: user.id, email: user.email }} team={team} configs={configs} invites={invites} passwords={strategy.passwords} />
+    <TeamConsole me={{ id: user.id, email: user.email }} team={team} configs={configs} invites={invites} providers={providers} passwords={strategy.passwords} />
   );
 }

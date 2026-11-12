@@ -12,11 +12,14 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/auth/strategy', () => ({ strategy: { identity: async () => null, passwords: true } }));
 
 process.env.AUTH_SECRET ??= 'test-secret-that-is-long-enough-for-a-key';
+process.env.PROVIDER_KEYS_SECRET = Buffer.alloc(32, 3).toString('base64');
 const { prisma } = await import('@/lib/prisma');
 const team = await import('../team');
 const { checkPassword } = await import('@dsh-teamwork/shared/server/passwords');
 
 const suffix = randomUUID();
+/** A public address by literal IP, so the network rule needs no DNS (RFC 5737's documentation range). */
+const PROVIDER = { name: 'deepseek', baseUrl: 'https://203.0.113.10/v1', apiKey: 'sk-test' };
 /** Every team this file makes, so cleanup touches nothing else in a shared database. */
 const made: string[] = [];
 
@@ -33,6 +36,7 @@ describe('teams against the database', () => {
     [admin, member, outsider] = await Promise.all(['admin', 'member', 'outsider'].map(makeUser));
     teamId = (await team.createTeam(admin, { name: 'Test team' })).id;
     made.push(teamId);
+    await team.createProvider(admin, PROVIDER);
   });
 
   afterAll(async () => {
@@ -62,6 +66,7 @@ describe('teams against the database', () => {
   it('keeps another team admin away from this team’s configuration', async () => {
     const own = await team.createConfig(admin, { ...model, name: 'Isolated' });
     made.push((await team.createTeam(outsider, { name: 'Other team' })).id);
+    await team.createProvider(outsider, PROVIDER);
     await expect(team.updateConfig(outsider, own.id, { ...model, name: 'Hijacked', version: 1 })).rejects.toMatchObject({ code: 'config_conflict' });
     await team.deleteConfig(outsider, own.id);
     expect((await prisma.teamConfig.findUnique({ where: { id: own.id } }))?.name).toBe('Isolated');
@@ -151,3 +156,68 @@ describe('accounts an admin creates, where the instance holds passwords', () => 
     await expect(team.addMember(added.userId, { email: `x-${suffix}@example.test` })).rejects.toMatchObject({ code: 'admin_required' });
   });
 });
+
+describe('a team’s providers', () => {
+  let admin: string, member: string, other: string;
+
+  beforeAll(async () => {
+    [admin, member, other] = await Promise.all(['providers-admin', 'providers-member', 'providers-other'].map(makeUser));
+    const teamId = (await team.createTeam(admin, { name: 'Providers team' })).id;
+    made.push(teamId, (await team.createTeam(other, { name: 'Providers elsewhere' })).id);
+    await prisma.membership.create({ data: { userId: member, teamId, role: 'member' } });
+  });
+
+  it('keeps the key encrypted, bound to the team, and out of every answer', async () => {
+    const created = await team.createProvider(admin, { ...PROVIDER, apiKey: 'sk-secret-value' });
+    expect(created).toEqual({ id: expect.any(String), name: 'deepseek', baseUrl: PROVIDER.baseUrl, updatedAt: expect.any(String) });
+    const row = await prisma.teamProvider.findUniqueOrThrow({ where: { id: created.id } });
+    expect(row.keyCipher).toMatch(/^v1\./);
+    expect(row.keyCipher).not.toContain('sk-secret-value');
+    expect(JSON.stringify(await team.listProviders(admin))).not.toContain('sk-secret');
+    await expect(team.createProvider(admin, PROVIDER)).rejects.toMatchObject({ code: 'provider_exists' });
+
+    const { decryptProviderKey } = await import('../provider-keys');
+    expect(decryptProviderKey(row.teamId, row.name, row.keyCipher)).toBe('sk-secret-value');
+    expect(() => decryptProviderKey('another-team', row.name, row.keyCipher)).toThrow();
+  });
+
+  it('is for the admin of the same team only', async () => {
+    const [own] = await team.listProviders(admin);
+    await expect(team.listProviders(member)).rejects.toMatchObject({ code: 'admin_required' });
+    await expect(team.createProvider(member, { ...PROVIDER, name: 'mine' })).rejects.toMatchObject({ code: 'admin_required' });
+    await expect(team.updateProvider(other, own.id, { baseUrl: 'https://203.0.113.11/v1' })).rejects.toMatchObject({ code: 'provider_not_configured' });
+    await team.deleteProvider(other, own.id);
+    expect(await prisma.teamProvider.findUnique({ where: { id: own.id } })).not.toBeNull();
+  });
+
+  it('moves an address or replaces the key, keeping the name', async () => {
+    const [own] = await team.listProviders(admin);
+    const before = await prisma.teamProvider.findUniqueOrThrow({ where: { id: own.id } });
+    const moved = await team.updateProvider(admin, own.id, { baseUrl: 'https://203.0.113.12/v1' });
+    expect(moved).toMatchObject({ name: 'deepseek', baseUrl: 'https://203.0.113.12/v1' });
+    expect((await prisma.teamProvider.findUniqueOrThrow({ where: { id: own.id } })).keyCipher).toBe(before.keyCipher);
+    await team.updateProvider(admin, own.id, { baseUrl: 'https://203.0.113.12/v1', apiKey: 'sk-rotated' });
+    expect((await prisma.teamProvider.findUniqueOrThrow({ where: { id: own.id } })).keyCipher).not.toBe(before.keyCipher);
+  });
+
+  it('refuses an address with credentials, a query, another scheme, or one the network rule forbids', async () => {
+    for (const baseUrl of ['https://user:pass@203.0.113.10/v1', 'https://203.0.113.10/v1?key=x', 'ftp://203.0.113.10/v1']) {
+      await expect(team.createProvider(admin, { ...PROVIDER, name: 'bad', baseUrl })).rejects.toThrow();
+    }
+    for (const baseUrl of ['https://127.0.0.1/v1', 'https://169.254.169.254/v1', 'http://10.0.0.5/v1']) {
+      await expect(team.createProvider(admin, { ...PROVIDER, name: 'bad', baseUrl })).rejects.toMatchObject({ code: 'provider_address_refused' });
+    }
+  });
+
+  it('is required by a team model, and cannot be removed while one calls it', async () => {
+    const model = (provider: string) => ({ kind: 'model', name: `Calls ${provider}`, data: { provider, model: 'chat' } }) as const;
+    await expect(team.createConfig(admin, model('absent'))).rejects.toMatchObject({ code: 'provider_not_configured' });
+    const config = await team.createConfig(admin, model('deepseek'));
+    const [own] = await team.listProviders(admin);
+    await expect(team.deleteProvider(admin, own.id)).rejects.toMatchObject({ code: 'provider_in_use' });
+    await team.deleteConfig(admin, config.id);
+    await team.deleteProvider(admin, own.id);
+    expect(await team.listProviders(admin)).toEqual([]);
+  });
+});
+

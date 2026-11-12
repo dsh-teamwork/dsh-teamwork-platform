@@ -1,30 +1,56 @@
 /**
  * The gateway's security boundary, with Prisma stubbed: the server alone
  * chooses where a call goes and with which key, only a team's own
- * configuration can be named, and nothing from upstream leaks back.
+ * configuration and providers can be named, an address must pass the network
+ * rule (ADR 0006), and nothing from upstream leaks back.
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // The strategy is next-auth, which needs a Next runtime; nothing here signs in.
 vi.mock('@/lib/auth/strategy', () => ({ strategy: { identity: async () => null } }));
-vi.mock('@/lib/prisma', () => ({ prisma: { membership: { findUnique: vi.fn() }, teamConfig: { findFirst: vi.fn() } } }));
-// Where a plain-http provider's host resolves decides whether it may be called.
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    membership: { findUnique: vi.fn() },
+    teamConfig: { findFirst: vi.fn() },
+    teamProvider: { findUnique: vi.fn(), findMany: vi.fn() },
+  },
+}));
+// Where a provider's host resolves decides whether it may be called.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
 
 const { prisma } = await import('@/lib/prisma');
 const { lookup } = await import('node:dns/promises');
 const { modelCatalog, proxyCompletion } = await import('../llm-gateway');
+const { encryptProviderKey } = await import('../provider-keys');
+const { guardedLookup } = await import('../provider-network');
 
+const SECRET = Buffer.alloc(32, 7).toString('base64');
 const membership = vi.mocked(prisma.membership.findUnique);
 const findConfig = vi.mocked(prisma.teamConfig.findFirst);
+const findProvider = vi.mocked(prisma.teamProvider.findUnique);
 const signal = () => new AbortController().signal;
 const row = (id: string, kind: 'model' | 'preset', data: object) =>
   ({ id, teamId: 't', kind, name: id, data, version: 1, createdAt: new Date(), updatedAt: new Date() }) as never;
+const resolvesTo = (...addresses: string[]) =>
+  vi.mocked(lookup).mockResolvedValue(addresses.map((address) => ({ address, family: address.includes(':') ? 6 : 4 })) as never);
+
+function provider(baseUrl: string, name = 'kimi') {
+  vi.stubEnv('PROVIDER_KEYS_SECRET', SECRET);
+  findProvider.mockResolvedValue({
+    id: 'pr',
+    teamId: 't',
+    name,
+    baseUrl,
+    keyCipher: encryptProviderKey('t', name, 'upstream-secret'),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+}
 
 function setup(role: 'admin' | 'member' = 'member') {
-  vi.stubEnv('LLM_ROUTES_JSON', JSON.stringify({ kimi: { baseURL: 'https://api.kimi.com/coding/v1', apiKeyEnv: 'TEST_MODEL_KEY' } }));
-  vi.stubEnv('TEST_MODEL_KEY', 'upstream-secret');
+  provider('https://api.kimi.com/coding/v1');
+  resolvesTo('203.0.113.10');
   membership.mockResolvedValue({ userId: 'u', teamId: 't', role, createdAt: new Date() });
   findConfig.mockResolvedValue(row('c', 'model', { provider: 'kimi', model: 'kimi-for-coding' }));
 }
@@ -94,45 +120,91 @@ describe('proxyCompletion', () => {
     expect(JSON.parse((request.mock.calls[0] as unknown as [string, RequestInit])[1].body as string)).toMatchObject({ model: 'actual', max_tokens: 1024 });
   });
 
-  describe('a plain-http provider', () => {
-    const resolvesTo = (...addresses: string[]) =>
-      vi.mocked(lookup).mockResolvedValue(addresses.map((address) => ({ address, family: address.includes(':') ? 6 : 4 })) as never);
-    const via = async (baseURL: string) => {
+  it('calls only the caller’s own team’s provider, with the key sealed for it', async () => {
+    setup();
+    const request = vi.fn(async () => Response.json({ choices: [] }));
+    await proxyCompletion('u', { model: 'c', messages: [{}] }, signal(), request);
+    expect(findProvider).toHaveBeenCalledWith({ where: { teamId_name: { teamId: 't', name: 'kimi' } } });
+
+    findProvider.mockResolvedValue(null);
+    await expect(proxyCompletion('u', { model: 'c', messages: [{}] }, signal(), request)).rejects.toMatchObject({ code: 'provider_not_configured' });
+    provider('https://api.kimi.com/coding/v1');
+    vi.stubEnv('PROVIDER_KEYS_SECRET', Buffer.alloc(32, 9).toString('base64'));
+    await expect(proxyCompletion('u', { model: 'c', messages: [{}] }, signal(), request)).rejects.toMatchObject({ code: 'provider_keys_unavailable' });
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  describe('the address rule', () => {
+    /** Calls through a provider at `baseUrl` whose host resolves to `addresses`. */
+    const via = async (baseUrl: string, addresses: string[] = [], allowPrivate = false) => {
       setup();
-      vi.stubEnv('LLM_ROUTES_JSON', JSON.stringify({ kimi: { baseURL, apiKeyEnv: 'TEST_MODEL_KEY' } }));
+      if (addresses.length) resolvesTo(...addresses);
+      if (allowPrivate) vi.stubEnv('ALLOW_PRIVATE_PROVIDERS', 'true');
+      provider(baseUrl);
       const request = vi.fn(async () => Response.json({ ok: true }));
       await proxyCompletion('u', { model: 'c', messages: [{}] }, signal(), request);
       return (request.mock.calls[0] as unknown as [string])[0];
     };
+    const refused = { code: 'provider_address_refused' };
 
-    it('is called when its host is a private address', async () => {
-      await expect(via('http://10.0.0.5:11434/v1')).resolves.toBe('http://10.0.0.5:11434/v1/chat/completions');
-      await expect(via('http://[::1]:8000/v1')).resolves.toBe('http://[::1]:8000/v1/chat/completions');
-      expect(lookup).not.toHaveBeenCalled();
+    it('calls a public https host, and refuses one that is private, link-local or carrier-grade NAT', async () => {
+      await expect(via('https://api.kimi.com/v1', ['203.0.113.10'])).resolves.toBe('https://api.kimi.com/v1/chat/completions');
+      await expect(via('https://internal.example/v1', ['10.0.0.5'])).rejects.toMatchObject(refused);
+      await expect(via('https://169.254.169.254/v1')).rejects.toMatchObject(refused);
+      await expect(via('https://100.64.0.1/v1')).rejects.toMatchObject(refused);
+      await expect(via('https://[::1]/v1')).rejects.toMatchObject(refused);
+      await expect(via('https://partly.example/v1', ['203.0.113.10', '127.0.0.1'])).rejects.toMatchObject(refused);
     });
 
-    it('is called when every address its name resolves to is private, as a compose service is', async () => {
-      resolvesTo('172.18.0.2');
-      await expect(via('http://ollama:11434/v1')).resolves.toBe('http://ollama:11434/v1/chat/completions');
-      resolvesTo('127.0.0.1', '::1');
-      await expect(via('http://localhost:8000/v1')).resolves.toBe('http://localhost:8000/v1/chat/completions');
+    it('never calls plain http without ALLOW_PRIVATE_PROVIDERS, even to a private host', async () => {
+      await expect(via('http://10.0.0.5:11434/v1')).rejects.toMatchObject(refused);
+      await expect(via('http://ollama:11434/v1', ['172.18.0.2'])).rejects.toMatchObject(refused);
     });
 
-    it('is refused when its host is public, partly public, or does not resolve', async () => {
-      resolvesTo('203.0.113.7');
-      await expect(via('http://api.kimi.com/v1')).rejects.toMatchObject({ code: 'provider_not_configured' });
-      resolvesTo('10.0.0.5', '203.0.113.7');
-      await expect(via('http://mixed.example/v1')).rejects.toMatchObject({ code: 'provider_not_configured' });
+    it('with it, calls private hosts over either scheme, and plain http only where every address is private', async () => {
+      await expect(via('http://10.0.0.5:11434/v1', [], true)).resolves.toBe('http://10.0.0.5:11434/v1/chat/completions');
+      await expect(via('http://[::1]:8000/v1', [], true)).resolves.toBe('http://[::1]:8000/v1/chat/completions');
+      await expect(via('http://ollama:11434/v1', ['172.18.0.2'], true)).resolves.toBe('http://ollama:11434/v1/chat/completions');
+      await expect(via('https://ollama:11434/v1', ['172.18.0.2'], true)).resolves.toBe('https://ollama:11434/v1/chat/completions');
+      await expect(via('http://api.kimi.com/v1', ['203.0.113.7'], true)).rejects.toMatchObject(refused);
+      await expect(via('http://mixed.example/v1', ['10.0.0.5', '203.0.113.7'], true)).rejects.toMatchObject(refused);
+      await expect(via('http://[::ffff:8.8.8.8]/v1', [], true)).rejects.toMatchObject(refused);
+    });
+
+    it('refuses a host that does not resolve', async () => {
+      setup();
       vi.mocked(lookup).mockRejectedValue(new Error('ENOTFOUND'));
-      await expect(via('http://missing.example/v1')).rejects.toMatchObject({ code: 'provider_not_configured' });
-      await expect(via('http://203.0.113.7/v1')).rejects.toMatchObject({ code: 'provider_not_configured' });
-      await expect(via('http://[::ffff:8.8.8.8]/v1')).rejects.toMatchObject({ code: 'provider_not_configured' });
+      const request = vi.fn();
+      await expect(proxyCompletion('u', { model: 'c', messages: [{}] }, signal(), request)).rejects.toMatchObject(refused);
+      expect(request).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the connection’s own lookup', () => {
+    // What the socket resolves when it opens: an answer that changed since the
+    // check — DNS rebinding — must fail here, not connect.
+    const answering = (...addresses: string[]) =>
+      ((_host: string, _options: object, callback: (e: Error | null, a: unknown) => void) =>
+        callback(null, addresses.map((address) => ({ address, family: address.includes(':') ? 6 : 4 })))) as never;
+    const run = (protocol: string, resolve: never, all = false) =>
+      new Promise<{ error: Error | null; result: unknown }>((done) =>
+        guardedLookup(protocol, resolve)('host.example', { all } as never, (error: Error | null, result: unknown) => done({ error, result })),
+      );
+
+    it('refuses a host that now resolves somewhere the rule forbids', async () => {
+      expect((await run('https:', answering('10.0.0.5'))).error).toBeTruthy();
+      expect((await run('https:', answering('203.0.113.10', '169.254.169.254'))).error).toBeTruthy();
+      expect((await run('http:', answering('203.0.113.10'))).error).toBeTruthy();
     });
 
-    it('keeps refusing credentials, a query or another scheme in the route', async () => {
-      await expect(via('http://user:pass@10.0.0.5/v1')).rejects.toMatchObject({ code: 'provider_not_configured' });
-      await expect(via('http://10.0.0.5/v1?key=x')).rejects.toMatchObject({ code: 'provider_not_configured' });
-      await expect(via('ftp://10.0.0.5/v1')).rejects.toMatchObject({ code: 'provider_not_configured' });
+    it('answers in either form the socket asks for when every address passes', async () => {
+      expect(await run('https:', answering('203.0.113.10'))).toEqual({ error: null, result: '203.0.113.10' });
+      expect((await run('https:', answering('203.0.113.10', '2001:db8::1'), true)).result).toEqual([
+        { address: '203.0.113.10', family: 4 },
+        { address: '2001:db8::1', family: 6 },
+      ]);
+      vi.stubEnv('ALLOW_PRIVATE_PROVIDERS', 'true');
+      expect((await run('http:', answering('10.0.0.5'))).error).toBeNull();
     });
   });
 });
@@ -143,7 +215,9 @@ describe('modelCatalog', () => {
     const request = vi.fn(async () =>
       Response.json({ data: [{ id: 'kimi', display_name: 'Kimi', context_length: 1048576, apiKey: 'secret-key' }, { id: 'other', limit: { context: 128000, output: 8192 } }] }),
     );
+    vi.mocked(prisma.teamProvider.findMany).mockResolvedValue([{ name: 'kimi' }] as never);
     expect(await modelCatalog('u', null, signal())).toEqual({ providers: ['kimi'] });
+    expect(prisma.teamProvider.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { teamId: 't' } }));
     const result = await modelCatalog('u', 'kimi', signal(), request);
     expect(result).toEqual({
       provider: 'kimi',

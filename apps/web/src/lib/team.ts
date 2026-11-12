@@ -13,6 +13,8 @@ import { Prisma, type Membership, type TeamConfig } from '@dsh-teamwork/db';
 import {
   AddMemberSchema,
   ConfigInputSchema,
+  ProviderInputSchema,
+  ProviderUpdateSchema,
   CreateTeamSchema,
   RedeemInviteSchema,
   UpdateConfigSchema,
@@ -21,6 +23,7 @@ import {
   type ConfigSnapshot,
   type CreatedInvite,
   type InviteView,
+  type ProviderView,
   type ResetPassword,
   type TeamConfigView,
   type TeamErrorCode,
@@ -30,6 +33,8 @@ import { generatePassword, hashPassword, setPassword } from '@dsh-teamwork/share
 
 import { strategy } from '@/lib/auth/strategy';
 import { prisma } from '@/lib/prisma';
+import { encryptProviderKey } from '@/lib/provider-keys';
+import { checkProviderAddress } from '@/lib/provider-network';
 
 /** A refusal with a status and a `TEAM_ERRORS` code; `handleRouteError` answers it as `{ error }`. */
 export class TeamError extends Error {
@@ -203,6 +208,69 @@ export async function redeemInvite(userId: string, input: unknown) {
   }));
 }
 
+// ─── Providers (ADR 0006) ───────────────────────────────────────────────────
+
+const toProviderView = (p: { id: string; name: string; baseUrl: string; updatedAt: Date }): ProviderView => ({
+  id: p.id,
+  name: p.name,
+  baseUrl: p.baseUrl,
+  updatedAt: p.updatedAt.toISOString(),
+});
+
+/** The team's providers, for its admin. The key is never part of the answer. */
+export async function listProviders(userId: string): Promise<ProviderView[]> {
+  const admin = await requireMembership(userId, true);
+  const rows = await prisma.teamProvider.findMany({ where: { teamId: admin.teamId }, orderBy: { name: 'asc' } });
+  return rows.map(toProviderView);
+}
+
+/** An admin adds a provider; its address must pass the network rule now, and on every call. */
+export async function createProvider(userId: string, body: unknown): Promise<ProviderView> {
+  const admin = await requireMembership(userId, true);
+  const input = ProviderInputSchema.parse(body);
+  await checkProviderAddress(new URL(input.baseUrl));
+  const row = await unique('provider_exists', () =>
+    prisma.teamProvider.create({
+      data: {
+        teamId: admin.teamId,
+        name: input.name,
+        baseUrl: input.baseUrl,
+        keyCipher: encryptProviderKey(admin.teamId, input.name, input.apiKey),
+      },
+    }),
+  );
+  return toProviderView(row);
+}
+
+/** An admin moves a provider or replaces its key. Its name stays: team models refer to it. */
+export async function updateProvider(userId: string, providerId: string, body: unknown): Promise<ProviderView> {
+  const admin = await requireMembership(userId, true);
+  const input = ProviderUpdateSchema.parse(body);
+  const row = await prisma.teamProvider.findFirst({ where: { id: providerId, teamId: admin.teamId } });
+  if (!row) throw new TeamError(404, 'provider_not_configured');
+  await checkProviderAddress(new URL(input.baseUrl));
+  const updated = await prisma.teamProvider.update({
+    where: { id: row.id },
+    data: {
+      baseUrl: input.baseUrl,
+      ...(input.apiKey ? { keyCipher: encryptProviderKey(admin.teamId, row.name, input.apiKey) } : {}),
+    },
+  });
+  return toProviderView(updated);
+}
+
+/** An admin removes a provider no team model or preset still calls. */
+export async function deleteProvider(userId: string, providerId: string) {
+  const admin = await requireMembership(userId, true);
+  const row = await prisma.teamProvider.findFirst({ where: { id: providerId, teamId: admin.teamId } });
+  if (!row) return;
+  const inUse = await prisma.teamConfig.findFirst({
+    where: { teamId: admin.teamId, kind: { in: ['model', 'preset'] }, data: { path: ['provider'], equals: row.name } },
+  });
+  if (inUse) throw new TeamError(409, 'provider_in_use');
+  await prisma.teamProvider.deleteMany({ where: { id: row.id, teamId: admin.teamId } });
+}
+
 // ─── Configuration ──────────────────────────────────────────────────────────
 
 export async function listConfigs(userId: string): Promise<ConfigSnapshot> {
@@ -216,6 +284,11 @@ async function checkReferences(teamId: string, input: ConfigInput) {
   if (input.kind === 'plugin') return;
   if (input.data.contextWindow && input.data.maxTokens && input.data.maxTokens > input.data.contextWindow) {
     throw new TeamError(400, 'max_tokens_exceeds_context');
+  }
+  // A model, or a preset with a model of its own, calls a provider the team has.
+  const provider = input.data.provider;
+  if (provider && !(await prisma.teamProvider.findUnique({ where: { teamId_name: { teamId, name: provider } } }))) {
+    throw new TeamError(400, 'provider_not_configured');
   }
   if (input.kind !== 'preset') return;
   const { modelConfigId, pluginDependencies } = input.data;
