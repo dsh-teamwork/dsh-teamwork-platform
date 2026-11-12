@@ -16,6 +16,9 @@ WORKDIR /app
 RUN corepack enable
 
 COPY . .
+# The origin is compiled into the static robots.txt, sitemap and canonicals,
+# and into the www redirect (canonical-host.mjs), so the build needs it too.
+ARG APP_URL
 RUN pnpm install --frozen-lockfile \
   && pnpm turbo run build --filter=@dsh-teamwork/web
 

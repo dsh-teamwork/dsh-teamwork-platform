@@ -23,6 +23,9 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      # Read at build as well as at run (apps/web/Dockerfile).
+      args:
+        APP_URL: ${APP_URL:-}
     depends_on:
       db:
         condition: service_healthy
