@@ -14,6 +14,10 @@ const config = {
   serverExternalPackages: ['@electric-sql/pglite', 'pglite-prisma-adapter'],
   // Nothing a visitor needs, and a free hint about what to attack.
   poweredByHeader: false,
+  // Inlined at build, like the legal pages it names (src/lib/legal.ts): the
+  // footer and sitemap link them exactly when this build published them, even
+  // where the variable is also set, or not, when the server runs.
+  env: { LEGAL_DIR: process.env.LEGAL_DIR ?? '' },
   async headers() {
     return [
       {

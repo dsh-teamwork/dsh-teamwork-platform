@@ -320,7 +320,7 @@ generated in Postgres by the first migration. `@electric-sql/pglite` and
 ## Architecture
 
 ```
-apps/web             Next.js 16 — the site, the team console (/team), the
+apps/web             Next.js 16 — the home page, the team console (/team), the
                      plugin's sign-in page (/plugin) and the API the plugin
                      calls (/api/*)
 packages/db          Prisma schema, migrations, ensureUser
@@ -329,8 +329,6 @@ packages/shared      what the clients agree about (root: isomorphic, including
                      strategy (@dsh-teamwork/shared/server/*)
 premium/apps/manage  Next.js 16 — the operator console; /api/admin/* for
                      automation
-premium/apps/site    Next.js 16 — the hosted landing page, /privacy and /terms
-                     on the root domain; no accounts, no database
 
 Everything under premium/ is closed and stays out of the community edition
 (docs/tech/community-edition.md). Before changing anything there, read
@@ -437,9 +435,8 @@ One PostHog project per product, fed from two sides
 
 ### Search and sharing
 
-What a crawler or a link preview reads, in `apps/web` (an instance's own
-`robots.txt`, `sitemap.xml` and canonicals) and `premium/apps/site` (the hosted
-service's public pages, which keep the same rules and add the share card):
+What a crawler or a link preview reads, all in `apps/web`: an instance's own
+`robots.txt`, `sitemap.xml`, canonicals and share card.
 
 - **`APP_URL` is the site's address** (`src/lib/site.ts`): `metadataBase`, `robots.txt`
   and `sitemap.xml` name it, and never the Host header, which a stranger can set.
@@ -447,9 +444,9 @@ service's public pages, which keep the same rules and add the share card):
 - **A public page states its own `alternates.canonical`**; signed-in and sign-in
   screens carry `robots: { index: false }`, and `src/app/sitemap.ts` lists only the
   public pages. `src/app/__tests__/seo.test.ts` holds the three files together.
-- **The share card is the site's `opengraph-image.tsx`**, English on purpose (its Onest files
+- **The share card is `opengraph-image.tsx`**, English on purpose (its Onest files
   carry no CJK glyphs); it draws the exported `public/logo.svg`, so it follows
-  `docs/brand/icon.svg` without being edited. The site's landing page carries
+  `docs/brand/icon.svg` without being edited. The landing page carries
   `Organization` and `WebSite` JSON-LD. The locale is never in the URL, so there is
   no hreflang.
 - **AI crawlers** (`src/lib/ai-crawlers.ts`, the same file in every sibling):
