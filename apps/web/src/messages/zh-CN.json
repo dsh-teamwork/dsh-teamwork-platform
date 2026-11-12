@@ -115,7 +115,7 @@
       "outputDescription": "输出要求（供成员阅读）",
       "plugins": "必需插件",
       "noPlugins": "暂无团队插件。",
-      "pluginsHint": "仅为团队声明，不会安装或授权任何插件。在 DSH 中运行 /team tools 查看实际工具名。",
+      "pluginsHint": "仅为团队声明，不会安装或授权任何插件。在 DSH 中运行 /teamwork tools 查看实际工具名。",
       "requiredTools": "必需工具（每行一个）",
       "optionalTools": "可选工具（每行一个）",
       "systemPrompt": "团队追加系统提示词",
@@ -176,12 +176,12 @@
   },
   "plugin": {
     "title": "授权 DSH 插件",
-    "description": "仅在你刚在自己的 DSH 中运行 /team login 时继续。",
-    "invalid": "链接不完整，请在 DSH 中重新运行 /team login。",
+    "description": "仅在你刚在自己的 DSH 中运行 /teamwork login 时继续。",
+    "invalid": "链接不完整，请在 DSH 中重新运行 /teamwork login。",
     "confirm": "确认授权",
     "copy": "将以下内容粘贴到 DSH：",
     "expiry": "授权码两分钟内有效、只能使用一次，且只对发起请求的 DSH 有效。",
-    "failed": "授权失败。请重新登录，或在 DSH 中重新运行 /team login。"
+    "failed": "授权失败。请重新登录，或在 DSH 中重新运行 /teamwork login。"
   },
   "setup": {
     "title": "创建第一个账号",

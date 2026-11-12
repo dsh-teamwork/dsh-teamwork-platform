@@ -103,7 +103,7 @@ DSH plugin                                    apps/web
   │                                           no session → /sign-in, back here after
   │                                           "Authorize" (a server action) →
   │                                           code = JWE{email, challenge}, 2 min, shown on the page
-  │ person pastes: /team authorize <code>
+  │ person pastes: /teamwork authorize <code>
   │── POST /api/auth/plugin/token {code, verifier} ──►
   │                                           S256(verifier) == challenge ?
   │◄── { token, expiresAt } ─────────────────  token = JWE{email}, its own salt, 30 days

@@ -58,7 +58,7 @@ an email and a password.
    others by email in `/team`: each gets a first password to change when they
    first sign in.
 5. Point each member's plugin at `APP_URL` (`apiEndpoint` in the DSH profile's
-   `cordis.patch.yml`). Then `/team login` signs them in.
+   `cordis.patch.yml`). Then `/teamwork login` signs them in.
 
 A model the team serves itself on the same private network can be reached
 over plain HTTP. The gateway allows `http://` only to a host that resolves to
