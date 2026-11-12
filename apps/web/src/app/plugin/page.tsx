@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('plugin'))('title'), robots: { index: false } };
 }
 
-/** Where `/team login` in DSH sends the browser: confirm, then copy the code back. */
+/** Where `/teamwork login` in DSH sends the browser: confirm, then copy the code back. */
 export default async function PluginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { challenge } = await searchParams;
   const valid = typeof challenge === 'string' && PLUGIN_CHALLENGE.test(challenge);

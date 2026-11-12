@@ -115,7 +115,7 @@
       "outputDescription": "What it produces (for people)",
       "plugins": "Required plugins",
       "noPlugins": "No team plugins yet.",
-      "pluginsHint": "A team declaration only: it does not install or authorize anything. Run /team tools in DSH to see real tool names.",
+      "pluginsHint": "A team declaration only: it does not install or authorize anything. Run /teamwork tools in DSH to see real tool names.",
       "requiredTools": "Required tools (one per line)",
       "optionalTools": "Optional tools (one per line)",
       "systemPrompt": "Team system prompt",
@@ -176,12 +176,12 @@
   },
   "plugin": {
     "title": "Authorize the DSH plugin",
-    "description": "Only continue if you just ran /team login in your own DSH.",
-    "invalid": "This link is incomplete. Run /team login in DSH again.",
+    "description": "Only continue if you just ran /teamwork login in your own DSH.",
+    "invalid": "This link is incomplete. Run /teamwork login in DSH again.",
     "confirm": "Authorize",
     "copy": "Paste this into DSH:",
     "expiry": "The code works once, for two minutes, and only for the DSH that asked for it.",
-    "failed": "Authorization failed. Sign in again, or run /team login in DSH again."
+    "failed": "Authorization failed. Sign in again, or run /teamwork login in DSH again."
   },
   "setup": {
     "title": "Create the first account",

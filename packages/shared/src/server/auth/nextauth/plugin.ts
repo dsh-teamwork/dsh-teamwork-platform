@@ -6,7 +6,7 @@
  *   POST /api/auth/plugin/token       { code, verifier } → { token, expiresAt }
  *
  * The plugin runs inside a DSH host that cannot receive a redirect, so the code
- * is shown to the person to paste back (`/team authorize <code>`) rather than
+ * is shown to the person to paste back (`/teamwork authorize <code>`) rather than
  * sent anywhere. `tokens.ts` says why the hand-off is PKCE: a code read off
  * somebody's screen is useless without the verifier only their plugin holds.
  * Minting needs an explicit confirmation (a server action, origin-checked by

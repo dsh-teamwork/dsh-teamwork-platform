@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-12 — The DSH command is /teamwork
+
+- **What:** The plugin's command is `/teamwork` instead of `/team` (`/teamwork login`, `/teamwork authorize <code>`, `/teamwork sync`, …). The plugin sign-in page shows `/teamwork authorize <code>` to paste back, and the web app's copy and these documents name the new command. The web console stays at `/team`.
+- **Why:** The developer's call: `/teamwork` names the product, and leaves `/team` to DSH's own team features.
+- **Breaking:** A member on a plugin build from before this change types `/team`; the pages now show `/teamwork`. Update the plugin.
+- **Upgrade:** Update `@dsh-teamwork/dsh-teamwork`.
+- **Refs:** `dsh-teamwork/dsh-teamwork` ac2fe24.
+
 ## 2026-11-11 — Passwords when SMTP_URL is unset
 
 - **What:**

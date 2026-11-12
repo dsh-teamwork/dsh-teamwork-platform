@@ -17,7 +17,7 @@ export function PluginAuthorize({ challenge }: { challenge: string }) {
     return (
       <div className="flex flex-col gap-2 text-sm">
         <p>{t('copy')}</p>
-        <Input readOnly value={`/team authorize ${code}`} onFocus={(e) => e.currentTarget.select()} className="font-mono" />
+        <Input readOnly value={`/teamwork authorize ${code}`} onFocus={(e) => e.currentTarget.select()} className="font-mono" />
         <p className="text-xs text-muted-foreground">{t('expiry')}</p>
       </div>
     );
