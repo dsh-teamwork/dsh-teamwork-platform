@@ -440,7 +440,9 @@ What a crawler or a link preview reads, all in `apps/web`: an instance's own
 
 - **`APP_URL` is the site's address** (`src/lib/site.ts`): `metadataBase`, `robots.txt`
   and `sitemap.xml` name it, and never the Host header, which a stranger can set.
-  Set it in every deployment.
+  Set it in every deployment, at build as well as at run: the static files and
+  the redirect that sends its `www`/apex twin to it (`canonical-host.mjs`) are
+  compiled in.
 - **A public page states its own `alternates.canonical`**; signed-in and sign-in
   screens carry `robots: { index: false }`, and `src/app/sitemap.ts` lists only the
   public pages. `src/app/__tests__/seo.test.ts` holds the three files together.

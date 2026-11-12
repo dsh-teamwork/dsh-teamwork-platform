@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-12 — The www twin redirects to APP_URL; APP_URL reaches the build
+
+- **What:** In production, the `www`/apex twin of the deployment's origin (`AUTH_URL`, else `APP_URL`) answers a 308 to that origin, path and query kept (`apps/web/canonical-host.mjs`, compiled into the build's redirects). `turbo.json` now passes `APP_URL` and `AUTH_URL` to `@dsh-teamwork/web#build`: strict env mode had stripped them, so the static `robots.txt`, sitemap and canonicals named `http://localhost:3800`.
+- **Why:** Auth.js cookies are host-only and Google returns to one callback, so signing in on the twin host failed. The hosted service serves `dshteamwork.com` and `www.dshteamwork.com`.
+- **Breaking:** None.
+- **Upgrade:** Set `APP_URL` where the web app is built, not only where it runs (on Railway the service variable already is; `compose.yaml` now passes it as a build argument). Redeploy, or `docker compose up --build`.
+- **Refs:** `apps/web/canonical-host.mjs`, `turbo.json`; router9's `apps/web/canonical-host.mjs`.
+
 ## 2026-11-12 — The web app is the home page; legal pages from LEGAL_DIR
 
 - **What:** The web app's `/` is now the landing page on every instance (what DSH Teamwork is, as a project and a service, and the way in), with its share card and JSON-LD; the start page is gone. `/privacy` and `/terms` are rendered at build from the Markdown in `LEGAL_DIR`, a deployment's own directory; unset, the routes answer 404 and the footer and sitemap leave them out. `next.config` inlines `LEGAL_DIR`, so links follow the build, and `turbo.json` passes it to `@dsh-teamwork/web#build` with any `docs/legal/*.md` in the cache key (strict env mode had stripped it). `react-markdown` and `remark-gfm` join the web app.

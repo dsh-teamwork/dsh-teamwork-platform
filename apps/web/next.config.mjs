@@ -1,5 +1,7 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 
+import { canonicalHostRedirects } from './canonical-host.mjs';
+
 // Links `src/i18n/request.ts` into the build. There is no routing half: the
 // locale is the viewer's (profile, then cookie, then Accept-Language) and no
 // URL carries it.
@@ -18,6 +20,11 @@ const config = {
   // footer and sitemap link them exactly when this build published them, even
   // where the variable is also set, or not, when the server runs.
   env: { LEGAL_DIR: process.env.LEGAL_DIR ?? '' },
+  // The www/apex twin of APP_URL redirects to it, or sign-in breaks on the twin
+  // (canonical-host.mjs says why).
+  async redirects() {
+    return canonicalHostRedirects(process.env);
+  },
   async headers() {
     return [
       {
