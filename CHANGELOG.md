@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-12 — The plugin's snapshot names the team and the caller's role
+
+- **What:** `GET /api/team/configs` answers `{ teamId, teamName, role, configs }`: the team's name and whether the caller is its `admin` or a `member`, beside the configurations. The plugin's new DSH sidebar panel shows both, and links an admin to `/team`.
+- **Why:** The Teamwork panel in DSH names the team a member is in and offers admins the way to the console, without a second request.
+- **Breaking:** A plugin that parses the snapshot strictly must accept the two fields; the plugin build released with the panel does.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/shared/src/team.ts`, `apps/web/src/lib/team.ts`, `docs/tech/architecture.md`.
+
 ## 2026-11-12 — The DSH command is /teamwork
 
 - **What:** The plugin's command is `/teamwork` instead of `/team` (`/teamwork login`, `/teamwork authorize <code>`, `/teamwork sync`, …). The plugin sign-in page shows `/teamwork authorize <code>` to paste back, and the web app's copy and these documents name the new command. The web console stays at `/team`.

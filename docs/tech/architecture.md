@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-11
+> **Status:** Current · **Updated:** 2026-11-12
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -21,6 +21,16 @@ The plugin (`@dsh-teamwork/dsh-teamwork`, its own repository) never reaches the
 database or a provider directly. It syncs `GET /api/team/configs` into a local
 cache, registers the team's models and presets in DSH next to the member's own,
 and sends every team-model call to the gateway with its Bearer token.
+
+A member works with the team from DSH in two ways: the `/teamwork` command and,
+in DSH's web shell, a Teamwork entry in the sidebar. The panel signs in, shows
+the team, its role and sync state, and applies the team's presets, models and
+pinned plugins to a session. It calls the plugin's own host routes
+(`api/teamwork/*`), which run the same functions as the command, so the Bearer
+token never reaches the browser. Publishing and members stay in `/team`: the
+panel links there for an admin and edits nothing on the server. Its components
+come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
+repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 
 ## Components
 
@@ -70,7 +80,7 @@ the same team at their exact version, checked when the preset is written.
 | `DELETE /api/team/members/:userId` | admin | Remove a member |
 | `GET`, `POST /api/team/invites`; `DELETE /api/team/invites/:id` | admin | List, create (token shown once), revoke |
 | `POST /api/invites/redeem` | anyone in no team | Spend a token and join |
-| `GET /api/team/configs` | member | `{ teamId, configs }` — the snapshot the plugin caches |
+| `GET /api/team/configs` | member | `{ teamId, teamName, role, configs }` — the snapshot the plugin caches |
 | `POST /api/team/configs`; `PATCH`, `DELETE /api/team/configs/:id` | admin | Publish, edit (with `version`), delete |
 | `GET /api/team/model-catalog[?provider=]` | admin | Configured providers, or one provider's models |
 | `POST /api/llm/chat/completions` | member | The model gateway |
