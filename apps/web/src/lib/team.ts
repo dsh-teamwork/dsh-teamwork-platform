@@ -275,8 +275,11 @@ export async function deleteProvider(userId: string, providerId: string) {
 
 export async function listConfigs(userId: string): Promise<ConfigSnapshot> {
   const member = await requireMembership(userId);
-  const rows = await prisma.teamConfig.findMany({ where: { teamId: member.teamId }, orderBy: [{ kind: 'asc' }, { name: 'asc' }] });
-  return { teamId: member.teamId, configs: rows.map(toConfigView) };
+  const [team, rows] = await Promise.all([
+    prisma.team.findUniqueOrThrow({ where: { id: member.teamId }, select: { name: true } }),
+    prisma.teamConfig.findMany({ where: { teamId: member.teamId }, orderBy: [{ kind: 'asc' }, { name: 'asc' }] }),
+  ]);
+  return { teamId: member.teamId, teamName: team.name, role: member.role, configs: rows.map(toConfigView) };
 }
 
 /** What a configuration may reference has to exist in the same team, at the pinned version. */

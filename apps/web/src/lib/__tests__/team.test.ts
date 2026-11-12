@@ -51,7 +51,11 @@ describe('teams against the database', () => {
 
     await expect(team.createConfig(member, model)).rejects.toMatchObject({ code: 'admin_required' });
     const config = await team.createConfig(admin, model);
-    expect((await team.listConfigs(member)).configs.map((c) => c.id)).toEqual([config.id]);
+    const snapshot = await team.listConfigs(member);
+    expect(snapshot.configs.map((c) => c.id)).toEqual([config.id]);
+    expect(snapshot.role).toBe('member');
+    expect((await team.listConfigs(admin)).role).toBe('admin');
+    expect(snapshot.teamName).toBe((await prisma.team.findUniqueOrThrow({ where: { id: snapshot.teamId } })).name);
     await expect(team.listConfigs(outsider)).rejects.toMatchObject({ code: 'no_team' });
 
     await team.updateConfig(admin, config.id, { ...model, name: 'Protected v2', version: 1 });

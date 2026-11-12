@@ -110,16 +110,18 @@ export const UpdateConfigSchema = z.intersection(ConfigInputSchema, z.object({ v
 /** A stored configuration as the API answers it. `data` is the kind's shape. */
 export type TeamConfigView = ConfigInput & { id: string; version: number; updatedAt: string };
 
-/** `GET /api/team/configs` — the snapshot the plugin caches. */
+export type TeamRole = 'admin' | 'member';
+
+/** `GET /api/team/configs` — the snapshot the plugin caches, with the team's name and the caller's role in it. */
 export interface ConfigSnapshot {
   teamId: string;
+  teamName: string;
+  role: TeamRole;
   configs: TeamConfigView[];
 }
 
 export const CreateTeamSchema = z.object({ name });
 export const RedeemInviteSchema = z.object({ token: z.string().min(32).max(100) });
-
-export type TeamRole = 'admin' | 'member';
 
 export interface TeamMemberView {
   userId: string;
