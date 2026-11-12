@@ -9,6 +9,16 @@
       "dependsOn": ["^build", "^db:generate"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "web-build/**"]
     },
+    // The web app renders /privacy and /terms at build from LEGAL_DIR (ADR 0007):
+    // strict env mode would strip the variable, and the documents it names live
+    // outside the package, so both join this task's cache key. The glob covers
+    // any tree's docs/legal/ without naming one.
+    "@dsh-teamwork/web#build": {
+      "dependsOn": ["^build", "^db:generate"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["LEGAL_DIR"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/**/docs/legal/*.md"]
+    },
     "lint": {
       "outputs": []
     },
