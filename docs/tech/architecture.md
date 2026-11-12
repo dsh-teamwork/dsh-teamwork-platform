@@ -160,7 +160,7 @@ never calls `ensureUser`, so signing in to it creates no `User` row.
 
 ## Deployment
 
-Railway: `web` (`alpha.dshteamwork.com`) and `manage`
+Railway: `web` (`dshteamwork.com`, the home page and the app; ADR 0007) and `manage`
 (`manage.dshteamwork.com`) services from this repository, one Postgres
 (`premium/docs/ops/deployment.md`). Provider keys are each team's, in the
 database; `PROVIDER_KEYS_SECRET`, which seals them, is a variable on `web`

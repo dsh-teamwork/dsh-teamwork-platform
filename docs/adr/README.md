@@ -9,6 +9,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0002](0002-platform-from-seed.md) — the platform is rebuilt from seed: one Next.js app on Railway.
 - [0005](0005-open-core.md) — open core: a self-hosted community edition for one team; company features stay closed.
 - [0006](0006-one-command-community-edition.md) — the community edition runs from one `npx` command: PGlite, passwords, team-owned provider keys.
+- [0007](0007-one-domain-one-app.md) — the web app serves the root domain and the landing page; legal pages come from `LEGAL_DIR`.
 
 The template:
 

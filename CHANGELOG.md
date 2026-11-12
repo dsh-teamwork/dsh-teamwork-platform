@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-12 — The web app is the home page; legal pages from LEGAL_DIR
+
+- **What:** The web app's `/` is now the landing page on every instance (what DSH Teamwork is, as a project and a service, and the way in), with its share card and JSON-LD; the start page is gone. `/privacy` and `/terms` are rendered at build from the Markdown in `LEGAL_DIR`, a deployment's own directory; unset, the routes answer 404 and the footer and sitemap leave them out. `next.config` inlines `LEGAL_DIR`, so links follow the build. `react-markdown` and `remark-gfm` join the web app.
+- **Why:** ADR 0007: the hosted service drops its separate landing site and `alpha.` subdomain and serves the web app on `dshteamwork.com`, which is also the DSH plugin's default server.
+- **Breaking:** A self-hosted instance's `/` changes from the start page to the landing page. Browsers on the hosted service sign in again once its origin moves.
+- **Upgrade:** Optional `LEGAL_DIR` at build. The hosted service sets `LEGAL_DIR=premium/docs/legal` and `APP_URL=https://dshteamwork.com` on `web`, and adds Google's OAuth callback for the root domain.
+- **Refs:** `docs/adr/0007-one-domain-one-app.md`, `apps/web/src/lib/legal.ts`, `docs/tech/community-edition.md`.
+
 ## 2026-11-12 — The plugin's snapshot names the team and the caller's role
 
 - **What:** `GET /api/team/configs` answers `{ teamId, teamName, role, configs }`: the team's name and whether the caller is its `admin` or a `member`, beside the configurations. The plugin's new DSH sidebar panel shows both, and links an admin to `/team`.

@@ -1,6 +1,6 @@
 # Community edition split
 
-> **Status:** Plan — Phases 0 to 2 done · **Updated:** 2026-11-11
+> **Status:** Plan — Phases 0 to 2 done · **Updated:** 2026-11-12
 
 How the open part of this repository becomes the public
 `dsh-teamwork/dsh-teamwork-platform` (ADR 0005), and how it then runs from
@@ -71,7 +71,7 @@ From then on the rules are:
 
 | Part | Public `dsh-teamwork-platform` | This repository only |
 | --- | --- | --- |
-| `apps/web` | Sign-in, `/team`, `/plugin`, `/account`, every `/api/*` route, the model gateway, locale, robots and sitemap | The marketing home page, `/privacy`, `/terms` and the share card: see "The hosted home page" |
+| `apps/web` | The home page and share card, sign-in, `/team`, `/plugin`, `/account`, every `/api/*` route, the model gateway, locale, robots and sitemap; `/privacy` and `/terms` from a deployment's `LEGAL_DIR` | The hosted service's legal text (`premium/docs/legal/`): see "The hosted home page" |
 | `apps/manage` | — | Moves to `premium/apps/manage` |
 | `packages/db` | `prisma/schema/` with today's models; every migration so far | Closed models in `prisma/schema/premium-*.prisma`; their migrations named `<timestamp>_premium_<name>` |
 | `packages/shared` | All of it, including the analytics client, which stays off unless configured | — |
@@ -108,29 +108,13 @@ neither file ever diverges.
 
 ## The hosted home page
 
-The hosted home page cannot stay in the open app. It links the privacy policy
-and the terms, because Google's OAuth verification requires that link. Those
-pages name Shushuo as the controller, which is false on anyone else's
-instance.
-
-**Decided: a closed `premium/apps/site` on the root domain,
-`dshteamwork.com`.** It holds the landing page, `/privacy`, `/terms`, the
-share card and the JSON-LD. Moving them there takes `pull-legal.mjs` and
-`docs/legal/` out of the open tree.
-
-The open web app's `/` becomes a short start page: the mark, one sentence, and
-"Sign in" or "Open your team". Every instance needs one.
-
-What it costs:
-
-- one Next.js app and one Railway service;
-- the root domain, which was waiting to be configured anyway.
-
-The alternative keeps the landing page in the open app and gives the hosted
-service a `(premium)` route group for the legal pages. But the open landing page
-would then link pages that 404 on every self-hosted instance, or need a switch
-to hide them. That is the flag beside the old path this repository does not
-build.
+**Superseded by [ADR 0007](../adr/0007-one-domain-one-app.md).** A closed
+`premium/apps/site` once served the landing page, `/privacy` and `/terms` on
+the root domain, because an open page linking legal text that names Shushuo
+would 404 on every self-hosted instance. Now the open web app's `/` is the
+landing page on every instance, the web app serves `dshteamwork.com`, and a
+deployment publishes its own legal pages from `LEGAL_DIR`; the hosted service
+points it at `premium/docs/legal/`.
 
 ## Order of work, and what gates what
 
@@ -301,7 +285,8 @@ Done on 2026-11-10.
    `turbo.json`, so the root one names no closed package. The open `/` is now
    a start page. The Railway service `dsh-teamwork-site` serves it on
    `dshteamwork.com`. Google's OAuth consent screen is pointed at its home
-   page, `/privacy` and `/terms` by hand, in Google Cloud.
+   page, `/privacy` and `/terms` by hand, in Google Cloud. Since retired by
+   ADR 0007: the web app serves the root domain and the landing page.
 3. **Done:** the schema is `prisma/schema/schema.prisma`. Four things followed
    it, as experiment 2 found:
    - the generator's `output`;
@@ -544,7 +529,7 @@ The npm package is scoped because `dsh-teamwork` on npm is someone else's; the
   - a private provider address is refused without
     `ALLOW_PRIVATE_PROVIDERS`;
   - the plugin refuses `http://` to a public address.
-- On `alpha.dshteamwork.com`, sign-in is still the emailed code and Google,
+- On `dshteamwork.com`, sign-in is still the emailed code and Google,
   and a team calls models with its own provider key.
 
 ### Phase 5: the first release
@@ -578,8 +563,9 @@ This phase is gated on the plugin's wire having settled, and on Phase 4.
 
 None remain. The developer settled these on 2026-11-10:
 
-1. **The hosted home page** is a closed `premium/apps/site` on the root domain
-   (see "The hosted home page").
+1. **The hosted home page** was a closed `premium/apps/site` on the root
+   domain; ADR 0007 has since made it the open web app's `/` (see "The hosted
+   home page").
 2. **Public documents:** the architecture, the design system and ADRs 0001,
    0002 and 0005. The rest stays here: positioning, the SaaS route, ops,
    legal, and ADRs 0003 and 0004, which are about the business. The public
@@ -607,10 +593,9 @@ None remain. The developer settled these on 2026-11-10:
   deliberately.
 - **The secret scan of the public tree is clean**, and the public repository's
   history is the one initial commit.
-- **The hosted service is unchanged.** On `alpha.dshteamwork.com`, signing in
+- **The hosted service is unchanged.** On `dshteamwork.com`, signing in
   by email over the new transport still reaches `/team`. The console still
-  admits only `ADMIN_EMAILS`. The root domain serves the home page, which
-  links `/privacy` and `/terms`.
+  admits only `ADMIN_EMAILS`. The home page links `/privacy` and `/terms`.
 - **This document is rewritten as `Current`.** It then describes the two
   repositories and the merge workflow, and stays public, as the
   developer decided.

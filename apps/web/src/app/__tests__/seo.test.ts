@@ -13,8 +13,14 @@ describe('crawler files', () => {
 
   it('lists the public pages and none of the signed-in ones', () => {
     vi.stubEnv('APP_URL', 'https://example.com');
-    const urls = sitemap().map((e) => e.url);
-    expect(urls).toEqual(['https://example.com']);
+    vi.stubEnv('LEGAL_DIR', '');
+    expect(sitemap().map((e) => e.url)).toEqual(['https://example.com']);
+  });
+
+  it('lists the legal pages only where the deployment publishes them', () => {
+    vi.stubEnv('APP_URL', 'https://example.com');
+    vi.stubEnv('LEGAL_DIR', 'docs/legal');
+    expect(sitemap().map((e) => e.url)).toEqual(['https://example.com', 'https://example.com/privacy', 'https://example.com/terms']);
   });
 
   it('keeps a page out of the sitemap only if robots.txt also refuses the path it lives on', () => {

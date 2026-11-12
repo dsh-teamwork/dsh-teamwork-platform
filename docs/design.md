@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-10
+> **Status:** Current · **Updated:** 2026-11-12
 
 The DSH Teamwork visual system — the whale mark, the indigo-and-paper palette, type, spacing and icons — and the file in code that owns each part.
 
@@ -18,10 +18,9 @@ stylesheet is right and this file is stale.
 | --- | --- |
 | Brand mark | `docs/brand/icon.svg` — the one hand-edited copy; every icon and logo is exported from it |
 | Exports | `scripts/generate-icons.mjs` (`pnpm assets:icons`) |
-| Web colour, radius, faces | `apps/web/src/app/globals.css` |
+| Web colour, radius, faces, the ocean | `apps/web/src/app/globals.css` |
 | Console colour, radius, faces | `premium/apps/manage/src/app/globals.css` |
-| Hosted site colour, the ocean | `premium/apps/site/src/app/globals.css` |
-| Share card | `premium/apps/site/src/app/opengraph-image.tsx` — the exported `public/logo.svg` beside the name (Onest Bold) and tagline (Onest Regular), on paper |
+| Share card | `apps/web/src/app/opengraph-image.tsx` — the exported `public/logo.svg` beside the name (Onest Bold) and tagline (Onest Regular), on paper |
 
 ## The mark
 
@@ -109,9 +108,8 @@ Console only:
 | `--warning` | `oklch(0.62 0.14 70)` | `oklch(0.8 0.14 75)` |
 | `--info` | `oklch(0.55 0.12 245)` | `oklch(0.72 0.12 245)` |
 
-The hosted site only — its landing page's ocean
-(`premium/apps/site/src/app/page.tsx`, `premium/apps/site/src/components/home/sea.tsx`).
-The site declares the web scale plus these. The sea is the same in both themes,
+The landing page's ocean (`apps/web/src/app/page.tsx`,
+`apps/web/src/components/home/sea.tsx`), declared beside the web scale. The sea is the same in both themes,
 so these are the one part of the scale that does not swap, except `--fluke`:
 
 | Token | Light | Dark | Role |
@@ -162,16 +160,16 @@ icon set.
   is the one call to action per form, not the brand.
 - **The logo is an image, not a drawing.** Show `public/logo.svg` at its square
   size; never redraw the mark inline or recolour it. The one inline whale is the
-  hosted landing page's hero illustration (`premium/apps/site`,
-  `components/home/sea.tsx`): the mark's fluke
+  landing page's hero illustration (`apps/web/src/components/home/sea.tsx`):
+  the mark's fluke
   path at hero scale over a full-width sea, drawn from the ocean tokens. It is
   not the logo, has no plate, and is not exported.
-- **The hosted landing page is one dive.** A paper sky and the fluke sounding,
+- **The landing page is one dive.** A paper sky and the fluke sounding,
   then each section a little deeper in one `--ocean` → `--ocean-deep`
   gradient, labelled with its depth. It states only what ships; a planned
   capability is not on it.
-- **The web app's `/` is a start page**: the logo, the name and tagline, and
-  the one way in. Every instance has it, self-hosted ones included.
+- **The web app's `/` is the landing page on every instance**, self-hosted
+  ones included (ADR 0007), so it states only what holds for any instance.
 - **Outcomes in the console** use `--success` / `--warning` / `--info` /
   `--destructive`, and every mutation reports through a `sonner` toast.
 - **Console chrome comes from `premium/apps/manage/src/components/console.tsx`**

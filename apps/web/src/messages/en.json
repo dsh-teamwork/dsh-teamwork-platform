@@ -5,11 +5,95 @@
     "signOut": "Sign out",
     "account": "Account",
     "language": "Language",
-    "backHome": "Back home"
+    "backHome": "Back home",
+    "privacy": "Privacy",
+    "terms": "Terms"
   },
   "home": {
     "title": "One team setup for every DSH.",
     "tagline": "Publish models, presets and plugin pins once; every member's DeepSeek Harness picks them up.",
+    "eyebrow": "The team edition of DeepSeek Harness",
+    "lede": "Publish models, presets and plugin pins once, and every member's DeepSeek Harness picks them up. Team-model calls go through the platform's gateway, so provider keys never leave the server.",
+    "hint": "Already on DSH? Type <code>/teamwork login</code> in your terminal.",
+    "nav": {
+      "how": "How it works",
+      "security": "Security",
+      "setup": "Team setup",
+      "faq": "Questions",
+      "selfhost": "Self-host"
+    },
+    "surface": {
+      "depth": "0 m",
+      "label": "Surface · where you already work",
+      "title": "Keep your tools. Sync once, and the team's setup is there.",
+      "lede": "Members keep their own DSH. The team's models and presets appear next to their own configuration, and nothing of theirs is overwritten.",
+      "step1Title": "An admin publishes once",
+      "step1Body": "Add team models, presets and plugin pins in the team console, and invite members with single-use links.",
+      "step2Title": "Members sign in to the team",
+      "step2Body": "Run <code>/teamwork login</code> in DSH, confirm on the website, and paste the code back with <code>/teamwork authorize</code>.",
+      "step3Title": "Sync and use",
+      "step3Body": "Run <code>/teamwork sync</code>, or let it run itself: once after sign-in, then every minute. The team's models and presets are then in DSH, and calls to team models go through the gateway.",
+      "terminalCaption": "In DSH · example",
+      "termSigned": "Signed in to acme-infra",
+      "termSynced": "Synced: 2 team models, 1 preset, 1 plugin pin",
+      "termGateway": "via gateway",
+      "termNoKey": "No provider key stored on this machine"
+    },
+    "boundary": {
+      "depth": "−40 m",
+      "label": "Boundary · safe to hand over",
+      "title": "The keys stay on the server. Membership is checked on every request.",
+      "lede": "No API keys pasted into a chat, and no rotating them when someone leaves. The team gets a path the platform guards.",
+      "keysTitle": "Keys never reach a laptop",
+      "keysBody": "Provider keys live only in the server's environment. A member's DSH holds a team token, which cannot call a provider by itself.",
+      "checkTitle": "Checked on every request",
+      "checkBody": "Every request re-reads the caller's membership. Remove someone, and their next request is refused.",
+      "gatewayTitle": "Only what inference needs",
+      "gatewayBody": "The gateway forwards an allow-list of inference fields, and none of the provider's headers come back.",
+      "promise": "Nothing a caller sends can name a URL, a header or a key.",
+      "promiseNote": "The model is resolved within your team; the provider and its key are the server's to choose."
+    },
+    "deep": {
+      "depth": "−200 m",
+      "label": "Deep · what the team shares",
+      "title": "Publish once. Everyone runs the same thing.",
+      "lede": "A team setup is three kinds of thing. Presets sit on top: each uses a team model and pins the plugins it needs. Change one once, and every member's next sync carries it.",
+      "presetsTitle": "Presets",
+      "presetsBody": "The team's prompt, tool requirements and plugin pins, on a team model or a model of its own.",
+      "pluginsTitle": "Plugin pins",
+      "pluginsBody": "npm packages at exact versions, so everyone runs the same build. Installing one stays each member's choice.",
+      "modelsTitle": "Team models",
+      "modelsBody": "A provider and a model the platform calls for the team, with the key on the server."
+    },
+    "community": {
+      "depth": "−500 m",
+      "label": "Community edition · run it yourself",
+      "title": "Or run it on your own server.",
+      "lede": "What one team needs is open source under Apache-2.0: teams, models, presets, plugin pins and the gateway. It runs as Postgres and one Node container from compose.yaml, and provider keys stay in your own server's environment.",
+      "repo": "Source on GitHub",
+      "guide": "Self-hosting guide"
+    },
+    "faq": {
+      "depth": "−1000 m",
+      "label": "Questions",
+      "title": "Before you start",
+      "q1": "Where do the provider keys live?",
+      "a1": "Only in the DSH Teamwork server's environment. A member's DSH holds a team token that lasts 30 days; team-model calls are forwarded by the server, and the token cannot reach a provider directly.",
+      "q2": "Do we have to change DSH?",
+      "a2": "No. Install the @dsh-teamwork/dsh-teamwork plugin, run /teamwork login, and /teamwork sync pulls the team's setup (it also syncs on its own every minute). The team's setup sits next to each member's own and overwrites nothing.",
+      "q3": "Are our conversations uploaded?",
+      "a3": "No. Conversations stay in each member's DSH. The platform forwards team-model calls to the provider and does not store them.",
+      "q4": "What happens when we remove a member?",
+      "a4": "Their next request is refused. Membership is checked on every request, so there is no waiting for a token to expire.",
+      "q5": "Can one person be in several teams?",
+      "a5": "Not yet: one person belongs to one team."
+    },
+    "final": {
+      "depth": "Seabed",
+      "label": "Start",
+      "title": "Set up your team and publish its first model.",
+      "lede": "Sign in, create a team, publish a team model. Once members sync, their first call goes through the gateway."
+    },
     "openConsole": "Open team console"
   },
   "signIn": {
