@@ -42,7 +42,7 @@ From then on the rules are:
    - teams and invitations;
    - team configuration;
    - the model gateway;
-   - `/team login` and `/team sync` from DSH.
+   - `/teamwork login` and `/teamwork sync` from DSH.
 
    It runs with no Google, PostHog or Resend account.
 2. **The public repository holds no closed code, no internal document and no
@@ -160,7 +160,7 @@ anything lands.
    There is no other account. Run the whole path:
    - sign in with an emailed code;
    - create a team, invite a second address and publish a model;
-   - in DSH, run `/team login`, `/team authorize` and `/team sync`;
+   - in DSH, run `/teamwork login`, `/teamwork authorize` and `/teamwork sync`;
    - get one answer through the gateway from a stub provider.
 
 ### Phase 0 results
@@ -223,8 +223,8 @@ not yet.**
     model and created an invitation;
   - the second person joined with the invitation, and a reuse of it was
     refused with 409;
-  - the plugin's own `TeamworkClient` ran `/team login`, the `/plugin`
-    confirmation, `/team authorize` and `/team sync`;
+  - the plugin's own `TeamworkClient` ran `/teamwork login`, the `/plugin`
+    confirmation, `/teamwork authorize` and `/teamwork sync`;
   - the gateway answered through the stub, with the server's key and the
     provider's model name.
 - **The server log** held no error and no call to Google, PostHog or Resend.

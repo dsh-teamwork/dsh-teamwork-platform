@@ -57,7 +57,7 @@ an email and a password.
    others by email in `/team`: each gets a first password to change when they
    first sign in.
 5. Point each member's plugin at `APP_URL` (`apiEndpoint` in the DSH profile's
-   `cordis.patch.yml`). Then `/team login` signs them in.
+   `cordis.patch.yml`). Then `/teamwork login` signs them in.
 
 Providers and their keys are the team's own: its admin adds them in `/team`,
 and the keys are stored encrypted under `PROVIDER_KEYS_SECRET`. A model the
