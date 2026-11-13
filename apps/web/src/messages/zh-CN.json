@@ -289,7 +289,7 @@
     "invalid": "链接不完整，请在 DSH 中重新运行 /teamwork login。",
     "confirm": "确认授权",
     "copy": "将以下内容粘贴到 DSH：",
-    "expiry": "授权码两分钟内有效、只能使用一次，且只对发起请求的 DSH 有效。",
+    "expiry": "授权码两分钟内有效，且只对发起请求的 DSH 有效。",
     "failed": "授权失败。请重新登录，或在 DSH 中重新运行 /teamwork login。"
   },
   "setup": {

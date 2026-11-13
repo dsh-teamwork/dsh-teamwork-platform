@@ -289,7 +289,7 @@
     "invalid": "This link is incomplete. Run /teamwork login in DSH again.",
     "confirm": "Authorize",
     "copy": "Paste this into DSH:",
-    "expiry": "The code works once, for two minutes, and only for the DSH that asked for it.",
+    "expiry": "The code works for two minutes, and only for the DSH that asked for it.",
     "failed": "Authorization failed. Sign in again, or run /teamwork login in DSH again."
   },
   "setup": {
