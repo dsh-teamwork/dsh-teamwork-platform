@@ -14,6 +14,7 @@ How documents are laid out, named and kept is the "Documentation" section of
 
 - [Architecture](tech/architecture.md) — components, data model, the team API, both sign-in flows and the model gateway.
 - [Community edition split](tech/community-edition.md) — how the open part becomes its own repository, runs from `npx`, and stays in step.
+- [Go server](tech/go-server.md) — how the server becomes one Go binary, and what each experiment found.
 
 ## Decisions
 
