@@ -67,11 +67,12 @@ jobs:
           pnpm --config.registry=http://127.0.0.1:4873 dlx @dsh-teamwork-exp/server -version
       - name: An install path longer than MAX_PATH
         run: |
-          d="$RUNNER_TEMP/$(printf 'a%.0s' $(seq 120))"
+          d="$RUNNER_TEMP/$(printf 'a%.0s' $(seq 190))"
           mkdir -p "$d" && cd "$d" && npm init -y >/dev/null
           npm install @dsh-teamwork-exp/server --no-audit --no-fund >/dev/null
           node -p "'binary path length: ' + require.resolve('@dsh-teamwork-exp/server-' + process.platform + '-' + process.arch + '/bin/dsh-teamwork' + (process.platform === 'win32' ? '.exe' : '')).length"
           npx dsh-teamwork -version
+          if [ "$RUNNER_OS" = Windows ]; then ls "$LOCALAPPDATA/dsh-teamwork/0.0.1/"; fi
       - name: Optional dependencies omitted
         run: |
           mkdir -p "$RUNNER_TEMP/omit" && cd "$RUNNER_TEMP/omit" && npm init -y >/dev/null
