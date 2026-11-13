@@ -29,7 +29,8 @@ the team, its role and sync state, and applies the team's presets, models and
 pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
 token never reaches the browser. Publishing and members stay in the web
-console, `/teams/{teamId}`: the panel links there for an admin and edits
+console, `/teams/{teamId}` (members at `/teams/{teamId}/members`): the panel
+links there for an admin and edits
 nothing on the server. Its components
 come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
 repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.

@@ -137,7 +137,6 @@
       "title": "我的团队",
       "empty": "你还不在任何团队里。创建一个，或用邀请链接加入。",
       "members": "{count} 人",
-      "back": "← 所有团队",
       "admin": "我管理的",
       "member": "我加入的"
     },
@@ -218,7 +217,6 @@
       "saved": "已保存，成员下次同步后生效。"
     },
     "members": {
-      "title": "成员",
       "remove": "移除",
       "removeConfirm": "移除此成员？",
       "removed": "成员已移除。",

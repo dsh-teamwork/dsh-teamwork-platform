@@ -192,8 +192,11 @@ function Invitations({ teamId, invites }: { teamId: string; invites: InviteView[
   const t = useTranslations('team');
   const format = useFormatter();
   const { pending, run } = useMutation();
-  const [link, setLink] = useState('');
-  const open = invites.filter((i) => !i.usedAt);
+  // The link just created, kept beside its invitation so revoking another one leaves it shown.
+  const [created, setCreated] = useState<{ id: string; link: string } | null>(null);
+  // Read once at mount: an invitation that expires while the page stays open goes on the next load.
+  const [now] = useState(Date.now);
+  const open = invites.filter((i) => !i.usedAt && Date.parse(i.expiresAt) > now);
   return (
     <Card>
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
@@ -205,20 +208,20 @@ function Invitations({ teamId, invites }: { teamId: string; invites: InviteView[
           disabled={pending}
           onClick={() =>
             run(async () => {
-              const created = await callApi<CreatedInvite>(`teams/${teamId}/invites`, 'POST');
-              setLink(`${location.origin}/teams?invite=${created.token}`);
+              const invite = await callApi<CreatedInvite>(`teams/${teamId}/invites`, 'POST');
+              setCreated({ id: invite.id, link: `${location.origin}/teams?invite=${invite.token}` });
             }, t('invites.created'))
           }
         >
           {t('invites.create')}
         </Button>
       </CardHeader>
-      {(link || open.length > 0) && (
+      {(created || open.length > 0) && (
         <CardContent className="flex flex-col gap-3 text-sm">
-          {link && (
+          {created && (
             <label className="flex flex-col gap-1.5">
               <span className="text-muted-foreground">{t('invites.link')}</span>
-              <Input readOnly value={link} className="font-mono" onFocus={(e) => e.currentTarget.select()} />
+              <Input readOnly value={created.link} className="font-mono" onFocus={(e) => e.currentTarget.select()} />
             </label>
           )}
           {open.map((i) => (
@@ -233,7 +236,7 @@ function Invitations({ teamId, invites }: { teamId: string; invites: InviteView[
                 onClick={() =>
                   run(async () => {
                     await callApi(`teams/${teamId}/invites/${i.id}`, 'DELETE');
-                    setLink('');
+                    if (created?.id === i.id) setCreated(null);
                   }, t('invites.revoked'))
                 }
               >

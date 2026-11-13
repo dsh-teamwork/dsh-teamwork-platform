@@ -320,7 +320,7 @@ generated in Postgres by the first migration. `@electric-sql/pglite` and
 ## Architecture
 
 ```
-apps/web             Next.js 16 — the home page, the team console (/team), the
+apps/web             Next.js 16 — the home page, the team console (/teams), the
                      plugin's sign-in page (/plugin) and the API the plugin
                      calls (/api/*)
 packages/db          Prisma schema, migrations, ensureUser

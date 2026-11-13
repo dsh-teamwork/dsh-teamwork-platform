@@ -14,7 +14,7 @@ import { cache } from 'react';
 
 import { currentUser } from '@/lib/auth';
 import { strategy } from '@/lib/auth/strategy';
-import { TeamError, teamOf, teamsOf } from '@/lib/team';
+import { TeamError, teamOf } from '@/lib/team';
 
 export const consolePage = cache(async (teamId: string) => {
   const here = `/teams/${teamId}`;
@@ -22,8 +22,8 @@ export const consolePage = cache(async (teamId: string) => {
   if (!user) redirect(`/sign-in?next=${encodeURIComponent(here)}`);
   if (strategy.passwords && (await mustChangePassword(user.id))) redirect(`/password?next=${encodeURIComponent(here)}`);
   try {
-    const [team, teams] = await Promise.all([teamOf(user.id, teamId), teamsOf(user.id)]);
-    return { user, team, teams, admin: team.role === 'admin' };
+    const team = await teamOf(user.id, teamId);
+    return { user, team, admin: team.role === 'admin' };
   } catch (error) {
     if (error instanceof TeamError && error.code === 'team_not_found') notFound();
     throw error;

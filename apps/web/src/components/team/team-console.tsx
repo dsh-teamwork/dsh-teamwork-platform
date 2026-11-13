@@ -19,10 +19,7 @@ interface Props {
   providers: ProviderView[];
 }
 
-/**
- * The team's configuration and providers, until the models, presets and
- * plugins pages replace them (docs/tech/architecture.md; ADR 0013).
- */
+/** The team's configuration and providers, until the models, presets and plugins pages replace them. */
 export function TeamConsole({ team, configs, providers }: Props) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();

@@ -137,7 +137,6 @@
       "title": "My teams",
       "empty": "You are not in any team yet. Create one, or join with an invitation link.",
       "members": "{count, plural, one {# member} other {# members}}",
-      "back": "← All teams",
       "admin": "Teams I manage",
       "member": "Teams I joined"
     },
@@ -218,7 +217,6 @@
       "saved": "Saved. Members get it at their next sync."
     },
     "members": {
-      "title": "Members",
       "remove": "Remove",
       "removeConfirm": "Remove this member?",
       "removed": "Member removed.",
