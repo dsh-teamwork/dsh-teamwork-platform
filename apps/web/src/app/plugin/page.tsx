@@ -7,18 +7,24 @@ import { getTranslations } from 'next-intl/server';
 import { PluginAuthorize } from '@/components/plugin-authorize';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { currentUser } from '@/lib/auth';
+import { nextAuth } from '@/lib/auth/nextauth';
 import { strategy } from '@/lib/auth/strategy';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('plugin'))('title'), robots: { index: false } };
 }
 
-/** Where `/teamwork login` in DSH sends the browser: confirm, then copy the code back. */
+/**
+ * Where `/teamwork login` in DSH sends the browser: confirm, then copy the code
+ * back. The phone app adds `redirect_uri`, and the code goes back to it instead,
+ * when that address is one this server sends codes to.
+ */
 export default async function PluginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { challenge } = await searchParams;
-  const valid = typeof challenge === 'string' && PLUGIN_CHALLENGE.test(challenge);
+  const { challenge, redirect_uri: redirectUri } = await searchParams;
+  const returnTo = redirectUri === undefined ? undefined : nextAuth.plugin.returnTo(redirectUri);
+  const valid = typeof challenge === 'string' && PLUGIN_CHALLENGE.test(challenge) && returnTo !== null;
   if (valid) {
-    const here = `/plugin?challenge=${challenge}`;
+    const here = `/plugin?${new URLSearchParams({ challenge, ...(returnTo ? { redirect_uri: returnTo } : {}) })}`;
     const user = await currentUser();
     if (!user) redirect(`/sign-in?next=${encodeURIComponent(here)}`);
     if (strategy.passwords && (await mustChangePassword(user.id))) redirect(`/password?next=${encodeURIComponent(here)}`);
@@ -30,11 +36,11 @@ export default async function PluginPage({ searchParams }: { searchParams: Promi
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{t('title')}</CardTitle>
-          <CardDescription>{valid ? t('description') : t('invalid')}</CardDescription>
+          <CardDescription>{valid ? t(returnTo ? 'descriptionApp' : 'description') : t('invalid')}</CardDescription>
         </CardHeader>
         {valid && (
           <CardContent>
-            <PluginAuthorize challenge={challenge} />
+            <PluginAuthorize challenge={challenge} returnTo={returnTo ?? undefined} />
           </CardContent>
         )}
       </Card>

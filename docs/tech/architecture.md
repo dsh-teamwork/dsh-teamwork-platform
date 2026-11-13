@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-12
+> **Status:** Current · **Updated:** 2026-11-13
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -125,6 +125,12 @@ A code read off the screen is useless without the verifier, which never leaves
 the plugin. A link alone mints nothing: the code exists only after the signed-in
 person presses Authorize. Why it is shaped this way:
 [ADR 0001](../adr/0001-plugin-sign-in.md).
+
+A phone app signs in through the same page with `&redirect_uri=…`. When the
+address starts with `MOBILE_REDIRECT_URI`, pressing Authorize sends the browser
+to `redirect_uri?code=…` instead of showing the code for pasting; any other
+address makes the link invalid, and with the variable unset no code is sent
+anywhere ([ADR 0010](../adr/0010-the-app-gets-its-code-back.md)).
 
 ## The model gateway
 

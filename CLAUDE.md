@@ -397,7 +397,9 @@ they paste back (`/teamwork authorize <code>`). The plugin trades code + verifie
 (`packages/shared/src/server/auth/nextauth/{plugin,tokens}.ts`). A JWT session
 or token **cannot be revoked before it expires** — the price of having no
 session table, chosen deliberately; team access is still re-checked on every
-request.
+request. A phone app adds `&redirect_uri=…` under `MOBILE_REDIRECT_URI`, and
+after the same confirmation the code goes back to it instead of being shown
+(`docs/adr/0010-the-app-gets-its-code-back.md`).
 
 | Where | What |
 | --- | --- |
