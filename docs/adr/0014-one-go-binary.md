@@ -55,11 +55,28 @@ and stores its data in SQLite, Postgres or MySQL, chosen by `DATABASE_URL`.**
   `@dsh-teamwork/ui`), built into the binary with `go:embed`. Next.js leaves
   the server; server components and server actions become calls to the same
   API the plugin uses.
-- **Sign-in is rewritten in Go**, keeping every rule `CLAUDE.md` states today:
-  Google (`golang.org/x/oauth2`), emailed codes or passwords decided by
-  `SMTP_URL`, scrypt with its parameters stored, the limits spent before the
-  comparison, the plugin's PKCE code and 30-day Bearer token. Sessions and
-  tokens stay stateless (JWE under `AUTH_SECRET`). Auth.js is removed.
+- **Sign-in is rewritten in Go**, with three doors:
+  - **Google**, through `github.com/markbates/goth`;
+  - **an emailed code**, or a password where `SMTP_URL` is unset, with
+    today's rules: the code as an HMAC, scrypt with its parameters stored,
+    each limit spent before the comparison;
+  - **Feishu**, through goth's `lark` provider, which speaks to
+    `open.feishu.cn`. Lark outside China is a later provider.
+
+  goth only runs the OAuth exchange and stores nothing, so every table stays
+  in `ent`. The plugin's PKCE code and 30-day Bearer token are unchanged.
+  Sessions and tokens stay stateless (JWE under `AUTH_SECRET`, through
+  `go-jose`). Auth.js is removed.
+- **An account is no longer its email.** `User.authId` is replaced by an
+  `identities` table: `(provider, subject)` is unique and points at one user.
+  - Google's subject is its `sub`; Feishu's is the `union_id`, which is the
+    same across one developer's apps (an `open_id` is not); an emailed code's
+    or a password's is the lower-cased email.
+  - Accounts merge by email only on an email the door has verified: an
+    emailed code, or Google with `email_verified`. A Feishu email is never
+    trusted for this, because Feishu does not promise it is verified.
+  - A first Feishu sign-in creates an account. To use Feishu with an existing
+    account, a person signs in another way and links it from `/account`.
 - **One OpenAPI document is the wire contract.** Go server types and the
   console's TypeScript client are generated from it; it replaces the Zod
   schemas in `@dsh-teamwork/shared`. The plugin's restated snapshot shape is
@@ -111,7 +128,15 @@ and stores its data in SQLite, Postgres or MySQL, chosen by `DATABASE_URL`.**
   ruling out SQLite) and its packaging. Its sign-in, provider-key and
   network decisions carry over unchanged. ADR 0002 (the platform is built
   from seed) stops describing the stack.
+- **A second door no longer merges by itself.** A person who signed in with a
+  password and then with Feishu has two accounts until they link them. That
+  is the price of never trusting an unverified email.
 - **Ruled out:**
+  - **An identity service beside the binary** (Casdoor, Ory, Zitadel): a
+    second process, with its own database and ORM.
+  - **goth's `wechat` provider as it is**: it invents `openid@wechat.com` as
+    the email, which would merge strangers' accounts under the old rule.
+    WeChat, WeCom and DingTalk wait until a team asks for them.
   - **Rust**, for a cost in development time with no gain the gateway can
     use.
   - **Prisma with three schemas**, three histories and every raw query
@@ -126,9 +151,9 @@ and stores its data in SQLite, Postgres or MySQL, chosen by `DATABASE_URL`.**
 The unknowns that could change this decision are answered first, by
 experiments thrown away afterwards:
 
-1. **Three dialects from one schema.** Today's tables in `ent`, migrations for
-   all three, and the concurrent sign-in-code test passing on SQLite,
-   Postgres 16 and MySQL 8.
+1. **Three dialects from one schema.** Today's tables and `identities` in
+   `ent`, migrations for all three, and the concurrent sign-in-code test
+   passing on SQLite, Postgres 16 and MySQL 8.
 2. **The gateway.** Streaming parity with today's gateway on the same
    requests, and its latency and memory against the Node gateway on one
    fixture.
