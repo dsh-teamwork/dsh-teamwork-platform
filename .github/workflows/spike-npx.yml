@@ -1,0 +1,69 @@
+# Throwaway: docs/tech/go-server.md, experiment 3, on macOS and Windows.
+# Deleted, with spike/npx, once the run is recorded.
+name: spike-npx
+on:
+  push:
+    branches: [claude/serene-davinci-dh7qxh]
+    paths: [spike/npx/**, .github/workflows/spike-npx.yml]
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: spike/npx/go.mod, cache-dependency-path: spike/npx/go.sum }
+      - run: bash spike/npx/pack.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: packages, path: spike/npx/out }
+  npx:
+    needs: pack
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    defaults: { run: { shell: bash } }
+    env:
+      npm_config_registry: http://127.0.0.1:4873
+      npm_config_cache: ${{ runner.temp }}/npm-cache
+    steps:
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - uses: actions/download-artifact@v4
+        with: { name: packages, path: out }
+      - name: Start a local registry and publish
+        run: |
+          cd out
+          npm_config_registry=https://registry.npmjs.org npm install --prefix ../vtool verdaccio@6 --no-fund --no-audit >/dev/null
+          (../vtool/node_modules/.bin/verdaccio --config verdaccio.yaml --listen 127.0.0.1:4873 > ../verdaccio.log 2>&1 &)
+          for i in $(seq 30); do curl -sf http://127.0.0.1:4873/-/ping >/dev/null && break; sleep 1; done
+          echo "//127.0.0.1:4873/:_authToken=anon" > ~/.npmrc
+          for d in server-*/ server/; do (cd "$d" && npm publish --registry http://127.0.0.1:4873 | tail -1); done
+      - name: npx from an empty cache
+        run: |
+          mkdir -p "$RUNNER_TEMP/run" && cd "$RUNNER_TEMP/run"
+          start=$(node -p Date.now()); npx --yes @dsh-teamwork-exp/server -version; end=$(node -p Date.now())
+          echo "clean-cache npx: $((end - start)) ms"
+          start=$(node -p Date.now()); npx --yes @dsh-teamwork-exp/server -version; end=$(node -p Date.now())
+          echo "warm-cache npx: $((end - start)) ms"
+          npx --yes @dsh-teamwork-exp/server -check -data "$RUNNER_TEMP/data"
+          npx --yes @dsh-teamwork-exp/server -check -data "$RUNNER_TEMP/data" | grep -q "teams=2"
+          echo "installed: $(find "$npm_config_cache/_npx" -mindepth 4 -maxdepth 4 -type d -path '*node_modules/@dsh-teamwork-exp/*' -exec basename {} \; | sort | tr '\n' ' ')"
+          n=$(find "$npm_config_cache/_npx" -mindepth 4 -maxdepth 4 -type d -path '*node_modules/@dsh-teamwork-exp/server-*' | wc -l)
+          test "$n" -eq 1
+      - name: Serve, answer a page, stop
+        run: |
+          cd "$RUNNER_TEMP/run"
+          npx --yes @dsh-teamwork-exp/server -data "$RUNNER_TEMP/data" > serve.log 2>&1 &
+          for i in $(seq 20); do curl -sf http://127.0.0.1:3900/ && break; sleep 1; done | grep -q "DSH Teamwork"
+          echo "page served"
+      - name: pnpm dlx
+        run: |
+          npm_config_registry=https://registry.npmjs.org npm install -g pnpm@10 >/dev/null
+          pnpm --config.registry=http://127.0.0.1:4873 dlx @dsh-teamwork-exp/server -version
+      - name: Optional dependencies omitted
+        run: |
+          mkdir -p "$RUNNER_TEMP/omit" && cd "$RUNNER_TEMP/omit" && npm init -y >/dev/null
+          npm install --omit=optional @dsh-teamwork-exp/server --no-audit --no-fund >/dev/null
+          if npx dsh-teamwork -version 2> err.txt; then echo "expected a failure"; exit 1; fi
+          cat err.txt
