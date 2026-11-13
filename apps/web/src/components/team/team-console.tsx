@@ -16,7 +16,7 @@ interface Props {
   configs: TeamConfigView[];
 }
 
-/** The team's configuration and providers, until the models, presets and plugins pages replace them. */
+/** The team's presets and plugin pins, until the presets and plugins pages replace them. */
 export function TeamConsole({ team, configs }: Props) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();

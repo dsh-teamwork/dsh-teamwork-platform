@@ -110,6 +110,14 @@ describe('teams against the database', () => {
     ).rejects.toMatchObject({ code: 'plugin_dependency_invalid' });
     const ok = await team.createConfig(admin, teamId, preset({ modelConfigId: target.id, pluginDependencies: [{ pluginConfigId: plugin.id, version: '1.0.0' }] }));
     expect(ok.kind).toBe('preset');
+
+    // What a preset uses stays until the preset changes.
+    await expect(team.deleteConfig(admin, teamId, target.id)).rejects.toMatchObject({ status: 409, code: 'model_in_use' });
+    await expect(team.deleteConfig(admin, teamId, plugin.id)).rejects.toMatchObject({ status: 409, code: 'plugin_in_use' });
+    await team.deleteConfig(admin, teamId, ok.id);
+    await team.deleteConfig(admin, teamId, target.id);
+    await team.deleteConfig(admin, teamId, plugin.id);
+    expect(await prisma.teamConfig.count({ where: { id: { in: [target.id, plugin.id] } } })).toBe(0);
   });
 });
 

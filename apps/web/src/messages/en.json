@@ -290,7 +290,7 @@
       "removeProviderConfirm": "Remove provider “{name}”? This is refused while a team model still calls it.",
       "providerRemoved": "Provider removed.",
       "removeModelConfirm": "Remove model “{name}”?",
-      "removeModelUsed": "“{name}” is used by {count, plural, one {# preset} other {# presets}}, which stop working without it. Remove it?",
+      "removeModelUsed": "{count, plural, one {# preset uses} other {# presets use}} it; point them at another model before removing it.",
       "modelRemoved": "Model removed.",
       "pickHint": "Pick a provider: its address is filled in, so you only paste an API key.",
       "connect": "Connect {name}",
@@ -314,6 +314,7 @@
       "chooseModelsHint": "The models you tick are published to the whole team. Context sizes come from the provider; add any it does not report later.",
       "allPublished": "Every model this provider lists is already published.",
       "noList": "This provider returned no model list. Type the model id instead.",
+      "listFailed": "The model list could not be read: {reason} Check the key, or type the model id instead.",
       "modelId": "Model id",
       "displayName": "Display name",
       "publish": "{count, plural, one {Publish # model} other {Publish # models}}",
@@ -359,7 +360,9 @@
     "provider_exists": "Your team already has a provider with that name.",
     "provider_in_use": "A team model or preset still uses this provider.",
     "provider_address_refused": "This server may not call that address.",
-    "provider_keys_unavailable": "Provider keys cannot be read or stored on this server: PROVIDER_KEYS_SECRET is missing or has changed."
+    "provider_keys_unavailable": "Provider keys cannot be read or stored on this server: PROVIDER_KEYS_SECRET is missing or has changed.",
+    "model_in_use": "Presets still use this model. Point them at another model first, then remove it.",
+    "plugin_in_use": "Presets still depend on this plugin. Remove it from those presets first, then remove it."
   },
   "plugin": {
     "title": "Authorize the DSH plugin",

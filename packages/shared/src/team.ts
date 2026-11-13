@@ -35,6 +35,8 @@ export const TEAM_ERRORS = [
   'member_in_other_team',
   'provider_exists',
   'provider_in_use',
+  'model_in_use',
+  'plugin_in_use',
   'provider_address_refused',
   'provider_keys_unavailable',
 ] as const;

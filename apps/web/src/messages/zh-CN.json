@@ -290,7 +290,7 @@
       "removeProviderConfirm": "删除 Provider「{name}」？还有团队模型在用它时会被拒绝。",
       "providerRemoved": "Provider 已删除。",
       "removeModelConfirm": "删除模型「{name}」？",
-      "removeModelUsed": "「{name}」正被 {count} 个预设使用，删除后它们会失效。确定删除？",
+      "removeModelUsed": "有 {count} 个预设在用它，先让它们改用别的模型才能删除。",
       "modelRemoved": "模型已删除。",
       "pickHint": "选择模型厂商：地址已经配好，只需要 API Key。",
       "connect": "接入 {name}",
@@ -314,6 +314,7 @@
       "chooseModelsHint": "勾选的模型会发布给整个团队。上下文长度来自厂商，厂商不报的可以之后补。",
       "allPublished": "这个 Provider 列出的模型都已发布。",
       "noList": "这个 Provider 没有返回模型列表，请手动填写模型 ID。",
+      "listFailed": "无法读取模型列表：{reason}请检查 API Key，或手动填写模型 ID。",
       "modelId": "模型 ID",
       "displayName": "显示名称",
       "publish": "发布 {count} 个模型",
@@ -359,7 +360,9 @@
     "provider_exists": "你的团队已经有同名的提供方。",
     "provider_in_use": "仍有团队模型或预设在使用这个提供方。",
     "provider_address_refused": "本服务器不允许调用这个地址。",
-    "provider_keys_unavailable": "本服务器无法读取或保存提供方密钥：PROVIDER_KEYS_SECRET 未设置或已更改。"
+    "provider_keys_unavailable": "本服务器无法读取或保存提供方密钥：PROVIDER_KEYS_SECRET 未设置或已更改。",
+    "model_in_use": "还有预设在用这个模型。先让这些预设改用别的模型，再删除。",
+    "plugin_in_use": "还有预设依赖这个插件。先从这些预设里去掉它，再删除。"
   },
   "plugin": {
     "title": "授权 DSH 插件",

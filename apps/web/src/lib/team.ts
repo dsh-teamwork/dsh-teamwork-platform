@@ -368,7 +368,21 @@ export async function updateConfig(userId: string, teamId: string, configId: str
   return toConfigView(await prisma.teamConfig.findUniqueOrThrow({ where: { id: configId } }));
 }
 
+/**
+ * An admin removes a configuration no preset of the team still uses: a model a
+ * preset references, or a plugin a preset pins, stays until those presets
+ * change, as a provider stays while a model calls it.
+ */
 export async function deleteConfig(userId: string, teamId: string, configId: string) {
   const admin = await requireMembership(userId, teamId, true);
+  const target = await prisma.teamConfig.findFirst({ where: { id: configId, teamId: admin.teamId }, select: { kind: true } });
+  if (target?.kind === 'model' || target?.kind === 'plugin') {
+    const presets = await prisma.teamConfig.findMany({ where: { teamId: admin.teamId, kind: 'preset' }, select: { data: true } });
+    const uses = (data: unknown) => {
+      const preset = data as { modelConfigId?: string; pluginDependencies?: { pluginConfigId: string }[] };
+      return target.kind === 'model' ? preset.modelConfigId === configId : !!preset.pluginDependencies?.some((d) => d.pluginConfigId === configId);
+    };
+    if (presets.some((p) => uses(p.data))) throw new TeamError(409, target.kind === 'model' ? 'model_in_use' : 'plugin_in_use');
+  }
   await prisma.teamConfig.deleteMany({ where: { id: configId, teamId: admin.teamId } });
 }

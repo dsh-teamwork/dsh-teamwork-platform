@@ -18,7 +18,7 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { callApi } from '@/lib/api-client';
+import { ApiCallError, callApi } from '@/lib/api-client';
 import { catalogEntry, PROVIDER_CATALOG } from '@/lib/provider-catalog';
 
 import { PageHeader } from './console-shell';
@@ -30,7 +30,26 @@ type CatalogModel = Extract<ModelCatalog, { models: unknown }>['models'][number]
 /** 131072 → "131K", 1048576 → "1M": a model's limits at a glance. */
 function tokens(n: number | undefined) {
   if (!n) return '—';
-  return n >= 1_000_000 ? `${Number((n / 1_000_000).toFixed(1))}M` : `${Math.round(n / 1000)}K`;
+  if (n >= 999_500) return `${Number((n / 1_000_000).toFixed(1))}M`;
+  return n >= 1000 ? `${Math.round(n / 1000)}K` : String(n);
+}
+
+/** The first of `id`, `id-2`, `id-3`… no provider of the team is called yet: a second account of a listed provider. */
+function freeProviderName(id: string, taken: Set<string>) {
+  let name = id;
+  for (let n = 2; taken.has(name); n++) name = `${id}-${n}`;
+  return name;
+}
+
+/**
+ * A team model name not taken yet, within the 100 characters a name may have.
+ * Names are unique per team; a second provider's model of the same name says whose it is.
+ */
+function freeModelName(name: string, provider: string, taken: Set<string>) {
+  const fit = (suffix: string) => (name.slice(0, Math.max(0, 100 - suffix.length)).trim() + suffix).slice(0, 100);
+  let label = fit('');
+  for (let n = 1; taken.has(label); n++) label = fit(n === 1 ? ` (${provider})` : ` (${provider} ${n})`);
+  return label;
 }
 
 interface Props {
@@ -208,10 +227,11 @@ function ModelRow({ teamId, model, admin, usedBy }: { teamId: string; model: Mod
           <Button
             size="sm"
             variant="ghost"
-            disabled={pending}
+            // The server refuses too (model_in_use): presets name the model they call.
+            disabled={pending || usedBy.length > 0}
+            title={usedBy.length ? t('removeModelUsed', { count: usedBy.length }) : undefined}
             onClick={() => {
-              const question = usedBy.length ? t('removeModelUsed', { name: model.name, count: usedBy.length }) : t('removeModelConfirm', { name: model.name });
-              if (confirm(question)) void run(() => callApi(`teams/${teamId}/configs/${model.id}`, 'DELETE'), t('modelRemoved'));
+              if (confirm(t('removeModelConfirm', { name: model.name }))) void run(() => callApi(`teams/${teamId}/configs/${model.id}`, 'DELETE'), t('modelRemoved'));
             }}
           >
             {t('remove')}
@@ -245,6 +265,7 @@ function ConnectDialog({
 }) {
   const t = useTranslations('team.models');
   const tc = useTranslations('team.catalog');
+  const te = useTranslations('teamErrors');
   const { pending, run } = useMutation();
   const [pick, setPick] = useState<string | null>(existing ? existing.name : null);
   const [name, setName] = useState(existing?.name ?? '');
@@ -254,19 +275,23 @@ function ConnectDialog({
   const [connected, setConnected] = useState<string | null>(existing?.name ?? null);
   const [listed, setListed] = useState<CatalogModel[] | null>(null);
   const [manual, setManual] = useState(false);
+  // Why the list could not be read (a wrong key, an unreachable provider), as a `teamErrors` code.
+  const [listError, setListError] = useState<string | null>(null);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [typed, setTyped] = useState({ id: '', name: '' });
   const taken = new Set(providers.map((p) => p.name));
   const custom = pick === 'custom';
 
-  // Reading the list never fails the dialog: a provider without `/models` is filled in by hand.
+  // Reading the list never fails the dialog: a provider without `/models` is filled in by hand, and the reason is shown.
   async function readModels(provider: string) {
+    setListError(null);
     try {
       const catalog = await callApi<{ models: CatalogModel[] }>(`teams/${teamId}/model-catalog?provider=${encodeURIComponent(provider)}`);
       const fresh = catalog.models.filter((m) => !published.some((p) => p.data.provider === provider && p.data.model === m.id));
       setListed(fresh);
       setManual(catalog.models.length === 0);
-    } catch {
+    } catch (error) {
+      setListError(error instanceof ApiCallError ? error.code : 'internal_error');
       setListed([]);
       setManual(true);
     }
@@ -293,19 +318,23 @@ function ConnectDialog({
       ? [{ id: typed.id.trim(), name: typed.name.trim() || typed.id.trim() }]
       : (listed ?? []).filter((m) => chosen.has(m.id));
     const names = new Set(published.map((m) => m.name));
+    const sent = new Set<string>();
     const ok = await run(async () => {
       for (const item of items) {
-        // Names are unique per team; a second provider's model of the same name says whose it is.
-        const label = names.has(item.name) ? `${item.name} (${provider})` : item.name;
+        const label = freeModelName(item.name.trim() || item.id, provider, names);
         names.add(label);
         await callApi(`teams/${teamId}/configs`, 'POST', {
           kind: 'model',
           name: label,
           data: { provider, model: item.id, contextWindow: item.contextWindow, maxTokens: item.maxTokens },
         });
+        sent.add(item.id);
       }
     }, t('published', { count: items.length }));
-    if (ok) onClose();
+    if (ok) return onClose();
+    // A failure part-way leaves the earlier models published: drop them, so a retry sends only the rest.
+    setListed((list) => list && list.filter((m) => !sent.has(m.id)));
+    setChosen((set) => new Set([...set].filter((id) => !sent.has(id))));
   }
 
   return (
@@ -322,13 +351,12 @@ function ConnectDialog({
               <li key={p.id}>
                 <button
                   type="button"
-                  disabled={taken.has(p.id)}
                   onClick={() => {
                     setPick(p.id);
-                    setName(p.id);
+                    setName(freeProviderName(p.id, taken));
                     setBaseUrl(p.baseUrl);
                   }}
-                  className="flex w-full flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm hover:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm hover:border-ring"
                 >
                   <Mark text={p.mark} />
                   <span className="font-medium">{tc(p.id)}</span>
@@ -377,7 +405,8 @@ function ConnectDialog({
               <Input id="provider-key" type="password" autoComplete="off" value={apiKey} onChange={(e) => setApiKey(e.target.value)} required autoFocus />
             </Field>
             {!custom && (
-              <details className="rounded-md border px-3 py-2 text-sm">
+              // Open for a second account, whose name is not the provider's id.
+              <details open={taken.has(pick)} className="rounded-md border px-3 py-2 text-sm">
                 <summary className="cursor-pointer text-muted-foreground">{t('advanced')}</summary>
                 <div className="mt-3 flex flex-col gap-4">
                   <Field id="provider-name" label={t('providerName')} hint={t('secondAccountHint')}>
@@ -426,7 +455,9 @@ function ConnectDialog({
 
         {connected && manual && (
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground">{t('noList')}</p>
+            <p className="text-sm text-muted-foreground">
+              {listError ? t('listFailed', { reason: te.has(listError) ? te(listError) : te('internal_error') }) : t('noList')}
+            </p>
             <Field id="model-id" label={t('modelId')}>
               <Input id="model-id" value={typed.id} onChange={(e) => setTyped({ ...typed, id: e.target.value })} maxLength={100} required />
             </Field>
