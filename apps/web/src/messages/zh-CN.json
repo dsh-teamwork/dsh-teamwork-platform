@@ -377,7 +377,9 @@
       "save": "保存",
       "create": "添加到团队",
       "saved": "已保存，成员下次同步后生效。",
-      "added": "已添加「{name}」。"
+      "added": "已添加「{name}」。",
+      "pinStale": "插件版本已变，编辑并保存这个预设即可按新版本固定。",
+      "pinStaleShort": "需重新保存"
     },
     "plugins": {
       "title": "插件",

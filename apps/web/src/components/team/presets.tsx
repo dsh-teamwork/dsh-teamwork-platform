@@ -212,6 +212,8 @@ function PresetCard({
     const plugin = plugins.find((p) => p.id === d.pluginConfigId);
     return plugin ? `${plugin.name} @${d.version}` : t('pluginMissing');
   });
+  // A pin to a version the plugin no longer has: saving the preset again re-pins it at the current one.
+  const stale = preset.data.pluginDependencies.some((d) => plugins.find((p) => p.id === d.pluginConfigId)?.data.version !== d.version);
   return (
     <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
       <div className="flex items-start justify-between gap-2">
@@ -227,9 +229,10 @@ function PresetCard({
             {route}
           </span>
           {pinned.length > 0 && (
-            <span className="flex items-center gap-1">
+            <span className={cn('flex items-center gap-1', stale && 'text-destructive')} title={stale ? t('pinStale') : undefined}>
               <Puzzle className="size-3.5" aria-hidden />
               {pinned.join(', ')}
+              {stale && ` · ${t('pinStaleShort')}`}
             </span>
           )}
         </span>
@@ -308,8 +311,10 @@ function PresetEditor({
   const [tab, setTab] = useState<Tab>('basics');
   const [extra, setExtra] = useState('');
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }));
-  // A tool the preset names that DSH does not ship (a plugin's, say) keeps its own row.
-  const names = [...DSH_TOOLS, ...[...draft.required, ...draft.optional].filter((n) => !(DSH_TOOLS as readonly string[]).includes(n))];
+  // A tool the preset names that DSH does not ship (a plugin's, say) keeps its own row, even while it is off.
+  const isDsh = (name: string) => (DSH_TOOLS as readonly string[]).includes(name);
+  const [others, setOthers] = useState(() => [...initial.required, ...initial.optional].filter((n) => !isDsh(n)));
+  const names = [...DSH_TOOLS, ...others];
   const state = (name: string) => (draft.required.includes(name) ? 'required' : draft.optional.includes(name) ? 'optional' : 'off');
   const choose = (name: string, next: 'required' | 'optional' | 'off') =>
     setDraft((d) => ({
@@ -318,6 +323,13 @@ function PresetEditor({
       optional: next === 'optional' ? [...d.optional.filter((n) => n !== name), name] : d.optional.filter((n) => n !== name),
     }));
   const ready = draft.name.trim() && (draft.modelConfigId || draft.route);
+  function addExtra() {
+    const name = extra.trim();
+    if (!name) return;
+    if (!isDsh(name) && !others.includes(name)) setOthers([...others, name]);
+    choose(name, 'required');
+    setExtra('');
+  }
 
   async function save() {
     const data = {
@@ -446,18 +458,16 @@ function PresetEditor({
                     placeholder={t('addTool')}
                     value={extra}
                     onChange={(e) => setExtra(e.target.value)}
+                    // Enter adds the tool; left alone it would submit, and publish, the whole preset.
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+                      e.preventDefault();
+                      addExtra();
+                    }}
                     maxLength={100}
                     className="font-mono"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={!extra.trim()}
-                    onClick={() => {
-                      choose(extra.trim(), 'required');
-                      setExtra('');
-                    }}
-                  >
+                  <Button type="button" variant="outline" disabled={!extra.trim()} onClick={addExtra}>
                     {t('add')}
                   </Button>
                 </div>

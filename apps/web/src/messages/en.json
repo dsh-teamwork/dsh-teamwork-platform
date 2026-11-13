@@ -377,7 +377,9 @@
       "save": "Save",
       "create": "Add to team",
       "saved": "Saved. Members get it at their next sync.",
-      "added": "Added “{name}”."
+      "added": "Added “{name}”.",
+      "pinStale": "The plugin’s version changed; edit and save this preset to pin the new one.",
+      "pinStaleShort": "save again"
     },
     "plugins": {
       "title": "Plugins",
