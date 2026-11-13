@@ -198,7 +198,7 @@ if the table and the script disagree, the script is right.
 
 | Exempt | Why it is not source |
 | --- | --- |
-| `apps/*/src/messages/*.json`, `premium/apps/*/src/messages/*.json` | The product ships in `en` and `zh-CN` (`LOCALES` in `@dsh-teamwork/shared`). |
+| `apps/*/src/messages/*.json`, `premium/apps/*/src/messages/*.json`, and an Expo app's `apps/mobile/lib/i18n/locales/*.json` (seed's layout), under `premium/` too | The product ships in `en` and `zh-CN` (`LOCALES` in `@dsh-teamwork/shared`). |
 | `packages/shared/src/locales.ts` | Endonyms: a language picker names each language in itself. |
 
 Exemption covers the **data**, never the file: keys, comments and test names are
