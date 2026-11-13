@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — experiments 1 and 2 done · **Updated:** 2026-11-13
+> **Status:** Plan — experiments 1 and 2 done, 3 on Linux · **Updated:** 2026-11-13
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -32,7 +32,8 @@ must keep.
    2. The gateway: streaming parity with the Node gateway on the same
       requests, and latency and memory on one fixture. **Done**, see below.
    3. Packaging: a binary published to a scratch npm scope and run with
-      `npx` on Linux, macOS and Windows.
+      `npx` on Linux, macOS and Windows. **Done on Linux**, see below; macOS
+      and Windows are still to run.
 2. **One vertical slice**, against an unchanged plugin: a password sign-in,
    `/teamwork login`, `GET /api/configs`, one call through the gateway.
 3. **The team API and the console**, page by page.
@@ -122,6 +123,45 @@ adds about 9 ms with Node and 3 ms with Go, which a model's answer dwarfs.
 The difference is in what one instance carries: about four to five times
 the requests per core, and a tenth of the memory, which is what the hosted
 service and a small private server pay for.
+
+## Experiment 3: `npx` and the platform packages
+
+Run on 2026-11-13 against a local registry (Verdaccio 6), so no network time
+is in the numbers. The binary embedded a page and the SQLite migrations; its
+self-check applied them in a data directory and wrote and read a row. Six
+packages were published: `server` (a 1 KB launcher, its `bin`) and one per
+platform, each listed in `server`'s `optionalDependencies` with `os` and
+`cpu`.
+
+**On Linux x64, everything the plan relies on held:**
+
+- `npx` from an empty cache installed `server` and `server-linux-x64` only,
+  and ran the binary in 1.4 s; with the cache warm, 0.46 s.
+- Asked for another platform (`npm install --os … --cpu …`), npm chose
+  `darwin-arm64`, `darwin-x64`, `win32-x64` and `linux-arm64` correctly, one
+  each.
+- The binary kept its executable bit through `npm pack` and install, with no
+  `bin` entry in the platform package.
+- `--ignore-scripts` changed nothing; `--omit=optional` ended in the
+  launcher's message and exit code 1.
+- `pnpm dlx` worked the same way.
+- A second start kept the data and skipped the applied migration.
+- The `linux-arm64` binary passed its self-check under qemu.
+
+**Sizes:** each platform package is 9.7 MB to download and 24–26 MB
+installed.
+
+**Two findings:**
+
+- **A registry's upload limit can refuse a platform package.** Verdaccio's
+  default, 10 MB, did. A company that mirrors npm through its own registry
+  may need the limit raised, so the release binaries and the container image
+  stay a documented way in.
+- **`npx` is for starting it, not for running it as a service.** Ctrl-C
+  reached the whole process group and everything stopped, and a SIGTERM to
+  the launcher reached the binary. A SIGTERM to `npx` alone, which is what a
+  service manager sends, ended npm but left the launcher and the binary
+  running: npm does not pass it on. A service runs the binary itself.
 
 ## Rules for the data layer
 
