@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — experiment 1 done · **Updated:** 2026-11-13
+> **Status:** Plan — experiments 1 and 2 done · **Updated:** 2026-11-13
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -30,7 +30,7 @@ must keep.
 1. **Experiments, thrown away afterwards.** Each could change ADR 0014.
    1. Three dialects from one schema. **Done**, see below.
    2. The gateway: streaming parity with the Node gateway on the same
-      requests, and latency and memory on one fixture.
+      requests, and latency and memory on one fixture. **Done**, see below.
    3. Packaging: a binary published to a scratch npm scope and run with
       `npx` on Linux, macOS and Windows.
 2. **One vertical slice**, against an unchanged plugin: a password sign-in,
@@ -74,6 +74,54 @@ Postgres 16.15 and MySQL 8.0.46. Today's tables plus `identities`.
 
 **Size:** the data layer alone, built without cgo, is 23–25 MB on Linux,
 macOS and Windows; most of it is the SQLite driver.
+
+## Experiment 2: the gateway
+
+Run on 2026-11-13. The Go gateway did what `llm-gateway.ts` does, over the
+ent schema of experiment 1 on Postgres 16: the Bearer, the user, the
+configuration, the membership, the provider and its sealed key, the
+allow-list, and the stream copied with none of the upstream headers. Its
+address check was a stand-in that admits loopback literals; the real rule,
+checked inside the connection's own lookup, is ported with the gateway. The
+Node gateway was `next start` of today's `apps/web`, on its own Postgres
+database with the same rows. A stub provider answered both: JSON after
+50 ms, or a stream of 100 chunks 10 ms apart. Both gateways, the stub and the
+load generator shared one 4-core machine.
+
+**Parity: the same on every check.**
+
+- The answers were byte for byte the same, streamed (10,614 bytes) and not.
+- The provider received the same body from both: the allow-listed fields,
+  `max_tokens` set from the model, and `user` and `base_url` dropped.
+- The status and error code matched for no token, a model of another team,
+  and a `max_tokens` above the model's.
+- **The Go gateway accepted a plugin token minted by the Node server.** An
+  Auth.js JWE is `dir` with A256CBC-HS512 under an HKDF of `AUTH_SECRET` and
+  its salt, which `go-jose` decrypts. So tokens already issued can keep
+  working across the rewrite, and members need not sign in again.
+
+**Load:**
+
+| Case | Concurrency | Node: req/s, p50 / p99 | Go: req/s, p50 / p99 |
+| --- | --- | --- | --- |
+| JSON, 50 ms upstream | 1 | 16.7, 59 / 65 ms | 18.8, 53 / 56 ms |
+| JSON | 50 | 235, 201 / 485 ms | 681, 68 / 120 ms |
+| JSON | 200 | 339, 568 / 1,836 ms | 1,710, 113 / 184 ms |
+| Stream, first byte | 1 | 8.6 / 11.5 ms | 2.0 / 2.5 ms |
+| Stream, first byte | 100 | 139 / 630 ms | 32 / 82 ms |
+| Stream, 1.1 s answer | 500 | 152, first byte 1,880 / 3,052 ms | 393, first byte 125 / 294 ms |
+
+- **Memory:** 299 MB idle and up to 742 MB under load for Node; 29 MB idle
+  and up to 100 MB for Go.
+- **CPU per request** at 200 concurrent JSON calls: 3.5 ms for Node, 0.8 ms
+  for Go.
+- No request failed in either.
+
+**What it means:** for one team, sending one request at a time, the gateway
+adds about 9 ms with Node and 3 ms with Go, which a model's answer dwarfs.
+The difference is in what one instance carries: about four to five times
+the requests per core, and a tenth of the memory, which is what the hosted
+service and a small private server pay for.
 
 ## Rules for the data layer
 
