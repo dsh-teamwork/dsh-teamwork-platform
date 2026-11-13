@@ -17,15 +17,15 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ApiCallError, callApi } from '@/lib/api-client';
 import { catalogEntry, PROVIDER_CATALOG } from '@/lib/provider-catalog';
 
 import { PageHeader } from './console-shell';
+import { Field } from './field';
 import { useMutation } from './use-mutation';
 
 type ModelConfig = Extract<TeamConfigView, { kind: 'model' }>;
-type CatalogModel = Extract<ModelCatalog, { models: unknown }>['models'][number];
+type CatalogModel = ModelCatalog['models'][number];
 
 /** 131072 → "131K", 1048576 → "1M": a model's limits at a glance. */
 function tokens(n: number | undefined) {
@@ -286,7 +286,7 @@ function ConnectDialog({
   async function readModels(provider: string) {
     setListError(null);
     try {
-      const catalog = await callApi<{ models: CatalogModel[] }>(`teams/${teamId}/model-catalog?provider=${encodeURIComponent(provider)}`);
+      const catalog = await callApi<ModelCatalog>(`teams/${teamId}/model-catalog?provider=${encodeURIComponent(provider)}`);
       const fresh = catalog.models.filter((m) => !published.some((p) => p.data.provider === provider && p.data.model === m.id));
       setListed(fresh);
       setManual(catalog.models.length === 0);
@@ -577,15 +577,5 @@ function EditModelDialog({ teamId, model, onClose }: { teamId: string; model: Mo
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Field({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      {children}
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-    </div>
   );
 }

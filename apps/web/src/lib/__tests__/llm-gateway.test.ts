@@ -216,9 +216,6 @@ describe('modelCatalog', () => {
     const request = vi.fn(async () =>
       Response.json({ data: [{ id: 'kimi', display_name: 'Kimi', context_length: 1048576, apiKey: 'secret-key' }, { id: 'other', limit: { context: 128000, output: 8192 } }] }),
     );
-    vi.mocked(prisma.teamProvider.findMany).mockResolvedValue([{ name: 'kimi' }] as never);
-    expect(await modelCatalog('u', 't', null, signal())).toEqual({ providers: ['kimi'] });
-    expect(prisma.teamProvider.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { teamId: 't' } }));
     const result = await modelCatalog('u', 't', 'kimi', signal(), request);
     expect(result).toEqual({
       provider: 'kimi',

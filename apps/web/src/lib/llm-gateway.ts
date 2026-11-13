@@ -11,6 +11,7 @@
 
 import 'server-only';
 
+import type { ModelCatalog } from '@dsh-teamwork/shared';
 import { z } from 'zod';
 
 import { readJson } from '@/lib/api';
@@ -44,22 +45,17 @@ const CatalogItem = z.object({
 });
 
 /**
- * For an admin choosing a team model: the configured providers, or one
- * provider's `/models`. A limit the provider does not report stays absent —
- * never a guessed capability.
+ * For an admin choosing team models: one provider's `/models`. A limit the
+ * provider does not report stays absent — never a guessed capability.
  */
 export async function modelCatalog(
   userId: string,
   teamId: string,
-  provider: string | null,
+  provider: string,
   signal: AbortSignal,
   request: ProviderRequest = providerFetch,
-) {
+): Promise<ModelCatalog> {
   const admin = await requireMembership(userId, teamId, true);
-  if (!provider) {
-    const rows = await prisma.teamProvider.findMany({ where: { teamId: admin.teamId }, orderBy: { name: 'asc' }, select: { name: true } });
-    return { providers: rows.map((row) => row.name) };
-  }
   const route = await routeFor(admin.teamId, provider);
   let list: z.infer<typeof CatalogItem>[];
   try {

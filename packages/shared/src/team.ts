@@ -208,7 +208,8 @@ export interface ResetPassword {
   password: string;
 }
 
-/** `GET /api/teams/:teamId/model-catalog`: the configured providers, or one provider's models. */
-export type ModelCatalog =
-  | { providers: string[] }
-  | { provider: string; models: { id: string; name: string; contextWindow?: number; maxTokens?: number }[] };
+/** `GET /api/teams/:teamId/model-catalog?provider=`: one provider's models. */
+export interface ModelCatalog {
+  provider: string;
+  models: { id: string; name: string; contextWindow?: number; maxTokens?: number }[];
+}

@@ -4,11 +4,11 @@
  * The frame of a team's console (`/teams/{teamId}/…`): a sidebar with the team
  * switcher, one link per page and the account, and the page beside it. On a
  * narrow screen the sidebar becomes a bar above the page. Which pages exist is
- * `SECTIONS`; a page that is not built yet is not listed.
+ * `SECTIONS`.
  */
 
 import type { TeamSummary, TeamView } from '@dsh-teamwork/shared';
-import { Check, ChevronsUpDown, Cpu, LayoutGrid, LayoutDashboard, LogOut, Users, type LucideIcon } from 'lucide-react';
+import { Check, ChevronsUpDown, Cpu, Layers, LayoutGrid, LayoutDashboard, LogOut, Puzzle, Users, type LucideIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -21,9 +21,11 @@ import { signOut } from '@/lib/auth/actions';
 import { cn } from '@/lib/utils';
 
 /** Each page of a team's console: its path below `/teams/{teamId}` and its icon. */
-const SECTIONS: { path: string; key: 'overview' | 'models' | 'members'; icon: LucideIcon }[] = [
+const SECTIONS: { path: string; key: 'overview' | 'models' | 'presets' | 'plugins' | 'members'; icon: LucideIcon }[] = [
   { path: '', key: 'overview', icon: LayoutDashboard },
   { path: 'models', key: 'models', icon: Cpu },
+  { path: 'presets', key: 'presets', icon: Layers },
+  { path: 'plugins', key: 'plugins', icon: Puzzle },
   { path: 'members', key: 'members', icon: Users },
 ];
 

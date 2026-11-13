@@ -89,7 +89,7 @@ the same team at their exact version, checked when the preset is written.
 | `GET /api/configs` | anyone signed in | `{ teams: [{ teamId, teamName, role, configs }] }` — the snapshot the plugin caches |
 | `GET`, `POST /api/teams/:teamId/configs`; `PATCH`, `DELETE …/configs/:id` | member reads, admin writes | List; publish, edit (with `version`), delete |
 | `GET`, `POST /api/teams/:teamId/providers`; `PUT`, `DELETE …/providers/:id` | admin | Providers, never a key |
-| `GET /api/teams/:teamId/model-catalog[?provider=]` | admin | Configured providers, or one provider's models |
+| `GET /api/teams/:teamId/model-catalog?provider=` | admin | One provider's models, read from its `/models` |
 | `POST /api/llm/chat/completions` | member | The model gateway |
 | `POST /api/auth/plugin/token` | the plugin | `{ code, verifier }` → `{ token, expiresAt }` |
 
