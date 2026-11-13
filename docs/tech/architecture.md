@@ -110,11 +110,12 @@ the same team at their exact version, checked when the preset is written.
 ```
 DSH plugin                                    apps/web
   │ verifier = random(32); challenge = S256(verifier)
-  │ print /plugin?challenge=… ; the person opens it
+  │ listen on http://127.0.0.1:<port>/callback
+  │ print /plugin?challenge=…&redirect_uri=… ; the person opens it
   │                                           no session → /sign-in, back here after
   │                                           "Authorize" (a server action) →
-  │                                           code = JWE{email, challenge}, 2 min, shown on the page
-  │ person pastes: /teamwork authorize <code>
+  │                                           code = JWE{email, challenge}, 2 min
+  │◄── browser: GET /callback?code=… ─────────  (or the person pastes /teamwork authorize <code>)
   │── POST /api/auth/plugin/token {code, verifier} ──►
   │                                           S256(verifier) == challenge ?
   │◄── { token, expiresAt } ─────────────────  token = JWE{email}, its own salt, 30 days
@@ -126,11 +127,14 @@ the plugin. A link alone mints nothing: the code exists only after the signed-in
 person presses Authorize. Why it is shaped this way:
 [ADR 0001](../adr/0001-plugin-sign-in.md).
 
-A phone app signs in through the same page with `&redirect_uri=…`. When the
-address starts with `MOBILE_REDIRECT_URI`, pressing Authorize sends the browser
-to `redirect_uri?code=…` instead of showing the code for pasting; any other
-address makes the link invalid, and with the variable unset no code is sent
-anywhere ([ADR 0010](../adr/0010-the-app-gets-its-code-back.md)).
+The code goes back through `&redirect_uri=…` in two cases. The plugin's own
+loopback listener, `http://127.0.0.1:<port>/…`, is accepted on every deployment
+([ADR 0012](../adr/0012-the-plugin-gets-its-code-back-on-loopback.md)). A
+phone app's address is accepted when it starts with `MOBILE_REDIRECT_URI`
+([ADR 0010](../adr/0010-the-app-gets-its-code-back.md)). For either, pressing
+Authorize sends the browser to `redirect_uri?code=…` and keeps the code on
+screen in case it does not arrive. Any other address makes the link invalid.
+Without a `redirect_uri`, the code is shown for pasting.
 
 ## The model gateway
 

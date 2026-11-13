@@ -11,6 +11,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0006](0006-one-command-community-edition.md) — the community edition runs from one `npx` command: PGlite, passwords, team-owned provider keys.
 - [0007](0007-one-domain-one-app.md) — the web app serves the root domain and the landing page; legal pages come from `LEGAL_DIR`.
 - [0010](0010-the-app-gets-its-code-back.md) — a phone app gets its sign-in code back by redirect, after the same confirmation.
+- [0012](0012-the-plugin-gets-its-code-back-on-loopback.md) — the DSH plugin gets its sign-in code back on a loopback address.
 
 The template:
 

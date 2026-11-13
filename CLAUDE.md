@@ -390,9 +390,11 @@ address is one account. An app built with `emailCodes: false` — the console �
 admits only Google sessions.
 
 **The DSH plugin signs in through the website** (`docs/adr/0001-plugin-sign-in.md`).
-`/teamwork login` in DSH prints `/plugin?challenge=…`; the signed-in person
-confirms, and is shown a two-minute code bound to that PKCE challenge, which
-they paste back (`/teamwork authorize <code>`). The plugin trades code + verifier at
+`/teamwork login` in DSH listens on `http://127.0.0.1:<port>` and prints
+`/plugin?challenge=…&redirect_uri=…`. The signed-in person confirms, and the
+browser takes a two-minute code bound to that PKCE challenge back to the plugin
+(`docs/adr/0012-the-plugin-gets-its-code-back-on-loopback.md`). The code also
+stays on screen to paste (`/teamwork authorize <code>`). The plugin trades code + verifier at
 `POST /api/auth/plugin/token` for a 30-day Bearer token
 (`packages/shared/src/server/auth/nextauth/{plugin,tokens}.ts`). A JWT session
 or token **cannot be revoked before it expires** — the price of having no
