@@ -4,7 +4,7 @@
  * the call to the provider with a key only it holds.
  *
  * Where a provider lives and its key are the team's (ADR 0006): its admin
- * enters them in `/team`, the key is kept encrypted (`provider-keys.ts`), and
+ * enters them in the team's console, the key is kept encrypted (`provider-keys.ts`), and
  * where the address may point is `provider-network.ts`'s rule. Nothing a
  * caller sends can name a URL, a header or a credential.
  */
@@ -48,8 +48,14 @@ const CatalogItem = z.object({
  * provider's `/models`. A limit the provider does not report stays absent —
  * never a guessed capability.
  */
-export async function modelCatalog(userId: string, provider: string | null, signal: AbortSignal, request: ProviderRequest = providerFetch) {
-  const admin = await requireMembership(userId, true);
+export async function modelCatalog(
+  userId: string,
+  teamId: string,
+  provider: string | null,
+  signal: AbortSignal,
+  request: ProviderRequest = providerFetch,
+) {
+  const admin = await requireMembership(userId, teamId, true);
   if (!provider) {
     const rows = await prisma.teamProvider.findMany({ where: { teamId: admin.teamId }, orderBy: { name: 'asc' }, select: { name: true } });
     return { providers: rows.map((row) => row.name) };
@@ -106,23 +112,32 @@ const CompletionRequest = z.looseObject({
 
 const RouteData = z.object({ provider: z.string(), model: z.string(), maxTokens: z.number().int().positive().optional() });
 
-/** The provider and model a configuration id resolves to, within the caller's team only. */
-async function resolveModel(teamId: string, configId: string) {
-  const config = await prisma.teamConfig.findFirst({ where: { id: configId, teamId, kind: { in: ['model', 'preset'] } } });
-  if (!config) throw new TeamError(403, 'model_forbidden');
+/**
+ * The team a configuration id belongs to and the provider and model it
+ * resolves to. A person may be in several teams (ADR 0013), so the id names the
+ * team: the caller must be a member of that team, and everything after this —
+ * the referenced model, the provider, its key — is read within it. A config
+ * that does not exist and one in a team the caller is not in get the same
+ * answer.
+ */
+async function resolveModel(userId: string, configId: string) {
+  const config = await prisma.teamConfig.findFirst({ where: { id: configId, kind: { in: ['model', 'preset'] } } });
+  const teamId = config?.teamId;
+  if (!config || !teamId || !(await prisma.membership.findUnique({ where: { userId_teamId: { userId, teamId } } }))) {
+    throw new TeamError(403, 'model_forbidden');
+  }
   const referenced = (config.data as { modelConfigId?: unknown }).modelConfigId;
   if (config.kind === 'preset' && typeof referenced === 'string') {
     const model = await prisma.teamConfig.findFirst({ where: { id: referenced, teamId, kind: 'model' } });
     if (!model) throw new TeamError(403, 'model_forbidden');
-    return RouteData.parse(model.data);
+    return { teamId, ...RouteData.parse(model.data) };
   }
-  return RouteData.parse(config.data);
+  return { teamId, ...RouteData.parse(config.data) };
 }
 
 export async function proxyCompletion(userId: string, input: unknown, signal: AbortSignal, request: ProviderRequest = providerFetch): Promise<Response> {
   const body = CompletionRequest.parse(input);
-  const member = await requireMembership(userId);
-  const target = await resolveModel(member.teamId, body.model);
+  const target = await resolveModel(userId, body.model);
 
   if (body.max_tokens !== undefined && body.max_completion_tokens !== undefined) {
     throw new TeamError(400, 'max_tokens_exceeds_context');
@@ -138,7 +153,7 @@ export async function proxyCompletion(userId: string, input: unknown, signal: Ab
     body.max_tokens = target.maxTokens;
   }
 
-  const route = await routeFor(member.teamId, target.provider);
+  const route = await routeFor(target.teamId, target.provider);
   const payload = Object.fromEntries(FORWARDED.filter((key) => key in body).map((key) => [key, body[key]]));
   let upstream: Response;
   try {

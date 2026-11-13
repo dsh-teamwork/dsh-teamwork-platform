@@ -23,7 +23,7 @@ type Data = Record<string, unknown>;
 const lines = (value: string) => value.split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
 const optionalNumber = (value: string) => (value ? Number(value) : undefined);
 
-export function ConfigForm({ editing, configs, onDone }: { editing: TeamConfigView | null; configs: TeamConfigView[]; onDone: () => void }) {
+export function ConfigForm({ teamId, editing, configs, onDone }: { teamId: string; editing: TeamConfigView | null; configs: TeamConfigView[]; onDone: () => void }) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();
   const [kind, setKind] = useState<ConfigKind>(editing?.kind ?? 'preset');
@@ -62,7 +62,7 @@ export function ConfigForm({ editing, configs, onDone }: { editing: TeamConfigVi
     }
     const body = { kind, name: text('name'), data, ...(editing ? { version: editing.version } : {}) };
     run(async () => {
-      await callApi(editing ? `team/configs/${editing.id}` : 'team/configs', editing ? 'PATCH' : 'POST', body);
+      await callApi(editing ? `teams/${teamId}/configs/${editing.id}` : `teams/${teamId}/configs`, editing ? 'PATCH' : 'POST', body);
       onDone();
       if (!editing) form.reset();
     }, t('form.saved'));
@@ -104,9 +104,9 @@ export function ConfigForm({ editing, configs, onDone }: { editing: TeamConfigVi
         </>
       )}
 
-      {kind === 'model' && <ModelFields initial={initial} />}
+      {kind === 'model' && <ModelFields teamId={teamId} initial={initial} />}
 
-      {kind === 'preset' && <PresetFields initial={initial} configs={configs} />}
+      {kind === 'preset' && <PresetFields teamId={teamId} initial={initial} configs={configs} />}
 
       <div className="flex gap-2">
         <Button disabled={pending}>{t('form.save')}</Button>
@@ -137,7 +137,7 @@ function Field({ label, children, hint }: { label: string; children: React.React
 type CatalogModel = Extract<ModelCatalog, { models: unknown }>['models'][number];
 
 /** Provider and model, with the provider's own catalogue offered when the server can reach it. */
-function ModelFields({ initial }: { initial: Data }) {
+function ModelFields({ teamId, initial }: { teamId: string; initial: Data }) {
   const t = useTranslations('team');
   const [provider, setProvider] = useState((initial.provider as string) ?? '');
   const [model, setModel] = useState((initial.model as string) ?? '');
@@ -150,19 +150,19 @@ function ModelFields({ initial }: { initial: Data }) {
 
   useEffect(() => {
     let active = true;
-    callApi<{ providers: string[] }>('team/model-catalog')
+    callApi<{ providers: string[] }>(`teams/${teamId}/model-catalog`)
       .then((r) => active && setProviders(r.providers))
       .catch(() => active && setNote(t('form.catalogUnavailable')));
     return () => {
       active = false;
     };
-  }, [t]);
+  }, [t, teamId]);
 
   async function fetchModels() {
     setLoading(true);
     setNote('');
     try {
-      const r = await callApi<{ models: CatalogModel[] }>(`team/model-catalog?provider=${encodeURIComponent(provider)}`);
+      const r = await callApi<{ models: CatalogModel[] }>(`teams/${teamId}/model-catalog?provider=${encodeURIComponent(provider)}`);
       setModels(r.models);
       if (!r.models.length) setNote(t('form.catalogEmpty'));
     } catch {
@@ -228,7 +228,7 @@ function ModelFields({ initial }: { initial: Data }) {
   );
 }
 
-function PresetFields({ initial, configs }: { initial: Data; configs: TeamConfigView[] }) {
+function PresetFields({ teamId, initial, configs }: { teamId: string; initial: Data; configs: TeamConfigView[] }) {
   const t = useTranslations('team');
   const models = configs.filter((c) => c.kind === 'model');
   const plugins = configs.filter((c) => c.kind === 'plugin');
@@ -248,7 +248,7 @@ function PresetFields({ initial, configs }: { initial: Data; configs: TeamConfig
           ))}
         </NativeSelect>
       </Field>
-      {ownRoute && !modelId && <ModelFields initial={initial} />}
+      {ownRoute && !modelId && <ModelFields teamId={teamId} initial={initial} />}
       <Field label={t('form.description')}>
         <Textarea name="description" defaultValue={initial.description as string} maxLength={500} />
       </Field>

@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Changing one's own password; where an admin set it, nothing else opens until it is changed. */
 export default async function PasswordPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
-  const next = returnPath(params.next, '/team');
+  const next = returnPath(params.next, '/teams');
   if (!strategy.passwords) redirect(next);
   const user = await currentUser();
   if (!user) redirect(`/sign-in?next=${encodeURIComponent(`/password?next=${next}`)}`);

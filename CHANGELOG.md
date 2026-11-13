@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-13 — A person may be in several teams
+
+- **What:** A membership is keyed by user and team, so one account can be in any number of teams, admin in some and member in others. The console moves from `/team` to `/teams` (the list, create, join) and `/teams/{teamId}`; the API from `/api/team/*` to `/api/teams/{teamId}/*`, where a team the caller is not in is `404 team_not_found`. The plugin's snapshot moves to `GET /api/configs` and lists every team: `{ teams: [{ teamId, teamName, role, configs }] }`. The gateway resolves a model to its own team and calls that team's provider. Invitation links are `/teams?invite=…`; `no_team` is gone.
+- **Why:** One person working for more than one team needed one account per team. ADR 0013.
+- **Breaking:** Plugin 0.6 cannot read the new snapshot and stops syncing until upgraded to 0.7.0. Links to `/team` and `/team?invite=…` answer 404. Any script calling `/api/team/*` moves to `/api/teams/{teamId}/*`.
+- **Upgrade:** `pnpm db:deploy` (migration `memberships_per_team`: the key becomes `(user_id, team_id)`; existing rows are unaffected). Publish plugin 0.7.0 the same day as this server.
+- **Refs:** `docs/adr/0013-one-person-many-teams.md`, `apps/web/src/lib/team.ts`, `apps/web/src/lib/llm-gateway.ts`, `packages/shared/src/team.ts`.
+
 ## 2026-11-13 — The DSH plugin gets its sign-in code back on loopback
 
 - **What:** `/plugin` also accepts a `redirect_uri` of `http://127.0.0.1:<port>/…`, on every deployment and with no configuration. Pressing Authorize sends the browser there with `?code=…`, and the `/teamwork authorize <code>` line stays on screen in case it does not arrive. `localhost`, `[::1]`, https and a missing port are refused, and still make the link invalid.

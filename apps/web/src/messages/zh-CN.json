@@ -133,6 +133,12 @@
     "noName": "未设置"
   },
   "team": {
+    "list": {
+      "title": "我的团队",
+      "empty": "你还不在任何团队里。创建一个，或用邀请链接加入。",
+      "members": "{count} 人",
+      "back": "← 所有团队"
+    },
     "title": "团队控制台",
     "overview": "团队配置与成员的本地配置并存；团队模型由平台代理，供应商密钥只保存在服务端。",
     "role": {
@@ -251,9 +257,9 @@
     }
   },
   "teamErrors": {
-    "no_team": "你还没有加入团队。",
+    "team_not_found": "找不到这个团队，或者你不在这个团队里。",
     "admin_required": "只有团队管理员可以执行此操作。",
-    "already_in_team": "你已经加入了一个团队。",
+    "already_in_team": "你已经是这个团队的成员了。",
     "admin_cannot_leave": "管理员不能退出团队。",
     "cannot_remove_self": "不能移除自己。",
     "invite_invalid": "邀请无效或已过期。",
@@ -273,7 +279,7 @@
     "not_found": "未找到。",
     "internal_error": "出了点问题，请重试。",
     "passwords_off": "此实例通过邀请链接加入团队。",
-    "member_in_team": "对方已经在一个团队中了。",
+    "member_in_team": "对方已经在这个团队里了。",
     "not_a_member": "对方不在你的团队中。",
     "cannot_reset_self": "请在修改密码页面修改你自己的密码。",
     "provider_exists": "你的团队已经有同名的提供方。",

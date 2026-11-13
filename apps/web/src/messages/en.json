@@ -133,6 +133,12 @@
     "noName": "Not set"
   },
   "team": {
+    "list": {
+      "title": "My teams",
+      "empty": "You are not in any team yet. Create one, or join with an invitation link.",
+      "members": "{count, plural, one {# member} other {# members}}",
+      "back": "← All teams"
+    },
     "title": "Team console",
     "overview": "Team configuration lives beside each member's local setup; team models run through the platform and provider keys stay on the server.",
     "role": {
@@ -251,9 +257,9 @@
     }
   },
   "teamErrors": {
-    "no_team": "You are not in a team yet.",
+    "team_not_found": "This team does not exist, or you are not in it.",
     "admin_required": "Only the team admin can do that.",
-    "already_in_team": "You are already in a team.",
+    "already_in_team": "You are already in this team.",
     "admin_cannot_leave": "The admin cannot leave the team.",
     "cannot_remove_self": "You cannot remove yourself.",
     "invite_invalid": "That invitation is invalid or has expired.",
@@ -273,7 +279,7 @@
     "not_found": "Not found.",
     "internal_error": "Something went wrong. Try again.",
     "passwords_off": "On this instance people join by invitation.",
-    "member_in_team": "That person is already in a team.",
+    "member_in_team": "That person is already in this team.",
     "not_a_member": "That person is not in your team.",
     "cannot_reset_self": "Change your own password from the password page.",
     "provider_exists": "Your team already has a provider with that name.",

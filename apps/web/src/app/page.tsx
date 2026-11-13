@@ -60,7 +60,7 @@ export default async function HomePage() {
     ],
   };
 
-  const start = user ? { href: '/team', label: t('openConsole') } : { href: '/sign-in', label: tc('signIn') };
+  const start = user ? { href: '/teams', label: t('openConsole') } : { href: '/sign-in', label: tc('signIn') };
   const legal = hasLegalPages();
   const faqs = [1, 2, 3, 4, 5] as const;
 

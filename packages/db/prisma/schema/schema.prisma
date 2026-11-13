@@ -29,8 +29,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  membership Membership?
-  password   Password?
+  memberships Membership[]
+  password    Password?
 
   @@map("users")
 }
@@ -105,10 +105,10 @@ model TeamProvider {
   @@map("team_providers")
 }
 
-// One team per person: the user is the key, so a second membership cannot
-// exist rather than being checked for.
+// A person in a team, with their role there. The key is the pair, so a person
+// may be in several teams but only once in each (ADR 0013).
 model Membership {
-  userId    String   @id @map("user_id")
+  userId    String   @map("user_id")
   teamId    String   @map("team_id")
   role      TeamRole
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -116,6 +116,7 @@ model Membership {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
+  @@id([userId, teamId])
   @@index([teamId])
   @@map("memberships")
 }

@@ -20,7 +20,7 @@ import { useMutation } from './use-mutation';
 
 const empty = { name: '', baseUrl: '', apiKey: '' };
 
-export function Providers({ providers }: { providers: ProviderView[] }) {
+export function Providers({ teamId, providers }: { teamId: string; providers: ProviderView[] }) {
   const t = useTranslations('team.providers');
   const { pending, run } = useMutation();
   const [editing, setEditing] = useState<ProviderView | null>(null);
@@ -65,7 +65,7 @@ export function Providers({ providers }: { providers: ProviderView[] }) {
                     variant="ghost"
                     disabled={pending}
                     onClick={() => {
-                      if (confirm(t('removeConfirm'))) run(() => callApi(`team/providers/${p.id}`, 'DELETE'), t('removed'));
+                      if (confirm(t('removeConfirm'))) run(() => callApi(`teams/${teamId}/providers/${p.id}`, 'DELETE'), t('removed'));
                     }}
                   >
                     {t('remove')}
@@ -81,9 +81,9 @@ export function Providers({ providers }: { providers: ProviderView[] }) {
             event.preventDefault();
             run(async () => {
               if (editing) {
-                await callApi(`team/providers/${editing.id}`, 'PUT', { baseUrl: form.baseUrl, ...(form.apiKey ? { apiKey: form.apiKey } : {}) });
+                await callApi(`teams/${teamId}/providers/${editing.id}`, 'PUT', { baseUrl: form.baseUrl, ...(form.apiKey ? { apiKey: form.apiKey } : {}) });
               } else {
-                await callApi('team/providers', 'POST', form);
+                await callApi(`teams/${teamId}/providers`, 'POST', form);
               }
               reset();
             }, editing ? t('saved') : t('added'));

@@ -2,6 +2,8 @@
 
 import type { InviteView, ProviderView, TeamConfigView, TeamView } from '@dsh-teamwork/shared';
 import { useFormatter, useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -29,6 +31,8 @@ interface Props {
 export function TeamConsole({ me, team, configs, invites, providers, passwords }: Props) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();
+  const router = useRouter();
+  const teamId = team.id;
   const admin = team.role === 'admin';
   const [editing, setEditing] = useState<TeamConfigView | null>(null);
 
@@ -39,6 +43,9 @@ export function TeamConsole({ me, team, configs, invites, providers, passwords }
       <Card>
         <CardHeader className="flex-row flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">
+            <Link href="/teams" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+              {t('list.back')}
+            </Link>
             <CardTitle>{team.name}</CardTitle>
             <CardDescription>
               {t(`role.${team.role}`)} · {t('overview')}
@@ -49,7 +56,11 @@ export function TeamConsole({ me, team, configs, invites, providers, passwords }
               variant="outline"
               disabled={pending}
               onClick={() => {
-                if (confirm(t('leave.confirm'))) run(() => callApi('team/membership', 'DELETE'), t('leave.done'));
+                if (!confirm(t('leave.confirm'))) return;
+                run(async () => {
+                  await callApi(`teams/${teamId}/membership`, 'DELETE');
+                  router.push('/teams');
+                }, t('leave.done'));
               }}
             >
               {t('leave.submit')}
@@ -74,7 +85,7 @@ export function TeamConsole({ me, team, configs, invites, providers, passwords }
                 pending={pending}
                 onEdit={() => setEditing(config)}
                 onDelete={() => {
-                  if (confirm(t('configs.deleteConfirm'))) run(() => callApi(`team/configs/${config.id}`, 'DELETE'), t('configs.deleted'));
+                  if (confirm(t('configs.deleteConfirm'))) run(() => callApi(`teams/${teamId}/configs/${config.id}`, 'DELETE'), t('configs.deleted'));
                 }}
               />
             ))}
@@ -87,13 +98,13 @@ export function TeamConsole({ me, team, configs, invites, providers, passwords }
               <CardTitle>{editing ? t('form.editTitle') : t('form.newTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <ConfigForm key={editing?.id ?? 'new'} editing={editing} configs={configs} onDone={() => setEditing(null)} />
+              <ConfigForm key={editing?.id ?? 'new'} teamId={teamId} editing={editing} configs={configs} onDone={() => setEditing(null)} />
             </CardContent>
           </Card>
         )}
       </div>
 
-      {admin && <Providers providers={providers} />}
+      {admin && <Providers teamId={teamId} providers={providers} />}
 
       <Members me={me} team={team} invites={invites} passwords={passwords} />
     </main>
@@ -174,6 +185,7 @@ function ConfigItem({
 
 function Members({ me, team, invites, passwords }: { me: Props['me']; team: TeamView; invites: InviteView[]; passwords: boolean }) {
   const t = useTranslations('team');
+  const teamId = team.id;
   const format = useFormatter();
   const { pending, run } = useMutation();
   const [link, setLink] = useState('');
@@ -204,7 +216,7 @@ function Members({ me, team, invites, passwords }: { me: Props['me']; team: Team
                       onClick={() => {
                         if (!confirm(t('members.resetConfirm'))) return;
                         run(async () => {
-                          const reset = await callApi<ResetPassword>(`team/members/${m.userId}/password`, 'POST');
+                          const reset = await callApi<ResetPassword>(`teams/${teamId}/members/${m.userId}/password`, 'POST');
                           setHandover({ email: m.email, password: reset.password });
                         }, t('members.resetDone'));
                       }}
@@ -217,7 +229,7 @@ function Members({ me, team, invites, passwords }: { me: Props['me']; team: Team
                     variant="ghost"
                     disabled={pending}
                     onClick={() => {
-                      if (confirm(t('members.removeConfirm'))) run(() => callApi(`team/members/${m.userId}`, 'DELETE'), t('members.removed'));
+                      if (confirm(t('members.removeConfirm'))) run(() => callApi(`teams/${teamId}/members/${m.userId}`, 'DELETE'), t('members.removed'));
                     }}
                   >
                     {t('members.remove')}
@@ -234,7 +246,7 @@ function Members({ me, team, invites, passwords }: { me: Props['me']; team: Team
               onSubmit={(event) => {
                 event.preventDefault();
                 run(async () => {
-                  const added = await callApi<AddedMember>('team/members', 'POST', { email });
+                  const added = await callApi<AddedMember>(`teams/${teamId}/members`, 'POST', { email });
                   setHandover({ email: added.email, password: added.password });
                   setEmail('');
                 }, t('members.added'));
@@ -270,8 +282,8 @@ function Members({ me, team, invites, passwords }: { me: Props['me']; team: Team
               disabled={pending}
               onClick={() =>
                 run(async () => {
-                  const created = await callApi<CreatedInvite>('team/invites', 'POST');
-                  setLink(`${location.origin}/team?invite=${created.token}`);
+                  const created = await callApi<CreatedInvite>(`teams/${teamId}/invites`, 'POST');
+                  setLink(`${location.origin}/teams?invite=${created.token}`);
                 }, t('invites.created'))
               }
             >
@@ -296,7 +308,7 @@ function Members({ me, team, invites, passwords }: { me: Props['me']; team: Team
                     disabled={pending}
                     onClick={() =>
                       run(async () => {
-                        await callApi(`team/invites/${i.id}`, 'DELETE');
+                        await callApi(`teams/${teamId}/invites/${i.id}`, 'DELETE');
                         setLink('');
                       }, t('invites.revoked'))
                     }

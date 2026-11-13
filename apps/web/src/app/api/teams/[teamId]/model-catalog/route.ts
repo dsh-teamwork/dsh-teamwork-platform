@@ -5,12 +5,15 @@ import { handleRouteError } from '@/lib/api';
 import { requireUser } from '@/lib/auth';
 import { modelCatalog } from '@/lib/llm-gateway';
 
-export async function GET(request: Request) {
+type Context = { params: Promise<{ teamId: string }> };
+
+export async function GET(request: Request, { params }: Context) {
   try {
     const user = await requireUser(request);
     const provider = new URL(request.url).searchParams.get('provider');
-    return NextResponse.json(await modelCatalog(user.id, provider, request.signal), { headers: { 'Cache-Control': 'no-store' } });
+    const catalog = await modelCatalog(user.id, (await params).teamId, provider, request.signal);
+    return NextResponse.json(catalog, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    return handleRouteError(error, 'GET /api/team/model-catalog');
+    return handleRouteError(error, 'GET /api/teams/[teamId]/model-catalog');
   }
 }

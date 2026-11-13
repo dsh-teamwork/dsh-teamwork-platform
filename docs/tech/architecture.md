@@ -9,26 +9,28 @@ live in `CLAUDE.md`; this file shows the mechanism behind them.
 ## Data flow
 
 ```
-DSH + plugin ──Bearer──► apps/web /api/team*, /api/llm/*  ──► @dsh-teamwork/db (Prisma) ──► Postgres, or PGlite in-process
+DSH + plugin ──Bearer──► apps/web /api/configs, /api/llm/*  ──► @dsh-teamwork/db (Prisma) ──► Postgres, or PGlite in-process
                                │
                                └── /api/llm/chat/completions ──► model provider (key from the server's env)
 
-browser ──cookie──► apps/web /team, /plugin, /api/*        premium/apps/manage pages
+browser ──cookie──► apps/web /teams, /plugin, /api/*       premium/apps/manage pages
 agent   ──MANAGE_API_KEY──► premium/apps/manage /api/admin/*
 ```
 
 The plugin (`@dsh-teamwork/dsh-teamwork`, its own repository) never reaches the
-database or a provider directly. It syncs `GET /api/team/configs` into a local
-cache, registers the team's models and presets in DSH next to the member's own,
-and sends every team-model call to the gateway with its Bearer token.
+database or a provider directly. It syncs `GET /api/configs` — every team the
+member is in ([ADR 0013](../adr/0013-one-person-many-teams.md)) — into a local
+cache, registers each team's models and presets in DSH next to the member's
+own, and sends every team-model call to the gateway with its Bearer token.
 
 A member works with the team from DSH in two ways: the `/teamwork` command and,
 in DSH's web shell, a Teamwork entry in the sidebar. The panel signs in, shows
 the team, its role and sync state, and applies the team's presets, models and
 pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
-token never reaches the browser. Publishing and members stay in `/team`: the
-panel links there for an admin and edits nothing on the server. Its components
+token never reaches the browser. Publishing and members stay in the web
+console, `/teams/{teamId}`: the panel links there for an admin and edits
+nothing on the server. Its components
 come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
 repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 
@@ -49,7 +51,7 @@ repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 | --- | --- | --- |
 | `users` | One profile per verified email (`authId`) | Created on the first authenticated request (`ensureUser`) |
 | `teams` | A name | — |
-| `memberships` | Who is in which team, as `admin` or `member` | `user_id` is the key: one team per person |
+| `memberships` | Who is in which team, as `admin` or `member` | `(user_id, team_id)` is the key: a person may be in several teams, once in each (ADR 0013) |
 | `team_configs` | `kind` (`model`, `preset`, `plugin`), `name`, `data`, `version` | Unique per team, kind and name; `data` parsed by `ConfigInputSchema` on every write; an edit names its `version` |
 | `invites` | A SHA-256 of a single-use token, its expiry and use | The token itself is never stored |
 | `verification_codes` | NextAuth email codes, as an HMAC | — |
@@ -67,22 +69,25 @@ the same team at their exact version, checked when the preset is written.
 2. The body is read with `readJson` (64 KiB, 4 MiB for the gateway; over the
    limit is `413 payload_too_large`). Anything that is not JSON fails the
    route's Zod schema as `400 { "error": "invalid_request", "issues" }`.
-3. The `lib/team.ts` function reads the caller's membership once and acts on
-   the team that row names. A refusal is `TeamError` → `{ "error": <code> }`
+3. The `lib/team.ts` function reads the caller's membership in the team the
+   URL names — that pair, user and team — and acts on that team only. A team
+   the caller is not in is `404 team_not_found`, like one that does not exist. A refusal is `TeamError` → `{ "error": <code> }`
    with one of `TEAM_ERRORS`; anything unexpected is logged and is
    `500 internal_error`.
 
 | Route | Who | What |
 | --- | --- | --- |
-| `POST /api/teams` | anyone in no team | Create a team; the caller is its admin |
-| `GET /api/team` | member | The team, the caller's role, its members |
-| `DELETE /api/team/membership` | member | Leave (an admin cannot) |
-| `DELETE /api/team/members/:userId` | admin | Remove a member |
-| `GET`, `POST /api/team/invites`; `DELETE /api/team/invites/:id` | admin | List, create (token shown once), revoke |
-| `POST /api/invites/redeem` | anyone in no team | Spend a token and join |
-| `GET /api/team/configs` | member | `{ teamId, teamName, role, configs }` — the snapshot the plugin caches |
-| `POST /api/team/configs`; `PATCH`, `DELETE /api/team/configs/:id` | admin | Publish, edit (with `version`), delete |
-| `GET /api/team/model-catalog[?provider=]` | admin | Configured providers, or one provider's models |
+| `GET /api/teams` | anyone signed in | The teams the caller is in, with their role in each |
+| `POST /api/teams` | anyone signed in | Create a team; the caller is its admin |
+| `GET /api/teams/:teamId` | member | The team, the caller's role, its members |
+| `DELETE /api/teams/:teamId/membership` | member | Leave (an admin cannot) |
+| `POST /api/teams/:teamId/members`; `DELETE /api/teams/:teamId/members/:userId` | admin | Add by email (passwords only), remove |
+| `GET`, `POST /api/teams/:teamId/invites`; `DELETE …/invites/:id` | admin | List, create (token shown once), revoke |
+| `POST /api/invites/redeem` | anyone signed in | Spend a token and join its team; a second seat in the same team is refused |
+| `GET /api/configs` | anyone signed in | `{ teams: [{ teamId, teamName, role, configs }] }` — the snapshot the plugin caches |
+| `GET`, `POST /api/teams/:teamId/configs`; `PATCH`, `DELETE …/configs/:id` | member reads, admin writes | List; publish, edit (with `version`), delete |
+| `GET`, `POST /api/teams/:teamId/providers`; `PUT`, `DELETE …/providers/:id` | admin | Providers, never a key |
+| `GET /api/teams/:teamId/model-catalog[?provider=]` | admin | Configured providers, or one provider's models |
 | `POST /api/llm/chat/completions` | member | The model gateway |
 | `POST /api/auth/plugin/token` | the plugin | `{ code, verifier }` → `{ token, expiresAt }` |
 
@@ -100,9 +105,9 @@ the same team at their exact version, checked when the preset is written.
   password, next)` checks a scrypt hash, after spending one of ten guesses per
   account per 15 minutes. `/setup?token=…`, printed by
   `src/instrumentation.ts` at start, claims the first account while no
-  password exists. `POST /api/team/members` and
-  `POST /api/team/members/:userId/password` give an admin's member a first
-  password, shown once; `/team` and `/plugin` send its owner to `/password`
+  password exists. `POST /api/teams/:teamId/members` and
+  `POST /api/teams/:teamId/members/:userId/password` give an admin's member a first
+  password, shown once; `/teams` and `/plugin` send its owner to `/password`
   until it is changed.
 
 ## Signing in from the plugin
@@ -141,8 +146,10 @@ Without a `redirect_uri`, the code is shown for pasting.
 `POST /api/llm/chat/completions` takes an OpenAI Chat Completions body whose
 `model` is a team configuration id. The gateway:
 
-1. re-reads the caller's membership and looks the id up **in that team only**
-   (a preset follows its `modelConfigId` to the team model);
+1. finds the team the id belongs to and requires the caller's membership in
+   **that team**; a missing id and another team's id are the same `403`. A
+   preset follows its `modelConfigId` to a model of the same team, and
+   everything after this is that team's (ADR 0013);
 2. caps output: `max_tokens` defaults to the model's `maxTokens`, and a caller
    asking for more is `400`;
 3. takes the team's provider of that name from `team_providers` — the base
@@ -178,7 +185,7 @@ only.
 
 ## What is expensive to change
 
-- **The wire the plugin speaks**: `/api/team/configs`'s snapshot,
+- **The wire the plugin speaks**: `/api/configs`'s snapshot,
   `/api/auth/plugin/token`, and the gateway's request shape. An installed
   plugin is a client this repository cannot update.
 - **Token format**: plugin tokens are JWEs under `AUTH_SECRET`; rotating the

@@ -1,6 +1,11 @@
 'use client';
 
+/** `/teams`: the teams the person is in, and where they create a team or join one by invitation. */
+
+import type { TeamSummary } from '@dsh-teamwork/shared';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -21,15 +26,38 @@ function tokenFrom(value: string): string {
   }
 }
 
-export function NoTeam({ email, invite, passwords }: { email: string; invite: string; passwords: boolean }) {
+export function TeamsHome({ email, teams, invite, passwords }: { email: string; teams: TeamSummary[]; invite: string; passwords: boolean }) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();
+  const router = useRouter();
   const [name, setName] = useState('');
   const [token, setToken] = useState(invite);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-6 px-6 py-10">
       <ConsoleHeader email={email} passwords={passwords} />
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('list.title')}</CardTitle>
+          {teams.length === 0 && <CardDescription>{t('list.empty')}</CardDescription>}
+        </CardHeader>
+        {teams.length > 0 && (
+          <CardContent>
+            <ul className="flex flex-col divide-y">
+              {teams.map((team) => (
+                <li key={team.id}>
+                  <Link href={`/teams/${team.id}`} className="flex items-center justify-between gap-4 py-3 hover:underline">
+                    <span className="font-medium">{team.name}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t(`role.${team.role}`)} · {t('list.members', { count: team.memberCount })}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        )}
+      </Card>
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -41,7 +69,10 @@ export function NoTeam({ email, invite, passwords }: { email: string; invite: st
               className="flex flex-col gap-3"
               onSubmit={(e) => {
                 e.preventDefault();
-                run(() => callApi('teams', 'POST', { name }), t('create.done'));
+                run(async () => {
+                  const created = await callApi<{ id: string }>('teams', 'POST', { name });
+                  router.push(`/teams/${created.id}`);
+                }, t('create.done'));
               }}
             >
               <Label htmlFor="team-name">{t('create.name')}</Label>
@@ -62,7 +93,10 @@ export function NoTeam({ email, invite, passwords }: { email: string; invite: st
                 className="flex flex-col gap-3"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  run(() => callApi('invites/redeem', 'POST', { token: tokenFrom(token) }), t('join.done'));
+                  run(async () => {
+                    const joined = await callApi<{ teamId: string }>('invites/redeem', 'POST', { token: tokenFrom(token) });
+                    router.push(`/teams/${joined.teamId}`);
+                  }, t('join.done'));
                 }}
               >
                 <Label htmlFor="invite-token">{t('join.token')}</Label>
