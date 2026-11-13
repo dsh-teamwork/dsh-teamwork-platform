@@ -29,10 +29,10 @@ the team, its role and sync state, and applies the team's presets, models and
 pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
 token never reaches the browser. Publishing and members stay in the web
-console, `/teams/{teamId}` (members at `/teams/{teamId}/members`; providers
-and team models at `/teams/{teamId}/models`): the panel
-links there for an admin and edits
-nothing on the server. Its components
+console, one page per task under `/teams/{teamId}`: the overview, `models`
+(providers from `lib/provider-catalog.ts`, and team models), `presets` (from
+`lib/preset-templates.ts` or blank), `plugins` and `members`. The panel links
+there for an admin and edits nothing on the server. Its components
 come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
 repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 
