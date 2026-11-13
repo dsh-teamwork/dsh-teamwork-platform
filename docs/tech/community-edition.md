@@ -1,6 +1,6 @@
 # Community edition split
 
-> **Status:** Plan — Phases 0 to 2 done · **Updated:** 2026-11-12
+> **Status:** Plan — Phases 0 to 2 done · **Updated:** 2026-11-13
 
 How the open part of this repository becomes the public
 `dsh-teamwork/dsh-teamwork-platform` (ADR 0005), and how it then runs from
@@ -373,6 +373,11 @@ Done on 2026-11-10.
 
 **Goal:** `npx @dsh-teamwork/server` on a machine with Node 24 starts a
 working instance. Nothing else is installed or configured (ADR 0006).
+
+**ADR 0014 changes how steps 6 and 7 are built.** The package becomes a
+launcher and one package per platform holding the Go binary, and SQLite
+replaces PGlite as the default database. Steps 1 to 5 stay as the record of
+what the Node server does; their rules carry over to the Go server.
 
 **Non-goals:**
 

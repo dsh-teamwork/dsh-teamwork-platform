@@ -319,6 +319,11 @@ generated in Postgres by the first migration. `@electric-sql/pglite` and
 
 ## Architecture
 
+**The server is being rewritten as one Go binary** over SQLite, Postgres or
+MySQL (`docs/adr/0014-one-go-binary.md`), in the order that ADR gives. Until
+the Go server serves everything, what follows describes the Node server that
+runs today.
+
 ```
 apps/web             Next.js 16 — the home page, the team console (/teams), the
                      plugin's sign-in page (/plugin) and the API the plugin

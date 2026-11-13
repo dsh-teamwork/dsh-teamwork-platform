@@ -1,6 +1,6 @@
 # 0014. The server is one Go binary over SQLite, Postgres or MySQL
 
-> **Status:** Proposed · **Date:** 2026-11-13
+> **Status:** Accepted · **Date:** 2026-11-13
 
 ## Context
 
@@ -124,7 +124,7 @@ and stores its data in SQLite, Postgres or MySQL, chosen by `DATABASE_URL`.**
   `/api/auth/plugin/token` and the gateway keep their shapes, so an installed
   plugin keeps working against the Go server. Plugin tokens issued by the
   Node server stop working, and members sign in again once.
-- **Supersedes, once accepted:** ADR 0006's database decision (PGlite, and
+- **Supersedes** ADR 0006's database decision (PGlite, and
   ruling out SQLite) and its packaging. Its sign-in, provider-key and
   network decisions carry over unchanged. ADR 0002 (the platform is built
   from seed) stops describing the stack.
