@@ -7,12 +7,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authorizePlugin } from '@/lib/auth/actions';
 
-export function PluginAuthorize({ challenge }: { challenge: string }) {
+/** `returnTo`: the app's own address, which receives the code as `?code=` instead of the person copying it. */
+export function PluginAuthorize({ challenge, returnTo }: { challenge: string; returnTo?: string }) {
   const t = useTranslations('plugin');
   const [code, setCode] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  if (code && returnTo) {
+    // Shown while the app opens, and kept as the way back if it does not.
+    return (
+      <div className="flex flex-col gap-2 text-sm">
+        <p>{t('returning')}</p>
+        <Input readOnly value={code} onFocus={(e) => e.currentTarget.select()} className="font-mono" />
+        <p className="text-xs text-muted-foreground">{t('expiry')}</p>
+      </div>
+    );
+  }
   if (code) {
     return (
       <div className="flex flex-col gap-2 text-sm">
@@ -30,8 +41,13 @@ export function PluginAuthorize({ challenge }: { challenge: string }) {
         onClick={() =>
           startTransition(async () => {
             const minted = await authorizePlugin(challenge);
-            if (minted) setCode(minted);
-            else setFailed(true);
+            if (!minted) return setFailed(true);
+            setCode(minted);
+            if (returnTo) {
+              const back = new URL(returnTo);
+              back.searchParams.set('code', minted);
+              window.location.href = back.toString();
+            }
           })
         }
       >

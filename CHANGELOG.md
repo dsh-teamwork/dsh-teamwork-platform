@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-13 — A phone app gets its sign-in code back by redirect
+
+- **What:** `/plugin` takes an optional `redirect_uri`. When it starts with the new `MOBILE_REDIRECT_URI`, pressing Authorize sends the browser to `redirect_uri?code=…` instead of showing the code for pasting, and the code stays on screen in case the app does not open. A `redirect_uri` outside the prefix makes the link invalid. With the variable unset, no code is sent anywhere.
+- **Why:** The phone app no longer has to paste a long code. ADR 0010.
+- **Breaking:** None.
+- **Upgrade:** Optional `MOBILE_REDIRECT_URI` on `web`; the hosted service sets `dshteamwork://sign-in`. Self-hosted instances leave it unset.
+- **Refs:** `docs/adr/0010-the-app-gets-its-code-back.md`, `packages/shared/src/server/auth/nextauth/plugin.ts`, `apps/web/src/app/plugin/page.tsx`.
+
 ## 2026-11-13 — Auth.js takes its origin from APP_URL
 
 - **What:** With `AUTH_URL` unset, `createNextAuth` sets it from `APP_URL`, so Auth.js builds its OAuth callback from the deployment's public origin instead of the request. `AUTH_URL` leaves `apps/web/.env.example`; one still set wins.
