@@ -192,7 +192,8 @@ only.
   secret signs every member out of every plugin at once.
 - **`team_configs.data`**: stored JSON written by older schemas has to stay
   readable once teams depend on it.
-- **One team per person**: `memberships.user_id` as the key.
+- **Several teams per person**: `memberships` keyed by `(user_id, team_id)`,
+  and every team route and rule carrying the team id (ADR 0013).
 - **`PROVIDER_KEYS_SECRET`**: every stored provider key is sealed under it.
   Losing or changing it means every team enters its keys again.
 - **A PGlite data directory**: a team's whole database in one directory, owned

@@ -164,14 +164,18 @@ export async function addMember(userId: string, teamId: string, input: unknown):
 /**
  * An admin replaces a member's password with a new first one, shown once.
  * Only for a member of the admin's own team, and never the admin's own:
- * that one is changed knowing the current password.
+ * that one is changed knowing the current password. Nor for someone who is
+ * also in another team (ADR 0013): the password opens the whole account, so
+ * an admin of one team resetting it would take over that person's place, an
+ * admin's included, in every other team.
  */
 export async function resetMemberPassword(userId: string, teamId: string, target: string): Promise<ResetPassword> {
   if (!strategy.passwords) throw new TeamError(400, 'passwords_off');
   const admin = await requireMembership(userId, teamId, true);
   if (target === userId) throw new TeamError(400, 'cannot_reset_self');
-  const member = await prisma.membership.findFirst({ where: { userId: target, teamId: admin.teamId } });
-  if (!member) throw new TeamError(404, 'not_a_member');
+  const memberships = await prisma.membership.findMany({ where: { userId: target }, select: { teamId: true } });
+  if (!memberships.some((m) => m.teamId === admin.teamId)) throw new TeamError(404, 'not_a_member');
+  if (memberships.length > 1) throw new TeamError(403, 'member_in_other_team');
   const password = generatePassword();
   await setPassword(target, password, true);
   return { password };

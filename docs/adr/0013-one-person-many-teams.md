@@ -37,7 +37,10 @@ that team, and calls that team's provider with that team's key.
   suite in `apps/web/src/lib/__tests__/team.test.ts` pins the 404 and the
   pairing.
 - The snapshot's shape changed, so plugin 0.7.0 and this server ship together;
-  plugin 0.6 cannot read the new snapshot and asks to be upgraded. No route
+  plugin 0.6 still asks for `/api/team/configs`, gets a 404 and stops syncing
+  until it is upgraded. No route
   for the old shape is kept.
 - The URL `/team` is gone; invitation links are `/teams?invite=…`.
 - A team keeps at least one admin, as before: the admin cannot leave.
+- A password opens the whole account, so an admin resets it only for a member
+  who is in no other team; anyone else changes their own.

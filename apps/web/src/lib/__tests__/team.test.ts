@@ -217,6 +217,15 @@ describe('accounts an admin creates, where the instance holds passwords', () => 
     await expect(team.resetMemberPassword(admin, teamId, stranger)).rejects.toMatchObject({ code: 'not_a_member' });
     await expect(team.addMember(added.userId, teamId, { email: `x-${suffix}@example.test` })).rejects.toMatchObject({ code: 'admin_required' });
   });
+
+  it('never resets the password of someone also in another team, whose account it would take over there', async () => {
+    const victim = await makeUser('accounts-other-team-admin');
+    const theirs = (await team.createTeam(victim, { name: 'Accounts victim team' })).id;
+    made.push(theirs);
+    const added = await team.addMember(admin, teamId, { email: `accounts-other-team-admin-${suffix}@example.test` });
+    expect(added.userId).toBe(victim);
+    await expect(team.resetMemberPassword(admin, teamId, victim)).rejects.toMatchObject({ status: 403, code: 'member_in_other_team' });
+  });
 });
 
 describe('a team’s providers', () => {

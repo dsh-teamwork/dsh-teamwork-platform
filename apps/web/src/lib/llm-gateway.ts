@@ -122,10 +122,9 @@ const RouteData = z.object({ provider: z.string(), model: z.string(), maxTokens:
  */
 async function resolveModel(userId: string, configId: string) {
   const config = await prisma.teamConfig.findFirst({ where: { id: configId, kind: { in: ['model', 'preset'] } } });
-  const teamId = config?.teamId;
-  if (!config || !teamId || !(await prisma.membership.findUnique({ where: { userId_teamId: { userId, teamId } } }))) {
-    throw new TeamError(403, 'model_forbidden');
-  }
+  if (!config) throw new TeamError(403, 'model_forbidden');
+  const { teamId } = config;
+  if (!(await prisma.membership.findUnique({ where: { userId_teamId: { userId, teamId } } }))) throw new TeamError(403, 'model_forbidden');
   const referenced = (config.data as { modelConfigId?: unknown }).modelConfigId;
   if (config.kind === 'preset' && typeof referenced === 'string') {
     const model = await prisma.teamConfig.findFirst({ where: { id: referenced, teamId, kind: 'model' } });

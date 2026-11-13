@@ -282,6 +282,7 @@
     "member_in_team": "对方已经在这个团队里了。",
     "not_a_member": "对方不在你的团队中。",
     "cannot_reset_self": "请在修改密码页面修改你自己的密码。",
+    "member_in_other_team": "对方也在其他团队中，只能由本人修改密码。",
     "provider_exists": "你的团队已经有同名的提供方。",
     "provider_in_use": "仍有团队模型或预设在使用这个提供方。",
     "provider_address_refused": "本服务器不允许调用这个地址。",

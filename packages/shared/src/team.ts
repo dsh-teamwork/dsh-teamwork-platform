@@ -32,6 +32,7 @@ export const TEAM_ERRORS = [
   'member_in_team',
   'not_a_member',
   'cannot_reset_self',
+  'member_in_other_team',
   'provider_exists',
   'provider_in_use',
   'provider_address_refused',

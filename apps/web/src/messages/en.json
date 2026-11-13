@@ -282,6 +282,7 @@
     "member_in_team": "That person is already in this team.",
     "not_a_member": "That person is not in your team.",
     "cannot_reset_self": "Change your own password from the password page.",
+    "member_in_other_team": "That person is also in another team, so only they can change their password.",
     "provider_exists": "Your team already has a provider with that name.",
     "provider_in_use": "A team model or preset still uses this provider.",
     "provider_address_refused": "This server may not call that address.",
