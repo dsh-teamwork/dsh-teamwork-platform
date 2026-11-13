@@ -142,7 +142,45 @@
       "member": "我加入的"
     },
     "title": "团队控制台",
-    "overview": "团队配置与成员的本地配置并存；团队模型由平台代理，供应商密钥只保存在服务端。",
+    "overview": {
+      "descriptionAdmin": "团队的模型、预设和插件，一处发布，每位成员的 DSH 自动保持一致。",
+      "descriptionMember": "团队发布的模型和预设会自动同步到你的 DSH。",
+      "setup": "起步清单",
+      "go": "去完成",
+      "steps": {
+        "provider": {
+          "title": "接入一个 Provider",
+          "hint": "选厂商、贴 API Key"
+        },
+        "model": {
+          "title": "发布团队模型",
+          "hint": "成员通过网关调用，Key 不出服务器"
+        },
+        "preset": {
+          "title": "添加预设",
+          "hint": "从模板开始，几秒钟就好"
+        },
+        "members": {
+          "title": "拉成员进来",
+          "hint": "发邀请链接，或直接建账号"
+        }
+      },
+      "connectAdmin": "发给新成员",
+      "connectMember": "在 DSH 里接入",
+      "connectHint": "装好 DSH Teamwork 插件后运行下面的命令，在浏览器里确认授权，DSH 随即自动完成登录。",
+      "copy": "复制",
+      "copied": "已复制",
+      "recent": "最近变更",
+      "recentEmpty": "还没有配置。",
+      "kind": {
+        "model": "模型",
+        "preset": "预设",
+        "plugin": "插件"
+      },
+      "presets": "团队预设",
+      "all": "查看全部",
+      "noPresets": "团队还没有发布预设。"
+    },
     "role": {
       "admin": "管理员",
       "member": "成员"

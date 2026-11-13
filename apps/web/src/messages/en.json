@@ -142,7 +142,45 @@
       "member": "Teams I joined"
     },
     "title": "Team console",
-    "overview": "Team configuration lives beside each member's local setup; team models run through the platform and provider keys stay on the server.",
+    "overview": {
+      "descriptionAdmin": "Your team’s models, presets and plugins, published once and kept the same in every member’s DSH.",
+      "descriptionMember": "The models and presets your team publishes sync to your DSH by themselves.",
+      "setup": "Getting started",
+      "go": "Go",
+      "steps": {
+        "provider": {
+          "title": "Connect a provider",
+          "hint": "Pick one and paste its API key"
+        },
+        "model": {
+          "title": "Publish team models",
+          "hint": "Members call them through the gateway; the key stays on the server"
+        },
+        "preset": {
+          "title": "Add a preset",
+          "hint": "Start from a template in seconds"
+        },
+        "members": {
+          "title": "Bring members in",
+          "hint": "Send an invitation link, or create their account"
+        }
+      },
+      "connectAdmin": "Send this to new members",
+      "connectMember": "Connect your DSH",
+      "connectHint": "With the DSH Teamwork plugin installed, run this command and confirm in the browser; DSH finishes signing in by itself.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "recent": "Recent changes",
+      "recentEmpty": "No configuration yet.",
+      "kind": {
+        "model": "Model",
+        "preset": "Preset",
+        "plugin": "Plugin"
+      },
+      "presets": "Team presets",
+      "all": "See all",
+      "noPresets": "Your team has not published a preset yet."
+    },
     "role": {
       "admin": "Admin",
       "member": "Member"
