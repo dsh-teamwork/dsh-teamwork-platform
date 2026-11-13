@@ -42,9 +42,9 @@ jobs:
       - name: npx from an empty cache
         run: |
           mkdir -p "$RUNNER_TEMP/run" && cd "$RUNNER_TEMP/run"
-          start=$(node -p Date.now()); npx --yes @dsh-teamwork-exp/server -version; end=$(node -p Date.now())
+          start=$(node -p 'Date.now()'); npx --yes @dsh-teamwork-exp/server -version; end=$(node -p 'Date.now()')
           echo "clean-cache npx: $((end - start)) ms"
-          start=$(node -p Date.now()); npx --yes @dsh-teamwork-exp/server -version; end=$(node -p Date.now())
+          start=$(node -p 'Date.now()'); npx --yes @dsh-teamwork-exp/server -version; end=$(node -p 'Date.now()')
           echo "warm-cache npx: $((end - start)) ms"
           npx --yes @dsh-teamwork-exp/server -check -data "$RUNNER_TEMP/data"
           npx --yes @dsh-teamwork-exp/server -check -data "$RUNNER_TEMP/data" | grep -q "teams=2"
