@@ -18,16 +18,21 @@ export function useMutation() {
   const te = useTranslations('teamErrors');
   const [pending, startTransition] = useTransition();
 
-  function run(action: () => Promise<unknown>, success?: string) {
-    startTransition(async () => {
-      try {
-        await action();
-        if (success) toast.success(success);
-        router.refresh();
-      } catch (error) {
-        const code = error instanceof ApiCallError ? error.code : 'internal_error';
-        toast.error(te.has(code) ? te(code) : te('internal_error'));
-      }
+  /** Resolves true once `action` succeeded, false once it failed and the failure was shown; a dialog uses it to stay on its step. */
+  function run(action: () => Promise<unknown>, success?: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          await action();
+          if (success) toast.success(success);
+          router.refresh();
+          resolve(true);
+        } catch (error) {
+          const code = error instanceof ApiCallError ? error.code : 'internal_error';
+          toast.error(te.has(code) ? te(code) : te('internal_error'));
+          resolve(false);
+        }
+      });
     });
   }
 

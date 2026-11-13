@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProviderView, TeamConfigView, TeamView } from '@dsh-teamwork/shared';
+import type { TeamConfigView, TeamView } from '@dsh-teamwork/shared';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -9,23 +9,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { callApi } from '@/lib/api-client';
 
 import { ConfigForm } from './config-form';
-import { Providers } from './providers';
 import { useMutation } from './use-mutation';
 
 interface Props {
   team: TeamView;
   configs: TeamConfigView[];
-  /** The team's providers; empty for a member, who does not see them. */
-  providers: ProviderView[];
 }
 
 /** The team's configuration and providers, until the models, presets and plugins pages replace them. */
-export function TeamConsole({ team, configs, providers }: Props) {
+export function TeamConsole({ team, configs }: Props) {
   const t = useTranslations('team');
   const { pending, run } = useMutation();
   const admin = team.role === 'admin';
   const teamId = team.id;
   const [editing, setEditing] = useState<TeamConfigView | null>(null);
+  // Team models have their own page now.
+  const shown = configs.filter((c) => c.kind !== 'model');
 
   return (
     <>
@@ -35,8 +34,8 @@ export function TeamConsole({ team, configs, providers }: Props) {
             <CardTitle>{t('configs.title')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {configs.length === 0 && <p className="text-sm text-muted-foreground">{t('configs.empty')}</p>}
-            {configs.map((config) => (
+            {shown.length === 0 && <p className="text-sm text-muted-foreground">{t('configs.empty')}</p>}
+            {shown.map((config) => (
               <ConfigItem
                 key={config.id}
                 config={config}
@@ -64,7 +63,6 @@ export function TeamConsole({ team, configs, providers }: Props) {
         )}
       </div>
 
-      {admin && <Providers teamId={teamId} providers={providers} />}
     </>
   );
 }

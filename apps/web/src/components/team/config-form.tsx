@@ -42,23 +42,20 @@ export function ConfigForm({ teamId, editing, configs, onDone }: { teamId: strin
         contextWindow: optionalNumber(text('contextWindow')),
         maxTokens: optionalNumber(text('maxTokens')),
       };
-      if (kind === 'model') data = ownRoute;
-      else {
-        const modelConfigId = text('modelConfigId');
-        data = {
-          ...(modelConfigId ? { modelConfigId } : ownRoute),
-          description: text('description'),
-          instructions: text('instructions'),
-          outputDescription: text('outputDescription'),
-          systemPrompt: text('systemPrompt'),
-          requiredTools: lines(text('requiredTools')),
-          optionalTools: lines(text('optionalTools')),
-          pluginDependencies: values.getAll('pluginDependency').map((id) => ({
-            pluginConfigId: String(id),
-            version: (configs.find((c) => c.id === id)?.data as Data | undefined)?.version,
-          })),
-        };
-      }
+      const modelConfigId = text('modelConfigId');
+      data = {
+        ...(modelConfigId ? { modelConfigId } : ownRoute),
+        description: text('description'),
+        instructions: text('instructions'),
+        outputDescription: text('outputDescription'),
+        systemPrompt: text('systemPrompt'),
+        requiredTools: lines(text('requiredTools')),
+        optionalTools: lines(text('optionalTools')),
+        pluginDependencies: values.getAll('pluginDependency').map((id) => ({
+          pluginConfigId: String(id),
+          version: (configs.find((c) => c.id === id)?.data as Data | undefined)?.version,
+        })),
+      };
     }
     const body = { kind, name: text('name'), data, ...(editing ? { version: editing.version } : {}) };
     run(async () => {
@@ -79,7 +76,6 @@ export function ConfigForm({ teamId, editing, configs, onDone }: { teamId: strin
       <Field label={t('form.kind')}>
         <NativeSelect value={kind} onChange={(e) => setKind(e.target.value as ConfigKind)} disabled={!!editing}>
           <option value="preset">{t('kind.preset')}</option>
-          <option value="model">{t('kind.model')}</option>
           <option value="plugin">{t('kind.plugin')}</option>
         </NativeSelect>
       </Field>
@@ -103,8 +99,6 @@ export function ConfigForm({ teamId, editing, configs, onDone }: { teamId: strin
           </Field>
         </>
       )}
-
-      {kind === 'model' && <ModelFields teamId={teamId} initial={initial} />}
 
       {kind === 'preset' && <PresetFields teamId={teamId} initial={initial} configs={configs} />}
 

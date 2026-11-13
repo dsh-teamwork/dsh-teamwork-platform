@@ -8,7 +8,7 @@
  */
 
 import type { TeamSummary, TeamView } from '@dsh-teamwork/shared';
-import { Check, ChevronsUpDown, LayoutGrid, LayoutDashboard, LogOut, Users, type LucideIcon } from 'lucide-react';
+import { Check, ChevronsUpDown, Cpu, LayoutGrid, LayoutDashboard, LogOut, Users, type LucideIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -21,8 +21,9 @@ import { signOut } from '@/lib/auth/actions';
 import { cn } from '@/lib/utils';
 
 /** Each page of a team's console: its path below `/teams/{teamId}` and its icon. */
-const SECTIONS: { path: string; key: 'overview' | 'members'; icon: LucideIcon }[] = [
+const SECTIONS: { path: string; key: 'overview' | 'models' | 'members'; icon: LucideIcon }[] = [
   { path: '', key: 'overview', icon: LayoutDashboard },
+  { path: 'models', key: 'models', icon: Cpu },
   { path: 'members', key: 'members', icon: Users },
 ];
 

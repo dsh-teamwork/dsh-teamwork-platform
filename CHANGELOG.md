@@ -7,11 +7,11 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-13 — The team console gets a sidebar and a page per task
 
-- **What:** `/teams/{teamId}` is a console with a sidebar: a team switcher (every team the person is in, with their role; switching keeps the page), one link per page, and the account. `/teams` groups the person's teams into those they manage and those they joined. Members have their own page, `/teams/{teamId}/members`, as a table with invitations or account creation beside it; a member leaves the team from there.
+- **What:** `/teams/{teamId}` is a console with a sidebar: a team switcher (every team the person is in, with their role; switching keeps the page), one link per page, and the account. `/teams` groups the person's teams into those they manage and those they joined. Members have their own page, `/teams/{teamId}/members`, as a table with invitations or account creation beside it; a member leaves the team from there. Models have their own page, `/teams/{teamId}/models`: an admin picks a provider from a list of nine OpenAI-compatible ones (DeepSeek, OpenAI, Qwen, Kimi, Zhipu GLM, Doubao, MiniMax, SiliconFlow, OpenRouter), pastes only its key, reads its model list and publishes several models at once; any other provider is entered by address. Each team model shows which presets use it.
 - **Why:** The single long `/team` page mixed every task; each task now has a page.
 - **Breaking:** None.
 - **Upgrade:** Nothing.
-- **Refs:** `apps/web/src/components/team/console-shell.tsx`, `apps/web/src/app/teams/[teamId]/layout.tsx`.
+- **Refs:** `apps/web/src/components/team/console-shell.tsx`, `apps/web/src/app/teams/[teamId]/layout.tsx`, `apps/web/src/lib/provider-catalog.ts`.
 
 ## 2026-11-13 — A person may be in several teams
 
