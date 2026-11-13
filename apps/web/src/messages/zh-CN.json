@@ -162,14 +162,16 @@
         },
         "members": {
           "title": "拉成员进来",
-          "hint": "发邀请链接，或直接建账号"
+          "hint": "给每个人发一条邀请链接",
+          "hintPasswords": "直接建账号，设好初始密码"
         }
       },
       "connectAdmin": "发给新成员",
       "connectMember": "在 DSH 里接入",
-      "connectHint": "装好 DSH Teamwork 插件后运行下面的命令，在浏览器里确认授权，DSH 随即自动完成登录。",
+      "connectHint": "装好 DSH Teamwork 插件，确认它的服务器是 {server}（在 Teamwork 面板里设置），然后运行下面的命令，在浏览器里确认授权，DSH 随即自动完成登录。",
       "copy": "复制",
       "copied": "已复制",
+      "copyFailed": "复制失败，请选中命令自行复制。",
       "recent": "最近变更",
       "recentEmpty": "还没有配置。",
       "kind": {

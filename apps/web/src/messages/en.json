@@ -162,14 +162,16 @@
         },
         "members": {
           "title": "Bring members in",
-          "hint": "Send an invitation link, or create their account"
+          "hint": "Send each of them an invitation link",
+          "hintPasswords": "Create their account with a first password"
         }
       },
       "connectAdmin": "Send this to new members",
       "connectMember": "Connect your DSH",
-      "connectHint": "With the DSH Teamwork plugin installed, run this command and confirm in the browser; DSH finishes signing in by itself.",
+      "connectHint": "Install the DSH Teamwork plugin and check that its server is {server} (set it in the Teamwork panel), then run this command and confirm in the browser; DSH finishes signing in by itself.",
       "copy": "Copy",
       "copied": "Copied",
+      "copyFailed": "Could not copy; select the command and copy it yourself.",
       "recent": "Recent changes",
       "recentEmpty": "No configuration yet.",
       "kind": {

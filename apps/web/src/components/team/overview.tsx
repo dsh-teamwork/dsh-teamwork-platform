@@ -20,7 +20,23 @@ import { PageHeader } from './console-shell';
 
 const LOGIN = '/teamwork login';
 
-export function Overview({ team, configs, providerCount }: { team: TeamView; configs: TeamConfigView[]; providerCount: number }) {
+type Preset = Extract<TeamConfigView, { kind: 'preset' }>;
+
+export function Overview({
+  team,
+  configs,
+  providerCount,
+  server,
+  passwords,
+}: {
+  team: TeamView;
+  configs: TeamConfigView[];
+  providerCount: number;
+  /** This instance's address: the plugin signs in to whichever server it is set to. */
+  server: string;
+  /** Members get a first password from the admin instead of an invitation. */
+  passwords: boolean;
+}) {
   const t = useTranslations('team.overview');
   const tn = useTranslations('team.nav');
   const admin = team.role === 'admin';
@@ -34,10 +50,10 @@ export function Overview({ team, configs, providerCount }: { team: TeamView; con
   ];
   // In the order a new team gets ready: each step needs the one before it.
   const steps = [
-    { key: 'provider', done: providerCount > 0, href: `${base}/models` },
-    { key: 'model', done: count('model') > 0, href: `${base}/models` },
-    { key: 'preset', done: count('preset') > 0, href: `${base}/presets` },
-    { key: 'members', done: team.members.length > 1, href: `${base}/members` },
+    { key: 'provider', hint: 'hint', done: providerCount > 0, href: `${base}/models` },
+    { key: 'model', hint: 'hint', done: count('model') > 0, href: `${base}/models` },
+    { key: 'preset', hint: 'hint', done: count('preset') > 0, href: `${base}/presets` },
+    { key: 'members', hint: passwords ? 'hintPasswords' : 'hint', done: team.members.length > 1, href: `${base}/members` },
   ] as const;
   const done = steps.filter((s) => s.done).length;
 
@@ -80,7 +96,7 @@ export function Overview({ team, configs, providerCount }: { team: TeamView; con
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className={cn('text-sm font-medium', step.done && 'text-muted-foreground line-through')}>{t(`steps.${step.key}.title`)}</span>
-                      <span className="text-xs text-muted-foreground">{t(`steps.${step.key}.hint`)}</span>
+                      <span className="text-xs text-muted-foreground">{t(`steps.${step.key}.${step.hint}`)}</span>
                     </span>
                     {!step.done && (
                       <Button asChild size="sm" variant="outline">
@@ -93,11 +109,11 @@ export function Overview({ team, configs, providerCount }: { team: TeamView; con
             </CardContent>
           </Card>
         ) : (
-          <Presets configs={configs} base={base} />
+          <PresetList configs={configs} base={base} />
         )}
 
         <div className="flex min-w-0 flex-col gap-6">
-          <Connect admin={admin} />
+          <Connect admin={admin} server={server} />
           <Recent configs={configs} />
         </div>
       </div>
@@ -106,7 +122,7 @@ export function Overview({ team, configs, providerCount }: { team: TeamView; con
 }
 
 /** How DSH joins: the command, to run (a member) or to send on (an admin). */
-function Connect({ admin }: { admin: boolean }) {
+function Connect({ admin, server }: { admin: boolean; server: string }) {
   const t = useTranslations('team.overview');
   return (
     <Card>
@@ -114,7 +130,7 @@ function Connect({ admin }: { admin: boolean }) {
         <CardTitle>{admin ? t('connectAdmin') : t('connectMember')}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <p className="text-sm text-muted-foreground">{t('connectHint')}</p>
+        <p className="text-sm text-muted-foreground">{t('connectHint', { server })}</p>
         <div className="flex items-center gap-2 rounded-md border bg-muted py-1.5 pr-1.5 pl-3 font-mono text-sm">
           <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{LOGIN}</span>
           <CopyButton text={LOGIN} />
@@ -130,9 +146,14 @@ function CopyButton({ text }: { text: string }) {
     <Button
       size="sm"
       variant="ghost"
-      onClick={() => {
-        // Unavailable (an insecure origin, say): the command stays selectable text beside the button.
-        navigator.clipboard?.writeText(text).then(() => toast.success(t('copied')), () => undefined);
+      onClick={async () => {
+        // Unavailable (an insecure origin, say) or refused: the command stays selectable text beside the button.
+        try {
+          await navigator.clipboard.writeText(text);
+          toast.success(t('copied'));
+        } catch {
+          toast.error(t('copyFailed'));
+        }
       }}
     >
       <Copy />
@@ -141,7 +162,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-/** The configuration that changed last, newest first: the team's own record of it. */
+/** The configuration edited last, newest first. Read from the rows that exist, so a removal does not show. */
 function Recent({ configs }: { configs: TeamConfigView[] }) {
   const t = useTranslations('team.overview');
   const tk = useTranslations('team.overview.kind');
@@ -177,9 +198,9 @@ function Recent({ configs }: { configs: TeamConfigView[] }) {
 }
 
 /** For a member: what the team shares, with a way to see more. */
-function Presets({ configs, base }: { configs: TeamConfigView[]; base: string }) {
+function PresetList({ configs, base }: { configs: TeamConfigView[]; base: string }) {
   const t = useTranslations('team.overview');
-  const presets = configs.filter((c) => c.kind === 'preset');
+  const presets = configs.filter((c): c is Preset => c.kind === 'preset');
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-3">
@@ -196,7 +217,7 @@ function Presets({ configs, base }: { configs: TeamConfigView[]; base: string })
             {presets.map((p) => (
               <li key={p.id} className="flex flex-col border-t px-6 py-2.5 text-sm">
                 <span className="font-medium">{p.name}</span>
-                {p.kind === 'preset' && p.data.description && <span className="text-xs text-muted-foreground">{p.data.description}</span>}
+                {p.data.description && <span className="text-xs text-muted-foreground">{p.data.description}</span>}
               </li>
             ))}
           </ul>

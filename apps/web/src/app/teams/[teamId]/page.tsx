@@ -1,4 +1,6 @@
 import { Overview } from '@/components/team/overview';
+import { strategy } from '@/lib/auth/strategy';
+import { siteOrigin } from '@/lib/site';
 import { listConfigs, listProviders } from '@/lib/team';
 import { consolePage } from '@/lib/team-page';
 
@@ -9,5 +11,5 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ t
     listConfigs(user.id, team.id),
     admin ? listProviders(user.id, team.id) : Promise.resolve([]),
   ]);
-  return <Overview team={team} configs={configs} providerCount={providers.length} />;
+  return <Overview team={team} configs={configs} providerCount={providers.length} server={siteOrigin()} passwords={strategy.passwords} />;
 }
