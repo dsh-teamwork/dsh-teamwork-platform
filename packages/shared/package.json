@@ -33,6 +33,7 @@
     ".": "./src/index.ts",
     "./server": "./src/server/index.ts",
     "./server/nextauth": "./src/server/auth/nextauth/index.ts",
+    "./server/tokens": "./src/server/auth/nextauth/tokens.ts",
     "./server/passwords": "./src/server/auth/nextauth/passwords.ts"
   },
   "peerDependencies": {
