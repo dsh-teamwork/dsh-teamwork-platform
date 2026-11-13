@@ -39,7 +39,7 @@ const ALLOWED = [
     why: 'The scanner has to spell out the characters it scans for, so it cannot pass its own check.',
   },
   {
-    match: (f) => /^(?:[^/]+\/)?apps\/[^/]+\/src\/messages\/.+\.json$/.test(f),
+    match: (f) => /^(?:[^/]+\/)?apps\/(?:[^/]+\/src\/messages|mobile\/lib\/i18n\/locales)\/.+\.json$/.test(f),
     why: 'Locale files: the product speaking to its user in the language that user chose. Keys and structure are English.',
   },
   {
