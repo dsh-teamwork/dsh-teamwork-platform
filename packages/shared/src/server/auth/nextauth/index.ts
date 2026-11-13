@@ -76,6 +76,11 @@ function cookies(name: string) {
 }
 
 export function createNextAuth(options: AuthOptions) {
+  // Auth.js builds its callback URL from AUTH_URL, and without it from the
+  // request, which behind a proxy can name the container rather than the site
+  // (Railway's localhost:8080): Google then refuses the token exchange with
+  // redirect_uri_mismatch. APP_URL is already this deployment's public origin.
+  if (!process.env.AUTH_URL?.trim() && process.env.APP_URL?.trim()) process.env.AUTH_URL = process.env.APP_URL.trim();
   const google = googleConfigured();
   // Decided once, at start: an instance either sends codes or holds passwords.
   const passwords = options.emailCodes && passwordsConfigured();

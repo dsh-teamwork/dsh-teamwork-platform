@@ -18,6 +18,9 @@ export default defineConfig({
     hookTimeout: 30_000,
     // The database suites share one database and clear what they touch.
     fileParallelism: false,
+    // next-auth imports `next/server` without an extension, which Node's ESM
+    // resolver refuses; inlined, Vite resolves it as the apps' bundler does.
+    server: { deps: { inline: ['next-auth'] } },
   },
   resolve: {
     // `server-only` throws outside a React Server Component build, which a

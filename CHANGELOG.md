@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-13 — Auth.js takes its origin from APP_URL
+
+- **What:** With `AUTH_URL` unset, `createNextAuth` sets it from `APP_URL`, so Auth.js builds its OAuth callback from the deployment's public origin instead of the request. `AUTH_URL` leaves `apps/web/.env.example`; one still set wins.
+- **Why:** Behind Railway's proxy the request names the container (`localhost:8080`), so Google refused the token exchange with `redirect_uri_mismatch` and the browser landed on `https://localhost:8080/sign-in?error=Configuration`.
+- **Breaking:** None.
+- **Upgrade:** Set `APP_URL` to the public origin; `AUTH_URL` can be dropped where it equals it.
+- **Refs:** `packages/shared/src/server/auth/nextauth/index.ts`.
+
 ## 2026-11-12 — The www twin redirects to APP_URL; APP_URL reaches the build
 
 - **What:** In production, the `www`/apex twin of the deployment's origin (`AUTH_URL`, else `APP_URL`) answers a 308 to that origin, path and query kept (`apps/web/canonical-host.mjs`, compiled into the build's redirects). `turbo.json` now passes `APP_URL` and `AUTH_URL` to `@dsh-teamwork/web#build`: strict env mode had stripped them, so the static `robots.txt`, sitemap and canonicals named `http://localhost:3800`.
