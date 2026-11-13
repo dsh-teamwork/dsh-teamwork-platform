@@ -64,7 +64,16 @@ jobs:
       - name: pnpm dlx
         run: |
           npm_config_registry=https://registry.npmjs.org npm install -g pnpm@10 >/dev/null
-          pnpm --config.registry=http://127.0.0.1:4873 dlx @dsh-teamwork-exp/server -version
+          if pnpm --config.registry=http://127.0.0.1:4873 dlx @dsh-teamwork-exp/server -version; then exit 0; fi
+          echo "::group::diagnose"
+          f=$(find "$(pnpm store path)/.." "${LOCALAPPDATA:-$HOME}" -name 'dsh-teamwork*' -path '*server-*' 2>/dev/null | head -5)
+          echo "found: $f"
+          for x in $f; do ls -la "$x"; "$x" -version || echo "direct run failed: $?"; done
+          sleep 5
+          pnpm --config.registry=http://127.0.0.1:4873 dlx @dsh-teamwork-exp/server -version || echo "second dlx failed"
+          node -e "const p=require('child_process');const r=p.spawnSync(process.argv[1],['-version'],{encoding:'utf8'});console.log('node spawn:',r.error&&r.error.code,r.stdout)" "$(echo "$f" | head -1)"
+          echo "::endgroup::"
+          exit 1
       - name: Optional dependencies omitted
         run: |
           mkdir -p "$RUNNER_TEMP/omit" && cd "$RUNNER_TEMP/omit" && npm init -y >/dev/null
