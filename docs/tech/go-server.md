@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — experiments 1 and 2 done, 3 on Linux · **Updated:** 2026-11-13
+> **Status:** Plan — experiments 1 to 3 done · **Updated:** 2026-11-13
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -32,8 +32,7 @@ must keep.
    2. The gateway: streaming parity with the Node gateway on the same
       requests, and latency and memory on one fixture. **Done**, see below.
    3. Packaging: a binary published to a scratch npm scope and run with
-      `npx` on Linux, macOS and Windows. **Done on Linux**, see below; macOS
-      and Windows are still to run.
+      `npx` on Linux, macOS and Windows. **Done**, see below.
 2. **One vertical slice**, against an unchanged plugin: a password sign-in,
    `/teamwork login`, `GET /api/configs`, one call through the gateway.
 3. **The team API and the console**, page by page.
@@ -151,7 +150,29 @@ platform, each listed in `server`'s `optionalDependencies` with `os` and
 **Sizes:** each platform package is 9.7 MB to download and 24–26 MB
 installed.
 
-**Two findings:**
+**On macOS (arm64) and Windows (x64)**, GitHub's runners ran the same
+packages from a registry on the runner, with npm and `pnpm dlx`: version,
+self-check twice, the page served, one platform package installed, and the
+message when optional dependencies are omitted. All passed once the two
+problems below were fixed. From an empty cache, `npx` took 0.54 s on macOS and
+5.1 s on Windows; warm, 0.43 s and 0.77 s.
+
+**Two problems the release must handle, found on the runners:**
+
+- **The executable bit is lost on the way to `npm pack`.** Built in one job
+  and packed in another, through `actions/upload-artifact`, the Linux and
+  macOS binaries arrived without it, and every start ended in `EACCES`. A
+  release packs in the job that built the binaries, and checks the modes
+  `npm pack --json` reports before it publishes.
+- **Windows cannot start a program from a path of 260 characters or more.**
+  `pnpm dlx` installs into a directory named by a timestamp and a process id,
+  and when the id took four hex digits the binary's path was exactly 260
+  characters: `require.resolve` found it and starting it failed with
+  `ENOENT`. A long user name or project path does the same. The launcher now
+  runs a copy kept under `%LOCALAPPDATA%\dsh-teamwork\<version>\` when the
+  path is that long; a test installed into a path of 270 characters and ran.
+
+**Two more findings:**
 
 - **A registry's upload limit can refuse a platform package.** Verdaccio's
   default, 10 MB, did. A company that mirrors npm through its own registry
@@ -162,6 +183,16 @@ installed.
   the launcher reached the binary. A SIGTERM to `npx` alone, which is what a
   service manager sends, ended npm but left the launcher and the binary
   running: npm does not pass it on. A service runs the binary itself.
+
+## Rules for packaging
+
+- One package per platform, chosen by `os` and `cpu` in the launcher's
+  `optionalDependencies`; no `postinstall`.
+- The Linux and macOS binaries are packed with their executable bit, checked
+  in the tarball before publishing.
+- On Windows the launcher starts a short-path copy when the installed path is
+  260 characters or longer.
+- A service starts the binary itself, never through `npx`.
 
 ## Rules for the data layer
 
