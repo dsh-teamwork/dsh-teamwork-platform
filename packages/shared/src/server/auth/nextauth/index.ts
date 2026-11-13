@@ -40,6 +40,7 @@ import { consumeCode, issueCode } from './codes';
 import { sendCodeEmail } from './email';
 import { checkPassword, claimFirstAccount, setPassword } from './passwords';
 import { createPluginHandoff } from './plugin';
+export type { ReturnTo } from './plugin';
 import { identityFromBearer, SESSION_MAX_AGE } from './tokens';
 
 /** Carries an `AuthError` code out of `authorize` to the action that called it. */

@@ -285,6 +285,7 @@
     "description": "Only continue if you just ran /teamwork login in your own DSH.",
     "descriptionApp": "Only continue if you just started signing in from the app on your own phone.",
     "returning": "Returning to the app. If it did not open, paste this code into it:",
+    "returningDsh": "Returning to DSH. If it does not finish signing in, paste this into DSH:",
     "invalid": "This link is incomplete. Run /teamwork login in DSH again.",
     "confirm": "Authorize",
     "copy": "Paste this into DSH:",

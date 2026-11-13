@@ -285,6 +285,7 @@
     "description": "仅在你刚在自己的 DSH 中运行 /teamwork login 时继续。",
     "descriptionApp": "仅在你刚在自己手机上的 App 里发起登录时继续。",
     "returning": "正在返回 App。如果 App 没有打开，请把下面的授权码粘贴到 App 里：",
+    "returningDsh": "正在交回 DSH。如果 DSH 没有自动完成登录，请把下面这行粘贴到 DSH：",
     "invalid": "链接不完整，请在 DSH 中重新运行 /teamwork login。",
     "confirm": "确认授权",
     "copy": "将以下内容粘贴到 DSH：",

@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-13 — The DSH plugin gets its sign-in code back on loopback
+
+- **What:** `/plugin` also accepts a `redirect_uri` of `http://127.0.0.1:<port>/…`, on every deployment and with no configuration. Pressing Authorize sends the browser there with `?code=…`, and the `/teamwork authorize <code>` line stays on screen in case it does not arrive. `localhost`, `[::1]`, https and a missing port are refused, and still make the link invalid.
+- **Why:** The first sign-in no longer has a copy-and-paste step. The plugin listens on that address from `/teamwork login` (plugin 0.6.0). ADR 0012.
+- **Breaking:** Plugin 0.6.0 sends `redirect_uri` on every login, and a server without this change shows its link as invalid. Upgrade the server with the plugin.
+- **Upgrade:** Nothing.
+- **Refs:** `docs/adr/0012-the-plugin-gets-its-code-back-on-loopback.md`, `packages/shared/src/server/auth/nextauth/plugin.ts`, `apps/web/src/components/plugin-authorize.tsx`.
+
 ## 2026-11-13 — A phone app gets its sign-in code back by redirect
 
 - **What:** `/plugin` takes an optional `redirect_uri`. When it starts with the new `MOBILE_REDIRECT_URI`, pressing Authorize sends the browser to `redirect_uri?code=…` instead of showing the code for pasting, and the code stays on screen in case the app does not open. A `redirect_uri` outside the prefix makes the link invalid. With the variable unset, no code is sent anywhere.
