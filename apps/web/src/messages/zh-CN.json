@@ -137,7 +137,9 @@
       "title": "我的团队",
       "empty": "你还不在任何团队里。创建一个，或用邀请链接加入。",
       "members": "{count} 人",
-      "back": "← 所有团队"
+      "back": "← 所有团队",
+      "admin": "我管理的",
+      "member": "我加入的"
     },
     "title": "团队控制台",
     "overview": "团队配置与成员的本地配置并存；团队模型由平台代理，供应商密钥只保存在服务端。",
@@ -227,7 +229,13 @@
       "firstPassword": "请现在把这个密码交给 {email}。它不会再显示，对方首次登录时必须修改：",
       "reset": "重置密码",
       "resetConfirm": "确定重置该成员的密码？对方当前的密码将立即失效。",
-      "resetDone": "密码已重置。"
+      "resetDone": "密码已重置。",
+      "person": "成员",
+      "role": "角色",
+      "you": "你",
+      "descriptionInvites": "邀请链接只能用一次，24 小时内有效。",
+      "descriptionPasswords": "这个实例没有配置邮件：直接创建账号，首次密码只显示一次，对方首次登录时必须修改。",
+      "descriptionMember": "团队里的人。退出后，团队的模型和预设会在下次同步时从你的 DSH 里移除。"
     },
     "invites": {
       "create": "生成一次性邀请",
@@ -235,7 +243,9 @@
       "link": "邀请链接（24 小时内有效）",
       "expires": "未使用的邀请，{at} 过期",
       "revoke": "撤销",
-      "revoked": "邀请已撤销。"
+      "revoked": "邀请已撤销。",
+      "title": "邀请",
+      "description": "生成一次性链接发给对方，对方登录后即加入团队。"
     },
     "providers": {
       "title": "模型提供方",
@@ -254,6 +264,15 @@
       "added": "已添加提供方。",
       "saved": "已保存提供方。",
       "removed": "已删除提供方。"
+    },
+    "nav": {
+      "label": "团队控制台",
+      "overview": "概览",
+      "members": "成员"
+    },
+    "switcher": {
+      "label": "切换团队",
+      "all": "所有团队"
     }
   },
   "teamErrors": {

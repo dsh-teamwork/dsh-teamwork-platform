@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-13 — The team console gets a sidebar and a page per task
+
+- **What:** `/teams/{teamId}` is a console with a sidebar: a team switcher (every team the person is in, with their role; switching keeps the page), one link per page, and the account. `/teams` groups the person's teams into those they manage and those they joined. Members have their own page, `/teams/{teamId}/members`, as a table with invitations or account creation beside it; a member leaves the team from there.
+- **Why:** The single long `/team` page mixed every task; each task now has a page.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/console-shell.tsx`, `apps/web/src/app/teams/[teamId]/layout.tsx`.
+
 ## 2026-11-13 — A person may be in several teams
 
 - **What:** A membership is keyed by user and team, so one account can be in any number of teams, admin in some and member in others. The console moves from `/team` to `/teams` (the list, create, join) and `/teams/{teamId}`; the API from `/api/team/*` to `/api/teams/{teamId}/*`, where a team the caller is not in is `404 team_not_found`. The plugin's snapshot moves to `GET /api/configs` and lists every team: `{ teams: [{ teamId, teamName, role, configs }] }`. The gateway resolves a model to its own team and calls that team's provider. Invitation links are `/teams?invite=…`; `no_team` is gone. An admin cannot reset the password of a member who is also in another team (`member_in_other_team`).

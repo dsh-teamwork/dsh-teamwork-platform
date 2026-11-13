@@ -137,7 +137,9 @@
       "title": "My teams",
       "empty": "You are not in any team yet. Create one, or join with an invitation link.",
       "members": "{count, plural, one {# member} other {# members}}",
-      "back": "← All teams"
+      "back": "← All teams",
+      "admin": "Teams I manage",
+      "member": "Teams I joined"
     },
     "title": "Team console",
     "overview": "Team configuration lives beside each member's local setup; team models run through the platform and provider keys stay on the server.",
@@ -227,7 +229,13 @@
       "firstPassword": "Give {email} this password now. It is not shown again, and they must change it when they first sign in:",
       "reset": "Reset password",
       "resetConfirm": "Reset this member's password? Their current one stops working.",
-      "resetDone": "Password reset."
+      "resetDone": "Password reset.",
+      "person": "Member",
+      "role": "Role",
+      "you": "you",
+      "descriptionInvites": "An invitation link works once, for 24 hours.",
+      "descriptionPasswords": "This instance sends no email: create the account here. The first password is shown once and must be changed at first sign-in.",
+      "descriptionMember": "Who is in the team. If you leave, its models and presets leave your DSH at the next sync."
     },
     "invites": {
       "create": "Create a single-use invitation",
@@ -235,7 +243,9 @@
       "link": "Invitation link (valid for 24 hours)",
       "expires": "Open invitation, expires {at}",
       "revoke": "Revoke",
-      "revoked": "Invitation revoked."
+      "revoked": "Invitation revoked.",
+      "title": "Invitations",
+      "description": "Create a single-use link and send it; whoever signs in with it joins the team."
     },
     "providers": {
       "title": "Providers",
@@ -254,6 +264,15 @@
       "added": "Provider added.",
       "saved": "Provider saved.",
       "removed": "Provider removed."
+    },
+    "nav": {
+      "label": "Team console",
+      "overview": "Overview",
+      "members": "Members"
+    },
+    "switcher": {
+      "label": "Switch team",
+      "all": "All teams"
     }
   },
   "teamErrors": {

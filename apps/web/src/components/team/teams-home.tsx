@@ -3,6 +3,7 @@
 /** `/teams`: the teams the person is in, and where they create a team or join one by invitation. */
 
 import type { TeamSummary } from '@dsh-teamwork/shared';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -36,28 +37,37 @@ export function TeamsHome({ email, teams, invite, passwords }: { email: string; 
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-6 px-6 py-10">
       <ConsoleHeader email={email} passwords={passwords} />
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('list.title')}</CardTitle>
-          {teams.length === 0 && <CardDescription>{t('list.empty')}</CardDescription>}
-        </CardHeader>
-        {teams.length > 0 && (
-          <CardContent>
-            <ul className="flex flex-col divide-y">
-              {teams.map((team) => (
+      {teams.length === 0 && <p className="text-sm text-muted-foreground">{t('list.empty')}</p>}
+      {(['admin', 'member'] as const).map((role) => {
+        const group = teams.filter((team) => team.role === role);
+        if (!group.length) return null;
+        return (
+          <section key={role} className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold">
+              {t(`list.${role}`)} <span className="font-normal text-muted-foreground">{group.length}</span>
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {group.map((team) => (
                 <li key={team.id}>
-                  <Link href={`/teams/${team.id}`} className="flex items-center justify-between gap-4 py-3 hover:underline">
-                    <span className="font-medium">{team.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {t(`role.${team.role}`)} · {t('list.members', { count: team.memberCount })}
+                  <Link
+                    href={`/teams/${team.id}`}
+                    className="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:border-ring"
+                  >
+                    <Image src="/logo.svg" alt="" width={36} height={36} className="shrink-0" />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate font-medium">{team.name}</span>
+                      <span className="text-xs text-muted-foreground">{t('list.members', { count: team.memberCount })}</span>
+                    </span>
+                    <span className={role === 'admin' ? 'rounded-full bg-brand px-2 py-0.5 text-xs font-medium text-brand-foreground' : 'rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground'}>
+                      {t(`role.${role}`)}
                     </span>
                   </Link>
                 </li>
               ))}
             </ul>
-          </CardContent>
-        )}
-      </Card>
+          </section>
+        );
+      })}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
