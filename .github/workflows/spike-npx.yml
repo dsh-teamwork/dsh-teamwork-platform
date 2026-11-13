@@ -38,6 +38,8 @@ jobs:
           (../vtool/node_modules/.bin/verdaccio --config verdaccio.yaml --listen 127.0.0.1:4873 > ../verdaccio.log 2>&1 &)
           for i in $(seq 30); do curl -sf http://127.0.0.1:4873/-/ping >/dev/null && break; sleep 1; done
           echo "//127.0.0.1:4873/:_authToken=anon" > ~/.npmrc
+          # upload-artifact drops file modes; a release must pack with the executable bit set.
+          chmod +x server-*/bin/* server/bin/launcher.js
           for d in server-*/ server/; do (cd "$d" && npm publish --registry http://127.0.0.1:4873 | tail -1); done
       - name: npx from an empty cache
         run: |
