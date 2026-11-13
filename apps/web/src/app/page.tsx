@@ -127,7 +127,7 @@ export default async function HomePage() {
               <figcaption className="mb-3 text-sm text-ocean-muted">{t('surface.terminalCaption')}</figcaption>
               <pre className="overflow-x-auto rounded-xl bg-ocean-deep p-5 font-mono text-[13px] leading-relaxed shadow-2xl ring-1 ring-ocean-line">
                 <span className="text-ocean-accent">›</span> /teamwork login{'\n'}
-                <span className="text-ocean-accent">›</span> /teamwork authorize 7Q4K-…{'\n'}
+                <span className="text-ocean-muted">{'  '}{t('surface.termConfirm')}</span>{'\n'}
                 <span className="text-ocean-accent">✓</span> {t('surface.termSigned')}{'\n'}
                 <span className="text-ocean-accent">›</span> /teamwork sync{'\n'}
                 <span className="text-ocean-accent">✓</span> {t('surface.termSynced')}{'\n'}
