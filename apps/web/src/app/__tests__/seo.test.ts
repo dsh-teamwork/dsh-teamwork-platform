@@ -26,6 +26,6 @@ describe('crawler files', () => {
   it('keeps a page out of the sitemap only if robots.txt also refuses the path it lives on', () => {
     const rules = robots().rules;
     const disallow = ([] as string[]).concat(...[rules].flat().map((r) => r.disallow ?? []));
-    for (const path of ['/account', '/api/', '/auth/', '/team', '/plugin']) expect(disallow).toContain(path);
+    for (const path of ['/account', '/api/', '/auth/', '/teams', '/plugin']) expect(disallow).toContain(path);
   });
 });

@@ -1,8 +1,10 @@
 /**
  * Teams, invitations and team configuration — the rules, written once, that
- * the /api/team routes and the console pages both call. Every function takes
- * the caller's user id and re-reads their membership, so a removed member is
- * refused on their very next request, plugin token or not.
+ * the /api/teams routes and the console pages both call. A person may be in
+ * several teams (ADR 0013), so every function that acts on a team takes its id
+ * from the caller and re-reads the membership of that one pair, user and team:
+ * a removed member is refused on their very next request, plugin token or not,
+ * and an admin of one team is nobody in another.
  */
 
 import 'server-only';
@@ -27,6 +29,7 @@ import {
   type ResetPassword,
   type TeamConfigView,
   type TeamErrorCode,
+  type TeamSummary,
   type TeamView,
 } from '@dsh-teamwork/shared';
 import { generatePassword, hashPassword, setPassword } from '@dsh-teamwork/shared/server/passwords';
@@ -61,10 +64,14 @@ async function unique<T>(code: TeamErrorCode, write: () => Promise<T>): Promise<
 
 export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
-/** The caller's membership; `admin` additionally requires the admin role. */
-export async function requireMembership(userId: string, admin = false): Promise<Membership> {
-  const row = await prisma.membership.findUnique({ where: { userId } });
-  if (!row) throw new TeamError(403, 'no_team');
+/**
+ * The caller's membership in `teamId`; `admin` additionally requires the admin
+ * role there. A team the caller is not in is a 404, the same answer as a team
+ * that does not exist, so a team id reveals nothing to an outsider.
+ */
+export async function requireMembership(userId: string, teamId: string, admin = false): Promise<Membership> {
+  const row = await prisma.membership.findUnique({ where: { userId_teamId: { userId, teamId } } });
+  if (!row) throw new TeamError(404, 'team_not_found');
   if (admin && row.role !== 'admin') throw new TeamError(403, 'admin_required');
   return row;
 }
@@ -80,13 +87,23 @@ export function toConfigView(row: TeamConfig): TeamConfigView {
   } as TeamConfigView;
 }
 
-/** The caller's team with its members, or null when they are in none. */
-export async function teamOf(userId: string): Promise<TeamView | null> {
-  const membership = await prisma.membership.findUnique({
+/** Every team the caller is in, the ones they joined first first. */
+export async function teamsOf(userId: string): Promise<TeamSummary[]> {
+  const rows = await prisma.membership.findMany({
     where: { userId },
+    include: { team: { select: { name: true, _count: { select: { members: true } } } } },
+    orderBy: { createdAt: 'asc' },
+  });
+  return rows.map((m) => ({ id: m.teamId, name: m.team.name, role: m.role, memberCount: m.team._count.members }));
+}
+
+/** A team the caller is in, with its members. */
+export async function teamOf(userId: string, teamId: string): Promise<TeamView> {
+  const membership = await prisma.membership.findUnique({
+    where: { userId_teamId: { userId, teamId } },
     include: { team: { include: { members: { include: { user: { select: { email: true } } }, orderBy: { createdAt: 'asc' } } } } },
   });
-  if (!membership) return null;
+  if (!membership) throw new TeamError(404, 'team_not_found');
   const { team } = membership;
   return {
     id: team.id,
@@ -98,23 +115,20 @@ export async function teamOf(userId: string): Promise<TeamView | null> {
 
 export async function createTeam(userId: string, input: unknown) {
   const { name } = CreateTeamSchema.parse(input);
-  if (await prisma.membership.findUnique({ where: { userId } })) throw new TeamError(409, 'already_in_team');
-  const team = await unique('already_in_team', () =>
-    prisma.team.create({ data: { name, members: { create: { userId, role: 'admin' } } } }),
-  );
+  const team = await prisma.team.create({ data: { name, members: { create: { userId, role: 'admin' } } } });
   return { id: team.id, name: team.name };
 }
 
-/** A member leaves. The admin cannot: a team never ends up without one. */
-export async function leaveTeam(userId: string) {
-  const member = await requireMembership(userId);
+/** A member leaves a team. The admin cannot: a team never ends up without one. */
+export async function leaveTeam(userId: string, teamId: string) {
+  const member = await requireMembership(userId, teamId);
   if (member.role === 'admin') throw new TeamError(400, 'admin_cannot_leave');
   // Scoped to the row just read: a membership changed since then is not this one.
-  await prisma.membership.deleteMany({ where: { userId, teamId: member.teamId, role: 'member' } });
+  await prisma.membership.deleteMany({ where: { userId, teamId, role: 'member' } });
 }
 
-export async function removeMember(userId: string, target: string) {
-  const admin = await requireMembership(userId, true);
+export async function removeMember(userId: string, teamId: string, target: string) {
+  const admin = await requireMembership(userId, teamId, true);
   if (target === userId) throw new TeamError(400, 'cannot_remove_self');
   await prisma.membership.deleteMany({ where: { userId: target, teamId: admin.teamId, role: 'member' } });
 }
@@ -123,13 +137,13 @@ export async function removeMember(userId: string, target: string) {
 
 /**
  * An admin adds someone by email. A new account gets a first password, shown
- * once, which its owner must change at first sign-in; an existing account
- * without a team keeps its own. Where the instance sends email, people join
- * by invitation instead.
+ * once, which its owner must change at first sign-in; an existing account,
+ * whatever other teams it is in, keeps its own. Where the instance sends
+ * email, people join by invitation instead.
  */
-export async function addMember(userId: string, input: unknown): Promise<AddedMember> {
+export async function addMember(userId: string, teamId: string, input: unknown): Promise<AddedMember> {
   if (!strategy.passwords) throw new TeamError(400, 'passwords_off');
-  const admin = await requireMembership(userId, true);
+  const admin = await requireMembership(userId, teamId, true);
   const { email } = AddMemberSchema.parse(input);
   const password = generatePassword();
   const hash = await hashPassword(password);
@@ -138,9 +152,9 @@ export async function addMember(userId: string, input: unknown): Promise<AddedMe
       where: { authId: email },
       create: { authId: email, email },
       update: {},
-      include: { password: true, membership: true },
+      include: { password: true, memberships: { where: { teamId: admin.teamId } } },
     });
-    if (user.membership) throw new TeamError(409, 'member_in_team');
+    if (user.memberships.length) throw new TeamError(409, 'member_in_team');
     if (!user.password) await tx.password.create({ data: { userId: user.id, hash, mustChange: true } });
     await tx.membership.create({ data: { userId: user.id, teamId: admin.teamId, role: 'member' } });
     return { userId: user.id, email, password: user.password ? null : password };
@@ -150,14 +164,18 @@ export async function addMember(userId: string, input: unknown): Promise<AddedMe
 /**
  * An admin replaces a member's password with a new first one, shown once.
  * Only for a member of the admin's own team, and never the admin's own:
- * that one is changed knowing the current password.
+ * that one is changed knowing the current password. Nor for someone who is
+ * also in another team (ADR 0013): the password opens the whole account, so
+ * an admin of one team resetting it would take over that person's place, an
+ * admin's included, in every other team.
  */
-export async function resetMemberPassword(userId: string, target: string): Promise<ResetPassword> {
+export async function resetMemberPassword(userId: string, teamId: string, target: string): Promise<ResetPassword> {
   if (!strategy.passwords) throw new TeamError(400, 'passwords_off');
-  const admin = await requireMembership(userId, true);
+  const admin = await requireMembership(userId, teamId, true);
   if (target === userId) throw new TeamError(400, 'cannot_reset_self');
-  const member = await prisma.membership.findFirst({ where: { userId: target, teamId: admin.teamId } });
-  if (!member) throw new TeamError(404, 'not_a_member');
+  const memberships = await prisma.membership.findMany({ where: { userId: target }, select: { teamId: true } });
+  if (!memberships.some((m) => m.teamId === admin.teamId)) throw new TeamError(404, 'not_a_member');
+  if (memberships.length > 1) throw new TeamError(403, 'member_in_other_team');
   const password = generatePassword();
   await setPassword(target, password, true);
   return { password };
@@ -171,14 +189,14 @@ const toInviteView = (i: { id: string; expiresAt: Date; usedAt: Date | null }): 
   usedAt: i.usedAt?.toISOString() ?? null,
 });
 
-export async function listInvites(userId: string): Promise<InviteView[]> {
-  const admin = await requireMembership(userId, true);
+export async function listInvites(userId: string, teamId: string): Promise<InviteView[]> {
+  const admin = await requireMembership(userId, teamId, true);
   const rows = await prisma.invite.findMany({ where: { teamId: admin.teamId }, orderBy: { createdAt: 'desc' } });
   return rows.map(toInviteView);
 }
 
-export async function createInvite(userId: string): Promise<CreatedInvite> {
-  const admin = await requireMembership(userId, true);
+export async function createInvite(userId: string, teamId: string): Promise<CreatedInvite> {
+  const admin = await requireMembership(userId, teamId, true);
   const token = randomBytes(32).toString('base64url');
   const invite = await prisma.invite.create({
     data: { teamId: admin.teamId, tokenHash: sha256(token), expiresAt: new Date(Date.now() + INVITE_TTL_MS) },
@@ -186,18 +204,24 @@ export async function createInvite(userId: string): Promise<CreatedInvite> {
   return { ...toInviteView(invite), token };
 }
 
-export async function revokeInvite(userId: string, inviteId: string) {
-  const admin = await requireMembership(userId, true);
+export async function revokeInvite(userId: string, teamId: string, inviteId: string) {
+  const admin = await requireMembership(userId, teamId, true);
   await prisma.invite.deleteMany({ where: { id: inviteId, teamId: admin.teamId } });
 }
 
-/** Spends the invitation and joins its team, atomically: two people racing for one token get one seat. */
+/**
+ * Spends the invitation and joins its team, atomically: two people racing for
+ * one token get one seat. Someone already in that team keeps the invitation
+ * unspent; being in other teams does not matter.
+ */
 export async function redeemInvite(userId: string, input: unknown) {
   const { token } = RedeemInviteSchema.parse(input);
   return unique('already_in_team', () => prisma.$transaction(async (tx) => {
-    if (await tx.membership.findUnique({ where: { userId } })) throw new TeamError(409, 'already_in_team');
     const invite = await tx.invite.findUnique({ where: { tokenHash: sha256(token) } });
     if (!invite || invite.expiresAt < new Date()) throw new TeamError(400, 'invite_invalid');
+    if (await tx.membership.findUnique({ where: { userId_teamId: { userId, teamId: invite.teamId } } })) {
+      throw new TeamError(409, 'already_in_team');
+    }
     const claimed = await tx.invite.updateMany({
       where: { id: invite.id, usedAt: null, expiresAt: { gt: new Date() } },
       data: { usedAt: new Date() },
@@ -218,15 +242,15 @@ const toProviderView = (p: { id: string; name: string; baseUrl: string; updatedA
 });
 
 /** The team's providers, for its admin. The key is never part of the answer. */
-export async function listProviders(userId: string): Promise<ProviderView[]> {
-  const admin = await requireMembership(userId, true);
+export async function listProviders(userId: string, teamId: string): Promise<ProviderView[]> {
+  const admin = await requireMembership(userId, teamId, true);
   const rows = await prisma.teamProvider.findMany({ where: { teamId: admin.teamId }, orderBy: { name: 'asc' } });
   return rows.map(toProviderView);
 }
 
 /** An admin adds a provider; its address must pass the network rule now, and on every call. */
-export async function createProvider(userId: string, body: unknown): Promise<ProviderView> {
-  const admin = await requireMembership(userId, true);
+export async function createProvider(userId: string, teamId: string, body: unknown): Promise<ProviderView> {
+  const admin = await requireMembership(userId, teamId, true);
   const input = ProviderInputSchema.parse(body);
   await checkProviderAddress(new URL(input.baseUrl));
   const row = await unique('provider_exists', () =>
@@ -243,8 +267,8 @@ export async function createProvider(userId: string, body: unknown): Promise<Pro
 }
 
 /** An admin moves a provider or replaces its key. Its name stays: team models refer to it. */
-export async function updateProvider(userId: string, providerId: string, body: unknown): Promise<ProviderView> {
-  const admin = await requireMembership(userId, true);
+export async function updateProvider(userId: string, teamId: string, providerId: string, body: unknown): Promise<ProviderView> {
+  const admin = await requireMembership(userId, teamId, true);
   const input = ProviderUpdateSchema.parse(body);
   const row = await prisma.teamProvider.findFirst({ where: { id: providerId, teamId: admin.teamId } });
   if (!row) throw new TeamError(404, 'provider_not_configured');
@@ -260,8 +284,8 @@ export async function updateProvider(userId: string, providerId: string, body: u
 }
 
 /** An admin removes a provider no team model or preset still calls. */
-export async function deleteProvider(userId: string, providerId: string) {
-  const admin = await requireMembership(userId, true);
+export async function deleteProvider(userId: string, teamId: string, providerId: string) {
+  const admin = await requireMembership(userId, teamId, true);
   const row = await prisma.teamProvider.findFirst({ where: { id: providerId, teamId: admin.teamId } });
   if (!row) return;
   const inUse = await prisma.teamConfig.findFirst({
@@ -273,13 +297,25 @@ export async function deleteProvider(userId: string, providerId: string) {
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
-export async function listConfigs(userId: string): Promise<ConfigSnapshot> {
-  const member = await requireMembership(userId);
-  const [team, rows] = await Promise.all([
-    prisma.team.findUniqueOrThrow({ where: { id: member.teamId }, select: { name: true } }),
-    prisma.teamConfig.findMany({ where: { teamId: member.teamId }, orderBy: [{ kind: 'asc' }, { name: 'asc' }] }),
-  ]);
-  return { teamId: member.teamId, teamName: team.name, role: member.role, configs: rows.map(toConfigView) };
+const CONFIG_ORDER = [{ kind: 'asc' }, { name: 'asc' }] as const;
+
+/** One team's configuration, for its console. */
+export async function listConfigs(userId: string, teamId: string): Promise<TeamConfigView[]> {
+  await requireMembership(userId, teamId);
+  const rows = await prisma.teamConfig.findMany({ where: { teamId }, orderBy: [...CONFIG_ORDER] });
+  return rows.map(toConfigView);
+}
+
+/** What the plugin syncs: every team the caller is in, each with its configuration, read in one query. */
+export async function configSnapshot(userId: string): Promise<ConfigSnapshot> {
+  const rows = await prisma.membership.findMany({
+    where: { userId },
+    include: { team: { select: { name: true, configs: { orderBy: [...CONFIG_ORDER] } } } },
+    orderBy: { createdAt: 'asc' },
+  });
+  return {
+    teams: rows.map((m) => ({ teamId: m.teamId, teamName: m.team.name, role: m.role, configs: m.team.configs.map(toConfigView) })),
+  };
 }
 
 /** What a configuration may reference has to exist in the same team, at the pinned version. */
@@ -306,8 +342,8 @@ async function checkReferences(teamId: string, input: ConfigInput) {
   }
 }
 
-export async function createConfig(userId: string, body: unknown): Promise<TeamConfigView> {
-  const admin = await requireMembership(userId, true);
+export async function createConfig(userId: string, teamId: string, body: unknown): Promise<TeamConfigView> {
+  const admin = await requireMembership(userId, teamId, true);
   const input = ConfigInputSchema.parse(body);
   await checkReferences(admin.teamId, input);
   const row = await unique('config_exists', () =>
@@ -318,8 +354,8 @@ export async function createConfig(userId: string, body: unknown): Promise<TeamC
   return toConfigView(row);
 }
 
-export async function updateConfig(userId: string, configId: string, body: unknown): Promise<TeamConfigView> {
-  const admin = await requireMembership(userId, true);
+export async function updateConfig(userId: string, teamId: string, configId: string, body: unknown): Promise<TeamConfigView> {
+  const admin = await requireMembership(userId, teamId, true);
   const { version, ...input } = UpdateConfigSchema.parse(body);
   await checkReferences(admin.teamId, input as ConfigInput);
   const changed = await unique('config_exists', () =>
@@ -332,7 +368,21 @@ export async function updateConfig(userId: string, configId: string, body: unkno
   return toConfigView(await prisma.teamConfig.findUniqueOrThrow({ where: { id: configId } }));
 }
 
-export async function deleteConfig(userId: string, configId: string) {
-  const admin = await requireMembership(userId, true);
+/**
+ * An admin removes a configuration no preset of the team still uses: a model a
+ * preset references, or a plugin a preset pins, stays until those presets
+ * change, as a provider stays while a model calls it.
+ */
+export async function deleteConfig(userId: string, teamId: string, configId: string) {
+  const admin = await requireMembership(userId, teamId, true);
+  const target = await prisma.teamConfig.findFirst({ where: { id: configId, teamId: admin.teamId }, select: { kind: true } });
+  if (target?.kind === 'model' || target?.kind === 'plugin') {
+    const presets = await prisma.teamConfig.findMany({ where: { teamId: admin.teamId, kind: 'preset' }, select: { data: true } });
+    const uses = (data: unknown) => {
+      const preset = data as { modelConfigId?: string; pluginDependencies?: { pluginConfigId: string }[] };
+      return target.kind === 'model' ? preset.modelConfigId === configId : !!preset.pluginDependencies?.some((d) => d.pluginConfigId === configId);
+    };
+    if (presets.some((p) => uses(p.data))) throw new TeamError(409, target.kind === 'model' ? 'model_in_use' : 'plugin_in_use');
+  }
   await prisma.teamConfig.deleteMany({ where: { id: configId, teamId: admin.teamId } });
 }

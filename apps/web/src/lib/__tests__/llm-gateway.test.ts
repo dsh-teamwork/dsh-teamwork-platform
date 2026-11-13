@@ -79,14 +79,15 @@ describe('proxyCompletion', () => {
     expect(await response.text()).toBe('data: [DONE]\n\n');
   });
 
-  it('never contacts upstream for a foreign model or a caller in no team', async () => {
+  it('never contacts upstream for a model that does not exist, or one in a team the caller is not in', async () => {
     setup();
     const request = vi.fn();
     findConfig.mockResolvedValue(null);
-    await expect(proxyCompletion('u', { model: 'foreign', messages: [{}] }, signal(), request)).rejects.toMatchObject({ status: 403, code: 'model_forbidden' });
-    expect(findConfig).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ teamId: 't', id: 'foreign' }) }));
+    await expect(proxyCompletion('u', { model: 'missing', messages: [{}] }, signal(), request)).rejects.toMatchObject({ status: 403, code: 'model_forbidden' });
+    findConfig.mockResolvedValue(row('c', 'model', { provider: 'kimi', model: 'k' }));
     membership.mockResolvedValue(null);
-    await expect(proxyCompletion('u', { model: 'c', messages: [{}] }, signal(), request)).rejects.toMatchObject({ status: 403, code: 'no_team' });
+    await expect(proxyCompletion('u', { model: 'c', messages: [{}] }, signal(), request)).rejects.toMatchObject({ status: 403, code: 'model_forbidden' });
+    expect(membership).toHaveBeenLastCalledWith({ where: { userId_teamId: { userId: 'u', teamId: 't' } } });
     expect(request).not.toHaveBeenCalled();
   });
 
@@ -215,10 +216,7 @@ describe('modelCatalog', () => {
     const request = vi.fn(async () =>
       Response.json({ data: [{ id: 'kimi', display_name: 'Kimi', context_length: 1048576, apiKey: 'secret-key' }, { id: 'other', limit: { context: 128000, output: 8192 } }] }),
     );
-    vi.mocked(prisma.teamProvider.findMany).mockResolvedValue([{ name: 'kimi' }] as never);
-    expect(await modelCatalog('u', null, signal())).toEqual({ providers: ['kimi'] });
-    expect(prisma.teamProvider.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { teamId: 't' } }));
-    const result = await modelCatalog('u', 'kimi', signal(), request);
+    const result = await modelCatalog('u', 't', 'kimi', signal(), request);
     expect(result).toEqual({
       provider: 'kimi',
       models: [
@@ -232,7 +230,7 @@ describe('modelCatalog', () => {
   it('is for admins only', async () => {
     setup('member');
     const request = vi.fn();
-    await expect(modelCatalog('u', 'kimi', signal(), request)).rejects.toMatchObject({ status: 403, code: 'admin_required' });
+    await expect(modelCatalog('u', 't', 'kimi', signal(), request)).rejects.toMatchObject({ status: 403, code: 'admin_required' });
     expect(request).not.toHaveBeenCalled();
   });
 
@@ -243,7 +241,7 @@ describe('modelCatalog', () => {
       Response.json({ data: [{ id: 'bad', context_length: -1 }] }),
       new Response('x'.repeat(1024 * 1024 + 1)),
     ]) {
-      await expect(modelCatalog('u', 'kimi', signal(), async () => response)).rejects.toMatchObject({ status: 502, code: 'upstream_unavailable' });
+      await expect(modelCatalog('u', 't', 'kimi', signal(), async () => response)).rejects.toMatchObject({ status: 502, code: 'upstream_unavailable' });
     }
   });
 });

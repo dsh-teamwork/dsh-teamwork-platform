@@ -11,7 +11,7 @@ import { z } from 'zod';
  * and words in its own language (`teamErrors.*` in the web app's messages).
  */
 export const TEAM_ERRORS = [
-  'no_team',
+  'team_not_found',
   'admin_required',
   'already_in_team',
   'admin_cannot_leave',
@@ -32,8 +32,11 @@ export const TEAM_ERRORS = [
   'member_in_team',
   'not_a_member',
   'cannot_reset_self',
+  'member_in_other_team',
   'provider_exists',
   'provider_in_use',
+  'model_in_use',
+  'plugin_in_use',
   'provider_address_refused',
   'provider_keys_unavailable',
 ] as const;
@@ -112,12 +115,25 @@ export type TeamConfigView = ConfigInput & { id: string; version: number; update
 
 export type TeamRole = 'admin' | 'member';
 
-/** `GET /api/team/configs` — the snapshot the plugin caches, with the team's name and the caller's role in it. */
-export interface ConfigSnapshot {
+/** One team in the plugin's snapshot: its name, the caller's role in it and its configuration. */
+export interface TeamSnapshot {
   teamId: string;
   teamName: string;
   role: TeamRole;
   configs: TeamConfigView[];
+}
+
+/** `GET /api/configs` — what the plugin syncs: every team the caller is in (ADR 0013). */
+export interface ConfigSnapshot {
+  teams: TeamSnapshot[];
+}
+
+/** `GET /api/teams` — one team the caller is in, for the list they pick from. */
+export interface TeamSummary {
+  id: string;
+  name: string;
+  role: TeamRole;
+  memberCount: number;
 }
 
 export const CreateTeamSchema = z.object({ name });
@@ -129,7 +145,7 @@ export interface TeamMemberView {
   role: TeamRole;
 }
 
-/** `GET /api/team` — the caller's team, their role in it and who else is in it. */
+/** `GET /api/teams/:teamId` — a team the caller is in, their role in it and who else is in it. */
 export interface TeamView {
   id: string;
   name: string;
@@ -143,7 +159,7 @@ export interface InviteView {
   usedAt: string | null;
 }
 
-/** `POST /api/team/invites` — the only time the token itself is seen. */
+/** `POST /api/teams/:teamId/invites` — the only time the token itself is seen. */
 export interface CreatedInvite extends InviteView {
   token: string;
 }
@@ -166,7 +182,7 @@ export const ProviderInputSchema = z.object({ name, baseUrl, apiKey });
 /** An edit keeps the name, which team models refer to; a key left out stays as it was. */
 export const ProviderUpdateSchema = z.object({ baseUrl, apiKey: apiKey.optional() });
 
-/** `GET /api/team/providers` — never the key. */
+/** `GET /api/teams/:teamId/providers` — never the key. */
 export interface ProviderView {
   id: string;
   name: string;
@@ -174,7 +190,7 @@ export interface ProviderView {
   updatedAt: string;
 }
 
-/** `POST /api/team/members`: an admin adds someone by email, where the instance holds passwords. */
+/** `POST /api/teams/:teamId/members`: an admin adds someone by email, where the instance holds passwords. */
 export const AddMemberSchema = z.object({ email: z.string().trim().toLowerCase().pipe(z.email()) });
 
 /**
@@ -187,12 +203,13 @@ export interface AddedMember {
   password: string | null;
 }
 
-/** `POST /api/team/members/:userId/password`: a new first password, seen once. */
+/** `POST /api/teams/:teamId/members/:userId/password`: a new first password, seen once. */
 export interface ResetPassword {
   password: string;
 }
 
-/** `GET /api/team/model-catalog`: the configured providers, or one provider's models. */
-export type ModelCatalog =
-  | { providers: string[] }
-  | { provider: string; models: { id: string; name: string; contextWindow?: number; maxTokens?: number }[] };
+/** `GET /api/teams/:teamId/model-catalog?provider=`: one provider's models. */
+export interface ModelCatalog {
+  provider: string;
+  models: { id: string; name: string; contextWindow?: number; maxTokens?: number }[];
+}

@@ -29,7 +29,7 @@ export async function signInWithPassword(email: string, password: string, next: 
 }
 
 export async function claimSetup(token: string, email: string, password: string) {
-  return strategy.claimSetup(token, email, password, '/team');
+  return strategy.claimSetup(token, email, password, '/teams');
 }
 
 export async function changePassword(current: string, next: string) {

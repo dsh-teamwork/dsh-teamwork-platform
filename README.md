@@ -54,14 +54,14 @@ an email and a password.
 4. **Claim the first account.** The web app prints
    `Create the first one at …/setup?token=…` when it starts
    (`docker compose logs web`). Open it, then create your team and add the
-   others by email in `/team`: each gets a first password to change when they
-   first sign in.
+   others by email in its console under `/teams`: each gets a first password
+   to change when they first sign in.
 5. Point each member's DSH plugin at `APP_URL`: in its Teamwork panel, change
    the server on the sign-in screen (or set `apiEndpoint` in the DSH profile's
    `cordis.patch.yml`). Then they sign in from the panel or with `/teamwork login`.
 
-Providers and their keys are the team's own: its admin adds them in `/team`,
-and the keys are stored encrypted under `PROVIDER_KEYS_SECRET`. A model the
+Providers and their keys are the team's own: its admin adds them in the
+team's console, and the keys are stored encrypted under `PROVIDER_KEYS_SECRET`. A model the
 team serves itself on the same network (Ollama, vLLM) can be added by its
 private address, over plain HTTP too: `compose.yaml` sets
 `ALLOW_PRIVATE_PROVIDERS=true`. Set it to `false` if people you do not trust

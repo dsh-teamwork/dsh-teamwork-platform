@@ -320,7 +320,7 @@ generated in Postgres by the first migration. `@electric-sql/pglite` and
 ## Architecture
 
 ```
-apps/web             Next.js 16 — the home page, the team console (/team), the
+apps/web             Next.js 16 — the home page, the team console (/teams), the
                      plugin's sign-in page (/plugin) and the API the plugin
                      calls (/api/*)
 packages/db          Prisma schema, migrations, ensureUser
@@ -345,17 +345,19 @@ working session.
 
 ### Teams and the model gateway
 
-`apps/web/src/lib/team.ts` holds every team rule; the `/api/team*` routes and
-the `/team` page both call it. Each function re-reads the caller's membership
-and acts on the team *that* row names, so a removed member is refused on the
-next request and an admin check can never pair with another team's id. One
-person is in at most one team (`Membership.userId` is the key). A failure is a
+`apps/web/src/lib/team.ts` holds every team rule; the `/api/teams/{teamId}/*`
+routes and the `/teams` pages both call it. A person may be in several teams
+(`docs/adr/0013-one-person-many-teams.md`; the membership key is the pair), so
+each function takes the team id from the request and re-reads the membership of
+that pair: a removed member is refused on the next request, a team the caller
+is not in is a 404, and an admin check can never pair with another team. The
+plugin syncs every team at once from `GET /api/configs`. A failure is a
 `TeamError` with a `TEAM_ERRORS` code, worded in `teamErrors.*` in the messages.
 
 `apps/web/src/lib/llm-gateway.ts` is the model gateway
 (`POST /api/llm/chat/completions`, OpenAI Chat Completions). The wire `model`
-is a team configuration id; the server resolves it within the caller's team,
-calls the team's own provider of that name (`team_providers`: the admin's
+is a team configuration id; the server finds the team it belongs to, refuses a
+caller who is not in that team, and calls that team's own provider of that name (`team_providers`: the admin's
 address, and a key sealed under `PROVIDER_KEYS_SECRET` by
 `src/lib/provider-keys.ts`), forwards an allow-list of inference fields and
 none of the upstream headers. Nothing a caller sends can name a URL, a header
@@ -379,7 +381,7 @@ decided by `SMTP_URL` (ADR 0006):
   (`@dsh-teamwork/shared/server/passwords`, the `passwords` table). Ten wrong
   guesses per account per fifteen minutes, each spent before the comparison. A
   team admin creates a member's account with a first password, shown once,
-  which its owner must change before `/team` or `/plugin` open; the admin
+  which its owner must change before `/teams` or `/plugin` open; the admin
   resets it the same way. The first account is claimed at
   `/setup?token=…`, a link the server prints at start, derived from
   `AUTH_SECRET` and dead once any password exists.

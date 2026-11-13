@@ -18,7 +18,7 @@ export default async function SignInPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const next = returnPath(params.next, '/team');
+  const next = returnPath(params.next, '/teams');
   if (await currentUser()) redirect(next);
   const t = await getTranslations('signIn');
 

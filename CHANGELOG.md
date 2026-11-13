@@ -5,6 +5,22 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-13 — The team console gets a sidebar and a page per task
+
+- **What:** `/teams/{teamId}` is a console with a sidebar: a team switcher (every team the person is in, with their role; switching keeps the page), one link per page, and the account. `/teams` groups the person's teams into those they manage and those they joined. Members have their own page, `/teams/{teamId}/members`, as a table with invitations or account creation beside it; a member leaves the team from there. Models have their own page, `/teams/{teamId}/models`: an admin picks a provider from a list of nine OpenAI-compatible ones (DeepSeek, OpenAI, Qwen, Kimi, Zhipu GLM, Doubao, MiniMax, SiliconFlow, OpenRouter), pastes only its key, reads its model list and publishes several models at once; any other provider is entered by address. Each team model shows which presets use it, and a model or plugin a preset still uses cannot be removed (`409 model_in_use`, `plugin_in_use`). Presets have their own page, `/teams/{teamId}/presets`: an admin starts one from three persona templates (writer, data analyst, research analyst) or from nothing, and edits it in three tabs (basics; DSH tools, each required, optional or off, and plugins; persona and method). Plugins have their own page, `/teams/{teamId}/plugins`. `GET /api/teams/{teamId}/model-catalog` now requires `?provider=`. The overview, `/teams/{teamId}`, counts the team's models, presets, plugins and members, gives an admin a four-step setup checklist and members the command to connect DSH, and lists the latest configuration changes.
+- **Why:** The single long `/team` page mixed every task; each task now has a page.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/console-shell.tsx`, `apps/web/src/app/teams/[teamId]/layout.tsx`, `apps/web/src/lib/provider-catalog.ts`, `apps/web/src/lib/preset-templates.ts`.
+
+## 2026-11-13 — A person may be in several teams
+
+- **What:** A membership is keyed by user and team, so one account can be in any number of teams, admin in some and member in others. The console moves from `/team` to `/teams` (the list, create, join) and `/teams/{teamId}`; the API from `/api/team/*` to `/api/teams/{teamId}/*`, where a team the caller is not in is `404 team_not_found`. The plugin's snapshot moves to `GET /api/configs` and lists every team: `{ teams: [{ teamId, teamName, role, configs }] }`. The gateway resolves a model to its own team and calls that team's provider. Invitation links are `/teams?invite=…`; `no_team` is gone. An admin cannot reset the password of a member who is also in another team (`member_in_other_team`).
+- **Why:** One person working for more than one team needed one account per team. ADR 0013.
+- **Breaking:** Plugin 0.6 cannot read the new snapshot and stops syncing until upgraded to 0.7.0. Links to `/team` and `/team?invite=…` answer 404. Any script calling `/api/team/*` moves to `/api/teams/{teamId}/*`.
+- **Upgrade:** `pnpm db:deploy` (migration `memberships_per_team`: the key becomes `(user_id, team_id)`; existing rows are unaffected). Publish plugin 0.7.0 the same day as this server.
+- **Refs:** `docs/adr/0013-one-person-many-teams.md`, `apps/web/src/lib/team.ts`, `apps/web/src/lib/llm-gateway.ts`, `packages/shared/src/team.ts`.
+
 ## 2026-11-13 — The DSH plugin gets its sign-in code back on loopback
 
 - **What:** `/plugin` also accepts a `redirect_uri` of `http://127.0.0.1:<port>/…`, on every deployment and with no configuration. Pressing Authorize sends the browser there with `?code=…`, and the `/teamwork authorize <code>` line stays on screen in case it does not arrive. `localhost`, `[::1]`, https and a missing port are refused, and still make the link invalid.

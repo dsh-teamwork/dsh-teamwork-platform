@@ -71,7 +71,7 @@ From then on the rules are:
 
 | Part | Public `dsh-teamwork-platform` | This repository only |
 | --- | --- | --- |
-| `apps/web` | The home page and share card, sign-in, `/team`, `/plugin`, `/account`, every `/api/*` route, the model gateway, locale, robots and sitemap; `/privacy` and `/terms` from a deployment's `LEGAL_DIR` | The hosted service's legal text (`premium/docs/legal/`): see "The hosted home page" |
+| `apps/web` | The home page and share card, sign-in, `/teams`, `/plugin`, `/account`, every `/api/*` route, the model gateway, locale, robots and sitemap; `/privacy` and `/terms` from a deployment's `LEGAL_DIR` | The hosted service's legal text (`premium/docs/legal/`): see "The hosted home page" |
 | `apps/manage` | — | Moves to `premium/apps/manage` |
 | `packages/db` | `prisma/schema/` with today's models; every migration so far | Closed models in `prisma/schema/premium-*.prisma`; their migrations named `<timestamp>_premium_<name>` |
 | `packages/shared` | All of it, including the analytics client, which stays off unless configured | — |
