@@ -44,7 +44,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
   }, []);
   useEffect(load, [load]);
-  // Signing out lands on the public home, as the Next app's did; the server
+  // Signing out lands on the public home; the server
   // serves it, so this is a page load rather than a route.
   const signOut = useCallback(async () => {
     try {

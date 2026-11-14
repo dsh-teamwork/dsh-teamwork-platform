@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// Ported from apps/web/src/app/__tests__/ai-crawlers.test.ts.
+// The siblings' ai-crawlers test, in Go.
 func TestAICrawlerPolicy(t *testing.T) {
 	groups := robotsGroups()
 

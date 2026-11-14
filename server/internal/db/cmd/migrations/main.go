@@ -7,7 +7,7 @@
 // Both replay the history into scratch databases: SQLite in memory, and the
 // Postgres and MySQL databases named by MIGRATE_DEV_POSTGRES and
 // MIGRATE_DEV_MYSQL, which this command empties. `check` fails when the
-// schema has a change no migration holds, as `db:drift` did for Prisma.
+// schema has a change no migration holds; it is `pnpm db:drift`.
 package main
 
 import (

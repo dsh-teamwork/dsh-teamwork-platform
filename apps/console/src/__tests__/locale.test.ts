@@ -1,15 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { matchLocale } from '@/lib/locale';
 import { isLoopback, returnPath } from '@/lib/return-path';
-
-describe('matchLocale', () => {
-  it('reads any Simplified Chinese tag as zh-CN and skips Traditional ones', () => {
-    expect(matchLocale(['zh-Hans-CN'])).toBe('zh-CN');
-    expect(matchLocale(['zh-TW', 'en-US'])).toBe('en');
-    expect(matchLocale(['fr'])).toBe('en');
-  });
-});
 
 describe('returnPath', () => {
   it('keeps a path on this site and refuses anything that leaves it', () => {

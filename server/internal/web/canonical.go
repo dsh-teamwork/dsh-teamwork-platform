@@ -8,8 +8,8 @@ import (
 )
 
 // CanonicalHost answers a request to the www/apex twin of APP_URL with a
-// permanent redirect to APP_URL, path and query kept: one host, not two. A
-// port of apps/web/canonical-host.mjs (from router9).
+// permanent redirect to APP_URL, path and query kept: one host, not two, as
+// router9's canonical-host.mjs does.
 //
 // Serving the app on both hosts breaks sign-in: the session cookie is
 // host-only, and Google returns to the one callback APP_URL names, so a

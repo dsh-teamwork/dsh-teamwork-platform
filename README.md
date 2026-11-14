@@ -7,22 +7,23 @@ provider keys never leave the server.
 
 | | |
 | --- | --- |
-| `apps/web` | Next.js 16 · the site, the team console and the API (`/api/*`) the plugin calls · Tailwind v4 · next-intl |
-| `packages/db` | Prisma 7 over Postgres · nanoid keys |
-| `packages/shared` | Wire schemas, locales, and the sign-in strategy |
-| `server` | Go · the one binary replacing the three above (ADR 0014): API, sign-in, gateway, three databases |
-| `apps/console` | Vite · React · the console and public pages, embedded into `server` |
+| `server` | Go · one binary: the API the plugin calls, sign-in, the model gateway, the console and the public pages, on SQLite, Postgres or MySQL (ADR 0014) |
+| `apps/console` | Vite · React · Tailwind v4 · the console and the public pages, embedded into `server` |
+| `api/openapi.yaml` | The wire contract the server is tested against and the console is typed from |
+| `packages/shared` | The languages and the rule that picks one |
 
 ## Quick start
 
 ```bash
-nvm use                 # Node 24.19.0
+nvm use                 # Node 24.19.0, for the console and the tooling
 pnpm install
-pnpm dev:setup          # Postgres in Docker (or: pnpm dev:shared, the ~/code/shushuo/dev stack)
-cp apps/web/.env.example apps/web/.env
-pnpm db:deploy
-pnpm dev                # web :3800
+pnpm build              # the console, embedded into the server
+cd server && go run ./cmd/dsh-teamwork   # :3800, SQLite in ~/.dsh-teamwork
 ```
+
+It prints a link that claims the first account. `CLAUDE.md` has the rest:
+the gate, the databases the suites run on, and working on the console with
+`pnpm dev`.
 
 ## Self-hosting
 

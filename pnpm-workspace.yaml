@@ -14,24 +14,21 @@ packages:
 # `pnpm` field — pnpm 11 no longer reads that field, and a setting left behind
 # there is ignored silently rather than reported. See https://pnpm.io/settings.
 
-# React is pinned rather than ranged so the two Next.js apps resolve one
-# React instance through this store.
+# React is pinned rather than ranged so every app resolves one React instance
+# through this store.
 overrides:
   '@types/react': '19.2.18'
   '@types/react-dom': '19.1.0'
   react: '19.2.0'
   react-dom: '19.2.0'
 
-# next-intl brings in @parcel/watcher and @swc/core; allowed as router9 and
-# vizfor allow them, so an install says nothing about them.
+# Native build steps the apps' toolchains bring in (the closed mobile app's
+# among them), allowed as router9 and vizfor allow them, so an install says
+# nothing about them.
 onlyBuiltDependencies:
   - '@parcel/watcher'
-  - '@prisma/client'
-  - '@prisma/engines'
   - '@swc/core'
   - esbuild
-  - prisma
-  - supabase
   - unrs-resolver
 
 # sharp is deliberately NOT allowed to run its install script. sharp <= 0.34

@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — phases 0 to 4 done, 5 built and waiting on the hosted move · **Updated:** 2026-11-14
+> **Status:** Plan — phases 0 to 6 done; Feishu waits · **Updated:** 2026-11-14
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -35,8 +35,9 @@ it passes:
 3. a code review of the phase's diff (`/code-review`), with every confirmed
    finding fixed and the checks run again.
 
-The Node server stays in the tree until phase 6 deletes it. The parity run
-needs it built, so the run is part of each gate, not of every CI run.
+The Node server stayed in the tree until phase 6 deleted it. The parity run
+needed it built, so the run was part of each gate up to phase 5, not of every
+CI run, and went with it.
 
 ### Where the code goes
 
@@ -51,10 +52,11 @@ needs it built, so the run is part of each gate, not of every CI run.
   only, which is the open server with the closed packages registered
   through `server/edition`.
 
-`apps/console` restates four small rules from `packages/shared` rather than
-depend on it, since that package depends on Prisma and goes in phase 6:
-`returnPath`, the PKCE challenge's form, the sign-in error codes and
-`matchLocale`. From phase 6 the console's copies are the only ones.
+`apps/console` restated four small rules from `packages/shared` while that
+package depended on Prisma: `returnPath`, the PKCE challenge's form, the
+sign-in error codes and `matchLocale`. Phase 6 left `packages/shared` with
+the languages and `matchLocale` only, which the console and the closed mobile
+app now import; the other three are the console's alone.
 
 ### Phase 0: experiments — done
 
@@ -335,8 +337,8 @@ own relay client, unchanged, pairing a phone and passing a call through the
 closed binary; the hosted service answering the plugin end-to-end test after
 the move.
 
-**Built on 2026-11-14; the move waits for the developer.** What the gate
-found:
+**Done on 2026-11-14**; the hosted service moved onto the closed binary the
+same day, on an empty database. What the gate found:
 
 - **The extension point** is `server/app` and `server/edition`, as planned.
   An extension's `Mount` returns the `stop` the server calls after it stops
@@ -387,6 +389,12 @@ found:
 
 **Verified by:** the gate and the plugin end-to-end test passing with the
 Node server gone, and `pnpm lint:docs` over the rewritten documents.
+
+**Done on 2026-11-14.** `packages/shared` keeps only the languages; the dev
+stack (`pnpm dev:setup`) is the Postgres and MySQL the Go suites and the drift
+check use, and `dev:shared`, `dev:web` and the `db:*` scripts other than
+`db:drift` are gone with Prisma. The gate passed on SQLite, Postgres 16 and
+MySQL 8.4, with the plugin's end-to-end test.
 
 ### After phase 6: Feishu
 
@@ -579,6 +587,6 @@ problems below were fixed. From an empty cache, `npx` took 0.54 s on macOS and
 - Every database suite runs on SQLite, Postgres 16 and MySQL 8 in CI, and the
   drift check runs per dialect.
 - The plugin, unchanged, signs in, syncs and calls a model through the binary.
-- Tests pin the boundaries the Node server pins today: the limits under a
+- Tests pin the boundaries the Node server pinned: the limits under a
   burst, a provider key never in a response, the provider address rule, a
   team the caller is not in answering 404, and the PKCE exchange.

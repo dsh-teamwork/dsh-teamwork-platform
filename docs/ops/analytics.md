@@ -1,6 +1,6 @@
 # Analytics
 
-> **Status:** Current · **Updated:** 2026-11-11
+> **Status:** Current · **Updated:** 2026-11-14
 
 What reaches PostHog, from where, under which identity, and how to query it
 without the source.
@@ -11,8 +11,8 @@ Every event lands in one PostHog project per product, from two places:
 
 | Side | Sends | Identity | Why |
 | --- | --- | --- | --- |
-| The browser (`apps/web/src/components/analytics.tsx`) | `$pageview` and `$pageleave` only, every URL cut to its path and no page title | None. Cookieless: unique visitors are a daily-salted hash PostHog computes | Nothing is stored in the visitor's browser, so there is no consent banner |
-| The server (`captureServerEvent`, `@dsh-teamwork/shared/server`) | The events in §3 | `distinct_id` is `User.id` | Only the server knows which account did something, on web and phone alike |
+| The browser (`apps/console/src/lib/analytics.ts`) | `$pageview` and `$pageleave` only, every URL cut to its path and no page title | None. Cookieless: unique visitors are a daily-salted hash PostHog computes | Nothing is stored in the visitor's browser, so there is no consent banner |
+| The server (`server/internal/analytics`) | The events in §3 | `distinct_id` is the account's id | Only the server knows which account did something, on web and phone alike |
 
 So a funnel from a landing page to a sign-up cannot be joined per person: the
 page side is anonymous by design. Traffic questions are answered from the
@@ -22,10 +22,8 @@ The database stays the authority for outcomes. When PostHog and the admin API
 (`premium/docs/ops/manage-api.md`) disagree about a count, the admin API is right, and
 the gap is lost or blocked events.
 
-`premium/apps/manage` sends nothing: its users are operators. It authorizes the
-identity against `ADMIN_EMAILS` without creating a profile row, so signing in
-to the console is never a sign-up and never uses up the one a later first
-visit to `apps/web` reports.
+The closed edition's operator console sends nothing of its own: its users are
+operators, signing in on an instance of their own.
 
 ## 2. Setting up a project
 
@@ -34,9 +32,10 @@ visit to `apps/web` reports.
    with a `product` property on every event.
 2. In Project settings → Web analytics, switch on **Cookieless server hash
    mode**. Without it PostHog drops every browser event.
-3. Put the project's `phc_` key in `apps/web`'s environment as
-   `NEXT_PUBLIC_POSTHOG_KEY`, on Railway and locally. The browser and the server
-   both read it. Leave it unset in development to send nothing.
+3. Put the project's `phc_` key in the server's environment as
+   `POSTHOG_KEY` (and `POSTHOG_HOST` for another region than the default). The
+   server reads it at run time and hands it to the pages it serves, so the
+   browser side needs no build. Leave it unset in development to send nothing.
 4. An agent that reads PostHog does so through PostHog's MCP server or
    connector, which whoever runs the agent installs and signs in to with
    access to this project. No PostHog key goes in `docs/ops/`.
@@ -44,14 +43,13 @@ visit to `apps/web` reports.
 ## 3. Events
 
 Besides PostHog's own `$pageview` and `$pageleave` from the browser, these are
-every event this product sends. The names and properties are
-`ANALYTICS_EVENTS` in `packages/shared/src/analytics.ts`, and
-`packages/shared/src/__tests__/analytics.test.ts` fails when this table and that
-list disagree.
+every event this product sends. The names and properties are `Events` in
+`server/internal/analytics/analytics.go`, and its test fails when this table
+and that list disagree.
 
 | Event | Source | Fires when | Properties |
 | --- | --- | --- | --- |
-| `user_signed_up` | server | The first authenticated request of a new account to `apps/web` creates its profile row; exactly once per account | `via` (`google`, `email`, `password`), `client` (`web`, `plugin`) |
+| `user_signed_up` | server | A sign-in creates an account: the first account claimed with a password, a first emailed code, or a first Google sign-in with no account to join; exactly once per account | `via` (`google`, `email`, `password`), `client` (`web`, `plugin`) |
 | `profile_updated` | server | `PATCH /api/profile` changes the profile | `fields` (any of `name`, `locale`; never their values), `client` |
 
 No property carries anything a person typed. Server events have GeoIP turned

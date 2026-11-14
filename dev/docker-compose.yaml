@@ -1,32 +1,44 @@
-# The standalone local stack: `pnpm dev:setup`. The same database names and
-# credentials as the shared ~/code/shushuo/dev stack (`pnpm dev:shared`), so
-# every .env works unchanged against either — but both bind 5432, so only one
-# runs at a time. No object store: nothing in this product stores files.
+# The local databases for the Go server's suites and drift check: `pnpm
+# dev:setup`. The same images and credentials as CI's services, so
+# TEST_POSTGRES_URL, TEST_MYSQL_URL, MIGRATE_DEV_POSTGRES and MIGRATE_DEV_MYSQL
+# read the same locally and there. The server itself needs none of this: with
+# no DATABASE_URL it runs on SQLite in its data directory.
 name: dsh-teamwork-dev
 
 services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: dsh_teamwork
-      POSTGRES_DEV_INSECURE: 'true'
       POSTGRES_PASSWORD: postgres_password
       POSTGRES_USER: postgres
+      POSTGRES_DB: go_drift
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dsh_teamwork -q"]
-      timeout: 60s
+      test: ["CMD-SHELL", "pg_isready -U postgres -q"]
       interval: 5s
+      timeout: 60s
       start_period: 60s
     ports:
       - 5432:5432
     volumes:
-      - type: volume
-        source: pgdata
-        target: /var/lib/postgresql/data/
-      - type: bind
-        source: ./initdb.d
-        target: /docker-entrypoint-initdb.d
-        read_only: true
+      - postgres:/var/lib/postgresql/data/
 
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_password
+      MYSQL_DATABASE: go_drift
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -pmysql_password"]
+      interval: 5s
+      timeout: 60s
+      start_period: 60s
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql:/var/lib/mysql
+
+# Not the old stack's `pgdata`: an existing volume skips POSTGRES_DB, so
+# go_drift would never be created on it.
 volumes:
-  pgdata: {}
+  postgres: {}
+  mysql: {}

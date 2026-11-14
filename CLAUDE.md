@@ -225,127 +225,108 @@ for English, switches the reply for as long as that holds.
 ## Commands
 
 ```bash
-pnpm dev:setup        # this project's own Postgres 16 via dev/docker-compose.yaml
-pnpm dev:stop | dev:clean    # stop it; clean also drops its volume
-pnpm dev:shared       # or: the shared ~/code/shushuo/dev stack (SHUSHUO_DEV overrides)
-pnpm dev:shared:status | dev:shared:stop
-pnpm dev              # every app; web :3800
-pnpm dev:web
+cd server && go run ./cmd/dsh-teamwork   # the server on :3800, SQLite in ~/.dsh-teamwork
+pnpm dev              # the console's Vite server on :3801, /api sent to :3800
+pnpm dev:setup        # Postgres 16 and MySQL 8.4 for the Go suites (dev/)
+pnpm dev:stop | dev:clean    # stop them; clean also drops their volumes
 
 pnpm tsc              # the gate, in CI's order: tsc → lint:lang → lint:docs →
 pnpm lint:lang        #   assets:icons --check → lint → db:drift → test → build.
 pnpm lint:docs        #   The husky pre-push hook runs all eight before every push,
-                      #   plus, where premium/ exists, the edition boundary.
+                      #   plus the plugin's end-to-end test and, where premium/
+                      #   exists, the edition boundary.
 pnpm assets:icons --check
 pnpm lint
 pnpm db:drift
 pnpm test
 pnpm build
 
-pnpm db:generate      # regenerate the Prisma client (postinstall does this)
-pnpm db:migrate       # AUTHOR a migration — local database only
-pnpm db:deploy        # APPLY committed migrations to a deployed database
-pnpm db:push | db:reset | db:studio | db:seed
-
 pnpm assets:icons     # every icon and logo, raster and vector, from docs/brand/icon.svg
 ```
 
-**Two local stacks, one set of `.env` values.** `pnpm dev:setup` runs this
-project's own Postgres (`dev/`, compose project `dsh-teamwork-dev`); `pnpm
-dev:shared` runs the `~/code/shushuo/dev` stack every sibling can share, where
-this project is registered (`registry.conf`: database `dsh_teamwork`, shadow
-`dsh_teamwork_shadow`; `ports.conf`: 3800/3801). Both create the same databases
-with the same credentials, so `cp apps/web/.env.example apps/web/.env` (and
-`premium/apps/manage`, `packages/db`) reaches either unedited, apart from
-`AUTH_SECRET`. Both bind 5432, so only one runs at a time; `dev:setup` refuses
-while another stack holds the port. Each keeps its own data: switching stacks
-means `pnpm db:deploy` again. There is no object store, because nothing here
-stores files.
-With no `SMTP_URL`, sign-in is an email and a password, and the web app prints
-a link that claims the first account when it starts.
+**The server is `server/`, one Go module and a workspace package**, so
+`pnpm lint` (gofmt and go vet), `test`, `build` and `db:drift` reach it as they
+reach the console; they need Go (the version in `server/go.mod`). Run from
+`server/`, with nothing configured it keeps its SQLite file and generated
+secrets in `~/.dsh-teamwork` (`--data` moves it), listens on
+`127.0.0.1:3800`, and prints a link that claims the first account. With no
+`SMTP_URL`, sign-in is an email and a password. To work on the console, start
+the server with `APP_URL=http://localhost:3801` and run `pnpm dev`: a write
+must come from APP_URL's origin. The server embeds the console its build last
+copied in (`server/scripts/embed.mjs`), so `pnpm build` before `go run` shows
+console changes on :3800.
+
+**Database suites run on every dialect they can reach.** Every case runs on
+SQLite, and on Postgres and MySQL when `TEST_POSTGRES_URL` and
+`TEST_MYSQL_URL` name a server they may create scratch databases on
+(`server/internal/testdb`); `db:drift` needs `MIGRATE_DEV_POSTGRES` and
+`MIGRATE_DEV_MYSQL`, databases it may empty, and skips without them. `pnpm
+dev:setup` starts both servers and prints the four variables. CI sets them
+all, so skipped locally never means skipped everywhere. The plugin's
+end-to-end test is `go test -tags e2e ./e2e` in `server/`, against
+`../dsh-teamwork` or `DSH_TEAMWORK_PLUGIN`.
 
 **CI runs on a push to `main`** — a merge — **and on every pull request**, plus
-by hand from the Actions tab: the gate above, the plugin's end-to-end test
-against the Go server, the release packed and run with `npx` on Linux, macOS
-and Windows, and a `self-host` job that builds `server/Dockerfile` and starts
-`compose.yaml`. A tag `v<version>` runs `.github/workflows/release.yaml`: npm,
-release binaries and the image on ghcr.io (it needs an `NPM_TOKEN` secret). `.husky/pre-push` runs the gate
-before a branch leaves your machine. `git push
---no-verify` is for a work-in-progress branch nobody will merge yet, not for
-landing a red `main`. The `@claude` workflow (`.github/workflows/claude.yml`)
-needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret (`claude setup-token`);
-without it that workflow fails and nothing else is affected. Suites that need a
-database run on PGlite in memory without `DATABASE_URL` and on Postgres with it;
-CI runs them both ways. `db:drift` skips without `SHADOW_DATABASE_URL` (see
-`packages/db/.env.example`); CI provides it, so skipped locally never means
-skipped everywhere.
-
-**The Go server (`server/`) is a workspace package**, so the same `pnpm lint`,
-`test`, `build` and `db:drift` cover it; they need Go (the version in
-`server/go.mod`). Its database suites run on SQLite always, and on Postgres and
-MySQL when `TEST_POSTGRES_URL` and `TEST_MYSQL_URL` name a server they may
-create scratch databases on; its drift check needs `MIGRATE_DEV_POSTGRES` and
-`MIGRATE_DEV_MYSQL`, databases it may empty, and skips without them. The
-plugin's end-to-end test is `go test -tags e2e ./e2e` in `server/`, against
-`../dsh-teamwork` or `DSH_TEAMWORK_PLUGIN`. `node server/scripts/pack.mjs
-<version>` builds the five binaries and their npm packages after
-`pnpm --filter @dsh-teamwork/console build`.
+by hand from the Actions tab: the gate above, the plugin's end-to-end test in
+every Go module that has one, the release packed and run with `npx` on Linux,
+macOS and Windows, and a `self-host` job that builds `server/Dockerfile` and
+starts `compose.yaml`. A tag `v<version>` runs `.github/workflows/release.yaml`:
+npm, release binaries and the image on ghcr.io (it needs an `NPM_TOKEN`
+secret); `node server/scripts/pack.mjs <version>` is its packing step, run by
+hand after `pnpm --filter @dsh-teamwork/console build`. `.husky/pre-push` runs
+the gate before a branch leaves your machine. `git push --no-verify` is for a
+work-in-progress branch nobody will merge yet, not for landing a red `main`.
+The `@claude` workflow (`.github/workflows/claude.yml`) needs a
+`CLAUDE_CODE_OAUTH_TOKEN` repository secret (`claude setup-token`); without it
+that workflow fails and nothing else is affected.
 
 **Every vitest workspace names its own `include` and excludes `dist`** (Vitest 4
-dropped `**/dist/**` from its default exclude). Next.js apps default to the
-`node` environment; a suite that needs the DOM opts in with
+dropped `**/dist/**` from its default exclude); the default environment is
+`node`, and a suite that needs the DOM opts in with
 `// @vitest-environment jsdom` on its first line. Types are checked once, by
 `pnpm tsc`, including the test files.
 
-### Prisma: where it lives, and how it finds the database
+### The database: one schema, three dialects
 
-`packages/db` (`@dsh-teamwork/db`) is the single owner of the schema. **`db:migrate`
-authors, `db:deploy` applies**: `prisma migrate dev` diffs, writes, needs a
-shadow database and offers to reset the one it is pointed at, so
-`packages/db/scripts/assert-local-database.mjs` refuses it — and `db:push` / `db:reset` — on
-any non-local host (`ALLOW_REMOTE_MIGRATE_DEV=1` is the deliberate escape hatch).
-`db:drift` replays every migration into a scratch database and compares the
-result to the schema (`prisma/schema/`), so a column that reached a database only through
-`db:push` cannot land unnoticed.
+`server/internal/db` owns the schema: an `ent` schema (`schema/`), its
+generated client (`ent/`, committed; `go generate ./internal/db` rewrites it)
+and the migrations, one directory per dialect (`migrations/sqlite`,
+`postgres`, `mysql`). `DATABASE_URL` picks the dialect (`postgres://`,
+`mysql://`, `sqlite:///path`); without one it is SQLite in the data
+directory. **The binary applies every pending migration before it serves**,
+recorded with its checksum in `schema_migrations`; Postgres and MySQL
+processes starting together take turns under a lock. The history is
+append-only: a migration somebody else's database applied is never edited,
+and the server refuses to start when one was.
 
-**With no `DATABASE_URL` the apps run on PGlite** (ADR 0006): Postgres compiled
-to WebAssembly, inside the process, in `PGLITE_DIR` (default
-`~/.dsh-teamwork/db`; `memory://` for a throwaway). `packages/db/src/pglite.ts`
-opens it on first connect, applies the committed migrations there — recorded in
-`_prisma_migrations` exactly as `prisma migrate deploy` records them — and
-closes it on `$disconnect()`. One process owns a data directory. The Prisma CLI
-cannot reach it, so `db:migrate`, `db:drift` and `db:studio` need Postgres.
-
-For those commands `DATABASE_URL` is resolved in one place,
-`packages/db/prisma.config.ts`: a real environment variable first, then the
-first of `packages/db/.env`, the root `.env`, `apps/web/.env`; with nothing
-set, the `pnpm dev:setup` stack. The guard reads the same list in the same
-order.
-
-Every `prisma` / `@prisma/*` dependency is pinned to an **exact** `7.9.1` (as is
-`vitest` at `4.1.11`): what a caret resolves to is decided by the day the
-lockfile was written. The client is generated into `packages/db/src/generated`
-(gitignored, turbo-cacheable); import `PrismaClient`, `Prisma` and model types
-from `@dsh-teamwork/db`, never from `@prisma/client`. Primary keys are `nanoid()`,
-generated in Postgres by the first migration. `@electric-sql/pglite` and
-`pglite-prisma-adapter` are exact too, and `apps/web` loads both unbundled
-(`serverExternalPackages`): bundled, PGlite cannot initialise a new directory.
+- **Authoring a migration**: change the schema, `go generate ./internal/db`,
+  then `go run ./internal/db/cmd/migrations new <name>` in `server/`, which
+  writes all three dialects' files and needs `MIGRATE_DEV_POSTGRES` and
+  `MIGRATE_DEV_MYSQL`. `db:drift` (`migrations check`) fails when the schema
+  holds a change no migration does.
+- **What the schema may use** is what the three share
+  (`docs/tech/go-server.md`, "Rules for the data layer"): ids are a nanoid set
+  by the application, a limit is a conditional update rather than a lock,
+  every MySQL table is `utf8mb4_bin` and every time column `datetime(6)`, and a
+  column's size is four bytes per character the API allows.
+- Every `vitest` dependency is pinned to an **exact** `4.1.11`: what a caret
+  resolves to is decided by the day the lockfile was written.
 
 ## Architecture
 
-**The server is being rewritten as one Go binary** over SQLite, Postgres or
-MySQL (`docs/adr/0014-one-go-binary.md`), in the order that ADR gives. Until
-the Go server serves everything, what follows describes the Node server that
-runs today.
-
 ```
-apps/web             Next.js 16 — the home page, the team console (/teams), the
-                     plugin's sign-in page (/plugin) and the API the plugin
-                     calls (/api/*)
-packages/db          Prisma schema, migrations, ensureUser
-packages/shared      what the clients agree about (root: isomorphic, including
-                     the team wire schemas) and the server-only sign-in
-                     strategy (@dsh-teamwork/shared/server/*)
+server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
+                     app.Main; app/ builds the server, edition/ is what a
+                     closed package registers through; internal/ holds the
+                     rest by concern: config, db, auth, team, gateway,
+                     analytics, httpapi (every route), web (the embedded
+                     console and public pages), wire (request shapes and
+                     error codes)
+apps/console         Vite and React: the console and the public pages,
+                     prerendered at its build and embedded in the binary
+api/openapi.yaml     the wire contract
+packages/shared      the languages and the rule that picks one, shared by the
+                     console and the closed mobile app
 premium/server       the closed Go module: the open server with the closed
                      packages (the relay, the operator console) registered
                      through server/edition
@@ -355,143 +336,140 @@ Everything under premium/ is closed and stays out of the community edition
 premium/CLAUDE.md.
 ```
 
-**The one rule about data access:** clients call the web API, and Prisma is
-reached only from the Next.js apps, where the ownership checks live. A request
-or response that crosses the wire has its Zod schema in `@dsh-teamwork/shared`,
-and both ends parse with it. The plugin repository cannot import that package,
-so `../dsh-teamwork/src/client.ts` restates the snapshot shape; a change to
-`packages/shared/src/team.ts` that touches the wire changes it in the same
-working session.
+**The one rule about data access:** clients call the API, and the database is
+reached only from `server/`, where the ownership checks live. Every route's
+request and response is in `api/openapi.yaml`: the Go tests validate each
+response they see against it, and the console's types are generated from it
+(`pnpm --filter @dsh-teamwork/console api:types` writes
+`src/lib/api.gen.ts`, and a test fails when it is stale). The plugin
+repository restates the snapshot shape in `../dsh-teamwork/src/client.ts`; a
+change to `GET /api/configs` changes it in the same working session.
 
 ### Teams and the model gateway
 
-`apps/web/src/lib/team.ts` holds every team rule; the `/api/teams/{teamId}/*`
-routes and the `/teams` pages both call it. A person may be in several teams
+`server/internal/team` holds every team rule; the `/api/teams/{teamId}/*`
+routes (`internal/httpapi`) call it. A person may be in several teams
 (`docs/adr/0013-one-person-many-teams.md`; the membership key is the pair), so
-each function takes the team id from the request and re-reads the membership of
+each rule takes the team id from the request and re-reads the membership of
 that pair: a removed member is refused on the next request, a team the caller
 is not in is a 404, and an admin check can never pair with another team. The
 plugin syncs every team at once from `GET /api/configs`. A failure is a
-`TeamError` with a `TEAM_ERRORS` code, worded in `teamErrors.*` in the messages.
+`wire.Error` with a code (`internal/wire`), worded in `teamErrors.*` in the
+console's messages.
 
-`apps/web/src/lib/llm-gateway.ts` is the model gateway
+`server/internal/gateway` is the model gateway
 (`POST /api/llm/chat/completions`, OpenAI Chat Completions). The wire `model`
 is a team configuration id; the server finds the team it belongs to, refuses a
-caller who is not in that team, and calls that team's own provider of that name (`team_providers`: the admin's
-address, and a key sealed under `PROVIDER_KEYS_SECRET` by
-`src/lib/provider-keys.ts`), forwards an allow-list of inference fields and
-none of the upstream headers. Nothing a caller sends can name a URL, a header
-or a key. **Where an address may point is `src/lib/provider-network.ts`**
-(ADR 0006): public https, unless `ALLOW_PRIVATE_PROVIDERS=true` also admits
-loopback and private networks, and plain http only to them; it is checked when
-an address is saved, before each call, and by the socket's own lookup, so a
-DNS answer that changes in between is refused.
+caller who is not in that team, and calls that team's own provider of that
+name (`team_providers`: the admin's address, and a key sealed under
+`PROVIDER_KEYS_SECRET` by `internal/team/keys.go`), forwards an allow-list of
+inference fields and none of the upstream headers. Nothing a caller sends can
+name a URL, a header or a key. **Where an address may point is
+`internal/team/network.go`** (ADR 0006): public https, unless
+`ALLOW_PRIVATE_PROVIDERS=true` also admits loopback and private networks, and
+plain http only to them; it is checked when an address is saved, before each
+call, and by the dialer as it connects, so a DNS answer that changes in
+between is refused.
 
 ### Sign-in
 
-NextAuth (Auth.js v5, JWT sessions, no adapter): Google, and one email door
-decided by `SMTP_URL` (ADR 0006):
+Three doors, all in `server/internal/auth` (ADR 0014):
 
-- **With it**, a code emailed over SMTP — the hosted service uses Resend's
-  endpoint — and stored as an HMAC under `AUTH_SECRET` (ten minutes, at most
-  five checks — each spent before the comparison — and five per address per
-  fifteen minutes, counted under an advisory lock). People join a team by
-  single-use invitation.
-- **Without it**, a password, stored as scrypt with its parameters
-  (`@dsh-teamwork/shared/server/passwords`, the `passwords` table). Ten wrong
+- **Google**, through `github.com/markbates/goth`, returning to
+  `/api/auth/callback/google`. An account is joined by email only when Google
+  says the email is verified.
+- **With `SMTP_URL`, a code emailed over SMTP** — the hosted service uses
+  Resend's endpoint — and stored as an HMAC under `AUTH_SECRET`: ten minutes,
+  at most five checks, each spent before the comparison, and five per address
+  per fifteen minutes. People join a team by single-use invitation.
+- **Without it, a password**, stored as scrypt with its parameters. Ten wrong
   guesses per account per fifteen minutes, each spent before the comparison. A
   team admin creates a member's account with a first password, shown once,
   which its owner must change before `/teams` or `/plugin` open; the admin
-  resets it the same way. The first account is claimed at
-  `/setup?token=…`, a link the server prints at start, derived from
-  `AUTH_SECRET` and dead once any password exists.
+  resets it the same way. The first account is claimed at `/setup?token=…`, a
+  link the server prints at start, derived from `AUTH_SECRET` and dead once any
+  password exists.
 
-Verifying a request ends in an `Identity` (`@dsh-teamwork/shared`), whose `via`
-names the door; `User.authId` is the lower-cased email, so every door for one
-address is one account. An app built with `emailCodes: false` — the console —
-admits only Google sessions.
+Every limit is a conditional update on `rate_windows`, never a lock. **An
+account is not its email**: the `identities` table records each door that
+reached it, `(provider, subject)` unique, and an account is joined by email
+only on an email the door verified. Sessions are a cookie and plugin tokens a
+Bearer, both JWE under keys derived from `AUTH_SECRET`, each kind under its
+own, so one never opens as the other.
 
 **The DSH plugin signs in through the website** (`docs/adr/0001-plugin-sign-in.md`).
 `/teamwork login` in DSH listens on `http://127.0.0.1:<port>` and prints
 `/plugin?challenge=…&redirect_uri=…`. The signed-in person confirms, and the
 browser takes a two-minute code bound to that PKCE challenge back to the plugin
 (`docs/adr/0012-the-plugin-gets-its-code-back-on-loopback.md`). The code also
-stays on screen to paste (`/teamwork authorize <code>`). The plugin trades code + verifier at
-`POST /api/auth/plugin/token` for a 30-day Bearer token
-(`packages/shared/src/server/auth/nextauth/{plugin,tokens}.ts`). A JWT session
-or token **cannot be revoked before it expires** — the price of having no
-session table, chosen deliberately; team access is still re-checked on every
-request. A phone app adds `&redirect_uri=…` under `MOBILE_REDIRECT_URI`, and
-after the same confirmation the code goes back to it instead of being shown
-(`docs/adr/0010-the-app-gets-its-code-back.md`).
-
-| Where | What |
-| --- | --- |
-| `@dsh-teamwork/shared` | `Identity`, `bearerFromHeader`, `returnPath`, `PLUGIN_CHALLENGE`, the admin allowlist, the email/code schemas and `AuthError` codes |
-| `@dsh-teamwork/shared/server/nextauth` | `createNextAuth`: `identity()`, `refreshSession()`, the four actions, `plugin.mint` / `plugin.redeem` |
-| `@dsh-teamwork/db`, `@dsh-teamwork/shared/server` | `ensureUser`, `createUserResolver` → `currentUser` / `requireUser` (the web app's; the console stops at the `Identity`) |
-| Each app's `lib/auth/` | Its options (`nextauth.ts`), `strategy.ts`, the actions; the mounts `/api/auth/[...nextauth]` and, in web, `/api/auth/plugin/token` |
-
-Each app's cookies are its own (`dsh-teamwork-web-auth*`, `dsh-teamwork-manage-auth*`): on
-localhost the apps share a host, since cookies ignore the port.
+stays on screen to paste (`/teamwork authorize <code>`). The plugin trades code
+and verifier at `POST /api/auth/plugin/token` for a 30-day Bearer token. A
+session or token **cannot be revoked before it expires** — the price of
+having no session table, chosen deliberately; team access is still re-checked
+on every request. A phone app adds `&redirect_uri=…` under
+`MOBILE_REDIRECT_URI`, and after the same confirmation the code goes back to
+it instead of being shown (`docs/adr/0010-the-app-gets-its-code-back.md`).
 
 ### Locale
 
-`en` and `zh-CN`, and **never in the URL**. Web: the profile's `locale`, then the
-`locale` cookie, then `Accept-Language` (`src/lib/locale.ts`, next-intl without
-routing), resolved through `matchLocale` in `@dsh-teamwork/shared`; a signed-in
-choice is written to the profile.
+`en` and `zh-CN`, and **never in the URL**: the profile's `locale`, then the
+`locale` cookie, then `Accept-Language`. The server resolves it for the pages
+it serves (`server/internal/web/locale.go`) and writes it on the console's
+root element; the console and the closed mobile app read the list and the
+rule from `@dsh-teamwork/shared`. A signed-in choice is written to the profile
+(`POST /api/locale`).
 
 ### Analytics
 
 One PostHog project per product, fed from two sides
-([`docs/ops/analytics.md`](docs/ops/analytics.md)):
+([`docs/ops/analytics.md`](docs/ops/analytics.md)), both off without
+`POSTHOG_KEY`:
 
-- **The browser counts anonymously.** `apps/web/src/components/analytics.tsx`
+- **The browser counts anonymously.** `apps/console/src/lib/analytics.ts`
   runs in cookieless mode with no identity: pageviews only, no autocapture, no
-  recording, and no consent banner.
-- **The server reports what happened to an account.** `captureServerEvent`
-  (`@dsh-teamwork/shared/server`) sends under `User.id`. It fires where the server sees
-  the event: a sign-up in `createUserResolver`, a profile change in its route.
-- **One table of events.** Every name and its strict property schema is
-  `ANALYTICS_EVENTS` in `@dsh-teamwork/shared`. A test holds `docs/ops/analytics.md` to
-  it, and no property carries anything a person typed.
+  recording, and no consent banner. The key reaches it from the server at run
+  time, in the page.
+- **The server reports what happened to an account.**
+  `server/internal/analytics` sends under the account's id, where the server
+  sees the event: a sign-up when an account is created, a profile change in its
+  route.
+- **One table of events.** Every name and its properties is `Events` in that
+  package, and its test holds `docs/ops/analytics.md` to it. No property
+  carries anything a person typed.
 - **The database is the authority for outcomes**; PostHog is for funnels and
-  traffic. `premium/apps/manage` sends nothing.
+  traffic.
 
 ### Search and sharing
 
-What a crawler or a link preview reads, all in `apps/web`: an instance's own
-`robots.txt`, `sitemap.xml`, canonicals and share card.
+What a crawler or a link preview reads: an instance's own `robots.txt`,
+`sitemap.xml`, canonicals and share card.
 
-- **`APP_URL` is the site's address** (`src/lib/site.ts`): `metadataBase`, `robots.txt`
-  and `sitemap.xml` name it, and never the Host header, which a stranger can set.
-  Set it in every deployment, at build as well as at run: the static files and
-  the redirect that sends its `www`/apex twin to it (`canonical-host.mjs`) are
-  compiled in.
-- **A public page states its own `alternates.canonical`**; signed-in and sign-in
-  screens carry `robots: { index: false }`, and `src/app/sitemap.ts` lists only the
-  public pages. `src/app/__tests__/seo.test.ts` holds the three files together.
-- **The share card is `opengraph-image.tsx`**, English on purpose (its Onest files
-  carry no CJK glyphs); it draws the exported `public/logo.svg`, so it follows
-  `docs/brand/icon.svg` without being edited. The landing page carries
-  `Organization` and `WebSite` JSON-LD. The locale is never in the URL, so there is
-  no hreflang.
-- **AI crawlers** (`src/lib/ai-crawlers.ts`, the same file in every sibling):
-  crawlers that gather training data are refused in `robots.txt`; search and
-  assistant fetchers are deliberately not named, so they follow the `*` group and
-  can cite the site. A product whose pages are written for agents passes those
-  paths to `aiTrainingRule()`. To allow training, empty `AI_TRAINING_BOTS`.
+- **`APP_URL` is the site's address**, read at run time: `robots.txt` and
+  `sitemap.xml` are written from it, the prerendered pages' canonicals and
+  share-card URLs are filled in from it as they are served, and its `www`/apex
+  twin is redirected to it (`server/internal/web/canonical.go`). Never the Host
+  header, which a stranger can set.
+- **A public page states its own canonical**; signed-in and sign-in screens
+  are `noindex`, and the sitemap lists only the public pages
+  (`server/internal/web/web_test.go` holds them together).
+- **The share card is drawn at the console's build** (satori), English on
+  purpose (its Onest files carry no CJK glyphs), from `public/logo.svg`, so it
+  follows `docs/brand/icon.svg` without being edited. The home page carries
+  `Organization` and `WebSite` JSON-LD. The locale is never in the URL, so
+  there is no hreflang.
+- **AI crawlers** (`server/internal/web/ai_crawlers.go`, the same list as every
+  sibling's `ai-crawlers.ts`): crawlers that gather training data are refused
+  in `robots.txt`; search and assistant fetchers are deliberately not named,
+  so they follow the `*` group and can cite the site.
 
 ## Deployment
 
 A self-hosted instance runs the Go server (`README.md`, "Self-hosting"): with
 `npx @dsh-teamwork/server`, a release binary, or `compose.yaml` over
 `server/Dockerfile`, which keeps the SQLite file and the generated secrets in a
-volume. The binary applies its migrations before it serves. Each app's `dev` pins its port; **`start` never does**, so the host's
-`PORT` decides — a pinned `start` port is how two siblings served 502s. The
-hosted service's deployment is in `premium/CLAUDE.md`, where that directory
-exists.
+volume. The binary applies its migrations before it serves, and listens on
+the host's `PORT` where one is set. The hosted service's deployment is in
+`premium/CLAUDE.md`, where that directory exists.
 
 ## Documentation
 

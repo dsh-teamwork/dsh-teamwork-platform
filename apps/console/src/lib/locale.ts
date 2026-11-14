@@ -1,38 +1,17 @@
 /**
- * The interface languages and how a browser's preference resolves to one,
- * as packages/shared/src/locales.ts does for the Node server. The locale is
- * never in the URL: a chosen one is the `locale` cookie, otherwise the
- * browser's.
+ * The viewer's language. The languages and the rule that picks one are
+ * `@dsh-teamwork/shared`'s, which the mobile app reads too. The locale is
+ * never in the URL: a chosen one is the profile's or the `locale` cookie,
+ * otherwise the browser's.
  */
+import { LOCALES, type Locale, matchLocale } from '@dsh-teamwork/shared';
 
-export const LOCALES = ['en', 'zh-CN'] as const;
-export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = 'en';
+export { LOCALES, type Locale };
 
 /**
- * The best supported locale for tags in preference order. An exact match
- * wins; otherwise the language decides, so `zh`, `zh-Hans` and `zh-SG` read
- * Simplified Chinese, and a Traditional-script tag falls through.
- */
-export function matchLocale(tags: readonly string[]): Locale {
-  for (const tag of tags) {
-    const exact = LOCALES.find((l) => l.toLowerCase() === tag.toLowerCase());
-    if (exact) return exact;
-    const language = tag.split('-')[0]?.toLowerCase();
-    if (language === 'zh') {
-      if (/-(hant|tw|hk|mo)\b/i.test(tag)) continue;
-      return 'zh-CN';
-    }
-    const byLanguage = LOCALES.find((l) => l.split('-')[0] === language);
-    if (byLanguage) return byLanguage;
-  }
-  return DEFAULT_LOCALE;
-}
-
-/**
- * The viewer's language: what the server resolved (the profile's, then the
- * cookie, then the browser's) and wrote on the root element, else, in
- * development, the cookie and the browser's languages.
+ * What the server resolved (the profile's, then the cookie, then the
+ * browser's) and wrote on the root element, else, in development, the cookie
+ * and the browser's languages.
  */
 export function currentLocale(): Locale {
   const resolved = document.documentElement.dataset.locale;

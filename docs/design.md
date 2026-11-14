@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-12
+> **Status:** Current · **Updated:** 2026-11-14
 
 The DSH Teamwork visual system — the whale mark, the indigo-and-paper palette, type, spacing and icons — and the file in code that owns each part.
 
@@ -18,9 +18,9 @@ stylesheet is right and this file is stale.
 | --- | --- |
 | Brand mark | `docs/brand/icon.svg` — the one hand-edited copy; every icon and logo is exported from it |
 | Exports | `scripts/generate-icons.mjs` (`pnpm assets:icons`) |
-| Web colour, radius, faces, the ocean | `apps/web/src/app/globals.css` |
+| Web colour, radius, faces, the ocean | `apps/console/src/globals.css` |
 | Console colour, radius, faces | `premium/apps/manage/src/app/globals.css` |
-| Share card | `apps/web/src/app/opengraph-image.tsx` — the exported `public/logo.svg` beside the name (Onest Bold) and tagline (Onest Regular), on paper |
+| Share card | `apps/console/scripts/prerender.mjs` — the exported `public/logo.svg` beside the name (Onest Bold) and tagline (Onest Regular), on paper |
 
 ## The mark
 
@@ -108,8 +108,8 @@ Console only:
 | `--warning` | `oklch(0.62 0.14 70)` | `oklch(0.8 0.14 75)` |
 | `--info` | `oklch(0.55 0.12 245)` | `oklch(0.72 0.12 245)` |
 
-The landing page's ocean (`apps/web/src/app/page.tsx`,
-`apps/web/src/components/home/sea.tsx`), declared beside the web scale. The sea is the same in both themes,
+The landing page's ocean (`apps/console/src/public/home.tsx`,
+`apps/console/src/public/sea.tsx`), declared beside the web scale. The sea is the same in both themes,
 so these are the one part of the scale that does not swap, except `--fluke`:
 
 | Token | Light | Dark | Role |
@@ -132,7 +132,7 @@ borrows it. Each token is exposed to Tailwind as `--color-*` in the file's
 | Surface | Faces | Scale |
 | --- | --- | --- |
 | Web, console | `--font-sans`: `system-ui, -apple-system, 'Segoe UI', sans-serif`; `--font-mono`: `ui-monospace, 'SF Mono', monospace` | Tailwind's defaults. The console adds `tabular` (tabular numerals) for columns of numbers |
-| Share card | Onest 700 and 400 (`apps/web/assets/fonts`: latin `.woff`, OFL licence beside them) | The name at 84px bold, the tagline at 36px regular; no CJK glyphs, so the card is English |
+| Share card | Onest 700 and 400 (`apps/console/assets/fonts`: latin `.woff`, OFL licence beside them) | The name at 84px bold, the tagline at 36px regular; no CJK glyphs, so the card is English |
 
 ## Spacing and radius
 
@@ -160,7 +160,7 @@ icon set.
   is the one call to action per form, not the brand.
 - **The logo is an image, not a drawing.** Show `public/logo.svg` at its square
   size; never redraw the mark inline or recolour it. The one inline whale is the
-  landing page's hero illustration (`apps/web/src/components/home/sea.tsx`):
+  landing page's hero illustration (`apps/console/src/public/sea.tsx`):
   the mark's fluke
   path at hero scale over a full-width sea, drawn from the ocean tokens. It is
   not the logo, has no plate, and is not exported.

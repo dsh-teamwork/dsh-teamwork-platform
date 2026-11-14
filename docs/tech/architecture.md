@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-13
+> **Status:** Current · **Updated:** 2026-11-14
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -9,14 +9,16 @@ live in `CLAUDE.md`; this file shows the mechanism behind them.
 ## Data flow
 
 ```
-DSH + plugin ──Bearer──► apps/web /api/configs, /api/llm/*  ──► @dsh-teamwork/db (Prisma) ──► Postgres, or PGlite in-process
+DSH + plugin ──Bearer──► server /api/configs, /api/llm/*  ──► ent ──► SQLite, Postgres or MySQL
                                │
-                               └── /api/llm/chat/completions ──► model provider (key from the server's env)
+                               └── /api/llm/chat/completions ──► the team's model provider
 
-browser ──cookie──► apps/web /teams, /plugin, /api/*       premium/apps/manage pages
-agent   ──MANAGE_API_KEY──► premium/apps/manage /api/admin/*
+browser ──cookie──► server /teams, /plugin (the embedded console), /api/*
+agent   ──MANAGE_API_KEY──► /api/admin/*, where premium/ adds it
 ```
 
+One binary serves everything: the API, the console it embeds and the
+prerendered public pages ([ADR 0014](../adr/0014-one-go-binary.md)).
 The plugin (`@dsh-teamwork/dsh-teamwork`, its own repository) never reaches the
 database or a provider directly. It syncs `GET /api/configs` — every team the
 member is in ([ADR 0013](../adr/0013-one-person-many-teams.md)) — into a local
@@ -30,7 +32,7 @@ pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
 token never reaches the browser. Publishing and members stay in the web
 console, one page per task under `/teams/{teamId}`: the overview, `models`
-(providers from `lib/provider-catalog.ts`, and team models), `presets` (from
+(providers from `apps/console/src/lib/provider-catalog.ts`, and team models), `presets` (from
 `lib/preset-templates.ts` or blank), `plugins` and `members`. The panel links
 there for an admin and edits nothing on the server. Its components
 come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
@@ -40,25 +42,30 @@ repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 
 | Component | Owns | Lives in |
 | --- | --- | --- |
-| Web app | The site, the team console, the plugin sign-in page, the whole API | `apps/web` |
-| Team rules | Membership, invitations, configuration and its references | `apps/web/src/lib/team.ts` |
-| Model gateway | Resolving a configuration id to a provider call | `apps/web/src/lib/llm-gateway.ts` |
-| Operator console | Google + `ADMIN_EMAILS`; `/api/admin/*` | `premium/apps/manage` |
-| Schema | Every table and migration; Postgres or, without `DATABASE_URL`, PGlite migrated on first connect | `packages/db` |
-| Wire schemas, sign-in | `ConfigInputSchema` and the team API's types; NextAuth | `packages/shared` |
+| Server | The binary: configuration, migrations, every route, the embedded console | `server/` (`app/`, `cmd/dsh-teamwork`) |
+| Team rules | Membership, invitations, configuration and its references, providers | `server/internal/team` |
+| Model gateway | Resolving a configuration id to a provider call | `server/internal/gateway` |
+| Sign-in | Google, emailed codes, passwords, identities, sessions and plugin tokens | `server/internal/auth` |
+| Wire | Request shapes, their validation and the error codes | `server/internal/wire`, `api/openapi.yaml` |
+| Schema | Every table and the migrations of three dialects | `server/internal/db` |
+| Console | The team pages, sign-in, `/plugin` and the public pages, prerendered and embedded | `apps/console` |
+| Extension point | What a closed package registers: routes, tables, migrations | `server/edition` |
 
 ## Data model
 
 | Table | What it holds | Invariant |
 | --- | --- | --- |
-| `users` | One profile per verified email (`authId`) | Created on the first authenticated request (`ensureUser`) |
+| `users` | An account: email, name, image, locale | Created by the first sign-in through any door, or by an admin adding a member by email |
+| `identities` | Each door that reached an account: `provider`, `subject` | `(provider, subject)` unique; an account is joined by email only on an email the door verified |
 | `teams` | A name | — |
 | `memberships` | Who is in which team, as `admin` or `member` | `(user_id, team_id)` is the key: a person may be in several teams, once in each (ADR 0013) |
-| `team_configs` | `kind` (`model`, `preset`, `plugin`), `name`, `data`, `version` | Unique per team, kind and name; `data` parsed by `ConfigInputSchema` on every write; an edit names its `version`; a model or plugin a preset uses cannot be removed (`model_in_use`, `plugin_in_use`) |
+| `team_configs` | `kind` (`model`, `preset`, `plugin`), `name`, `data`, `version` | Unique per team, kind and name; `data` validated by `wire.ConfigInput` on every write; an edit names its `version`; a model or plugin a preset uses cannot be removed (`model_in_use`, `plugin_in_use`) |
 | `invites` | A SHA-256 of a single-use token, its expiry and use | The token itself is never stored |
-| `verification_codes` | NextAuth email codes, as an HMAC | — |
+| `verification_codes` | Emailed codes, as an HMAC under `AUTH_SECRET` | Ten minutes, at most five checks |
+| `rate_windows` | One counter per limit and key | Spent by a conditional update, never under a lock |
 | `team_providers` | A team's provider: `name`, `base_url`, and `key_cipher`, its key sealed under `PROVIDER_KEYS_SECRET` | Unique per team and name; the key is never stored in clear or answered; a provider a team model calls cannot be removed |
-| `passwords` | One scrypt hash per user, a must-change mark and the guesses counted against it | Only where `SMTP_URL` is unset; the hash names its own parameters |
+| `passwords` | One scrypt hash per user and a must-change mark | Only where `SMTP_URL` is unset; the hash names its own parameters |
+| `schema_migrations` | Every migration applied, with its checksum | Append-only; a changed checksum stops the start |
 
 A preset references a team model by id (`modelConfigId`) or names its own
 provider and model, never both; its `pluginDependencies` pin plugin entries of
@@ -66,16 +73,18 @@ the same team at their exact version, checked when the preset is written.
 
 ## A request through the team API
 
-1. The route calls `requireUser(request)`: the plugin's `Bearer` first, the
-   session cookie second; no identity is `401 { "error": "unauthorized" }`.
-2. The body is read with `readJson` (64 KiB, 4 MiB for the gateway; over the
-   limit is `413 payload_too_large`). Anything that is not JSON fails the
-   route's Zod schema as `400 { "error": "invalid_request", "issues" }`.
-3. The `lib/team.ts` function reads the caller's membership in the team the
+1. `requireUser` finds the caller: the plugin's `Bearer` first, the session
+   cookie second; no identity is `401 { "error": "unauthorized" }`. A write a
+   cookie authorizes must come from `APP_URL`'s origin (`403 cross_origin`).
+2. The body is read with a limit (64 KiB, 4 MiB for the gateway; over it is
+   `413 payload_too_large`) and validated by its `wire` type; a failure is
+   `400 { "error": "invalid_request", "issues" }`.
+3. The `internal/team` function reads the caller's membership in the team the
    URL names — that pair, user and team — and acts on that team only. A team
-   the caller is not in is `404 team_not_found`, like one that does not exist. A refusal is `TeamError` → `{ "error": <code> }`
-   with one of `TEAM_ERRORS`; anything unexpected is logged and is
-   `500 internal_error`.
+   the caller is not in is `404 team_not_found`, like one that does not exist.
+   A refusal is a `wire.Error` → `{ "error": <code> }`; anything unexpected is
+   logged and is `500 internal_error`. Every response is held to
+   `api/openapi.yaml` by the Go tests.
 
 | Route | Who | What |
 | --- | --- | --- |
@@ -91,36 +100,41 @@ the same team at their exact version, checked when the preset is written.
 | `GET`, `POST /api/teams/:teamId/providers`; `PUT`, `DELETE …/providers/:id` | admin | Providers, never a key |
 | `GET /api/teams/:teamId/model-catalog?provider=` | admin | One provider's models, read from its `/models` |
 | `POST /api/llm/chat/completions` | member | The model gateway |
+| `GET`, `PATCH /api/profile`; `POST /api/locale` | anyone signed in | The account's name and locale |
 | `POST /api/auth/plugin/token` | the plugin | `{ code, verifier }` → `{ token, expiresAt }` |
 
 ## Signing in on the web
 
-- **Google.** `startGoogle(next)` redirects to Google, which returns to
-  `/api/auth/callback/google` and lands on `returnPath(next)` — only ever a
-  path on this origin.
-- **Email code**, where `SMTP_URL` is set. `sendCode(email)` stores an HMAC
-  of a six-digit code (10 minutes, at most 5 checks, 5 codes per address per
-  15 minutes — both limits hold under concurrent requests) and mails it over
-  SMTP (the hosted service uses Resend's endpoint).
-  `verifyCode(email, code, next)` signs in and redirects.
-- **Password**, where it is not (ADR 0006). `signInWithPassword(email,
-  password, next)` checks a scrypt hash, after spending one of ten guesses per
-  account per 15 minutes. `/setup?token=…`, printed by
-  `src/instrumentation.ts` at start, claims the first account while no
-  password exists. `POST /api/teams/:teamId/members` and
-  `POST /api/teams/:teamId/members/:userId/password` give an admin's member a first
-  password, shown once; `/teams` and `/plugin` send its owner to `/password`
-  until it is changed.
+Every door is a route under `/api/auth/` and ends in a session cookie, a JWE
+under a key derived from `AUTH_SECRET`.
+
+- **Google**, where `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` are set. `GET /api/auth/google?next=…`
+  redirects to Google, which returns to `/api/auth/callback/google` and lands
+  on the `next` path — only ever a path on this origin. An existing account is
+  joined by email only when Google says the email is verified.
+- **Email code**, where `SMTP_URL` is set. `POST /api/auth/email/send` stores
+  an HMAC of a six-digit code (10 minutes, at most 5 checks, 5 codes per
+  address per 15 minutes — both limits hold under concurrent requests) and
+  mails it over SMTP (the hosted service uses Resend's endpoint).
+  `POST /api/auth/email/verify` signs in.
+- **Password**, where it is not (ADR 0006).
+  `POST /api/auth/password/sign-in` checks a scrypt hash, after spending one
+  of ten guesses per account per 15 minutes. `/setup?token=…`, printed by the
+  server at start, claims the first account while no password exists.
+  `POST /api/teams/:teamId/members` and
+  `POST /api/teams/:teamId/members/:userId/password` give an admin's member a
+  first password, shown once; `/teams` and `/plugin` send its owner to
+  `/password` until it is changed.
 
 ## Signing in from the plugin
 
 ```
-DSH plugin                                    apps/web
+DSH plugin                                    server
   │ verifier = random(32); challenge = S256(verifier)
   │ listen on http://127.0.0.1:<port>/callback
   │ print /plugin?challenge=…&redirect_uri=… ; the person opens it
   │                                           no session → /sign-in, back here after
-  │                                           "Authorize" (a server action) →
+  │                                           "Authorize" → POST /api/auth/plugin/code →
   │                                           code = JWE{email, challenge}, 2 min
   │◄── browser: GET /callback?code=… ─────────  (or the person pastes /teamwork authorize <code>)
   │── POST /api/auth/plugin/token {code, verifier} ──►
@@ -158,32 +172,26 @@ Without a `redirect_uri`, the code is shown for pasting.
    URL its admin entered, with no credentials, query or fragment, and the key
    decrypted from `key_cipher` (AES-256-GCM under `PROVIDER_KEYS_SECRET`,
    bound to the team and the name). The address must pass the network rule of
-   `src/lib/provider-network.ts` (ADR 0006): public https, or with
+   `server/internal/team/network.go` (ADR 0006): public https, or with
    `ALLOW_PRIVATE_PROVIDERS=true` loopback and private networks too, plain
    http only there. Link-local, carrier-grade NAT and unspecified addresses
    count as private. The rule is checked on save, before the call, and by the
-   connection's own DNS lookup, so a rebinding answer is refused;
+   dialer as it connects, so a rebinding answer is refused;
 4. forwards only the inference fields (`messages`, `tools`, `stream`,
-   `temperature`, …) with `redirect: 'error'` and a 120 s timeout, and answers
+   `temperature`, …) following no redirect and waiting at most 120 s for the
+   provider's headers, and answers
    the provider's body with none of its headers. A provider failure is `502`
    (`429` stays `429`) and its body is dropped.
 
-## The operator console
-
-Pages call `requireAdminPage()`: no identity → `/login`, an identity not on
-`ADMIN_EMAILS` → `/denied`. The console admits only Google sessions
-(`emailCodes: false`). `/api/admin/*` goes through `withAdminRead` (a session or
-the key) or `withAdminWrite` (a session, or the key with an `x-agent-id`; same
-origin, a JSON body). Both re-read `ADMIN_EMAILS` on every request. The console
-never calls `ensureUser`, so signing in to it creates no `User` row.
-
 ## Deployment
 
-Railway: `web` (`dshteamwork.com`, the home page and the app; ADR 0007) and `manage`
-(`manage.dshteamwork.com`) services from this repository, one Postgres
-(`premium/docs/ops/deployment.md`). Provider keys are each team's, in the
-database; `PROVIDER_KEYS_SECRET`, which seals them, is a variable on `web`
-only.
+One binary, three ways to run it (`README.md`, "Self-hosting"): `npx
+@dsh-teamwork/server`, a release binary, or `compose.yaml` over
+`server/Dockerfile`. With nothing configured it keeps a SQLite file and
+generated secrets in its data directory; `DATABASE_URL` points it at Postgres
+or MySQL. It applies every pending migration before it serves. The hosted
+service runs the closed edition of the same binary, deployed as described
+where `premium/` exists.
 
 ## What is expensive to change
 
@@ -198,6 +206,7 @@ only.
   and every team route and rule carrying the team id (ADR 0013).
 - **`PROVIDER_KEYS_SECRET`**: every stored provider key is sealed under it.
   Losing or changing it means every team enters its keys again.
-- **A PGlite data directory**: a team's whole database in one directory, owned
-  by one process. Its `_prisma_migrations` rows match Prisma's, so a dump
-  restored into Postgres keeps migrating with `pnpm db:deploy`.
+- **The migration history**: three dialects' directories, applied in order and
+  checked by checksum; a migration another database applied is never edited.
+- **The npm packages' names**: `@dsh-teamwork/server` and its platform
+  packages are what a self-hoster's `npx` resolves.

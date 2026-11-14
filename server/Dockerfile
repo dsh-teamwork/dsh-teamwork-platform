@@ -15,7 +15,7 @@ WORKDIR /src
 RUN corepack enable
 COPY . .
 ARG LEGAL_DIR
-# Only the console's own modules; the root's postinstall belongs to Prisma.
+# Only the console's own modules, and no install scripts: the build needs none.
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter @dsh-teamwork/console... \
   && pnpm --filter @dsh-teamwork/console build
 

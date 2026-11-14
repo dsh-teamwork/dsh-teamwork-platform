@@ -1,9 +1,8 @@
 # Pre-push: the local run of CI.
 #
-# CI triggers only on a push to `main` — i.e. on a merge — so a branch and its
-# pull request get no automatic check at all. This hook is that check: it runs
-# the same steps, in the same order, as `.github/workflows/ci.yaml`. The two
-# are meant to stay in step — a step added there belongs here as well.
+# It runs the same steps, in the same order, as `.github/workflows/ci.yaml`,
+# before a branch leaves the machine. The two are meant to stay in step — a
+# step added there belongs here as well.
 #
 # To skip it on a work-in-progress branch: `git push --no-verify`. That is an
 # escape hatch for a branch nobody will merge yet, not a way to land a red main.
@@ -36,14 +35,13 @@ run 'Icons check     (pnpm assets:icons --check)' pnpm assets:icons --check
 
 run 'Lint            (pnpm lint)' pnpm lint
 
-# Skips with a warning when no SHADOW_DATABASE_URL is set (see
-# packages/db/.env.example), so a laptop without the dev stack can still push.
+# Skips with a warning without MIGRATE_DEV_POSTGRES and MIGRATE_DEV_MYSQL (see
+# server/scripts/drift.mjs), so a laptop without those databases can still push.
 run 'Migration drift (pnpm db:drift)' pnpm db:drift
 
-# A suite that needs Postgres skips itself when nothing answers on
-# DATABASE_URL, so this stays runnable without the dev stack up. CI runs a
-# postgres service, so those cases are never skipped there — start
-# `pnpm dev:setup` if you want them locally too.
+# The Go suites run every database case on SQLite, and on Postgres and MySQL
+# where TEST_POSTGRES_URL and TEST_MYSQL_URL name a server; CI sets both, so
+# those cases are never skipped there.
 run 'Test            (pnpm test)' pnpm test
 
 run 'Build           (pnpm build)' pnpm build

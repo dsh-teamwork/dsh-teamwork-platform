@@ -184,7 +184,7 @@ func TestBrowserAnalyticsKey(t *testing.T) {
 	}
 }
 
-// Ported from apps/web/src/app/__tests__/seo.test.ts.
+// What a crawler reads: robots.txt, the sitemap and each page's canonical.
 func TestCrawlerFiles(t *testing.T) {
 	t.Run("names the sitemap from APP_URL", func(t *testing.T) {
 		got := body(t, serve(t, handler(build(false), nil), "/robots.txt", map[string]string{"Host": "evil.example"}))
