@@ -314,14 +314,15 @@ closed binary (the developer's choice on 2026-11-14).
   `wss://<APP_URL host>/relay/plugin`, from which the plugin and the app find
   the rest, so neither changes; `RELAY_URL` goes. Frames, close codes, limits
   and push notifications through Expo as today.
-- **The operator console** at `/manage` on the same origin, a Vite app like
-  the open console, embedded in the closed binary, and `/api/admin/*` in Go:
-  a Google session (never a password or an emailed code) whose email is in
-  `ADMIN_EMAILS`, re-read on every request, or `MANAGE_API_KEY` with
-  `x-agent-id` on a write; the self-describing index rendered from the Go
-  route table. Its cost: the console no longer has an origin of its own, so
-  a script injected into the site would reach it with an admin's cookie; the
-  pages' Content Security Policy is what stands between.
+- **The operator console** at `/manage`, a Vite app like the open console,
+  embedded in the closed binary, and `/api/admin/*` in Go: a Google session
+  (never a password or an emailed code) whose email is in `ADMIN_EMAILS`,
+  re-read on every request, or `MANAGE_API_KEY` with `x-agent-id` on a write;
+  the self-describing index rendered from the Go route table. It exists only
+  on an instance where `ADMIN_EMAILS` is set, and the hosted service runs it
+  as a second instance of the image on a domain of its own, with its own
+  `APP_URL` and `AUTH_SECRET`, so the console never shares the member site's
+  origin or sessions (the developer's choice on 2026-11-14).
 - `premium/apps/relay`, `premium/apps/manage` and `apps/web`'s `(premium)`
   route go in the commits that replace them.
 - The closed image and the edition boundary check; the hosted service's
