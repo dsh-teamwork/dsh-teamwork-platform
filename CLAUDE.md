@@ -265,8 +265,11 @@ With no `SMTP_URL`, sign-in is an email and a password, and the web app prints
 a link that claims the first account when it starts.
 
 **CI runs on a push to `main`** — a merge — **and on every pull request**, plus
-by hand from the Actions tab: the gate above, and a `self-host` job that builds
-`apps/web/Dockerfile` and starts `compose.yaml`. `.husky/pre-push` runs the gate
+by hand from the Actions tab: the gate above, the plugin's end-to-end test
+against the Go server, the release packed and run with `npx` on Linux, macOS
+and Windows, and a `self-host` job that builds `server/Dockerfile` and starts
+`compose.yaml`. A tag `v<version>` runs `.github/workflows/release.yaml`: npm,
+release binaries and the image on ghcr.io (it needs an `NPM_TOKEN` secret). `.husky/pre-push` runs the gate
 before a branch leaves your machine. `git push
 --no-verify` is for a work-in-progress branch nobody will merge yet, not for
 landing a red `main`. The `@claude` workflow (`.github/workflows/claude.yml`)
@@ -276,6 +279,17 @@ database run on PGlite in memory without `DATABASE_URL` and on Postgres with it;
 CI runs them both ways. `db:drift` skips without `SHADOW_DATABASE_URL` (see
 `packages/db/.env.example`); CI provides it, so skipped locally never means
 skipped everywhere.
+
+**The Go server (`server/`) is a workspace package**, so the same `pnpm lint`,
+`test`, `build` and `db:drift` cover it; they need Go (the version in
+`server/go.mod`). Its database suites run on SQLite always, and on Postgres and
+MySQL when `TEST_POSTGRES_URL` and `TEST_MYSQL_URL` name a server they may
+create scratch databases on; its drift check needs `MIGRATE_DEV_POSTGRES` and
+`MIGRATE_DEV_MYSQL`, databases it may empty, and skips without them. The
+plugin's end-to-end test is `go test -tags e2e ./e2e` in `server/`, against
+`../dsh-teamwork` or `DSH_TEAMWORK_PLUGIN`. `node server/scripts/pack.mjs
+<version>` builds the five binaries and their npm packages after
+`pnpm --filter @dsh-teamwork/console build`.
 
 **Every vitest workspace names its own `include` and excludes `dist`** (Vitest 4
 dropped `**/dist/**` from its default exclude). Next.js apps default to the
@@ -319,6 +333,11 @@ generated in Postgres by the first migration. `@electric-sql/pglite` and
 
 ## Architecture
 
+**The server is being rewritten as one Go binary** over SQLite, Postgres or
+MySQL (`docs/adr/0014-one-go-binary.md`), in the order that ADR gives. Until
+the Go server serves everything, what follows describes the Node server that
+runs today.
+
 ```
 apps/web             Next.js 16 — the home page, the team console (/teams), the
                      plugin's sign-in page (/plugin) and the API the plugin
@@ -327,8 +346,9 @@ packages/db          Prisma schema, migrations, ensureUser
 packages/shared      what the clients agree about (root: isomorphic, including
                      the team wire schemas) and the server-only sign-in
                      strategy (@dsh-teamwork/shared/server/*)
-premium/apps/manage  Next.js 16 — the operator console; /api/admin/* for
-                     automation
+premium/server       the closed Go module: the open server with the closed
+                     packages (the relay, the operator console) registered
+                     through server/edition
 
 Everything under premium/ is closed and stays out of the community edition
 (docs/tech/community-edition.md). Before changing anything there, read
@@ -465,9 +485,10 @@ What a crawler or a link preview reads, all in `apps/web`: an instance's own
 
 ## Deployment
 
-A self-hosted instance runs `compose.yaml` (`README.md`, "Self-hosting"):
-Postgres and `apps/web/Dockerfile`, which applies the migrations and then
-serves. Each app's `dev` pins its port; **`start` never does**, so the host's
+A self-hosted instance runs the Go server (`README.md`, "Self-hosting"): with
+`npx @dsh-teamwork/server`, a release binary, or `compose.yaml` over
+`server/Dockerfile`, which keeps the SQLite file and the generated secrets in a
+volume. The binary applies its migrations before it serves. Each app's `dev` pins its port; **`start` never does**, so the host's
 `PORT` decides — a pinned `start` port is how two siblings served 502s. The
 hosted service's deployment is in `premium/CLAUDE.md`, where that directory
 exists.

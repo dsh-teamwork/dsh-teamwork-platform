@@ -1,0 +1,8 @@
+# What a Dockerfile here never needs: installed modules, build output and git.
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+.git
+.env
+**/.env

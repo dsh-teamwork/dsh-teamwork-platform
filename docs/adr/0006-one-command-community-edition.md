@@ -1,6 +1,6 @@
 # 0006. The community edition runs from one command, with nothing else to install
 
-> **Status:** Accepted · **Date:** 2026-11-11
+> **Status:** Superseded by 0014 · **Date:** 2026-11-11
 
 ## Context
 

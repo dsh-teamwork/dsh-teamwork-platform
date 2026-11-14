@@ -1,10 +1,14 @@
 packages:
   - apps/*
   - packages/*
+  # The Go server (ADR 0014): a package so the gate's lint, test, build and
+  # db:drift reach it as they reach every other.
+  - server
   # The closed editions' apps and packages (docs/tech/community-edition.md);
   # absent from the public repository, where the globs match nothing.
   - premium/apps/*
   - premium/packages/*
+  - premium/server
 
 # Build-script policy and dependency resolution live here, not in package.json's
 # `pnpm` field — pnpm 11 no longer reads that field, and a setting left behind

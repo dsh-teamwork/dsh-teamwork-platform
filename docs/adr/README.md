@@ -8,11 +8,12 @@ or the hosted service, kept with the closed edition rather than here.
 - [0001](0001-plugin-sign-in.md) — the DSH plugin signs in through the website with a pasted PKCE code.
 - [0002](0002-platform-from-seed.md) — the platform is rebuilt from seed: one Next.js app on Railway.
 - [0005](0005-open-core.md) — open core: a self-hosted community edition for one team; company features stay closed.
-- [0006](0006-one-command-community-edition.md) — the community edition runs from one `npx` command: PGlite, passwords, team-owned provider keys.
+- [0006](0006-one-command-community-edition.md) — superseded by 0014: the community edition runs from one `npx` command: PGlite, passwords, team-owned provider keys.
 - [0007](0007-one-domain-one-app.md) — the web app serves the root domain and the landing page; legal pages come from `LEGAL_DIR`.
 - [0010](0010-the-app-gets-its-code-back.md) — a phone app gets its sign-in code back by redirect, after the same confirmation.
 - [0012](0012-the-plugin-gets-its-code-back-on-loopback.md) — the DSH plugin gets its sign-in code back on a loopback address.
 - [0013](0013-one-person-many-teams.md) — a person may be in several teams; the team travels in the URL.
+- [0014](0014-one-go-binary.md) — the server becomes one Go binary over SQLite, Postgres or MySQL.
 
 The template:
 

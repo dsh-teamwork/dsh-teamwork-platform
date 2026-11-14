@@ -52,29 +52,35 @@ const SOURCE = 'docs/brand/icon.svg'
 const PIXEL_TOLERANCE = 1
 
 /**
- * Every Next.js app in the repository gets the same exports, found rather than
- * listed: the open repository has only `apps/*`, and a list naming the closed
+ * Every app in the repository gets the same exports, found rather than
+ * listed — a Next.js app (`src/app/`) and a Vite app (`vite.config.ts`) alike: the open repository has only `apps/*`, and a list naming the closed
  * edition's apps would fail this script's own check there
  * (docs/tech/community-edition.md).
  */
 const APP_ROOTS = ['apps', 'premium/apps']
+const isNext = (root, name) => existsSync(resolve(repoRoot, root, name, 'src/app'))
+const isVite = (root, name) => existsSync(resolve(repoRoot, root, name, 'vite.config.ts'))
 const APPS = APP_ROOTS.flatMap((root) =>
   existsSync(resolve(repoRoot, root))
     ? readdirSync(resolve(repoRoot, root), { withFileTypes: true })
-        .filter((d) => d.isDirectory() && existsSync(resolve(repoRoot, root, d.name, 'src/app')))
+        .filter((d) => d.isDirectory() && (isNext(root, d.name) || isVite(root, d.name)))
         .map((d) => `${root}/${d.name}`)
         .sort()
     : [],
 )
 
 /** Each target renders the source SVG to a square PNG of the given size. */
-const TARGETS = APPS.flatMap((app) => [
-  // The browser-tab icon (Next.js serves app/icon.png).
-  { src: SOURCE, out: `${app}/src/app/icon.png`, size: 256, flatten: true },
-  // The touch icon iOS uses when a page is added to a home screen (Next.js
-  // serves app/apple-icon.png).
-  { src: SOURCE, out: `${app}/src/app/apple-icon.png`, size: 180, flatten: true },
-])
+const TARGETS = APPS.flatMap((app) => {
+  // Next.js serves app/icon.png and app/apple-icon.png; a Vite app serves
+  // public/ as it is, and its index.html links the two.
+  const dir = existsSync(resolve(repoRoot, app, 'src/app')) ? `${app}/src/app` : `${app}/public`
+  return [
+    // The browser-tab icon.
+    { src: SOURCE, out: `${dir}/icon.png`, size: 256, flatten: true },
+    // The touch icon iOS uses when a page is added to a home screen.
+    { src: SOURCE, out: `${dir}/apple-icon.png`, size: 180, flatten: true },
+  ]
+})
 
 /** The in-app logos, one per app, shown as they are on either theme. */
 const LOGO_TARGETS = APPS.map((app) => ({ src: SOURCE, out: `${app}/public/logo.svg` }))

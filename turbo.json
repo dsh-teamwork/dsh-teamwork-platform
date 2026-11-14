@@ -9,6 +9,22 @@
       "dependsOn": ["^build", "^db:generate"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "web-build/**"]
     },
+    // Every Go task compiles the embedded console. The server's build copies
+    // the built console in (server/scripts/embed.mjs) and keeps the copy as an
+    // output, so a cache hit restores it; lint and test wait for that build
+    // rather than copying it themselves.
+    "@dsh-teamwork/go-server#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "internal/web/dist/**"]
+    },
+    "@dsh-teamwork/go-server#lint": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "@dsh-teamwork/go-server#test": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
     // The web app reads three variables at build, which strict env mode would
     // otherwise strip: LEGAL_DIR renders /privacy and /terms (ADR 0007), APP_URL
     // is the origin the static robots.txt, sitemap and canonicals name and the
@@ -83,12 +99,16 @@
   "globalEnv": [
     "DATABASE_URL",
     "SHADOW_DATABASE_URL",
-    "PGLITE_DIR"
+    "PGLITE_DIR",
+    // The Go server's suites run on Postgres and MySQL where these name a
+    // server (server/internal/testdb), so they change what a test proves.
+    "TEST_POSTGRES_URL",
+    "TEST_MYSQL_URL"
   ],
   // Read by the db:* scripts but not part of any result, so passed through
   // rather than hashed. Without this, turbo's strict env mode strips
   // ALLOW_REMOTE_MIGRATE_DEV and the documented escape hatch never reaches
   // assert-local-database.mjs.
-  "globalPassThroughEnv": ["ALLOW_REMOTE_MIGRATE_DEV", "DRIFT_SHADOW_DATABASE_URL"],
+  "globalPassThroughEnv": ["ALLOW_REMOTE_MIGRATE_DEV", "DRIFT_SHADOW_DATABASE_URL", "MIGRATE_DEV_POSTGRES", "MIGRATE_DEV_MYSQL", "GOPATH", "GOCACHE", "GOMODCACHE"],
   "ui": "tui"
 }
