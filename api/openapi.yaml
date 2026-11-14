@@ -129,6 +129,25 @@ paths:
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
   /teams:
+    get:
+      summary: The teams the caller is in, with their role in each
+      responses:
+        '200':
+          description: The teams, the ones joined first first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, name, role, memberCount]
+                  properties:
+                    id: { type: string }
+                    name: { type: string }
+                    role: { type: string, enum: [admin, member] }
+                    memberCount: { type: integer, minimum: 1 }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
     post:
       summary: Create a team; the caller is its admin
       requestBody:
@@ -158,6 +177,17 @@ paths:
   /teams/{teamId}/providers:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: An admin lists the team's providers, never a key
+      responses:
+        '200':
+          description: The providers, by name
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Provider' } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
     post:
       summary: An admin adds a provider; its key is write-only
       requestBody:
@@ -185,6 +215,17 @@ paths:
   /teams/{teamId}/configs:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: One team's configuration, for any member
+      responses:
+        '200':
+          description: The configuration, by kind and name
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Config' } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
     post:
       summary: An admin publishes a model, preset or plugin
       requestBody:
@@ -244,6 +285,323 @@ paths:
         '429': { $ref: '#/components/responses/Error' }
         '502': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
+  /auth/email/send:
+    post:
+      summary: Email a six-digit sign-in code (instances with SMTP)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [email], properties: { email: { type: string } } }
+      responses:
+        '204': { description: Sent }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /auth/email/verify:
+    post:
+      summary: Sign in with the emailed code; a first sign-in makes the account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties: { email: { type: string }, code: { type: string, pattern: '^\d{6}$' } }
+      responses:
+        '204': { description: Signed in; the session cookie is set }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /auth/google:
+    get:
+      summary: Go to Google; `next` is where to land after
+      security: []
+      parameters:
+        - { name: next, in: query, schema: { type: string } }
+      responses:
+        '302': { description: 'To Google, or back to /sign-in?error= where Google is off' }
+  /auth/callback/google:
+    get:
+      summary: Where Google returns; signs in and goes to `next`
+      security: []
+      parameters:
+        - { name: state, in: query, schema: { type: string } }
+        - { name: code, in: query, schema: { type: string } }
+      responses:
+        '302': { description: 'Signed in and sent on, or back to /sign-in?error=' }
+  /teams/{teamId}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: A team the caller is in, their role and its members
+      responses:
+        '200':
+          description: The team
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Team' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/membership:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    delete:
+      summary: A member leaves the team; its admin cannot
+      responses:
+        '204': { description: Left }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/members:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: An admin adds someone by email, where the instance holds passwords
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [email], properties: { email: { type: string } } }
+      responses:
+        '201':
+          description: The member, with a first password shown once, or null for an existing account
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId, email, password]
+                properties:
+                  userId: { type: string }
+                  email: { type: string }
+                  password: { type: string, nullable: true }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/members/{userId}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: userId, in: path, required: true, schema: { type: string } }
+    delete:
+      summary: An admin removes a member
+      responses:
+        '204': { description: 'Removed, or was not a member' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/members/{userId}/password:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: userId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: An admin gives a member a new first password, shown once
+      responses:
+        '200':
+          description: The password
+          content:
+            application/json:
+              schema: { type: object, required: [password], properties: { password: { type: string } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/invites:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: An admin lists the team's invitations, newest first
+      responses:
+        '200':
+          description: The invitations, never their tokens
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Invite' } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+    post:
+      summary: An admin creates a single-use invitation good for a day
+      responses:
+        '201':
+          description: The invitation and its token, the only time it is seen
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/Invite' }
+                  - { type: object, required: [token], properties: { token: { type: string } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/invites/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    delete:
+      summary: An admin revokes an invitation
+      responses:
+        '204': { description: 'Revoked, or was not there' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /invites/redeem:
+    post:
+      summary: Spend an invitation token and join its team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [token], properties: { token: { type: string, minLength: 32, maxLength: 100 } } }
+      responses:
+        '200':
+          description: The team joined
+          content:
+            application/json:
+              schema: { type: object, required: [teamId], properties: { teamId: { type: string } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/configs/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      summary: An admin edits a configuration, naming the version it read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/ConfigInput' }
+                - { type: object, required: [version], properties: { version: { type: integer, minimum: 1 } } }
+      responses:
+        '200':
+          description: The configuration at its new version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Config' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+    delete:
+      summary: An admin removes a configuration no preset still uses
+      responses:
+        '204': { description: 'Removed, or was not there' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/providers/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: An admin moves a provider or replaces its key; the name stays
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baseUrl]
+              properties:
+                baseUrl: { type: string, maxLength: 500 }
+                apiKey: { type: string, minLength: 1, maxLength: 4096 }
+      responses:
+        '200':
+          description: The provider, never its key
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Provider' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+    delete:
+      summary: An admin removes a provider no model or preset calls
+      responses:
+        '204': { description: 'Removed, or was not there' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/model-catalog:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: provider, in: query, required: true, schema: { type: string, minLength: 1 } }
+    get:
+      summary: One provider's models, for an admin choosing team models
+      responses:
+        '200':
+          description: The models, with only the limits the provider states
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [provider, models]
+                properties:
+                  provider: { type: string }
+                  models:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, name]
+                      additionalProperties: false
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        contextWindow: { type: integer }
+                        maxTokens: { type: integer }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /profile:
+    get:
+      summary: The signed-in profile
+      responses:
+        '200':
+          description: The profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+    patch:
+      summary: Change the name or the locale; null clears it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, nullable: true, minLength: 1, maxLength: 80 }
+                locale: { type: string, nullable: true, enum: [en, zh-CN, null] }
+      responses:
+        '200':
+          description: The profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     session: { type: apiKey, in: cookie, name: dsh-teamwork-session }
@@ -417,3 +775,36 @@ components:
               teamName: { type: string }
               role: { type: string, enum: [admin, member] }
               configs: { type: array, items: { $ref: '#/components/schemas/Config' } }
+    Team:
+      type: object
+      required: [id, name, role, members]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        role: { type: string, enum: [admin, member] }
+        members:
+          type: array
+          items:
+            type: object
+            required: [userId, email, role]
+            properties:
+              userId: { type: string }
+              email: { type: string, nullable: true }
+              role: { type: string, enum: [admin, member] }
+    Invite:
+      type: object
+      required: [id, expiresAt, usedAt]
+      properties:
+        id: { type: string }
+        expiresAt: { type: string, format: date-time }
+        usedAt: { type: string, format: date-time, nullable: true }
+    Profile:
+      type: object
+      required: [id, email, name, image, locale]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        email: { type: string, nullable: true }
+        name: { type: string, nullable: true }
+        image: { type: string, nullable: true }
+        locale: { type: string, nullable: true, enum: [en, zh-CN, null] }
