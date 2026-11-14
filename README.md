@@ -10,6 +10,8 @@ provider keys never leave the server.
 | `apps/web` | Next.js 16 · the site, the team console and the API (`/api/*`) the plugin calls · Tailwind v4 · next-intl |
 | `packages/db` | Prisma 7 over Postgres · nanoid keys |
 | `packages/shared` | Wire schemas, locales, and the sign-in strategy |
+| `server` | Go · the one binary replacing the three above (ADR 0014): API, sign-in, gateway, three databases |
+| `apps/console` | Vite · React · the console and public pages, embedded into `server` |
 
 ## Quick start
 
@@ -24,47 +26,51 @@ pnpm dev                # web :3800
 
 ## Self-hosting
 
-`compose.yaml` runs one team's instance: Postgres and the web app, which
-applies every migration before it starts. No Google, PostHog or Resend account
-is needed, and no mail server either: without `SMTP_URL`, people sign in with
-an email and a password.
+The server is one program (ADR 0014): the API, the console and the public
+pages, over a SQLite file in its data directory unless `DATABASE_URL` names a
+Postgres or MySQL database. No Google, PostHog or mail account is needed:
+without `SMTP_URL`, people sign in with an email and a password. It writes
+its own `AUTH_SECRET` and `PROVIDER_KEYS_SECRET` into `secrets.json` in the
+data directory on first start, unless the environment sets them.
 
-1. Beside `compose.yaml`, write a `.env` (`apps/web/.env.example` explains each
-   variable):
+1. **Start it**, one of three ways:
 
-   ```bash
-   POSTGRES_PASSWORD=…                        # openssl rand -hex 16
-   APP_URL=https://teamwork.example.com       # the address members open
-   AUTH_SECRET=…                              # openssl rand -base64 32
-   PROVIDER_KEYS_SECRET=…                     # openssl rand -base64 32
-   # Optional: SMTP_URL and AUTH_EMAIL_FROM send sign-in codes instead of
-   # using passwords; AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET add a Google button;
-   # WEB_PORT changes the host port (3000).
-   ```
+   - With Node installed, to try it: `npx @dsh-teamwork/server` (data in
+     `~/.dsh-teamwork`, served on `http://localhost:3800`). Node is needed to
+     install it, not to run it.
+   - As a service: download the binary for your platform from the
+     [releases](https://github.com/dsh-teamwork/dsh-teamwork-platform/releases)
+     (checked against `SHA256SUMS`) and run `dsh-teamwork --data <dir>` from
+     your service manager. Run the binary itself, never `npx`: npm does not
+     pass a stop signal on.
+   - In a container: `docker compose up -d --build` beside `compose.yaml`,
+     which keeps the data in a volume and publishes port 3000 (`PORT` in a
+     `.env` beside it changes that).
 
-2. Start it:
+   Every setting is an environment variable (in compose, a `.env` beside
+   `compose.yaml`): `APP_URL`, the address members open; `DATABASE_URL`;
+   `SMTP_URL` and `AUTH_EMAIL_FROM` to send sign-in codes instead of using
+   passwords; `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` for a Google button;
+   `HOST` and `PORT` to listen elsewhere than `127.0.0.1:3800`.
 
-   ```bash
-   docker compose up -d --build
-   ```
-
-3. **Serve it over HTTPS.** A member's DSH plugin refuses plain HTTP anywhere
+2. **Serve it over HTTPS.** A member's DSH plugin refuses plain HTTP anywhere
    but on loopback, so put a TLS proxy in front, for example
-   `caddy reverse-proxy --from teamwork.example.com --to localhost:3000`.
-4. **Claim the first account.** The web app prints
+   `caddy reverse-proxy --from teamwork.example.com --to localhost:3000`, and
+   set `APP_URL` to that address.
+3. **Claim the first account.** The server prints
    `Create the first one at …/setup?token=…` when it starts
-   (`docker compose logs web`). Open it, then create your team and add the
+   (`docker compose logs server`). Open it, then create your team and add the
    others by email in its console under `/teams`: each gets a first password
    to change when they first sign in.
-5. Point each member's DSH plugin at `APP_URL`: in its Teamwork panel, change
+4. Point each member's DSH plugin at `APP_URL`: in its Teamwork panel, change
    the server on the sign-in screen (or set `apiEndpoint` in the DSH profile's
    `cordis.patch.yml`). Then they sign in from the panel or with `/teamwork login`.
 
 Providers and their keys are the team's own: its admin adds them in the
 team's console, and the keys are stored encrypted under `PROVIDER_KEYS_SECRET`. A model the
 team serves itself on the same network (Ollama, vLLM) can be added by its
-private address, over plain HTTP too: `compose.yaml` sets
-`ALLOW_PRIVATE_PROVIDERS=true`. Set it to `false` if people you do not trust
+private address, over plain HTTP too, with `ALLOW_PRIVATE_PROVIDERS=true`,
+which `compose.yaml` sets. Set it to `false` if people you do not trust
 share the instance.
 
 The documents — architecture, the community edition, decisions, analytics — are indexed

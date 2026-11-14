@@ -79,7 +79,7 @@ From then on the rules are:
 | Docs | `docs/tech/architecture.md`, `docs/tech/community-edition.md`, `docs/design.md`, `docs/ops/analytics.md`, ADRs 0001, 0002 and 0005 | `premium/docs/`: positioning, the SaaS route, the rest of `ops/`, `legal/`, ADRs 0003 and 0004 |
 | Agent instructions | `CLAUDE.md`, `AGENTS.md` | `premium/CLAUDE.md`, which an agent reads before touching `premium/` |
 | Changelog | `CHANGELOG.md` for the open product | `premium/CHANGELOG.md` |
-| Self-hosting | `apps/web/Dockerfile`, `compose.yaml`, a self-hosting section in `README.md` | — |
+| Self-hosting | `server/Dockerfile`, `compose.yaml`, the npm packages and release binaries (`.github/workflows/release.yaml`), a self-hosting section in `README.md` | — |
 | Licence and contributing | `LICENSE` (Apache-2.0), `NOTICE`, a README section asking for the DCO sign-off, CI on pull requests | — |
 | Deployment | — | `railpack.json`, Railway services, `premium/docs/ops/deployment.md` |
 
@@ -360,8 +360,8 @@ Done on 2026-11-10.
      its own `LICENSE` is covered by it.
    - The README asks for `Signed-off-by:` on every commit.
    - CI runs on pull requests too. Its `self-host` job builds
-     `apps/web/Dockerfile`, starts `compose.yaml` from a bare `.env` and checks
-     that the web app answers after its migrations. Experiment 3's
+     `server/Dockerfile`, starts `compose.yaml` with no `.env` and checks
+     that the server answers and keeps its data across containers. Experiment 3's
      browser-and-plugin script stays a manual check, because it needs the
      plugin's client and a browser.
 6. **Make the plugin repository public**, relicensed Apache-2.0: a `LICENSE`

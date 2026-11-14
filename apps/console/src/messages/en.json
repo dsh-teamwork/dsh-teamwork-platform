@@ -132,7 +132,7 @@
       "depth": "−500 m",
       "label": "Community edition · run it yourself",
       "title": "Or run it on your own server.",
-      "lede": "What one team needs is open source under Apache-2.0: teams, models, presets, plugin pins and the gateway. It runs as Postgres and one Node container from compose.yaml, and provider keys stay in your own server's environment.",
+      "lede": "What one team needs is open source under Apache-2.0: teams, models, presets, plugin pins and the gateway. It runs as one program, from npx, a download or compose.yaml, on SQLite, Postgres or MySQL, and provider keys stay on your own server.",
       "repo": "Source on GitHub",
       "guide": "Self-hosting guide"
     },

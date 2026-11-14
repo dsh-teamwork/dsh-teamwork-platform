@@ -14,9 +14,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # A mocked Prisma cannot see what a database decides, so the suites that
-    # need one run on a real one: Postgres here, and PGlite in the step after
-    # them (ADR 0006).
+    # A mocked database cannot see what a database decides, so the suites that
+    # need one run on real ones: Postgres and MySQL here, and SQLite (Go) and
+    # PGlite (Node) in-process (ADR 0014).
     services:
       postgres:
         image: postgres:16
@@ -31,12 +31,30 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: mysql_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -pmysql_password"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
 
     env:
       # Matches the `pnpm dev:setup` stack, so a suite talks to the same URL
       # locally and here.
       DATABASE_URL: postgresql://postgres:postgres_password@localhost:5432/postgres
       SHADOW_DATABASE_URL: postgresql://postgres:postgres_password@localhost:5432/prisma_shadow
+      # The Go server's suites run every database case on SQLite, and on these
+      # two servers too, in a scratch database each (server/internal/testdb).
+      TEST_POSTGRES_URL: postgres://postgres:postgres_password@localhost:5432/postgres?sslmode=disable
+      TEST_MYSQL_URL: mysql://root:mysql_password@localhost:3306/mysql
+      # Its drift check empties these (server/scripts/drift.mjs).
+      MIGRATE_DEV_POSTGRES: postgres://postgres:postgres_password@localhost:5432/go_drift?sslmode=disable
+      MIGRATE_DEV_MYSQL: mysql://root:mysql_password@localhost:3306/go_drift
 
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +65,10 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
 
       - name: Install node modules
         run: pnpm install --frozen-lockfile
@@ -84,10 +106,12 @@ jobs:
 
       # Replays every migration into a scratch database and compares the result
       # with the schema, so a column that reached a database only through
-      # `db:push` cannot land unnoticed.
+      # `db:push` cannot land unnoticed: Prisma's on Postgres, and each of the Go
+      # server's three dialects.
       - name: Migration drift
         run: |
-          PGPASSWORD=postgres_password psql -h localhost -U postgres -c 'CREATE DATABASE prisma_shadow'
+          PGPASSWORD=postgres_password psql -h localhost -U postgres -c 'CREATE DATABASE prisma_shadow' -c 'CREATE DATABASE go_drift'
+          mysql -h 127.0.0.1 -uroot -pmysql_password -e 'CREATE DATABASE go_drift'
           pnpm db:drift
 
       - name: Test
@@ -103,45 +127,130 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # The DSH plugin, unchanged, against the Go server on all three
+      # databases: sign in on loopback, sync, call a model (server/e2e).
+      - name: Check out the plugin
+        uses: actions/checkout@v4
+        with:
+          repository: dsh-teamwork/dsh-teamwork
+          path: _plugin
+
+      - name: Plugin end to end
+        run: |
+          (cd _plugin && pnpm install --frozen-lockfile --ignore-scripts)
+          cd server && go test -tags e2e ./e2e
+        env:
+          DSH_TEAMWORK_PLUGIN: ${{ github.workspace }}/_plugin
+
       # The closed edition only: every open path must equal the community
       # edition it last merged (docs/tech/community-edition.md).
       - name: Edition boundary
         if: hashFiles('premium/scripts/lint-edition.mjs') != ''
         run: node premium/scripts/lint-edition.mjs
 
-  # Self-hosting as README.md describes it: build apps/web/Dockerfile, start
-  # compose.yaml with nothing but its .env, and check the web app answers after
-  # applying its migrations. No Google, PostHog or SMTP account is involved.
+  # The release, packed exactly as the release workflow packs it: five
+  # binaries, their npm packages and the launcher (server/scripts/pack.mjs).
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - name: Build the console
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts --filter @dsh-teamwork/console...
+          pnpm --filter @dsh-teamwork/console build
+      - name: Pack
+        run: node server/scripts/pack.mjs 0.0.0-ci.${{ github.run_number }}
+      # A tarball keeps its files' modes; a loose binary would not.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: server/dist/release/*.tgz
+
+  # `npx @dsh-teamwork/server` from an empty cache on each platform a person
+  # runs it on, against a registry on the runner (Verdaccio; its 10 MB default
+  # upload limit is raised, since a platform package is about 11 MB).
+  npx:
+    needs: pack
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: server/scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-packages
+          path: packages
+      - name: Start a registry
+        run: |
+          mkdir -p "$RUNNER_TEMP/registry"
+          cat > "$RUNNER_TEMP/registry/config.yaml" <<'YAML'
+          storage: ./storage
+          auth: { htpasswd: { file: ./htpasswd } }
+          uplinks: {}
+          packages:
+            '@dsh-teamwork/*': { access: $all, publish: $anonymous }
+          max_body_size: 100mb
+          log: { type: stdout, format: pretty, level: warn }
+          YAML
+          npx --yes verdaccio@6.11.1 --config "$RUNNER_TEMP/registry/config.yaml" --listen 127.0.0.1:4873 > "$RUNNER_TEMP/registry/log" 2>&1 &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:4873/-/ping && exit 0; sleep 2; done
+          cat "$RUNNER_TEMP/registry/log"; exit 1
+      - name: Install with npx, start, and serve
+        run: node server/scripts/smoke-npm.mjs http://127.0.0.1:4873 packages 0.0.0-ci.${{ github.run_number }}
+
+  # Self-hosting as README.md describes it: build server/Dockerfile, start
+  # compose.yaml with no .env at all, and check the server answers and prints
+  # the link that claims the first account. No Google, PostHog or SMTP account
+  # is involved.
   self-host:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Write the instance's .env
-        run: |
-          {
-            echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
-            echo "APP_URL=http://localhost:3000"
-            echo "AUTH_SECRET=$(openssl rand -base64 32)"
-            echo "PROVIDER_KEYS_SECRET=$(openssl rand -base64 32)"
-          } > .env
-
       - name: Build and start
         run: docker compose up -d --build --wait --wait-timeout 300
 
-      # The container starts serving once its migrations are applied, so the
-      # first request is retried for up to two minutes.
-      - name: The web app answers
+      - name: The server answers
         run: |
-          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 2; done
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 2; done
           for path in / /sign-in /robots.txt; do
             status=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:3000$path")
             echo "$path $status"
             test "$status" = 200
           done
-          docker compose logs web | grep -E 'All migrations have been successfully applied|No pending migrations'
+          docker compose logs server | grep -F 'http://localhost:3000/setup?token='
+
+      # The SQLite file and the generated secrets are in the volume, so a new
+      # container starts on the same instance.
+      - name: The data outlives the container
+        run: |
+          before=$(docker compose logs server | grep -o 'setup?token=[A-Za-z0-9_-]*' | head -1)
+          docker compose down
+          docker compose up -d --wait
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 2; done
+          after=$(docker compose logs server | grep -o 'setup?token=[A-Za-z0-9_-]*' | head -1)
+          echo "$before / $after"
+          test -n "$before" && test "$before" = "$after"
 
       - name: Logs on failure
         if: failure()
         run: docker compose logs
-

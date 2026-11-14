@@ -1,0 +1,89 @@
+name: Release
+
+# A tag `v<version>` releases the server three ways (ADR 0014): the npm
+# packages behind `npx @dsh-teamwork/server`, the five binaries as downloads on
+# a GitHub release, and the container image on ghcr.io. CI has already run the
+# gate on the commit; this only builds and publishes.
+#
+# Needs an NPM_TOKEN repository secret that may publish to the @dsh-teamwork
+# scope. A version with a pre-release part (1.2.0-rc.1) is published under the
+# `next` tag, so `npx @dsh-teamwork/server` keeps starting the last stable one.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
+      - name: Version
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          case "$version" in *-*) echo "NPM_TAG=next" >> "$GITHUB_ENV" ;; *) echo "NPM_TAG=latest" >> "$GITHUB_ENV" ;; esac
+
+      - name: Build the console
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts --filter @dsh-teamwork/console...
+          pnpm --filter @dsh-teamwork/console build
+
+      # Built and packed in this job: a binary carried between jobs loses its
+      # executable bit, and pack.mjs refuses a tarball without it.
+      - name: Pack
+        run: node server/scripts/pack.mjs "$VERSION"
+
+      # The platform packages before the launcher that depends on them.
+      - name: Publish to npm
+        run: |
+          cd server/dist/release
+          for tarball in dsh-teamwork-server-*-*-"$VERSION".tgz; do
+            npm publish "$tarball" --access public --tag "$NPM_TAG"
+          done
+          npm publish "dsh-teamwork-server-$VERSION.tgz" --access public --tag "$NPM_TAG"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: GitHub release
+        run: |
+          cd server/dist/release/binaries
+          sha256sum * > SHA256SUMS
+          flags=""
+          case "$VERSION" in *-*) flags="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes $flags *
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Container image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: VERSION=${{ env.VERSION }}
+          push: true
+          tags: |
+            ghcr.io/dsh-teamwork/server:${{ env.VERSION }}
+            ${{ env.NPM_TAG == 'latest' && 'ghcr.io/dsh-teamwork/server:latest' || '' }}
