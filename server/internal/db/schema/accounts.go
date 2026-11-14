@@ -50,7 +50,8 @@ func (Identity) Indexes() []ent.Index {
 }
 
 // Password is a user's scrypt hash, where the instance sends no email
-// (ADR 0006), with the guesses counted against it in the current window.
+// (ADR 0006). The guesses against an address are counted in RateWindow, so
+// an address with no account is limited the same way.
 type Password struct{ ent.Schema }
 
 func (Password) Mixin() []ent.Mixin { return []ent.Mixin{Base{}, Updated{}} }
@@ -59,8 +60,6 @@ func (Password) Fields() []ent.Field {
 		field.String("user_id").MaxLen(32).Unique(),
 		field.String("hash").MaxLen(512),
 		field.Bool("must_change").Default(false),
-		field.Int("failures").Default(0),
-		field.Time("failures_since").SchemaType(mysqlTime).Optional().Nillable(),
 	}
 }
 func (Password) Edges() []ent.Edge {
@@ -82,8 +81,8 @@ func (VerificationCode) Fields() []ent.Field {
 }
 func (VerificationCode) Indexes() []ent.Index { return []ent.Index{index.Fields("email", "created_at")} }
 
-// RateWindow counts events per key in a fixed window, such as the codes sent
-// to one address.
+// RateWindow counts events per key in a fixed window: the password guesses
+// against one address, the codes sent to it.
 type RateWindow struct{ ent.Schema }
 
 func (RateWindow) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }

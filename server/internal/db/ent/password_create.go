@@ -78,34 +78,6 @@ func (_c *PasswordCreate) SetNillableMustChange(v *bool) *PasswordCreate {
 	return _c
 }
 
-// SetFailures sets the "failures" field.
-func (_c *PasswordCreate) SetFailures(v int) *PasswordCreate {
-	_c.mutation.SetFailures(v)
-	return _c
-}
-
-// SetNillableFailures sets the "failures" field if the given value is not nil.
-func (_c *PasswordCreate) SetNillableFailures(v *int) *PasswordCreate {
-	if v != nil {
-		_c.SetFailures(*v)
-	}
-	return _c
-}
-
-// SetFailuresSince sets the "failures_since" field.
-func (_c *PasswordCreate) SetFailuresSince(v time.Time) *PasswordCreate {
-	_c.mutation.SetFailuresSince(v)
-	return _c
-}
-
-// SetNillableFailuresSince sets the "failures_since" field if the given value is not nil.
-func (_c *PasswordCreate) SetNillableFailuresSince(v *time.Time) *PasswordCreate {
-	if v != nil {
-		_c.SetFailuresSince(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *PasswordCreate) SetID(v string) *PasswordCreate {
 	_c.mutation.SetID(v)
@@ -172,10 +144,6 @@ func (_c *PasswordCreate) defaults() {
 		v := password.DefaultMustChange
 		_c.mutation.SetMustChange(v)
 	}
-	if _, ok := _c.mutation.Failures(); !ok {
-		v := password.DefaultFailures
-		_c.mutation.SetFailures(v)
-	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := password.DefaultID()
 		_c.mutation.SetID(v)
@@ -208,9 +176,6 @@ func (_c *PasswordCreate) check() error {
 	}
 	if _, ok := _c.mutation.MustChange(); !ok {
 		return &ValidationError{Name: "must_change", err: errors.New(`ent: missing required field "Password.must_change"`)}
-	}
-	if _, ok := _c.mutation.Failures(); !ok {
-		return &ValidationError{Name: "failures", err: errors.New(`ent: missing required field "Password.failures"`)}
 	}
 	if v, ok := _c.mutation.ID(); ok {
 		if err := password.IDValidator(v); err != nil {
@@ -271,14 +236,6 @@ func (_c *PasswordCreate) createSpec() (*Password, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.MustChange(); ok {
 		_spec.SetField(password.FieldMustChange, field.TypeBool, value)
 		_node.MustChange = value
-	}
-	if value, ok := _c.mutation.Failures(); ok {
-		_spec.SetField(password.FieldFailures, field.TypeInt, value)
-		_node.Failures = value
-	}
-	if value, ok := _c.mutation.FailuresSince(); ok {
-		_spec.SetField(password.FieldFailuresSince, field.TypeTime, value)
-		_node.FailuresSince = &value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -397,42 +354,6 @@ func (u *PasswordUpsert) UpdateMustChange() *PasswordUpsert {
 	return u
 }
 
-// SetFailures sets the "failures" field.
-func (u *PasswordUpsert) SetFailures(v int) *PasswordUpsert {
-	u.Set(password.FieldFailures, v)
-	return u
-}
-
-// UpdateFailures sets the "failures" field to the value that was provided on create.
-func (u *PasswordUpsert) UpdateFailures() *PasswordUpsert {
-	u.SetExcluded(password.FieldFailures)
-	return u
-}
-
-// AddFailures adds v to the "failures" field.
-func (u *PasswordUpsert) AddFailures(v int) *PasswordUpsert {
-	u.Add(password.FieldFailures, v)
-	return u
-}
-
-// SetFailuresSince sets the "failures_since" field.
-func (u *PasswordUpsert) SetFailuresSince(v time.Time) *PasswordUpsert {
-	u.Set(password.FieldFailuresSince, v)
-	return u
-}
-
-// UpdateFailuresSince sets the "failures_since" field to the value that was provided on create.
-func (u *PasswordUpsert) UpdateFailuresSince() *PasswordUpsert {
-	u.SetExcluded(password.FieldFailuresSince)
-	return u
-}
-
-// ClearFailuresSince clears the value of the "failures_since" field.
-func (u *PasswordUpsert) ClearFailuresSince() *PasswordUpsert {
-	u.SetNull(password.FieldFailuresSince)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -537,48 +458,6 @@ func (u *PasswordUpsertOne) SetMustChange(v bool) *PasswordUpsertOne {
 func (u *PasswordUpsertOne) UpdateMustChange() *PasswordUpsertOne {
 	return u.Update(func(s *PasswordUpsert) {
 		s.UpdateMustChange()
-	})
-}
-
-// SetFailures sets the "failures" field.
-func (u *PasswordUpsertOne) SetFailures(v int) *PasswordUpsertOne {
-	return u.Update(func(s *PasswordUpsert) {
-		s.SetFailures(v)
-	})
-}
-
-// AddFailures adds v to the "failures" field.
-func (u *PasswordUpsertOne) AddFailures(v int) *PasswordUpsertOne {
-	return u.Update(func(s *PasswordUpsert) {
-		s.AddFailures(v)
-	})
-}
-
-// UpdateFailures sets the "failures" field to the value that was provided on create.
-func (u *PasswordUpsertOne) UpdateFailures() *PasswordUpsertOne {
-	return u.Update(func(s *PasswordUpsert) {
-		s.UpdateFailures()
-	})
-}
-
-// SetFailuresSince sets the "failures_since" field.
-func (u *PasswordUpsertOne) SetFailuresSince(v time.Time) *PasswordUpsertOne {
-	return u.Update(func(s *PasswordUpsert) {
-		s.SetFailuresSince(v)
-	})
-}
-
-// UpdateFailuresSince sets the "failures_since" field to the value that was provided on create.
-func (u *PasswordUpsertOne) UpdateFailuresSince() *PasswordUpsertOne {
-	return u.Update(func(s *PasswordUpsert) {
-		s.UpdateFailuresSince()
-	})
-}
-
-// ClearFailuresSince clears the value of the "failures_since" field.
-func (u *PasswordUpsertOne) ClearFailuresSince() *PasswordUpsertOne {
-	return u.Update(func(s *PasswordUpsert) {
-		s.ClearFailuresSince()
 	})
 }
 
@@ -853,48 +732,6 @@ func (u *PasswordUpsertBulk) SetMustChange(v bool) *PasswordUpsertBulk {
 func (u *PasswordUpsertBulk) UpdateMustChange() *PasswordUpsertBulk {
 	return u.Update(func(s *PasswordUpsert) {
 		s.UpdateMustChange()
-	})
-}
-
-// SetFailures sets the "failures" field.
-func (u *PasswordUpsertBulk) SetFailures(v int) *PasswordUpsertBulk {
-	return u.Update(func(s *PasswordUpsert) {
-		s.SetFailures(v)
-	})
-}
-
-// AddFailures adds v to the "failures" field.
-func (u *PasswordUpsertBulk) AddFailures(v int) *PasswordUpsertBulk {
-	return u.Update(func(s *PasswordUpsert) {
-		s.AddFailures(v)
-	})
-}
-
-// UpdateFailures sets the "failures" field to the value that was provided on create.
-func (u *PasswordUpsertBulk) UpdateFailures() *PasswordUpsertBulk {
-	return u.Update(func(s *PasswordUpsert) {
-		s.UpdateFailures()
-	})
-}
-
-// SetFailuresSince sets the "failures_since" field.
-func (u *PasswordUpsertBulk) SetFailuresSince(v time.Time) *PasswordUpsertBulk {
-	return u.Update(func(s *PasswordUpsert) {
-		s.SetFailuresSince(v)
-	})
-}
-
-// UpdateFailuresSince sets the "failures_since" field to the value that was provided on create.
-func (u *PasswordUpsertBulk) UpdateFailuresSince() *PasswordUpsertBulk {
-	return u.Update(func(s *PasswordUpsert) {
-		s.UpdateFailuresSince()
-	})
-}
-
-// ClearFailuresSince clears the value of the "failures_since" field.
-func (u *PasswordUpsertBulk) ClearFailuresSince() *PasswordUpsertBulk {
-	return u.Update(func(s *PasswordUpsert) {
-		s.ClearFailuresSince()
 	})
 }
 

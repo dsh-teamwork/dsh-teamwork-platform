@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { CardPage, Failure, Loading } from '@/components/page';
+import { CardPage, Failure } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,7 +31,6 @@ export function SetupPage() {
   const [error, setError] = useState<AuthError | null>(null);
   const [pending, setPending] = useState(false);
 
-  if (!session) return <Loading />;
   if (!token || !session.doors.password || !session.setupOpen) return <CardPage title={t('title')} description={t('closed')} />;
 
   async function submit() {

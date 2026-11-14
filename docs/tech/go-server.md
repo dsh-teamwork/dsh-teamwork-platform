@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — phase 0 done · **Updated:** 2026-11-14
+> **Status:** Plan — phases 0 and 1 done · **Updated:** 2026-11-14
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -50,6 +50,11 @@ needs it built, so the run is part of each gate, not of every CI run.
 - `premium/server/`: the closed Go packages, compiled into the closed binary
   only.
 
+`apps/console` restates four small rules from `packages/shared` rather than
+depend on it, since that package depends on Prisma and goes in phase 6:
+`returnPath`, the PKCE challenge's form, the sign-in error codes and
+`matchLocale`. From phase 6 the console's copies are the only ones.
+
 ### Phase 0: experiments — done
 
 Three dialects from one schema, the gateway, and packaging; results below.
@@ -65,8 +70,9 @@ The binary serves exactly what an installed plugin calls, end to end:
 2. Sign-in by password: the setup link for the first account, the session
    cookie, password change.
 3. The plugin's sign-in: `/plugin`, the loopback and pasted code, and
-   `POST /api/auth/plugin/token`. Tokens the Node server minted stay valid
-   (experiment 2).
+   `POST /api/auth/plugin/token`. A token carries the user's id; the hosted
+   service starts empty, so tokens the Node server minted are not carried
+   over, and members sign in again once.
 4. Just enough of the team API to set a team up: create a team, add a
    provider, publish a model.
 5. `GET /api/configs` and `POST /api/llm/chat/completions`, with the
@@ -88,6 +94,40 @@ The binary serves exactly what an installed plugin calls, end to end:
   password limit under a burst, a provider address refused without
   `ALLOW_PRIVATE_PROVIDERS`, a DNS answer that changes between check and
   connect, a provider key never in a response.
+
+**Done on 2026-11-14.** What the gate found:
+
+- **Checks on three dialects:** the boundary tests (the slice, the PKCE
+  exchange, the guess limit under a burst, the first account under a race,
+  team boundaries, the address rule on save and on the socket, the browser
+  guards) pass on SQLite, Postgres 16 and MySQL 8, and every answer they
+  read matches `api/openapi.yaml`. Two controls showed the tests can fail:
+  without the dialer's check, the rebinding test fails; without the guess
+  limit, the burst test fails.
+- **The plugin, unchanged**, signs in on loopback, syncs and makes a plain
+  and a streamed call, on each dialect (`go test -tags e2e ./e2e`).
+- **The parity run:** 27 of 29 requests answer the same. The two that do not
+  are a provider or a configuration created twice: the Go server answers
+  `409`, the Node server `500 internal_error`, because its production build
+  carries a second copy of Prisma's error class and `instanceof` misses it.
+  That is a bug in the Node server, left for phase 6 to delete.
+- **The review** found ten things; nine are fixed:
+  - an `AUTH_SECRET` of whitespace started the server on an empty key, so
+    anyone could compute the setup link; one under 32 characters now stops
+    the start;
+  - the guess limit applied only to addresses with an account, which told an
+    attacker which accounts exist; guesses are now counted per address;
+  - the private ranges now include the IPv6 forms that translate to IPv4
+    (NAT64, 6to4, IPv4-compatible);
+  - the start log named `127.0.0.1` while `APP_URL` said `localhost`, so the
+    logged address refused every write; the log names `APP_URL`, and the
+    loopback names are one site;
+  - a failed first read of the session left the console loading for ever;
+  - a MySQL user name with escapes was mangled without a password;
+  - a changelog entry, a repeated query and a repeated rule.
+
+  The tenth, that the console restates four rules from `packages/shared`,
+  is kept on purpose, as "Where the code goes" says.
 
 ### Phase 2: the rest of the API and sign-in
 

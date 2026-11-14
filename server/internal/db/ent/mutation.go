@@ -1815,22 +1815,19 @@ func (m *MembershipMutation) ResetEdge(name string) error {
 // PasswordMutation represents an operation that mutates the Password nodes in the graph.
 type PasswordMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *string
-	created_at     *time.Time
-	updated_at     *time.Time
-	hash           *string
-	must_change    *bool
-	failures       *int
-	addfailures    *int
-	failures_since *time.Time
-	clearedFields  map[string]struct{}
-	user           *string
-	cleareduser    bool
-	done           bool
-	oldValue       func(context.Context) (*Password, error)
-	predicates     []predicate.Password
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	updated_at    *time.Time
+	hash          *string
+	must_change   *bool
+	clearedFields map[string]struct{}
+	user          *string
+	cleareduser   bool
+	done          bool
+	oldValue      func(context.Context) (*Password, error)
+	predicates    []predicate.Password
 }
 
 var _ ent.Mutation = (*PasswordMutation)(nil)
@@ -2117,111 +2114,6 @@ func (m *PasswordMutation) ResetMustChange() {
 	m.must_change = nil
 }
 
-// SetFailures sets the "failures" field.
-func (m *PasswordMutation) SetFailures(i int) {
-	m.failures = &i
-	m.addfailures = nil
-}
-
-// Failures returns the value of the "failures" field in the mutation.
-func (m *PasswordMutation) Failures() (r int, exists bool) {
-	v := m.failures
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldFailures returns the old "failures" field's value of the Password entity.
-// If the Password object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PasswordMutation) OldFailures(ctx context.Context) (v int, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFailures is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFailures requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFailures: %w", err)
-	}
-	return oldValue.Failures, nil
-}
-
-// AddFailures adds i to the "failures" field.
-func (m *PasswordMutation) AddFailures(i int) {
-	if m.addfailures != nil {
-		*m.addfailures += i
-	} else {
-		m.addfailures = &i
-	}
-}
-
-// AddedFailures returns the value that was added to the "failures" field in this mutation.
-func (m *PasswordMutation) AddedFailures() (r int, exists bool) {
-	v := m.addfailures
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetFailures resets all changes to the "failures" field.
-func (m *PasswordMutation) ResetFailures() {
-	m.failures = nil
-	m.addfailures = nil
-}
-
-// SetFailuresSince sets the "failures_since" field.
-func (m *PasswordMutation) SetFailuresSince(t time.Time) {
-	m.failures_since = &t
-}
-
-// FailuresSince returns the value of the "failures_since" field in the mutation.
-func (m *PasswordMutation) FailuresSince() (r time.Time, exists bool) {
-	v := m.failures_since
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldFailuresSince returns the old "failures_since" field's value of the Password entity.
-// If the Password object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PasswordMutation) OldFailuresSince(ctx context.Context) (v *time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFailuresSince is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFailuresSince requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFailuresSince: %w", err)
-	}
-	return oldValue.FailuresSince, nil
-}
-
-// ClearFailuresSince clears the value of the "failures_since" field.
-func (m *PasswordMutation) ClearFailuresSince() {
-	m.failures_since = nil
-	m.clearedFields[password.FieldFailuresSince] = struct{}{}
-}
-
-// FailuresSinceCleared returns if the "failures_since" field was cleared in this mutation.
-func (m *PasswordMutation) FailuresSinceCleared() bool {
-	_, ok := m.clearedFields[password.FieldFailuresSince]
-	return ok
-}
-
-// ResetFailuresSince resets all changes to the "failures_since" field.
-func (m *PasswordMutation) ResetFailuresSince() {
-	m.failures_since = nil
-	delete(m.clearedFields, password.FieldFailuresSince)
-}
-
 // ClearUser clears the "user" edge to the User entity.
 func (m *PasswordMutation) ClearUser() {
 	m.cleareduser = true
@@ -2283,7 +2175,7 @@ func (m *PasswordMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PasswordMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 5)
 	if m.created_at != nil {
 		fields = append(fields, password.FieldCreatedAt)
 	}
@@ -2298,12 +2190,6 @@ func (m *PasswordMutation) Fields() []string {
 	}
 	if m.must_change != nil {
 		fields = append(fields, password.FieldMustChange)
-	}
-	if m.failures != nil {
-		fields = append(fields, password.FieldFailures)
-	}
-	if m.failures_since != nil {
-		fields = append(fields, password.FieldFailuresSince)
 	}
 	return fields
 }
@@ -2323,10 +2209,6 @@ func (m *PasswordMutation) Field(name string) (ent.Value, bool) {
 		return m.Hash()
 	case password.FieldMustChange:
 		return m.MustChange()
-	case password.FieldFailures:
-		return m.Failures()
-	case password.FieldFailuresSince:
-		return m.FailuresSince()
 	}
 	return nil, false
 }
@@ -2346,10 +2228,6 @@ func (m *PasswordMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldHash(ctx)
 	case password.FieldMustChange:
 		return m.OldMustChange(ctx)
-	case password.FieldFailures:
-		return m.OldFailures(ctx)
-	case password.FieldFailuresSince:
-		return m.OldFailuresSince(ctx)
 	}
 	return nil, fmt.Errorf("unknown Password field %s", name)
 }
@@ -2394,20 +2272,6 @@ func (m *PasswordMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetMustChange(v)
 		return nil
-	case password.FieldFailures:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetFailures(v)
-		return nil
-	case password.FieldFailuresSince:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetFailuresSince(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Password field %s", name)
 }
@@ -2415,21 +2279,13 @@ func (m *PasswordMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *PasswordMutation) AddedFields() []string {
-	var fields []string
-	if m.addfailures != nil {
-		fields = append(fields, password.FieldFailures)
-	}
-	return fields
+	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *PasswordMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	case password.FieldFailures:
-		return m.AddedFailures()
-	}
 	return nil, false
 }
 
@@ -2438,13 +2294,6 @@ func (m *PasswordMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *PasswordMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case password.FieldFailures:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddFailures(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Password numeric field %s", name)
 }
@@ -2452,11 +2301,7 @@ func (m *PasswordMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *PasswordMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(password.FieldFailuresSince) {
-		fields = append(fields, password.FieldFailuresSince)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -2469,11 +2314,6 @@ func (m *PasswordMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *PasswordMutation) ClearField(name string) error {
-	switch name {
-	case password.FieldFailuresSince:
-		m.ClearFailuresSince()
-		return nil
-	}
 	return fmt.Errorf("unknown Password nullable field %s", name)
 }
 
@@ -2495,12 +2335,6 @@ func (m *PasswordMutation) ResetField(name string) error {
 		return nil
 	case password.FieldMustChange:
 		m.ResetMustChange()
-		return nil
-	case password.FieldFailures:
-		m.ResetFailures()
-		return nil
-	case password.FieldFailuresSince:
-		m.ResetFailuresSince()
 		return nil
 	}
 	return fmt.Errorf("unknown Password field %s", name)

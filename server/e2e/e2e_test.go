@@ -30,7 +30,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
 
-const secret = "e2e-auth-secret"
+const secret = "e2e-auth-secret-at-least-32-characters"
 
 func here() string {
 	_, file, _, _ := runtime.Caller(0)
@@ -75,23 +75,30 @@ func serve(t *testing.T, bin, databaseURL string) string {
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
+	exited := make(chan error, 1)
+	go func() { exited <- cmd.Wait() }()
 	t.Cleanup(func() {
 		cmd.Process.Signal(os.Interrupt)
-		cmd.Wait()
+		<-exited
 		if t.Failed() {
 			t.Logf("server log:\n%s", log.String())
 		}
 	})
-	deadline := time.Now().Add(30 * time.Second)
-	for time.Now().Before(deadline) {
-		if res, err := http.Get(base + "/api/auth/session"); err == nil {
-			res.Body.Close()
-			return base
+	deadline := time.After(30 * time.Second)
+	for {
+		select {
+		case err := <-exited:
+			exited <- err
+			t.Fatalf("the server exited: %v", err)
+		case <-deadline:
+			t.Fatal("the server did not answer within 30 seconds")
+		case <-time.After(100 * time.Millisecond):
+			if res, err := http.Get(base + "/api/auth/session"); err == nil {
+				res.Body.Close()
+				return base
+			}
 		}
-		time.Sleep(100 * time.Millisecond)
 	}
-	t.Fatalf("the server did not start:\n%s", log.String())
-	return ""
 }
 
 func stubProvider(t *testing.T) string {

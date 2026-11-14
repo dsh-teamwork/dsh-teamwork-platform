@@ -17,7 +17,7 @@ CREATE UNIQUE INDEX `membership_user_id_team_id` ON `memberships` (`user_id`, `t
 -- Create index "membership_team_id" to table: "memberships"
 CREATE INDEX `membership_team_id` ON `memberships` (`team_id`);
 -- Create "passwords" table
-CREATE TABLE `passwords` (`id` text NOT NULL, `created_at` datetime NOT NULL, `updated_at` datetime NOT NULL, `hash` text NOT NULL, `must_change` bool NOT NULL DEFAULT (false), `failures` integer NOT NULL DEFAULT (0), `failures_since` datetime NULL, `user_id` text NOT NULL, PRIMARY KEY (`id`), CONSTRAINT `passwords_users_password` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE);
+CREATE TABLE `passwords` (`id` text NOT NULL, `created_at` datetime NOT NULL, `updated_at` datetime NOT NULL, `hash` text NOT NULL, `must_change` bool NOT NULL DEFAULT (false), `user_id` text NOT NULL, PRIMARY KEY (`id`), CONSTRAINT `passwords_users_password` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE);
 -- Create index "passwords_user_id_key" to table: "passwords"
 CREATE UNIQUE INDEX `passwords_user_id_key` ON `passwords` (`user_id`);
 -- Create "rate_windows" table

@@ -19,6 +19,9 @@ import (
 	"strings"
 )
 
+// MinAuthSecret is the shortest AUTH_SECRET accepted.
+const MinAuthSecret = 32
+
 // Config is everything the server reads at start.
 type Config struct {
 	DataDir     string
@@ -74,12 +77,17 @@ func Load(args []string, env func(string) string) (Config, error) {
 	if err := os.MkdirAll(c.DataDir, 0o700); err != nil {
 		return Config{}, fmt.Errorf("data directory: %w", err)
 	}
-	stored, err := secrets(c.DataDir, env("AUTH_SECRET") == "" || env("PROVIDER_KEYS_SECRET") == "")
+	authEnv, keysEnv := strings.TrimSpace(env("AUTH_SECRET")), strings.TrimSpace(env("PROVIDER_KEYS_SECRET"))
+	stored, err := secrets(c.DataDir, authEnv == "" || keysEnv == "")
 	if err != nil {
 		return Config{}, err
 	}
-	c.AuthSecret = first(strings.TrimSpace(env("AUTH_SECRET")), stored.AuthSecret)
-	keys := first(strings.TrimSpace(env("PROVIDER_KEYS_SECRET")), stored.ProviderKeysSecret)
+	// The secret every session, token and the setup link derive from: one a
+	// stranger could guess would let them claim the first account.
+	if c.AuthSecret = first(authEnv, stored.AuthSecret); len(c.AuthSecret) < MinAuthSecret {
+		return Config{}, fmt.Errorf("AUTH_SECRET: at least %d characters of random (openssl rand -base64 32)", MinAuthSecret)
+	}
+	keys := first(keysEnv, stored.ProviderKeysSecret)
 	if c.ProviderKeysSecret, err = base64.StdEncoding.DecodeString(keys); err != nil || len(c.ProviderKeysSecret) != 32 {
 		return Config{}, errors.New("PROVIDER_KEYS_SECRET: 32 random bytes in base64 (openssl rand -base64 32)")
 	}

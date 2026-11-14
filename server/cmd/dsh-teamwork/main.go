@@ -87,7 +87,7 @@ func run() error {
 		return err
 	}
 	server := &http.Server{Handler: srv.Handler(), ReadHeaderTimeout: 10 * time.Second}
-	slog.Info("listening", "address", "http://"+ln.Addr().String(), "database", target.Dialect, "version", version)
+	slog.Info("serving", "url", cfg.AppURL, "listening", ln.Addr().String(), "database", target.Dialect, "version", version)
 	errs := make(chan error, 1)
 	go func() { errs <- server.Serve(ln) }()
 	select {

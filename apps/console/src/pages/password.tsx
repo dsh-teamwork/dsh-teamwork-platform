@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { CardPage, Failure, Loading } from '@/components/page';
+import { CardPage, Failure } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +27,6 @@ export function PasswordPage() {
   const [error, setError] = useState<AuthError | null>(null);
   const [pending, setPending] = useState(false);
 
-  if (!session) return <Loading />;
   if (!session.user) return <Navigate to={`/sign-in?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   if (!session.doors.password) return <Navigate to={next} replace />;
 

@@ -1,7 +1,7 @@
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { CardPage, Loading } from '@/components/page';
+import { CardPage } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
@@ -15,7 +15,6 @@ export function TeamsPage() {
   const { session, refresh } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
-  if (!session) return <Loading />;
   if (!session.user) return <Navigate to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} replace />;
   if (session.user.mustChangePassword) return <Navigate to={`/password?next=${encodeURIComponent(location.pathname)}`} replace />;
   return (

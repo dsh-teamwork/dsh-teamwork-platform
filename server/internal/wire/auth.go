@@ -45,6 +45,9 @@ func ValidPassword(p string) bool {
 	return n >= PasswordMin && n <= 256
 }
 
+// ValidVerifier is an RFC 7636 code verifier's length: 43 to 128 characters.
+func ValidVerifier(v string) bool { return len(v) >= 43 && len(v) <= 128 }
+
 // PluginChallenge is an RFC 7636 S256 challenge: base64url of a SHA-256.
 var PluginChallenge = regexp.MustCompile(`^[A-Za-z0-9_-]{43}$`)
 

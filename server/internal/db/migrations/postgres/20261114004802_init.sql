@@ -31,7 +31,7 @@ CREATE INDEX "membership_team_id" ON "memberships" ("team_id");
 -- Create index "membership_user_id_team_id" to table: "memberships"
 CREATE UNIQUE INDEX "membership_user_id_team_id" ON "memberships" ("user_id", "team_id");
 -- Create "passwords" table
-CREATE TABLE "passwords" ("id" character varying NOT NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "hash" character varying NOT NULL, "must_change" boolean NOT NULL DEFAULT false, "failures" bigint NOT NULL DEFAULT 0, "failures_since" timestamptz NULL, "user_id" character varying NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "passwords_users_password" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);
+CREATE TABLE "passwords" ("id" character varying NOT NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "hash" character varying NOT NULL, "must_change" boolean NOT NULL DEFAULT false, "user_id" character varying NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "passwords_users_password" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);
 -- Create index "passwords_user_id_key" to table: "passwords"
 CREATE UNIQUE INDEX "passwords_user_id_key" ON "passwords" ("user_id");
 -- Create "team_configs" table

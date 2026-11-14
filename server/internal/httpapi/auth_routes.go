@@ -80,11 +80,7 @@ func (s *Server) passwordSignIn(w http.ResponseWriter, r *http.Request) error {
 	if err := s.startSession(w, user, "password"); err != nil {
 		return err
 	}
-	must, err := s.Auth.MustChange(r.Context(), user.ID)
-	if err != nil {
-		return err
-	}
-	writeJSON(w, http.StatusOK, map[string]bool{"mustChangePassword": must})
+	writeJSON(w, http.StatusOK, map[string]bool{"mustChangePassword": user.Edges.Password.MustChange})
 	return nil
 }
 
@@ -172,7 +168,7 @@ func (s *Server) pluginToken(w http.ResponseWriter, r *http.Request) error {
 	if err := decode(r, &in); err != nil {
 		return wire.E(http.StatusBadRequest, "invalid_request")
 	}
-	if in.Code == "" || len(in.Verifier) < 43 || len(in.Verifier) > 128 {
+	if in.Code == "" || !wire.ValidVerifier(in.Verifier) {
 		return wire.E(http.StatusBadRequest, "invalid_request")
 	}
 	token, exp, err := s.Auth.RedeemHandoff(r.Context(), in.Code, in.Verifier)

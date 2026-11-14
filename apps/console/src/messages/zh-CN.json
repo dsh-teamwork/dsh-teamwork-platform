@@ -8,7 +8,8 @@
     "backHome": "返回首页",
     "privacy": "隐私政策",
     "terms": "服务条款",
-    "close": "关闭"
+    "close": "关闭",
+    "retry": "重试"
   },
   "signIn": {
     "title": "登录",

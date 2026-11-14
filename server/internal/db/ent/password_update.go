@@ -78,47 +78,6 @@ func (_u *PasswordUpdate) SetNillableMustChange(v *bool) *PasswordUpdate {
 	return _u
 }
 
-// SetFailures sets the "failures" field.
-func (_u *PasswordUpdate) SetFailures(v int) *PasswordUpdate {
-	_u.mutation.ResetFailures()
-	_u.mutation.SetFailures(v)
-	return _u
-}
-
-// SetNillableFailures sets the "failures" field if the given value is not nil.
-func (_u *PasswordUpdate) SetNillableFailures(v *int) *PasswordUpdate {
-	if v != nil {
-		_u.SetFailures(*v)
-	}
-	return _u
-}
-
-// AddFailures adds value to the "failures" field.
-func (_u *PasswordUpdate) AddFailures(v int) *PasswordUpdate {
-	_u.mutation.AddFailures(v)
-	return _u
-}
-
-// SetFailuresSince sets the "failures_since" field.
-func (_u *PasswordUpdate) SetFailuresSince(v time.Time) *PasswordUpdate {
-	_u.mutation.SetFailuresSince(v)
-	return _u
-}
-
-// SetNillableFailuresSince sets the "failures_since" field if the given value is not nil.
-func (_u *PasswordUpdate) SetNillableFailuresSince(v *time.Time) *PasswordUpdate {
-	if v != nil {
-		_u.SetFailuresSince(*v)
-	}
-	return _u
-}
-
-// ClearFailuresSince clears the value of the "failures_since" field.
-func (_u *PasswordUpdate) ClearFailuresSince() *PasswordUpdate {
-	_u.mutation.ClearFailuresSince()
-	return _u
-}
-
 // SetUser sets the "user" edge to the User entity.
 func (_u *PasswordUpdate) SetUser(v *User) *PasswordUpdate {
 	return _u.SetUserID(v.ID)
@@ -216,18 +175,6 @@ func (_u *PasswordUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.MustChange(); ok {
 		_spec.SetField(password.FieldMustChange, field.TypeBool, value)
 	}
-	if value, ok := _u.mutation.Failures(); ok {
-		_spec.SetField(password.FieldFailures, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedFailures(); ok {
-		_spec.AddField(password.FieldFailures, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.FailuresSince(); ok {
-		_spec.SetField(password.FieldFailuresSince, field.TypeTime, value)
-	}
-	if _u.mutation.FailuresSinceCleared() {
-		_spec.ClearField(password.FieldFailuresSince, field.TypeTime)
-	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -324,47 +271,6 @@ func (_u *PasswordUpdateOne) SetNillableMustChange(v *bool) *PasswordUpdateOne {
 	if v != nil {
 		_u.SetMustChange(*v)
 	}
-	return _u
-}
-
-// SetFailures sets the "failures" field.
-func (_u *PasswordUpdateOne) SetFailures(v int) *PasswordUpdateOne {
-	_u.mutation.ResetFailures()
-	_u.mutation.SetFailures(v)
-	return _u
-}
-
-// SetNillableFailures sets the "failures" field if the given value is not nil.
-func (_u *PasswordUpdateOne) SetNillableFailures(v *int) *PasswordUpdateOne {
-	if v != nil {
-		_u.SetFailures(*v)
-	}
-	return _u
-}
-
-// AddFailures adds value to the "failures" field.
-func (_u *PasswordUpdateOne) AddFailures(v int) *PasswordUpdateOne {
-	_u.mutation.AddFailures(v)
-	return _u
-}
-
-// SetFailuresSince sets the "failures_since" field.
-func (_u *PasswordUpdateOne) SetFailuresSince(v time.Time) *PasswordUpdateOne {
-	_u.mutation.SetFailuresSince(v)
-	return _u
-}
-
-// SetNillableFailuresSince sets the "failures_since" field if the given value is not nil.
-func (_u *PasswordUpdateOne) SetNillableFailuresSince(v *time.Time) *PasswordUpdateOne {
-	if v != nil {
-		_u.SetFailuresSince(*v)
-	}
-	return _u
-}
-
-// ClearFailuresSince clears the value of the "failures_since" field.
-func (_u *PasswordUpdateOne) ClearFailuresSince() *PasswordUpdateOne {
-	_u.mutation.ClearFailuresSince()
 	return _u
 }
 
@@ -494,18 +400,6 @@ func (_u *PasswordUpdateOne) sqlSave(ctx context.Context) (_node *Password, err 
 	}
 	if value, ok := _u.mutation.MustChange(); ok {
 		_spec.SetField(password.FieldMustChange, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.Failures(); ok {
-		_spec.SetField(password.FieldFailures, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedFailures(); ok {
-		_spec.AddField(password.FieldFailures, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.FailuresSince(); ok {
-		_spec.SetField(password.FieldFailuresSince, field.TypeTime, value)
-	}
-	if _u.mutation.FailuresSinceCleared() {
-		_spec.ClearField(password.FieldFailuresSince, field.TypeTime)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

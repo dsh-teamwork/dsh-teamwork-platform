@@ -24,8 +24,8 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
-// Guesses: ten wrong passwords per account per fifteen minutes, each spent
-// before the comparison, so a burst of concurrent guesses gets no more.
+// Guesses: ten passwords per address per fifteen minutes, each spent before
+// the comparison, so a burst of concurrent guesses gets no more.
 const (
 	MaxFailures   = 10
 	FailureWindow = 15 * time.Minute
@@ -76,8 +76,18 @@ func (s *Service) UserByEmail(ctx context.Context, email string) (*ent.User, err
 	return id.Edges.User, nil
 }
 
-// CheckPassword is the account an email and password sign in to.
+// CheckPassword is the account an email and password sign in to. A guess is
+// spent before the comparison, against the address whether or not it has an
+// account, so the limit says nothing about which accounts exist.
 func (s *Service) CheckPassword(ctx context.Context, email, pw string) (*ent.User, error) {
+	email = wire.NormalizeEmail(email)
+	ok, err := s.claimGuess(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, refuse(wire.TooManyAttempts)
+	}
 	user, err := s.UserByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -88,49 +98,60 @@ func (s *Service) CheckPassword(ctx context.Context, email, pw string) (*ent.Use
 		VerifyPassword(s.decoy, pw)
 		return nil, refuse(wire.InvalidCredentials)
 	}
-	ok, err := s.claimGuess(ctx, user.ID)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, refuse(wire.TooManyAttempts)
-	}
 	if !VerifyPassword(user.Edges.Password.Hash, pw) {
 		return nil, refuse(wire.InvalidCredentials)
 	}
-	if err := s.DB.Password.Update().Where(password.UserID(user.ID)).SetFailures(0).ClearFailuresSince().Exec(ctx); err != nil {
-		return nil, err
-	}
-	return user, nil
+	return user, s.clearGuesses(ctx, email)
 }
 
-// claimGuess spends one guess, or answers that they are used up: open a new
-// window if the last one has passed, otherwise count into it while under the
-// limit. Each is one conditional update, atomic on every dialect.
-func (s *Service) claimGuess(ctx context.Context, userID string) (bool, error) {
-	now := s.now()
-	fresh, err := s.DB.Password.Update().
-		Where(password.UserID(userID), password.Or(password.FailuresSinceIsNil(), password.FailuresSinceLTE(now.Add(-FailureWindow)))).
-		SetFailures(1).SetFailuresSince(now).Save(ctx)
+func guessKey(email string) string { return "password:" + email }
+
+// claimGuess spends one of the address's guesses, or answers that they are
+// used up: open a new window if the last one has passed, otherwise count into
+// it while under the limit. Each is one conditional update, atomic on every
+// dialect.
+func (s *Service) claimGuess(ctx context.Context, email string) (bool, error) {
+	key, now := guessKey(email), s.now()
+	if err := s.DB.RateWindow.Create().SetKey(key).SetWindowStart(now).SetCount(0).
+		OnConflictColumns(ratewindow.FieldKey).Ignore().Exec(ctx); err != nil {
+		return false, err
+	}
+	fresh, err := s.DB.RateWindow.Update().
+		Where(ratewindow.Key(key), ratewindow.WindowStartLTE(now.Add(-FailureWindow))).
+		SetCount(1).SetWindowStart(now).Save(ctx)
 	if err != nil || fresh > 0 {
 		return fresh > 0, err
 	}
-	counted, err := s.DB.Password.Update().
-		Where(password.UserID(userID), password.FailuresLT(MaxFailures)).
-		AddFailures(1).Save(ctx)
+	counted, err := s.DB.RateWindow.Update().
+		Where(ratewindow.Key(key), ratewindow.CountLT(MaxFailures)).
+		AddCount(1).Save(ctx)
 	return counted > 0, err
 }
 
-// SetPassword sets or replaces a user's password and clears its guesses.
+func (s *Service) clearGuesses(ctx context.Context, email string) error {
+	_, err := s.DB.RateWindow.Delete().Where(ratewindow.Key(guessKey(email))).Exec(ctx)
+	return err
+}
+
+// SetPassword sets or replaces a user's password and clears the guesses
+// counted against their address.
 func (s *Service) SetPassword(ctx context.Context, userID, pw string, mustChange bool) error {
 	hash, err := HashPassword(pw)
 	if err != nil {
 		return err
 	}
-	return s.DB.Password.Create().SetUserID(userID).SetHash(hash).SetMustChange(mustChange).SetFailures(0).
+	err = s.DB.Password.Create().SetUserID(userID).SetHash(hash).SetMustChange(mustChange).
 		OnConflictColumns(password.FieldUserID).
-		Update(func(u *ent.PasswordUpsert) { u.SetHash(hash).SetMustChange(mustChange).SetFailures(0).ClearFailuresSince().UpdateUpdatedAt() }).
+		Update(func(u *ent.PasswordUpsert) { u.SetHash(hash).SetMustChange(mustChange).UpdateUpdatedAt() }).
 		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	u, err := s.DB.User.Get(ctx, userID)
+	if err != nil || u.Email == nil {
+		return err
+	}
+	return s.clearGuesses(ctx, *u.Email)
 }
 
 // ChangePassword replaces the signed-in person's password, checking the
@@ -279,7 +300,7 @@ var ErrInvalidCode = errors.New("invalid_code")
 // token.
 func (s *Service) RedeemHandoff(ctx context.Context, code, verifier string) (string, time.Time, error) {
 	c, err := s.Sealer.Open(PluginHandoff, code)
-	if err != nil || len(verifier) < 43 || len(verifier) > 128 ||
+	if err != nil || !wire.ValidVerifier(verifier) ||
 		subtle.ConstantTimeCompare([]byte(c.Challenge), []byte(ChallengeOf(verifier))) != 1 {
 		return "", time.Time{}, ErrInvalidCode
 	}

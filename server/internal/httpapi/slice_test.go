@@ -127,6 +127,16 @@ func TestPasswordGuessLimitUnderBurst(t *testing.T) {
 		if r.code() != "too_many_attempts" {
 			t.Fatalf("right password in a spent window: %d %s", r.status, r.body)
 		}
+		// An address with no account is limited the same way, so the answers
+		// say nothing about which accounts exist.
+		for i := 0; i < auth.MaxFailures; i++ {
+			if r := e.browser().post("/api/auth/password/sign-in", map[string]string{"email": "nobody@x.io", "password": "whatever it is"}); r.code() != "invalid_credentials" {
+				t.Fatalf("unknown address, guess %d: %s", i+1, r.body)
+			}
+		}
+		if r := e.browser().post("/api/auth/password/sign-in", map[string]string{"email": "Nobody@X.io", "password": "whatever it is"}); r.code() != "too_many_attempts" {
+			t.Fatalf("unknown address past the limit: %s", r.body)
+		}
 	})
 }
 
@@ -268,6 +278,9 @@ func TestBrowserGuards(t *testing.T) {
 		if r := admin.post("/api/teams", map[string]string{"name": "T"}); r.status != 403 || r.code() != "cross_origin" {
 			t.Fatalf("cross origin: %d %s", r.status, r.body)
 		}
+		// The same machine under another loopback name is the same site.
+		admin.origin = strings.Replace(e.url, "127.0.0.1", "localhost", 1)
+		must(t, admin.post("/api/teams", map[string]string{"name": "T2"}), 201)
 		admin.origin = e.url
 		big := `{"name":"` + strings.Repeat("x", 70<<10) + `"}`
 		if r := admin.post("/api/teams", big); r.status != 413 || r.code() != "payload_too_large" {

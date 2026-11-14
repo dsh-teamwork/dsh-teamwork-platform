@@ -23,7 +23,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
 
-const secret = "test-auth-secret"
+const secret = "test-auth-secret-at-least-32-characters"
 
 // env is one running server over one test database.
 type env struct {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Navigate, useLocation, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { CardPage, Failure, Loading } from '@/components/page';
+import { CardPage, Failure } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, type PluginCode } from '@/lib/api';
@@ -29,7 +29,6 @@ export function PluginPage() {
   const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState(false);
 
-  if (!session) return <Loading />;
   const to = redirectUri === null ? null : isLoopback(redirectUri) ? 'dsh' : session.mobileRedirectPrefix && redirectUri.startsWith(session.mobileRedirectPrefix) ? 'app' : undefined;
   const valid = CHALLENGE.test(challenge) && to !== undefined;
   if (!valid) return <CardPage title={t('title')} description={t('invalid')} wide />;

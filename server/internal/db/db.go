@@ -86,10 +86,12 @@ func mysqlTarget(u *url.URL) (Target, error) {
 	query.Set("charset", "utf8mb4")
 	dsn := fmt.Sprintf("tcp(%s)/%s?%s", host, name, query.Encode())
 	if u.User != nil {
-		dsn = u.User.String() + "@" + dsn
+		// The driver reads its DSN literally, so the URL's escapes are undone.
+		cred := u.User.Username()
 		if pass, ok := u.User.Password(); ok {
-			dsn = u.User.Username() + ":" + pass + "@" + strings.SplitN(dsn, "@", 2)[1]
+			cred += ":" + pass
 		}
+		dsn = cred + "@" + dsn
 	}
 	return Target{Dialect: dialect.MySQL, Driver: "mysql", DSN: dsn}, nil
 }

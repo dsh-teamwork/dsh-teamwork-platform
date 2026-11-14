@@ -94,10 +94,21 @@ func (s *Server) sameOrigin(r *http.Request) bool {
 		return true
 	}
 	if o := r.Header.Get("Origin"); o != "" {
-		want, err := url.Parse(s.Config.AppURL)
-		return err == nil && o == want.Scheme+"://"+want.Host
+		got, err1 := url.Parse(o)
+		want, err2 := url.Parse(s.Config.AppURL)
+		if err1 != nil || err2 != nil || got.Scheme != want.Scheme || got.Port() != want.Port() {
+			return false
+		}
+		// localhost, 127.0.0.1 and [::1] are one machine: a server on loopback
+		// is the same site whichever name the browser used. Any other host
+		// must be APP_URL's own, which DNS rebinding cannot fake.
+		return got.Hostname() == want.Hostname() || (loopback(got.Hostname()) && loopback(want.Hostname()))
 	}
 	return r.Header.Get("Sec-Fetch-Site") == "same-origin"
+}
+
+func loopback(host string) bool {
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
 // startSession sets the browser's session cookie.

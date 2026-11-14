@@ -24,10 +24,6 @@ const (
 	FieldHash = "hash"
 	// FieldMustChange holds the string denoting the must_change field in the database.
 	FieldMustChange = "must_change"
-	// FieldFailures holds the string denoting the failures field in the database.
-	FieldFailures = "failures"
-	// FieldFailuresSince holds the string denoting the failures_since field in the database.
-	FieldFailuresSince = "failures_since"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the password in the database.
@@ -49,8 +45,6 @@ var Columns = []string{
 	FieldUserID,
 	FieldHash,
 	FieldMustChange,
-	FieldFailures,
-	FieldFailuresSince,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -76,8 +70,6 @@ var (
 	HashValidator func(string) error
 	// DefaultMustChange holds the default value on creation for the "must_change" field.
 	DefaultMustChange bool
-	// DefaultFailures holds the default value on creation for the "failures" field.
-	DefaultFailures int
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -115,16 +107,6 @@ func ByHash(opts ...sql.OrderTermOption) OrderOption {
 // ByMustChange orders the results by the must_change field.
 func ByMustChange(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMustChange, opts...).ToFunc()
-}
-
-// ByFailures orders the results by the failures field.
-func ByFailures(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFailures, opts...).ToFunc()
-}
-
-// ByFailuresSince orders the results by the failures_since field.
-func ByFailuresSince(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFailuresSince, opts...).ToFunc()
 }
 
 // ByUserField orders the results by user field.

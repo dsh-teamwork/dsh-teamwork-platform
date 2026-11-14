@@ -8,6 +8,7 @@ func TestResolve(t *testing.T) {
 		{"sqlite:///srv/x.sqlite", "sqlite3", "file:/srv/x.sqlite?" + SQLitePragmas},
 		{"postgres://u:p@h:5432/d?sslmode=disable", "postgres", "postgres://u:p@h:5432/d?sslmode=disable"},
 		{"mysql://u:p%40ss@h/d", "mysql", "u:p@ss@tcp(h:3306)/d?charset=utf8mb4&loc=UTC&parseTime=true"},
+		{"mysql://app%40svc@h/d", "mysql", "app@svc@tcp(h:3306)/d?charset=utf8mb4&loc=UTC&parseTime=true"},
 	}
 	for _, c := range cases {
 		got, err := Resolve(c.url, "/data")

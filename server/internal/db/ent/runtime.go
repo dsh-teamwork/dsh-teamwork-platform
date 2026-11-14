@@ -162,10 +162,6 @@ func init() {
 	passwordDescMustChange := passwordFields[2].Descriptor()
 	// password.DefaultMustChange holds the default value on creation for the must_change field.
 	password.DefaultMustChange = passwordDescMustChange.Default.(bool)
-	// passwordDescFailures is the schema descriptor for failures field.
-	passwordDescFailures := passwordFields[3].Descriptor()
-	// password.DefaultFailures holds the default value on creation for the failures field.
-	password.DefaultFailures = passwordDescFailures.Default.(int)
 	// passwordDescID is the schema descriptor for id field.
 	passwordDescID := passwordMixinFields0[0].Descriptor()
 	// password.DefaultID holds the default value on creation for the id field.

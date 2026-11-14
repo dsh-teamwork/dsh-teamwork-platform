@@ -90,16 +90,6 @@ func MustChange(v bool) predicate.Password {
 	return predicate.Password(sql.FieldEQ(FieldMustChange, v))
 }
 
-// Failures applies equality check predicate on the "failures" field. It's identical to FailuresEQ.
-func Failures(v int) predicate.Password {
-	return predicate.Password(sql.FieldEQ(FieldFailures, v))
-}
-
-// FailuresSince applies equality check predicate on the "failures_since" field. It's identical to FailuresSinceEQ.
-func FailuresSince(v time.Time) predicate.Password {
-	return predicate.Password(sql.FieldEQ(FieldFailuresSince, v))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Password {
 	return predicate.Password(sql.FieldEQ(FieldCreatedAt, v))
@@ -318,96 +308,6 @@ func MustChangeEQ(v bool) predicate.Password {
 // MustChangeNEQ applies the NEQ predicate on the "must_change" field.
 func MustChangeNEQ(v bool) predicate.Password {
 	return predicate.Password(sql.FieldNEQ(FieldMustChange, v))
-}
-
-// FailuresEQ applies the EQ predicate on the "failures" field.
-func FailuresEQ(v int) predicate.Password {
-	return predicate.Password(sql.FieldEQ(FieldFailures, v))
-}
-
-// FailuresNEQ applies the NEQ predicate on the "failures" field.
-func FailuresNEQ(v int) predicate.Password {
-	return predicate.Password(sql.FieldNEQ(FieldFailures, v))
-}
-
-// FailuresIn applies the In predicate on the "failures" field.
-func FailuresIn(vs ...int) predicate.Password {
-	return predicate.Password(sql.FieldIn(FieldFailures, vs...))
-}
-
-// FailuresNotIn applies the NotIn predicate on the "failures" field.
-func FailuresNotIn(vs ...int) predicate.Password {
-	return predicate.Password(sql.FieldNotIn(FieldFailures, vs...))
-}
-
-// FailuresGT applies the GT predicate on the "failures" field.
-func FailuresGT(v int) predicate.Password {
-	return predicate.Password(sql.FieldGT(FieldFailures, v))
-}
-
-// FailuresGTE applies the GTE predicate on the "failures" field.
-func FailuresGTE(v int) predicate.Password {
-	return predicate.Password(sql.FieldGTE(FieldFailures, v))
-}
-
-// FailuresLT applies the LT predicate on the "failures" field.
-func FailuresLT(v int) predicate.Password {
-	return predicate.Password(sql.FieldLT(FieldFailures, v))
-}
-
-// FailuresLTE applies the LTE predicate on the "failures" field.
-func FailuresLTE(v int) predicate.Password {
-	return predicate.Password(sql.FieldLTE(FieldFailures, v))
-}
-
-// FailuresSinceEQ applies the EQ predicate on the "failures_since" field.
-func FailuresSinceEQ(v time.Time) predicate.Password {
-	return predicate.Password(sql.FieldEQ(FieldFailuresSince, v))
-}
-
-// FailuresSinceNEQ applies the NEQ predicate on the "failures_since" field.
-func FailuresSinceNEQ(v time.Time) predicate.Password {
-	return predicate.Password(sql.FieldNEQ(FieldFailuresSince, v))
-}
-
-// FailuresSinceIn applies the In predicate on the "failures_since" field.
-func FailuresSinceIn(vs ...time.Time) predicate.Password {
-	return predicate.Password(sql.FieldIn(FieldFailuresSince, vs...))
-}
-
-// FailuresSinceNotIn applies the NotIn predicate on the "failures_since" field.
-func FailuresSinceNotIn(vs ...time.Time) predicate.Password {
-	return predicate.Password(sql.FieldNotIn(FieldFailuresSince, vs...))
-}
-
-// FailuresSinceGT applies the GT predicate on the "failures_since" field.
-func FailuresSinceGT(v time.Time) predicate.Password {
-	return predicate.Password(sql.FieldGT(FieldFailuresSince, v))
-}
-
-// FailuresSinceGTE applies the GTE predicate on the "failures_since" field.
-func FailuresSinceGTE(v time.Time) predicate.Password {
-	return predicate.Password(sql.FieldGTE(FieldFailuresSince, v))
-}
-
-// FailuresSinceLT applies the LT predicate on the "failures_since" field.
-func FailuresSinceLT(v time.Time) predicate.Password {
-	return predicate.Password(sql.FieldLT(FieldFailuresSince, v))
-}
-
-// FailuresSinceLTE applies the LTE predicate on the "failures_since" field.
-func FailuresSinceLTE(v time.Time) predicate.Password {
-	return predicate.Password(sql.FieldLTE(FieldFailuresSince, v))
-}
-
-// FailuresSinceIsNil applies the IsNil predicate on the "failures_since" field.
-func FailuresSinceIsNil() predicate.Password {
-	return predicate.Password(sql.FieldIsNull(FieldFailuresSince))
-}
-
-// FailuresSinceNotNil applies the NotNil predicate on the "failures_since" field.
-func FailuresSinceNotNil() predicate.Password {
-	return predicate.Password(sql.FieldNotNull(FieldFailuresSince))
 }
 
 // HasUser applies the HasEdge predicate on the "user" edge.

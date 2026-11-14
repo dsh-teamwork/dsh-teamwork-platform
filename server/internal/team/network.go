@@ -23,7 +23,8 @@ import (
 //	| http   | never                         | every address private |
 //
 // Private means loopback, the private ranges, link-local (cloud metadata
-// lives there), carrier-grade NAT and the unspecified address. The rule is
+// lives there), carrier-grade NAT, the unspecified address, and the IPv6
+// forms that translate to IPv4. The rule is
 // checked when an address is saved, before every call, and on the socket
 // itself: the dialer refuses the address it is about to connect to, so an
 // answer that changed since the check (DNS rebinding) is never connected to.
@@ -45,6 +46,13 @@ var private = []netip.Prefix{
 	netip.MustParsePrefix("::1/128"),
 	netip.MustParsePrefix("fc00::/7"),
 	netip.MustParsePrefix("fe80::/10"),
+	// Forms that carry an IPv4 address inside IPv6 and can be translated to
+	// it on the way out: NAT64 (RFC 6052, RFC 8215), 6to4, and the deprecated
+	// IPv4-compatible range. A provider is never one of these.
+	netip.MustParsePrefix("64:ff9b::/96"),
+	netip.MustParsePrefix("64:ff9b:1::/48"),
+	netip.MustParsePrefix("2002::/16"),
+	netip.MustParsePrefix("::/96"),
 }
 
 // IsPrivate is whether an address is one a shared instance must not call.

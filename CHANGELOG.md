@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-14 — The Go server's first slice, and the console beside it
+
+- **What:** `server/` is the Go binary of ADR 0014, with `apps/console`, a Vite and React console built into it. It serves what the DSH plugin calls: the first account's setup link, password sign-in, `/plugin` and the token exchange, creating a team, a provider and a configuration, `GET /api/configs` and the model gateway, on SQLite, Postgres or MySQL. `api/openapi.yaml` describes those routes. Not deployed: the Node server still serves every instance.
+- **Why:** Phase 1 of `docs/tech/go-server.md`, the slice that gates the rest of the move.
+- **Breaking:** None. Nothing runs the binary yet.
+- **Upgrade:** Nothing. For the binary, when it is deployed: `DATABASE_URL` also takes `mysql://` and `sqlite:///path`, and with none the database is SQLite in the data directory (`--data`, default `~/.dsh-teamwork`), which also holds `secrets.json`, written on first start; `HOST` and `--host` choose the address, loopback by default; `AUTH_SECRET` must be at least 32 characters.
+- **Refs:** `docs/adr/0014-one-go-binary.md`, `docs/tech/go-server.md`, `server/`, `apps/console/`, `api/openapi.yaml`.
+
 ## 2026-11-13 — The team console gets a sidebar and a page per task
 
 - **What:** `/teams/{teamId}` is a console with a sidebar: a team switcher (every team the person is in, with their role; switching keeps the page), one link per page, and the account. `/teams` groups the person's teams into those they manage and those they joined. Members have their own page, `/teams/{teamId}/members`, as a table with invitations or account creation beside it; a member leaves the team from there. Models have their own page, `/teams/{teamId}/models`: an admin picks a provider from a list of nine OpenAI-compatible ones (DeepSeek, OpenAI, Qwen, Kimi, Zhipu GLM, Doubao, MiniMax, SiliconFlow, OpenRouter), pastes only its key, reads its model list and publishes several models at once; any other provider is entered by address. Each team model shows which presets use it, and a model or plugin a preset still uses cannot be removed (`409 model_in_use`, `plugin_in_use`). Presets have their own page, `/teams/{teamId}/presets`: an admin starts one from three persona templates (writer, data analyst, research analyst) or from nothing, and edits it in three tabs (basics; DSH tools, each required, optional or off, and plugins; persona and method). Plugins have their own page, `/teams/{teamId}/plugins`. `GET /api/teams/{teamId}/model-catalog` now requires `?provider=`. The overview, `/teams/{teamId}`, counts the team's models, presets, plugins and members, gives an admin a four-step setup checklist and members the command to connect DSH, and lists the latest configuration changes.

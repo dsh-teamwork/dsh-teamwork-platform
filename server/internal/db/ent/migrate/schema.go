@@ -120,8 +120,6 @@ var (
 		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "hash", Type: field.TypeString, Size: 512},
 		{Name: "must_change", Type: field.TypeBool, Default: false},
-		{Name: "failures", Type: field.TypeInt, Default: 0},
-		{Name: "failures_since", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "user_id", Type: field.TypeString, Unique: true, Size: 32},
 	}
 	// PasswordsTable holds the schema information for the "passwords" table.
@@ -132,7 +130,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "passwords_users_password",
-				Columns:    []*schema.Column{PasswordsColumns[7]},
+				Columns:    []*schema.Column{PasswordsColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
