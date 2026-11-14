@@ -27,10 +27,16 @@ must keep.
 
 ## Order of work
 
-Six phases. Each ends in a gate: the phase's checks pass on SQLite,
-Postgres 16 and MySQL 8, and nothing in the next phase starts before they do.
-The Node server keeps running beside the Go one until phase 6 deletes it, so
-every phase can compare the two on the same requests.
+Six phases. Each ends in a gate, and nothing in the next phase starts before
+it passes:
+
+1. the phase's checks pass on SQLite, Postgres 16 and MySQL 8;
+2. the parity run compares the Node and Go servers on the phase's routes;
+3. a code review of the phase's diff (`/code-review`), with every confirmed
+   finding fixed and the checks run again.
+
+The Node server stays in the tree until phase 6 deletes it. The parity run
+needs it built, so the run is part of each gate, not of every CI run.
 
 ### Where the code goes
 
@@ -145,15 +151,15 @@ test after the move.
 **Verified by:** the gate and the plugin end-to-end test passing with the
 Node server gone, and `pnpm lint:docs` over the rewritten documents.
 
-## Open questions
+## Decisions
 
-- **The public pages.** A single-page app is a poor page for crawlers. The
-  plan prerenders home, privacy and terms to static HTML at build and embeds
-  them; the alternative is rendering them in Go templates.
-- **The hosted service's data at the move.** Reset it, as the Building stage
-  allows, or copy it from Postgres into the new schema.
-- **The parity run in CI.** It needs the Node server built in CI until phase
-  6; the alternative is running it only before each phase's gate.
+Taken by the developer on 2026-11-14:
+
+- **The public pages are prerendered.** Home, privacy and terms are rendered
+  to static HTML when the console is built, and embedded with it.
+- **The hosted service starts empty on the Go server.** Its data is not
+  carried over.
+- **The parity run belongs to each phase's gate**, not to CI.
 
 ## Experiment 1: three dialects from one schema
 
