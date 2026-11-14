@@ -8,6 +8,7 @@ packages:
   # absent from the public repository, where the globs match nothing.
   - premium/apps/*
   - premium/packages/*
+  - premium/server
 
 # Build-script policy and dependency resolution live here, not in package.json's
 # `pnpm` field — pnpm 11 no longer reads that field, and a setting left behind

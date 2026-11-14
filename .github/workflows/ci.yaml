@@ -136,10 +136,14 @@ jobs:
           repository: dsh-teamwork/dsh-teamwork
           path: _plugin
 
+      # Every Go module with an e2e directory runs it: the open server's, and
+      # the closed one's where this tree has it.
       - name: Plugin end to end
         run: |
           (cd _plugin && pnpm install --frozen-lockfile --ignore-scripts)
-          cd server && go test -tags e2e ./e2e
+          for dir in $(git ls-files '*e2e/*_test.go' | xargs -n1 dirname | sort -u); do
+            (cd "$dir/.." && go test -tags e2e ./e2e)
+          done
         env:
           DSH_TEAMWORK_PLUGIN: ${{ github.workspace }}/_plugin
 
