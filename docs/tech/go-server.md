@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — phases 0 to 3 done · **Updated:** 2026-11-14
+> **Status:** Plan — phases 0 to 4 done · **Updated:** 2026-11-14
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -244,6 +244,49 @@ SEO test ported to the public pages.
 
 **Verified by:** CI green on all of it, and one install from a clean machine
 on each platform with `npx`, the release binary and `compose.yaml`.
+
+**Done on 2026-11-14.** What the gate found:
+
+- **Where it lives:** `server/` is a workspace package, so the gate's `lint`
+  (gofmt and vet), `test`, `build` and `db:drift` run the Go side with the
+  rest, and the pre-push hook adds the plugin's end-to-end test when the
+  plugin is checked out beside. The server's build copies the built console
+  in (`server/scripts/embed.mjs`) and turbo keeps the copy as its output, so
+  a cache hit compiles too. `server/scripts/pack.mjs` builds the five
+  binaries and their packages; `server/npm/launcher.js` is the launcher.
+- **CI on a clean runner:** the Go suites on SQLite, Postgres 16 and
+  MySQL 8.4, the drift check on all three, the plugin's end-to-end test on
+  all three, the release packed and installed with `npx` from an empty cache
+  through a registry on the runner on Linux, macOS and Windows, and
+  `compose.yaml` built from `server/Dockerfile`, answering with no `.env`,
+  printing the setup link, and printing the same one after the container was
+  replaced, so the SQLite file and `secrets.json` live in the volume. The
+  binary the npm package installs is the one the release offers for download.
+- **Found on the runners:** `npm publish dir/name.tgz` reads a path with a
+  slash as a GitHub repository on Linux and macOS (not on Windows); the
+  smoke test and the release publish by explicit path.
+- **Not run:** a tag, which publishes for real, waits for an `NPM_TOKEN` and
+  the developer's go-ahead; the first release is its own check.
+- **The review** found ten things; nine are fixed:
+  - `go vet` and a cached console build ran without the console in
+    `internal/web/dist`, which is not in git, so a fresh checkout could not
+    compile it; the server's own build now copies it, and lint and test wait
+    for that build rather than racing it;
+  - a `HOST` in compose's `.env` overrode the container's address, and a
+    changed `PORT` left `APP_URL` on 3000;
+  - the launcher re-raised a child's signal into its own handlers and exited
+    0;
+  - a tag on a commit CI never saw would publish; a release now requires the
+    commit to be on `main`;
+  - the arm64 image built the console and the binary under emulation; both
+    stages now run on the builder's platform and Go cross-compiles;
+  - the second test run (PGlite) ran the Go suites again;
+  - the plugin's path in the pre-push hook was relative to the wrong
+    directory;
+  - and this document was not updated.
+
+  The tenth, that the plugin repository might be private to CI's token, did
+  not hold: it is public.
 
 ### Phase 5: `premium/`
 
