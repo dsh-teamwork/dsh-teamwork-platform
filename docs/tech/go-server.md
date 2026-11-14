@@ -134,14 +134,14 @@ The binary serves exactly what an installed plugin calls, end to end:
 - Every remaining route: teams, membership, members, admin-set passwords,
   invites, configurations with versions and in-use checks, providers, the
   model catalogue, profile.
-- Emailed codes over SMTP, Google, Feishu, the `identities` table and
-  linking a second sign-in from the account page.
+- Emailed codes over SMTP and Google. A Google sign-in with a verified
+  email joins the account that address already has; the `identities` table
+  records each door an account has used.
 - Server-side analytics events, with the table and its test.
 
 **Verified by:** every case in today's 24 test files rewritten as Go tests and
-run on the three dialects; the parity run extended to every route; Feishu and
-Google against a stub OAuth server in tests, and once by hand against the real
-ones.
+run on the three dialects; the parity run extended to every route; Google
+against a stub OAuth server in tests, and once by hand against the real one.
 
 ### Phase 3: the console
 
@@ -191,6 +191,15 @@ test after the move.
 **Verified by:** the gate and the plugin end-to-end test passing with the
 Node server gone, and `pnpm lint:docs` over the rewritten documents.
 
+### After phase 6: Feishu
+
+Feishu sign-in, through goth's `lark` provider, as ADR 0014 decided, with
+linking a second sign-in from the account page. Moved after the Node server
+is gone by the developer's choice on 2026-11-14: Google comes first.
+
+**Verified by:** Feishu against a stub OAuth server in tests, and once by
+hand against a real Feishu app.
+
 ## Decisions
 
 Taken by the developer on 2026-11-14:
@@ -200,6 +209,7 @@ Taken by the developer on 2026-11-14:
 - **The hosted service starts empty on the Go server.** Its data is not
   carried over.
 - **The parity run belongs to each phase's gate**, not to CI.
+- **Google before Feishu.** Phase 2 brings Google; Feishu follows phase 6.
 
 ## Experiment 1: three dialects from one schema
 
