@@ -35,8 +35,16 @@ type Config struct {
 
 	AllowPrivateProviders bool
 	SMTPURL               string // set: emailed codes; unset: passwords
+	EmailFrom             string // AUTH_EMAIL_FROM
 	MobileRedirectURI     string
+
+	GoogleID, GoogleSecret string // both set: the Google door
+
+	PostHogKey, PostHogHost string // POSTHOG_KEY set: server analytics
 }
+
+// Google is whether the Google door is configured.
+func (c Config) Google() bool { return c.GoogleID != "" && c.GoogleSecret != "" }
 
 // Passwords is whether the email door is a password: no SMTP to send codes.
 func (c Config) Passwords() bool { return c.SMTPURL == "" }
@@ -58,6 +66,11 @@ func Load(args []string, env func(string) string) (Config, error) {
 		AllowPrivateProviders: strings.TrimSpace(env("ALLOW_PRIVATE_PROVIDERS")) == "true",
 		SMTPURL:               strings.TrimSpace(env("SMTP_URL")),
 		MobileRedirectURI:     strings.TrimSpace(env("MOBILE_REDIRECT_URI")),
+		EmailFrom:             strings.TrimSpace(env("AUTH_EMAIL_FROM")),
+		GoogleID:              strings.TrimSpace(env("AUTH_GOOGLE_ID")),
+		GoogleSecret:          strings.TrimSpace(env("AUTH_GOOGLE_SECRET")),
+		PostHogKey:            strings.TrimSpace(env("POSTHOG_KEY")),
+		PostHogHost:           strings.TrimRight(strings.TrimSpace(env("POSTHOG_HOST")), "/"),
 	}
 	c.Port = *port
 	if c.Port == 0 {

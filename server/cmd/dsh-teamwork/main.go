@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db"
@@ -62,14 +63,21 @@ func run() error {
 		return err
 	}
 	network := &team.Network{AllowPrivate: cfg.AllowPrivateProviders}
-	teams := &team.Service{DB: client, Keys: keys, Network: network}
 	authn := &auth.Service{DB: client, Sealer: auth.NewSealer(cfg.AuthSecret, nil), Secret: cfg.AuthSecret}
+	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords()}
 	srv := &httpapi.Server{
-		Config:  cfg,
-		Auth:    authn,
-		Team:    teams,
-		Gateway: &gateway.Gateway{Team: teams, Client: network.Client()},
-		Web:     web.Handler(),
+		Config:    cfg,
+		Auth:      authn,
+		Team:      teams,
+		Gateway:   &gateway.Gateway{Team: teams, Client: network.Client()},
+		Web:       web.Handler(),
+		Analytics: &analytics.Client{Key: cfg.PostHogKey, Host: cfg.PostHogHost},
+	}
+	if !cfg.Passwords() {
+		srv.Mailer = auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
+	}
+	if cfg.Google() {
+		srv.Google = auth.NewGoogle(cfg.GoogleID, cfg.GoogleSecret, cfg.AppURL, nil)
 	}
 
 	if cfg.Passwords() {

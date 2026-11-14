@@ -33,6 +33,8 @@ type SessionUser struct {
 func (s *Server) session(w http.ResponseWriter, r *http.Request) error {
 	var v SessionView
 	v.Doors.Password = s.Config.Passwords()
+	v.Doors.EmailCode = !s.Config.Passwords()
+	v.Doors.Google = s.Google != nil
 	v.MobileRedirectPrefix = s.Config.MobileRedirectURI
 	c, err := s.identify(r)
 	if err != nil {
@@ -96,6 +98,7 @@ func (s *Server) setup(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	s.Analytics.Capture(user.ID, "user_signed_up", map[string]any{"via": "password", "client": "web"})
 	if err := s.startSession(w, user, "password"); err != nil {
 		return err
 	}

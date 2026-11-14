@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/netip"
-	"net"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -35,6 +35,7 @@ type env struct {
 
 type options struct {
 	allowPrivate bool
+	smtp         string
 	lookup       func(ctx context.Context, host string) ([]netip.Addr, error)
 }
 
@@ -45,12 +46,13 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 		t.Fatal(err)
 	}
 	network := &team.Network{AllowPrivate: o.allowPrivate, Lookup: o.lookup}
-	teams := &team.Service{DB: d.Client, Keys: keys, Network: network}
+	authn := &auth.Service{DB: d.Client, Sealer: auth.NewSealer(secret, nil), Secret: secret}
+	teams := &team.Service{DB: d.Client, Keys: keys, Network: network, Auth: authn, Passwords: o.smtp == ""}
 	ts := httptest.NewUnstartedServer(nil)
 	appURL := "http://" + ts.Listener.Addr().String()
 	srv := &httpapi.Server{
-		Config:  config.Config{AppURL: appURL, AuthSecret: secret},
-		Auth:    &auth.Service{DB: d.Client, Sealer: auth.NewSealer(secret, nil), Secret: secret},
+		Config:  config.Config{AppURL: appURL, AuthSecret: secret, SMTPURL: o.smtp},
+		Auth:    authn,
 		Team:    teams,
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client()},
 	}
@@ -238,4 +240,3 @@ func (e *env) team(b *browser, s *stub, name string) (teamID, modelID string) {
 	}), 201)["id"].(string)
 	return teamID, modelID
 }
-

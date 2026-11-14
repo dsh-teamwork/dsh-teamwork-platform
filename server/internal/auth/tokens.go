@@ -19,6 +19,7 @@ const (
 	Session       Purpose = "dsh-teamwork.session"
 	PluginHandoff Purpose = "dsh-teamwork.plugin-handoff"
 	PluginBearer  Purpose = "dsh-teamwork.plugin-session"
+	OAuthState    Purpose = "dsh-teamwork.oauth-state"
 )
 
 // SessionTTL is how long a browser session and a plugin token last. Neither
@@ -34,6 +35,7 @@ type Claims struct {
 	Sub       string `json:"sub"`                 // the user id
 	Via       string `json:"via,omitempty"`       // the door: password, email, google, feishu
 	Challenge string `json:"challenge,omitempty"` // a hand-off code's PKCE challenge
+	Next      string `json:"next,omitempty"`      // an OAuth round trip's return path
 	Iat       int64  `json:"iat"`
 	Exp       int64  `json:"exp"`
 }

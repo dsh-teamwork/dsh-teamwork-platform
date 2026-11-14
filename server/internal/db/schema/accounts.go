@@ -79,7 +79,9 @@ func (VerificationCode) Fields() []ent.Field {
 		field.Time("expires_at").SchemaType(mysqlTime),
 	}
 }
-func (VerificationCode) Indexes() []ent.Index { return []ent.Index{index.Fields("email", "created_at")} }
+func (VerificationCode) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("email", "created_at")}
+}
 
 // RateWindow counts events per key in a fixed window: the password guesses
 // against one address, the codes sent to it.

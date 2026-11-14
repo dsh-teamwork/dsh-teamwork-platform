@@ -11,13 +11,11 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -150,21 +148,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID str
 		fields["max_tokens"], _ = json.Marshal(t.maxTokens)
 	}
 
-	p, err := g.Team.DB.TeamProvider.Query().Where(teamprovider.TeamID(t.teamID), teamprovider.Name(t.provider)).Only(ctx)
-	if ent.IsNotFound(err) {
-		return wire.E(http.StatusServiceUnavailable, wire.ProviderNotConfigured)
-	}
-	if err != nil {
-		return err
-	}
-	base, err := url.Parse(p.BaseURL)
-	if err != nil {
-		return wire.E(http.StatusBadRequest, wire.ProviderAddressRefused)
-	}
-	if err := g.Team.Network.Check(ctx, base); err != nil {
-		return err
-	}
-	key, err := g.Team.Keys.Open(t.teamID, p.Name, p.KeyCipher)
+	base, key, err := g.Team.Route(ctx, t.teamID, t.provider)
 	if err != nil {
 		return err
 	}
@@ -177,7 +161,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID str
 	payload["model"], _ = json.Marshal(t.model)
 	out, _ := json.Marshal(payload)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimSuffix(base.String(), "/")+"/chat/completions", bytes.NewReader(out))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/chat/completions", bytes.NewReader(out))
 	if err != nil {
 		return wire.E(http.StatusBadGateway, wire.UpstreamUnavailable)
 	}

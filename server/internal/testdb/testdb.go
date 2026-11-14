@@ -15,7 +15,6 @@ import (
 	"strings"
 	"testing"
 
-
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/ids"
@@ -106,4 +105,3 @@ func scratch(t *testing.T, name, server string) string {
 
 // Dialect is the ent dialect name of a test database.
 func (d *DB) Dialect() string { return d.Target.Dialect }
-

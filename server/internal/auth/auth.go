@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
@@ -61,19 +60,13 @@ func (r *Refusal) Error() string { return r.Code }
 func refuse(code string) error { return &Refusal{Code: code} }
 
 // UserByEmail is the account an address signs in to through an email door,
-// or nil.
+// with its password, or nil.
 func (s *Service) UserByEmail(ctx context.Context, email string) (*ent.User, error) {
-	id, err := s.DB.Identity.Query().
-		Where(identity.Provider(EmailProvider), identity.Subject(wire.NormalizeEmail(email))).
-		WithUser(func(q *ent.UserQuery) { q.WithPassword() }).
-		Only(ctx)
+	u, err := s.DB.User.Query().Where(user.Email(wire.NormalizeEmail(email))).WithPassword().Only(ctx)
 	if ent.IsNotFound(err) {
 		return nil, nil
 	}
-	if err != nil {
-		return nil, err
-	}
-	return id.Edges.User, nil
+	return u, err
 }
 
 // CheckPassword is the account an email and password sign in to. A guess is
@@ -223,7 +216,7 @@ func (s *Service) ClaimFirstAccount(ctx context.Context, token, email, pw string
 		}
 		return nil, err
 	}
-	user, err := ensureEmailUser(ctx, tx.Client(), addr)
+	user, err := EnsureEmailUser(ctx, tx.Client(), addr)
 	if err != nil {
 		return nil, err
 	}
@@ -239,21 +232,10 @@ func (s *Service) ClaimFirstAccount(ctx context.Context, token, email, pw string
 	return user, nil
 }
 
-// ensureEmailUser is the account an address proves, created with its email
-// identity when it has none.
-func ensureEmailUser(ctx context.Context, c *ent.Client, email string) (*ent.User, error) {
-	found, err := c.Identity.Query().Where(identity.Provider(EmailProvider), identity.Subject(email)).QueryUser().Only(ctx)
-	if err == nil || !ent.IsNotFound(err) {
-		return found, err
-	}
-	user, err := c.User.Create().SetEmail(email).Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := c.Identity.Create().SetProvider(EmailProvider).SetSubject(email).SetUserID(user.ID).Exec(ctx); err != nil {
-		return nil, err
-	}
-	return user, nil
+// EnsureEmailUser is the account an address proves, made when it has none.
+func EnsureEmailUser(ctx context.Context, c *ent.Client, email string) (*ent.User, error) {
+	u, _, err := Account(ctx, c, EmailProof(email))
+	return u, err
 }
 
 // MustChange is whether an admin-set password is still unchanged.

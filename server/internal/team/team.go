@@ -13,6 +13,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
@@ -25,6 +26,18 @@ type Service struct {
 	DB      *ent.Client
 	Keys    *Keys
 	Network *Network
+	Auth    *auth.Service
+	// Passwords is whether the instance holds passwords (no SMTP), where an
+	// admin creates members' accounts rather than inviting them.
+	Passwords bool
+	Now       func() time.Time
+}
+
+func (s *Service) now() time.Time {
+	if s.Now != nil {
+		return s.Now().UTC()
+	}
+	return time.Now().UTC()
 }
 
 // Time is how the API writes a time: UTC, milliseconds, as JavaScript's

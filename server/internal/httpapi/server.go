@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
@@ -15,11 +16,14 @@ import (
 
 // Server holds what the handlers need.
 type Server struct {
-	Config  config.Config
-	Auth    *auth.Service
-	Team    *team.Service
-	Gateway *gateway.Gateway
-	Web     http.Handler
+	Config    config.Config
+	Auth      *auth.Service
+	Team      *team.Service
+	Gateway   *gateway.Gateway
+	Mailer    auth.Mailer       // where SMTP_URL is set
+	Google    *auth.Google      // where the Google door is configured
+	Analytics *analytics.Client // nil or keyless sends nothing
+	Web       http.Handler
 }
 
 // handler is a route that answers with an error instead of writing one.
@@ -42,6 +46,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	get := func(pattern string, h handler) { mux.HandleFunc("GET "+pattern, s.route(h, false)) }
 	post := func(pattern string, h handler) { mux.HandleFunc("POST "+pattern, s.route(h, true)) }
+	write := func(method, pattern string, h handler) { mux.HandleFunc(method+" "+pattern, s.route(h, true)) }
 
 	get("/api/auth/session", s.session)
 	post("/api/auth/password/sign-in", s.passwordSignIn)
@@ -49,6 +54,10 @@ func (s *Server) Handler() http.Handler {
 	post("/api/auth/password/change", s.changePassword)
 	post("/api/auth/sign-out", s.signOut)
 	post("/api/auth/plugin/code", s.pluginCode)
+	post("/api/auth/email/send", s.sendCode)
+	post("/api/auth/email/verify", s.verifyCode)
+	get("/api/auth/google", s.startGoogle)
+	get(auth.GoogleCallbackPath, s.googleCallback)
 	// No cookie authorizes it and a code is useless without its verifier, so
 	// any client may call it from anywhere, Origin or not.
 	mux.HandleFunc("POST /api/auth/plugin/token", s.route(s.pluginToken, false))
@@ -56,6 +65,25 @@ func (s *Server) Handler() http.Handler {
 	post("/api/teams", s.createTeam)
 	post("/api/teams/{teamId}/providers", s.createProvider)
 	post("/api/teams/{teamId}/configs", s.createConfig)
+	get("/api/teams", s.listTeams)
+	get("/api/teams/{teamId}", s.getTeam)
+	write("DELETE", "/api/teams/{teamId}/membership", s.leaveTeam)
+	post("/api/teams/{teamId}/members", s.addMember)
+	write("DELETE", "/api/teams/{teamId}/members/{userId}", s.removeMember)
+	post("/api/teams/{teamId}/members/{userId}/password", s.resetMemberPassword)
+	get("/api/teams/{teamId}/invites", s.listInvites)
+	post("/api/teams/{teamId}/invites", s.createInvite)
+	write("DELETE", "/api/teams/{teamId}/invites/{id}", s.revokeInvite)
+	post("/api/invites/redeem", s.redeemInvite)
+	get("/api/teams/{teamId}/configs", s.listConfigs)
+	write("PATCH", "/api/teams/{teamId}/configs/{id}", s.updateConfig)
+	write("DELETE", "/api/teams/{teamId}/configs/{id}", s.deleteConfig)
+	get("/api/teams/{teamId}/providers", s.listProviders)
+	write("PUT", "/api/teams/{teamId}/providers/{id}", s.updateProvider)
+	write("DELETE", "/api/teams/{teamId}/providers/{id}", s.deleteProvider)
+	get("/api/teams/{teamId}/model-catalog", s.modelCatalog)
+	get("/api/profile", s.getProfile)
+	write("PATCH", "/api/profile", s.updateProfile)
 	get("/api/configs", s.configs)
 	post("/api/llm/chat/completions", s.completions)
 

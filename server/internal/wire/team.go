@@ -289,3 +289,122 @@ func (c *ConfigInput) Canonical() json.RawMessage {
 	b, _ := json.Marshal(v)
 	return b
 }
+
+// ProviderUpdate is PUT /api/teams/:teamId/providers/:id. The name stays,
+// since team models refer to it; a key left out stays as it was.
+type ProviderUpdate struct {
+	BaseURL string  `json:"baseUrl"`
+	APIKey  *string `json:"apiKey"`
+}
+
+func (p *ProviderUpdate) Validate() error {
+	var is Issues
+	if !ValidBaseURL(p.BaseURL) {
+		is.Add("An http or https URL with no credentials, query or fragment", "baseUrl")
+	}
+	if p.APIKey != nil {
+		*p.APIKey = strings.TrimSpace(*p.APIKey)
+		if length(*p.APIKey) < 1 || length(*p.APIKey) > 4096 {
+			is.Add("Between 1 and 4096 characters", "apiKey")
+		}
+	}
+	return is.Err()
+}
+
+// UpdateConfig is PATCH /api/teams/:teamId/configs/:id: the whole
+// configuration again, and the version it was read at.
+type UpdateConfig struct {
+	ConfigInput
+	Version int `json:"version"`
+}
+
+func (u *UpdateConfig) Validate() error {
+	err := u.ConfigInput.Validate()
+	if u.Version < 1 {
+		var is Issues
+		if inv, ok := err.(*Invalid); ok {
+			is = inv.Issues
+		}
+		is.Add("A positive whole number", "version")
+		return is.Err()
+	}
+	return err
+}
+
+// AddMember is POST /api/teams/:teamId/members, where the instance holds
+// passwords.
+type AddMember struct {
+	Email string `json:"email"`
+}
+
+func (a *AddMember) Validate() error {
+	var is Issues
+	email, ok := Email(a.Email)
+	if !ok {
+		is.Add("An email address", "email")
+	}
+	a.Email = email
+	return is.Err()
+}
+
+// RedeemInvite is POST /api/invites/redeem.
+type RedeemInvite struct {
+	Token string `json:"token"`
+}
+
+func (r *RedeemInvite) Validate() error {
+	var is Issues
+	if len(r.Token) < 32 || len(r.Token) > 100 {
+		is.Add("An invitation token", "token")
+	}
+	return is.Err()
+}
+
+// Locales are the interface languages (packages/shared/src/locales.ts).
+var Locales = []string{"en", "zh-CN"}
+
+// UpdateProfile is PATCH /api/profile: either field, a value or null.
+type UpdateProfile struct {
+	Name   Optional[string] `json:"name"`
+	Locale Optional[string] `json:"locale"`
+}
+
+func (u *UpdateProfile) Validate() error {
+	var is Issues
+	if u.Name.Set && u.Name.Value != nil {
+		*u.Name.Value = strings.TrimSpace(*u.Name.Value)
+		if length(*u.Name.Value) < 1 || length(*u.Name.Value) > 80 {
+			is.Add("Between 1 and 80 characters", "name")
+		}
+	}
+	if u.Locale.Set && u.Locale.Value != nil {
+		ok := false
+		for _, l := range Locales {
+			ok = ok || *u.Locale.Value == l
+		}
+		if !ok {
+			is.Add("One of en, zh-CN", "locale")
+		}
+	}
+	return is.Err()
+}
+
+// Optional is a field that may be absent, null, or a value.
+type Optional[T any] struct {
+	Set   bool
+	Value *T
+}
+
+func (o *Optional[T]) UnmarshalJSON(b []byte) error {
+	o.Set = true
+	if string(b) == "null" {
+		o.Value = nil
+		return nil
+	}
+	var v T
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	o.Value = &v
+	return nil
+}

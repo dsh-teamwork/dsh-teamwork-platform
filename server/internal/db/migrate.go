@@ -156,7 +156,9 @@ func lock(ctx context.Context, c *sql.Conn, d string) (func(), error) {
 		if _, err := c.ExecContext(ctx, "SELECT pg_advisory_lock(hashtext('dsh-teamwork:migrate'))"); err != nil {
 			return nil, err
 		}
-		return func() { c.ExecContext(context.Background(), "SELECT pg_advisory_unlock(hashtext('dsh-teamwork:migrate'))") }, nil
+		return func() {
+			c.ExecContext(context.Background(), "SELECT pg_advisory_unlock(hashtext('dsh-teamwork:migrate'))")
+		}, nil
 	case dialect.MySQL:
 		var got sql.NullInt64
 		if err := c.QueryRowContext(ctx, "SELECT GET_LOCK('dsh-teamwork:migrate', 120)").Scan(&got); err != nil {
