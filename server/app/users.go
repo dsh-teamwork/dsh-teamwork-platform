@@ -6,6 +6,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/predicate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
 )
@@ -61,4 +62,8 @@ func (u users) Rename(ctx context.Context, id string, name *string) (bool, error
 		return false, nil
 	}
 	return err == nil, err
+}
+
+func (u users) InTeam(ctx context.Context, id string) (bool, error) {
+	return u.db.Membership.Query().Where(membership.UserID(id)).Exist(ctx)
 }

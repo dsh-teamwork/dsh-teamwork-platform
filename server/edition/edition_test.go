@@ -120,5 +120,12 @@ func TestExtension(t *testing.T) {
 		if found, err := host.Users.Rename(ctx, "nobody", nil); found || err != nil {
 			t.Fatalf("unknown: %v %v", found, err)
 		}
+		if in, err := host.Users.InTeam(ctx, ada); in || err != nil {
+			t.Fatalf("in a team before joining one: %v %v", in, err)
+		}
+		in.Team(ada)
+		if in, err := host.Users.InTeam(ctx, ada); !in || err != nil {
+			t.Fatalf("not in the team it created: %v %v", in, err)
+		}
 	})
 }

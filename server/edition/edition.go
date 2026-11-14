@@ -50,6 +50,8 @@ type Users interface {
 	// Rename sets an account's display name, nil clearing it; found is false
 	// when no account has that id.
 	Rename(ctx context.Context, id string, name *string) (found bool, err error)
+	// InTeam reports whether the account is a member of any team.
+	InTeam(ctx context.Context, id string) (bool, error)
 }
 
 // Host is what the server lends an extension.

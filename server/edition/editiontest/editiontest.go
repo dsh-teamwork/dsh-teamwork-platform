@@ -20,6 +20,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
 // Secret is the instance's AUTH_SECRET.
@@ -90,6 +91,16 @@ func (in *Instance) Account(email string) string {
 		in.t.Fatal(err)
 	}
 	return u.ID
+}
+
+// Team creates a team with the account as its admin, and returns its id.
+func (in *Instance) Team(userID string) string {
+	in.t.Helper()
+	created, err := in.srv.Team.CreateTeam(context.Background(), userID, wire.CreateTeam{Name: "Team"})
+	if err != nil {
+		in.t.Fatal(err)
+	}
+	return created.ID
 }
 
 // Bearer is a token for the account, as the plugin and the app hold one.

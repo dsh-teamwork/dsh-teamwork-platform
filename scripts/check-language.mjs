@@ -43,6 +43,10 @@ const ALLOWED = [
     why: 'Locale files: the product speaking to its user in the language that user chose. Keys and structure are English.',
   },
   {
+    match: (f) => /^(?:[^/]+\/)?server\/(?:[^/]+\/)*messages\/[^/]+\.json$/.test(f),
+    why: 'Locale files the Go server embeds, such as what a notification says: the same data as the apps\' messages, beside the package that sends it.',
+  },
+  {
     match: (f) => f === 'packages/shared/src/locales.ts',
     why: 'Endonyms. A language picker that names languages in a language you cannot read is useless, so each language\'s own name for itself is the correct string.',
   },
