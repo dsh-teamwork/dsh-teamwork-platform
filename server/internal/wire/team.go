@@ -193,7 +193,7 @@ func (p *PresetData) validate(is *Issues) {
 	}
 	ownRoute := p.Provider != nil || p.Model != nil || p.ContextWindow != nil || p.MaxTokens != nil
 	if (p.ModelConfigID != nil && ownRoute) || (p.ModelConfigID == nil && (p.Provider == nil || p.Model == nil)) {
-		is.Add("A preset references a team model or names its own provider and model, not both.")
+		is.Add("A preset references a team model or names its own provider and model, not both.", "data")
 	}
 }
 

@@ -170,12 +170,10 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 func (s *Server) pluginToken(w http.ResponseWriter, r *http.Request) error {
 	var in wire.PluginToken
 	if err := decode(r, &in); err != nil {
-		return err
+		return wire.E(http.StatusBadRequest, "invalid_request")
 	}
 	if in.Code == "" || len(in.Verifier) < 43 || len(in.Verifier) > 128 {
-		var is wire.Issues
-		is.Add("A code and a verifier of 43 to 128 characters")
-		return is.Err()
+		return wire.E(http.StatusBadRequest, "invalid_request")
 	}
 	token, exp, err := s.Auth.RedeemHandoff(r.Context(), in.Code, in.Verifier)
 	if errors.Is(err, auth.ErrInvalidCode) {
