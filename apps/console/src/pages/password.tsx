@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { CardPage, Failure } from '@/components/page';
+import { CardPage, Failure, useTitle } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ const PASSWORD_MIN = 10;
 export function PasswordPage() {
   const t = useTranslations('password');
   const te = useTranslations('authErrors');
+  useTitle(t('title'));
   const { session, refresh } = useSession();
   const navigate = useNavigate();
   const location = useLocation();

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
@@ -21,6 +22,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 )
 
 const secret = "test-auth-secret-at-least-32-characters"
@@ -38,6 +40,7 @@ type options struct {
 	smtp         string
 	mailer       auth.Mailer
 	lookup       func(ctx context.Context, host string) ([]netip.Addr, error)
+	web          fs.FS // a console build to serve, as web.New takes it
 }
 
 func start(t *testing.T, d *testdb.DB, o options) *env {
@@ -58,6 +61,9 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client()},
 	}
 	srv.Mailer = o.mailer
+	if o.web != nil {
+		srv.Web = web.New(o.web, web.Options{AppURL: appURL, Viewer: srv.Viewer})
+	}
 	ts.Config.Handler = srv.Handler()
 	ts.Start()
 	t.Cleanup(ts.Close)

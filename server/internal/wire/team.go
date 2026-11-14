@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 )
@@ -377,14 +378,26 @@ func (u *UpdateProfile) Validate() error {
 			is.Add("Between 1 and 80 characters", "name")
 		}
 	}
-	if u.Locale.Set && u.Locale.Value != nil {
-		ok := false
-		for _, l := range Locales {
-			ok = ok || *u.Locale.Value == l
-		}
-		if !ok {
-			is.Add("One of en, zh-CN", "locale")
-		}
+	if u.Locale.Set && u.Locale.Value != nil && !IsLocale(*u.Locale.Value) {
+		is.Add("One of en, zh-CN", "locale")
+	}
+	return is.Err()
+}
+
+// IsLocale is whether s is one of Locales.
+func IsLocale(s string) bool {
+	return slices.Contains(Locales, s)
+}
+
+// ChooseLocale is POST /api/locale.
+type ChooseLocale struct {
+	Locale string `json:"locale"`
+}
+
+func (c *ChooseLocale) Validate() error {
+	var is Issues
+	if !IsLocale(c.Locale) {
+		is.Add("One of en, zh-CN", "locale")
 	}
 	return is.Err()
 }

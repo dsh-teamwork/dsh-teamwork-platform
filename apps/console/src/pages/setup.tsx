@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { CardPage, Failure } from '@/components/page';
+import { CardPage, Failure, useTitle } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +22,7 @@ export function SetupPage() {
   const ts = useTranslations('signIn');
   const tp = useTranslations('password');
   const te = useTranslations('authErrors');
+  useTitle(t('title'));
   const { session, refresh } = useSession();
   const navigate = useNavigate();
   const [params] = useSearchParams();

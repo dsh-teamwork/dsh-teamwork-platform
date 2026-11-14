@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { CardPage, Loading } from '@/components/page';
@@ -10,6 +11,8 @@ interface SessionState {
   session: Session;
   /** Reads the session again, after signing in or out. */
   refresh: () => Promise<Session>;
+  /** Ends the browser's session; a guarded page then sends the reader to sign in. */
+  signOut: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionState | null>(null);
@@ -40,6 +43,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
   }, []);
   useEffect(load, [load]);
+  const signOut = useCallback(async () => {
+    await api('auth/sign-out', { method: 'POST' });
+    await refresh();
+  }, [refresh]);
 
   if (failed && !session) {
     return (
@@ -51,11 +58,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
   }
   if (!session) return <Loading />;
-  return <SessionContext.Provider value={{ session, refresh }}>{children}</SessionContext.Provider>;
+  return <SessionContext.Provider value={{ session, refresh, signOut }}>{children}</SessionContext.Provider>;
 }
 
 export function useSession(): SessionState {
   const state = useContext(SessionContext);
   if (!state) throw new Error('useSession outside SessionProvider');
   return state;
+}
+
+/**
+ * The pages below it open only for someone signed in, past a password an
+ * admin set and its owner has not changed yet; either detour comes back here.
+ */
+export function RequireUser() {
+  const { session } = useSession();
+  const location = useLocation();
+  const here = encodeURIComponent(location.pathname + location.search);
+  if (!session.user) return <Navigate to={`/sign-in?next=${here}`} replace />;
+  if (session.user.mustChangePassword) return <Navigate to={`/password?next=${here}`} replace />;
+  return <Outlet />;
 }

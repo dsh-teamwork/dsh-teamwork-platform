@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 3801",
-    "build": "vite build && node scripts/embed.mjs",
+    "build": "vite build && node scripts/prerender.mjs && node scripts/embed.mjs",
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

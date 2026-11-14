@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Navigate, useLocation, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { CardPage, Failure } from '@/components/page';
+import { CardPage, Failure, useTitle } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, type PluginCode } from '@/lib/api';
@@ -20,6 +20,7 @@ const CHALLENGE = /^[A-Za-z0-9_-]{43}$/;
  */
 export function PluginPage() {
   const t = useTranslations('plugin');
+  useTitle(t('title'));
   const { session } = useSession();
   const location = useLocation();
   const [params] = useSearchParams();

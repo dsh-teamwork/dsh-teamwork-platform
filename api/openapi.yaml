@@ -571,6 +571,26 @@ paths:
         '404': { $ref: '#/components/responses/Error' }
         '502': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
+  /locale:
+    post:
+      summary: Choose the interface language
+      description: >
+        Sets the `locale` cookie (a year, path /) for anybody, and the
+        profile's locale too when signed in, so the choice follows the account.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [locale]
+              properties:
+                locale: { type: string, enum: [en, zh-CN] }
+      responses:
+        '204': { description: Chosen }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
   /profile:
     get:
       summary: The signed-in profile

@@ -70,9 +70,9 @@ func run() error {
 		Auth:      authn,
 		Team:      teams,
 		Gateway:   &gateway.Gateway{Team: teams, Client: network.Client()},
-		Web:       web.Handler(),
 		Analytics: &analytics.Client{Key: cfg.PostHogKey, Host: cfg.PostHogHost},
 	}
+	srv.Web = web.Handler(web.Options{AppURL: cfg.AppURL, PostHogKey: cfg.PostHogKey, PostHogHost: cfg.PostHogHost, Viewer: srv.Viewer})
 	if !cfg.Passwords() {
 		srv.Mailer = auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
 	}

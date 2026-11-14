@@ -5,6 +5,10 @@
     "signOut": "Sign out",
     "account": "Account",
     "language": "Language",
+    "localeNames": {
+      "en": "English",
+      "zh-CN": "简体中文"
+    },
     "backHome": "Back home",
     "privacy": "Privacy",
     "terms": "Terms",

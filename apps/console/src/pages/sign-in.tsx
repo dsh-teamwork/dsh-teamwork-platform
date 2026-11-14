@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { CardPage, Failure } from '@/components/page';
+import { CardPage, Failure, useTitle } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,7 @@ function fromQuery(value: string | null): AuthError | null {
 export function SignInPage() {
   const t = useTranslations('signIn');
   const te = useTranslations('authErrors');
+  useTitle(t('title'));
   const { session, refresh } = useSession();
   const navigate = useNavigate();
   const [params] = useSearchParams();

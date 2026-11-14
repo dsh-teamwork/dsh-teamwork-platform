@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,4 +31,11 @@ export function Failure({ message }: { message: string | null }) {
       {message}
     </p>
   );
+}
+
+/** The tab's title, as the Next pages set it: "Page · DSH Teamwork". */
+export function useTitle(title?: string) {
+  useEffect(() => {
+    document.title = title ? `${title} · DSH Teamwork` : 'DSH Teamwork';
+  }, [title]);
 }

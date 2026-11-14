@@ -1,5 +1,6 @@
 // Package httpapi is the HTTP surface: the API the console and the DSH plugin
-// call, and the console itself for every other path.
+// call, and the public pages and the console (package web) for every other
+// path.
 package httpapi
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
@@ -84,6 +86,7 @@ func (s *Server) Handler() http.Handler {
 	get("/api/teams/{teamId}/model-catalog", s.modelCatalog)
 	get("/api/profile", s.getProfile)
 	write("PATCH", "/api/profile", s.updateProfile)
+	post("/api/locale", s.chooseLocale)
 	get("/api/configs", s.configs)
 	post("/api/llm/chat/completions", s.completions)
 
@@ -94,12 +97,19 @@ func (s *Server) Handler() http.Handler {
 	if s.Web != nil {
 		mux.Handle("/", s.Web)
 	}
-	return recoverer(headers(mux))
+	return recoverer(web.CanonicalHost(s.Config.AppURL, headers(s.secure(), mux)))
 }
 
-func headers(next http.Handler) http.Handler {
+// headers are the ones every answer carries. HSTS only where APP_URL is
+// https, and without `preload`: that is a one-way door, added once the domain
+// layout has settled. Framing is refused outright: no page of this site is
+// meant to be shown inside another, this one's included.
+func headers(secure bool, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
+		if secure {
+			h.Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		}
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		h.Set("X-Frame-Options", "DENY")

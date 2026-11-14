@@ -1,4 +1,4 @@
-import type { components } from './api.gen';
+import type { components, paths } from './api.gen';
 
 /**
  * The console's calls to the server's API. A failure is an ApiError carrying
@@ -34,3 +34,22 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
 export type Schemas = components['schemas'];
 export type Session = Schemas['Session'];
 export type PluginCode = Schemas['PluginCode'];
+
+export type Team = Schemas['Team'];
+export type TeamSummary = paths['/teams']['get']['responses'][200]['content']['application/json'][number];
+export type Provider = Schemas['Provider'];
+export type Invite = Schemas['Invite'];
+
+/**
+ * A configuration with its kind's data, as the server stores it: it fills a
+ * preset's and a plugin's lists and texts, so they are never absent here
+ * though a writer may leave them out.
+ */
+type ConfigData = {
+  model: Schemas['ModelData'];
+  preset: Schemas['PresetData'] &
+    Required<Pick<Schemas['PresetData'], 'description' | 'instructions' | 'outputDescription' | 'pluginDependencies' | 'requiredTools' | 'optionalTools' | 'systemPrompt'>>;
+  plugin: Schemas['PluginData'] & Required<Pick<Schemas['PluginData'], 'providesTools' | 'description'>>;
+};
+export type ConfigOf<K extends keyof ConfigData> = Omit<Schemas['Config'], 'kind' | 'data'> & { kind: K; data: ConfigData[K] };
+export type TeamConfig = ConfigOf<'model'> | ConfigOf<'preset'> | ConfigOf<'plugin'>;
