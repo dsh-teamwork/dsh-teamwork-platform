@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — experiments 1 to 3 done · **Updated:** 2026-11-13
+> **Status:** Plan — phase 0 done · **Updated:** 2026-11-14
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -27,21 +27,133 @@ must keep.
 
 ## Order of work
 
-1. **Experiments, thrown away afterwards.** Each could change ADR 0014.
-   1. Three dialects from one schema. **Done**, see below.
-   2. The gateway: streaming parity with the Node gateway on the same
-      requests, and latency and memory on one fixture. **Done**, see below.
-   3. Packaging: a binary published to a scratch npm scope and run with
-      `npx` on Linux, macOS and Windows. **Done**, see below.
-2. **One vertical slice**, against an unchanged plugin: a password sign-in,
-   `/teamwork login`, `GET /api/configs`, one call through the gateway.
-3. **The team API and the console**, page by page.
-4. **`premium/`**: the operator console and `/api/admin/*`.
-5. **Deletion**: the Node server, `packages/db`, the server half of
-   `packages/shared`, and the parts of `CLAUDE.md` that describe them.
+Six phases. Each ends in a gate: the phase's checks pass on SQLite,
+Postgres 16 and MySQL 8, and nothing in the next phase starts before they do.
+The Node server keeps running beside the Go one until phase 6 deletes it, so
+every phase can compare the two on the same requests.
 
-Step 2 gates the rest: until it passes against the real plugin, nothing else
-is ported.
+### Where the code goes
+
+- `server/`: one Go module. `cmd/dsh-teamwork` is the binary; the rest is
+  `internal/` packages by concern (schema and migrations, auth, team rules,
+  gateway, HTTP API, embedded console).
+- `apps/console/`: the console as a Vite and React app, built into
+  `server/` with `go:embed`.
+- `api/openapi.yaml`: the wire contract. Go server types and the console's
+  client are generated from it.
+- `premium/server/`: the closed Go packages, compiled into the closed binary
+  only.
+
+### Phase 0: experiments — done
+
+Three dialects from one schema, the gateway, and packaging; results below.
+
+### Phase 1: the plugin's slice — the gate for everything else
+
+The binary serves exactly what an installed plugin calls, end to end:
+
+1. The module, configuration from today's variable names, a data directory
+   that holds the SQLite file and the secrets written on first start, the
+   migrations for all three dialects embedded and applied at start, and the
+   drift check per dialect.
+2. Sign-in by password: the setup link for the first account, the session
+   cookie, password change.
+3. The plugin's sign-in: `/plugin`, the loopback and pasted code, and
+   `POST /api/auth/plugin/token`. Tokens the Node server minted stay valid
+   (experiment 2).
+4. Just enough of the team API to set a team up: create a team, add a
+   provider, publish a model.
+5. `GET /api/configs` and `POST /api/llm/chat/completions`, with the
+   provider address rule ported in full, checked inside the connection's own
+   lookup.
+6. `api/openapi.yaml` for these routes, and the plugin's restated shape
+   checked against it.
+
+**Verified by:**
+
+- an end-to-end test that starts the binary on each dialect, claims the first
+  account, sets a team up, and drives the real plugin (`../dsh-teamwork`):
+  login, sync, one streamed and one plain call through the gateway to a stub
+  provider;
+- a parity run: the same request sequence against the Node server and the Go
+  server, with the status and body compared field by field for each route in
+  the slice;
+- tests on the boundaries: the PKCE exchange, a token for another team, the
+  password limit under a burst, a provider address refused without
+  `ALLOW_PRIVATE_PROVIDERS`, a DNS answer that changes between check and
+  connect, a provider key never in a response.
+
+### Phase 2: the rest of the API and sign-in
+
+- Every remaining route: teams, membership, members, admin-set passwords,
+  invites, configurations with versions and in-use checks, providers, the
+  model catalogue, profile.
+- Emailed codes over SMTP, Google, Feishu, the `identities` table and
+  linking a second sign-in from the account page.
+- Server-side analytics events, with the table and its test.
+
+**Verified by:** every case in today's 24 test files rewritten as Go tests and
+run on the three dialects; the parity run extended to every route; Feishu and
+Google against a stub OAuth server in tests, and once by hand against the real
+ones.
+
+### Phase 3: the console
+
+- The pages: sign-in, setup, password, account, plugin, the teams list, and a
+  team's overview, models, presets, plugins and members; English and
+  Simplified Chinese from today's message files.
+- The public pages: home, privacy and terms, with `robots.txt`, the sitemap,
+  canonicals, the share card and the JSON-LD.
+
+**Verified by:** a Playwright run of every page's main flow in both locales
+against the binary; screenshots of each page next to today's for review; the
+SEO test ported to the public pages.
+
+### Phase 4: packaging, self-hosting and CI
+
+- The npm packages under the rules below, release binaries for the five
+  platforms, and a container image.
+- `compose.yaml` on the image, the README's self-hosting section, and the
+  first-start flow of ADR 0006 on the binary.
+- CI: the Go tests on the three dialects, the drift check per dialect, the
+  console build, the plugin end-to-end test, and an `npx` smoke test on
+  macOS, Windows and Linux. The pre-push gate runs the same set.
+
+**Verified by:** CI green on all of it, and one install from a clean machine
+on each platform with `npx`, the release binary and `compose.yaml`.
+
+### Phase 5: `premium/`
+
+- The operator console and `/api/admin/*`: Google only, `ADMIN_EMAILS` re-read
+  on every request, `MANAGE_API_KEY` with `x-agent-id`, the self-describing
+  index.
+- The closed binary built with `premium/server/`, and the edition boundary
+  check kept.
+- The hosted service moved to the closed binary on Railway.
+
+**Verified by:** today's console tests rewritten in Go; the route index held
+to the routes by a test; the hosted service answering the plugin end-to-end
+test after the move.
+
+### Phase 6: delete the Node server
+
+- `apps/web`, `packages/db`, the server half of `packages/shared`, Prisma,
+  Auth.js and Next.js, and the parity run, which has nothing left to compare.
+- `CLAUDE.md`, `docs/tech/architecture.md`, `docs/tech/community-edition.md`,
+  the README and the changelog rewritten for the Go server.
+
+**Verified by:** the gate and the plugin end-to-end test passing with the
+Node server gone, and `pnpm lint:docs` over the rewritten documents.
+
+## Open questions
+
+- **The public pages.** A single-page app is a poor page for crawlers. The
+  plan prerenders home, privacy and terms to static HTML at build and embeds
+  them; the alternative is rendering them in Go templates.
+- **The hosted service's data at the move.** Reset it, as the Building stage
+  allows, or copy it from Postgres into the new schema.
+- **The parity run in CI.** It needs the Node server built in CI until phase
+  6; the alternative is running it only before each phase's gate.
 
 ## Experiment 1: three dialects from one schema
 
