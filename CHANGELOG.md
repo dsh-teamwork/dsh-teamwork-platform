@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-14 — The Go server reads PROVIDER_KEYS_SECRET as the Node server did
+
+- **What:** `PROVIDER_KEYS_SECRET` is decoded like Node's `Buffer.from(s, 'base64')`: the standard and URL-safe alphabets, padding optional, whitespace ignored. It must still be 32 bytes.
+- **Why:** A key the Node deployment held, copied onto the Go server, stopped it at start: the Go server read only padded standard base64.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/config/config.go`.
+
 ## 2026-11-14 — The Go server has an extension point for a closed edition
 
 - **What:** `server/app` runs the server, and `cmd/dsh-teamwork` only calls `app.Main`. `server/edition` is what a closed package registers from its `init`: its own migrations per dialect, applied after the open history and recorded in `schema_migrations` as `<name>:<version>` (a set missing the running dialect stops the start), its routes on the server's mux, and a `stop` the server calls on shutdown before the database closes. The host lends it the database, Bearer and session verification, the same-origin check and an accounts interface. `server/edition/editiontest` serves the real server with extensions mounted, on each reachable database, for closed tests. The language check admits locale files a Go package embeds (`server/**/messages/*.json`); CI and the pre-push hook run every Go module's `e2e` directory; the workspace globs include `premium/server`. The community binary registers nothing.

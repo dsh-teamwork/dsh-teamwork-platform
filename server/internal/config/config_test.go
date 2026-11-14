@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/base64"
 	"os"
 	"path/filepath"
 	"testing"
@@ -42,5 +43,42 @@ func TestWeakAuthSecretIsRefused(t *testing.T) {
 	}
 	if _, err := Load([]string{"--data", dir}, env(map[string]string{"AUTH_SECRET": " "})); err == nil {
 		t.Error("a blank AUTH_SECRET fell back to an empty stored one")
+	}
+}
+
+// PROVIDER_KEYS_SECRET is read as the Node server read it (Buffer.from(…,
+// 'base64')): standard or URL-safe, padded or not, line breaks ignored. A key
+// a deployment already holds starts the Go server too; one that is not 32
+// bytes still does not.
+func TestProviderKeysSecretEncodings(t *testing.T) {
+	key := make([]byte, 32)
+	for i := range key {
+		key[i] = byte(250 - i) // high bytes, so the URL-safe alphabet differs
+	}
+	std := base64.StdEncoding.EncodeToString(key)
+	for name, value := range map[string]string{
+		"standard":          std,
+		"unpadded":          base64.RawStdEncoding.EncodeToString(key),
+		"url-safe":          base64.URLEncoding.EncodeToString(key),
+		"url-safe raw":      base64.RawURLEncoding.EncodeToString(key),
+		"wrapped":           std[:20] + "\n" + std[20:],
+		"surrounding space": "  " + std + "\n",
+	} {
+		c, err := Load([]string{"--data", t.TempDir()}, env(map[string]string{"PROVIDER_KEYS_SECRET": value}))
+		if err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		if string(c.ProviderKeysSecret) != string(key) {
+			t.Errorf("%s: decoded to another key", name)
+		}
+	}
+	for name, value := range map[string]string{
+		"16 bytes":   base64.StdEncoding.EncodeToString(key[:16]),
+		"not base64": "not a key at all, not even close!!!!!!!!!!",
+	} {
+		if _, err := Load([]string{"--data", t.TempDir()}, env(map[string]string{"PROVIDER_KEYS_SECRET": value})); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
 	}
 }

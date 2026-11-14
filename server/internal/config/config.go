@@ -101,10 +101,28 @@ func Load(args []string, env func(string) string) (Config, error) {
 		return Config{}, fmt.Errorf("AUTH_SECRET: at least %d characters of random (openssl rand -base64 32)", MinAuthSecret)
 	}
 	keys := first(keysEnv, stored.ProviderKeysSecret)
-	if c.ProviderKeysSecret, err = base64.StdEncoding.DecodeString(keys); err != nil || len(c.ProviderKeysSecret) != 32 {
+	if c.ProviderKeysSecret, err = decodeKey(keys); err != nil || len(c.ProviderKeysSecret) != 32 {
 		return Config{}, errors.New("PROVIDER_KEYS_SECRET: 32 random bytes in base64 (openssl rand -base64 32)")
 	}
 	return c, nil
+}
+
+// decodeKey reads base64 as the Node server's Buffer.from(s, 'base64') did,
+// so a key a deployment already holds keeps working: the standard and the
+// URL-safe alphabets alike, padding optional, whitespace ignored.
+func decodeKey(s string) ([]byte, error) {
+	s = strings.Map(func(r rune) rune {
+		switch r {
+		case ' ', '\t', '\r', '\n', '=':
+			return -1
+		case '-':
+			return '+'
+		case '_':
+			return '/'
+		}
+		return r
+	}, s)
+	return base64.RawStdEncoding.DecodeString(s)
 }
 
 type storedSecrets struct {
