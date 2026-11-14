@@ -119,8 +119,9 @@ jobs:
 
       # The same suites without DATABASE_URL: each workspace then runs on a
       # PGlite of its own, in memory, which applies the migrations as it opens.
+      # The Go server never reads DATABASE_URL, so it is not run twice.
       - name: Test on PGlite
-        run: pnpm test
+        run: pnpm test --filter='!@dsh-teamwork/go-server'
         env:
           DATABASE_URL: ""
 

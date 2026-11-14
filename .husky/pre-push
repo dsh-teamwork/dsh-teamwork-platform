@@ -53,6 +53,9 @@ run 'Build           (pnpm build)' pnpm build
 # skips with a warning, and CI runs it.
 plugin=${DSH_TEAMWORK_PLUGIN:-../dsh-teamwork}
 if [ -f "$plugin/lib/client.js" ]; then
+  # Absolute, since the test resolves it from server/e2e.
+  DSH_TEAMWORK_PLUGIN=$(cd "$plugin" && pwd)
+  export DSH_TEAMWORK_PLUGIN
   run 'Plugin e2e      (go test -tags e2e ./e2e)' sh -c 'cd server && go test -tags e2e ./e2e'
 else
   printf '\n\033[1;33m! Plugin e2e skipped: no DSH plugin at %s\033[0m\n' "$plugin"

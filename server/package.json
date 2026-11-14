@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "node scripts/lint.mjs",
     "test": "go test ./...",
-    "build": "go build -trimpath -o dist/dsh-teamwork ./cmd/dsh-teamwork",
+    "build": "node scripts/embed.mjs && go build -trimpath -o dist/dsh-teamwork ./cmd/dsh-teamwork",
     "db:drift": "node scripts/drift.mjs"
   },
   "devDependencies": {

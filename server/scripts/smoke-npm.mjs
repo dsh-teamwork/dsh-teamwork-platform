@@ -9,7 +9,7 @@
 import { execFileSync, spawn } from 'node:child_process';
 import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const [registry, tarballs, version] = process.argv.slice(2);
 if (!registry || !tarballs || !version) {
@@ -29,7 +29,8 @@ const npx = (args) => [windows ? 'npx.cmd' : 'npx', ['--yes', `@dsh-teamwork/ser
 const launcher = `dsh-teamwork-server-${version}.tgz`;
 const files = readdirSync(tarballs).filter((f) => f.endsWith('.tgz'));
 files.sort((a, b) => Number(a === launcher) - Number(b === launcher));
-for (const file of files) npm(['publish', join(tarballs, file), '--access', 'public', '--tag', 'smoke'], { stdio: 'inherit' });
+// An absolute path: npm reads `dir/name.tgz` as a GitHub repository.
+for (const file of files) npm(['publish', resolve(tarballs, file), '--access', 'public', '--tag', 'smoke'], { stdio: 'inherit' });
 
 const [cmd, args] = npx(['--version']);
 const printed = execFileSync(cmd, args, { env, shell: windows, encoding: 'utf8', cwd: home }).trim();

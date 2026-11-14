@@ -44,4 +44,10 @@ child.on('error', (error) => {
   console.error(`dsh-teamwork: ${error.message}`);
   process.exit(1);
 });
-child.on('exit', (code, signal) => (signal ? process.kill(process.pid, signal) : process.exit(code ?? 1)));
+// Ended by a signal, the launcher ends by the same one, so whoever started it
+// sees why; its own handlers go first, or they would catch it.
+child.on('exit', (code, signal) => {
+  if (!signal) process.exit(code ?? 1);
+  for (const s of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.removeAllListeners(s);
+  process.kill(process.pid, signal);
+});

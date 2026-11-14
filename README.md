@@ -45,7 +45,7 @@ data directory on first start, unless the environment sets them.
      pass a stop signal on.
    - In a container: `docker compose up -d --build` beside `compose.yaml`,
      which keeps the data in a volume and publishes port 3000 (`PORT` in a
-     `.env` beside it changes that).
+     `.env` beside it changes that; the container's own address is fixed).
 
    Every setting is an environment variable (in compose, a `.env` beside
    `compose.yaml`): `APP_URL`, the address members open; `DATABASE_URL`;

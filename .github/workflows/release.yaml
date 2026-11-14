@@ -2,8 +2,9 @@ name: Release
 
 # A tag `v<version>` releases the server three ways (ADR 0014): the npm
 # packages behind `npx @dsh-teamwork/server`, the five binaries as downloads on
-# a GitHub release, and the container image on ghcr.io. CI has already run the
-# gate on the commit; this only builds and publishes.
+# a GitHub release, and the container image on ghcr.io. It releases only a
+# commit already on main, where CI ran the gate on the merge; this only builds
+# and publishes.
 #
 # Needs an NPM_TOKEN repository secret that may publish to the @dsh-teamwork
 # scope. A version with a pre-release part (1.2.0-rc.1) is published under the
@@ -21,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -31,6 +34,11 @@ jobs:
         with:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
+
+      - name: The tag is on main
+        run: |
+          git fetch --quiet origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not on main"; exit 1; }
 
       - name: Version
         run: |
@@ -48,14 +56,15 @@ jobs:
       - name: Pack
         run: node server/scripts/pack.mjs "$VERSION"
 
-      # The platform packages before the launcher that depends on them.
+      # The platform packages before the launcher that depends on them; `./`
+      # because npm reads a bare `name.tgz` path with a slash as a repository.
       - name: Publish to npm
         run: |
           cd server/dist/release
           for tarball in dsh-teamwork-server-*-*-"$VERSION".tgz; do
-            npm publish "$tarball" --access public --tag "$NPM_TAG"
+            npm publish "./$tarball" --access public --tag "$NPM_TAG"
           done
-          npm publish "dsh-teamwork-server-$VERSION.tgz" --access public --tag "$NPM_TAG"
+          npm publish "./dsh-teamwork-server-$VERSION.tgz" --access public --tag "$NPM_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

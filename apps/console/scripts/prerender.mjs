@@ -1,5 +1,5 @@
 // Renders the public pages (src/public/) to static HTML in dist/public/, after
-// `vite build` and before embed.mjs: home in each locale and sign-in state,
+// `vite build` and before the server embeds the result (server/scripts/embed.mjs): home in each locale and sign-in state,
 // privacy and terms when LEGAL_DIR is set, and the share card. The Go server
 // embeds them and picks one per request (server/internal/web).
 //

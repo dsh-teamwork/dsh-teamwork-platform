@@ -9,11 +9,21 @@
       "dependsOn": ["^build", "^db:generate"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "web-build/**"]
     },
-    // The console it embeds is built first (its devDependency), and copied
-    // into internal/web/dist by the console's own build.
+    // Every Go task compiles the embedded console. The server's build copies
+    // the built console in (server/scripts/embed.mjs) and keeps the copy as an
+    // output, so a cache hit restores it; lint and test wait for that build
+    // rather than copying it themselves.
     "@dsh-teamwork/go-server#build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "internal/web/dist/**"]
+    },
+    "@dsh-teamwork/go-server#lint": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "@dsh-teamwork/go-server#test": {
+      "dependsOn": ["build"],
+      "outputs": []
     },
     // The web app reads three variables at build, which strict env mode would
     // otherwise strip: LEGAL_DIR renders /privacy and /terms (ADR 0007), APP_URL

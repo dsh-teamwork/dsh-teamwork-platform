@@ -12,8 +12,11 @@ services:
       - path: .env
         required: false
     environment:
-      # Inside the container the port is fixed; the published one is PORT.
+      # Inside the container the address is fixed; the published port is PORT,
+      # and APP_URL follows it unless the .env names the real address.
+      HOST: 0.0.0.0
       PORT: 3000
+      APP_URL: ${APP_URL:-http://localhost:${PORT:-3000}}
       # One team on its own network: its models may live beside it (ADR 0006).
       ALLOW_PRIVATE_PROVIDERS: ${ALLOW_PRIVATE_PROVIDERS:-true}
     ports:

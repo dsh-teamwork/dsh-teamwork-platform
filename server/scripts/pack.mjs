@@ -9,7 +9,7 @@
 // a binary carried between jobs as a workflow artifact loses its executable
 // bit; the modes in each tarball are checked before anything is published.
 import { execFileSync } from 'node:child_process';
-import { chmodSync, copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,10 +28,7 @@ if (!version || !/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(version)) {
 }
 
 const server = join(dirname(fileURLToPath(import.meta.url)), '..');
-if (!existsSync(join(server, 'internal/web/dist/index.html'))) {
-  console.error('pack: the console is not built; run `pnpm --filter @dsh-teamwork/console build` first');
-  process.exit(1);
-}
+execFileSync('node', [join(server, 'scripts/embed.mjs')], { stdio: 'inherit' });
 
 const out = join(server, 'dist/release');
 rmSync(out, { recursive: true, force: true });
