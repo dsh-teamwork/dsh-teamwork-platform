@@ -1,3 +1,5 @@
+import type { components } from './api.gen';
+
 /**
  * The console's calls to the server's API. A failure is an ApiError carrying
  * the stable code the server answered with, which a page words in its own
@@ -28,16 +30,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 
-/** GET /api/auth/session. */
-export interface Session {
-  user: { id: string; email: string | null; name: string | null; mustChangePassword: boolean } | null;
-  doors: { password: boolean; emailCode: boolean; google: boolean };
-  setupOpen: boolean;
-  mobileRedirectPrefix: string;
-}
-
-/** POST /api/auth/plugin/code. */
-export interface PluginCode {
-  code: string;
-  returnTo: { url: string; to: 'dsh' | 'app' } | null;
-}
+/** The shapes api/openapi.yaml names, generated into api.gen.ts (`pnpm api:types`). */
+export type Schemas = components['schemas'];
+export type Session = Schemas['Session'];
+export type PluginCode = Schemas['PluginCode'];

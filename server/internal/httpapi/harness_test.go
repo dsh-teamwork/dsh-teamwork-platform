@@ -57,6 +57,7 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	ts.Config.Handler = srv.Handler()
 	ts.Start()
 	t.Cleanup(ts.Close)
+	holdToContract(t, appURL)
 	return &env{t: t, db: d, url: appURL, network: network}
 }
 
@@ -119,6 +120,7 @@ func do(t *testing.T, c *http.Client, method, url string, body any, header map[s
 	}
 	defer res.Body.Close()
 	b, _ := io.ReadAll(res.Body)
+	checkContract(t, req, res, b)
 	return response{status: res.StatusCode, body: b}
 }
 

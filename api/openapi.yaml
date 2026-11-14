@@ -1,0 +1,419 @@
+# The DSH Teamwork API: what the console, the DSH plugin and the phone app
+# call (docs/tech/go-server.md). Every response the Go server's tests see is
+# validated against this file, and the console's types are generated from it
+# (apps/console/src/lib/api.gen.ts). A route is added here in the same change
+# that adds it to the server.
+openapi: 3.0.3
+info:
+  title: DSH Teamwork
+  version: '1'
+  description: >
+    Errors are `{ "error": <code> }` with a stable code a client branches on,
+    plus `issues` when the request failed validation. A browser is signed in
+    by a session cookie, and a write it sends must come from the site's own
+    origin; the DSH plugin sends `Authorization: Bearer <token>`.
+servers:
+  - url: /api
+security:
+  - session: []
+  - bearer: []
+paths:
+  /auth/session:
+    get:
+      summary: Who is signed in, and the doors this instance offers
+      security: []
+      responses:
+        '200':
+          description: The session, with `user` null when nobody is signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+  /auth/password/sign-in:
+    post:
+      summary: Sign in with an email and a password (instances without SMTP)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordSignIn' }
+      responses:
+        '200':
+          description: Signed in; the session cookie is set
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mustChangePassword]
+                properties:
+                  mustChangePassword: { type: boolean }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /auth/setup:
+    post:
+      summary: Claim the first account with the link the server printed
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Setup' }
+      responses:
+        '204': { description: Created and signed in }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /auth/password/change:
+    post:
+      summary: Replace one's own password, checking the current one
+      security: [{ session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangePassword' }
+      responses:
+        '204': { description: Changed }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /auth/sign-out:
+    post:
+      summary: End the browser's session
+      security: []
+      responses:
+        '204': { description: Signed out }
+  /auth/plugin/code:
+    post:
+      summary: Confirm a plugin's sign-in and get a two-minute code bound to its challenge
+      security: [{ session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PluginCodeRequest' }
+      responses:
+        '200':
+          description: The code, and where it may be sent instead of shown
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PluginCode' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /auth/plugin/token:
+    post:
+      summary: Trade a code and the plugin's PKCE verifier for a 30-day Bearer token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, verifier]
+              properties:
+                code: { type: string, minLength: 1 }
+                verifier: { type: string, minLength: 43, maxLength: 128 }
+      responses:
+        '200':
+          description: The token
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, expiresAt]
+                properties:
+                  token: { type: string }
+                  expiresAt: { type: string, format: date-time }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+  /teams:
+    post:
+      summary: Create a team; the caller is its admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 100 }
+      responses:
+        '201':
+          description: The team
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, name]
+                properties:
+                  id: { type: string }
+                  name: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '413': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/providers:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: An admin adds a provider; its key is write-only
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, baseUrl, apiKey]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 100 }
+                baseUrl: { type: string, maxLength: 500 }
+                apiKey: { type: string, minLength: 1, maxLength: 4096 }
+      responses:
+        '201':
+          description: The provider, never its key
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Provider' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/configs:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: An admin publishes a model, preset or plugin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConfigInput' }
+      responses:
+        '201':
+          description: The stored configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Config' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /configs:
+    get:
+      summary: What the plugin syncs — every team the caller is in, with its configuration
+      responses:
+        '200':
+          description: The snapshot
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Snapshot' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /llm/chat/completions:
+    post:
+      summary: The model gateway (OpenAI Chat Completions); `model` is a team configuration id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, messages]
+              additionalProperties: true
+              properties:
+                model: { type: string, minLength: 1 }
+                messages: { type: array, minItems: 1, items: {} }
+                stream: { type: boolean }
+      responses:
+        '200':
+          description: The provider's answer, streamed through with none of its headers
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+            text/event-stream:
+              schema: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '413': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    session: { type: apiKey, in: cookie, name: dsh-teamwork-session }
+    bearer: { type: http, scheme: bearer }
+  responses:
+    Error:
+      description: A refusal
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        issues:
+          type: array
+          items:
+            type: object
+            required: [path, message]
+            properties:
+              path: { type: array, items: { oneOf: [{ type: string }, { type: integer }] } }
+              message: { type: string }
+    Session:
+      type: object
+      required: [user, doors, setupOpen, mobileRedirectPrefix]
+      properties:
+        user:
+          type: object
+          nullable: true
+          required: [id, email, name, mustChangePassword]
+          properties:
+            id: { type: string }
+            email: { type: string, nullable: true }
+            name: { type: string, nullable: true }
+            mustChangePassword: { type: boolean }
+        doors:
+          type: object
+          required: [password, emailCode, google]
+          properties:
+            password: { type: boolean }
+            emailCode: { type: boolean }
+            google: { type: boolean }
+        setupOpen: { type: boolean }
+        mobileRedirectPrefix: { type: string }
+    PasswordSignIn:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string }
+    Setup:
+      type: object
+      required: [token, email, password]
+      properties:
+        token: { type: string }
+        email: { type: string }
+        password: { type: string, minLength: 10, maxLength: 256 }
+    ChangePassword:
+      type: object
+      required: [current, next]
+      properties:
+        current: { type: string }
+        next: { type: string, minLength: 10, maxLength: 256 }
+    PluginCodeRequest:
+      type: object
+      required: [challenge]
+      properties:
+        challenge: { type: string, pattern: '^[A-Za-z0-9_-]{43}$' }
+        redirectUri: { type: string }
+    PluginCode:
+      type: object
+      required: [code, returnTo]
+      properties:
+        code: { type: string }
+        returnTo:
+          type: object
+          nullable: true
+          required: [url, to]
+          properties:
+            url: { type: string }
+            to: { type: string, enum: [dsh, app] }
+    Provider:
+      type: object
+      required: [id, name, baseUrl, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        name: { type: string }
+        baseUrl: { type: string }
+        updatedAt: { type: string, format: date-time }
+    Tokens: { type: integer, minimum: 1, maximum: 10000000 }
+    ModelData:
+      type: object
+      required: [provider, model]
+      additionalProperties: false
+      properties:
+        provider: { type: string }
+        model: { type: string }
+        contextWindow: { $ref: '#/components/schemas/Tokens' }
+        maxTokens: { $ref: '#/components/schemas/Tokens' }
+    PresetData:
+      type: object
+      additionalProperties: false
+      description: References a team model (modelConfigId) or names its own provider and model, never both.
+      properties:
+        provider: { type: string }
+        model: { type: string }
+        contextWindow: { $ref: '#/components/schemas/Tokens' }
+        maxTokens: { $ref: '#/components/schemas/Tokens' }
+        modelConfigId: { type: string }
+        description: { type: string }
+        instructions: { type: string }
+        outputDescription: { type: string }
+        pluginDependencies:
+          type: array
+          items:
+            type: object
+            required: [pluginConfigId, version]
+            properties:
+              pluginConfigId: { type: string }
+              version: { type: string }
+        requiredTools: { type: array, items: { type: string } }
+        optionalTools: { type: array, items: { type: string } }
+        systemPrompt: { type: string }
+    PluginData:
+      type: object
+      required: [package, version]
+      additionalProperties: false
+      properties:
+        package: { type: string }
+        version: { type: string }
+        providesTools: { type: array, items: { type: string } }
+        description: { type: string }
+    ConfigInput:
+      type: object
+      required: [kind, name, data]
+      properties:
+        kind: { type: string, enum: [model, preset, plugin] }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        data:
+          oneOf:
+            - { $ref: '#/components/schemas/ModelData' }
+            - { $ref: '#/components/schemas/PresetData' }
+            - { $ref: '#/components/schemas/PluginData' }
+    Config:
+      type: object
+      required: [id, kind, name, data, version, updatedAt]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [model, preset, plugin] }
+        name: { type: string }
+        data:
+          type: object
+          additionalProperties: true
+          description: The kind's data (ModelData, PresetData or PluginData) as stored.
+        version: { type: integer, minimum: 1 }
+        updatedAt: { type: string, format: date-time }
+    Snapshot:
+      type: object
+      required: [teams]
+      properties:
+        teams:
+          type: array
+          items:
+            type: object
+            required: [teamId, teamName, role, configs]
+            properties:
+              teamId: { type: string }
+              teamName: { type: string }
+              role: { type: string, enum: [admin, member] }
+              configs: { type: array, items: { $ref: '#/components/schemas/Config' } }
