@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-14 — The Node server is gone; the Go binary is the only server
+
+- **What:** `apps/web` (Next.js and Auth.js), `packages/db` (Prisma, PGlite and their migrations), the server half of `packages/shared` and the parity run are deleted. `packages/shared` keeps the languages and `matchLocale`, which `apps/console` now imports. `pnpm dev:setup` starts Postgres 16 and MySQL 8.4 for the Go suites and prints the four variables they read; `dev:shared`, `dev:web`, `build:web`, the `postinstall` and every `db:*` script but `db:drift` are gone, as are `railpack.json`, `DATABASE_URL` and `SHADOW_DATABASE_URL` in CI, and the PGlite test run. `CLAUDE.md`, the README, `docs/tech/architecture.md` and `docs/tech/community-edition.md` describe the Go server.
+- **Why:** Phase 6 of `docs/tech/go-server.md`: the binary serves everything the Node server did (ADR 0014).
+- **Breaking:** A local database made by Prisma or PGlite is not read by the binary; there is no move, as the plan decided. Contributors' `.env` files for `apps/web` and `packages/db` no longer do anything.
+- **Upgrade:** `pnpm install`; `pnpm dev:setup` for the new dev stack, on volumes of its own, and export what it prints. The old stack's `pgdata` volume is no longer used: `docker volume rm dsh-teamwork-dev_pgdata`.
+- **Refs:** `docs/tech/go-server.md`, `docs/adr/0014-one-go-binary.md`, `dev/docker-compose.yaml`.
+
 ## 2026-11-14 — The Go server reads PROVIDER_KEYS_SECRET as the Node server did
 
 - **What:** `PROVIDER_KEYS_SECRET` is decoded like Node's `Buffer.from(s, 'base64')`: the standard and URL-safe alphabets, padding optional, whitespace ignored. It must still be 32 bytes.

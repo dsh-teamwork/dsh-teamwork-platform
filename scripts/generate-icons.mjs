@@ -53,17 +53,16 @@ const PIXEL_TOLERANCE = 1
 
 /**
  * Every app in the repository gets the same exports, found rather than
- * listed — a Next.js app (`src/app/`) and a Vite app (`vite.config.ts`) alike: the open repository has only `apps/*`, and a list naming the closed
+ * listed: every Vite app (`vite.config.ts`). The open repository has only `apps/*`, and a list naming the closed
  * edition's apps would fail this script's own check there
  * (docs/tech/community-edition.md).
  */
 const APP_ROOTS = ['apps', 'premium/apps']
-const isNext = (root, name) => existsSync(resolve(repoRoot, root, name, 'src/app'))
 const isVite = (root, name) => existsSync(resolve(repoRoot, root, name, 'vite.config.ts'))
 const APPS = APP_ROOTS.flatMap((root) =>
   existsSync(resolve(repoRoot, root))
     ? readdirSync(resolve(repoRoot, root), { withFileTypes: true })
-        .filter((d) => d.isDirectory() && (isNext(root, d.name) || isVite(root, d.name)))
+        .filter((d) => d.isDirectory() && isVite(root, d.name))
         .map((d) => `${root}/${d.name}`)
         .sort()
     : [],
@@ -71,9 +70,8 @@ const APPS = APP_ROOTS.flatMap((root) =>
 
 /** Each target renders the source SVG to a square PNG of the given size. */
 const TARGETS = APPS.flatMap((app) => {
-  // Next.js serves app/icon.png and app/apple-icon.png; a Vite app serves
-  // public/ as it is, and its index.html links the two.
-  const dir = existsSync(resolve(repoRoot, app, 'src/app')) ? `${app}/src/app` : `${app}/public`
+  // A Vite app serves public/ as it is, and its index.html links the two.
+  const dir = `${app}/public`
   return [
     // The browser-tab icon.
     { src: SOURCE, out: `${dir}/icon.png`, size: 256, flatten: true },

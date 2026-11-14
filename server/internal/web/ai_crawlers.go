@@ -1,8 +1,8 @@
 package web
 
-// Which AI crawlers may read this site. A port of apps/web/src/lib/ai-crawlers.ts,
-// the file that is the same in every sibling repository: keep the list and the
-// rule in step with it.
+// Which AI crawlers may read this site. The siblings keep the same list and
+// rule in their own `ai-crawlers.ts`, seed's being the source: keep this one in
+// step with it.
 //
 // **Crawlers that gather training data are refused; crawlers that fetch a page
 // to answer a question are not.** Search and assistant fetchers (OAI-SearchBot,

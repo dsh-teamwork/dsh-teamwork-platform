@@ -6,9 +6,8 @@ import (
 	"testing"
 )
 
-// Ported from apps/web/src/lib/__tests__/canonical-host.test.ts. The Node
-// rule's AUTH_URL and NODE_ENV are not this binary's: APP_URL alone names the
-// origin, and https is what makes it production.
+// The siblings' canonical-host test, in Go. APP_URL alone names the origin,
+// and https is what makes it production.
 func TestCanonicalHost(t *testing.T) {
 	served := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	send := func(appURL, method, target string) *httptest.ResponseRecorder {

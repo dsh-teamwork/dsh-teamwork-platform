@@ -1,11 +1,8 @@
 /**
- * @dsh-teamwork/shared — what web and manage have to agree about. Isomorphic:
- * nothing here may reach for Node, the DOM, React or `process.env`, because
- * client components import it too.
+ * @dsh-teamwork/shared — what the clients written in TypeScript agree about:
+ * the languages the product ships in and how a person's preference picks
+ * one. Isomorphic: nothing here may reach for Node, the DOM or React. The
+ * wire is `api/openapi.yaml`, not this package.
  */
 
-export * from './analytics';
-export * from './api';
-export * from './auth';
 export * from './locales';
-export * from './team';

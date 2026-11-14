@@ -29,5 +29,3 @@ output/
 .claude/
 .gemini/
 
-# Prisma generated client
-**/src/generated/prisma

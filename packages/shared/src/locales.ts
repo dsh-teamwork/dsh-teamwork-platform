@@ -1,6 +1,8 @@
 /**
- * The interface languages, shared by web and mobile so both offer the same
- * list and resolve a browser's or a device's tag to the same one.
+ * The interface languages, shared by the console and the mobile app so both
+ * offer the same list and resolve a browser's or a device's tag to the same
+ * one. The Go server applies the same rule to the pages it serves
+ * (server/internal/web/locale.go).
  *
  * The locale is never in the URL. Signed in, it is `User.locale`; signed out,
  * a cookie on web and a stored preference on mobile; with nothing chosen, the

@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #
-# Brings up Postgres for local development, on its own. `pnpm dev:setup` wraps
-# this; `stop.sh` and `clean.sh` are its siblings. `pnpm dev:shared` is the
-# alternative: the ~/code/shushuo/dev stack every sibling can share.
+# Brings up Postgres and MySQL for the Go server's suites and drift check.
+# `pnpm dev:setup` wraps this; `stop.sh` and `clean.sh` are its siblings.
 
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -12,26 +11,26 @@ fail() { printf '\033[1;31m%s\033[0m\n' "$1" >&2; exit 1; }
 
 docker info >/dev/null 2>&1 || fail 'Docker is not running.'
 
-# Another stack on 5432 (the shared one, or a sibling's own) would make
-# `compose up` fail on the port with a message that names neither.
-holder=$(docker ps --filter publish=5432 --format '{{.Names}}' | grep -v '^dsh-teamwork-dev-' || true)
+# Another stack on 5432 or 3306 would make `compose up` fail on the port with
+# a message that names neither.
+holder=$(docker ps --filter publish=5432 --filter publish=3306 --format '{{.Names}}' | grep -v '^dsh-teamwork-dev-' || true)
 if [ -n "$holder" ]; then
-  fail "Port 5432 is taken by: ${holder//$'\n'/, }.
-Stop that stack first (the shared one: pnpm dev:shared:stop), or keep using it
-— this project's .env reaches either."
+  fail "Port 5432 or 3306 is taken by: ${holder//$'\n'/, }. Stop that first."
 fi
 
-step 'starting postgres'
-docker compose up -d --wait postgres
+step 'starting postgres and mysql'
+docker compose up -d --wait
 docker compose ps
 
 step 'ready'
 cat <<'TXT'
-postgres    postgresql://postgres:postgres_password@localhost:5432/dsh_teamwork
-shadow      postgresql://postgres:postgres_password@localhost:5432/dsh_teamwork_shadow
+export TEST_POSTGRES_URL='postgres://postgres:postgres_password@localhost:5432/postgres?sslmode=disable'
+export TEST_MYSQL_URL='mysql://root:mysql_password@localhost:3306/mysql'
+export MIGRATE_DEV_POSTGRES='postgres://postgres:postgres_password@localhost:5432/go_drift?sslmode=disable'
+export MIGRATE_DEV_MYSQL='mysql://root:mysql_password@localhost:3306/go_drift'
 
-These match apps/web, premium/apps/manage and packages/db .env.example as they are.
-Apply the schema with: pnpm db:deploy
+With these set, `pnpm test` runs every database case on all three dialects
+and `pnpm db:drift` checks the migrations of each.
 
 Stop:   pnpm dev:stop
 Reset:  pnpm dev:clean

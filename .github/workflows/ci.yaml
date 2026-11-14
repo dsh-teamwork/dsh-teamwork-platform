@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     # A mocked database cannot see what a database decides, so the suites that
-    # need one run on real ones: Postgres and MySQL here, and SQLite (Go) and
-    # PGlite (Node) in-process (ADR 0014).
+    # need one run on real ones: Postgres and MySQL here, and SQLite in-process
+    # (ADR 0014).
     services:
       postgres:
         image: postgres:16
@@ -44,10 +44,6 @@ jobs:
           --health-retries 20
 
     env:
-      # Matches the `pnpm dev:setup` stack, so a suite talks to the same URL
-      # locally and here.
-      DATABASE_URL: postgresql://postgres:postgres_password@localhost:5432/postgres
-      SHADOW_DATABASE_URL: postgresql://postgres:postgres_password@localhost:5432/prisma_shadow
       # The Go server's suites run every database case on SQLite, and on these
       # two servers too, in a scratch database each (server/internal/testdb).
       TEST_POSTGRES_URL: postgres://postgres:postgres_password@localhost:5432/postgres?sslmode=disable
@@ -58,8 +54,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      # The version lives in `.nvmrc`, which Railpack reads too — one Node for
-      # CI, the deploy and a contributor's shell, rather than three that drift.
+      # The version lives in `.nvmrc` — one Node for CI and a contributor's
+      # shell. server/Dockerfile names the same version; a bump changes both.
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -99,31 +95,17 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      # Bring the schema up with the committed migrations, not `db:push`: applying
-      # them to an empty database is also the check that they apply cleanly.
-      - name: Apply migrations
-        run: pnpm db:deploy
-
-      # Replays every migration into a scratch database and compares the result
-      # with the schema, so a column that reached a database only through
-      # `db:push` cannot land unnoticed: Prisma's on Postgres, and each of the Go
-      # server's three dialects.
+      # Replays every migration into a scratch database of each dialect and
+      # compares the result with the ent schema, so a schema change no
+      # migration holds cannot land unnoticed.
       - name: Migration drift
         run: |
-          PGPASSWORD=postgres_password psql -h localhost -U postgres -c 'CREATE DATABASE prisma_shadow' -c 'CREATE DATABASE go_drift'
+          PGPASSWORD=postgres_password psql -h localhost -U postgres -c 'CREATE DATABASE go_drift'
           mysql -h 127.0.0.1 -uroot -pmysql_password -e 'CREATE DATABASE go_drift'
           pnpm db:drift
 
       - name: Test
         run: pnpm test
-
-      # The same suites without DATABASE_URL: each workspace then runs on a
-      # PGlite of its own, in memory, which applies the migrations as it opens.
-      # The Go server never reads DATABASE_URL, so it is not run twice.
-      - name: Test on PGlite
-        run: pnpm test --filter='!@dsh-teamwork/go-server'
-        env:
-          DATABASE_URL: ""
 
       - name: Build
         run: pnpm build
