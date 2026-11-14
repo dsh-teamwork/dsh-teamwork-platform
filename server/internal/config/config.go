@@ -138,10 +138,12 @@ func first(values ...string) string {
 	return ""
 }
 
-// displayHost is the host a printed link names: an unspecified address is
-// not one a browser can open.
+// displayHost is the host the default APP_URL names. Loopback and the
+// unspecified address are localhost, the name a person types; any other
+// address a browser reaches the server by needs APP_URL set to it, since a
+// write must come from APP_URL's origin.
 func displayHost(h string) string {
-	if h == "" || h == "0.0.0.0" || h == "::" {
+	if h == "" || h == "0.0.0.0" || h == "::" || h == "127.0.0.1" || h == "::1" {
 		return "localhost"
 	}
 	return h
