@@ -1,11 +1,13 @@
 package httpapi
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -129,4 +131,46 @@ func (s *Server) endSession(w http.ResponseWriter) {
 		Name: s.cookieName(), Value: "", Path: "/", MaxAge: -1,
 		HttpOnly: true, Secure: s.secure(), SameSite: http.SameSiteLaxMode,
 	})
+}
+
+// The caller as a closed edition sees it (server/edition).
+
+// SessionIdentity is the browser's session on r, or nil; a Bearer token is
+// not looked at.
+func (s *Server) SessionIdentity(r *http.Request) (*edition.Identity, error) {
+	c, err := r.Cookie(s.cookieName())
+	if err != nil || c.Value == "" {
+		return nil, nil
+	}
+	return s.open(r.Context(), auth.Session, c.Value)
+}
+
+// BearerIdentity opens a token the plugin or the app holds, or is nil.
+func (s *Server) BearerIdentity(ctx context.Context, token string) (*edition.Identity, error) {
+	if token == "" {
+		return nil, nil
+	}
+	return s.open(ctx, auth.PluginBearer, token)
+}
+
+// SameOrigin reports whether r, a write, came from this site.
+func (s *Server) SameOrigin(r *http.Request) bool { return s.sameOrigin(r) }
+
+func (s *Server) open(ctx context.Context, purpose auth.Purpose, token string) (*edition.Identity, error) {
+	claims, err := s.Auth.Sealer.Open(purpose, token)
+	if err != nil {
+		return nil, nil
+	}
+	user, err := s.Auth.DB.User.Get(ctx, claims.Sub)
+	if ent.IsNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	id := &edition.Identity{UserID: user.ID, Via: claims.Via}
+	if user.Email != nil {
+		id.Email = *user.Email
+	}
+	return id, nil
 }

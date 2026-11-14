@@ -97,7 +97,7 @@ func mysqlTarget(u *url.URL) (Target, error) {
 }
 
 // Open connects, applies every pending migration and returns the client.
-func Open(ctx context.Context, t Target) (*ent.Client, *sql.DB, error) {
+func Open(ctx context.Context, t Target, extra ...Set) (*ent.Client, *sql.DB, error) {
 	conn, err := sql.Open(t.Driver, t.DSN)
 	if err != nil {
 		return nil, nil, err
@@ -111,7 +111,7 @@ func Open(ctx context.Context, t Target) (*ent.Client, *sql.DB, error) {
 		conn.Close()
 		return nil, nil, fmt.Errorf("database: %w", err)
 	}
-	if err := Migrate(ctx, conn, t.Dialect); err != nil {
+	if err := Migrate(ctx, conn, t.Dialect, extra...); err != nil {
 		conn.Close()
 		return nil, nil, err
 	}

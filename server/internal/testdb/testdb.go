@@ -44,8 +44,8 @@ func Each(t *testing.T, f func(t *testing.T, d *DB)) {
 }
 
 // New is a fresh migrated database of one dialect, or nil when it cannot be
-// reached in this environment.
-func New(t *testing.T, name string) *DB {
+// reached in this environment; extra are a closed edition's migrations.
+func New(t *testing.T, name string, extra ...db.Set) *DB {
 	t.Helper()
 	ctx := context.Background()
 	var raw string
@@ -63,7 +63,7 @@ func New(t *testing.T, name string) *DB {
 	if err != nil {
 		t.Fatal(err)
 	}
-	client, conn, err := db.Open(ctx, target)
+	client, conn, err := db.Open(ctx, target, extra...)
 	if err != nil {
 		t.Fatal(err)
 	}

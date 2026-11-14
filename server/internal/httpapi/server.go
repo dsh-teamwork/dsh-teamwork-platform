@@ -26,6 +26,9 @@ type Server struct {
 	Google    *auth.Google      // where the Google door is configured
 	Analytics *analytics.Client // nil or keyless sends nothing
 	Web       http.Handler
+	// Mux, when set, is the router Handler adds its routes to: one a closed
+	// edition has already added its own to (server/edition).
+	Mux *http.ServeMux
 }
 
 // handler is a route that answers with an error instead of writing one.
@@ -45,7 +48,10 @@ func (s *Server) route(h handler, write bool) http.HandlerFunc {
 
 // Handler is every route.
 func (s *Server) Handler() http.Handler {
-	mux := http.NewServeMux()
+	mux := s.Mux
+	if mux == nil {
+		mux = http.NewServeMux()
+	}
 	get := func(pattern string, h handler) { mux.HandleFunc("GET "+pattern, s.route(h, false)) }
 	post := func(pattern string, h handler) { mux.HandleFunc("POST "+pattern, s.route(h, true)) }
 	write := func(method, pattern string, h handler) { mux.HandleFunc(method+" "+pattern, s.route(h, true)) }

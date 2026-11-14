@@ -26,21 +26,32 @@ var migrations embed.FS
 // Dirs maps a dialect to its directory under migrations/.
 var Dirs = map[string]string{dialect.SQLite: "sqlite", dialect.Postgres: "postgres", dialect.MySQL: "mysql"}
 
+// Set is a closed edition's own migrations (server/edition): a directory per
+// dialect, named as Dirs names them, applied after the open history and
+// recorded under "<Name>:<version>", so the two histories never collide.
+type Set struct {
+	Name string
+	FS   fs.FS
+}
+
 type migration struct {
 	version, name, checksum string
 	stmts                   []string
 }
 
 func load(d string) ([]migration, error) {
-	dir := "migrations/" + Dirs[d]
-	names, err := fs.Glob(migrations, dir+"/*.sql")
+	return loadDir(migrations, "migrations/"+Dirs[d], "")
+}
+
+func loadDir(fsys fs.FS, dir, prefix string) ([]migration, error) {
+	names, err := fs.Glob(fsys, dir+"/*.sql")
 	if err != nil {
 		return nil, err
 	}
 	sort.Strings(names)
 	out := make([]migration, 0, len(names))
 	for _, n := range names {
-		body, err := migrations.ReadFile(n)
+		body, err := fs.ReadFile(fsys, n)
 		if err != nil {
 			return nil, err
 		}
@@ -51,7 +62,7 @@ func load(d string) ([]migration, error) {
 		sum := sha256.Sum256(body)
 		base := strings.TrimSuffix(path.Base(n), ".sql")
 		version, _, _ := strings.Cut(base, "_")
-		out = append(out, migration{version: version, name: base, checksum: hex.EncodeToString(sum[:]), stmts: stmts})
+		out = append(out, migration{version: prefix + version, name: prefix + base, checksum: hex.EncodeToString(sum[:]), stmts: stmts})
 	}
 	return out, nil
 }
@@ -60,11 +71,19 @@ func load(d string) ([]migration, error) {
 // each recorded in schema_migrations with its checksum. A recorded migration
 // whose file has changed since stops the start: the history is append-only.
 // Several processes starting at once against Postgres or MySQL take turns
-// under a lock held for the run; SQLite has one process per file.
-func Migrate(ctx context.Context, conn *sql.DB, d string) error {
+// under a lock held for the run; SQLite has one process per file. Each of
+// extra follows the open history, in the order given.
+func Migrate(ctx context.Context, conn *sql.DB, d string, extra ...Set) error {
 	all, err := load(d)
 	if err != nil {
 		return err
+	}
+	for _, set := range extra {
+		more, err := loadDir(set.FS, Dirs[d], set.Name+":")
+		if err != nil {
+			return fmt.Errorf("migrate: %s: %w", set.Name, err)
+		}
+		all = append(all, more...)
 	}
 	c, err := conn.Conn(ctx)
 	if err != nil {

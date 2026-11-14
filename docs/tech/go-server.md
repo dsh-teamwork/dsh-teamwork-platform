@@ -47,8 +47,9 @@ needs it built, so the run is part of each gate, not of every CI run.
   `server/` with `go:embed`.
 - `api/openapi.yaml`: the wire contract. Go server types and the console's
   client are generated from it.
-- `premium/server/`: the closed Go packages, compiled into the closed binary
-  only.
+- `premium/server/`: the closed Go module, compiled into the closed binary
+  only, which is the open server with the closed packages registered
+  through `server/edition`.
 
 `apps/console` restates four small rules from `packages/shared` rather than
 depend on it, since that package depends on Prisma and goes in phase 6:
@@ -290,16 +291,48 @@ on each platform with `npx`, the release binary and `compose.yaml`.
 
 ### Phase 5: `premium/`
 
-- The operator console and `/api/admin/*`: Google only, `ADMIN_EMAILS` re-read
-  on every request, `MANAGE_API_KEY` with `x-agent-id`, the self-describing
-  index.
-- The closed binary built with `premium/server/`, and the edition boundary
-  check kept.
-- The hosted service moved to the closed binary on Railway.
+The closed edition holds two services besides the console: the mobile relay
+(ADR 0008), a WebSocket service on Prisma that verifies Auth.js tokens, and
+its three tables. Neither survives phase 6 as it is, so both move into the
+closed binary (the developer's choice on 2026-11-14).
 
-**Verified by:** today's console tests rewritten in Go; the route index held
-to the routes by a test; the hosted service answering the plugin end-to-end
-test after the move.
+- **The extension point, open:** `server/app` runs the server (what
+  `cmd/dsh-teamwork` did), and `server/edition` is what a closed package
+  registers from its `init`: routes on the server's mux, its own migrations
+  per dialect, applied after the open ones and recorded under its name, and
+  the host's services it may use (the database connection, Bearer and session
+  verification, `AUTH_SECRET`, `APP_URL`). The open binary registers nothing,
+  and `server/edition/editiontest` gives a closed package the open suites'
+  three databases.
+- **The closed module, `premium/server/`:** its own `go.mod`, requiring the
+  open module from `../../server`; its `cmd/dsh-teamwork` blank-imports the
+  closed packages and calls `app.Main`. Its tables are an `ent` schema of its
+  own, with migrations per dialect and the drift check, like the open ones.
+- **The relay** in Go, mounted under `/relay` on the same port: `/relay/plugin`
+  and `/relay/phone` (WebSockets), `POST /relay/pair`, `GET /relay/pairings`,
+  `DELETE /relay/pairings/{id}`. `GET /api/relay` names
+  `wss://<APP_URL host>/relay/plugin`, from which the plugin and the app find
+  the rest, so neither changes; `RELAY_URL` goes. Frames, close codes, limits
+  and push notifications through Expo as today.
+- **The operator console** at `/manage` on the same origin, a Vite app like
+  the open console, embedded in the closed binary, and `/api/admin/*` in Go:
+  a Google session (never a password or an emailed code) whose email is in
+  `ADMIN_EMAILS`, re-read on every request, or `MANAGE_API_KEY` with
+  `x-agent-id` on a write; the self-describing index rendered from the Go
+  route table. Its cost: the console no longer has an origin of its own, so
+  a script injected into the site would reach it with an admin's cookie; the
+  pages' Content Security Policy is what stands between.
+- `premium/apps/relay`, `premium/apps/manage` and `apps/web`'s `(premium)`
+  route go in the commits that replace them.
+- The closed image and the edition boundary check; the hosted service's
+  runbook rewritten for one Railway service running the closed image.
+- The move itself, data wiped as decided, waits for the developer's go-ahead.
+
+**Verified by:** today's console and relay tests rewritten in Go, on the
+three databases; the route index held to the routes by a test; the plugin's
+own relay client, unchanged, pairing a phone and passing a call through the
+closed binary; the hosted service answering the plugin end-to-end test after
+the move.
 
 ### Phase 6: delete the Node server
 
