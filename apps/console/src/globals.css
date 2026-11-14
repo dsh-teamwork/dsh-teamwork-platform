@@ -1,0 +1,223 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* `.dark` on <html> (next-themes, attribute="class") swaps the whole scale. */
+@custom-variant dark (&:is(.dark, .dark *));
+
+/*
+ * Every colour is a variable, so light and dark are kept in step in one place
+ * and a page never names a Tailwind palette step (`text-gray-600`).
+ *
+ * The palette is the brand's (docs/design.md): warm paper grounds and indigo
+ * ink in light, indigo-black grounds and paper text in dark. The brand hue is
+ * `--brand`, and it is NOT `--accent`: `accent` is the subtle hover surface
+ * every shadcn-shaped primitive uses, so a brand colour there tints every
+ * hover. Brand chrome opts in with `bg-brand`; `--primary` stays a neutral ink.
+ */
+:root {
+  --background: oklch(0.985 0.004 85);
+  --foreground: oklch(0.2 0.03 268);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.03 268);
+  --muted: oklch(0.96 0.006 85);
+  --muted-foreground: oklch(0.47 0.025 268);
+  --primary: oklch(0.23 0.035 268);
+  --primary-foreground: oklch(0.985 0.004 85);
+  --secondary: oklch(0.96 0.006 85);
+  --secondary-foreground: oklch(0.23 0.035 268);
+  --accent: oklch(0.95 0.008 85);
+  --accent-foreground: oklch(0.23 0.035 268);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --brand: oklch(0.33 0.11 268);
+  --brand-foreground: oklch(0.97 0.008 85);
+  --border: oklch(0.91 0.008 85);
+  --input: oklch(0.91 0.008 85);
+  --ring: oklch(0.62 0.08 268);
+  --radius: 0.5rem;
+  /*
+   * The landing page's ocean (components/home/sea.tsx and the sections below it):
+   * the same sea in both themes, so it is the one part of the scale that does
+   * not swap. `--fluke` does: indigo against a paper sky, paper against a
+   * night one.
+   */
+  --ocean: oklch(0.33 0.11 268);
+  --ocean-deep: oklch(0.17 0.04 268);
+  --ocean-foreground: oklch(0.97 0.008 85);
+  --ocean-muted: oklch(0.8 0.035 268);
+  --ocean-line: oklch(1 0 0 / 13%);
+  --ocean-accent: oklch(0.83 0.14 86);
+  --fluke: oklch(0.33 0.11 268);
+}
+
+.dark {
+  --background: oklch(0.17 0.03 268);
+  --foreground: oklch(0.96 0.006 85);
+  --card: oklch(0.21 0.035 268);
+  --card-foreground: oklch(0.96 0.006 85);
+  --muted: oklch(0.26 0.035 268);
+  --muted-foreground: oklch(0.74 0.025 268);
+  --primary: oklch(0.94 0.008 85);
+  --primary-foreground: oklch(0.21 0.035 268);
+  --secondary: oklch(0.26 0.035 268);
+  --secondary-foreground: oklch(0.96 0.006 85);
+  --accent: oklch(0.26 0.035 268);
+  --accent-foreground: oklch(0.96 0.006 85);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --brand: oklch(0.8 0.085 268);
+  --brand-foreground: oklch(0.19 0.035 268);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.55 0.08 268);
+  --ocean: oklch(0.33 0.11 268);
+  --ocean-deep: oklch(0.17 0.04 268);
+  --ocean-foreground: oklch(0.97 0.008 85);
+  --ocean-muted: oklch(0.8 0.035 268);
+  --ocean-line: oklch(1 0 0 / 13%);
+  --ocean-accent: oklch(0.83 0.14 86);
+  --fluke: oklch(0.96 0.006 85);
+}
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ocean: var(--ocean);
+  --color-ocean-deep: var(--ocean-deep);
+  --color-ocean-foreground: var(--ocean-foreground);
+  --color-ocean-muted: var(--ocean-muted);
+  --color-ocean-line: var(--ocean-line);
+  --color-ocean-accent: var(--ocean-accent);
+  --color-fluke: var(--fluke);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* The hero sea drifts left by one wave period (160 of the SVG's units) and loops. */
+.sea-drift {
+  animation: sea-drift 14s linear infinite;
+}
+@keyframes sea-drift {
+  to {
+    transform: translateX(-160px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sea-drift {
+    animation: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/*
+ * A document rendered from markdown (components/legal-document.tsx). There is
+ * no typography plugin, so the elements markdown produces are styled here, on
+ * the same tokens as everything else.
+ */
+.prose-document {
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+.prose-document h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+.prose-document h2 {
+  margin: 2.5rem 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-document h3 {
+  margin: 1.75rem 0 0.5rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-document p,
+.prose-document ul,
+.prose-document ol {
+  margin: 0.85rem 0;
+}
+.prose-document ul,
+.prose-document ol {
+  padding-inline-start: 1.4rem;
+}
+.prose-document ul {
+  list-style: disc;
+}
+.prose-document ol {
+  list-style: decimal;
+}
+.prose-document li {
+  margin: 0.35rem 0;
+}
+.prose-document strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-document a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-document code {
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.prose-document hr {
+  margin: 2.5rem 0;
+  border-top: 1px solid var(--border);
+}
+.prose-document table {
+  width: 100%;
+  margin: 1.25rem 0;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+.prose-document th,
+.prose-document td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  text-align: start;
+}
+.prose-document th {
+  color: var(--foreground);
+  font-weight: 600;
+}

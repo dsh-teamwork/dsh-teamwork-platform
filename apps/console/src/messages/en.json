@@ -1,0 +1,69 @@
+{
+  "common": {
+    "appName": "DSH Teamwork",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "account": "Account",
+    "language": "Language",
+    "backHome": "Back home",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "close": "Close"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "subtitle": "No password. Use Google, or get a one-time code by email.",
+    "subtitleEmailOnly": "No password. Get a one-time code by email.",
+    "google": "Continue with Google",
+    "or": "or",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "Email me a code",
+    "codeSent": "We sent a six-digit code to {email}.",
+    "code": "Code",
+    "verify": "Sign in",
+    "useAnotherEmail": "Use another email",
+    "subtitlePassword": "Sign in with your email and password.",
+    "subtitlePasswordGoogle": "Use Google, or your email and password.",
+    "password": "Password",
+    "noAccount": "No account yet? Your team admin creates one for you."
+  },
+  "authErrors": {
+    "invalid_email": "That doesn't look like an email address.",
+    "invalid_code": "That code didn't work. Check it and try again.",
+    "code_expired": "That code has expired. Ask for a new one.",
+    "too_many_attempts": "Too many attempts. Wait a minute and try again.",
+    "not_allowed": "This account can't sign in here.",
+    "unavailable": "Sign-in isn't available right now.",
+    "invalid_credentials": "That email and password don't match.",
+    "weak_password": "Use at least 10 characters.",
+    "setup_closed": "This instance already has its first account. Sign in instead."
+  },
+  "plugin": {
+    "title": "Authorize the DSH plugin",
+    "description": "Only continue if you just ran /teamwork login in your own DSH.",
+    "descriptionApp": "Only continue if you just started signing in from the app on your own phone.",
+    "returning": "Returning to the app. If it did not open, paste this code into it:",
+    "returningDsh": "Returning to DSH. If it does not finish signing in, paste this into DSH:",
+    "invalid": "This link is incomplete. Run /teamwork login in DSH again.",
+    "confirm": "Authorize",
+    "copy": "Paste this into DSH:",
+    "expiry": "The code works for two minutes, and only for the DSH that asked for it.",
+    "failed": "Authorization failed. Sign in again, or run /teamwork login in DSH again."
+  },
+  "password": {
+    "title": "Change your password",
+    "mustChange": "Your team admin set this password for you. Choose your own before you continue.",
+    "current": "Current password",
+    "next": "New password",
+    "hint": "At least 10 characters. A few unrelated words are easy to remember and hard to guess.",
+    "submit": "Change password",
+    "change": "Change password"
+  },
+  "setup": {
+    "title": "Create the first account",
+    "description": "This instance has no account yet. Create yours, then create your team and add the others.",
+    "closed": "This link no longer works: the first account already exists.",
+    "submit": "Create account"
+  }
+}

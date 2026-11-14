@@ -1,0 +1,69 @@
+{
+  "common": {
+    "appName": "DSH Teamwork",
+    "signIn": "登录",
+    "signOut": "退出登录",
+    "account": "账户",
+    "language": "语言",
+    "backHome": "返回首页",
+    "privacy": "隐私政策",
+    "terms": "服务条款",
+    "close": "关闭"
+  },
+  "signIn": {
+    "title": "登录",
+    "subtitle": "无需密码。使用 Google，或通过邮箱获取一次性验证码。",
+    "subtitleEmailOnly": "无需密码。通过邮箱获取一次性验证码。",
+    "google": "使用 Google 继续",
+    "or": "或",
+    "email": "邮箱",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "发送验证码",
+    "codeSent": "六位验证码已发送至 {email}。",
+    "code": "验证码",
+    "verify": "登录",
+    "useAnotherEmail": "换一个邮箱",
+    "subtitlePassword": "使用邮箱和密码登录。",
+    "subtitlePasswordGoogle": "使用 Google，或邮箱和密码登录。",
+    "password": "密码",
+    "noAccount": "还没有账号？请团队管理员为你创建。"
+  },
+  "authErrors": {
+    "invalid_email": "邮箱地址格式不正确。",
+    "invalid_code": "验证码不正确，请检查后重试。",
+    "code_expired": "验证码已过期，请重新获取。",
+    "too_many_attempts": "尝试次数过多，请稍后再试。",
+    "not_allowed": "此账户无法在这里登录。",
+    "unavailable": "登录服务暂时不可用。",
+    "invalid_credentials": "邮箱或密码不正确。",
+    "weak_password": "密码至少需要 10 个字符。",
+    "setup_closed": "此实例已经有第一个账号了，请直接登录。"
+  },
+  "plugin": {
+    "title": "授权 DSH 插件",
+    "description": "仅在你刚在自己的 DSH 中运行 /teamwork login 时继续。",
+    "descriptionApp": "仅在你刚在自己手机上的 App 里发起登录时继续。",
+    "returning": "正在返回 App。如果 App 没有打开，请把下面的授权码粘贴到 App 里：",
+    "returningDsh": "正在交回 DSH。如果 DSH 没有自动完成登录，请把下面这行粘贴到 DSH：",
+    "invalid": "链接不完整，请在 DSH 中重新运行 /teamwork login。",
+    "confirm": "确认授权",
+    "copy": "将以下内容粘贴到 DSH：",
+    "expiry": "授权码两分钟内有效，且只对发起请求的 DSH 有效。",
+    "failed": "授权失败。请重新登录，或在 DSH 中重新运行 /teamwork login。"
+  },
+  "password": {
+    "title": "修改密码",
+    "mustChange": "这个密码是团队管理员为你设置的，请先设置你自己的密码再继续。",
+    "current": "当前密码",
+    "next": "新密码",
+    "hint": "至少 10 个字符。几个不相关的词组合起来，既好记又难猜。",
+    "submit": "修改密码",
+    "change": "修改密码"
+  },
+  "setup": {
+    "title": "创建第一个账号",
+    "description": "此实例还没有任何账号。先创建你自己的账号，再创建团队并添加其他成员。",
+    "closed": "此链接已失效：第一个账号已经创建。",
+    "submit": "创建账号"
+  }
+}
