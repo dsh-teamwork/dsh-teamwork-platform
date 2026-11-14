@@ -168,7 +168,7 @@ func TestConcurrentFirstGoogleSignIn(t *testing.T) {
 func TestLongGoogleProfileStillSignsIn(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		email := "long@example.test"
-		name := strings.Repeat("名", 120)
+		name := strings.Repeat("\u540d", 120) // a CJK character, three bytes in UTF-8
 		image := "https://example.test/" + strings.Repeat("p", 3000)
 		u, created, err := auth.Account(context.Background(), d.Client, auth.Proof{Provider: "google", Subject: "g-long", Email: &email, Name: &name, Image: &image})
 		if err != nil || !created {

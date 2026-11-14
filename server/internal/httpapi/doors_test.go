@@ -181,14 +181,14 @@ func TestNamesCountCharacters(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		e := start(t, d, options{})
 		admin := e.admin("a@x.io")
-		long := strings.Repeat("团", 100)
+		long := strings.Repeat("\u56e2", 100) // a CJK character, three bytes in UTF-8
 		if got := must(t, admin.post("/api/teams", map[string]string{"name": long}), 201)["name"]; got != long {
 			t.Fatalf("name kept as %v", got)
 		}
-		if r := admin.post("/api/teams", map[string]string{"name": long + "团"}); r.status != 400 {
+		if r := admin.post("/api/teams", map[string]string{"name": long + "\u56e2"}); r.status != 400 {
 			t.Fatalf("101 characters: %d %s", r.status, r.body)
 		}
-		name := strings.Repeat("名", 80)
+		name := strings.Repeat("\u540d", 80)
 		r := do(t, admin.client, "PATCH", e.url+"/api/profile", map[string]any{"name": name}, map[string]string{"Origin": admin.origin})
 		if r.status != 200 || r.json(t)["name"] != name {
 			t.Fatalf("80-character name: %d %s", r.status, r.body)
