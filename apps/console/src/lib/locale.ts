@@ -29,8 +29,14 @@ export function matchLocale(tags: readonly string[]): Locale {
   return DEFAULT_LOCALE;
 }
 
-/** The cookie's choice, else the browser's languages. */
+/**
+ * The viewer's language: what the server resolved (the profile's, then the
+ * cookie, then the browser's) and wrote on the root element, else, in
+ * development, the cookie and the browser's languages.
+ */
 export function currentLocale(): Locale {
+  const resolved = document.documentElement.dataset.locale;
+  if (resolved && (LOCALES as readonly string[]).includes(resolved)) return resolved as Locale;
   const chosen = /(?:^|;\s*)locale=([^;]+)/.exec(document.cookie)?.[1];
   return matchLocale([...(chosen ? [decodeURIComponent(chosen)] : []), ...navigator.languages]);
 }

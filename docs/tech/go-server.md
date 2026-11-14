@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — phases 0 to 2 done · **Updated:** 2026-11-14
+> **Status:** Plan — phases 0 to 3 done · **Updated:** 2026-11-14
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -192,6 +192,45 @@ against a stub OAuth server in tests, and once by hand against the real one.
 **Verified by:** a Playwright run of every page's main flow in both locales
 against the binary; screenshots of each page next to today's for review; the
 SEO test ported to the public pages.
+
+**Done on 2026-11-14.** What the gate found:
+
+- **Every page's flow in both languages:** one Playwright script ran on the
+  Node and the Go servers alike, each from an empty database: claiming the
+  first account, a team, a provider from the catalogue and two models,
+  a plugin, a preset from a template, a member and a reset password, the
+  team switcher, every team page in Chinese, the account page, a team that
+  does not exist, a phone-width overview and signing out. A second script
+  ran the invitation flow on an instance that sends email: codes through a
+  stand-in mail server, an invitation link, the invitee signing in through
+  it and joining. Neither met a page error.
+- **Screenshots side by side:** the 27 pages and states the two servers
+  share, the home page in both languages among them, match apart from the
+  server's own address. Signing out on the Go console went to the sign-in
+  page where the Node app went home; it now goes home.
+- **Tests:** the SEO, AI-crawler, canonical-host, browser analytics and
+  legal-document tests are ported, with the choice of home page by
+  profile, cookie and browser, on top of phase 2's.
+- **The review** found nine things, all fixed:
+  - the console read the cookie and the browser but never the profile's
+    language, so a person whose profile said Chinese saw the home page in
+    Chinese and the console in English; the server now writes the viewer's
+    language on the console's page, as it chooses the home page;
+  - choosing a language wrote the profile from a session whose admin-set
+    password was unchanged;
+  - publishing several models that failed part-way left the page showing
+    none of those published, and a retry collided with them on every try
+    (the Node console too); the page now reads its data again after every
+    write;
+  - a sign-out that failed said nothing;
+  - two reads of one list answering out of order could bring back a
+    deleted entry;
+  - `/account` was outside the must-change guard;
+  - the home page's `Vary` left out `Authorization`, and the console's had
+    none;
+  - the www/apex redirect carried no security headers, HSTS included;
+  - a q such as `inf` in Accept-Language ranked differently from the Node
+    parser.
 
 ### Phase 4: packaging, self-hosting and CI
 

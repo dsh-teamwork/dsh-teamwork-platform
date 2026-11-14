@@ -18,7 +18,7 @@ func build(legal bool) fstest.MapFS {
 		return &fstest.MapFile{Data: []byte(`<!doctype html><html><head><link rel="canonical" href="%APP_URL%/"/></head><body>` + id + `</body></html>`)}
 	}
 	b := fstest.MapFS{
-		"index.html":                       {Data: []byte(`<!doctype html><html><head><meta name="robots" content="noindex"/></head><body>spa</body></html>`)},
+		"index.html":                       {Data: []byte(`<!doctype html><html lang="en"><head><meta name="robots" content="noindex"/></head><body>spa</body></html>`)},
 		"assets/index-abc.js":              {Data: []byte("console.log(1)")},
 		"public/home.en.html":              page("home.en"),
 		"public/home.en.signed-in.html":    page("home.en.signed-in"),
@@ -91,7 +91,7 @@ func TestHomePicksTheViewersPage(t *testing.T) {
 			if res.StatusCode != 200 || !strings.Contains(got, "<body>"+c.want+"</body>") {
 				t.Fatalf("%d %s, want %s", res.StatusCode, got, c.want)
 			}
-			if res.Header.Get("Vary") != "Cookie, Accept-Language" || res.Header.Get("Cache-Control") != "no-cache" {
+			if res.Header.Get("Vary") != "Cookie, Authorization, Accept-Language" || res.Header.Get("Cache-Control") != "no-cache" {
 				t.Fatalf("headers %v", res.Header)
 			}
 		})
@@ -251,6 +251,53 @@ func TestMatchLocale(t *testing.T) {
 		"fr;q=1, en;q=x, zh;q=1": "zh-CN",
 	}
 	for header, want := range cases {
+		if got := MatchLocale(AcceptLanguage(header)); got != want {
+			t.Errorf("%q: %s, want %s", header, got, want)
+		}
+	}
+}
+
+// The console renders in the viewer's language, the profile's first, as the
+// home page does: the server writes it on the root element, and the answer
+// varies with everything that chose it.
+func TestTheConsoleCarriesTheViewersLocale(t *testing.T) {
+	root := build(false)
+	cases := []struct {
+		name   string
+		v      *viewer
+		header map[string]string
+		want   string
+	}{
+		{"browser", nil, map[string]string{"Accept-Language": "zh-CN,en;q=0.5"}, "zh-CN"},
+		{"cookie over browser", nil, map[string]string{"Accept-Language": "zh-CN", "Cookie": "locale=en"}, "en"},
+		{"profile over cookie", &viewer{locale: "zh-CN", signedIn: true}, map[string]string{"Cookie": "locale=en"}, "zh-CN"},
+	}
+	for _, c := range cases {
+		res := serve(t, handler(root, c.v), "/teams", c.header)
+		got := body(t, res)
+		if !strings.Contains(got, `<html lang="`+c.want+`" data-locale="`+c.want+`">`) {
+			t.Errorf("%s: %s", c.name, got)
+		}
+		if res.Header.Get("Vary") != "Cookie, Authorization, Accept-Language" {
+			t.Errorf("%s: Vary %q", c.name, res.Header.Get("Vary"))
+		}
+	}
+	if v := serve(t, handler(root, nil), "/", nil).Header.Get("Vary"); !strings.Contains(v, "Authorization") {
+		t.Errorf("home Vary %q: a Bearer token also chooses the signed-in page", v)
+	}
+}
+
+// A q the Node parser reads as NaN is dropped here too, whatever Go's own
+// float parser would make of it.
+func TestAcceptLanguageReadsQLikeNode(t *testing.T) {
+	for header, want := range map[string]string{
+		"en;q=0.9, zh;q=inf":  "en",
+		"en;q=0.9, zh;q=NaN":  "en",
+		"en;q=0.9, zh;q=0x1":  "en",
+		"en;q=0.9, zh;q=1_0":  "en",
+		"en;q=0.5, zh;q=0.8":  "zh-CN",
+		"en;q=0.9, zh;q=1e-1": "en",
+	} {
 		if got := MatchLocale(AcceptLanguage(header)); got != want {
 			t.Errorf("%q: %s, want %s", header, got, want)
 		}

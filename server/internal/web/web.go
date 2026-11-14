@@ -106,7 +106,7 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if b, ok := s.pages[name+".html"]; ok {
 			// One address, four pages: a cache must key on what chose this one.
-			w.Header().Set("Vary", "Cookie, Accept-Language")
+			w.Header().Set("Vary", vary)
 			s.html(w, b)
 			return
 		}
@@ -150,8 +150,21 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "The console is not built into this binary (pnpm --filter console build).", http.StatusNotFound)
 		return
 	}
-	s.html(w, s.index)
+	// The console renders in the viewer's language, the profile's first, as
+	// the home page does; it reads it from the root element.
+	profile := ""
+	if s.opts.Viewer != nil {
+		profile, _ = s.opts.Viewer(r)
+	}
+	locale := viewerLocale(r, profile)
+	w.Header().Set("Vary", vary)
+	s.html(w, bytes.Replace(s.index, []byte(`<html lang="en">`), []byte(`<html lang="`+locale+`" data-locale="`+locale+`">`), 1))
 }
+
+// vary is every request header that chooses which page an address answers
+// with: the session (a cookie, or a Bearer token), the locale cookie and the
+// browser's languages.
+const vary = "Cookie, Authorization, Accept-Language"
 
 func (s *site) html(w http.ResponseWriter, b []byte) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

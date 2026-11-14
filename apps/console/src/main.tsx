@@ -34,10 +34,10 @@ const router = createBrowserRouter([
   { path: '/setup', element: <SetupPage /> },
   { path: '/password', element: <PasswordPage /> },
   { path: '/plugin', element: <PluginPage /> },
-  { path: '/account', element: <AccountPage /> },
   {
     element: <RequireUser />,
     children: [
+      { path: '/account', element: <AccountPage /> },
       { path: '/teams', element: <TeamsPage /> },
       {
         path: '/teams/:teamId',

@@ -1,4 +1,3 @@
-import { Navigate } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { useTitle } from '@/components/page';
@@ -14,7 +13,7 @@ export function AccountPage() {
   const tc = useTranslations('common');
   useTitle(t('title'));
   const user = session.user;
-  if (!user) return <Navigate to="/sign-in?next=/account" replace />;
+  if (!user) return null; // RequireUser sends a stranger to sign in
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-6">

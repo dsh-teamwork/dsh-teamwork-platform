@@ -47,6 +47,11 @@ func MatchLocale(tags []string) string {
 
 // AcceptLanguage is the header's tags in preference order: by q, highest
 // first, ties in the order given, `q=0` and `*` dropped.
+// decimal is a plain decimal number. strconv.ParseFloat also reads "inf",
+// "NaN", hex and underscores, which JavaScript's Number() does not, so a q
+// written that way would rank differently from the Node parser.
+var decimal = regexp.MustCompile(`^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$`)
+
 func AcceptLanguage(header string) []string {
 	type entry struct {
 		tag string
@@ -58,7 +63,7 @@ func AcceptLanguage(header string) []string {
 		tag, q := strings.TrimSpace(fields[0]), 1.0
 		for _, p := range fields[1:] {
 			if v, ok := strings.CutPrefix(strings.TrimSpace(p), "q="); ok {
-				if n, err := strconv.ParseFloat(v, 64); err == nil {
+				if n, err := strconv.ParseFloat(v, 64); err == nil && decimal.MatchString(v) {
 					q = n
 				} else {
 					q = 0 // JavaScript's Number() reads garbage as NaN, which no q > 0 keeps

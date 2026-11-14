@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -21,8 +22,10 @@ func (s *Server) chooseLocale(w http.ResponseWriter, r *http.Request) error {
 	if err := decode(r, &in); err != nil {
 		return err
 	}
-	c, err := s.identify(r)
-	if err != nil {
+	// The profile is written only for someone who may reach it: not while an
+	// admin-set password is unchanged, as for PATCH /api/profile.
+	c, err := s.requireUser(r)
+	if err != nil && !errors.Is(err, errUnauthorized) && !isPasswordChangeRequired(err) {
 		return err
 	}
 	if c != nil {
@@ -55,4 +58,9 @@ func (s *Server) Viewer(r *http.Request) (locale string, signedIn bool) {
 		locale = *c.user.Locale
 	}
 	return locale, true
+}
+
+func isPasswordChangeRequired(err error) bool {
+	var we *wire.Error
+	return errors.As(err, &we) && we.Code == wire.PasswordChangeRequired
 }

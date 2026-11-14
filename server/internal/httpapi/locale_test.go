@@ -1,7 +1,11 @@
 package httpapi_test
 
 import (
+	"context"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -86,4 +90,34 @@ func TestHomeAndTheLocale(t *testing.T) {
 			}
 		})
 	})
+}
+
+// Choosing a language while an admin-set password is unchanged sets the
+// cookie, but writes nothing to the profile, which that session cannot reach.
+func TestLocaleDoesNotWriteAProfileBehindAPasswordChange(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{web: homes()})
+		b := e.admin("a@x.io")
+		d.Client.Password.Update().SetMustChange(true).ExecX(context.Background())
+		if r := b.post("/api/locale", map[string]string{"locale": "zh-CN"}); r.status != http.StatusNoContent {
+			t.Fatalf("%d %s", r.status, r.body)
+		}
+		if b.cookie("locale") != "zh-CN" {
+			t.Fatal("no locale cookie")
+		}
+		if u := d.Client.User.Query().OnlyX(context.Background()); u.Locale != nil {
+			t.Fatalf("profile locale written: %s", *u.Locale)
+		}
+	})
+}
+
+// The www/apex redirect carries the security headers too, so the twin host
+// records HSTS on its first visit.
+func TestCanonicalRedirectCarriesHSTS(t *testing.T) {
+	srv := &httpapi.Server{Config: config.Config{AppURL: "https://dshteamwork.com"}}
+	w := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(w, httptest.NewRequest("GET", "https://www.dshteamwork.com/teams", nil))
+	if w.Code != http.StatusPermanentRedirect || w.Header().Get("Strict-Transport-Security") == "" || w.Header().Get("X-Content-Type-Options") != "nosniff" {
+		t.Fatalf("%d %v", w.Code, w.Header())
+	}
 }

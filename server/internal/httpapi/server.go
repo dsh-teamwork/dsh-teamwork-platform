@@ -97,7 +97,9 @@ func (s *Server) Handler() http.Handler {
 	if s.Web != nil {
 		mux.Handle("/", s.Web)
 	}
-	return recoverer(web.CanonicalHost(s.Config.AppURL, headers(s.secure(), mux)))
+	// Security headers go on everything, the www/apex redirect included, so the
+	// twin host records HSTS too.
+	return recoverer(headers(s.secure(), web.CanonicalHost(s.Config.AppURL, mux)))
 }
 
 // headers are the ones every answer carries. HSTS only where APP_URL is

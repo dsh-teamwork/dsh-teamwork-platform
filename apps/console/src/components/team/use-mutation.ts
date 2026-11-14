@@ -23,18 +23,20 @@ export function useMutation(reload: () => Promise<unknown>) {
   const word = useTeamError();
   const [pending, setPending] = useState(false);
 
-  /** Resolves true once `action` succeeded, false once it failed and the failure was shown; a dialog uses it to stay on its step. */
+  /** Reads the page's data again whatever happened. Resolves true once `action` succeeded, false once it failed and the failure was shown; a dialog uses it to stay on its step. */
   async function run(action: () => Promise<unknown>, success?: string): Promise<boolean> {
     setPending(true);
     try {
       await action();
       if (success) toast.success(success);
-      await reload();
       return true;
     } catch (error) {
       toast.error(word(error));
       return false;
     } finally {
+      // A write that failed part-way (several models published, one refused)
+      // has still changed the team, so the page reads it again either way.
+      await reload().catch(() => undefined);
       setPending(false);
     }
   }

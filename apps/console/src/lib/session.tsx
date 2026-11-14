@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
+import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
 
 import { CardPage, Loading } from '@/components/page';
@@ -46,9 +47,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   // Signing out lands on the public home, as the Next app's did; the server
   // serves it, so this is a page load rather than a route.
   const signOut = useCallback(async () => {
-    await api('auth/sign-out', { method: 'POST' });
+    try {
+      await api('auth/sign-out', { method: 'POST' });
+    } catch {
+      // Still signed in: say so, rather than let the person believe otherwise.
+      toast.error(t('unavailable'));
+      return;
+    }
     window.location.assign('/');
-  }, []);
+  }, [t]);
 
   if (failed && !session) {
     return (
