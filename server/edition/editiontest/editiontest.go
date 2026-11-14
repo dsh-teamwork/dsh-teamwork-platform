@@ -60,7 +60,6 @@ func Each(t *testing.T, exts []edition.Extension, o Options, f func(t *testing.T
 			if d == nil {
 				t.Skipf("%s: TEST_%s_URL is not set", name, strings.ToUpper(name))
 			}
-			ctx, cancel := context.WithCancel(context.Background())
 			ts := httptest.NewUnstartedServer(nil)
 			cfg := config.Config{
 				AppURL:             "http://" + ts.Listener.Addr().String(),
@@ -68,16 +67,16 @@ func Each(t *testing.T, exts []edition.Extension, o Options, f func(t *testing.T
 				ProviderKeysSecret: bytes.Repeat([]byte{7}, 32),
 			}
 			env := func(k string) string { return o.Env[k] }
-			srv, handler, err := app.Build(ctx, cfg, d.Client, d.SQL, d.Target.Dialect, exts, env)
+			srv, handler, stop, err := app.Build(cfg, d.Client, d.SQL, d.Target.Dialect, exts, env)
 			if err != nil {
-				cancel()
 				t.Fatal(err)
 			}
 			ts.Config.Handler = handler
 			ts.Start()
-			// The server goes first, then what the extensions hold: as the
-			// binary shuts down.
-			t.Cleanup(func() { cancel(); ts.Close() })
+			// The server goes first, then what the extensions hold, and the
+			// database last (testdb's cleanup, registered before this one):
+			// as the binary shuts down.
+			t.Cleanup(func() { ts.Close(); stop() })
 			f(t, &Instance{Dialect: name, URL: cfg.AppURL, SQL: d.SQL, t: t, srv: srv})
 		})
 	}

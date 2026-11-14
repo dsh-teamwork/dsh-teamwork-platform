@@ -76,8 +76,6 @@ type Host struct {
 	SameOrigin func(r *http.Request) bool
 	Users      Users
 	Env        func(string) string
-	// Done is closed when the server begins to shut down.
-	Done <-chan struct{}
 }
 
 // Extension is one closed feature.
@@ -87,8 +85,11 @@ type Extension struct {
 	// Migrations holds a directory of .sql files per dialect, named sqlite,
 	// postgres and mysql; nil for none.
 	Migrations fs.FS
-	// Mount adds the extension's routes once the server is ready to serve.
-	Mount func(h Host) error
+	// Mount adds the extension's routes once the server is ready to serve. It
+	// returns stop, called once the server has stopped taking requests and
+	// before the database closes: it ends what the extension holds (sockets,
+	// goroutines) and returns when they have let go. nil for nothing to stop.
+	Mount func(h Host) (stop func(), err error)
 }
 
 var (

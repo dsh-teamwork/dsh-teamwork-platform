@@ -346,8 +346,9 @@ packages/db          Prisma schema, migrations, ensureUser
 packages/shared      what the clients agree about (root: isomorphic, including
                      the team wire schemas) and the server-only sign-in
                      strategy (@dsh-teamwork/shared/server/*)
-premium/apps/manage  Next.js 16 — the operator console; /api/admin/* for
-                     automation
+premium/server       the closed Go module: the open server with the closed
+                     packages (the relay, the operator console) registered
+                     through server/edition
 
 Everything under premium/ is closed and stays out of the community edition
 (docs/tech/community-edition.md). Before changing anything there, read

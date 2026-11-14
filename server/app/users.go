@@ -45,7 +45,8 @@ func (u users) List(ctx context.Context, q string, page, size int) ([]edition.Us
 func (u users) Count(ctx context.Context, since time.Time) (int, error) {
 	q := u.db.User.Query()
 	if !since.IsZero() {
-		q = q.Where(user.CreatedAtGTE(since))
+		// Times are stored in UTC, and SQLite compares them as text.
+		q = q.Where(user.CreatedAtGTE(since.UTC()))
 	}
 	return q.Count(ctx)
 }

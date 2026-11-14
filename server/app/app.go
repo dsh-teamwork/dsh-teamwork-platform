@@ -67,10 +67,13 @@ func run(version string) error {
 	}
 	defer client.Close()
 
-	srv, handler, err := Build(ctx, cfg, client, conn, target.Dialect, extensions, os.Getenv)
+	srv, handler, stopExtensions, err := Build(cfg, client, conn, target.Dialect, extensions, os.Getenv)
 	if err != nil {
 		return err
 	}
+	// After the server stops taking requests, and before the deferred close
+	// of the database.
+	defer stopExtensions()
 	if cfg.Passwords() {
 		if open, err := srv.Auth.SetupOpen(ctx); err != nil {
 			slog.Error("could not check for a first account", "error", err)
@@ -104,11 +107,12 @@ func run(version string) error {
 
 // Build is the server over an opened database, with exts mounted on its
 // router: what run serves, and what editiontest serves to a closed package's
-// tests. ctx ending is the extensions' signal to let go of what they hold.
-func Build(ctx context.Context, cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, exts []edition.Extension, env func(string) string) (*httpapi.Server, http.Handler, error) {
+// tests. stop ends what the extensions hold; call it once the server has
+// stopped taking requests, before the database closes.
+func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, exts []edition.Extension, env func(string) string) (*httpapi.Server, http.Handler, func(), error) {
 	keys, err := team.NewKeys(cfg.ProviderKeysSecret)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	network := &team.Network{AllowPrivate: cfg.AllowPrivateProviders}
 	authn := &auth.Service{DB: client, Sealer: auth.NewSealer(cfg.AuthSecret, nil), Secret: cfg.AuthSecret}
@@ -133,13 +137,23 @@ func Build(ctx context.Context, cfg config.Config, client *ent.Client, conn *sql
 	host := edition.Host{
 		DB: conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
-		Users: NewUsers(client), Env: env, Done: ctx.Done(),
+		Users: NewUsers(client), Env: env,
 	}
-	for _, e := range exts {
-		if err := e.Mount(host); err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", e.Name, err)
+	var stops []func()
+	stop := func() {
+		for i := len(stops) - 1; i >= 0; i-- {
+			stops[i]()
 		}
 	}
-
-	return srv, srv.Handler(), nil
+	for _, e := range exts {
+		s, err := e.Mount(host)
+		if err != nil {
+			stop()
+			return nil, nil, nil, fmt.Errorf("%s: %w", e.Name, err)
+		}
+		if s != nil {
+			stops = append(stops, s)
+		}
+	}
+	return srv, srv.Handler(), stop, nil
 }

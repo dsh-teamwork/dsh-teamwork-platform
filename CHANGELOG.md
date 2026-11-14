@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-14 — The Go server has an extension point for a closed edition
+
+- **What:** `server/app` runs the server, and `cmd/dsh-teamwork` only calls `app.Main`. `server/edition` is what a closed package registers from its `init`: its own migrations per dialect, applied after the open history and recorded in `schema_migrations` as `<name>:<version>` (a set missing the running dialect stops the start), its routes on the server's mux, and a `stop` the server calls on shutdown before the database closes. The host lends it the database, Bearer and session verification, the same-origin check and an accounts interface. `server/edition/editiontest` serves the real server with extensions mounted, on each reachable database, for closed tests. The language check admits locale files a Go package embeds (`server/**/messages/*.json`); CI and the pre-push hook run every Go module's `e2e` directory; the workspace globs include `premium/server`. The community binary registers nothing.
+- **Why:** Phase 5 of `docs/tech/go-server.md`: the closed edition is the same binary with closed packages compiled in (ADR 0014).
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/app/`, `server/edition/`, `server/internal/db/migrate.go`, `docs/tech/go-server.md`.
+
 ## 2026-11-14 — Self-hosting runs the Go server: npx, release binaries and the image
 
 - **What:** `compose.yaml` runs one container built from `server/Dockerfile` (the console embedded, a static binary on distroless), with the SQLite file and the generated secrets in a volume and no `.env` required; Postgres is no longer part of it, and `DATABASE_URL` in a `.env` beside it points the server at Postgres or MySQL instead. `apps/web/Dockerfile` is gone. A tag `v<version>` runs `.github/workflows/release.yaml`, which publishes `@dsh-teamwork/server` and its five platform packages to npm (`npx @dsh-teamwork/server`), the five binaries with `SHA256SUMS` on a GitHub release, and `ghcr.io/dsh-teamwork/server` for amd64 and arm64. CI also runs the Go suites on SQLite, Postgres 16 and MySQL 8.4, the Go drift check per dialect, the DSH plugin's end-to-end test, and the packed release through `npx` on Linux, macOS and Windows; `server/` is a workspace package, so the gate needs Go.

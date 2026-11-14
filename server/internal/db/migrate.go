@@ -79,6 +79,11 @@ func Migrate(ctx context.Context, conn *sql.DB, d string, extra ...Set) error {
 		return err
 	}
 	for _, set := range extra {
+		// A set without this dialect's directory would start a server
+		// without its tables, to fail at their first query.
+		if _, err := fs.Stat(set.FS, Dirs[d]); err != nil {
+			return fmt.Errorf("migrate: %s has no migrations for %s", set.Name, d)
+		}
 		more, err := loadDir(set.FS, Dirs[d], set.Name+":")
 		if err != nil {
 			return fmt.Errorf("migrate: %s: %w", set.Name, err)

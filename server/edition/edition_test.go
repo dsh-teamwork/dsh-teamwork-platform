@@ -24,7 +24,7 @@ func probe(host *edition.Host) edition.Extension {
 			"postgres/20260101000000_init.sql": {Data: []byte(table)},
 			"mysql/20260101000000_init.sql":    {Data: []byte(table)},
 		},
-		Mount: func(h edition.Host) error {
+		Mount: func(h edition.Host) (func(), error) {
 			*host = h
 			h.Mux.HandleFunc("GET /probe", func(w http.ResponseWriter, r *http.Request) {
 				var who *edition.Identity
@@ -40,7 +40,7 @@ func probe(host *edition.Host) edition.Extension {
 				}
 				json.NewEncoder(w).Encode(who)
 			})
-			return nil
+			return nil, nil
 		},
 	}
 }
@@ -104,7 +104,8 @@ func TestExtension(t *testing.T) {
 		if err != nil || total != 1 || users[0].Email != "Grace@Example.com" {
 			t.Fatalf("search ignoring case: %+v %d %v", users, total, err)
 		}
-		if n, err := host.Users.Count(ctx, time.Now().Add(-time.Hour)); err != nil || n != 2 {
+		// A time in another zone counts the same: the stored times are UTC.
+		if n, err := host.Users.Count(ctx, time.Now().In(time.FixedZone("UTC+8", 8*3600)).Add(-time.Hour)); err != nil || n != 2 {
 			t.Fatalf("count: %d %v", n, err)
 		}
 		name2 := "Ada L."
