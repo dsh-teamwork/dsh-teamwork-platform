@@ -36,6 +36,7 @@ type env struct {
 type options struct {
 	allowPrivate bool
 	smtp         string
+	mailer       auth.Mailer
 	lookup       func(ctx context.Context, host string) ([]netip.Addr, error)
 }
 
@@ -56,6 +57,7 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 		Team:    teams,
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client()},
 	}
+	srv.Mailer = o.mailer
 	ts.Config.Handler = srv.Handler()
 	ts.Start()
 	t.Cleanup(ts.Close)

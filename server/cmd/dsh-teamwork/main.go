@@ -77,7 +77,8 @@ func run() error {
 		srv.Mailer = auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
 	}
 	if cfg.Google() {
-		srv.Google = auth.NewGoogle(cfg.GoogleID, cfg.GoogleSecret, cfg.AppURL, nil)
+		// A stalled Google must not hold a sign-in, and its goroutine, for ever.
+		srv.Google = auth.NewGoogle(cfg.GoogleID, cfg.GoogleSecret, cfg.AppURL, &http.Client{Timeout: 15 * time.Second})
 	}
 
 	if cfg.Passwords() {

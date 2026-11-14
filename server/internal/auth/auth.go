@@ -216,8 +216,11 @@ func (s *Service) ClaimFirstAccount(ctx context.Context, token, email, pw string
 		}
 		return nil, err
 	}
-	user, err := EnsureEmailUser(ctx, tx.Client(), addr)
+	user, _, err := EnsureEmailUser(ctx, tx, addr)
 	if err != nil {
+		if ent.IsConstraintError(err) {
+			return nil, refuse(wire.SetupClosed)
+		}
 		return nil, err
 	}
 	if err := tx.Password.Create().SetUserID(user.ID).SetHash(hash).Exec(ctx); err != nil {
@@ -232,10 +235,10 @@ func (s *Service) ClaimFirstAccount(ctx context.Context, token, email, pw string
 	return user, nil
 }
 
-// EnsureEmailUser is the account an address proves, made when it has none.
-func EnsureEmailUser(ctx context.Context, c *ent.Client, email string) (*ent.User, error) {
-	u, _, err := Account(ctx, c, EmailProof(email))
-	return u, err
+// EnsureEmailUser is the account an address proves, made when it has none,
+// inside the caller's transaction; created says whether it was just made.
+func EnsureEmailUser(ctx context.Context, tx *ent.Tx, email string) (*ent.User, bool, error) {
+	return AccountInTx(ctx, tx, EmailProof(email))
 }
 
 // MustChange is whether an admin-set password is still unchanged.

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/verificationcode"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -215,4 +216,10 @@ func TestCodeSendBurst(t *testing.T) {
 			t.Fatalf("stored codes: %d %v", n, err)
 		}
 	})
+}
+
+// ensureUser is the account an address proves, made when it has none.
+func ensureUser(ctx context.Context, c *ent.Client, email string) (*ent.User, error) {
+	u, _, err := auth.Account(ctx, c, auth.EmailProof(email))
+	return u, err
 }

@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — phases 0 and 1 done · **Updated:** 2026-11-14
+> **Status:** Plan — phases 0 to 2 done · **Updated:** 2026-11-14
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -142,6 +142,44 @@ The binary serves exactly what an installed plugin calls, end to end:
 **Verified by:** every case in today's 24 test files rewritten as Go tests and
 run on the three dialects; the parity run extended to every route; Google
 against a stub OAuth server in tests, and once by hand against the real one.
+
+**Done on 2026-11-14.** What the gate found:
+
+- **Checks on three dialects:** today's server-side test files are ported:
+  the team rules, the gateway and the provider network, the profile, the
+  configuration rules, emailed codes, passwords, the plugin hand-off, SMTP
+  against a fake server, Google through goth against a stub, and the
+  analytics table held to `docs/ops/analytics.md`. With phase 1's, 248 test
+  cases pass on SQLite, Postgres and MySQL, every answer against
+  `api/openapi.yaml`, and the plugin end-to-end test still passes. The
+  browser-side files (crawlers, the sitemap, the legal pages, browser
+  analytics) belong to phase 3.
+- **The parity run, on every route:** 66 of 69 requests answer the same. The
+  three that do not are the Node bug phase 1 found, now also on a rename
+  onto a name in use.
+- **What porting the tests found:** two first sign-ins racing with one new
+  Google account could fail one of them or leave the account made with no
+  sign-up reported. The account and its identity are now one transaction.
+- **The review** found ten things, all fixed. Three were in the Node server
+  too and came across with the port:
+  - a team admin adding an address could give a first password, which the
+    admin then knew, to an existing account that had none (one made through
+    Google), and so take it over with its place in every other team; only an
+    account made by that call now gets a first password;
+  - a code that could not be emailed still used up one of the address's five
+    sends, and stayed valid; it is now given back;
+  - editing a configuration could change its kind, taking a model a preset
+    uses past the in-use check; a kind no longer changes.
+
+  The rest were the port's own: a lost race inside a caller's transaction
+  answered 500 on Postgres, starting a transaction that failed for any reason
+  wrote without one, a long Google name stopped its owner signing in, a
+  failed Google callback left the browser on a JSON page, Google had no
+  timeout, the team list loaded every member to count them, and the
+  changelog. Testing the long-name fix found that the schema's limits
+  counted bytes where the API counts characters, so a Chinese team name of
+  34 characters was a server error; columns now hold four bytes per
+  character the API allows.
 
 ### Phase 3: the console
 

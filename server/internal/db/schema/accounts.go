@@ -16,7 +16,7 @@ func (User) Mixin() []ent.Mixin { return []ent.Mixin{Base{}, Updated{}} }
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("email").Optional().Nillable().Unique(),
-		field.String("name").Optional().Nillable().MaxLen(80),
+		field.String("name").Optional().Nillable().MaxLen(runes(80)),
 		field.String("image").Optional().Nillable().MaxLen(2048),
 		field.String("locale").Optional().Nillable().MaxLen(16),
 	}

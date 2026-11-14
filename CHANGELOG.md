@@ -5,12 +5,12 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
-## 2026-11-14 — The Go server's first slice, and the console beside it
+## 2026-11-14 — The Go server serves the whole API, and the console beside it
 
-- **What:** `server/` is the Go binary of ADR 0014, with `apps/console`, a Vite and React console built into it. It serves what the DSH plugin calls: the first account's setup link, password sign-in, `/plugin` and the token exchange, creating a team, a provider and a configuration, `GET /api/configs` and the model gateway, on SQLite, Postgres or MySQL. `api/openapi.yaml` describes those routes. Not deployed: the Node server still serves every instance.
-- **Why:** Phase 1 of `docs/tech/go-server.md`, the slice that gates the rest of the move.
+- **What:** `server/` is the Go binary of ADR 0014, with `apps/console`, a Vite and React console built into it. It serves every route of `apps/web`'s API, described in `api/openapi.yaml`, on SQLite, Postgres or MySQL: the first account's setup link, password sign-in, emailed codes over SMTP, Google (through `github.com/markbates/goth`, at Auth.js's callback path `/api/auth/callback/google`), `/plugin` and the token exchange, teams, members, invitations, configurations, providers, the model catalogue, the profile, `GET /api/configs` and the model gateway, with server analytics to PostHog. An account is no longer its email: an `identities` table records each door, and a Google sign-in with a verified email joins the account that address has. The console has only the sign-in pages so far. Not deployed: the Node server still serves every instance.
+- **Why:** Phases 1 and 2 of `docs/tech/go-server.md`.
 - **Breaking:** None. Nothing runs the binary yet.
-- **Upgrade:** Nothing. For the binary, when it is deployed: `DATABASE_URL` also takes `mysql://` and `sqlite:///path`, and with none the database is SQLite in the data directory (`--data`, default `~/.dsh-teamwork`), which also holds `secrets.json`, written on first start; `HOST` and `--host` choose the address, loopback by default; `AUTH_SECRET` must be at least 32 characters.
+- **Upgrade:** Nothing. For the binary, when it is deployed: `DATABASE_URL` also takes `mysql://` and `sqlite:///path`, and with none the database is SQLite in the data directory (`--data`, default `~/.dsh-teamwork`), which also holds `secrets.json`, written on first start; `HOST` and `--host` choose the address, loopback by default; `AUTH_SECRET` must be at least 32 characters; `AUTH_EMAIL_FROM`, `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` keep their meaning; analytics read `POSTHOG_KEY` and `POSTHOG_HOST` in place of `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST`.
 - **Refs:** `docs/adr/0014-one-go-binary.md`, `docs/tech/go-server.md`, `server/`, `apps/console/`, `api/openapi.yaml`.
 
 ## 2026-11-13 — The team console gets a sidebar and a page per task

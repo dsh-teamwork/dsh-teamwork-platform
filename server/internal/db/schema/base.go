@@ -46,3 +46,8 @@ func (Updated) Fields() []ent.Field {
 
 // cascade deletes the rows that point at a parent with it.
 var cascade = entsql.OnDelete(entsql.Cascade)
+
+// runes is the column size for a field the API limits to n characters. ent's
+// MaxLen counts bytes, and a character is up to four in UTF-8, so a limit in
+// characters is the API's (internal/wire) and the column only has to hold it.
+func runes(n int) int { return 4 * n }

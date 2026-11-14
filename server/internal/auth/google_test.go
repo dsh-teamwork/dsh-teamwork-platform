@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"sync"
 	"testing"
 
@@ -96,7 +97,7 @@ func googleProof(id, email string) auth.Proof {
 func TestGoogleJoinsTheEmailAccount(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		ctx := context.Background()
-		existing, err := auth.EnsureEmailUser(ctx, d.Client, "ada@example.test")
+		existing, err := ensureUser(ctx, d.Client, "ada@example.test")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -158,6 +159,23 @@ func TestConcurrentFirstGoogleSignIn(t *testing.T) {
 		users, err := d.Client.User.Query().Where(user.Email("race@example.test")).Count(ctx)
 		if err != nil || users != 1 || createdCount != 1 {
 			t.Fatalf("users %d (err %v), created=true %d times; want 1 and 1", users, err, createdCount)
+		}
+	})
+}
+
+// A long Google display name or picture address does not stop its owner
+// signing in: the name is cut to what the profile holds, the picture dropped.
+func TestLongGoogleProfileStillSignsIn(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		email := "long@example.test"
+		name := strings.Repeat("名", 120)
+		image := "https://example.test/" + strings.Repeat("p", 3000)
+		u, created, err := auth.Account(context.Background(), d.Client, auth.Proof{Provider: "google", Subject: "g-long", Email: &email, Name: &name, Image: &image})
+		if err != nil || !created {
+			t.Fatalf("created %v: %v", created, err)
+		}
+		if u.Name == nil || len([]rune(*u.Name)) != 80 || u.Image != nil {
+			t.Fatalf("name %v, image %v", u.Name, u.Image)
 		}
 	})
 }

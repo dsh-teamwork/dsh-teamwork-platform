@@ -35,6 +35,17 @@ func (s *Service) UpdateConfig(ctx context.Context, userID, teamID, configID str
 	if err != nil {
 		return ConfigView{}, err
 	}
+	// A configuration keeps its kind: a model a preset references must not
+	// become a plugin, which would also take it past the in-use checks.
+	current, err := s.DB.TeamConfig.Query().Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID)).Only(ctx)
+	if err != nil && !ent.IsNotFound(err) {
+		return ConfigView{}, err
+	}
+	if current != nil && string(current.Kind) != in.Kind {
+		var is wire.Issues
+		is.Add("A configuration's kind does not change", "kind")
+		return ConfigView{}, is.Err()
+	}
 	if err := s.checkReferences(ctx, admin.TeamID, &in.ConfigInput); err != nil {
 		return ConfigView{}, err
 	}

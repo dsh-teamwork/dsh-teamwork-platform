@@ -154,7 +154,7 @@ var (
 	TeamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "name", Type: field.TypeString, Size: 400},
 	}
 	// TeamsTable holds the schema information for the "teams" table.
 	TeamsTable = &schema.Table{
@@ -168,7 +168,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"model", "preset", "plugin"}},
-		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "name", Type: field.TypeString, Size: 400},
 		{Name: "data", Type: field.TypeJSON},
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "team_id", Type: field.TypeString, Size: 32},
@@ -199,7 +199,7 @@ var (
 		{Name: "id", Type: field.TypeString, Size: 32},
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "name", Type: field.TypeString, Size: 400},
 		{Name: "base_url", Type: field.TypeString, Size: 500},
 		{Name: "key_cipher", Type: field.TypeString, Size: 2147483647},
 		{Name: "team_id", Type: field.TypeString, Size: 32},
@@ -231,7 +231,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "email", Type: field.TypeString, Unique: true, Nullable: true},
-		{Name: "name", Type: field.TypeString, Nullable: true, Size: 80},
+		{Name: "name", Type: field.TypeString, Nullable: true, Size: 320},
 		{Name: "image", Type: field.TypeString, Nullable: true, Size: 2048},
 		{Name: "locale", Type: field.TypeString, Nullable: true, Size: 16},
 	}

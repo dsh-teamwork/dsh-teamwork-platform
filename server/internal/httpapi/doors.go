@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"log/slog"
@@ -34,6 +35,11 @@ func (s *Server) sendCode(w http.ResponseWriter, r *http.Request) error {
 	if err := s.Mailer.SendCode(r.Context(), email, code); err != nil {
 		// The server's reply, never the message: it carries the code.
 		slog.Error("SMTP refused a sign-in code", "error", err)
+		// A code that never left is given back: it does not count against the
+		// address, and it cannot be used.
+		if err := s.Auth.ReturnCode(context.WithoutCancel(r.Context()), email, code); err != nil {
+			slog.Error("an unsent sign-in code was not given back", "error", err)
+		}
 		return &auth.Refusal{Code: wire.Unavailable}
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -136,15 +142,17 @@ func (s *Server) googleCallback(w http.ResponseWriter, r *http.Request) error {
 		slog.Error("Google sign-in failed", "error", err)
 		return s.signInFailed(w, r, wire.Unavailable)
 	}
+	// A browser is on this page: a failure goes back to the form, worded there.
 	user, created, err := auth.Account(r.Context(), s.Auth.DB, proof)
-	if err != nil {
-		return err
-	}
-	if created {
+	if err == nil && created {
 		s.Analytics.Capture(user.ID, "user_signed_up", map[string]any{"via": "google", "client": "web"})
 	}
-	if err := s.startSession(w, user, "google"); err != nil {
-		return err
+	if err == nil {
+		err = s.startSession(w, user, "google")
+	}
+	if err != nil {
+		slog.Error("Google sign-in failed", "error", err)
+		return s.signInFailed(w, r, wire.Unavailable)
 	}
 	http.Redirect(w, r, wire.ReturnPath(claims.Next, "/teams"), http.StatusFound)
 	return nil

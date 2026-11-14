@@ -36,7 +36,7 @@ func TestCheckPasswordAnswers(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		ctx := context.Background()
 		s := newService(d, newClock())
-		u, err := auth.EnsureEmailUser(ctx, d.Client, "a@example.test")
+		u, err := ensureUser(ctx, d.Client, "a@example.test")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -62,7 +62,7 @@ func TestSetPasswordClearsGuessesAndCarriesMustChange(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		ctx := context.Background()
 		s := newService(d, newClock())
-		u, err := auth.EnsureEmailUser(ctx, d.Client, "a@example.test")
+		u, err := ensureUser(ctx, d.Client, "a@example.test")
 		if err != nil {
 			t.Fatal(err)
 		}

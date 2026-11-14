@@ -107,3 +107,14 @@ func (s *Service) ConsumeCode(ctx context.Context, email, code string) error {
 	_, err = s.DB.VerificationCode.Delete().Where(verificationcode.Email(email)).Exec(ctx)
 	return err
 }
+
+// ReturnCode undoes IssueCode for a code that could not be sent: the code is
+// deleted, and the send it spent is given back to the address's window.
+func (s *Service) ReturnCode(ctx context.Context, email, code string) error {
+	if _, err := s.DB.VerificationCode.Delete().
+		Where(verificationcode.Email(email), verificationcode.CodeHash(s.codeHash(email, code))).Exec(ctx); err != nil {
+		return err
+	}
+	_, err := s.DB.RateWindow.Update().Where(ratewindow.Key("code:"+email), ratewindow.CountGT(0)).AddCount(-1).Save(ctx)
+	return err
+}

@@ -17,7 +17,7 @@ var verifier = strings.Repeat("v", 50)
 func handoff(t *testing.T, s *auth.Service, d *testdb.DB) (userID, code string) {
 	t.Helper()
 	ctx := context.Background()
-	u, err := auth.EnsureEmailUser(ctx, d.Client, "a@example.test")
+	u, err := ensureUser(ctx, d.Client, "a@example.test")
 	if err != nil {
 		t.Fatal(err)
 	}

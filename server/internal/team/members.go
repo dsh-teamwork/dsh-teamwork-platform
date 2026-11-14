@@ -7,7 +7,6 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
@@ -21,15 +20,30 @@ type Summary struct {
 
 // TeamsOf is every team the caller is in, the ones they joined first first.
 func (s *Service) TeamsOf(ctx context.Context, userID string) ([]Summary, error) {
-	ms, err := s.DB.Membership.Query().Where(membership.UserID(userID)).
-		WithTeam(func(q *ent.TeamQuery) { q.WithMemberships() }).
+	ms, err := s.DB.Membership.Query().Where(membership.UserID(userID)).WithTeam().
 		Order(ent.Asc(membership.FieldCreatedAt), ent.Asc(membership.FieldID)).All(ctx)
 	if err != nil {
 		return nil, err
 	}
+	ids := make([]string, 0, len(ms))
+	for _, m := range ms {
+		ids = append(ids, m.TeamID)
+	}
+	var counts []struct {
+		TeamID string `json:"team_id"`
+		Count  int    `json:"count"`
+	}
+	if err := s.DB.Membership.Query().Where(membership.TeamIDIn(ids...)).
+		GroupBy(membership.FieldTeamID).Aggregate(ent.Count()).Scan(ctx, &counts); err != nil {
+		return nil, err
+	}
+	members := map[string]int{}
+	for _, c := range counts {
+		members[c.TeamID] = c.Count
+	}
 	out := make([]Summary, 0, len(ms))
 	for _, m := range ms {
-		out = append(out, Summary{ID: m.TeamID, Name: m.Edges.Team.Name, Role: string(m.Role), MemberCount: len(m.Edges.Team.Edges.Memberships)})
+		out = append(out, Summary{ID: m.TeamID, Name: m.Edges.Team.Name, Role: string(m.Role), MemberCount: members[m.TeamID]})
 	}
 	return out, nil
 }
@@ -112,8 +126,8 @@ func passwordsOff() error { return wire.E(http.StatusBadRequest, "passwords_off"
 
 // AddMember is an admin adding someone by email, where the instance holds
 // passwords (ADR 0006). A new account gets a first password its owner must
-// change at first sign-in; an existing one, whatever other teams it is in,
-// keeps its own.
+// change at first sign-in; an existing one, whatever other teams it is in
+// and whether or not it has a password, is added as it is.
 func (s *Service) AddMember(ctx context.Context, userID, teamID string, in wire.AddMember) (AddedMember, error) {
 	if !s.Passwords {
 		return AddedMember{}, passwordsOff()
@@ -132,7 +146,7 @@ func (s *Service) AddMember(ctx context.Context, userID, teamID string, in wire.
 		return AddedMember{}, err
 	}
 	defer tx.Rollback()
-	user, err := auth.EnsureEmailUser(ctx, tx.Client(), in.Email)
+	user, created, err := auth.EnsureEmailUser(ctx, tx, in.Email)
 	if err != nil {
 		return AddedMember{}, conflict(err, "member_in_team")
 	}
@@ -142,12 +156,12 @@ func (s *Service) AddMember(ctx context.Context, userID, teamID string, in wire.
 		}
 		return AddedMember{}, err
 	}
-	has, err := tx.Password.Query().Where(password.UserID(user.ID)).Exist(ctx)
-	if err != nil {
-		return AddedMember{}, err
-	}
 	out := AddedMember{UserID: user.ID, Email: in.Email}
-	if !has {
+	// Only an account made here gets a first password. An existing one keeps
+	// whatever doors it has: one with no password (signed up with Google)
+	// must not get one an admin knows, or the admin would hold that account
+	// and its place in every other team (ADR 0013).
+	if created {
 		if err := tx.Password.Create().SetUserID(user.ID).SetHash(hash).SetMustChange(true).Exec(ctx); err != nil {
 			return AddedMember{}, conflict(err, "member_in_team")
 		}

@@ -14,7 +14,7 @@ type Team struct{ ent.Schema }
 
 func (Team) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
 func (Team) Fields() []ent.Field {
-	return []ent.Field{field.String("name").MaxLen(100)}
+	return []ent.Field{field.String("name").MaxLen(runes(100))}
 }
 func (Team) Edges() []ent.Edge {
 	return []ent.Edge{
@@ -55,7 +55,7 @@ func (TeamConfig) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("team_id").MaxLen(32),
 		field.Enum("kind").Values("model", "preset", "plugin"),
-		field.String("name").MaxLen(100),
+		field.String("name").MaxLen(runes(100)),
 		field.JSON("data", json.RawMessage{}),
 		field.Int("version").Default(1),
 	}
@@ -75,7 +75,7 @@ func (TeamProvider) Mixin() []ent.Mixin { return []ent.Mixin{Base{}, Updated{}} 
 func (TeamProvider) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("team_id").MaxLen(32),
-		field.String("name").MaxLen(100),
+		field.String("name").MaxLen(runes(100)),
 		field.String("base_url").MaxLen(500),
 		field.Text("key_cipher"),
 	}
