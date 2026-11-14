@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — phases 0 to 4 done · **Updated:** 2026-11-14
+> **Status:** Plan — phases 0 to 4 done, 5 built and waiting on the hosted move · **Updated:** 2026-11-14
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -333,6 +333,49 @@ three databases; the route index held to the routes by a test; the plugin's
 own relay client, unchanged, pairing a phone and passing a call through the
 closed binary; the hosted service answering the plugin end-to-end test after
 the move.
+
+**Built on 2026-11-14; the move waits for the developer.** What the gate
+found:
+
+- **The extension point** is `server/app` and `server/edition`, as planned.
+  An extension's `Mount` returns the `stop` the server calls after it stops
+  taking requests and before the database closes; a migration set without the
+  running dialect's directory stops the start. Its test runs a probe
+  extension on the three databases: its migration recorded under its name,
+  its route inside the security headers, Bearer and session each opening only
+  their own kind of token, and the accounts interface.
+- **The relay**: the Node relay's four suites (pairing, the plugin's socket,
+  forwarding, push) ported and passing on SQLite, Postgres and MySQL under the
+  race detector, and the plugin's own relay client, unchanged, pairing a phone,
+  passing a call and a revocation through the closed binary on all three.
+- **The operator console**: the Next console's guard, allow-list, index and
+  route tests ported and passing on the three databases; the pages driven in
+  Chromium (sign-in, denied, dashboard, users, search, rename, theme, the phone
+  drawer) with no error under their Content Security Policy.
+- **The closed image** built and run locally: the pages, `/privacy`,
+  `/manage` and `/api/relay` answered, and the community binary answers 404
+  on `/api/relay` and `/api/admin/*`.
+- **The review** found ten things; nine are fixed:
+  - a fresh checkout could not build the closed module: the console's
+    placeholder was ignored by git;
+  - the accounts count compared a local time with UTC times on SQLite;
+  - a relay socket that sent no hello saw no close code, the library
+    dropping the connection when a read's deadline passed;
+  - replacing a computer's socket held the new one's welcome behind the old
+    one's close handshake;
+  - an open relay socket was never checked again: a member who left every
+    team kept it; it is now checked at every ping;
+  - the console's writes had a same-origin rule of their own, looser than the
+    server's;
+  - the admin API's document described a 405 the router never sends;
+  - extensions had no way to finish before the database closed, which the
+    tests' cleanup raced;
+  - and a migration set missing a dialect started a server without its
+    tables.
+
+  The tenth, that a Google sign-in started from the console returns to the
+  member sign-in page when it fails, stays: the console's page no longer
+  claims to show that error.
 
 ### Phase 6: delete the Node server
 
