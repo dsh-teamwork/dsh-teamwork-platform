@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
@@ -169,6 +170,9 @@ func (s *Service) AddMember(ctx context.Context, userID, teamID string, in wire.
 	}
 	if err := tx.Membership.Create().SetUserID(user.ID).SetTeamID(admin.TeamID).SetRole(membership.RoleMember).Exec(ctx); err != nil {
 		return AddedMember{}, conflict(err, "member_in_team")
+	}
+	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.MemberJoined, TeamID: admin.TeamID, UserID: user.ID, ActorID: userID}); err != nil {
+		return AddedMember{}, err
 	}
 	return out, conflict(tx.Commit(), "member_in_team")
 }

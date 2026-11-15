@@ -13,6 +13,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
@@ -31,6 +32,14 @@ type Service struct {
 	// admin creates members' accounts rather than inviting them.
 	Passwords bool
 	Now       func() time.Time
+	Changed   func(context.Context, *ent.Client, edition.TeamChange) error
+}
+
+func (s *Service) changed(ctx context.Context, db *ent.Client, change edition.TeamChange) error {
+	if s.Changed == nil {
+		return nil
+	}
+	return s.Changed(ctx, db, change)
 }
 
 func (s *Service) now() time.Time {
@@ -79,6 +88,9 @@ func (s *Service) CreateTeam(ctx context.Context, userID string, in wire.CreateT
 		return Created{}, err
 	}
 	if err := tx.Membership.Create().SetUserID(userID).SetTeamID(t.ID).SetRole(membership.RoleAdmin).Exec(ctx); err != nil {
+		return Created{}, err
+	}
+	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.TeamCreated, TeamID: t.ID, UserID: userID, ActorID: userID}); err != nil {
 		return Created{}, err
 	}
 	return Created{ID: t.ID, Name: t.Name}, tx.Commit()

@@ -133,7 +133,7 @@ func (s *Service) resolve(ctx context.Context, teamID, actorID, requestID string
 		return wire.E(http.StatusBadRequest, "usage_resolution_points_required")
 	}
 	if owner != "" {
-		if err := participate(db, teamID, owner, func(tx edition.SQLExecutor) error {
+		if err := Participate(db, teamID, owner, func(tx edition.SQLExecutor) error {
 			return s.Funding[owner].Settle(ctx, tx, edition.FundingSettlement{RequestID: current.ID, TeamID: teamID, Units: *amount, Tokens: in.Tokens, Estimated: true, ActorID: actorID, Reason: in.Reason})
 		}); err != nil {
 			return err

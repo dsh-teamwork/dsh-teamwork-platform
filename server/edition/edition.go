@@ -85,7 +85,24 @@ type Host struct {
 	// Operator-only recovery. Team APIs never receive this capability.
 	ResolveFundingUsage func(context.Context, string, string, string, string, string, Tokens) error
 	WithTeamTx          func(context.Context, string, func(SQLExecutor) error) error
+	// SubscribeTeams runs inside a successful team creation or member join.
+	// Handlers access only their own tables, perform no network I/O, and return
+	// errors to roll back both the membership and their changes. Mount-only.
+	SubscribeTeams func(TeamChangeHandler) error
 }
+
+// TeamChange identifies a real committed transition, never a browser claim.
+// Creation includes the creator's initial membership; it emits no separate join.
+type TeamChange struct {
+	Kind, TeamID, UserID, ActorID string
+}
+
+const (
+	TeamCreated  = "created"
+	MemberJoined = "joined"
+)
+
+type TeamChangeHandler func(context.Context, SQLExecutor, TeamChange) error
 
 // Extension is one closed feature.
 type Extension struct {

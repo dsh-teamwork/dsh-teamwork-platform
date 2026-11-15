@@ -36,7 +36,10 @@ func (t *fundingTx) QueryContext(ctx context.Context, q string, args ...any) (*s
 	}
 	return t.db.QueryContext(ctx, q, args...)
 }
-func participate(db *ent.Client, teamID, owner string, fn func(edition.SQLExecutor) error) error {
+
+// Participate borrows an existing transaction owned by the public caller. It
+// neither starts nor commits one, including for a team not yet visible to peers.
+func Participate(db *ent.Client, teamID, owner string, fn func(edition.SQLExecutor) error) error {
 	t := &fundingTx{db: db, teamID: teamID, owner: owner}
 	t.active.Store(true)
 	defer t.active.Store(false)
@@ -53,7 +56,7 @@ func (s *Service) WithTeamTx(ctx context.Context, teamID string, fn func(edition
 	if err := lockTeam(ctx, tx.Client(), teamID); err != nil {
 		return err
 	}
-	if err := participate(tx.Client(), teamID, "", fn); err != nil {
+	if err := Participate(tx.Client(), teamID, "", fn); err != nil {
 		return err
 	}
 	return tx.Commit()
@@ -82,7 +85,7 @@ func (s *Service) RegisterFunding(owner string, p edition.ModelFunding) (edition
 			if err := lockTeam(ctx, tx.Client(), teamID); err != nil {
 				return err
 			}
-			if err := participate(tx.Client(), teamID, owner, fn); err != nil {
+			if err := Participate(tx.Client(), teamID, owner, fn); err != nil {
 				return err
 			}
 			return tx.Commit()

@@ -141,6 +141,20 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	}
 
 	srv.Mux = http.NewServeMux()
+	var teamHandlers []struct {
+		owner  string
+		handle edition.TeamChangeHandler
+	}
+	teams.Changed = func(ctx context.Context, db *ent.Client, change edition.TeamChange) error {
+		for _, subscriber := range teamHandlers {
+			if err := usage.Participate(db, change.TeamID, subscriber.owner, func(tx edition.SQLExecutor) error {
+				return subscriber.handle(ctx, tx, change)
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	host := edition.Host{
 		DB: conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
@@ -170,6 +184,18 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	}
 	for _, e := range exts {
 		host.RegisterFunding = func(p edition.ModelFunding) (edition.FundingHost, error) { return meter.RegisterFunding(e.Name, p) }
+		subscribed := false
+		host.SubscribeTeams = func(handle edition.TeamChangeHandler) error {
+			if handle == nil || subscribed {
+				return errors.New("invalid or duplicate team subscription")
+			}
+			subscribed = true
+			teamHandlers = append(teamHandlers, struct {
+				owner  string
+				handle edition.TeamChangeHandler
+			}{e.Name, handle})
+			return nil
+		}
 		s, err := e.Mount(host)
 		if err != nil {
 			stop()

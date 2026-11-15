@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Transactional edition team provisioning
+
+- **What:** Edition subscribers receive actual team creation and member joins inside the public mutation transaction, through an owner-scoped borrowed SQL executor. Creation includes the true creator and emits no additional join. Both member-addition paths propagate callback failure before commit.
+- **Why:** Edition records must not be lost after a membership commits or duplicated by browser retries.
+- **Upgrade:** No schema change or community subscriber. Handlers run only for new mutations and must keep SQL work short; external work requires an extension-owned durable work item.
+- **Refs:** `docs/adr/0020-transactional-team-events.md`.
+
 ## 2026-11-15 — Optional model funding shares budget transactions
 
 - **What:** A named edition participant supplies protected model routes and immutable retail quotes, then reserves and settles through the public accounting transaction. The host lends a transaction-bound executor, team permissions and scoped model publication. Missing participants fail closed; BYOK never invokes funding. Hosted reconciliation is operator-only, and every strict request retains its admitted bounds even without a team policy. The console displays protected prices as read-only.

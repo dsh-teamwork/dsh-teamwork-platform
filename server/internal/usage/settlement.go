@@ -69,7 +69,7 @@ func (s *Service) settle(ctx context.Context, request *ent.UsageRequest, observa
 			if p == nil || units == nil {
 				return errors.New("funding participant unavailable for settlement")
 			}
-			if err := participate(db, current.TeamID, current.RouteOwner, func(tx edition.SQLExecutor) error {
+			if err := Participate(db, current.TeamID, current.RouteOwner, func(tx edition.SQLExecutor) error {
 				return p.Settle(ctx, tx, edition.FundingSettlement{RequestID: current.ID, TeamID: current.TeamID, Units: *units, Tokens: observation.Tokens})
 			}); err != nil {
 				return err

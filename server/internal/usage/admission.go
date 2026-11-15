@@ -229,7 +229,7 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 	}
 	if call.Owner != "" {
 		in := edition.FundingAdmission{RequestID: request.ID, TeamID: call.TeamID, UserID: call.UserID, ConfigID: call.ConfigID, Reference: call.Reference, Model: call.Model, RateID: rateID, HeldUnits: heldUnits}
-		if err := participate(db, call.TeamID, call.Owner, func(tx edition.SQLExecutor) error { return s.Funding[call.Owner].Reserve(ctx, tx, in) }); err != nil {
+		if err := Participate(db, call.TeamID, call.Owner, func(tx edition.SQLExecutor) error { return s.Funding[call.Owner].Reserve(ctx, tx, in) }); err != nil {
 			return nil, err
 		}
 	}

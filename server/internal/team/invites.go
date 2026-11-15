@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
@@ -123,6 +124,9 @@ func (s *Service) RedeemInvite(ctx context.Context, userID string, in wire.Redee
 	}
 	if err := tx.Membership.Create().SetUserID(userID).SetTeamID(i.TeamID).SetRole(membership.RoleMember).Exec(ctx); err != nil {
 		return "", conflict(err, "already_in_team")
+	}
+	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.MemberJoined, TeamID: i.TeamID, UserID: userID, ActorID: userID}); err != nil {
+		return "", err
 	}
 	return i.TeamID, conflict(tx.Commit(), "already_in_team")
 }
