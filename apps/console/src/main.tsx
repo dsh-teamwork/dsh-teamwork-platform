@@ -1,15 +1,15 @@
 import './globals.css';
 
-import { lazy, StrictMode, Suspense } from 'react';
+import { lazy, StrictMode, Suspense, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
+import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'react-router';
 import { Toaster } from 'sonner';
 import { IntlProvider } from 'use-intl';
 
 import { startAnalytics } from '@/lib/analytics';
 import { Loading } from '@/components/page';
 import { currentLocale } from '@/lib/locale';
-import { RequireUser, SessionProvider } from '@/lib/session';
+import { RequireUser, SessionProvider, useSession } from '@/lib/session';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
 
@@ -33,6 +33,18 @@ const TeamsPage = lazy(() => import('@/pages/teams').then((m) => ({ default: m.T
 const locale = currentLocale();
 document.documentElement.lang = locale;
 void startAnalytics();
+
+// A sign-in return can target an edition's separately embedded app. Let the
+// server load that document rather than treating it as an unknown public page.
+function FallbackPage() {
+  const { session } = useSession();
+  const location = useLocation();
+  const edition = session.teamPages.some((page) => location.pathname.startsWith(page.path));
+  useEffect(() => {
+    if (edition) window.location.replace(`${location.pathname}${location.search}${location.hash}`);
+  }, [edition, location]);
+  return edition ? <Loading /> : <Navigate to="/teams" replace />;
+}
 
 const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/teams" replace /> },
@@ -60,7 +72,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-  { path: '*', element: <Navigate to="/teams" replace /> },
+  { path: '*', element: <FallbackPage /> },
 ]);
 
 createRoot(document.getElementById('root')!).render(

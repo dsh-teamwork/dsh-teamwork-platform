@@ -9,7 +9,7 @@ import { ChartNoAxesCombined, Check, ChevronsUpDown, Cpu, Gauge, Layers, LayoutG
 import { DropdownMenu } from 'radix-ui';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
-import { useTranslations } from 'use-intl';
+import { useLocale, useTranslations } from 'use-intl';
 
 import { LocalePicker } from '@/components/locale-picker';
 import type { Team, TeamSummary } from '@/lib/api';
@@ -52,7 +52,8 @@ export function ConsoleShell({
   const t = useTranslations('team');
   const tc = useTranslations('common');
   const tp = useTranslations('password');
-  const { signOut } = useSession();
+  const { signOut, session } = useSession();
+  const locale = useLocale();
   const section = sectionOf(useLocation().pathname, team.id);
 
   return (
@@ -73,6 +74,12 @@ export function ConsoleShell({
               <Icon className="size-4" aria-hidden />
               {t(`nav.${key}`)}
             </Link>
+          ))}
+          {session.teamPages.map((page) => (
+            <a key={page.path} href={`${page.path}${encodeURIComponent(team.id)}`} className="flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm hover:bg-accent">
+              <LayoutGrid className="size-4" aria-hidden />
+              {page.labels[locale === 'zh-CN' ? 'zh-CN' : 'en']}
+            </a>
           ))}
         </nav>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-sm text-muted-foreground md:mt-auto md:flex-col md:flex-nowrap md:items-stretch">

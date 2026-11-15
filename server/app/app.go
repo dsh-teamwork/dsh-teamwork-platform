@@ -13,9 +13,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
@@ -159,7 +161,26 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		DB: conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		Users: NewUsers(client), Env: env,
-		WithTeamTx:          meter.WithTeamTx,
+		WithTeamTx: meter.WithTeamTx,
+		AddTeamPage: func(page edition.TeamPage) error {
+			if !regexp.MustCompile(`^/[a-z][a-z0-9/-]*/$`).MatchString(page.Path) || len(page.Path) > 100 || len(page.Labels) != 2 {
+				return errors.New("invalid edition team page")
+			}
+			labels := map[string]string{}
+			for _, locale := range []string{"en", "zh-CN"} {
+				if n := utf8.RuneCountInString(page.Labels[locale]); n < 1 || n > 60 {
+					return errors.New("invalid edition team page label")
+				}
+				labels[locale] = page.Labels[locale]
+			}
+			for _, old := range srv.TeamPages {
+				if old.Path == page.Path {
+					return errors.New("duplicate edition team page")
+				}
+			}
+			srv.TeamPages = append(srv.TeamPages, edition.TeamPage{Path: page.Path, Labels: labels})
+			return nil
+		},
 		ResolveFundingUsage: meter.ResolveFunding,
 		TeamExists: func(ctx context.Context, id string) (bool, error) {
 			_, err := client.Team.Get(ctx, id)

@@ -19,6 +19,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0017](0017-community-budget-reservations.md) — atomic scope reservations, calendar windows, explicit recovery and transactional budget notifications.
 - [0018](0018-atomic-model-funding.md) — protected model routes and optional funding share the public accounting transaction.
 - [0020](0020-transactional-team-events.md) — edition provisioning joins real team creation and member insertion transactions.
+- [0022](0022-edition-team-navigation.md) — registered same-origin team pages appear in the console and survive sign-in returns without closed route imports.
 
 The template:
 

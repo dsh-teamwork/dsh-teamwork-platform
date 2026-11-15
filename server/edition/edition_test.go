@@ -130,3 +130,38 @@ func TestExtension(t *testing.T) {
 		}
 	})
 }
+
+func TestEditionTeamNavigationIsSameOriginAndCopied(t *testing.T) {
+	ext := edition.Extension{Name: "navigation", Mount: func(h edition.Host) (func(), error) {
+		labels := map[string]string{"en": "Team tools", "zh-CN": "Team tools"}
+		for _, path := range []string{"https://outside.test/", "//outside.test/", "/tools/../", "/tools/?next=", "/tools\\outside/"} {
+			if err := h.AddTeamPage(edition.TeamPage{Path: path, Labels: labels}); err == nil {
+				t.Fatalf("accepted unsafe edition path %q", path)
+			}
+		}
+		if err := h.AddTeamPage(edition.TeamPage{Path: "/tools/teams/", Labels: labels}); err != nil {
+			return nil, err
+		}
+		labels["en"] = "Mutated after registration"
+		if err := h.AddTeamPage(edition.TeamPage{Path: "/tools/teams/", Labels: labels}); err == nil {
+			t.Fatal("duplicate navigation registered")
+		}
+		return nil, nil
+	}}
+	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
+		res, err := http.Get(in.URL + "/api/auth/session")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		var body struct {
+			TeamPages []edition.TeamPage `json:"teamPages"`
+		}
+		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		if res.StatusCode != 200 || len(body.TeamPages) != 1 || body.TeamPages[0].Labels["en"] != "Team tools" {
+			t.Fatalf("navigation: %d %+v", res.StatusCode, body)
+		}
+	})
+}

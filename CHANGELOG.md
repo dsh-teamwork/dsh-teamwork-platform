@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Edition team pages in console navigation
+
+- **What:** Installed editions register same-origin team page prefixes and localized labels. Session metadata exposes the entries, the sidebar keeps the selected team, and public sign-in returns load the edition document instead of falling through to the team list.
+- **Why:** Separately embedded member apps need a discoverable entry without importing closed code or introducing another authentication flow.
+- **Upgrade:** Session responses include an empty `teamPages` array on community installations. Navigation registration grants no API permissions.
+- **Refs:** `docs/adr/0022-edition-team-navigation.md`.
+
 ## 2026-11-15 — Transactional edition team provisioning
 
 - **What:** Edition subscribers receive actual team creation and member joins inside the public mutation transaction, through an owner-scoped borrowed SQL executor. Creation includes the true creator and emits no additional join. Both member-addition paths propagate callback failure before commit.

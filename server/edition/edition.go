@@ -89,6 +89,14 @@ type Host struct {
 	// Handlers access only their own tables, perform no network I/O, and return
 	// errors to roll back both the membership and their changes. Mount-only.
 	SubscribeTeams func(TeamChangeHandler) error
+	// AddTeamPage adds an edition-owned, same-origin team navigation entry.
+	// Path is a fixed absolute prefix ending in /; the console appends team id.
+	AddTeamPage func(TeamPage) error
+}
+
+type TeamPage struct {
+	Path   string            `json:"path"`
+	Labels map[string]string `json:"labels"`
 }
 
 // TeamChange identifies a real committed transition, never a browser claim.

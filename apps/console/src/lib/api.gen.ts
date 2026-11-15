@@ -2032,6 +2032,13 @@ export interface components {
             };
             setupOpen: boolean;
             mobileRedirectPrefix: string;
+            teamPages: {
+                path: string;
+                labels: {
+                    en: string;
+                    "zh-CN": string;
+                };
+            }[];
         };
         PasswordSignIn: {
             email: string;

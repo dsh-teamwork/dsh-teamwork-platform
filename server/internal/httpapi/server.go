@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
@@ -30,7 +31,8 @@ type Server struct {
 	Web       http.Handler
 	// Mux, when set, is the router Handler adds its routes to: one a closed
 	// edition has already added its own to (server/edition).
-	Mux *http.ServeMux
+	Mux       *http.ServeMux
+	TeamPages []edition.TeamPage
 }
 
 // handler is a route that answers with an error instead of writing one.
