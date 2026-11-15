@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Member quota summaries for companion clients
+
+- **What:** Budget reads include the authenticated member's effective point availability after holds, token-cap status and uncertain usage. Administrator summaries exclude other members and provider-specific caps; reads create no accounting windows.
+- **Why:** Companion clients need a small advisory display without reimplementing budget inheritance or claiming a prepaid wallet is a usage allowance.
+- **Upgrade:** No schema change. Clients must still handle provider constraints at actual admission and treat an unknown summary as unavailable.
+- **Refs:** `docs/tech/usage-budgets.md`.
+
 ## 2026-11-15 — Edition team pages in console navigation
 
 - **What:** Installed editions register same-origin team page prefixes and localized labels. Session metadata exposes the entries, the sidebar keeps the selected team, and public sign-in returns load the edition document instead of falling through to the team list.

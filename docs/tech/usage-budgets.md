@@ -125,6 +125,13 @@ The budget page shows per-member current-period activity, spent/reserved points
 and remaining enabled points after reservations. Unknown usage leaves remaining
 points unconfirmed; lowered caps clamp availability to zero without hiding
 actual consumption. Other scope caps must still pass admission.
+Budget reads also return an advisory `summary` for the authenticated member,
+including admins. It takes the minimum applicable team/member point allowance
+after holds and preserves unknown usage. Token-only caps are flagged separately;
+provider caps stay on the detail page. `resetAt` is the earliest policy boundary,
+not a guarantee that all exhausted limits reopen then. Reads create no windows.
+Companion clients load this independently of configuration sync, clear it on
+team/account/server changes and never use it as an admission authorization.
 Outsiders retain team-not-found behavior. Typed failures report exhaustion,
 unconfirmed usage, missing prices, unsupported bounds and accounting failures;
 limit errors include scope/reset time. CSV retains stable user/model ids and

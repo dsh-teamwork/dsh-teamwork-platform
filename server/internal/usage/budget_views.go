@@ -31,6 +31,7 @@ type WindowView struct {
 type BudgetPage struct {
 	Policies []PolicyView `json:"policies"`
 	Windows  []WindowView `json:"windows"`
+	Summary  QuotaSummary `json:"summary"`
 }
 
 func (s *Service) Budgets(ctx context.Context, teamID, userID string, admin bool) (BudgetPage, error) {
@@ -74,5 +75,6 @@ func (s *Service) Budgets(ctx context.Context, teamID, userID string, admin bool
 		}
 		p.Windows = append(p.Windows, v)
 	}
-	return p, nil
+	p.Summary, err = summarizeQuota(rows, p.Windows, userID, now)
+	return p, err
 }

@@ -583,10 +583,11 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [policies, windows]
+                required: [policies, windows, summary]
                 properties:
                   policies: { type: array, items: { $ref: '#/components/schemas/BudgetPolicy' } }
                   windows: { type: array, items: { $ref: '#/components/schemas/BudgetWindow' } }
+                  summary: { $ref: '#/components/schemas/QuotaSummary' }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
@@ -856,6 +857,15 @@ components:
             activeTimezone: { type: string }
             effectiveAt: { type: string, nullable: true, format: date-time }
             inheritsDefault: { type: boolean }
+    QuotaSummary:
+      type: object
+      required: [remaining, state, resetAt, tokenLimited, exhausted]
+      properties:
+        remaining: { type: string, nullable: true, description: "Smallest current team/member points allowance after holds; advisory, not a wallet balance" }
+        state: { type: string, enum: [known, unlimited, unconfirmed] }
+        resetAt: { type: string, nullable: true, format: date-time, description: Earliest active policy boundary; other limits may remain exhausted afterwards. }
+        tokenLimited: { type: boolean }
+        exhausted: { type: boolean }
     BudgetWindow:
       type: object
       required: [id, scope, subjectId, period, startsAt, endsAt, spent, reserved, pointLimit, remaining, inputSpent, inputReserved, outputSpent, outputReserved, unpriced, unbounded]

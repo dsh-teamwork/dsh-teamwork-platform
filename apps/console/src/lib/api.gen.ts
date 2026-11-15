@@ -1413,6 +1413,7 @@ export interface paths {
                         "application/json": {
                             policies: components["schemas"]["BudgetPolicy"][];
                             windows: components["schemas"]["BudgetWindow"][];
+                            summary: components["schemas"]["QuotaSummary"];
                         };
                     };
                 };
@@ -1950,6 +1951,19 @@ export interface components {
             /** Format: date-time */
             effectiveAt: string | null;
             inheritsDefault: boolean;
+        };
+        QuotaSummary: {
+            /** @description Smallest current team/member points allowance after holds; advisory, not a wallet balance */
+            remaining: string | null;
+            /** @enum {string} */
+            state: "known" | "unlimited" | "unconfirmed";
+            /**
+             * Format: date-time
+             * @description Earliest active policy boundary; other limits may remain exhausted afterwards.
+             */
+            resetAt: string | null;
+            tokenLimited: boolean;
+            exhausted: boolean;
         };
         BudgetWindow: {
             id: string;
