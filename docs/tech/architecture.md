@@ -1,10 +1,25 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-14
+> **Status:** Current · **Updated:** 2026-11-15
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
 live in `CLAUDE.md`; this file shows the mechanism behind them.
+
+The gateway records community usage and exact reference points in
+`server/internal/usage`, with immutable team model rates (ADR 0022).
+The [usage and budget reference](usage-budgets.md) describes atomic scope
+reservations, calendar limits, explicit recovery and notifications (ADR 0023). These capabilities
+belong to community core ([ADR 0021](../adr/0021-community-usage-and-budgets.md)).
+Optional model funding participates in the same accounting transaction through
+`edition.Host`; protected routes fail closed without their registered owner
+([ADR 0024](../adr/0024-atomic-model-funding.md)).
+
+Edition team provisioning uses `Host.SubscribeTeams` (ADR 0026): callbacks
+borrow the creation/join transaction and return errors before either side
+commits. Creation carries the true creator once; accepted invitations and
+password-admin additions emit only actual joins. No subscriber means no
+extension work or historical replay.
 
 ## Data flow
 
@@ -45,6 +60,7 @@ repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 | Server | The binary: configuration, migrations, every route, the embedded console | `server/` (`app/`, `cmd/dsh-teamwork`) |
 | Team rules | Membership, invitations, configuration and its references, providers | `server/internal/team` |
 | Model gateway | Resolving a configuration id to a provider call | `server/internal/gateway` |
+| Usage and budgets | Price snapshots, point/token reservations, settlement, recovery and notices | `server/internal/usage` |
 | Sign-in | Google, emailed codes, passwords, identities, sessions and plugin tokens | `server/internal/auth` |
 | Wire | Request shapes, their validation and the error codes | `server/internal/wire`, `api/openapi.yaml` |
 | Schema | Every table and the migrations of three dialects | `server/internal/db` |

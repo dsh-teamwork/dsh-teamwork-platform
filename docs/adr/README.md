@@ -14,6 +14,12 @@ or the hosted service, kept with the closed edition rather than here.
 - [0012](0012-the-plugin-gets-its-code-back-on-loopback.md) — the DSH plugin gets its sign-in code back on a loopback address.
 - [0013](0013-one-person-many-teams.md) — a person may be in several teams; the team travels in the URL.
 - [0014](0014-one-go-binary.md) — the server becomes one Go binary over SQLite, Postgres or MySQL.
+- [0021](0021-community-usage-and-budgets.md) — usage points and budgets are community features; hosted wallets and payment settlement stay closed.
+- [0022](0022-reference-usage-accounting.md) — exact reference points, immutable rates and per-call usage snapshots; incomplete usage remains pending.
+- [0023](0023-community-budget-reservations.md) — atomic scope reservations, calendar windows, explicit recovery and transactional budget notifications.
+- [0024](0024-atomic-model-funding.md) — protected model routes and optional funding share the public accounting transaction.
+- [0026](0026-transactional-team-events.md) — edition provisioning joins real team creation and member insertion transactions.
+- [0028](0028-edition-team-navigation.md) — registered same-origin team pages appear in the console and survive sign-in returns without closed route imports.
 
 The template:
 

@@ -30,10 +30,35 @@ type SMTP struct {
 	From string // AUTH_EMAIL_FROM; "DSH Teamwork <no-reply@localhost>" when empty
 }
 
+// Message is a transactional text message. ID is a stable local identifier
+// for retry deduplication; the configured sender's domain is appended by SMTP.
+type Message struct {
+	To, Subject, Text, ID string
+}
+
 // SendCode sends the code. The code is never logged: a code in a log is a
 // code anybody with log access can use, so an error carries the server's
 // reply, never the message.
 func (m SMTP) SendCode(ctx context.Context, to, code string) error {
+	return m.SendMessage(ctx, Message{To: to, Subject: "Your sign-in code: " + code,
+		Text: "Your sign-in code is " + code + ". It expires in 10 minutes.\n\nIf you did not ask for it, ignore this email.\n"})
+}
+
+// SendMessage reuses the sign-in transport; budget and commercial messages
+// do not need a parallel SMTP stack or a different vendor account.
+func (m SMTP) SendMessage(ctx context.Context, message Message) error {
+	recipient, err := mail.ParseAddress(message.To)
+	if err != nil || strings.ContainsAny(message.To+message.Subject, "\r\n") {
+		return errors.New("invalid mail recipient or subject")
+	}
+	for _, c := range message.ID {
+		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '-' || c == '_' || c == '.') {
+			return errors.New("invalid message identifier")
+		}
+	}
+	if len(message.ID) > 120 {
+		return errors.New("invalid message identifier")
+	}
 	u, err := url.Parse(m.URL)
 	if err != nil || (u.Scheme != "smtp" && u.Scheme != "smtps") || u.Hostname() == "" {
 		return errors.New("SMTP_URL: smtp://user:password@host:587 or smtps://…:465")
@@ -88,7 +113,7 @@ func (m SMTP) SendCode(ctx context.Context, to, code string) error {
 	if err := c.Mail(sender.Address); err != nil {
 		return err
 	}
-	if err := c.Rcpt(to); err != nil {
+	if err := c.Rcpt(recipient.Address); err != nil {
 		return err
 	}
 	w, err := c.Data()
@@ -97,19 +122,25 @@ func (m SMTP) SendCode(ctx context.Context, to, code string) error {
 	}
 	id := make([]byte, 12)
 	rand.Read(id)
+	messageID := message.ID
+	if messageID == "" {
+		messageID = hex.EncodeToString(id)
+	}
 	domain := sender.Address[strings.LastIndex(sender.Address, "@")+1:]
+	toHeader := recipient.String()
+	if recipient.Name == "" {
+		toHeader = recipient.Address
+	}
 	msg := strings.Join([]string{
 		"From: " + sender.String(),
-		"To: " + to,
-		"Subject: " + mime.QEncoding.Encode("utf-8", "Your sign-in code: "+code),
+		"To: " + toHeader,
+		"Subject: " + mime.QEncoding.Encode("utf-8", message.Subject),
 		"Date: " + time.Now().UTC().Format(time.RFC1123Z),
-		"Message-ID: <" + hex.EncodeToString(id) + "@" + domain + ">",
+		"Message-ID: <" + messageID + "@" + domain + ">",
 		"MIME-Version: 1.0",
 		"Content-Type: text/plain; charset=utf-8",
 		"",
-		"Your sign-in code is " + code + ". It expires in 10 minutes.",
-		"",
-		"If you did not ask for it, ignore this email.",
+		strings.ReplaceAll(strings.ReplaceAll(message.Text, "\r\n", "\n"), "\n", "\r\n"),
 		"",
 	}, "\r\n")
 	if _, err := w.Write([]byte(msg)); err != nil {

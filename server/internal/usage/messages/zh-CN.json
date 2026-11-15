@@ -1,0 +1,12 @@
+{
+  "Subject": "Teamwork 预算提醒 · %s",
+  "Intro": "%s 已使用 %d%% 的%s预算。",
+  "Points": "积分：%s / %s",
+  "Input": "输入 Token：%d / %d",
+  "Output": "输出 Token：%d / %d",
+  "Total": "总 Token：%d / %d",
+  "Reset": "下次重置（UTC）：%s",
+  "Manage": "查看预算：%s",
+  "Footer": "这是你的 Teamwork 实例发送的使用量通知，不包含对话内容或提供方密钥。",
+  "Scopes": { "team": "团队", "member": "成员", "provider": "上游" }
+}

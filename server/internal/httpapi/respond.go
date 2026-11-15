@@ -6,7 +6,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -71,9 +73,19 @@ func fail(w http.ResponseWriter, r *http.Request, err error) {
 	var we *wire.Error
 	var invalid *wire.Invalid
 	var refusal *auth.Refusal
+	var funding *edition.FundingError
 	switch {
+	case errors.As(err, &funding) && funding.Status >= 400 && funding.Status <= 503:
+		writeJSON(w, funding.Status, map[string]string{"error": funding.Code})
 	case errors.As(err, &we):
-		writeJSON(w, we.Status, map[string]string{"error": we.Code})
+		body := map[string]any{"error": we.Code}
+		if we.Scope != "" {
+			body["scope"] = we.Scope
+		}
+		if we.ResetAt != nil {
+			body["resetAt"] = we.ResetAt.UTC().Format(time.RFC3339Nano)
+		}
+		writeJSON(w, we.Status, body)
 	case errors.As(err, &invalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid_request", "issues": invalid.Issues})
 	case errors.As(err, &refusal):

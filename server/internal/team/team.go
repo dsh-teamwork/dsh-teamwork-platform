@@ -13,6 +13,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
@@ -31,6 +32,14 @@ type Service struct {
 	// admin creates members' accounts rather than inviting them.
 	Passwords bool
 	Now       func() time.Time
+	Changed   func(context.Context, *ent.Client, edition.TeamChange) error
+}
+
+func (s *Service) changed(ctx context.Context, db *ent.Client, change edition.TeamChange) error {
+	if s.Changed == nil {
+		return nil
+	}
+	return s.Changed(ctx, db, change)
 }
 
 func (s *Service) now() time.Time {
@@ -81,6 +90,9 @@ func (s *Service) CreateTeam(ctx context.Context, userID string, in wire.CreateT
 	if err := tx.Membership.Create().SetUserID(userID).SetTeamID(t.ID).SetRole(membership.RoleAdmin).Exec(ctx); err != nil {
 		return Created{}, err
 	}
+	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.TeamCreated, TeamID: t.ID, UserID: userID, ActorID: userID}); err != nil {
+		return Created{}, err
+	}
 	return Created{ID: t.ID, Name: t.Name}, tx.Commit()
 }
 
@@ -126,10 +138,11 @@ type ConfigView struct {
 	Data      json.RawMessage `json:"data"`
 	Version   int             `json:"version"`
 	UpdatedAt string          `json:"updatedAt"`
+	Owner     string          `json:"owner,omitempty"`
 }
 
 func configView(c *ent.TeamConfig) ConfigView {
-	return ConfigView{ID: c.ID, Kind: string(c.Kind), Name: c.Name, Data: c.Data, Version: c.Version, UpdatedAt: Time(c.UpdatedAt)}
+	return ConfigView{ID: c.ID, Kind: string(c.Kind), Name: c.Name, Data: c.Data, Version: c.Version, UpdatedAt: Time(c.UpdatedAt), Owner: c.RouteOwner}
 }
 
 var kindOrder = map[teamconfig.Kind]int{teamconfig.KindModel: 0, teamconfig.KindPreset: 1, teamconfig.KindPlugin: 2}

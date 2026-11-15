@@ -27,6 +27,10 @@ const (
 	FieldName = "name"
 	// FieldData holds the string denoting the data field in the database.
 	FieldData = "data"
+	// FieldRouteOwner holds the string denoting the route_owner field in the database.
+	FieldRouteOwner = "route_owner"
+	// FieldRouteReference holds the string denoting the route_reference field in the database.
+	FieldRouteReference = "route_reference"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
@@ -51,6 +55,8 @@ var Columns = []string{
 	FieldKind,
 	FieldName,
 	FieldData,
+	FieldRouteOwner,
+	FieldRouteReference,
 	FieldVersion,
 }
 
@@ -75,6 +81,14 @@ var (
 	TeamIDValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultRouteOwner holds the default value on creation for the "route_owner" field.
+	DefaultRouteOwner string
+	// RouteOwnerValidator is a validator for the "route_owner" field. It is called by the builders before save.
+	RouteOwnerValidator func(string) error
+	// DefaultRouteReference holds the default value on creation for the "route_reference" field.
+	DefaultRouteReference string
+	// RouteReferenceValidator is a validator for the "route_reference" field. It is called by the builders before save.
+	RouteReferenceValidator func(string) error
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion int
 	// DefaultID holds the default value on creation for the "id" field.
@@ -138,6 +152,16 @@ func ByKind(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByRouteOwner orders the results by the route_owner field.
+func ByRouteOwner(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRouteOwner, opts...).ToFunc()
+}
+
+// ByRouteReference orders the results by the route_reference field.
+func ByRouteReference(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRouteReference, opts...).ToFunc()
 }
 
 // ByVersion orders the results by the version field.

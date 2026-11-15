@@ -1,0 +1,12 @@
+{
+  "Subject": "Teamwork budget alert · %s",
+  "Intro": "%s has reached %d%% of its %s budget.",
+  "Points": "Points: %s / %s",
+  "Input": "Input tokens: %d / %d",
+  "Output": "Output tokens: %d / %d",
+  "Total": "Total tokens: %d / %d",
+  "Reset": "Next reset (UTC): %s",
+  "Manage": "Review budgets: %s",
+  "Footer": "This is a usage notification from your Teamwork instance. It contains no conversation content or provider credentials.",
+  "Scopes": { "team": "team", "member": "member", "provider": "provider" }
+}

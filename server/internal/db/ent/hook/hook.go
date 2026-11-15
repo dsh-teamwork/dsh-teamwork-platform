@@ -9,6 +9,78 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 )
 
+// The BudgetEventFunc type is an adapter to allow the use of ordinary
+// function as BudgetEvent mutator.
+type BudgetEventFunc func(context.Context, *ent.BudgetEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BudgetEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BudgetEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BudgetEventMutation", m)
+}
+
+// The BudgetGateFunc type is an adapter to allow the use of ordinary
+// function as BudgetGate mutator.
+type BudgetGateFunc func(context.Context, *ent.BudgetGateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BudgetGateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BudgetGateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BudgetGateMutation", m)
+}
+
+// The BudgetNoticeFunc type is an adapter to allow the use of ordinary
+// function as BudgetNotice mutator.
+type BudgetNoticeFunc func(context.Context, *ent.BudgetNoticeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BudgetNoticeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BudgetNoticeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BudgetNoticeMutation", m)
+}
+
+// The BudgetPolicyFunc type is an adapter to allow the use of ordinary
+// function as BudgetPolicy mutator.
+type BudgetPolicyFunc func(context.Context, *ent.BudgetPolicyMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BudgetPolicyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BudgetPolicyMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BudgetPolicyMutation", m)
+}
+
+// The BudgetReservationFunc type is an adapter to allow the use of ordinary
+// function as BudgetReservation mutator.
+type BudgetReservationFunc func(context.Context, *ent.BudgetReservationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BudgetReservationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BudgetReservationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BudgetReservationMutation", m)
+}
+
+// The BudgetWindowFunc type is an adapter to allow the use of ordinary
+// function as BudgetWindow mutator.
+type BudgetWindowFunc func(context.Context, *ent.BudgetWindowMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BudgetWindowFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BudgetWindowMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BudgetWindowMutation", m)
+}
+
 // The IdentityFunc type is an adapter to allow the use of ordinary
 // function as Identity mutator.
 type IdentityFunc func(context.Context, *ent.IdentityMutation) (ent.Value, error)
@@ -43,6 +115,18 @@ func (f MembershipFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MembershipMutation", m)
+}
+
+// The ModelRateFunc type is an adapter to allow the use of ordinary
+// function as ModelRate mutator.
+type ModelRateFunc func(context.Context, *ent.ModelRateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ModelRateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ModelRateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ModelRateMutation", m)
 }
 
 // The PasswordFunc type is an adapter to allow the use of ordinary
@@ -103,6 +187,18 @@ func (f TeamProviderFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TeamProviderMutation", m)
+}
+
+// The UsageRequestFunc type is an adapter to allow the use of ordinary
+// function as UsageRequest mutator.
+type UsageRequestFunc func(context.Context, *ent.UsageRequestMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UsageRequestFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UsageRequestMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UsageRequestMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

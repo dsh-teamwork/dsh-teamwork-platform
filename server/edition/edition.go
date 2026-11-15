@@ -76,7 +76,41 @@ type Host struct {
 	SameOrigin func(r *http.Request) bool
 	Users      Users
 	Env        func(string) string
+	// TeamRole re-reads one membership. An outsider gets the public 404 error.
+	TeamRole   func(context.Context, string, string, bool) (string, error)
+	TeamExists func(context.Context, string) (bool, error)
+	// RegisterFunding binds protected models to this extension. Called once
+	// during Mount, before serving; community code needs no participant.
+	RegisterFunding func(ModelFunding) (FundingHost, error)
+	// Operator-only recovery. Team APIs never receive this capability.
+	ResolveFundingUsage func(context.Context, string, string, string, string, string, Tokens) error
+	WithTeamTx          func(context.Context, string, func(SQLExecutor) error) error
+	// SubscribeTeams runs inside a successful team creation or member join.
+	// Handlers access only their own tables, perform no network I/O, and return
+	// errors to roll back both the membership and their changes. Mount-only.
+	SubscribeTeams func(TeamChangeHandler) error
+	// AddTeamPage adds an edition-owned, same-origin team navigation entry.
+	// Path is a fixed absolute prefix ending in /; the console appends team id.
+	AddTeamPage func(TeamPage) error
 }
+
+type TeamPage struct {
+	Path   string            `json:"path"`
+	Labels map[string]string `json:"labels"`
+}
+
+// TeamChange identifies a real committed transition, never a browser claim.
+// Creation includes the creator's initial membership; it emits no separate join.
+type TeamChange struct {
+	Kind, TeamID, UserID, ActorID string
+}
+
+const (
+	TeamCreated  = "created"
+	MemberJoined = "joined"
+)
+
+type TeamChangeHandler func(context.Context, SQLExecutor, TeamChange) error
 
 // Extension is one closed feature.
 type Extension struct {

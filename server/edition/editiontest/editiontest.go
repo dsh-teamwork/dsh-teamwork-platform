@@ -18,6 +18,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -42,6 +43,9 @@ type Instance struct {
 type Options struct {
 	// Env is what the extensions read through Host.Env.
 	Env map[string]string
+	// Upstream replaces only inference transport, for extension accounting
+	// integration tests. Authentication, budgets and routing remain real.
+	Upstream http.RoundTripper
 }
 
 // Each runs f once per reachable dialect, as a subtest named after it, on a
@@ -70,6 +74,9 @@ func Each(t *testing.T, exts []edition.Extension, o Options, f func(t *testing.T
 			srv, handler, stop, err := app.Build(cfg, d.Client, d.SQL, d.Target.Dialect, exts, env)
 			if err != nil {
 				t.Fatal(err)
+			}
+			if o.Upstream != nil {
+				srv.Gateway.Client = &http.Client{Transport: o.Upstream}
 			}
 			ts.Config.Handler = handler
 			ts.Start()
@@ -100,6 +107,15 @@ func (in *Instance) Team(userID string) string {
 		in.t.Fatal(err)
 	}
 	return created.ID
+}
+
+// Member adds an existing test account to a team. The extension's requests
+// still exercise the real, unmodified session and role checks.
+func (in *Instance) Member(teamID, userID string) {
+	in.t.Helper()
+	if err := in.srv.Team.DB.Membership.Create().SetTeamID(teamID).SetUserID(userID).SetRole(membership.RoleMember).Exec(context.Background()); err != nil {
+		in.t.Fatal(err)
+	}
 }
 
 // Bearer is a token for the account, as the plugin and the app hold one.

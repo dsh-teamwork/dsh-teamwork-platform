@@ -13,9 +13,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
@@ -26,6 +28,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 )
 
@@ -117,16 +120,22 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	network := &team.Network{AllowPrivate: cfg.AllowPrivateProviders}
 	authn := &auth.Service{DB: client, Sealer: auth.NewSealer(cfg.AuthSecret, nil), Secret: cfg.AuthSecret}
 	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords()}
+	meter := &usage.Service{DB: client, AppURL: cfg.AppURL}
 	srv := &httpapi.Server{
 		Config:    cfg,
 		Auth:      authn,
 		Team:      teams,
-		Gateway:   &gateway.Gateway{Team: teams, Client: network.Client()},
+		Gateway:   &gateway.Gateway{Team: teams, Client: network.Client(), Usage: meter},
+		Usage:     meter,
 		Analytics: &analytics.Client{Key: cfg.PostHogKey, Host: cfg.PostHogHost},
 	}
 	srv.Web = web.Handler(web.Options{AppURL: cfg.AppURL, PostHogKey: cfg.PostHogKey, PostHogHost: cfg.PostHogHost, Viewer: srv.Viewer})
 	if !cfg.Passwords() {
-		srv.Mailer = auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
+		mail := auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
+		srv.Mailer = mail
+		meter.SendNotice = func(ctx context.Context, message usage.NoticeMessage) error {
+			return mail.SendMessage(ctx, auth.Message{To: message.To, Subject: message.Subject, Text: message.Text, ID: message.ID})
+		}
 	}
 	if cfg.Google() {
 		// A stalled Google must not hold a sign-in, and its goroutine, for ever.
@@ -134,18 +143,80 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	}
 
 	srv.Mux = http.NewServeMux()
+	var teamHandlers []struct {
+		owner  string
+		handle edition.TeamChangeHandler
+	}
+	teams.Changed = func(ctx context.Context, db *ent.Client, change edition.TeamChange) error {
+		for _, subscriber := range teamHandlers {
+			if err := usage.Participate(db, change.TeamID, subscriber.owner, func(tx edition.SQLExecutor) error {
+				return subscriber.handle(ctx, tx, change)
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	host := edition.Host{
 		DB: conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		Users: NewUsers(client), Env: env,
+		WithTeamTx: meter.WithTeamTx,
+		AddTeamPage: func(page edition.TeamPage) error {
+			if !regexp.MustCompile(`^/[a-z][a-z0-9/-]*/$`).MatchString(page.Path) || len(page.Path) > 100 || len(page.Labels) != 2 {
+				return errors.New("invalid edition team page")
+			}
+			labels := map[string]string{}
+			for _, locale := range []string{"en", "zh-CN"} {
+				if n := utf8.RuneCountInString(page.Labels[locale]); n < 1 || n > 60 {
+					return errors.New("invalid edition team page label")
+				}
+				labels[locale] = page.Labels[locale]
+			}
+			for _, old := range srv.TeamPages {
+				if old.Path == page.Path {
+					return errors.New("duplicate edition team page")
+				}
+			}
+			srv.TeamPages = append(srv.TeamPages, edition.TeamPage{Path: page.Path, Labels: labels})
+			return nil
+		},
+		ResolveFundingUsage: meter.ResolveFunding,
+		TeamExists: func(ctx context.Context, id string) (bool, error) {
+			_, err := client.Team.Get(ctx, id)
+			if ent.IsNotFound(err) {
+				return false, nil
+			}
+			return err == nil, err
+		},
+		TeamRole: func(ctx context.Context, userID, teamID string, admin bool) (string, error) {
+			m, err := teams.RequireMembership(ctx, userID, teamID, admin)
+			if err != nil {
+				return "", err
+			}
+			return string(m.Role), nil
+		},
 	}
-	var stops []func()
+	stops := []func(){meter.StartMaintenance()}
 	stop := func() {
 		for i := len(stops) - 1; i >= 0; i-- {
 			stops[i]()
 		}
 	}
 	for _, e := range exts {
+		host.RegisterFunding = func(p edition.ModelFunding) (edition.FundingHost, error) { return meter.RegisterFunding(e.Name, p) }
+		subscribed := false
+		host.SubscribeTeams = func(handle edition.TeamChangeHandler) error {
+			if handle == nil || subscribed {
+				return errors.New("invalid or duplicate team subscription")
+			}
+			subscribed = true
+			teamHandlers = append(teamHandlers, struct {
+				owner  string
+				handle edition.TeamChangeHandler
+			}{e.Name, handle})
+			return nil
+		}
 		s, err := e.Mount(host)
 		if err != nil {
 			stop()

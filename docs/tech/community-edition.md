@@ -43,6 +43,15 @@ feature adds code and never changes open code.
 
 ## What goes where
 
+**Planned usage and budget ownership is open** ([ADR 0021](../adr/0021-community-usage-and-budgets.md)).
+The [implementation plan](usage-budgets.md) covers model reference prices,
+Token-to-point conversion, team/member/provider budgets, reservations,
+reports, exports and optional SMTP alerts in the community server and console.
+These features are not shipped yet. They run without a hosted account or
+closed component. Hosted supplier accounts, purchased/promotional wallets,
+payments, refunds and commercial reconciliation remain closed. This refines
+ADR 0005's original grouping of usage and billing; its historical text stays.
+
 | Part | Public `dsh-teamwork-platform` | Closed repository only |
 | --- | --- | --- |
 | `server/` | The whole server: every route, the model gateway, sign-in, the schema and migrations of three dialects, and `server/edition`, the extension point | — |

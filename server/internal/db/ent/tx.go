@@ -14,12 +14,26 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// BudgetEvent is the client for interacting with the BudgetEvent builders.
+	BudgetEvent *BudgetEventClient
+	// BudgetGate is the client for interacting with the BudgetGate builders.
+	BudgetGate *BudgetGateClient
+	// BudgetNotice is the client for interacting with the BudgetNotice builders.
+	BudgetNotice *BudgetNoticeClient
+	// BudgetPolicy is the client for interacting with the BudgetPolicy builders.
+	BudgetPolicy *BudgetPolicyClient
+	// BudgetReservation is the client for interacting with the BudgetReservation builders.
+	BudgetReservation *BudgetReservationClient
+	// BudgetWindow is the client for interacting with the BudgetWindow builders.
+	BudgetWindow *BudgetWindowClient
 	// Identity is the client for interacting with the Identity builders.
 	Identity *IdentityClient
 	// Invite is the client for interacting with the Invite builders.
 	Invite *InviteClient
 	// Membership is the client for interacting with the Membership builders.
 	Membership *MembershipClient
+	// ModelRate is the client for interacting with the ModelRate builders.
+	ModelRate *ModelRateClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
@@ -30,6 +44,8 @@ type Tx struct {
 	TeamConfig *TeamConfigClient
 	// TeamProvider is the client for interacting with the TeamProvider builders.
 	TeamProvider *TeamProviderClient
+	// UsageRequest is the client for interacting with the UsageRequest builders.
+	UsageRequest *UsageRequestClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// VerificationCode is the client for interacting with the VerificationCode builders.
@@ -165,14 +181,22 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.BudgetEvent = NewBudgetEventClient(tx.config)
+	tx.BudgetGate = NewBudgetGateClient(tx.config)
+	tx.BudgetNotice = NewBudgetNoticeClient(tx.config)
+	tx.BudgetPolicy = NewBudgetPolicyClient(tx.config)
+	tx.BudgetReservation = NewBudgetReservationClient(tx.config)
+	tx.BudgetWindow = NewBudgetWindowClient(tx.config)
 	tx.Identity = NewIdentityClient(tx.config)
 	tx.Invite = NewInviteClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
+	tx.ModelRate = NewModelRateClient(tx.config)
 	tx.Password = NewPasswordClient(tx.config)
 	tx.RateWindow = NewRateWindowClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.TeamConfig = NewTeamConfigClient(tx.config)
 	tx.TeamProvider = NewTeamProviderClient(tx.config)
+	tx.UsageRequest = NewUsageRequestClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.VerificationCode = NewVerificationCodeClient(tx.config)
 }
@@ -184,7 +208,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Identity.QueryXXX(), the query will be executed
+// applies a query, for example: BudgetEvent.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

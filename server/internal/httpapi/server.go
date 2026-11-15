@@ -7,11 +7,13 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -22,13 +24,15 @@ type Server struct {
 	Auth      *auth.Service
 	Team      *team.Service
 	Gateway   *gateway.Gateway
+	Usage     *usage.Service
 	Mailer    auth.Mailer       // where SMTP_URL is set
 	Google    *auth.Google      // where the Google door is configured
 	Analytics *analytics.Client // nil or keyless sends nothing
 	Web       http.Handler
 	// Mux, when set, is the router Handler adds its routes to: one a closed
 	// edition has already added its own to (server/edition).
-	Mux *http.ServeMux
+	Mux       *http.ServeMux
+	TeamPages []edition.TeamPage
 }
 
 // handler is a route that answers with an error instead of writing one.
@@ -48,6 +52,12 @@ func (s *Server) route(h handler, write bool) http.HandlerFunc {
 
 // Handler is every route.
 func (s *Server) Handler() http.Handler {
+	if s.Usage == nil && s.Team != nil {
+		s.Usage = &usage.Service{DB: s.Team.DB, AppURL: s.Config.AppURL}
+	}
+	if s.Gateway != nil && s.Gateway.Usage == nil {
+		s.Gateway.Usage = s.Usage
+	}
 	mux := s.Mux
 	if mux == nil {
 		mux = http.NewServeMux()
@@ -90,6 +100,15 @@ func (s *Server) Handler() http.Handler {
 	write("PUT", "/api/teams/{teamId}/providers/{id}", s.updateProvider)
 	write("DELETE", "/api/teams/{teamId}/providers/{id}", s.deleteProvider)
 	get("/api/teams/{teamId}/model-catalog", s.modelCatalog)
+	get("/api/teams/{teamId}/model-rates/{configId}", s.getModelRate)
+	write("PUT", "/api/teams/{teamId}/model-rates/{configId}", s.setModelRate)
+	get("/api/teams/{teamId}/usage", s.listUsage)
+	get("/api/teams/{teamId}/usage/export", s.exportUsage)
+	post("/api/teams/{teamId}/usage/{requestId}/resolve", s.resolveUsage)
+	get("/api/teams/{teamId}/budgets", s.getBudgets)
+	write("PUT", "/api/teams/{teamId}/budgets", s.setBudget)
+	get("/api/teams/{teamId}/budgets/notices", s.listBudgetNotices)
+	post("/api/teams/{teamId}/budgets/notices/{noticeId}/retry", s.retryBudgetNotice)
 	get("/api/profile", s.getProfile)
 	write("PATCH", "/api/profile", s.updateProfile)
 	post("/api/locale", s.chooseLocale)

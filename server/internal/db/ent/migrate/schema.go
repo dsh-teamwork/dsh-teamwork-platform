@@ -9,6 +9,186 @@ import (
 )
 
 var (
+	// BudgetEventsColumns holds the columns for the "budget_events" table.
+	BudgetEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "window_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "request_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "policy_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "action_key", Type: field.TypeString, Unique: true, Size: 150},
+		{Name: "actor_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"policy", "reserve", "settle", "resolve", "pending", "late_usage"}},
+		{Name: "data", Type: field.TypeJSON},
+	}
+	// BudgetEventsTable holds the schema information for the "budget_events" table.
+	BudgetEventsTable = &schema.Table{
+		Name:       "budget_events",
+		Columns:    BudgetEventsColumns,
+		PrimaryKey: []*schema.Column{BudgetEventsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "budgetevent_team_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{BudgetEventsColumns[2], BudgetEventsColumns[1]},
+			},
+			{
+				Name:    "budgetevent_window_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{BudgetEventsColumns[3], BudgetEventsColumns[1]},
+			},
+		},
+	}
+	// BudgetGatesColumns holds the columns for the "budget_gates" table.
+	BudgetGatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "revision", Type: field.TypeInt64, Default: 0},
+	}
+	// BudgetGatesTable holds the schema information for the "budget_gates" table.
+	BudgetGatesTable = &schema.Table{
+		Name:       "budget_gates",
+		Columns:    BudgetGatesColumns,
+		PrimaryKey: []*schema.Column{BudgetGatesColumns[0]},
+	}
+	// BudgetNoticesColumns holds the columns for the "budget_notices" table.
+	BudgetNoticesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "window_id", Type: field.TypeString, Size: 32},
+		{Name: "recipient_id", Type: field.TypeString, Size: 32},
+		{Name: "threshold", Type: field.TypeInt},
+		{Name: "data", Type: field.TypeJSON},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"pending", "sending", "sent", "failed", "skipped"}, Default: "pending"},
+		{Name: "lease_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "lease_until", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "next_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "attempts", Type: field.TypeInt, Default: 0},
+		{Name: "last_error", Type: field.TypeString, Size: 64, Default: ""},
+	}
+	// BudgetNoticesTable holds the schema information for the "budget_notices" table.
+	BudgetNoticesTable = &schema.Table{
+		Name:       "budget_notices",
+		Columns:    BudgetNoticesColumns,
+		PrimaryKey: []*schema.Column{BudgetNoticesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "budgetnotice_window_id_recipient_id_threshold",
+				Unique:  true,
+				Columns: []*schema.Column{BudgetNoticesColumns[3], BudgetNoticesColumns[4], BudgetNoticesColumns[5]},
+			},
+			{
+				Name:    "budgetnotice_state_next_at",
+				Unique:  false,
+				Columns: []*schema.Column{BudgetNoticesColumns[7], BudgetNoticesColumns[10]},
+			},
+		},
+	}
+	// BudgetPoliciesColumns holds the columns for the "budget_policies" table.
+	BudgetPoliciesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "scope", Type: field.TypeEnum, Enums: []string{"team", "member", "default_member", "provider"}},
+		{Name: "subject_id", Type: field.TypeString, Size: 400, Default: ""},
+		{Name: "period", Type: field.TypeEnum, Enums: []string{"day", "month"}},
+		{Name: "timezone", Type: field.TypeString, Size: 100},
+		{Name: "previous_timezone", Type: field.TypeString, Size: 100, Default: ""},
+		{Name: "timezone_effective_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "point_limit", Type: field.TypeInt64, Nullable: true},
+		{Name: "input_limit", Type: field.TypeInt64, Nullable: true},
+		{Name: "output_limit", Type: field.TypeInt64, Nullable: true},
+		{Name: "total_limit", Type: field.TypeInt64, Nullable: true},
+		{Name: "enabled", Type: field.TypeBool, Default: true},
+		{Name: "notify", Type: field.TypeEnum, Enums: []string{"admins", "owner", "both", "none"}, Default: "admins"},
+		{Name: "revision", Type: field.TypeInt, Default: 1},
+	}
+	// BudgetPoliciesTable holds the schema information for the "budget_policies" table.
+	BudgetPoliciesTable = &schema.Table{
+		Name:       "budget_policies",
+		Columns:    BudgetPoliciesColumns,
+		PrimaryKey: []*schema.Column{BudgetPoliciesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "budgetpolicy_team_id_scope_subject_id_period",
+				Unique:  true,
+				Columns: []*schema.Column{BudgetPoliciesColumns[3], BudgetPoliciesColumns[4], BudgetPoliciesColumns[5], BudgetPoliciesColumns[6]},
+			},
+		},
+	}
+	// BudgetReservationsColumns holds the columns for the "budget_reservations" table.
+	BudgetReservationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "request_id", Type: field.TypeString, Size: 32},
+		{Name: "window_id", Type: field.TypeString, Size: 32},
+		{Name: "policy_id", Type: field.TypeString, Size: 32},
+		{Name: "policy_revision", Type: field.TypeInt},
+		{Name: "point_units", Type: field.TypeInt64, Default: 0},
+		{Name: "input_tokens", Type: field.TypeInt64, Default: 0},
+		{Name: "output_tokens", Type: field.TypeInt64, Default: 0},
+		{Name: "unbounded", Type: field.TypeBool, Default: false},
+		{Name: "unpriced", Type: field.TypeBool, Default: false},
+		{Name: "settled", Type: field.TypeBool, Default: false},
+	}
+	// BudgetReservationsTable holds the schema information for the "budget_reservations" table.
+	BudgetReservationsTable = &schema.Table{
+		Name:       "budget_reservations",
+		Columns:    BudgetReservationsColumns,
+		PrimaryKey: []*schema.Column{BudgetReservationsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "budgetreservation_request_id_window_id",
+				Unique:  true,
+				Columns: []*schema.Column{BudgetReservationsColumns[2], BudgetReservationsColumns[3]},
+			},
+			{
+				Name:    "budgetreservation_window_id_settled",
+				Unique:  false,
+				Columns: []*schema.Column{BudgetReservationsColumns[3], BudgetReservationsColumns[11]},
+			},
+		},
+	}
+	// BudgetWindowsColumns holds the columns for the "budget_windows" table.
+	BudgetWindowsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "scope", Type: field.TypeEnum, Enums: []string{"team", "member", "provider"}},
+		{Name: "subject_id", Type: field.TypeString, Size: 400, Default: ""},
+		{Name: "period", Type: field.TypeEnum, Enums: []string{"day", "month"}},
+		{Name: "starts_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "ends_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "spent_units", Type: field.TypeInt64, Default: 0},
+		{Name: "reserved_units", Type: field.TypeInt64, Default: 0},
+		{Name: "spent_input", Type: field.TypeInt64, Default: 0},
+		{Name: "reserved_input", Type: field.TypeInt64, Default: 0},
+		{Name: "spent_output", Type: field.TypeInt64, Default: 0},
+		{Name: "reserved_output", Type: field.TypeInt64, Default: 0},
+		{Name: "unpriced_count", Type: field.TypeInt64, Default: 0},
+		{Name: "unbounded_count", Type: field.TypeInt64, Default: 0},
+	}
+	// BudgetWindowsTable holds the schema information for the "budget_windows" table.
+	BudgetWindowsTable = &schema.Table{
+		Name:       "budget_windows",
+		Columns:    BudgetWindowsColumns,
+		PrimaryKey: []*schema.Column{BudgetWindowsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "budgetwindow_team_id_scope_subject_id_period_starts_at",
+				Unique:  true,
+				Columns: []*schema.Column{BudgetWindowsColumns[2], BudgetWindowsColumns[3], BudgetWindowsColumns[4], BudgetWindowsColumns[5], BudgetWindowsColumns[6]},
+			},
+			{
+				Name:    "budgetwindow_team_id_ends_at",
+				Unique:  false,
+				Columns: []*schema.Column{BudgetWindowsColumns[2], BudgetWindowsColumns[7]},
+			},
+		},
+	}
 	// IdentitiesColumns holds the columns for the "identities" table.
 	IdentitiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -113,6 +293,35 @@ var (
 			},
 		},
 	}
+	// ModelRatesColumns holds the columns for the "model_rates" table.
+	ModelRatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "config_id", Type: field.TypeString, Size: 32},
+		{Name: "provider", Type: field.TypeString, Size: 400},
+		{Name: "model", Type: field.TypeString, Size: 400},
+		{Name: "revision", Type: field.TypeInt},
+		{Name: "basis", Type: field.TypeEnum, Enums: []string{"cost", "weight"}},
+		{Name: "input_rate", Type: field.TypeInt64},
+		{Name: "cache_read_rate", Type: field.TypeInt64},
+		{Name: "cache_write_rate", Type: field.TypeInt64},
+		{Name: "output_rate", Type: field.TypeInt64},
+		{Name: "actor_id", Type: field.TypeString, Size: 32},
+	}
+	// ModelRatesTable holds the schema information for the "model_rates" table.
+	ModelRatesTable = &schema.Table{
+		Name:       "model_rates",
+		Columns:    ModelRatesColumns,
+		PrimaryKey: []*schema.Column{ModelRatesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "modelrate_team_id_config_id_revision",
+				Unique:  true,
+				Columns: []*schema.Column{ModelRatesColumns[2], ModelRatesColumns[3], ModelRatesColumns[6]},
+			},
+		},
+	}
 	// PasswordsColumns holds the columns for the "passwords" table.
 	PasswordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -170,6 +379,8 @@ var (
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"model", "preset", "plugin"}},
 		{Name: "name", Type: field.TypeString, Size: 400},
 		{Name: "data", Type: field.TypeJSON},
+		{Name: "route_owner", Type: field.TypeString, Size: 40, Default: ""},
+		{Name: "route_reference", Type: field.TypeString, Size: 100, Default: ""},
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "team_id", Type: field.TypeString, Size: 32},
 	}
@@ -181,7 +392,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "team_configs_teams_configs",
-				Columns:    []*schema.Column{TeamConfigsColumns[7]},
+				Columns:    []*schema.Column{TeamConfigsColumns[9]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -190,7 +401,7 @@ var (
 			{
 				Name:    "teamconfig_team_id_kind_name",
 				Unique:  true,
-				Columns: []*schema.Column{TeamConfigsColumns[7], TeamConfigsColumns[3], TeamConfigsColumns[4]},
+				Columns: []*schema.Column{TeamConfigsColumns[9], TeamConfigsColumns[3], TeamConfigsColumns[4]},
 			},
 		},
 	}
@@ -222,6 +433,64 @@ var (
 				Name:    "teamprovider_team_id_name",
 				Unique:  true,
 				Columns: []*schema.Column{TeamProvidersColumns[6], TeamProvidersColumns[3]},
+			},
+		},
+	}
+	// UsageRequestsColumns holds the columns for the "usage_requests" table.
+	UsageRequestsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "app_url", Type: field.TypeString, Size: 500, Default: ""},
+		{Name: "submitted_config_id", Type: field.TypeString, Size: 32},
+		{Name: "config_id", Type: field.TypeString, Size: 32},
+		{Name: "provider", Type: field.TypeString, Size: 400},
+		{Name: "model", Type: field.TypeString, Size: 400},
+		{Name: "stream", Type: field.TypeBool},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"running", "settled", "unpriced", "pending", "failed", "estimated"}, Default: "running"},
+		{Name: "deadline_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "rate_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "route_owner", Type: field.TypeString, Size: 40, Default: ""},
+		{Name: "admitted_units", Type: field.TypeInt64, Nullable: true},
+		{Name: "admitted_input", Type: field.TypeInt64, Nullable: true},
+		{Name: "admitted_output", Type: field.TypeInt64, Nullable: true},
+		{Name: "rates", Type: field.TypeJSON, Nullable: true},
+		{Name: "point_units", Type: field.TypeInt64, Nullable: true},
+		{Name: "input_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "cache_read_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "cache_write_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "output_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "reasoning_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "provider_request_id", Type: field.TypeString, Size: 200, Default: ""},
+		{Name: "error_code", Type: field.TypeString, Size: 64, Default: ""},
+		{Name: "finished_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// UsageRequestsTable holds the schema information for the "usage_requests" table.
+	UsageRequestsTable = &schema.Table{
+		Name:       "usage_requests",
+		Columns:    UsageRequestsColumns,
+		PrimaryKey: []*schema.Column{UsageRequestsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "usagerequest_team_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[1]},
+			},
+			{
+				Name:    "usagerequest_team_id_user_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[3], UsageRequestsColumns[1]},
+			},
+			{
+				Name:    "usagerequest_team_id_config_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[6], UsageRequestsColumns[1]},
+			},
+			{
+				Name:    "usagerequest_state_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UsageRequestsColumns[10], UsageRequestsColumns[1]},
 			},
 		},
 	}
@@ -265,20 +534,52 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		BudgetEventsTable,
+		BudgetGatesTable,
+		BudgetNoticesTable,
+		BudgetPoliciesTable,
+		BudgetReservationsTable,
+		BudgetWindowsTable,
 		IdentitiesTable,
 		InvitesTable,
 		MembershipsTable,
+		ModelRatesTable,
 		PasswordsTable,
 		RateWindowsTable,
 		TeamsTable,
 		TeamConfigsTable,
 		TeamProvidersTable,
+		UsageRequestsTable,
 		UsersTable,
 		VerificationCodesTable,
 	}
 )
 
 func init() {
+	BudgetEventsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	BudgetGatesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	BudgetNoticesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	BudgetPoliciesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	BudgetReservationsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	BudgetWindowsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
 	IdentitiesTable.ForeignKeys[0].RefTable = UsersTable
 	IdentitiesTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
@@ -292,6 +593,10 @@ func init() {
 	MembershipsTable.ForeignKeys[0].RefTable = TeamsTable
 	MembershipsTable.ForeignKeys[1].RefTable = UsersTable
 	MembershipsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	ModelRatesTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}
@@ -315,6 +620,10 @@ func init() {
 	}
 	TeamProvidersTable.ForeignKeys[0].RefTable = TeamsTable
 	TeamProvidersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	UsageRequestsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

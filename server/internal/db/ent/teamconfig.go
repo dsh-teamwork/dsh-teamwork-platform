@@ -31,6 +31,10 @@ type TeamConfig struct {
 	Name string `json:"name,omitempty"`
 	// Data holds the value of the "data" field.
 	Data json.RawMessage `json:"data,omitempty"`
+	// RouteOwner holds the value of the "route_owner" field.
+	RouteOwner string `json:"route_owner,omitempty"`
+	// RouteReference holds the value of the "route_reference" field.
+	RouteReference string `json:"route_reference,omitempty"`
 	// Version holds the value of the "version" field.
 	Version int `json:"version,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -68,7 +72,7 @@ func (*TeamConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case teamconfig.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case teamconfig.FieldID, teamconfig.FieldTeamID, teamconfig.FieldKind, teamconfig.FieldName:
+		case teamconfig.FieldID, teamconfig.FieldTeamID, teamconfig.FieldKind, teamconfig.FieldName, teamconfig.FieldRouteOwner, teamconfig.FieldRouteReference:
 			values[i] = new(sql.NullString)
 		case teamconfig.FieldCreatedAt, teamconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -130,6 +134,18 @@ func (_m *TeamConfig) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Data); err != nil {
 					return fmt.Errorf("unmarshal field data: %w", err)
 				}
+			}
+		case teamconfig.FieldRouteOwner:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field route_owner", values[i])
+			} else if value.Valid {
+				_m.RouteOwner = value.String
+			}
+		case teamconfig.FieldRouteReference:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field route_reference", values[i])
+			} else if value.Valid {
+				_m.RouteReference = value.String
 			}
 		case teamconfig.FieldVersion:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -195,6 +211,12 @@ func (_m *TeamConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("data=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Data))
+	builder.WriteString(", ")
+	builder.WriteString("route_owner=")
+	builder.WriteString(_m.RouteOwner)
+	builder.WriteString(", ")
+	builder.WriteString("route_reference=")
+	builder.WriteString(_m.RouteReference)
 	builder.WriteString(", ")
 	builder.WriteString("version=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Version))

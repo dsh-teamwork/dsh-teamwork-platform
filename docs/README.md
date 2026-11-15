@@ -13,6 +13,7 @@ How documents are laid out, named and kept is the "Documentation" section of
 ## Technical
 
 - [Architecture](tech/architecture.md) — components, data model, the team API, both sign-in flows and the model gateway.
+- [Usage points and budgets](tech/usage-budgets.md) — community metering, model prices, team/member limits, reservations, reports and implementation acceptance.
 - [Community edition split](tech/community-edition.md) — how the open part becomes its own repository, runs from `npx`, and stays in step.
 - [Go server](tech/go-server.md) — how the server becomes one Go binary, and what each experiment found.
 

@@ -23,6 +23,7 @@ import { catalogEntry, PROVIDER_CATALOG } from '@/lib/provider-catalog';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
+import { ModelRateButton } from './model-rate';
 
 type ModelConfig = ConfigOf<'model'>;
 /** One model a provider lists at `/models`, with only the limits it states. */
@@ -136,7 +137,7 @@ function Models({ team, configs, providers, reload }: Props) {
                   <th className="px-4 py-2.5 font-medium whitespace-nowrap">{t('context')}</th>
                   <th className="px-4 py-2.5 font-medium whitespace-nowrap">{t('maxOutput')}</th>
                   <th className="px-4 py-2.5 font-medium whitespace-nowrap">{t('usedBy')}</th>
-                  {admin && <th className="px-4 py-2.5" />}
+                  <th className="px-4 py-2.5" />
                 </tr>
               </thead>
               <tbody>
@@ -241,11 +242,12 @@ function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; re
           <span className="text-xs text-muted-foreground">{t('unused')}</span>
         )}
       </td>
-      {admin && (
-        <td className="px-4 py-3 text-right whitespace-nowrap">
-          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+      <td className="px-4 py-3 text-right whitespace-nowrap">
+        <ModelRateButton teamId={teamId} configId={model.id} name={model.name} admin={admin} />
+        {admin && <>
+          {!model.owner && <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
             {t('edit')}
-          </Button>
+          </Button>}
           <Button
             size="sm"
             variant="ghost"
@@ -259,8 +261,8 @@ function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; re
             {t('remove')}
           </Button>
           {editing && <EditModelDialog teamId={teamId} reload={reload} model={model} onClose={() => setEditing(false)} />}
-        </td>
-      )}
+        </>}
+      </td>
     </tr>
   );
 }
