@@ -59,6 +59,20 @@ func (_u *UsageRequestUpdate) SetNillableUserID(v *string) *UsageRequestUpdate {
 	return _u
 }
 
+// SetAppURL sets the "app_url" field.
+func (_u *UsageRequestUpdate) SetAppURL(v string) *UsageRequestUpdate {
+	_u.mutation.SetAppURL(v)
+	return _u
+}
+
+// SetNillableAppURL sets the "app_url" field if the given value is not nil.
+func (_u *UsageRequestUpdate) SetNillableAppURL(v *string) *UsageRequestUpdate {
+	if v != nil {
+		_u.SetAppURL(*v)
+	}
+	return _u
+}
+
 // SetSubmittedConfigID sets the "submitted_config_id" field.
 func (_u *UsageRequestUpdate) SetSubmittedConfigID(v string) *UsageRequestUpdate {
 	_u.mutation.SetSubmittedConfigID(v)
@@ -140,6 +154,26 @@ func (_u *UsageRequestUpdate) SetNillableState(v *usagerequest.State) *UsageRequ
 	if v != nil {
 		_u.SetState(*v)
 	}
+	return _u
+}
+
+// SetDeadlineAt sets the "deadline_at" field.
+func (_u *UsageRequestUpdate) SetDeadlineAt(v time.Time) *UsageRequestUpdate {
+	_u.mutation.SetDeadlineAt(v)
+	return _u
+}
+
+// SetNillableDeadlineAt sets the "deadline_at" field if the given value is not nil.
+func (_u *UsageRequestUpdate) SetNillableDeadlineAt(v *time.Time) *UsageRequestUpdate {
+	if v != nil {
+		_u.SetDeadlineAt(*v)
+	}
+	return _u
+}
+
+// ClearDeadlineAt clears the value of the "deadline_at" field.
+func (_u *UsageRequestUpdate) ClearDeadlineAt() *UsageRequestUpdate {
+	_u.mutation.ClearDeadlineAt()
 	return _u
 }
 
@@ -429,6 +463,11 @@ func (_u *UsageRequestUpdate) check() error {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.user_id": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.AppURL(); ok {
+		if err := usagerequest.AppURLValidator(v); err != nil {
+			return &ValidationError{Name: "app_url", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.app_url": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.SubmittedConfigID(); ok {
 		if err := usagerequest.SubmittedConfigIDValidator(v); err != nil {
 			return &ValidationError{Name: "submitted_config_id", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.submitted_config_id": %w`, err)}
@@ -496,6 +535,9 @@ func (_u *UsageRequestUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if value, ok := _u.mutation.UserID(); ok {
 		_spec.SetField(usagerequest.FieldUserID, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.AppURL(); ok {
+		_spec.SetField(usagerequest.FieldAppURL, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.SubmittedConfigID(); ok {
 		_spec.SetField(usagerequest.FieldSubmittedConfigID, field.TypeString, value)
 	}
@@ -513,6 +555,12 @@ func (_u *UsageRequestUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if value, ok := _u.mutation.State(); ok {
 		_spec.SetField(usagerequest.FieldState, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.DeadlineAt(); ok {
+		_spec.SetField(usagerequest.FieldDeadlineAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeadlineAtCleared() {
+		_spec.ClearField(usagerequest.FieldDeadlineAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.RateID(); ok {
 		_spec.SetField(usagerequest.FieldRateID, field.TypeString, value)
@@ -644,6 +692,20 @@ func (_u *UsageRequestUpdateOne) SetNillableUserID(v *string) *UsageRequestUpdat
 	return _u
 }
 
+// SetAppURL sets the "app_url" field.
+func (_u *UsageRequestUpdateOne) SetAppURL(v string) *UsageRequestUpdateOne {
+	_u.mutation.SetAppURL(v)
+	return _u
+}
+
+// SetNillableAppURL sets the "app_url" field if the given value is not nil.
+func (_u *UsageRequestUpdateOne) SetNillableAppURL(v *string) *UsageRequestUpdateOne {
+	if v != nil {
+		_u.SetAppURL(*v)
+	}
+	return _u
+}
+
 // SetSubmittedConfigID sets the "submitted_config_id" field.
 func (_u *UsageRequestUpdateOne) SetSubmittedConfigID(v string) *UsageRequestUpdateOne {
 	_u.mutation.SetSubmittedConfigID(v)
@@ -725,6 +787,26 @@ func (_u *UsageRequestUpdateOne) SetNillableState(v *usagerequest.State) *UsageR
 	if v != nil {
 		_u.SetState(*v)
 	}
+	return _u
+}
+
+// SetDeadlineAt sets the "deadline_at" field.
+func (_u *UsageRequestUpdateOne) SetDeadlineAt(v time.Time) *UsageRequestUpdateOne {
+	_u.mutation.SetDeadlineAt(v)
+	return _u
+}
+
+// SetNillableDeadlineAt sets the "deadline_at" field if the given value is not nil.
+func (_u *UsageRequestUpdateOne) SetNillableDeadlineAt(v *time.Time) *UsageRequestUpdateOne {
+	if v != nil {
+		_u.SetDeadlineAt(*v)
+	}
+	return _u
+}
+
+// ClearDeadlineAt clears the value of the "deadline_at" field.
+func (_u *UsageRequestUpdateOne) ClearDeadlineAt() *UsageRequestUpdateOne {
+	_u.mutation.ClearDeadlineAt()
 	return _u
 }
 
@@ -1027,6 +1109,11 @@ func (_u *UsageRequestUpdateOne) check() error {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.user_id": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.AppURL(); ok {
+		if err := usagerequest.AppURLValidator(v); err != nil {
+			return &ValidationError{Name: "app_url", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.app_url": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.SubmittedConfigID(); ok {
 		if err := usagerequest.SubmittedConfigIDValidator(v); err != nil {
 			return &ValidationError{Name: "submitted_config_id", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.submitted_config_id": %w`, err)}
@@ -1111,6 +1198,9 @@ func (_u *UsageRequestUpdateOne) sqlSave(ctx context.Context) (_node *UsageReque
 	if value, ok := _u.mutation.UserID(); ok {
 		_spec.SetField(usagerequest.FieldUserID, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.AppURL(); ok {
+		_spec.SetField(usagerequest.FieldAppURL, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.SubmittedConfigID(); ok {
 		_spec.SetField(usagerequest.FieldSubmittedConfigID, field.TypeString, value)
 	}
@@ -1128,6 +1218,12 @@ func (_u *UsageRequestUpdateOne) sqlSave(ctx context.Context) (_node *UsageReque
 	}
 	if value, ok := _u.mutation.State(); ok {
 		_spec.SetField(usagerequest.FieldState, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.DeadlineAt(); ok {
+		_spec.SetField(usagerequest.FieldDeadlineAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeadlineAtCleared() {
+		_spec.ClearField(usagerequest.FieldDeadlineAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.RateID(); ok {
 		_spec.SetField(usagerequest.FieldRateID, field.TypeString, value)

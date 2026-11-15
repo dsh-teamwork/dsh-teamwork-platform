@@ -5,6 +5,12 @@ package ent
 import (
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetnotice"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetpolicy"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetreservation"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetwindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
@@ -24,6 +30,380 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	budgeteventMixin := schema.BudgetEvent{}.Mixin()
+	budgeteventMixinFields0 := budgeteventMixin[0].Fields()
+	_ = budgeteventMixinFields0
+	budgeteventFields := schema.BudgetEvent{}.Fields()
+	_ = budgeteventFields
+	// budgeteventDescCreatedAt is the schema descriptor for created_at field.
+	budgeteventDescCreatedAt := budgeteventMixinFields0[1].Descriptor()
+	// budgetevent.DefaultCreatedAt holds the default value on creation for the created_at field.
+	budgetevent.DefaultCreatedAt = budgeteventDescCreatedAt.Default.(func() time.Time)
+	// budgeteventDescTeamID is the schema descriptor for team_id field.
+	budgeteventDescTeamID := budgeteventFields[0].Descriptor()
+	// budgetevent.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	budgetevent.TeamIDValidator = budgeteventDescTeamID.Validators[0].(func(string) error)
+	// budgeteventDescWindowID is the schema descriptor for window_id field.
+	budgeteventDescWindowID := budgeteventFields[1].Descriptor()
+	// budgetevent.DefaultWindowID holds the default value on creation for the window_id field.
+	budgetevent.DefaultWindowID = budgeteventDescWindowID.Default.(string)
+	// budgetevent.WindowIDValidator is a validator for the "window_id" field. It is called by the builders before save.
+	budgetevent.WindowIDValidator = budgeteventDescWindowID.Validators[0].(func(string) error)
+	// budgeteventDescRequestID is the schema descriptor for request_id field.
+	budgeteventDescRequestID := budgeteventFields[2].Descriptor()
+	// budgetevent.DefaultRequestID holds the default value on creation for the request_id field.
+	budgetevent.DefaultRequestID = budgeteventDescRequestID.Default.(string)
+	// budgetevent.RequestIDValidator is a validator for the "request_id" field. It is called by the builders before save.
+	budgetevent.RequestIDValidator = budgeteventDescRequestID.Validators[0].(func(string) error)
+	// budgeteventDescPolicyID is the schema descriptor for policy_id field.
+	budgeteventDescPolicyID := budgeteventFields[3].Descriptor()
+	// budgetevent.DefaultPolicyID holds the default value on creation for the policy_id field.
+	budgetevent.DefaultPolicyID = budgeteventDescPolicyID.Default.(string)
+	// budgetevent.PolicyIDValidator is a validator for the "policy_id" field. It is called by the builders before save.
+	budgetevent.PolicyIDValidator = budgeteventDescPolicyID.Validators[0].(func(string) error)
+	// budgeteventDescActionKey is the schema descriptor for action_key field.
+	budgeteventDescActionKey := budgeteventFields[4].Descriptor()
+	// budgetevent.ActionKeyValidator is a validator for the "action_key" field. It is called by the builders before save.
+	budgetevent.ActionKeyValidator = budgeteventDescActionKey.Validators[0].(func(string) error)
+	// budgeteventDescActorID is the schema descriptor for actor_id field.
+	budgeteventDescActorID := budgeteventFields[5].Descriptor()
+	// budgetevent.DefaultActorID holds the default value on creation for the actor_id field.
+	budgetevent.DefaultActorID = budgeteventDescActorID.Default.(string)
+	// budgetevent.ActorIDValidator is a validator for the "actor_id" field. It is called by the builders before save.
+	budgetevent.ActorIDValidator = budgeteventDescActorID.Validators[0].(func(string) error)
+	// budgeteventDescID is the schema descriptor for id field.
+	budgeteventDescID := budgeteventMixinFields0[0].Descriptor()
+	// budgetevent.DefaultID holds the default value on creation for the id field.
+	budgetevent.DefaultID = budgeteventDescID.Default.(func() string)
+	// budgetevent.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	budgetevent.IDValidator = func() func(string) error {
+		validators := budgeteventDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	budgetgateMixin := schema.BudgetGate{}.Mixin()
+	budgetgateMixinFields0 := budgetgateMixin[0].Fields()
+	_ = budgetgateMixinFields0
+	budgetgateFields := schema.BudgetGate{}.Fields()
+	_ = budgetgateFields
+	// budgetgateDescCreatedAt is the schema descriptor for created_at field.
+	budgetgateDescCreatedAt := budgetgateMixinFields0[1].Descriptor()
+	// budgetgate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	budgetgate.DefaultCreatedAt = budgetgateDescCreatedAt.Default.(func() time.Time)
+	// budgetgateDescRevision is the schema descriptor for revision field.
+	budgetgateDescRevision := budgetgateFields[0].Descriptor()
+	// budgetgate.DefaultRevision holds the default value on creation for the revision field.
+	budgetgate.DefaultRevision = budgetgateDescRevision.Default.(int64)
+	// budgetgateDescID is the schema descriptor for id field.
+	budgetgateDescID := budgetgateMixinFields0[0].Descriptor()
+	// budgetgate.DefaultID holds the default value on creation for the id field.
+	budgetgate.DefaultID = budgetgateDescID.Default.(func() string)
+	// budgetgate.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	budgetgate.IDValidator = func() func(string) error {
+		validators := budgetgateDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	budgetnoticeMixin := schema.BudgetNotice{}.Mixin()
+	budgetnoticeMixinFields0 := budgetnoticeMixin[0].Fields()
+	_ = budgetnoticeMixinFields0
+	budgetnoticeFields := schema.BudgetNotice{}.Fields()
+	_ = budgetnoticeFields
+	// budgetnoticeDescCreatedAt is the schema descriptor for created_at field.
+	budgetnoticeDescCreatedAt := budgetnoticeMixinFields0[1].Descriptor()
+	// budgetnotice.DefaultCreatedAt holds the default value on creation for the created_at field.
+	budgetnotice.DefaultCreatedAt = budgetnoticeDescCreatedAt.Default.(func() time.Time)
+	// budgetnoticeDescTeamID is the schema descriptor for team_id field.
+	budgetnoticeDescTeamID := budgetnoticeFields[0].Descriptor()
+	// budgetnotice.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	budgetnotice.TeamIDValidator = budgetnoticeDescTeamID.Validators[0].(func(string) error)
+	// budgetnoticeDescWindowID is the schema descriptor for window_id field.
+	budgetnoticeDescWindowID := budgetnoticeFields[1].Descriptor()
+	// budgetnotice.WindowIDValidator is a validator for the "window_id" field. It is called by the builders before save.
+	budgetnotice.WindowIDValidator = budgetnoticeDescWindowID.Validators[0].(func(string) error)
+	// budgetnoticeDescRecipientID is the schema descriptor for recipient_id field.
+	budgetnoticeDescRecipientID := budgetnoticeFields[2].Descriptor()
+	// budgetnotice.RecipientIDValidator is a validator for the "recipient_id" field. It is called by the builders before save.
+	budgetnotice.RecipientIDValidator = budgetnoticeDescRecipientID.Validators[0].(func(string) error)
+	// budgetnoticeDescLeaseID is the schema descriptor for lease_id field.
+	budgetnoticeDescLeaseID := budgetnoticeFields[6].Descriptor()
+	// budgetnotice.DefaultLeaseID holds the default value on creation for the lease_id field.
+	budgetnotice.DefaultLeaseID = budgetnoticeDescLeaseID.Default.(string)
+	// budgetnotice.LeaseIDValidator is a validator for the "lease_id" field. It is called by the builders before save.
+	budgetnotice.LeaseIDValidator = budgetnoticeDescLeaseID.Validators[0].(func(string) error)
+	// budgetnoticeDescNextAt is the schema descriptor for next_at field.
+	budgetnoticeDescNextAt := budgetnoticeFields[8].Descriptor()
+	// budgetnotice.DefaultNextAt holds the default value on creation for the next_at field.
+	budgetnotice.DefaultNextAt = budgetnoticeDescNextAt.Default.(func() time.Time)
+	// budgetnoticeDescAttempts is the schema descriptor for attempts field.
+	budgetnoticeDescAttempts := budgetnoticeFields[9].Descriptor()
+	// budgetnotice.DefaultAttempts holds the default value on creation for the attempts field.
+	budgetnotice.DefaultAttempts = budgetnoticeDescAttempts.Default.(int)
+	// budgetnoticeDescLastError is the schema descriptor for last_error field.
+	budgetnoticeDescLastError := budgetnoticeFields[10].Descriptor()
+	// budgetnotice.DefaultLastError holds the default value on creation for the last_error field.
+	budgetnotice.DefaultLastError = budgetnoticeDescLastError.Default.(string)
+	// budgetnotice.LastErrorValidator is a validator for the "last_error" field. It is called by the builders before save.
+	budgetnotice.LastErrorValidator = budgetnoticeDescLastError.Validators[0].(func(string) error)
+	// budgetnoticeDescID is the schema descriptor for id field.
+	budgetnoticeDescID := budgetnoticeMixinFields0[0].Descriptor()
+	// budgetnotice.DefaultID holds the default value on creation for the id field.
+	budgetnotice.DefaultID = budgetnoticeDescID.Default.(func() string)
+	// budgetnotice.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	budgetnotice.IDValidator = func() func(string) error {
+		validators := budgetnoticeDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	budgetpolicyMixin := schema.BudgetPolicy{}.Mixin()
+	budgetpolicyMixinFields0 := budgetpolicyMixin[0].Fields()
+	_ = budgetpolicyMixinFields0
+	budgetpolicyMixinFields1 := budgetpolicyMixin[1].Fields()
+	_ = budgetpolicyMixinFields1
+	budgetpolicyFields := schema.BudgetPolicy{}.Fields()
+	_ = budgetpolicyFields
+	// budgetpolicyDescCreatedAt is the schema descriptor for created_at field.
+	budgetpolicyDescCreatedAt := budgetpolicyMixinFields0[1].Descriptor()
+	// budgetpolicy.DefaultCreatedAt holds the default value on creation for the created_at field.
+	budgetpolicy.DefaultCreatedAt = budgetpolicyDescCreatedAt.Default.(func() time.Time)
+	// budgetpolicyDescUpdatedAt is the schema descriptor for updated_at field.
+	budgetpolicyDescUpdatedAt := budgetpolicyMixinFields1[0].Descriptor()
+	// budgetpolicy.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	budgetpolicy.DefaultUpdatedAt = budgetpolicyDescUpdatedAt.Default.(func() time.Time)
+	// budgetpolicy.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	budgetpolicy.UpdateDefaultUpdatedAt = budgetpolicyDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// budgetpolicyDescTeamID is the schema descriptor for team_id field.
+	budgetpolicyDescTeamID := budgetpolicyFields[0].Descriptor()
+	// budgetpolicy.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	budgetpolicy.TeamIDValidator = budgetpolicyDescTeamID.Validators[0].(func(string) error)
+	// budgetpolicyDescSubjectID is the schema descriptor for subject_id field.
+	budgetpolicyDescSubjectID := budgetpolicyFields[2].Descriptor()
+	// budgetpolicy.DefaultSubjectID holds the default value on creation for the subject_id field.
+	budgetpolicy.DefaultSubjectID = budgetpolicyDescSubjectID.Default.(string)
+	// budgetpolicy.SubjectIDValidator is a validator for the "subject_id" field. It is called by the builders before save.
+	budgetpolicy.SubjectIDValidator = budgetpolicyDescSubjectID.Validators[0].(func(string) error)
+	// budgetpolicyDescTimezone is the schema descriptor for timezone field.
+	budgetpolicyDescTimezone := budgetpolicyFields[4].Descriptor()
+	// budgetpolicy.TimezoneValidator is a validator for the "timezone" field. It is called by the builders before save.
+	budgetpolicy.TimezoneValidator = budgetpolicyDescTimezone.Validators[0].(func(string) error)
+	// budgetpolicyDescPreviousTimezone is the schema descriptor for previous_timezone field.
+	budgetpolicyDescPreviousTimezone := budgetpolicyFields[5].Descriptor()
+	// budgetpolicy.DefaultPreviousTimezone holds the default value on creation for the previous_timezone field.
+	budgetpolicy.DefaultPreviousTimezone = budgetpolicyDescPreviousTimezone.Default.(string)
+	// budgetpolicy.PreviousTimezoneValidator is a validator for the "previous_timezone" field. It is called by the builders before save.
+	budgetpolicy.PreviousTimezoneValidator = budgetpolicyDescPreviousTimezone.Validators[0].(func(string) error)
+	// budgetpolicyDescPointLimit is the schema descriptor for point_limit field.
+	budgetpolicyDescPointLimit := budgetpolicyFields[7].Descriptor()
+	// budgetpolicy.PointLimitValidator is a validator for the "point_limit" field. It is called by the builders before save.
+	budgetpolicy.PointLimitValidator = budgetpolicyDescPointLimit.Validators[0].(func(int64) error)
+	// budgetpolicyDescInputLimit is the schema descriptor for input_limit field.
+	budgetpolicyDescInputLimit := budgetpolicyFields[8].Descriptor()
+	// budgetpolicy.InputLimitValidator is a validator for the "input_limit" field. It is called by the builders before save.
+	budgetpolicy.InputLimitValidator = budgetpolicyDescInputLimit.Validators[0].(func(int64) error)
+	// budgetpolicyDescOutputLimit is the schema descriptor for output_limit field.
+	budgetpolicyDescOutputLimit := budgetpolicyFields[9].Descriptor()
+	// budgetpolicy.OutputLimitValidator is a validator for the "output_limit" field. It is called by the builders before save.
+	budgetpolicy.OutputLimitValidator = budgetpolicyDescOutputLimit.Validators[0].(func(int64) error)
+	// budgetpolicyDescTotalLimit is the schema descriptor for total_limit field.
+	budgetpolicyDescTotalLimit := budgetpolicyFields[10].Descriptor()
+	// budgetpolicy.TotalLimitValidator is a validator for the "total_limit" field. It is called by the builders before save.
+	budgetpolicy.TotalLimitValidator = budgetpolicyDescTotalLimit.Validators[0].(func(int64) error)
+	// budgetpolicyDescEnabled is the schema descriptor for enabled field.
+	budgetpolicyDescEnabled := budgetpolicyFields[11].Descriptor()
+	// budgetpolicy.DefaultEnabled holds the default value on creation for the enabled field.
+	budgetpolicy.DefaultEnabled = budgetpolicyDescEnabled.Default.(bool)
+	// budgetpolicyDescRevision is the schema descriptor for revision field.
+	budgetpolicyDescRevision := budgetpolicyFields[13].Descriptor()
+	// budgetpolicy.DefaultRevision holds the default value on creation for the revision field.
+	budgetpolicy.DefaultRevision = budgetpolicyDescRevision.Default.(int)
+	// budgetpolicy.RevisionValidator is a validator for the "revision" field. It is called by the builders before save.
+	budgetpolicy.RevisionValidator = budgetpolicyDescRevision.Validators[0].(func(int) error)
+	// budgetpolicyDescID is the schema descriptor for id field.
+	budgetpolicyDescID := budgetpolicyMixinFields0[0].Descriptor()
+	// budgetpolicy.DefaultID holds the default value on creation for the id field.
+	budgetpolicy.DefaultID = budgetpolicyDescID.Default.(func() string)
+	// budgetpolicy.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	budgetpolicy.IDValidator = func() func(string) error {
+		validators := budgetpolicyDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	budgetreservationMixin := schema.BudgetReservation{}.Mixin()
+	budgetreservationMixinFields0 := budgetreservationMixin[0].Fields()
+	_ = budgetreservationMixinFields0
+	budgetreservationFields := schema.BudgetReservation{}.Fields()
+	_ = budgetreservationFields
+	// budgetreservationDescCreatedAt is the schema descriptor for created_at field.
+	budgetreservationDescCreatedAt := budgetreservationMixinFields0[1].Descriptor()
+	// budgetreservation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	budgetreservation.DefaultCreatedAt = budgetreservationDescCreatedAt.Default.(func() time.Time)
+	// budgetreservationDescRequestID is the schema descriptor for request_id field.
+	budgetreservationDescRequestID := budgetreservationFields[0].Descriptor()
+	// budgetreservation.RequestIDValidator is a validator for the "request_id" field. It is called by the builders before save.
+	budgetreservation.RequestIDValidator = budgetreservationDescRequestID.Validators[0].(func(string) error)
+	// budgetreservationDescWindowID is the schema descriptor for window_id field.
+	budgetreservationDescWindowID := budgetreservationFields[1].Descriptor()
+	// budgetreservation.WindowIDValidator is a validator for the "window_id" field. It is called by the builders before save.
+	budgetreservation.WindowIDValidator = budgetreservationDescWindowID.Validators[0].(func(string) error)
+	// budgetreservationDescPolicyID is the schema descriptor for policy_id field.
+	budgetreservationDescPolicyID := budgetreservationFields[2].Descriptor()
+	// budgetreservation.PolicyIDValidator is a validator for the "policy_id" field. It is called by the builders before save.
+	budgetreservation.PolicyIDValidator = budgetreservationDescPolicyID.Validators[0].(func(string) error)
+	// budgetreservationDescPointUnits is the schema descriptor for point_units field.
+	budgetreservationDescPointUnits := budgetreservationFields[4].Descriptor()
+	// budgetreservation.DefaultPointUnits holds the default value on creation for the point_units field.
+	budgetreservation.DefaultPointUnits = budgetreservationDescPointUnits.Default.(int64)
+	// budgetreservationDescInputTokens is the schema descriptor for input_tokens field.
+	budgetreservationDescInputTokens := budgetreservationFields[5].Descriptor()
+	// budgetreservation.DefaultInputTokens holds the default value on creation for the input_tokens field.
+	budgetreservation.DefaultInputTokens = budgetreservationDescInputTokens.Default.(int64)
+	// budgetreservationDescOutputTokens is the schema descriptor for output_tokens field.
+	budgetreservationDescOutputTokens := budgetreservationFields[6].Descriptor()
+	// budgetreservation.DefaultOutputTokens holds the default value on creation for the output_tokens field.
+	budgetreservation.DefaultOutputTokens = budgetreservationDescOutputTokens.Default.(int64)
+	// budgetreservationDescUnbounded is the schema descriptor for unbounded field.
+	budgetreservationDescUnbounded := budgetreservationFields[7].Descriptor()
+	// budgetreservation.DefaultUnbounded holds the default value on creation for the unbounded field.
+	budgetreservation.DefaultUnbounded = budgetreservationDescUnbounded.Default.(bool)
+	// budgetreservationDescUnpriced is the schema descriptor for unpriced field.
+	budgetreservationDescUnpriced := budgetreservationFields[8].Descriptor()
+	// budgetreservation.DefaultUnpriced holds the default value on creation for the unpriced field.
+	budgetreservation.DefaultUnpriced = budgetreservationDescUnpriced.Default.(bool)
+	// budgetreservationDescSettled is the schema descriptor for settled field.
+	budgetreservationDescSettled := budgetreservationFields[9].Descriptor()
+	// budgetreservation.DefaultSettled holds the default value on creation for the settled field.
+	budgetreservation.DefaultSettled = budgetreservationDescSettled.Default.(bool)
+	// budgetreservationDescID is the schema descriptor for id field.
+	budgetreservationDescID := budgetreservationMixinFields0[0].Descriptor()
+	// budgetreservation.DefaultID holds the default value on creation for the id field.
+	budgetreservation.DefaultID = budgetreservationDescID.Default.(func() string)
+	// budgetreservation.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	budgetreservation.IDValidator = func() func(string) error {
+		validators := budgetreservationDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	budgetwindowMixin := schema.BudgetWindow{}.Mixin()
+	budgetwindowMixinFields0 := budgetwindowMixin[0].Fields()
+	_ = budgetwindowMixinFields0
+	budgetwindowFields := schema.BudgetWindow{}.Fields()
+	_ = budgetwindowFields
+	// budgetwindowDescCreatedAt is the schema descriptor for created_at field.
+	budgetwindowDescCreatedAt := budgetwindowMixinFields0[1].Descriptor()
+	// budgetwindow.DefaultCreatedAt holds the default value on creation for the created_at field.
+	budgetwindow.DefaultCreatedAt = budgetwindowDescCreatedAt.Default.(func() time.Time)
+	// budgetwindowDescTeamID is the schema descriptor for team_id field.
+	budgetwindowDescTeamID := budgetwindowFields[0].Descriptor()
+	// budgetwindow.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	budgetwindow.TeamIDValidator = budgetwindowDescTeamID.Validators[0].(func(string) error)
+	// budgetwindowDescSubjectID is the schema descriptor for subject_id field.
+	budgetwindowDescSubjectID := budgetwindowFields[2].Descriptor()
+	// budgetwindow.DefaultSubjectID holds the default value on creation for the subject_id field.
+	budgetwindow.DefaultSubjectID = budgetwindowDescSubjectID.Default.(string)
+	// budgetwindow.SubjectIDValidator is a validator for the "subject_id" field. It is called by the builders before save.
+	budgetwindow.SubjectIDValidator = budgetwindowDescSubjectID.Validators[0].(func(string) error)
+	// budgetwindowDescSpentUnits is the schema descriptor for spent_units field.
+	budgetwindowDescSpentUnits := budgetwindowFields[6].Descriptor()
+	// budgetwindow.DefaultSpentUnits holds the default value on creation for the spent_units field.
+	budgetwindow.DefaultSpentUnits = budgetwindowDescSpentUnits.Default.(int64)
+	// budgetwindowDescReservedUnits is the schema descriptor for reserved_units field.
+	budgetwindowDescReservedUnits := budgetwindowFields[7].Descriptor()
+	// budgetwindow.DefaultReservedUnits holds the default value on creation for the reserved_units field.
+	budgetwindow.DefaultReservedUnits = budgetwindowDescReservedUnits.Default.(int64)
+	// budgetwindowDescSpentInput is the schema descriptor for spent_input field.
+	budgetwindowDescSpentInput := budgetwindowFields[8].Descriptor()
+	// budgetwindow.DefaultSpentInput holds the default value on creation for the spent_input field.
+	budgetwindow.DefaultSpentInput = budgetwindowDescSpentInput.Default.(int64)
+	// budgetwindowDescReservedInput is the schema descriptor for reserved_input field.
+	budgetwindowDescReservedInput := budgetwindowFields[9].Descriptor()
+	// budgetwindow.DefaultReservedInput holds the default value on creation for the reserved_input field.
+	budgetwindow.DefaultReservedInput = budgetwindowDescReservedInput.Default.(int64)
+	// budgetwindowDescSpentOutput is the schema descriptor for spent_output field.
+	budgetwindowDescSpentOutput := budgetwindowFields[10].Descriptor()
+	// budgetwindow.DefaultSpentOutput holds the default value on creation for the spent_output field.
+	budgetwindow.DefaultSpentOutput = budgetwindowDescSpentOutput.Default.(int64)
+	// budgetwindowDescReservedOutput is the schema descriptor for reserved_output field.
+	budgetwindowDescReservedOutput := budgetwindowFields[11].Descriptor()
+	// budgetwindow.DefaultReservedOutput holds the default value on creation for the reserved_output field.
+	budgetwindow.DefaultReservedOutput = budgetwindowDescReservedOutput.Default.(int64)
+	// budgetwindowDescUnpricedCount is the schema descriptor for unpriced_count field.
+	budgetwindowDescUnpricedCount := budgetwindowFields[12].Descriptor()
+	// budgetwindow.DefaultUnpricedCount holds the default value on creation for the unpriced_count field.
+	budgetwindow.DefaultUnpricedCount = budgetwindowDescUnpricedCount.Default.(int64)
+	// budgetwindowDescUnboundedCount is the schema descriptor for unbounded_count field.
+	budgetwindowDescUnboundedCount := budgetwindowFields[13].Descriptor()
+	// budgetwindow.DefaultUnboundedCount holds the default value on creation for the unbounded_count field.
+	budgetwindow.DefaultUnboundedCount = budgetwindowDescUnboundedCount.Default.(int64)
+	// budgetwindowDescID is the schema descriptor for id field.
+	budgetwindowDescID := budgetwindowMixinFields0[0].Descriptor()
+	// budgetwindow.DefaultID holds the default value on creation for the id field.
+	budgetwindow.DefaultID = budgetwindowDescID.Default.(func() string)
+	// budgetwindow.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	budgetwindow.IDValidator = func() func(string) error {
+		validators := budgetwindowDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	identityMixin := schema.Identity{}.Mixin()
 	identityMixinFields0 := identityMixin[0].Fields()
 	_ = identityMixinFields0
@@ -434,36 +814,42 @@ func init() {
 	usagerequestDescUserID := usagerequestFields[1].Descriptor()
 	// usagerequest.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	usagerequest.UserIDValidator = usagerequestDescUserID.Validators[0].(func(string) error)
+	// usagerequestDescAppURL is the schema descriptor for app_url field.
+	usagerequestDescAppURL := usagerequestFields[2].Descriptor()
+	// usagerequest.DefaultAppURL holds the default value on creation for the app_url field.
+	usagerequest.DefaultAppURL = usagerequestDescAppURL.Default.(string)
+	// usagerequest.AppURLValidator is a validator for the "app_url" field. It is called by the builders before save.
+	usagerequest.AppURLValidator = usagerequestDescAppURL.Validators[0].(func(string) error)
 	// usagerequestDescSubmittedConfigID is the schema descriptor for submitted_config_id field.
-	usagerequestDescSubmittedConfigID := usagerequestFields[2].Descriptor()
+	usagerequestDescSubmittedConfigID := usagerequestFields[3].Descriptor()
 	// usagerequest.SubmittedConfigIDValidator is a validator for the "submitted_config_id" field. It is called by the builders before save.
 	usagerequest.SubmittedConfigIDValidator = usagerequestDescSubmittedConfigID.Validators[0].(func(string) error)
 	// usagerequestDescConfigID is the schema descriptor for config_id field.
-	usagerequestDescConfigID := usagerequestFields[3].Descriptor()
+	usagerequestDescConfigID := usagerequestFields[4].Descriptor()
 	// usagerequest.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
 	usagerequest.ConfigIDValidator = usagerequestDescConfigID.Validators[0].(func(string) error)
 	// usagerequestDescProvider is the schema descriptor for provider field.
-	usagerequestDescProvider := usagerequestFields[4].Descriptor()
+	usagerequestDescProvider := usagerequestFields[5].Descriptor()
 	// usagerequest.ProviderValidator is a validator for the "provider" field. It is called by the builders before save.
 	usagerequest.ProviderValidator = usagerequestDescProvider.Validators[0].(func(string) error)
 	// usagerequestDescModel is the schema descriptor for model field.
-	usagerequestDescModel := usagerequestFields[5].Descriptor()
+	usagerequestDescModel := usagerequestFields[6].Descriptor()
 	// usagerequest.ModelValidator is a validator for the "model" field. It is called by the builders before save.
 	usagerequest.ModelValidator = usagerequestDescModel.Validators[0].(func(string) error)
 	// usagerequestDescRateID is the schema descriptor for rate_id field.
-	usagerequestDescRateID := usagerequestFields[8].Descriptor()
+	usagerequestDescRateID := usagerequestFields[10].Descriptor()
 	// usagerequest.DefaultRateID holds the default value on creation for the rate_id field.
 	usagerequest.DefaultRateID = usagerequestDescRateID.Default.(string)
 	// usagerequest.RateIDValidator is a validator for the "rate_id" field. It is called by the builders before save.
 	usagerequest.RateIDValidator = usagerequestDescRateID.Validators[0].(func(string) error)
 	// usagerequestDescProviderRequestID is the schema descriptor for provider_request_id field.
-	usagerequestDescProviderRequestID := usagerequestFields[16].Descriptor()
+	usagerequestDescProviderRequestID := usagerequestFields[18].Descriptor()
 	// usagerequest.DefaultProviderRequestID holds the default value on creation for the provider_request_id field.
 	usagerequest.DefaultProviderRequestID = usagerequestDescProviderRequestID.Default.(string)
 	// usagerequest.ProviderRequestIDValidator is a validator for the "provider_request_id" field. It is called by the builders before save.
 	usagerequest.ProviderRequestIDValidator = usagerequestDescProviderRequestID.Validators[0].(func(string) error)
 	// usagerequestDescErrorCode is the schema descriptor for error_code field.
-	usagerequestDescErrorCode := usagerequestFields[17].Descriptor()
+	usagerequestDescErrorCode := usagerequestFields[19].Descriptor()
 	// usagerequest.DefaultErrorCode holds the default value on creation for the error_code field.
 	usagerequest.DefaultErrorCode = usagerequestDescErrorCode.Default.(string)
 	// usagerequest.ErrorCodeValidator is a validator for the "error_code" field. It is called by the builders before save.

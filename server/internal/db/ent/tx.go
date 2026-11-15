@@ -14,6 +14,18 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// BudgetEvent is the client for interacting with the BudgetEvent builders.
+	BudgetEvent *BudgetEventClient
+	// BudgetGate is the client for interacting with the BudgetGate builders.
+	BudgetGate *BudgetGateClient
+	// BudgetNotice is the client for interacting with the BudgetNotice builders.
+	BudgetNotice *BudgetNoticeClient
+	// BudgetPolicy is the client for interacting with the BudgetPolicy builders.
+	BudgetPolicy *BudgetPolicyClient
+	// BudgetReservation is the client for interacting with the BudgetReservation builders.
+	BudgetReservation *BudgetReservationClient
+	// BudgetWindow is the client for interacting with the BudgetWindow builders.
+	BudgetWindow *BudgetWindowClient
 	// Identity is the client for interacting with the Identity builders.
 	Identity *IdentityClient
 	// Invite is the client for interacting with the Invite builders.
@@ -169,6 +181,12 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.BudgetEvent = NewBudgetEventClient(tx.config)
+	tx.BudgetGate = NewBudgetGateClient(tx.config)
+	tx.BudgetNotice = NewBudgetNoticeClient(tx.config)
+	tx.BudgetPolicy = NewBudgetPolicyClient(tx.config)
+	tx.BudgetReservation = NewBudgetReservationClient(tx.config)
+	tx.BudgetWindow = NewBudgetWindowClient(tx.config)
 	tx.Identity = NewIdentityClient(tx.config)
 	tx.Invite = NewInviteClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
@@ -190,7 +208,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Identity.QueryXXX(), the query will be executed
+// applies a query, for example: BudgetEvent.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

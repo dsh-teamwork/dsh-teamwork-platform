@@ -51,7 +51,10 @@ func (s *Server) route(h handler, write bool) http.HandlerFunc {
 // Handler is every route.
 func (s *Server) Handler() http.Handler {
 	if s.Usage == nil && s.Team != nil {
-		s.Usage = &usage.Service{DB: s.Team.DB}
+		s.Usage = &usage.Service{DB: s.Team.DB, AppURL: s.Config.AppURL}
+	}
+	if s.Gateway != nil && s.Gateway.Usage == nil {
+		s.Gateway.Usage = s.Usage
 	}
 	mux := s.Mux
 	if mux == nil {
@@ -98,6 +101,12 @@ func (s *Server) Handler() http.Handler {
 	get("/api/teams/{teamId}/model-rates/{configId}", s.getModelRate)
 	write("PUT", "/api/teams/{teamId}/model-rates/{configId}", s.setModelRate)
 	get("/api/teams/{teamId}/usage", s.listUsage)
+	get("/api/teams/{teamId}/usage/export", s.exportUsage)
+	post("/api/teams/{teamId}/usage/{requestId}/resolve", s.resolveUsage)
+	get("/api/teams/{teamId}/budgets", s.getBudgets)
+	write("PUT", "/api/teams/{teamId}/budgets", s.setBudget)
+	get("/api/teams/{teamId}/budgets/notices", s.listBudgetNotices)
+	post("/api/teams/{teamId}/budgets/notices/{noticeId}/retry", s.retryBudgetNotice)
 	get("/api/profile", s.getProfile)
 	write("PATCH", "/api/profile", s.updateProfile)
 	post("/api/locale", s.chooseLocale)

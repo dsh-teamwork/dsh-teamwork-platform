@@ -1383,6 +1383,225 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/budgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Read scoped budget policies and current usage windows */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Admin team view or member's applicable policies and windows */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            policies: components["schemas"]["BudgetPolicy"][];
+                            windows: components["schemas"]["BudgetWindow"][];
+                        };
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        /** An admin edits a budget without resetting its period spend */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["BudgetPolicyInput"];
+                };
+            };
+            responses: {
+                /** @description Updated policy with any scheduled timezone transition */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BudgetPolicy"];
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                409: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/budgets/notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Read recent budget mail delivery status within your permission scope */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Most recent 30 notices; members only see their own */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BudgetNotice"][];
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/budgets/notices/{noticeId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                noticeId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** An admin retries failed mail after its cooldown */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    noticeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Queued again without duplicating a successful delivery */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                409: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/usage/{requestId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** An admin records an explicit BYOK usage estimate with retained evidence */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UsageResolution"];
+                };
+            };
+            responses: {
+                /** @description Resolved once; prior evidence and actor are preserved */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                409: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teams/{teamId}/model-rates/{configId}": {
         parameters: {
             query?: never;
@@ -1517,6 +1736,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/usage/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Export up to 10000 scoped calls; members can export only their own */
+        get: {
+            parameters: {
+                query?: {
+                    userId?: string;
+                    configId?: string;
+                    since?: string;
+                    until?: string;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description UTF-8 CSV with immutable identifiers, null values left empty, and formula-safe text */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/csv": string;
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                413: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/locale": {
         parameters: {
             query?: never;
@@ -1636,6 +1905,76 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        BudgetNotice: {
+            id: string;
+            recipientId: string;
+            threshold: number;
+            /** @enum {string} */
+            state: "pending" | "sending" | "sent" | "failed" | "skipped";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            nextAt: string;
+            code: string;
+        };
+        UsageResolution: {
+            reason: string;
+            points: string | null;
+            tokens: {
+                input: number;
+                cacheRead: number;
+                cacheWrite: number;
+                output: number;
+                reasoning: number;
+            };
+        };
+        BudgetPolicyInput: {
+            /** @enum {string} */
+            scope: "team" | "member" | "default_member" | "provider";
+            subjectId: string;
+            /** @enum {string} */
+            period: "day" | "month";
+            timezone: string;
+            revision: number;
+            enabled: boolean;
+            /** @enum {string} */
+            notify: "admins" | "owner" | "both" | "none";
+            points: string | null;
+            input: number | null;
+            output: number | null;
+            total: number | null;
+        };
+        BudgetPolicy: components["schemas"]["BudgetPolicyInput"] & {
+            id: string;
+            activeTimezone: string;
+            /** Format: date-time */
+            effectiveAt: string | null;
+            inheritsDefault: boolean;
+        };
+        BudgetWindow: {
+            id: string;
+            /** @enum {string} */
+            scope: "team" | "member" | "provider";
+            subjectId: string;
+            /** @enum {string} */
+            period: "day" | "month";
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            spent: string;
+            reserved: string;
+            /** @description Effective enabled points ceiling; null means no points cap */
+            pointLimit: string | null;
+            /** @description Ceiling minus spent and reserved; null for unlimited or unconfirmed usage */
+            remaining: string | null;
+            inputSpent: number;
+            inputReserved: number;
+            outputSpent: number;
+            outputReserved: number;
+            unpriced: number;
+            unbounded: number;
+        };
         ModelRateInput: {
             revision: number;
             /** @enum {string} */
@@ -1655,19 +1994,24 @@ export interface components {
             provider: string;
             model: string;
             /** @enum {string} */
-            state: "running" | "settled" | "unpriced" | "pending" | "failed";
+            state: "running" | "settled" | "unpriced" | "pending" | "failed" | "estimated";
+            code: string;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             finishedAt: string | null;
             input: number | null;
             cacheRead: number | null;
+            cacheWrite: number | null;
             output: number | null;
             reasoning: number | null;
             points: string | null;
         };
         Error: {
             error: string;
+            scope?: string;
+            /** Format: date-time */
+            resetAt?: string;
             issues?: {
                 path: (string | number)[];
                 message: string;

@@ -149,3 +149,35 @@ func TestSMTPRefusalIsAnErrorWithoutTheCode(t *testing.T) {
 		t.Fatalf("the error carries the code: %v", err)
 	}
 }
+
+func TestSMTPTransactionalIdentifierAndHeaderValidation(t *testing.T) {
+	url, delivered := fakeSMTP(t, false)
+	sender := auth.SMTP{URL: url, From: "Teamwork <no-reply@example.test>"}
+	message := auth.Message{To: "Member <member@example.test>", Subject: "Budget threshold", Text: "Your budget reached 80%.\nReview your team settings.", ID: "budget-stable_123"}
+	for range 2 {
+		if err := sender.SendMessage(context.Background(), message); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case msg := <-delivered:
+			parsed, err := mail.ReadMessage(strings.NewReader(msg.data))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if parsed.Header.Get("Message-ID") != "<budget-stable_123@example.test>" || msg.to != "member@example.test" {
+				t.Fatalf("unstable identifier or recipient: %+v", msg)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("local SMTP delivery stalled")
+		}
+	}
+	for _, bad := range []auth.Message{
+		{To: "member@example.test\r\nBcc: other@example.test", Subject: "Budget"},
+		{To: "member@example.test", Subject: "Budget\r\nBcc: other@example.test"},
+		{To: "member@example.test", Subject: "Budget", ID: "bad\r\nheader"},
+	} {
+		if err := sender.SendMessage(context.Background(), bad); err == nil {
+			t.Fatal("header injection accepted")
+		}
+	}
+}

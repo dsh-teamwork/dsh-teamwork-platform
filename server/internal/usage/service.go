@@ -2,8 +2,6 @@ package usage
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,12 +12,27 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
-type Service struct{ DB *ent.Client }
+type Service struct {
+	DB         *ent.Client
+	Now        func() time.Time
+	AppURL     string
+	SendNotice func(context.Context, NoticeMessage) error
+}
+
+const MaxCallDuration = 15 * time.Minute
+
+func (s *Service) now() time.Time {
+	if s.Now != nil {
+		return s.Now().UTC()
+	}
+	return time.Now().UTC()
+}
 
 // Call is resolved by the gateway, never populated from caller identity fields.
 type Call struct {
 	TeamID, UserID, SubmittedConfigID, ConfigID, Provider, Model string
 	Stream                                                       bool
+	Bounds                                                       func() (Tokens, error)
 }
 
 func (s *Service) latestRate(ctx context.Context, teamID, configID string) (*ent.ModelRate, error) {
@@ -125,47 +138,13 @@ func (s *Service) SetRate(ctx context.Context, call Call, in RateInput) (RateVie
 // Begin captures the price before dispatch; adding or editing a rate later
 // cannot change the price of a request already accepted.
 func (s *Service) Begin(ctx context.Context, call Call) (*ent.UsageRequest, error) {
-	r, err := s.latestRate(ctx, call.TeamID, call.ConfigID)
-	if err != nil {
-		return nil, err
-	}
-	b := s.DB.UsageRequest.Create().SetTeamID(call.TeamID).SetUserID(call.UserID).
-		SetSubmittedConfigID(call.SubmittedConfigID).SetConfigID(call.ConfigID).
-		SetProvider(call.Provider).SetModel(call.Model).SetStream(call.Stream)
-	if r != nil && r.Provider == call.Provider && r.Model == call.Model {
-		data, _ := json.Marshal(ratesOf(r))
-		b.SetRateID(r.ID).SetRates(data)
-	}
-	return b.Save(ctx)
+	return s.admit(ctx, call)
 }
 
 // Finish is idempotent. Incomplete or unmeasurable responses remain pending,
 // including a transport error after an upstream may have accepted the request.
 func (s *Service) Finish(ctx context.Context, request *ent.UsageRequest, observation Observation, code string) error {
-	state := usagerequest.StatePending
-	var units *int64
-	if observation.Known && observation.Complete && !observation.Invalid {
-		state = usagerequest.StateUnpriced
-		if request.RateID != "" {
-			var rates Rates
-			if json.Unmarshal(request.Rates, &rates) != nil {
-				return errors.New("invalid stored rate snapshot")
-			}
-			amount, err := rates.Cost(observation.Tokens)
-			if err != nil {
-				return err
-			}
-			units, state = &amount, usagerequest.StateSettled
-		}
-	}
-	b := s.DB.UsageRequest.Update().Where(usagerequest.ID(request.ID), usagerequest.StateEQ(usagerequest.StateRunning)).
-		SetState(state).SetFinishedAt(time.Now().UTC()).SetErrorCode(code).SetProviderRequestID(observation.ID).SetNillablePointUnits(units)
-	if observation.Known && !observation.Invalid {
-		t := observation.Tokens
-		b.SetInputTokens(t.Input).SetCacheReadTokens(t.CacheRead).SetCacheWriteTokens(t.CacheWrite).SetOutputTokens(t.Output).SetReasoningTokens(t.Reasoning)
-	}
-	_, err := b.Save(ctx)
-	return err
+	return s.settle(ctx, request, observation, code)
 }
 
 // EntryView is the stable JSON surface; nil points mean unpriced or pending,
@@ -177,10 +156,12 @@ type EntryView struct {
 	Provider   string  `json:"provider"`
 	Model      string  `json:"model"`
 	State      string  `json:"state"`
+	Code       string  `json:"code"`
 	CreatedAt  string  `json:"createdAt"`
 	FinishedAt *string `json:"finishedAt"`
 	Input      *int64  `json:"input"`
 	CacheRead  *int64  `json:"cacheRead"`
+	CacheWrite *int64  `json:"cacheWrite"`
 	Output     *int64  `json:"output"`
 	Reasoning  *int64  `json:"reasoning"`
 	Points     *string `json:"points"`
@@ -228,18 +209,39 @@ func (s *Service) List(ctx context.Context, f Filter) (Page, error) {
 	}
 	p := Page{Entries: []EntryView{}, Total: total, Page: f.Page, Size: f.Size}
 	for _, r := range rows {
-		v := EntryView{ID: r.ID, UserID: r.UserID, ConfigID: r.ConfigID, Provider: r.Provider, Model: r.Model,
-			State: string(r.State), CreatedAt: r.CreatedAt.UTC().Format(time.RFC3339Nano),
-			Input: r.InputTokens, CacheRead: r.CacheReadTokens, Output: r.OutputTokens, Reasoning: r.ReasoningTokens}
-		if r.FinishedAt != nil {
-			at := r.FinishedAt.UTC().Format(time.RFC3339Nano)
-			v.FinishedAt = &at
-		}
-		if r.PointUnits != nil {
-			points := FormatPoints(*r.PointUnits)
-			v.Points = &points
-		}
-		p.Entries = append(p.Entries, v)
+		p.Entries = append(p.Entries, entryView(r))
 	}
 	return p, nil
+}
+
+func entryView(r *ent.UsageRequest) EntryView {
+	v := EntryView{ID: r.ID, UserID: r.UserID, ConfigID: r.ConfigID, Provider: r.Provider, Model: r.Model,
+		State: string(r.State), Code: r.ErrorCode, CreatedAt: r.CreatedAt.UTC().Format(time.RFC3339Nano),
+		Input: r.InputTokens, CacheRead: r.CacheReadTokens, CacheWrite: r.CacheWriteTokens, Output: r.OutputTokens, Reasoning: r.ReasoningTokens}
+	if r.FinishedAt != nil {
+		at := r.FinishedAt.UTC().Format(time.RFC3339Nano)
+		v.FinishedAt = &at
+	}
+	if r.PointUnits != nil {
+		points := FormatPoints(*r.PointUnits)
+		v.Points = &points
+	}
+	return v
+}
+
+// Export fails before writing anything when the bounded result is too large.
+// A single query avoids offset drift while calls are being created or settled.
+func (s *Service) Export(ctx context.Context, f Filter) ([]EntryView, error) {
+	rows, err := s.query(f).Order(ent.Desc(usagerequest.FieldCreatedAt), ent.Desc(usagerequest.FieldID)).Limit(10001).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) > 10000 {
+		return nil, wire.E(http.StatusRequestEntityTooLarge, "usage_export_too_large")
+	}
+	entries := make([]EntryView, 0, len(rows))
+	for _, row := range rows {
+		entries = append(entries, entryView(row))
+	}
+	return entries, nil
 }

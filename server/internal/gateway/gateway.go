@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"math"
@@ -165,16 +166,19 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID str
 		}
 	}
 	payload["model"], _ = json.Marshal(t.model)
-	out, _ := json.Marshal(payload)
-
 	// Record before dispatch. A caller cannot supply attribution or price facts.
 	meter := g.Usage
 	if meter == nil {
 		meter = &usage.Service{DB: g.Team.DB}
 	}
 	tracked, err := meter.Begin(ctx, usage.Call{TeamID: t.teamID, UserID: userID,
-		SubmittedConfigID: model, ConfigID: t.configID, Provider: t.provider, Model: t.model, Stream: stream})
+		SubmittedConfigID: model, ConfigID: t.configID, Provider: t.provider, Model: t.model, Stream: stream,
+		Bounds: func() (usage.Tokens, error) { return usage.DeepSeekBounds(base, t.model, payload) }})
 	if err != nil {
+		var refusal *wire.Error
+		if errors.As(err, &refusal) {
+			return err
+		}
 		return wire.E(http.StatusServiceUnavailable, "usage_unavailable")
 	}
 	observer := usage.NewObserver(stream)
@@ -187,7 +191,10 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID str
 		}
 	}()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/chat/completions", bytes.NewReader(out))
+	out, _ := json.Marshal(payload)
+	upstreamCtx, cancelUpstream := context.WithDeadline(ctx, *tracked.DeadlineAt)
+	defer cancelUpstream()
+	req, err := http.NewRequestWithContext(upstreamCtx, http.MethodPost, base+"/chat/completions", bytes.NewReader(out))
 	if err != nil {
 		return wire.E(http.StatusBadGateway, wire.UpstreamUnavailable)
 	}

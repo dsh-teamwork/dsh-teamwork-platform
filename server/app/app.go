@@ -26,6 +26,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 )
 
@@ -117,16 +118,22 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	network := &team.Network{AllowPrivate: cfg.AllowPrivateProviders}
 	authn := &auth.Service{DB: client, Sealer: auth.NewSealer(cfg.AuthSecret, nil), Secret: cfg.AuthSecret}
 	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords()}
+	meter := &usage.Service{DB: client, AppURL: cfg.AppURL}
 	srv := &httpapi.Server{
 		Config:    cfg,
 		Auth:      authn,
 		Team:      teams,
-		Gateway:   &gateway.Gateway{Team: teams, Client: network.Client()},
+		Gateway:   &gateway.Gateway{Team: teams, Client: network.Client(), Usage: meter},
+		Usage:     meter,
 		Analytics: &analytics.Client{Key: cfg.PostHogKey, Host: cfg.PostHogHost},
 	}
 	srv.Web = web.Handler(web.Options{AppURL: cfg.AppURL, PostHogKey: cfg.PostHogKey, PostHogHost: cfg.PostHogHost, Viewer: srv.Viewer})
 	if !cfg.Passwords() {
-		srv.Mailer = auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
+		mail := auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
+		srv.Mailer = mail
+		meter.SendNotice = func(ctx context.Context, message usage.NoticeMessage) error {
+			return mail.SendMessage(ctx, auth.Message{To: message.To, Subject: message.Subject, Text: message.Text, ID: message.ID})
+		}
 	}
 	if cfg.Google() {
 		// A stalled Google must not hold a sign-in, and its goroutine, for ever.
@@ -139,7 +146,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		Users: NewUsers(client), Env: env,
 	}
-	var stops []func()
+	stops := []func(){meter.StartMaintenance()}
 	stop := func() {
 		for i := len(stops) - 1; i >= 0; i-- {
 			stops[i]()

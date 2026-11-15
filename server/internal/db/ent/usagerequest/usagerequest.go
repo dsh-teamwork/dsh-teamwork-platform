@@ -20,6 +20,8 @@ const (
 	FieldTeamID = "team_id"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
+	// FieldAppURL holds the string denoting the app_url field in the database.
+	FieldAppURL = "app_url"
 	// FieldSubmittedConfigID holds the string denoting the submitted_config_id field in the database.
 	FieldSubmittedConfigID = "submitted_config_id"
 	// FieldConfigID holds the string denoting the config_id field in the database.
@@ -32,6 +34,8 @@ const (
 	FieldStream = "stream"
 	// FieldState holds the string denoting the state field in the database.
 	FieldState = "state"
+	// FieldDeadlineAt holds the string denoting the deadline_at field in the database.
+	FieldDeadlineAt = "deadline_at"
 	// FieldRateID holds the string denoting the rate_id field in the database.
 	FieldRateID = "rate_id"
 	// FieldRates holds the string denoting the rates field in the database.
@@ -64,12 +68,14 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldTeamID,
 	FieldUserID,
+	FieldAppURL,
 	FieldSubmittedConfigID,
 	FieldConfigID,
 	FieldProvider,
 	FieldModel,
 	FieldStream,
 	FieldState,
+	FieldDeadlineAt,
 	FieldRateID,
 	FieldRates,
 	FieldPointUnits,
@@ -100,6 +106,10 @@ var (
 	TeamIDValidator func(string) error
 	// UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	UserIDValidator func(string) error
+	// DefaultAppURL holds the default value on creation for the "app_url" field.
+	DefaultAppURL string
+	// AppURLValidator is a validator for the "app_url" field. It is called by the builders before save.
+	AppURLValidator func(string) error
 	// SubmittedConfigIDValidator is a validator for the "submitted_config_id" field. It is called by the builders before save.
 	SubmittedConfigIDValidator func(string) error
 	// ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
@@ -134,11 +144,12 @@ const DefaultState = StateRunning
 
 // State values.
 const (
-	StateRunning  State = "running"
-	StateSettled  State = "settled"
-	StateUnpriced State = "unpriced"
-	StatePending  State = "pending"
-	StateFailed   State = "failed"
+	StateRunning   State = "running"
+	StateSettled   State = "settled"
+	StateUnpriced  State = "unpriced"
+	StatePending   State = "pending"
+	StateFailed    State = "failed"
+	StateEstimated State = "estimated"
 )
 
 func (s State) String() string {
@@ -148,7 +159,7 @@ func (s State) String() string {
 // StateValidator is a validator for the "state" field enum values. It is called by the builders before save.
 func StateValidator(s State) error {
 	switch s {
-	case StateRunning, StateSettled, StateUnpriced, StatePending, StateFailed:
+	case StateRunning, StateSettled, StateUnpriced, StatePending, StateFailed, StateEstimated:
 		return nil
 	default:
 		return fmt.Errorf("usagerequest: invalid enum value for state field: %q", s)
@@ -176,6 +187,11 @@ func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
 // ByUserID orders the results by the user_id field.
 func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUserID, opts...).ToFunc()
+}
+
+// ByAppURL orders the results by the app_url field.
+func ByAppURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAppURL, opts...).ToFunc()
 }
 
 // BySubmittedConfigID orders the results by the submitted_config_id field.
@@ -206,6 +222,11 @@ func ByStream(opts ...sql.OrderTermOption) OrderOption {
 // ByState orders the results by the state field.
 func ByState(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldState, opts...).ToFunc()
+}
+
+// ByDeadlineAt orders the results by the deadline_at field.
+func ByDeadlineAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeadlineAt, opts...).ToFunc()
 }
 
 // ByRateID orders the results by the rate_id field.

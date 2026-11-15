@@ -10,10 +10,34 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
+    readonly scope?: string,
+    readonly resetAt?: string,
   ) {
     super(code);
     this.name = 'ApiError';
   }
+}
+
+async function checkResponse(response: Response) {
+  if (!response.ok) {
+    const error = (await response.json().catch(() => null)) as { error?: unknown; scope?: unknown; resetAt?: unknown } | null;
+    throw new ApiError(response.status, typeof error?.error === 'string' ? error.error : 'unavailable',
+      typeof error?.scope === 'string' ? error.scope : undefined,
+      typeof error?.resetAt === 'string' && !Number.isNaN(Date.parse(error.resetAt)) ? error.resetAt : undefined);
+  }
+}
+
+export async function download(path: string, filename: string) {
+  const response = await fetch(`/api/${path}`, { credentials: 'same-origin' });
+  await checkResponse(response);
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
@@ -23,10 +47,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     credentials: 'same-origin',
   });
-  if (!response.ok) {
-    const error = (await response.json().catch(() => null)) as { error?: unknown } | null;
-    throw new ApiError(response.status, typeof error?.error === 'string' ? error.error : 'unavailable');
-  }
+  await checkResponse(response);
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 

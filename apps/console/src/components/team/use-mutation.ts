@@ -6,16 +6,20 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useTranslations } from 'use-intl';
+import { useFormatter, useTranslations } from 'use-intl';
 
 import { ApiError } from '@/lib/api';
 
 /** A failure in the reader's language: the server's code where `teamErrors` words it, else a generic one. */
 export function useTeamError() {
   const te = useTranslations('teamErrors');
+  const format = useFormatter();
   return (error: unknown) => {
     const code = error instanceof ApiError ? error.code : 'internal_error';
-    return te.has(code) ? te(code) : te('internal_error');
+    const message = te.has(code) ? te(code) : te('internal_error');
+    return error instanceof ApiError && error.resetAt
+      ? `${message} ${te('available_at', { at: format.dateTime(new Date(error.resetAt), { dateStyle: 'medium', timeStyle: 'short' }) })}`
+      : message;
   };
 }
 

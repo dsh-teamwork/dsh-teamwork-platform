@@ -8,8 +8,8 @@ live in `CLAUDE.md`; this file shows the mechanism behind them.
 
 The gateway records community usage and exact reference points in
 `server/internal/usage`, with immutable team model rates (ADR 0016).
-The [usage and budget plan](usage-budgets.md) describes that API and the
-remaining reservation, enforcement and recovery work. These capabilities
+The [usage and budget reference](usage-budgets.md) describes atomic scope
+reservations, calendar limits, explicit recovery and notifications (ADR 0017). These capabilities
 belong to community core ([ADR 0015](../adr/0015-community-usage-and-budgets.md)).
 
 ## Data flow
@@ -51,6 +51,7 @@ repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 | Server | The binary: configuration, migrations, every route, the embedded console | `server/` (`app/`, `cmd/dsh-teamwork`) |
 | Team rules | Membership, invitations, configuration and its references, providers | `server/internal/team` |
 | Model gateway | Resolving a configuration id to a provider call | `server/internal/gateway` |
+| Usage and budgets | Price snapshots, point/token reservations, settlement, recovery and notices | `server/internal/usage` |
 | Sign-in | Google, emailed codes, passwords, identities, sessions and plugin tokens | `server/internal/auth` |
 | Wire | Request shapes, their validation and the error codes | `server/internal/wire`, `api/openapi.yaml` |
 | Schema | Every table and the migrations of three dialects | `server/internal/db` |

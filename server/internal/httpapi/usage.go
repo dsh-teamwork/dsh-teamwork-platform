@@ -74,14 +74,14 @@ func (s *Server) setModelRate(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (s *Server) listUsage(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) usageFilter(r *http.Request) (usage.Filter, error) {
 	c, err := s.requireUser(r)
 	if err != nil {
-		return err
+		return usage.Filter{}, err
 	}
 	m, err := s.Team.RequireMembership(r.Context(), c.user.ID, r.PathValue("teamId"), false)
 	if err != nil {
-		return err
+		return usage.Filter{}, err
 	}
 	query := r.URL.Query()
 	f := usage.Filter{TeamID: m.TeamID, UserID: query.Get("userId"), ConfigID: query.Get("configId"), Page: 1, Size: 50}
@@ -120,6 +120,14 @@ func (s *Server) listUsage(w http.ResponseWriter, r *http.Request) error {
 		issues.Add("until must be later than since", "until")
 	}
 	if err := issues.Err(); err != nil {
+		return usage.Filter{}, err
+	}
+	return f, nil
+}
+
+func (s *Server) listUsage(w http.ResponseWriter, r *http.Request) error {
+	f, err := s.usageFilter(r)
+	if err != nil {
 		return err
 	}
 	page, err := s.Usage.List(r.Context(), f)

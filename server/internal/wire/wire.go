@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // Issue is one reason a request failed validation, as `{ path, message }`.
@@ -41,8 +42,10 @@ func (e *Invalid) Error() string { return fmt.Sprintf("invalid request: %v", e.I
 
 // Error is a refusal the API names: a status and a stable code.
 type Error struct {
-	Status int
-	Code   string
+	Status  int
+	Code    string
+	Scope   string
+	ResetAt *time.Time
 }
 
 func (e *Error) Error() string { return e.Code }

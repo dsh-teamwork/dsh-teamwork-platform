@@ -571,6 +571,94 @@ paths:
         '404': { $ref: '#/components/responses/Error' }
         '502': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/budgets:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Read scoped budget policies and current usage windows
+      responses:
+        '200':
+          description: Admin team view or member's applicable policies and windows
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [policies, windows]
+                properties:
+                  policies: { type: array, items: { $ref: '#/components/schemas/BudgetPolicy' } }
+                  windows: { type: array, items: { $ref: '#/components/schemas/BudgetWindow' } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+    put:
+      summary: An admin edits a budget without resetting its period spend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BudgetPolicyInput' }
+      responses:
+        '200':
+          description: Updated policy with any scheduled timezone transition
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BudgetPolicy' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/budgets/notices:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Read recent budget mail delivery status within your permission scope
+      responses:
+        '200':
+          description: Most recent 30 notices; members only see their own
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/BudgetNotice' } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/budgets/notices/{noticeId}/retry:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: noticeId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: An admin retries failed mail after its cooldown
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false }
+      responses:
+        '204': { description: Queued again without duplicating a successful delivery }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/usage/{requestId}/resolve:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: requestId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: An admin records an explicit BYOK usage estimate with retained evidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UsageResolution' }
+      responses:
+        '204': { description: Resolved once; prior evidence and actor are preserved }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
   /teams/{teamId}/model-rates/{configId}:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -634,6 +722,27 @@ paths:
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/usage/export:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Export up to 10000 scoped calls; members can export only their own
+      parameters:
+        - { name: userId, in: query, schema: { type: string } }
+        - { name: configId, in: query, schema: { type: string } }
+        - { name: since, in: query, schema: { type: string, format: date-time } }
+        - { name: until, in: query, schema: { type: string, format: date-time } }
+      responses:
+        '200':
+          description: UTF-8 CSV with immutable identifiers, null values left empty, and formula-safe text
+          content:
+            text/csv:
+              schema: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '413': { $ref: '#/components/responses/Error' }
   /locale:
     post:
       summary: Choose the interface language
@@ -696,6 +805,77 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
   schemas:
+    BudgetNotice:
+      type: object
+      required: [id, recipientId, threshold, state, createdAt, nextAt, code]
+      properties:
+        id: { type: string }
+        recipientId: { type: string }
+        threshold: { type: integer }
+        state: { type: string, enum: [pending, sending, sent, failed, skipped] }
+        createdAt: { type: string, format: date-time }
+        nextAt: { type: string, format: date-time }
+        code: { type: string }
+    UsageResolution:
+      type: object
+      required: [reason, tokens, points]
+      properties:
+        reason: { type: string, minLength: 8, maxLength: 500 }
+        points: { type: string, nullable: true }
+        tokens:
+          type: object
+          required: [input, cacheRead, cacheWrite, output, reasoning]
+          properties:
+            input: { type: integer, minimum: 0 }
+            cacheRead: { type: integer, minimum: 0 }
+            cacheWrite: { type: integer, minimum: 0 }
+            output: { type: integer, minimum: 0 }
+            reasoning: { type: integer, minimum: 0 }
+    BudgetPolicyInput:
+      type: object
+      required: [scope, subjectId, period, timezone, revision, enabled, notify, points, input, output, total]
+      properties:
+        scope: { type: string, enum: [team, member, default_member, provider] }
+        subjectId: { type: string }
+        period: { type: string, enum: [day, month] }
+        timezone: { type: string }
+        revision: { type: integer }
+        enabled: { type: boolean }
+        notify: { type: string, enum: [admins, owner, both, none] }
+        points: { type: string, nullable: true }
+        input: { type: integer, nullable: true }
+        output: { type: integer, nullable: true }
+        total: { type: integer, nullable: true }
+    BudgetPolicy:
+      allOf:
+        - { $ref: '#/components/schemas/BudgetPolicyInput' }
+        - type: object
+          required: [id, activeTimezone, effectiveAt, inheritsDefault]
+          properties:
+            id: { type: string }
+            activeTimezone: { type: string }
+            effectiveAt: { type: string, nullable: true, format: date-time }
+            inheritsDefault: { type: boolean }
+    BudgetWindow:
+      type: object
+      required: [id, scope, subjectId, period, startsAt, endsAt, spent, reserved, pointLimit, remaining, inputSpent, inputReserved, outputSpent, outputReserved, unpriced, unbounded]
+      properties:
+        id: { type: string }
+        scope: { type: string, enum: [team, member, provider] }
+        subjectId: { type: string }
+        period: { type: string, enum: [day, month] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        spent: { type: string }
+        reserved: { type: string }
+        pointLimit: { type: string, nullable: true, description: Effective enabled points ceiling; null means no points cap }
+        remaining: { type: string, nullable: true, description: Ceiling minus spent and reserved; null for unlimited or unconfirmed usage }
+        inputSpent: { type: integer }
+        inputReserved: { type: integer }
+        outputSpent: { type: integer }
+        outputReserved: { type: integer }
+        unpriced: { type: integer }
+        unbounded: { type: integer }
     ModelRateInput:
       type: object
       required: [revision, basis, input, cacheRead, cacheWrite, output]
@@ -715,18 +895,20 @@ components:
             configured: { type: boolean }
     UsageEntry:
       type: object
-      required: [id, userId, configId, provider, model, state, createdAt, finishedAt, input, cacheRead, output, reasoning, points]
+      required: [id, userId, configId, provider, model, state, code, createdAt, finishedAt, input, cacheRead, cacheWrite, output, reasoning, points]
       properties:
         id: { type: string }
         userId: { type: string }
         configId: { type: string }
         provider: { type: string }
         model: { type: string }
-        state: { type: string, enum: [running, settled, unpriced, pending, failed] }
+        state: { type: string, enum: [running, settled, unpriced, pending, failed, estimated] }
+        code: { type: string }
         createdAt: { type: string, format: date-time }
         finishedAt: { type: string, nullable: true, format: date-time }
         input: { type: integer, nullable: true }
         cacheRead: { type: integer, nullable: true }
+        cacheWrite: { type: integer, nullable: true }
         output: { type: integer, nullable: true }
         reasoning: { type: integer, nullable: true }
         points: { type: string, nullable: true }
@@ -735,6 +917,8 @@ components:
       required: [error]
       properties:
         error: { type: string }
+        scope: { type: string }
+        resetAt: { type: string, format: date-time }
         issues:
           type: array
           items:

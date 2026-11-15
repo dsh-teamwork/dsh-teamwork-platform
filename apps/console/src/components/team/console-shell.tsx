@@ -5,7 +5,7 @@
  * `SECTIONS`.
  */
 
-import { ChartNoAxesCombined, Check, ChevronsUpDown, Cpu, Layers, LayoutGrid, LayoutDashboard, LogOut, Puzzle, Users, type LucideIcon } from 'lucide-react';
+import { ChartNoAxesCombined, Check, ChevronsUpDown, Cpu, Gauge, Layers, LayoutGrid, LayoutDashboard, LogOut, Puzzle, Users, type LucideIcon } from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
@@ -17,10 +17,11 @@ import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
 /** Each page of a team's console: its path below `/teams/{teamId}` and its icon. */
-const SECTIONS: { path: string; key: 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage'; icon: LucideIcon }[] = [
+const SECTIONS: { path: string; key: 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets'; icon: LucideIcon }[] = [
   { path: '', key: 'overview', icon: LayoutDashboard },
   { path: 'models', key: 'models', icon: Cpu },
   { path: 'usage', key: 'usage', icon: ChartNoAxesCombined },
+  { path: 'budgets', key: 'budgets', icon: Gauge },
   { path: 'presets', key: 'presets', icon: Layers },
   { path: 'plugins', key: 'plugins', icon: Puzzle },
   { path: 'members', key: 'members', icon: Users },

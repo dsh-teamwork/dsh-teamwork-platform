@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Community budgets, recovery and usage export
+
+- **What:** Daily/monthly team, per-member default/override and provider point/token caps reserve atomically before dispatch and settle against immutable prices. Policy edits preserve consumption; timezone changes wait for a boundary. The console adds budget management, scoped CSV exports, explicit estimated reconciliation and optional 80/95/100 percent SMTP alerts with retry history. Lost calls retain their holds; observed bound overruns suspend the route until reviewed.
+- **Why:** Teams need enforceable usage governance independently of hosted prepaid balances.
+- **Breaking:** Enabled hard budgets require a verified route: initially direct DeepSeek text/function calls. Other BYOK routes remain measurable with enforcement disabled. Full-context input reservations are conservative; a small remaining allowance may not admit even a short prompt.
+- **Upgrade:** The binary applies the new public migrations. Existing teams have no automatic caps. Configure model reference rates, then budgets. Existing SMTP settings enable budget mail; without SMTP use the console. No wallet or live payment is enabled.
+- **Refs:** `docs/adr/0017-community-budget-reservations.md`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-14 — Community model reference prices and usage records
 
 - **What:** Admins publish revisioned model reference rates from Models. The gateway snapshots rates before dispatch, observes JSON/SSE token usage and stores exact reference points; Usage shows team records to admins and only personal records to members. Unpriced and interrupted calls stay explicitly unpriced/pending. Referenced presets use their model's rates. Public schemas/migrations cover SQLite, Postgres and MySQL. Console routes load on demand to keep new administration forms out of the initial bundle.

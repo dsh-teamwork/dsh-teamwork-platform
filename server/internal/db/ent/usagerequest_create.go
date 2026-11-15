@@ -50,6 +50,20 @@ func (_c *UsageRequestCreate) SetUserID(v string) *UsageRequestCreate {
 	return _c
 }
 
+// SetAppURL sets the "app_url" field.
+func (_c *UsageRequestCreate) SetAppURL(v string) *UsageRequestCreate {
+	_c.mutation.SetAppURL(v)
+	return _c
+}
+
+// SetNillableAppURL sets the "app_url" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableAppURL(v *string) *UsageRequestCreate {
+	if v != nil {
+		_c.SetAppURL(*v)
+	}
+	return _c
+}
+
 // SetSubmittedConfigID sets the "submitted_config_id" field.
 func (_c *UsageRequestCreate) SetSubmittedConfigID(v string) *UsageRequestCreate {
 	_c.mutation.SetSubmittedConfigID(v)
@@ -90,6 +104,20 @@ func (_c *UsageRequestCreate) SetState(v usagerequest.State) *UsageRequestCreate
 func (_c *UsageRequestCreate) SetNillableState(v *usagerequest.State) *UsageRequestCreate {
 	if v != nil {
 		_c.SetState(*v)
+	}
+	return _c
+}
+
+// SetDeadlineAt sets the "deadline_at" field.
+func (_c *UsageRequestCreate) SetDeadlineAt(v time.Time) *UsageRequestCreate {
+	_c.mutation.SetDeadlineAt(v)
+	return _c
+}
+
+// SetNillableDeadlineAt sets the "deadline_at" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableDeadlineAt(v *time.Time) *UsageRequestCreate {
+	if v != nil {
+		_c.SetDeadlineAt(*v)
 	}
 	return _c
 }
@@ -293,6 +321,10 @@ func (_c *UsageRequestCreate) defaults() {
 		v := usagerequest.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
+	if _, ok := _c.mutation.AppURL(); !ok {
+		v := usagerequest.DefaultAppURL
+		_c.mutation.SetAppURL(v)
+	}
 	if _, ok := _c.mutation.State(); !ok {
 		v := usagerequest.DefaultState
 		_c.mutation.SetState(v)
@@ -334,6 +366,14 @@ func (_c *UsageRequestCreate) check() error {
 	if v, ok := _c.mutation.UserID(); ok {
 		if err := usagerequest.UserIDValidator(v); err != nil {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.user_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.AppURL(); !ok {
+		return &ValidationError{Name: "app_url", err: errors.New(`ent: missing required field "UsageRequest.app_url"`)}
+	}
+	if v, ok := _c.mutation.AppURL(); ok {
+		if err := usagerequest.AppURLValidator(v); err != nil {
+			return &ValidationError{Name: "app_url", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.app_url": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.SubmittedConfigID(); !ok {
@@ -456,6 +496,10 @@ func (_c *UsageRequestCreate) createSpec() (*UsageRequest, *sqlgraph.CreateSpec)
 		_spec.SetField(usagerequest.FieldUserID, field.TypeString, value)
 		_node.UserID = value
 	}
+	if value, ok := _c.mutation.AppURL(); ok {
+		_spec.SetField(usagerequest.FieldAppURL, field.TypeString, value)
+		_node.AppURL = value
+	}
 	if value, ok := _c.mutation.SubmittedConfigID(); ok {
 		_spec.SetField(usagerequest.FieldSubmittedConfigID, field.TypeString, value)
 		_node.SubmittedConfigID = value
@@ -479,6 +523,10 @@ func (_c *UsageRequestCreate) createSpec() (*UsageRequest, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.State(); ok {
 		_spec.SetField(usagerequest.FieldState, field.TypeEnum, value)
 		_node.State = value
+	}
+	if value, ok := _c.mutation.DeadlineAt(); ok {
+		_spec.SetField(usagerequest.FieldDeadlineAt, field.TypeTime, value)
+		_node.DeadlineAt = &value
 	}
 	if value, ok := _c.mutation.RateID(); ok {
 		_spec.SetField(usagerequest.FieldRateID, field.TypeString, value)
@@ -600,6 +648,18 @@ func (u *UsageRequestUpsert) UpdateUserID() *UsageRequestUpsert {
 	return u
 }
 
+// SetAppURL sets the "app_url" field.
+func (u *UsageRequestUpsert) SetAppURL(v string) *UsageRequestUpsert {
+	u.Set(usagerequest.FieldAppURL, v)
+	return u
+}
+
+// UpdateAppURL sets the "app_url" field to the value that was provided on create.
+func (u *UsageRequestUpsert) UpdateAppURL() *UsageRequestUpsert {
+	u.SetExcluded(usagerequest.FieldAppURL)
+	return u
+}
+
 // SetSubmittedConfigID sets the "submitted_config_id" field.
 func (u *UsageRequestUpsert) SetSubmittedConfigID(v string) *UsageRequestUpsert {
 	u.Set(usagerequest.FieldSubmittedConfigID, v)
@@ -669,6 +729,24 @@ func (u *UsageRequestUpsert) SetState(v usagerequest.State) *UsageRequestUpsert 
 // UpdateState sets the "state" field to the value that was provided on create.
 func (u *UsageRequestUpsert) UpdateState() *UsageRequestUpsert {
 	u.SetExcluded(usagerequest.FieldState)
+	return u
+}
+
+// SetDeadlineAt sets the "deadline_at" field.
+func (u *UsageRequestUpsert) SetDeadlineAt(v time.Time) *UsageRequestUpsert {
+	u.Set(usagerequest.FieldDeadlineAt, v)
+	return u
+}
+
+// UpdateDeadlineAt sets the "deadline_at" field to the value that was provided on create.
+func (u *UsageRequestUpsert) UpdateDeadlineAt() *UsageRequestUpsert {
+	u.SetExcluded(usagerequest.FieldDeadlineAt)
+	return u
+}
+
+// ClearDeadlineAt clears the value of the "deadline_at" field.
+func (u *UsageRequestUpsert) ClearDeadlineAt() *UsageRequestUpsert {
+	u.SetNull(usagerequest.FieldDeadlineAt)
 	return u
 }
 
@@ -967,6 +1045,20 @@ func (u *UsageRequestUpsertOne) UpdateUserID() *UsageRequestUpsertOne {
 	})
 }
 
+// SetAppURL sets the "app_url" field.
+func (u *UsageRequestUpsertOne) SetAppURL(v string) *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.SetAppURL(v)
+	})
+}
+
+// UpdateAppURL sets the "app_url" field to the value that was provided on create.
+func (u *UsageRequestUpsertOne) UpdateAppURL() *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.UpdateAppURL()
+	})
+}
+
 // SetSubmittedConfigID sets the "submitted_config_id" field.
 func (u *UsageRequestUpsertOne) SetSubmittedConfigID(v string) *UsageRequestUpsertOne {
 	return u.Update(func(s *UsageRequestUpsert) {
@@ -1048,6 +1140,27 @@ func (u *UsageRequestUpsertOne) SetState(v usagerequest.State) *UsageRequestUpse
 func (u *UsageRequestUpsertOne) UpdateState() *UsageRequestUpsertOne {
 	return u.Update(func(s *UsageRequestUpsert) {
 		s.UpdateState()
+	})
+}
+
+// SetDeadlineAt sets the "deadline_at" field.
+func (u *UsageRequestUpsertOne) SetDeadlineAt(v time.Time) *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.SetDeadlineAt(v)
+	})
+}
+
+// UpdateDeadlineAt sets the "deadline_at" field to the value that was provided on create.
+func (u *UsageRequestUpsertOne) UpdateDeadlineAt() *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.UpdateDeadlineAt()
+	})
+}
+
+// ClearDeadlineAt clears the value of the "deadline_at" field.
+func (u *UsageRequestUpsertOne) ClearDeadlineAt() *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.ClearDeadlineAt()
 	})
 }
 
@@ -1549,6 +1662,20 @@ func (u *UsageRequestUpsertBulk) UpdateUserID() *UsageRequestUpsertBulk {
 	})
 }
 
+// SetAppURL sets the "app_url" field.
+func (u *UsageRequestUpsertBulk) SetAppURL(v string) *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.SetAppURL(v)
+	})
+}
+
+// UpdateAppURL sets the "app_url" field to the value that was provided on create.
+func (u *UsageRequestUpsertBulk) UpdateAppURL() *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.UpdateAppURL()
+	})
+}
+
 // SetSubmittedConfigID sets the "submitted_config_id" field.
 func (u *UsageRequestUpsertBulk) SetSubmittedConfigID(v string) *UsageRequestUpsertBulk {
 	return u.Update(func(s *UsageRequestUpsert) {
@@ -1630,6 +1757,27 @@ func (u *UsageRequestUpsertBulk) SetState(v usagerequest.State) *UsageRequestUps
 func (u *UsageRequestUpsertBulk) UpdateState() *UsageRequestUpsertBulk {
 	return u.Update(func(s *UsageRequestUpsert) {
 		s.UpdateState()
+	})
+}
+
+// SetDeadlineAt sets the "deadline_at" field.
+func (u *UsageRequestUpsertBulk) SetDeadlineAt(v time.Time) *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.SetDeadlineAt(v)
+	})
+}
+
+// UpdateDeadlineAt sets the "deadline_at" field to the value that was provided on create.
+func (u *UsageRequestUpsertBulk) UpdateDeadlineAt() *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.UpdateDeadlineAt()
+	})
+}
+
+// ClearDeadlineAt clears the value of the "deadline_at" field.
+func (u *UsageRequestUpsertBulk) ClearDeadlineAt() *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.ClearDeadlineAt()
 	})
 }
 

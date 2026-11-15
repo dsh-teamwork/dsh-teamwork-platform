@@ -27,6 +27,7 @@ const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => 
 const TeamPluginsPage = lazy(() => import('@/pages/team/plugins').then((m) => ({ default: m.TeamPluginsPage })));
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
+const TeamBudgetsPage = lazy(() => import('@/pages/team/budgets').then((m) => ({ default: m.TeamBudgetsPage })));
 const TeamsPage = lazy(() => import('@/pages/teams').then((m) => ({ default: m.TeamsPage })));
 
 const locale = currentLocale();
@@ -51,6 +52,7 @@ const router = createBrowserRouter([
           { index: true, element: <TeamOverviewPage /> },
           { path: 'models', element: <TeamModelsPage /> },
           { path: 'usage', element: <TeamUsagePage /> },
+          { path: 'budgets', element: <TeamBudgetsPage /> },
           { path: 'presets', element: <TeamPresetsPage /> },
           { path: 'plugins', element: <TeamPluginsPage /> },
           { path: 'members', element: <TeamMembersPage /> },

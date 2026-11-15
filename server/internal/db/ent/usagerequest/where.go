@@ -79,6 +79,11 @@ func UserID(v string) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldUserID, v))
 }
 
+// AppURL applies equality check predicate on the "app_url" field. It's identical to AppURLEQ.
+func AppURL(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldAppURL, v))
+}
+
 // SubmittedConfigID applies equality check predicate on the "submitted_config_id" field. It's identical to SubmittedConfigIDEQ.
 func SubmittedConfigID(v string) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldSubmittedConfigID, v))
@@ -102,6 +107,11 @@ func Model(v string) predicate.UsageRequest {
 // Stream applies equality check predicate on the "stream" field. It's identical to StreamEQ.
 func Stream(v bool) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldStream, v))
+}
+
+// DeadlineAt applies equality check predicate on the "deadline_at" field. It's identical to DeadlineAtEQ.
+func DeadlineAt(v time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldDeadlineAt, v))
 }
 
 // RateID applies equality check predicate on the "rate_id" field. It's identical to RateIDEQ.
@@ -322,6 +332,71 @@ func UserIDEqualFold(v string) predicate.UsageRequest {
 // UserIDContainsFold applies the ContainsFold predicate on the "user_id" field.
 func UserIDContainsFold(v string) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldContainsFold(FieldUserID, v))
+}
+
+// AppURLEQ applies the EQ predicate on the "app_url" field.
+func AppURLEQ(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldAppURL, v))
+}
+
+// AppURLNEQ applies the NEQ predicate on the "app_url" field.
+func AppURLNEQ(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldAppURL, v))
+}
+
+// AppURLIn applies the In predicate on the "app_url" field.
+func AppURLIn(vs ...string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldAppURL, vs...))
+}
+
+// AppURLNotIn applies the NotIn predicate on the "app_url" field.
+func AppURLNotIn(vs ...string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldAppURL, vs...))
+}
+
+// AppURLGT applies the GT predicate on the "app_url" field.
+func AppURLGT(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldAppURL, v))
+}
+
+// AppURLGTE applies the GTE predicate on the "app_url" field.
+func AppURLGTE(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldAppURL, v))
+}
+
+// AppURLLT applies the LT predicate on the "app_url" field.
+func AppURLLT(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldAppURL, v))
+}
+
+// AppURLLTE applies the LTE predicate on the "app_url" field.
+func AppURLLTE(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldAppURL, v))
+}
+
+// AppURLContains applies the Contains predicate on the "app_url" field.
+func AppURLContains(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldContains(FieldAppURL, v))
+}
+
+// AppURLHasPrefix applies the HasPrefix predicate on the "app_url" field.
+func AppURLHasPrefix(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldHasPrefix(FieldAppURL, v))
+}
+
+// AppURLHasSuffix applies the HasSuffix predicate on the "app_url" field.
+func AppURLHasSuffix(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldHasSuffix(FieldAppURL, v))
+}
+
+// AppURLEqualFold applies the EqualFold predicate on the "app_url" field.
+func AppURLEqualFold(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEqualFold(FieldAppURL, v))
+}
+
+// AppURLContainsFold applies the ContainsFold predicate on the "app_url" field.
+func AppURLContainsFold(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldContainsFold(FieldAppURL, v))
 }
 
 // SubmittedConfigIDEQ applies the EQ predicate on the "submitted_config_id" field.
@@ -612,6 +687,56 @@ func StateIn(vs ...State) predicate.UsageRequest {
 // StateNotIn applies the NotIn predicate on the "state" field.
 func StateNotIn(vs ...State) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldNotIn(FieldState, vs...))
+}
+
+// DeadlineAtEQ applies the EQ predicate on the "deadline_at" field.
+func DeadlineAtEQ(v time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldDeadlineAt, v))
+}
+
+// DeadlineAtNEQ applies the NEQ predicate on the "deadline_at" field.
+func DeadlineAtNEQ(v time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldDeadlineAt, v))
+}
+
+// DeadlineAtIn applies the In predicate on the "deadline_at" field.
+func DeadlineAtIn(vs ...time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldDeadlineAt, vs...))
+}
+
+// DeadlineAtNotIn applies the NotIn predicate on the "deadline_at" field.
+func DeadlineAtNotIn(vs ...time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldDeadlineAt, vs...))
+}
+
+// DeadlineAtGT applies the GT predicate on the "deadline_at" field.
+func DeadlineAtGT(v time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldDeadlineAt, v))
+}
+
+// DeadlineAtGTE applies the GTE predicate on the "deadline_at" field.
+func DeadlineAtGTE(v time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldDeadlineAt, v))
+}
+
+// DeadlineAtLT applies the LT predicate on the "deadline_at" field.
+func DeadlineAtLT(v time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldDeadlineAt, v))
+}
+
+// DeadlineAtLTE applies the LTE predicate on the "deadline_at" field.
+func DeadlineAtLTE(v time.Time) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldDeadlineAt, v))
+}
+
+// DeadlineAtIsNil applies the IsNil predicate on the "deadline_at" field.
+func DeadlineAtIsNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIsNull(FieldDeadlineAt))
+}
+
+// DeadlineAtNotNil applies the NotNil predicate on the "deadline_at" field.
+func DeadlineAtNotNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotNull(FieldDeadlineAt))
 }
 
 // RateIDEQ applies the EQ predicate on the "rate_id" field.

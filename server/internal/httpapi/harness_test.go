@@ -36,11 +36,12 @@ type env struct {
 }
 
 type options struct {
-	allowPrivate bool
-	smtp         string
-	mailer       auth.Mailer
-	lookup       func(ctx context.Context, host string) ([]netip.Addr, error)
-	web          fs.FS // a console build to serve, as web.New takes it
+	allowPrivate  bool
+	smtp          string
+	mailer        auth.Mailer
+	lookup        func(ctx context.Context, host string) ([]netip.Addr, error)
+	web           fs.FS        // a console build to serve, as web.New takes it
+	gatewayClient *http.Client // deterministic protocol replay, never a paid upstream
 }
 
 func start(t *testing.T, d *testdb.DB, o options) *env {
@@ -61,6 +62,9 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client()},
 	}
 	srv.Mailer = o.mailer
+	if o.gatewayClient != nil {
+		srv.Gateway.Client = o.gatewayClient
+	}
 	if o.web != nil {
 		srv.Web = web.New(o.web, web.Options{AppURL: appURL, Viewer: srv.Viewer})
 	}

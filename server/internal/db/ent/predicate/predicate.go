@@ -6,6 +6,24 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// BudgetEvent is the predicate function for budgetevent builders.
+type BudgetEvent func(*sql.Selector)
+
+// BudgetGate is the predicate function for budgetgate builders.
+type BudgetGate func(*sql.Selector)
+
+// BudgetNotice is the predicate function for budgetnotice builders.
+type BudgetNotice func(*sql.Selector)
+
+// BudgetPolicy is the predicate function for budgetpolicy builders.
+type BudgetPolicy func(*sql.Selector)
+
+// BudgetReservation is the predicate function for budgetreservation builders.
+type BudgetReservation func(*sql.Selector)
+
+// BudgetWindow is the predicate function for budgetwindow builders.
+type BudgetWindow func(*sql.Selector)
+
 // Identity is the predicate function for identity builders.
 type Identity func(*sql.Selector)
 

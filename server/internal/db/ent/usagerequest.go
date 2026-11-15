@@ -24,6 +24,8 @@ type UsageRequest struct {
 	TeamID string `json:"team_id,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	UserID string `json:"user_id,omitempty"`
+	// AppURL holds the value of the "app_url" field.
+	AppURL string `json:"app_url,omitempty"`
 	// SubmittedConfigID holds the value of the "submitted_config_id" field.
 	SubmittedConfigID string `json:"submitted_config_id,omitempty"`
 	// ConfigID holds the value of the "config_id" field.
@@ -36,6 +38,8 @@ type UsageRequest struct {
 	Stream bool `json:"stream,omitempty"`
 	// State holds the value of the "state" field.
 	State usagerequest.State `json:"state,omitempty"`
+	// DeadlineAt holds the value of the "deadline_at" field.
+	DeadlineAt *time.Time `json:"deadline_at,omitempty"`
 	// RateID holds the value of the "rate_id" field.
 	RateID string `json:"rate_id,omitempty"`
 	// Rates holds the value of the "rates" field.
@@ -72,9 +76,9 @@ func (*UsageRequest) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case usagerequest.FieldPointUnits, usagerequest.FieldInputTokens, usagerequest.FieldCacheReadTokens, usagerequest.FieldCacheWriteTokens, usagerequest.FieldOutputTokens, usagerequest.FieldReasoningTokens:
 			values[i] = new(sql.NullInt64)
-		case usagerequest.FieldID, usagerequest.FieldTeamID, usagerequest.FieldUserID, usagerequest.FieldSubmittedConfigID, usagerequest.FieldConfigID, usagerequest.FieldProvider, usagerequest.FieldModel, usagerequest.FieldState, usagerequest.FieldRateID, usagerequest.FieldProviderRequestID, usagerequest.FieldErrorCode:
+		case usagerequest.FieldID, usagerequest.FieldTeamID, usagerequest.FieldUserID, usagerequest.FieldAppURL, usagerequest.FieldSubmittedConfigID, usagerequest.FieldConfigID, usagerequest.FieldProvider, usagerequest.FieldModel, usagerequest.FieldState, usagerequest.FieldRateID, usagerequest.FieldProviderRequestID, usagerequest.FieldErrorCode:
 			values[i] = new(sql.NullString)
-		case usagerequest.FieldCreatedAt, usagerequest.FieldFinishedAt:
+		case usagerequest.FieldCreatedAt, usagerequest.FieldDeadlineAt, usagerequest.FieldFinishedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -115,6 +119,12 @@ func (_m *UsageRequest) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UserID = value.String
 			}
+		case usagerequest.FieldAppURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field app_url", values[i])
+			} else if value.Valid {
+				_m.AppURL = value.String
+			}
 		case usagerequest.FieldSubmittedConfigID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field submitted_config_id", values[i])
@@ -150,6 +160,13 @@ func (_m *UsageRequest) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field state", values[i])
 			} else if value.Valid {
 				_m.State = usagerequest.State(value.String)
+			}
+		case usagerequest.FieldDeadlineAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deadline_at", values[i])
+			} else if value.Valid {
+				_m.DeadlineAt = new(time.Time)
+				*_m.DeadlineAt = value.Time
 			}
 		case usagerequest.FieldRateID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -271,6 +288,9 @@ func (_m *UsageRequest) String() string {
 	builder.WriteString("user_id=")
 	builder.WriteString(_m.UserID)
 	builder.WriteString(", ")
+	builder.WriteString("app_url=")
+	builder.WriteString(_m.AppURL)
+	builder.WriteString(", ")
 	builder.WriteString("submitted_config_id=")
 	builder.WriteString(_m.SubmittedConfigID)
 	builder.WriteString(", ")
@@ -288,6 +308,11 @@ func (_m *UsageRequest) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("state=")
 	builder.WriteString(fmt.Sprintf("%v", _m.State))
+	builder.WriteString(", ")
+	if v := _m.DeadlineAt; v != nil {
+		builder.WriteString("deadline_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("rate_id=")
 	builder.WriteString(_m.RateID)
