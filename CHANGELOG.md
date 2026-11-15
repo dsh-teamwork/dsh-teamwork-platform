@@ -17,21 +17,21 @@ are in `CLAUDE.md`, "The changelog".
 - **What:** Installed editions register same-origin team page prefixes and localized labels. Session metadata exposes the entries, the sidebar keeps the selected team, and public sign-in returns load the edition document instead of falling through to the team list.
 - **Why:** Separately embedded member apps need a discoverable entry without importing closed code or introducing another authentication flow.
 - **Upgrade:** Session responses include an empty `teamPages` array on community installations. Navigation registration grants no API permissions.
-- **Refs:** `docs/adr/0022-edition-team-navigation.md`.
+- **Refs:** `docs/adr/0028-edition-team-navigation.md`.
 
 ## 2026-11-15 — Transactional edition team provisioning
 
 - **What:** Edition subscribers receive actual team creation and member joins inside the public mutation transaction, through an owner-scoped borrowed SQL executor. Creation includes the true creator and emits no additional join. Both member-addition paths propagate callback failure before commit.
 - **Why:** Edition records must not be lost after a membership commits or duplicated by browser retries.
 - **Upgrade:** No schema change or community subscriber. Handlers run only for new mutations and must keep SQL work short; external work requires an extension-owned durable work item.
-- **Refs:** `docs/adr/0020-transactional-team-events.md`.
+- **Refs:** `docs/adr/0026-transactional-team-events.md`.
 
 ## 2026-11-15 — Optional model funding shares budget transactions
 
 - **What:** A named edition participant supplies protected model routes and immutable retail quotes, then reserves and settles through the public accounting transaction. The host lends a transaction-bound executor, team permissions and scoped model publication. Missing participants fail closed; BYOK never invokes funding. Hosted reconciliation is operator-only, and every strict request retains its admitted bounds even without a team policy. The console displays protected prices as read-only.
 - **Why:** A separate prepaid check can overspend or leave wallet and budget counters inconsistent after failure.
 - **Upgrade:** The binary applies the append-only route/bound migrations. Community installations register no funding participant and keep their existing BYOK behavior. No hosted credit or payment processor is activated by this change.
-- **Refs:** `docs/adr/0018-atomic-model-funding.md`, `server/edition/funding.go`.
+- **Refs:** `docs/adr/0024-atomic-model-funding.md`, `server/edition/funding.go`.
 
 ## 2026-11-15 — Community budgets, recovery and usage export
 
@@ -39,13 +39,13 @@ are in `CLAUDE.md`, "The changelog".
 - **Why:** Teams need enforceable usage governance independently of hosted prepaid balances.
 - **Breaking:** Enabled hard budgets require a verified route: initially direct DeepSeek text/function calls. Other BYOK routes remain measurable with enforcement disabled. Full-context input reservations are conservative; a small remaining allowance may not admit even a short prompt.
 - **Upgrade:** The binary applies the new public migrations. Existing teams have no automatic caps. Configure model reference rates, then budgets. Existing SMTP settings enable budget mail; without SMTP use the console. No wallet or live payment is enabled.
-- **Refs:** `docs/adr/0017-community-budget-reservations.md`, `docs/tech/usage-budgets.md`.
+- **Refs:** `docs/adr/0023-community-budget-reservations.md`, `docs/tech/usage-budgets.md`.
 
 ## 2026-11-14 — Community model reference prices and usage records
 
 - **What:** Admins publish revisioned model reference rates from Models. The gateway snapshots rates before dispatch, observes JSON/SSE token usage and stores exact reference points; Usage shows team records to admins and only personal records to members. Unpriced and interrupted calls stay explicitly unpriced/pending. Referenced presets use their model's rates. Public schemas/migrations cover SQLite, Postgres and MySQL. Console routes load on demand to keep new administration forms out of the initial bundle.
 - **Upgrade:** The binary applies the new public migrations. Set model rates to value future calls; existing calls are not repriced. This slice records usage and does not yet enforce budgets or charge money.
-- **Refs:** `docs/adr/0015-community-usage-and-budgets.md`, `docs/adr/0016-reference-usage-accounting.md`, `docs/tech/usage-budgets.md`.
+- **Refs:** `docs/adr/0021-community-usage-and-budgets.md`, `docs/adr/0022-reference-usage-accounting.md`, `docs/tech/usage-budgets.md`.
 
 ## 2026-11-14 — The Node server is gone; the Go binary is the only server
 

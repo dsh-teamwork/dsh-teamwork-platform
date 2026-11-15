@@ -1,4 +1,4 @@
-# 0015. Usage points and budgets belong to the community edition
+# 0021. Usage points and budgets belong to the community edition
 
 > **Status:** Accepted · **Date:** 2026-11-14
 

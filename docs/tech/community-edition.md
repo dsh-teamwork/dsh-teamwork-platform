@@ -43,7 +43,7 @@ feature adds code and never changes open code.
 
 ## What goes where
 
-**Planned usage and budget ownership is open** ([ADR 0015](../adr/0015-community-usage-and-budgets.md)).
+**Planned usage and budget ownership is open** ([ADR 0021](../adr/0021-community-usage-and-budgets.md)).
 The [implementation plan](usage-budgets.md) covers model reference prices,
 Token-to-point conversion, team/member/provider budgets, reservations,
 reports, exports and optional SMTP alerts in the community server and console.

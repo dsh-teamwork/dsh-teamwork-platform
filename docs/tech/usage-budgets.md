@@ -4,13 +4,13 @@
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
-([ADR 0015](../adr/0015-community-usage-and-budgets.md)). This document describes
+([ADR 0021](../adr/0021-community-usage-and-budgets.md)). This document describes
 the implementation and its current provider limits.
 
 ## Ownership and prices
 
 Optional model funding uses the public transaction described in
-[ADR 0018](../adr/0018-atomic-model-funding.md). `edition.Host` registers a
+[ADR 0024](../adr/0024-atomic-model-funding.md). `edition.Host` registers a
 named participant, lends a lifetime-bound SQL executor, and publishes protected
 model configurations. Its immutable quote supplies the public request price;
 team admins can read that rate but cannot replace it with a BYOK reference rate.
@@ -26,7 +26,7 @@ MySQL. Nothing installs a cap automatically. Admins configure reference rates
 in Models, then daily/monthly caps in Budgets; Usage shows the resulting calls.
 
 The scale is `1 CNY = 1,000 reference points` and `1 point = 1,000,000,000`
-integer accounting units ([ADR 0016](../adr/0016-reference-usage-accounting.md)).
+integer accounting units ([ADR 0022](../adr/0022-reference-usage-accounting.md)).
 CNY-per-million-token rates accept six decimal places, with checked integer
 arithmetic and decimal-string amounts over HTTP. Admins choose estimated cost
 or deliberate internal weights. Foreign supplier quotes must be converted to
@@ -46,7 +46,7 @@ short SQL transaction. A team guard row serializes policy selection across
 instances. Reserve all applicable team, per-person and provider point/token
 caps together, commit, then dispatch. Each cap requires
 `spent + reserved + request_bound <= limit`; conditional counter updates and
-append-only events protect/reconstruct the projections (ADR 0017).
+append-only events protect/reconstruct the projections (ADR 0023).
 
 Policies support day/month in an explicit IANA timezone, point caps, input,
 output and total-token caps. Every enabled applicable cap must pass, including

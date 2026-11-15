@@ -1,4 +1,4 @@
-# 0022. Same-origin edition team navigation
+# 0028. Same-origin edition team navigation
 
 > **Status:** Accepted · **Date:** 2026-11-15
 

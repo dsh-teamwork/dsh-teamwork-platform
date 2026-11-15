@@ -1,4 +1,4 @@
-# 0017. Community budget reservations and explicit recovery
+# 0023. Community budget reservations and explicit recovery
 
 > **Status:** Accepted · **Date:** 2026-11-14
 

@@ -1,4 +1,4 @@
-# 0016. Reference prices and immutable usage snapshots
+# 0022. Reference prices and immutable usage snapshots
 
 > **Status:** Accepted · **Date:** 2026-11-14
 

@@ -1,4 +1,4 @@
-# 0018. Model funding shares the public accounting transaction
+# 0024. Model funding shares the public accounting transaction
 
 > **Status:** Accepted · **Date:** 2026-11-15
 

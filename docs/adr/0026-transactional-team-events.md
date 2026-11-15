@@ -1,4 +1,4 @@
-# 0020. Transactional team creation and member joins
+# 0026. Transactional team creation and member joins
 
 > **Status:** Accepted · **Date:** 2026-11-15
 

@@ -7,15 +7,15 @@ ways to sign in, the model gateway and what is expensive to change. The rules
 live in `CLAUDE.md`; this file shows the mechanism behind them.
 
 The gateway records community usage and exact reference points in
-`server/internal/usage`, with immutable team model rates (ADR 0016).
+`server/internal/usage`, with immutable team model rates (ADR 0022).
 The [usage and budget reference](usage-budgets.md) describes atomic scope
-reservations, calendar limits, explicit recovery and notifications (ADR 0017). These capabilities
-belong to community core ([ADR 0015](../adr/0015-community-usage-and-budgets.md)).
+reservations, calendar limits, explicit recovery and notifications (ADR 0023). These capabilities
+belong to community core ([ADR 0021](../adr/0021-community-usage-and-budgets.md)).
 Optional model funding participates in the same accounting transaction through
 `edition.Host`; protected routes fail closed without their registered owner
-([ADR 0018](../adr/0018-atomic-model-funding.md)).
+([ADR 0024](../adr/0024-atomic-model-funding.md)).
 
-Edition team provisioning uses `Host.SubscribeTeams` (ADR 0020): callbacks
+Edition team provisioning uses `Host.SubscribeTeams` (ADR 0026): callbacks
 borrow the creation/join transaction and return errors before either side
 commits. Creation carries the true creator once; accepted invitations and
 password-admin additions emit only actual joins. No subscriber means no
