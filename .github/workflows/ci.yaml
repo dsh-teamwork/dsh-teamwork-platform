@@ -10,6 +10,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Keep only the newest run for a pull request or branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -137,7 +142,10 @@ jobs:
 
   # The release, packed exactly as the release workflow packs it: five
   # binaries, their npm packages and the launcher (server/scripts/pack.mjs).
+  # Community distribution checks belong to Platform; downstream editions run
+  # the full build gate above without repacking the unchanged community server.
   pack:
+    if: github.repository == 'dsh-teamwork/dsh-teamwork-platform'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -156,36 +164,9 @@ jobs:
           pnpm --filter @dsh-teamwork/console build
       - name: Pack
         run: node server/scripts/pack.mjs 0.0.0-ci.${{ github.run_number }}
-      # A tarball keeps its files' modes; a loose binary would not.
-      - uses: actions/upload-artifact@v4
-        with:
-          name: npm-packages
-          path: server/dist/release/*.tgz
-
-  # `npx @dsh-teamwork/server` from an empty cache on each platform a person
-  # runs it on, against a registry on the runner (Verdaccio; its 10 MB default
-  # upload limit is raised, since a platform package is about 11 MB).
-  npx:
-    needs: pack
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: server/scripts
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-      - uses: actions/download-artifact@v4
-        with:
-          name: npm-packages
-          path: packages
+      # Test these tarballs on this Linux runner from an empty npm cache.
+      # Keeping install/start beside packing avoids another checkout, toolchain
+      # setup and artifact transfer. The scratch registry never publishes to npm.
       - name: Start a registry
         run: |
           mkdir -p "$RUNNER_TEMP/registry"
@@ -202,13 +183,14 @@ jobs:
           for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:4873/-/ping && exit 0; sleep 2; done
           cat "$RUNNER_TEMP/registry/log"; exit 1
       - name: Install with npx, start, and serve
-        run: node server/scripts/smoke-npm.mjs http://127.0.0.1:4873 packages 0.0.0-ci.${{ github.run_number }}
+        run: node server/scripts/smoke-npm.mjs http://127.0.0.1:4873 server/dist/release 0.0.0-ci.${{ github.run_number }}
 
   # Self-hosting as README.md describes it: build server/Dockerfile, start
   # compose.yaml with no .env at all, and check the server answers and prints
   # the link that claims the first account. No Google, PostHog or SMTP account
   # is involved.
   self-host:
+    if: github.repository == 'dsh-teamwork/dsh-teamwork-platform'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

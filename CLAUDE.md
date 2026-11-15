@@ -268,9 +268,12 @@ end-to-end test is `go test -tags e2e ./e2e` in `server/`, against
 
 **CI runs on a push to `main`** — a merge — **and on every pull request**, plus
 by hand from the Actions tab: the gate above, the plugin's end-to-end test in
-every Go module that has one, the release packed and run with `npx` on Linux,
-macOS and Windows, and a `self-host` job that builds `server/Dockerfile` and
-starts `compose.yaml`. A tag `v<version>` runs `.github/workflows/release.yaml`:
+every Go module that has one. All jobs use Linux, and a newer run cancels an
+older run for the same pull request or branch. The Platform repository also
+packs the release and runs it with `npx` in the same job, and has a `self-host`
+job that builds `server/Dockerfile` and starts `compose.yaml`; downstream
+editions run the complete build gate without repeating those community
+distribution checks. A tag `v<version>` runs `.github/workflows/release.yaml`:
 npm, release binaries and the image on ghcr.io (it needs an `NPM_TOKEN`
 secret); `node server/scripts/pack.mjs <version>` is its packing step, run by
 hand after `pnpm --filter @dsh-teamwork/console build`. `.husky/pre-push` runs

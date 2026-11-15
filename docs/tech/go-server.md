@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — phases 0 to 6 done; Feishu waits · **Updated:** 2026-11-14
+> **Status:** Plan — phases 0 to 6 done; Feishu waits · **Updated:** 2026-11-15
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -242,8 +242,9 @@ SEO test ported to the public pages.
 - `compose.yaml` on the image, the README's self-hosting section, and the
   first-start flow of ADR 0006 on the binary.
 - CI: the Go tests on the three dialects, the drift check per dialect, the
-  console build, the plugin end-to-end test, and an `npx` smoke test on
-  macOS, Windows and Linux. The pre-push gate runs the same set.
+  console build and the plugin end-to-end test. Platform additionally packs
+  the release and runs an `npx` smoke test on Linux in the same job. The
+  pre-push gate runs the build checks and plugin end-to-end test.
 
 **Verified by:** CI green on all of it, and one install from a clean machine
 on each platform with `npx`, the release binary and `compose.yaml`.
@@ -260,7 +261,7 @@ on each platform with `npx`, the release binary and `compose.yaml`.
 - **CI on a clean runner:** the Go suites on SQLite, Postgres 16 and
   MySQL 8.4, the drift check on all three, the plugin's end-to-end test on
   all three, the release packed and installed with `npx` from an empty cache
-  through a registry on the runner on Linux, macOS and Windows, and
+  through a registry on the same Linux runner in Platform, and
   `compose.yaml` built from `server/Dockerfile`, answering with no `.env`,
   printing the setup link, and printing the same one after the container was
   replaced, so the SQLite file and `secrets.json` live in the volume. The

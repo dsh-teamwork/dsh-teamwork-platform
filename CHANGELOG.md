@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Linux CI with community distribution checks owned by Platform
+
+- **What:** Both repositories run CI on Linux. Platform packs and smoke-tests npm packages in one job and owns Docker self-host verification; downstream editions retain the full integrated build gate. New runs cancel older runs for the same pull request or branch.
+- **Why:** Avoid repeating community packaging and self-host checks in downstream editions, and remove the macOS/Windows runner matrix and artifact transfer between packing and installation.
+- **Upgrade:** No runtime or database change. Release artifacts still target all supported platforms; routine CI installation checks exercise Linux only.
+- **Refs:** `.github/workflows/ci.yaml`, `docs/tech/community-edition.md`.
+
 ## 2026-11-15 — Member quota summaries for companion clients
 
 - **What:** Budget reads include the authenticated member's effective point availability after holds, token-cap status and uncertain usage. Administrator summaries exclude other members and provider-specific caps; reads create no accounting windows.

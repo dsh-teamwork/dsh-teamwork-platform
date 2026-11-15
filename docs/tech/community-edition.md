@@ -1,6 +1,6 @@
 # Community edition split
 
-> **Status:** Current — the first release waits · **Updated:** 2026-11-14
+> **Status:** Current — the first release waits · **Updated:** 2026-11-15
 
 How the open community edition, the public `dsh-teamwork/dsh-teamwork-platform`
 (ADR 0005), and the closed edition built on it stay two repositories with one
@@ -126,10 +126,14 @@ Gated on the plugin's wire having settled.
 
 ## How it is verified
 
-- **CI on every pull request** runs the gate, the plugin's end-to-end test,
-  the packed `npx` run on Linux, macOS and Windows, and a `self-host` job that
+- **CI on every pull request** runs the gate and the plugin's end-to-end test
+  on Linux in both repositories. Platform alone packs the community release
+  and installs it with `npx` in one Linux job, and runs a `self-host` job that
   builds `server/Dockerfile`, starts `compose.yaml` with no `.env`, and checks
-  the server answers and keeps its data across containers.
+  the server answers and keeps its data across containers. The closed repository
+  retains all integrated build/database checks without repeating community
+  distribution checks. A newer run cancels an older one for the same pull
+  request or branch.
 - **`lint:edition` passes in the closed repository** and fails when an open
   file is edited there.
 - **The public repository's history** is the one initial commit and what was
