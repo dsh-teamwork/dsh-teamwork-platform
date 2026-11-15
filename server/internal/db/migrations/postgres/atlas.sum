@@ -1,4 +1,4 @@
-h1:V3FizQJBbSPgpxE7wvjGy929ZNtOpE9BvmJCSsvqaVk=
+h1:ebcrV0ZEdlzfXm4VnSEefmnOANXAWGlh5nTqTZf808A=
 20261114012021_init.sql h1:iMOUyNDjsoN2pj1dEAgWtcpU2a5fByVlZgoCXiaOC0s=
 20261115041609_usage_metering.sql h1:hmiNJMr1kxsgtgVBku/vxrvrU1Hqyzw2Q0wEosNSm30=
 20261115044856_budget_reservations.sql h1:4ZPHNOx9bCw/rSuKnOs0NRy2fMJfOBPyohDlmcPtQUI=
@@ -7,3 +7,7 @@ h1:V3FizQJBbSPgpxE7wvjGy929ZNtOpE9BvmJCSsvqaVk=
 20261115062630_budget_notice_preferences.sql h1:4ywg9Pc+LCdeDtL6L5U46phLh9lMDMLniuUC4iRNviU=
 20261115073946_model_funding.sql h1:z31JmHWA8hEykw5U61bNGRl50v08hEdPVeedr9PSnUQ=
 20261115074500_admitted_funding_bounds.sql h1:i6sejEoXK2+tDr8jTkQ+xlHPteDgOeL6MJ2YEL74HO4=
+20261115133742_team_assistant.sql h1:KIE+tQp6o7q45060plov9N8wgiyZdbcsqJIwTrg5liI=
+20261115134500_resource_publications.sql h1:PIjWJYuY+8C2IzbZVh4e97+sibjOY3U279pfQS5GeFE=
+20261115135104_private_plugin_artifacts.sql h1:fLxh+BNxtwtbYpwvlYoX8rWu+35bNAEQgZs4hRrQek8=
+20261115135922_publication_builtin_identity.sql h1:Zr/eC4VpaG2Df9JPlsymL8b812vN+9vwIz1rJ20ip6o=

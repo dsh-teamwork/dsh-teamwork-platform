@@ -164,3 +164,14 @@ func TestReturnAddress(t *testing.T) {
 		}
 	}
 }
+
+func TestInheritedPresetHasNoTeamRoute(t *testing.T) {
+	if err := config(t, `{"kind":"preset","name":"Assistant","data":{"inheritModel":true}}`); err != nil {
+		t.Fatal(err)
+	}
+	for _, route := range []string{`,"provider":"p","model":"m"`, `,"modelConfigId":"m"`, `,"maxTokens":100`} {
+		if config(t, `{"kind":"preset","name":"Assistant","data":{"inheritModel":true`+route+`}}`) == nil {
+			t.Fatalf("inherited preset accepted route %s", route)
+		}
+	}
+}

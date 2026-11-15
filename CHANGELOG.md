@@ -5,6 +5,22 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Reviewed resource sharing and historical backups
+
+- **What:** Members submit preset/plugin creations and updates; admins approve frozen revisions. Direct admin writes share transactional history. Private archives are inspected, digest-pinned and access-controlled. Time-based history supports comparison, resource/dependency export and reviewed restoration, including deleted resources and retained plugin pins. Host-approved assistant tools connect sharing and supported management operations.
+- **Why:** Teams need local-resource sharing without granting publication rights, and recoverable updates with exact plugin bytes.
+- **Breaking:** Sync adds referenced historical plugin metadata. Publish the matching plugin with the server; new private archives are not public npm packages.
+- **Upgrade:** Apply all append-only migrations and persist/back up both the database and the data directory's artifacts. Existing configs receive a legacy baseline before their first edit/deletion. Retained history is not automatically purged.
+- **Refs:** `docs/adr/0030-reviewed-resources-and-publication-history.md`, `docs/tech/team-assistant.md`.
+
+## 2026-11-15 — Default team assistant and inherited preset models
+
+- **What:** Team creation includes a uniquely identified assistant preset. Presets may explicitly inherit the session model. The console and plugin preserve this choice, and scoped assistant tools read team resources, usage, budgets and membership or sync configuration.
+- **Why:** New teams need an entry point that works before they configure a team model.
+- **Breaking:** Config names accept up to 120 characters; preset data adds an exclusive inherited-model choice.
+- **Upgrade:** Apply the new migrations on all three dialects and update the plugin with the platform. Existing teams are not automatically modified.
+- **Refs:** `docs/tech/team-assistant.md`.
+
 ## 2026-11-15 — Linux CI with community distribution checks owned by Platform
 
 - **What:** Both repositories run CI on Linux. Platform packs and smoke-tests npm packages in one job and owns Docker self-host verification; downstream editions retain the full integrated build gate. New runs cancel older runs for the same pull request or branch.

@@ -189,6 +189,40 @@ var (
 			},
 		},
 	}
+	// ConfigRevisionsColumns holds the columns for the "config_revisions" table.
+	ConfigRevisionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "config_id", Type: field.TypeString, Size: 32},
+		{Name: "version", Type: field.TypeInt},
+		{Name: "builtin", Type: field.TypeString, Size: 40, Default: ""},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"model", "preset", "plugin"}},
+		{Name: "name", Type: field.TypeString, Size: 480},
+		{Name: "data", Type: field.TypeJSON},
+		{Name: "author_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "reviewer_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "note", Type: field.TypeString, Size: 8000, Default: ""},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"system", "legacy", "direct", "approved"}},
+	}
+	// ConfigRevisionsTable holds the schema information for the "config_revisions" table.
+	ConfigRevisionsTable = &schema.Table{
+		Name:       "config_revisions",
+		Columns:    ConfigRevisionsColumns,
+		PrimaryKey: []*schema.Column{ConfigRevisionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "configrevision_team_id_config_id_version",
+				Unique:  true,
+				Columns: []*schema.Column{ConfigRevisionsColumns[2], ConfigRevisionsColumns[3], ConfigRevisionsColumns[4]},
+			},
+			{
+				Name:    "configrevision_team_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConfigRevisionsColumns[2], ConfigRevisionsColumns[1]},
+			},
+		},
+	}
 	// IdentitiesColumns holds the columns for the "identities" table.
 	IdentitiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -359,6 +393,72 @@ var (
 		Columns:    RateWindowsColumns,
 		PrimaryKey: []*schema.Column{RateWindowsColumns[0]},
 	}
+	// ResourceArtifactsColumns holds the columns for the "resource_artifacts" table.
+	ResourceArtifactsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "package", Type: field.TypeString, Size: 214},
+		{Name: "version", Type: field.TypeString, Size: 100},
+		{Name: "sha256", Type: field.TypeString, Size: 64},
+		{Name: "size", Type: field.TypeInt64},
+		{Name: "files", Type: field.TypeJSON},
+		{Name: "published", Type: field.TypeBool, Default: false},
+	}
+	// ResourceArtifactsTable holds the schema information for the "resource_artifacts" table.
+	ResourceArtifactsTable = &schema.Table{
+		Name:       "resource_artifacts",
+		Columns:    ResourceArtifactsColumns,
+		PrimaryKey: []*schema.Column{ResourceArtifactsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "resourceartifact_team_id_package_version",
+				Unique:  true,
+				Columns: []*schema.Column{ResourceArtifactsColumns[2], ResourceArtifactsColumns[4], ResourceArtifactsColumns[5]},
+			},
+			{
+				Name:    "resourceartifact_team_id_author_id",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceArtifactsColumns[2], ResourceArtifactsColumns[3]},
+			},
+		},
+	}
+	// ResourceSubmissionsColumns holds the columns for the "resource_submissions" table.
+	ResourceSubmissionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "config_id", Type: field.TypeString, Size: 32},
+		{Name: "base_version", Type: field.TypeInt, Default: 0},
+		{Name: "proposal", Type: field.TypeJSON},
+		{Name: "note", Type: field.TypeString, Size: 8000, Default: ""},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"draft", "pending", "published", "rejected", "withdrawn"}, Default: "draft"},
+		{Name: "revision", Type: field.TypeInt, Default: 1},
+		{Name: "reviewer_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "reason", Type: field.TypeString, Size: 8000, Default: ""},
+		{Name: "decided_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// ResourceSubmissionsTable holds the schema information for the "resource_submissions" table.
+	ResourceSubmissionsTable = &schema.Table{
+		Name:       "resource_submissions",
+		Columns:    ResourceSubmissionsColumns,
+		PrimaryKey: []*schema.Column{ResourceSubmissionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "resourcesubmission_team_id_author_id",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceSubmissionsColumns[3], ResourceSubmissionsColumns[4]},
+			},
+			{
+				Name:    "resourcesubmission_team_id_state",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceSubmissionsColumns[3], ResourceSubmissionsColumns[9]},
+			},
+		},
+	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -377,7 +477,8 @@ var (
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"model", "preset", "plugin"}},
-		{Name: "name", Type: field.TypeString, Size: 400},
+		{Name: "name", Type: field.TypeString, Size: 480},
+		{Name: "builtin", Type: field.TypeString, Nullable: true, Size: 40},
 		{Name: "data", Type: field.TypeJSON},
 		{Name: "route_owner", Type: field.TypeString, Size: 40, Default: ""},
 		{Name: "route_reference", Type: field.TypeString, Size: 100, Default: ""},
@@ -392,7 +493,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "team_configs_teams_configs",
-				Columns:    []*schema.Column{TeamConfigsColumns[9]},
+				Columns:    []*schema.Column{TeamConfigsColumns[10]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -401,7 +502,12 @@ var (
 			{
 				Name:    "teamconfig_team_id_kind_name",
 				Unique:  true,
-				Columns: []*schema.Column{TeamConfigsColumns[9], TeamConfigsColumns[3], TeamConfigsColumns[4]},
+				Columns: []*schema.Column{TeamConfigsColumns[10], TeamConfigsColumns[3], TeamConfigsColumns[4]},
+			},
+			{
+				Name:    "teamconfig_team_id_builtin",
+				Unique:  true,
+				Columns: []*schema.Column{TeamConfigsColumns[10], TeamConfigsColumns[5]},
 			},
 		},
 	}
@@ -540,12 +646,15 @@ var (
 		BudgetPoliciesTable,
 		BudgetReservationsTable,
 		BudgetWindowsTable,
+		ConfigRevisionsTable,
 		IdentitiesTable,
 		InvitesTable,
 		MembershipsTable,
 		ModelRatesTable,
 		PasswordsTable,
 		RateWindowsTable,
+		ResourceArtifactsTable,
+		ResourceSubmissionsTable,
 		TeamsTable,
 		TeamConfigsTable,
 		TeamProvidersTable,
@@ -580,6 +689,10 @@ func init() {
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}
+	ConfigRevisionsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
 	IdentitiesTable.ForeignKeys[0].RefTable = UsersTable
 	IdentitiesTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
@@ -606,6 +719,14 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	RateWindowsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	ResourceArtifactsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	ResourceSubmissionsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

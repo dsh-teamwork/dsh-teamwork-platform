@@ -118,6 +118,7 @@ type PluginDependency struct {
 // PresetData references a team model or names its own provider and model,
 // never both.
 type PresetData struct {
+	InheritModel       bool               `json:"inheritModel,omitempty"`
 	Provider           *string            `json:"provider,omitempty"`
 	Model              *string            `json:"model,omitempty"`
 	ContextWindow      *int64             `json:"contextWindow,omitempty"`
@@ -193,13 +194,15 @@ func (p *PresetData) validate(is *Issues) {
 		tools[t] = true
 	}
 	ownRoute := p.Provider != nil || p.Model != nil || p.ContextWindow != nil || p.MaxTokens != nil
-	if (p.ModelConfigID != nil && ownRoute) || (p.ModelConfigID == nil && (p.Provider == nil || p.Model == nil)) {
+	if p.InheritModel && (p.ModelConfigID != nil || ownRoute) || !p.InheritModel && ((p.ModelConfigID != nil && ownRoute) || (p.ModelConfigID == nil && (p.Provider == nil || p.Model == nil))) {
 		is.Add("A preset references a team model or names its own provider and model, not both.", "data")
 	}
 }
 
 // PluginData pins an npm package at one exact version.
 type PluginData struct {
+	ArtifactID    string   `json:"artifactId,omitempty"`
+	SHA256        string   `json:"sha256,omitempty"`
 	Package       string   `json:"package"`
 	Version       string   `json:"version"`
 	ProvidesTools []string `json:"providesTools"`
@@ -207,6 +210,9 @@ type PluginData struct {
 }
 
 func (p *PluginData) validate(is *Issues) {
+	if (p.ArtifactID == "") != (p.SHA256 == "") || len(p.ArtifactID) > 32 || (p.SHA256 != "" && !regexp.MustCompile(`^[a-f0-9]{64}$`).MatchString(p.SHA256)) {
+		is.Add("An artifact and its SHA-256 digest are required together", "data", "artifactId")
+	}
 	if !npmPackage.MatchString(p.Package) {
 		is.Add("An npm package name", "data", "package")
 	}
@@ -243,7 +249,10 @@ type ConfigInput struct {
 // Validate parses Data for the kind and holds it to the kind's rules.
 func (c *ConfigInput) Validate() error {
 	var is Issues
-	name(&is, &c.Name, "name")
+	c.Name = strings.TrimSpace(c.Name)
+	if length(c.Name) < 1 || length(c.Name) > 120 {
+		is.Add("Between 1 and 120 characters", "name")
+	}
 	strict := func(v any) bool {
 		dec := json.NewDecoder(bytes.NewReader(c.Data))
 		dec.DisallowUnknownFields()

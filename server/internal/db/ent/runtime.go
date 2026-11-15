@@ -11,12 +11,15 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetpolicy"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetreservation"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetwindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -404,6 +407,71 @@ func init() {
 			return nil
 		}
 	}()
+	configrevisionMixin := schema.ConfigRevision{}.Mixin()
+	configrevisionMixinFields0 := configrevisionMixin[0].Fields()
+	_ = configrevisionMixinFields0
+	configrevisionFields := schema.ConfigRevision{}.Fields()
+	_ = configrevisionFields
+	// configrevisionDescCreatedAt is the schema descriptor for created_at field.
+	configrevisionDescCreatedAt := configrevisionMixinFields0[1].Descriptor()
+	// configrevision.DefaultCreatedAt holds the default value on creation for the created_at field.
+	configrevision.DefaultCreatedAt = configrevisionDescCreatedAt.Default.(func() time.Time)
+	// configrevisionDescTeamID is the schema descriptor for team_id field.
+	configrevisionDescTeamID := configrevisionFields[0].Descriptor()
+	// configrevision.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	configrevision.TeamIDValidator = configrevisionDescTeamID.Validators[0].(func(string) error)
+	// configrevisionDescConfigID is the schema descriptor for config_id field.
+	configrevisionDescConfigID := configrevisionFields[1].Descriptor()
+	// configrevision.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
+	configrevision.ConfigIDValidator = configrevisionDescConfigID.Validators[0].(func(string) error)
+	// configrevisionDescBuiltin is the schema descriptor for builtin field.
+	configrevisionDescBuiltin := configrevisionFields[3].Descriptor()
+	// configrevision.DefaultBuiltin holds the default value on creation for the builtin field.
+	configrevision.DefaultBuiltin = configrevisionDescBuiltin.Default.(string)
+	// configrevision.BuiltinValidator is a validator for the "builtin" field. It is called by the builders before save.
+	configrevision.BuiltinValidator = configrevisionDescBuiltin.Validators[0].(func(string) error)
+	// configrevisionDescName is the schema descriptor for name field.
+	configrevisionDescName := configrevisionFields[5].Descriptor()
+	// configrevision.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	configrevision.NameValidator = configrevisionDescName.Validators[0].(func(string) error)
+	// configrevisionDescAuthorID is the schema descriptor for author_id field.
+	configrevisionDescAuthorID := configrevisionFields[7].Descriptor()
+	// configrevision.DefaultAuthorID holds the default value on creation for the author_id field.
+	configrevision.DefaultAuthorID = configrevisionDescAuthorID.Default.(string)
+	// configrevision.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	configrevision.AuthorIDValidator = configrevisionDescAuthorID.Validators[0].(func(string) error)
+	// configrevisionDescReviewerID is the schema descriptor for reviewer_id field.
+	configrevisionDescReviewerID := configrevisionFields[8].Descriptor()
+	// configrevision.DefaultReviewerID holds the default value on creation for the reviewer_id field.
+	configrevision.DefaultReviewerID = configrevisionDescReviewerID.Default.(string)
+	// configrevision.ReviewerIDValidator is a validator for the "reviewer_id" field. It is called by the builders before save.
+	configrevision.ReviewerIDValidator = configrevisionDescReviewerID.Validators[0].(func(string) error)
+	// configrevisionDescNote is the schema descriptor for note field.
+	configrevisionDescNote := configrevisionFields[9].Descriptor()
+	// configrevision.DefaultNote holds the default value on creation for the note field.
+	configrevision.DefaultNote = configrevisionDescNote.Default.(string)
+	// configrevision.NoteValidator is a validator for the "note" field. It is called by the builders before save.
+	configrevision.NoteValidator = configrevisionDescNote.Validators[0].(func(string) error)
+	// configrevisionDescID is the schema descriptor for id field.
+	configrevisionDescID := configrevisionMixinFields0[0].Descriptor()
+	// configrevision.DefaultID holds the default value on creation for the id field.
+	configrevision.DefaultID = configrevisionDescID.Default.(func() string)
+	// configrevision.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	configrevision.IDValidator = func() func(string) error {
+		validators := configrevisionDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	identityMixin := schema.Identity{}.Mixin()
 	identityMixinFields0 := identityMixin[0].Fields()
 	_ = identityMixinFields0
@@ -666,6 +734,134 @@ func init() {
 			return nil
 		}
 	}()
+	resourceartifactMixin := schema.ResourceArtifact{}.Mixin()
+	resourceartifactMixinFields0 := resourceartifactMixin[0].Fields()
+	_ = resourceartifactMixinFields0
+	resourceartifactFields := schema.ResourceArtifact{}.Fields()
+	_ = resourceartifactFields
+	// resourceartifactDescCreatedAt is the schema descriptor for created_at field.
+	resourceartifactDescCreatedAt := resourceartifactMixinFields0[1].Descriptor()
+	// resourceartifact.DefaultCreatedAt holds the default value on creation for the created_at field.
+	resourceartifact.DefaultCreatedAt = resourceartifactDescCreatedAt.Default.(func() time.Time)
+	// resourceartifactDescTeamID is the schema descriptor for team_id field.
+	resourceartifactDescTeamID := resourceartifactFields[0].Descriptor()
+	// resourceartifact.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	resourceartifact.TeamIDValidator = resourceartifactDescTeamID.Validators[0].(func(string) error)
+	// resourceartifactDescAuthorID is the schema descriptor for author_id field.
+	resourceartifactDescAuthorID := resourceartifactFields[1].Descriptor()
+	// resourceartifact.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	resourceartifact.AuthorIDValidator = resourceartifactDescAuthorID.Validators[0].(func(string) error)
+	// resourceartifactDescPackage is the schema descriptor for package field.
+	resourceartifactDescPackage := resourceartifactFields[2].Descriptor()
+	// resourceartifact.PackageValidator is a validator for the "package" field. It is called by the builders before save.
+	resourceartifact.PackageValidator = resourceartifactDescPackage.Validators[0].(func(string) error)
+	// resourceartifactDescVersion is the schema descriptor for version field.
+	resourceartifactDescVersion := resourceartifactFields[3].Descriptor()
+	// resourceartifact.VersionValidator is a validator for the "version" field. It is called by the builders before save.
+	resourceartifact.VersionValidator = resourceartifactDescVersion.Validators[0].(func(string) error)
+	// resourceartifactDescSha256 is the schema descriptor for sha256 field.
+	resourceartifactDescSha256 := resourceartifactFields[4].Descriptor()
+	// resourceartifact.Sha256Validator is a validator for the "sha256" field. It is called by the builders before save.
+	resourceartifact.Sha256Validator = resourceartifactDescSha256.Validators[0].(func(string) error)
+	// resourceartifactDescPublished is the schema descriptor for published field.
+	resourceartifactDescPublished := resourceartifactFields[7].Descriptor()
+	// resourceartifact.DefaultPublished holds the default value on creation for the published field.
+	resourceartifact.DefaultPublished = resourceartifactDescPublished.Default.(bool)
+	// resourceartifactDescID is the schema descriptor for id field.
+	resourceartifactDescID := resourceartifactMixinFields0[0].Descriptor()
+	// resourceartifact.DefaultID holds the default value on creation for the id field.
+	resourceartifact.DefaultID = resourceartifactDescID.Default.(func() string)
+	// resourceartifact.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	resourceartifact.IDValidator = func() func(string) error {
+		validators := resourceartifactDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	resourcesubmissionMixin := schema.ResourceSubmission{}.Mixin()
+	resourcesubmissionMixinFields0 := resourcesubmissionMixin[0].Fields()
+	_ = resourcesubmissionMixinFields0
+	resourcesubmissionMixinFields1 := resourcesubmissionMixin[1].Fields()
+	_ = resourcesubmissionMixinFields1
+	resourcesubmissionFields := schema.ResourceSubmission{}.Fields()
+	_ = resourcesubmissionFields
+	// resourcesubmissionDescCreatedAt is the schema descriptor for created_at field.
+	resourcesubmissionDescCreatedAt := resourcesubmissionMixinFields0[1].Descriptor()
+	// resourcesubmission.DefaultCreatedAt holds the default value on creation for the created_at field.
+	resourcesubmission.DefaultCreatedAt = resourcesubmissionDescCreatedAt.Default.(func() time.Time)
+	// resourcesubmissionDescUpdatedAt is the schema descriptor for updated_at field.
+	resourcesubmissionDescUpdatedAt := resourcesubmissionMixinFields1[0].Descriptor()
+	// resourcesubmission.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	resourcesubmission.DefaultUpdatedAt = resourcesubmissionDescUpdatedAt.Default.(func() time.Time)
+	// resourcesubmission.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	resourcesubmission.UpdateDefaultUpdatedAt = resourcesubmissionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// resourcesubmissionDescTeamID is the schema descriptor for team_id field.
+	resourcesubmissionDescTeamID := resourcesubmissionFields[0].Descriptor()
+	// resourcesubmission.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	resourcesubmission.TeamIDValidator = resourcesubmissionDescTeamID.Validators[0].(func(string) error)
+	// resourcesubmissionDescAuthorID is the schema descriptor for author_id field.
+	resourcesubmissionDescAuthorID := resourcesubmissionFields[1].Descriptor()
+	// resourcesubmission.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	resourcesubmission.AuthorIDValidator = resourcesubmissionDescAuthorID.Validators[0].(func(string) error)
+	// resourcesubmissionDescConfigID is the schema descriptor for config_id field.
+	resourcesubmissionDescConfigID := resourcesubmissionFields[2].Descriptor()
+	// resourcesubmission.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
+	resourcesubmission.ConfigIDValidator = resourcesubmissionDescConfigID.Validators[0].(func(string) error)
+	// resourcesubmissionDescBaseVersion is the schema descriptor for base_version field.
+	resourcesubmissionDescBaseVersion := resourcesubmissionFields[3].Descriptor()
+	// resourcesubmission.DefaultBaseVersion holds the default value on creation for the base_version field.
+	resourcesubmission.DefaultBaseVersion = resourcesubmissionDescBaseVersion.Default.(int)
+	// resourcesubmissionDescNote is the schema descriptor for note field.
+	resourcesubmissionDescNote := resourcesubmissionFields[5].Descriptor()
+	// resourcesubmission.DefaultNote holds the default value on creation for the note field.
+	resourcesubmission.DefaultNote = resourcesubmissionDescNote.Default.(string)
+	// resourcesubmission.NoteValidator is a validator for the "note" field. It is called by the builders before save.
+	resourcesubmission.NoteValidator = resourcesubmissionDescNote.Validators[0].(func(string) error)
+	// resourcesubmissionDescRevision is the schema descriptor for revision field.
+	resourcesubmissionDescRevision := resourcesubmissionFields[7].Descriptor()
+	// resourcesubmission.DefaultRevision holds the default value on creation for the revision field.
+	resourcesubmission.DefaultRevision = resourcesubmissionDescRevision.Default.(int)
+	// resourcesubmissionDescReviewerID is the schema descriptor for reviewer_id field.
+	resourcesubmissionDescReviewerID := resourcesubmissionFields[8].Descriptor()
+	// resourcesubmission.DefaultReviewerID holds the default value on creation for the reviewer_id field.
+	resourcesubmission.DefaultReviewerID = resourcesubmissionDescReviewerID.Default.(string)
+	// resourcesubmission.ReviewerIDValidator is a validator for the "reviewer_id" field. It is called by the builders before save.
+	resourcesubmission.ReviewerIDValidator = resourcesubmissionDescReviewerID.Validators[0].(func(string) error)
+	// resourcesubmissionDescReason is the schema descriptor for reason field.
+	resourcesubmissionDescReason := resourcesubmissionFields[9].Descriptor()
+	// resourcesubmission.DefaultReason holds the default value on creation for the reason field.
+	resourcesubmission.DefaultReason = resourcesubmissionDescReason.Default.(string)
+	// resourcesubmission.ReasonValidator is a validator for the "reason" field. It is called by the builders before save.
+	resourcesubmission.ReasonValidator = resourcesubmissionDescReason.Validators[0].(func(string) error)
+	// resourcesubmissionDescID is the schema descriptor for id field.
+	resourcesubmissionDescID := resourcesubmissionMixinFields0[0].Descriptor()
+	// resourcesubmission.DefaultID holds the default value on creation for the id field.
+	resourcesubmission.DefaultID = resourcesubmissionDescID.Default.(func() string)
+	// resourcesubmission.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	resourcesubmission.IDValidator = func() func(string) error {
+		validators := resourcesubmissionDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	teamMixin := schema.Team{}.Mixin()
 	teamMixinFields0 := teamMixin[0].Fields()
 	_ = teamMixinFields0
@@ -724,20 +920,24 @@ func init() {
 	teamconfigDescName := teamconfigFields[2].Descriptor()
 	// teamconfig.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	teamconfig.NameValidator = teamconfigDescName.Validators[0].(func(string) error)
+	// teamconfigDescBuiltin is the schema descriptor for builtin field.
+	teamconfigDescBuiltin := teamconfigFields[3].Descriptor()
+	// teamconfig.BuiltinValidator is a validator for the "builtin" field. It is called by the builders before save.
+	teamconfig.BuiltinValidator = teamconfigDescBuiltin.Validators[0].(func(string) error)
 	// teamconfigDescRouteOwner is the schema descriptor for route_owner field.
-	teamconfigDescRouteOwner := teamconfigFields[4].Descriptor()
+	teamconfigDescRouteOwner := teamconfigFields[5].Descriptor()
 	// teamconfig.DefaultRouteOwner holds the default value on creation for the route_owner field.
 	teamconfig.DefaultRouteOwner = teamconfigDescRouteOwner.Default.(string)
 	// teamconfig.RouteOwnerValidator is a validator for the "route_owner" field. It is called by the builders before save.
 	teamconfig.RouteOwnerValidator = teamconfigDescRouteOwner.Validators[0].(func(string) error)
 	// teamconfigDescRouteReference is the schema descriptor for route_reference field.
-	teamconfigDescRouteReference := teamconfigFields[5].Descriptor()
+	teamconfigDescRouteReference := teamconfigFields[6].Descriptor()
 	// teamconfig.DefaultRouteReference holds the default value on creation for the route_reference field.
 	teamconfig.DefaultRouteReference = teamconfigDescRouteReference.Default.(string)
 	// teamconfig.RouteReferenceValidator is a validator for the "route_reference" field. It is called by the builders before save.
 	teamconfig.RouteReferenceValidator = teamconfigDescRouteReference.Validators[0].(func(string) error)
 	// teamconfigDescVersion is the schema descriptor for version field.
-	teamconfigDescVersion := teamconfigFields[6].Descriptor()
+	teamconfigDescVersion := teamconfigFields[7].Descriptor()
 	// teamconfig.DefaultVersion holds the default value on creation for the version field.
 	teamconfig.DefaultVersion = teamconfigDescVersion.Default.(int)
 	// teamconfigDescID is the schema descriptor for id field.

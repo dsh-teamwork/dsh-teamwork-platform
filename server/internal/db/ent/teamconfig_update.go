@@ -215,6 +215,9 @@ func (_u *TeamConfigUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(teamconfig.FieldName, field.TypeString, value)
 	}
+	if _u.mutation.BuiltinCleared() {
+		_spec.ClearField(teamconfig.FieldBuiltin, field.TypeString)
+	}
 	if value, ok := _u.mutation.Data(); ok {
 		_spec.SetField(teamconfig.FieldData, field.TypeJSON, value)
 	}
@@ -492,6 +495,9 @@ func (_u *TeamConfigUpdateOne) sqlSave(ctx context.Context) (_node *TeamConfig, 
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(teamconfig.FieldName, field.TypeString, value)
+	}
+	if _u.mutation.BuiltinCleared() {
+		_spec.ClearField(teamconfig.FieldBuiltin, field.TypeString)
 	}
 	if value, ok := _u.mutation.Data(); ok {
 		_spec.SetField(teamconfig.FieldData, field.TypeJSON, value)

@@ -29,6 +29,8 @@ type TeamConfig struct {
 	Kind teamconfig.Kind `json:"kind,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Builtin holds the value of the "builtin" field.
+	Builtin *string `json:"builtin,omitempty"`
 	// Data holds the value of the "data" field.
 	Data json.RawMessage `json:"data,omitempty"`
 	// RouteOwner holds the value of the "route_owner" field.
@@ -72,7 +74,7 @@ func (*TeamConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case teamconfig.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case teamconfig.FieldID, teamconfig.FieldTeamID, teamconfig.FieldKind, teamconfig.FieldName, teamconfig.FieldRouteOwner, teamconfig.FieldRouteReference:
+		case teamconfig.FieldID, teamconfig.FieldTeamID, teamconfig.FieldKind, teamconfig.FieldName, teamconfig.FieldBuiltin, teamconfig.FieldRouteOwner, teamconfig.FieldRouteReference:
 			values[i] = new(sql.NullString)
 		case teamconfig.FieldCreatedAt, teamconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -126,6 +128,13 @@ func (_m *TeamConfig) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				_m.Name = value.String
+			}
+		case teamconfig.FieldBuiltin:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field builtin", values[i])
+			} else if value.Valid {
+				_m.Builtin = new(string)
+				*_m.Builtin = value.String
 			}
 		case teamconfig.FieldData:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -208,6 +217,11 @@ func (_m *TeamConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
+	builder.WriteString(", ")
+	if v := _m.Builtin; v != nil {
+		builder.WriteString("builtin=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("data=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Data))

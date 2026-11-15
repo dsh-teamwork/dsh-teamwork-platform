@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -113,7 +114,7 @@ func TestInvitedMemberReadsButCannotWriteUntilRemoved(t *testing.T) {
 
 		refused(t, "a member publishing", member.post("/api/teams/"+teamID+"/configs", model("Protected")), 403, "admin_required")
 		config := must(t, admin.post("/api/teams/"+teamID+"/configs", model("Protected")), 201)
-		if ids := configIDs(t, member.get("/api/teams/"+teamID+"/configs")); len(ids) != 1 || ids[0] != config["id"] {
+		if ids := configIDs(t, member.get("/api/teams/"+teamID+"/configs")); len(ids) != 2 || !slices.Contains(ids, config["id"].(string)) {
 			t.Fatalf("member reads %v", ids)
 		}
 		if role := must(t, member.get("/api/teams/"+teamID), 200)["role"]; role != "member" {
@@ -180,10 +181,10 @@ func TestAnotherTeamsAdminCannotTouchThisTeamsConfig(t *testing.T) {
 		refused(t, "a config of another team, patched", other.send("PATCH", "/api/teams/"+elsewhere+"/configs/"+own, hijack), 409, "config_conflict")
 		must(t, other.send("DELETE", "/api/teams/"+elsewhere+"/configs/"+own, nil), 204)
 		configs := jsonArray(t, admin.get("/api/teams/"+teamID+"/configs"))
-		if len(configs) != 1 || configs[0].(map[string]any)["name"] != "Isolated" {
+		if len(configs) != 2 || configs[1].(map[string]any)["builtin"] != "team-assistant" || configs[0].(map[string]any)["name"] != "Isolated" {
 			t.Fatalf("this team's configs after another admin's writes: %v", configs)
 		}
-		if got := jsonArray(t, other.get("/api/teams/"+elsewhere+"/configs")); len(got) != 0 {
+		if got := jsonArray(t, other.get("/api/teams/"+elsewhere+"/configs")); len(got) != 1 || got[0].(map[string]any)["builtin"] != "team-assistant" {
 			t.Fatalf("the other team gained %v", got)
 		}
 	})
@@ -275,8 +276,8 @@ func TestPresetReferencesMustBeThisTeamsAtThatVersion(t *testing.T) {
 		for _, id := range []string{ok["id"].(string), target, plugin} {
 			must(t, admin.send("DELETE", configs+"/"+id, nil), 204)
 		}
-		if ids := configIDs(t, admin.get(configs)); len(ids) != 0 {
-			t.Fatalf("left after deleting: %v", ids)
+		if rows := jsonArray(t, admin.get(configs)); len(rows) != 1 || rows[0].(map[string]any)["builtin"] != "team-assistant" {
+			t.Fatalf("left after deleting: %v", rows)
 		}
 	})
 }

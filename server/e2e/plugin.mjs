@@ -5,6 +5,7 @@
 // provider; see docs/tech/go-server.md, phase 1.
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
+import { mkdir,writeFile,readFile,rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -64,7 +65,8 @@ assert.ok(client.authenticated());
 const snapshot = await client.sync();
 assert.equal(snapshot.teams.length, 1);
 assert.equal(snapshot.teams[0].teamId, team.id);
-assert.deepEqual(snapshot.teams[0].configs.map((c) => c.id), [model.id]);
+assert.deepEqual(snapshot.teams[0].configs.filter(c=>c.kind==='model').map(c => c.id), [model.id]);
+assert.equal(snapshot.teams[0].configs.filter(c=>c.builtin==='team-assistant' && c.kind==='preset' && c.data.inheritModel===true).length,1);
 
 // A team model, called the way DSH calls it through the plugin.
 const call = (stream) =>
@@ -80,6 +82,25 @@ const streamed = await call(true);
 assert.equal(streamed.headers.get('content-type'), 'text/event-stream');
 const text = await streamed.text();
 assert.ok(text.trim().endsWith('data: [DONE]'), text);
+
+
+// Exercise the plugin's actual local preparation, upload, approval, sync and download path.
+const workspace=mkdtempSync(join(tmpdir(),'teamwork-share-e2e-'));
+let prepared;
+try {
+ const directory=join(workspace,'plugin');await mkdir(directory);
+ await writeFile(join(directory,'package.json'),JSON.stringify({name:'teamwork-e2e-private',version:'1.0.0',type:'module',main:'index.js',files:['index.js']}));
+ await writeFile(join(directory,'index.js'),'export function apply() {}');
+ const {preparePlugin}=await import(pathToFileURL(join(PLUGIN,'lib/local-share.js')).href);
+ prepared=await preparePlugin(workspace,'plugin',new AbortController().signal);
+ const pending=await client.submitPlugin(team.id,await readFile(prepared.path),prepared.sha256,{name:'Private fixture',note:'Actual client upload',baseVersion:0},new AbortController().signal);
+ assert.equal(pending.state,'pending');
+ await browser(`teams/${team.id}/submissions/${pending.id}/approve`,{revision:pending.revision});
+ const synced=await client.sync();const shared=synced.teams[0].configs.find(c=>c.kind==='plugin'&&c.name==='Private fixture');assert(shared);
+ const downloaded=await client.downloadArtifact(team.id,shared.data.artifactId,shared.data.sha256);
+ assert.deepEqual(await readFile(downloaded),await readFile(prepared.path));
+ console.log('private plugin e2e ok: prepared, submitted, approved, synced and downloaded exact bytes');
+} finally {if(prepared)await rm(prepared.directory,{recursive:true,force:true});await rm(workspace,{recursive:true,force:true});}
 
 callback.close();
 console.log(`plugin e2e ok: signed in, synced ${snapshot.teams[0].configs.length} configuration, two calls through the gateway`);

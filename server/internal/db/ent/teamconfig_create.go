@@ -71,6 +71,20 @@ func (_c *TeamConfigCreate) SetName(v string) *TeamConfigCreate {
 	return _c
 }
 
+// SetBuiltin sets the "builtin" field.
+func (_c *TeamConfigCreate) SetBuiltin(v string) *TeamConfigCreate {
+	_c.mutation.SetBuiltin(v)
+	return _c
+}
+
+// SetNillableBuiltin sets the "builtin" field if the given value is not nil.
+func (_c *TeamConfigCreate) SetNillableBuiltin(v *string) *TeamConfigCreate {
+	if v != nil {
+		_c.SetBuiltin(*v)
+	}
+	return _c
+}
+
 // SetData sets the "data" field.
 func (_c *TeamConfigCreate) SetData(v json.RawMessage) *TeamConfigCreate {
 	_c.mutation.SetData(v)
@@ -231,6 +245,11 @@ func (_c *TeamConfigCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "TeamConfig.name": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.Builtin(); ok {
+		if err := teamconfig.BuiltinValidator(v); err != nil {
+			return &ValidationError{Name: "builtin", err: fmt.Errorf(`ent: validator failed for field "TeamConfig.builtin": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Data(); !ok {
 		return &ValidationError{Name: "data", err: errors.New(`ent: missing required field "TeamConfig.data"`)}
 	}
@@ -312,6 +331,10 @@ func (_c *TeamConfigCreate) createSpec() (*TeamConfig, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(teamconfig.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := _c.mutation.Builtin(); ok {
+		_spec.SetField(teamconfig.FieldBuiltin, field.TypeString, value)
+		_node.Builtin = &value
 	}
 	if value, ok := _c.mutation.Data(); ok {
 		_spec.SetField(teamconfig.FieldData, field.TypeJSON, value)
@@ -495,6 +518,9 @@ func (u *TeamConfigUpsertOne) UpdateNewValues() *TeamConfigUpsertOne {
 		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(teamconfig.FieldCreatedAt)
+		}
+		if _, exists := u.create.mutation.Builtin(); exists {
+			s.SetIgnore(teamconfig.FieldBuiltin)
 		}
 		if _, exists := u.create.mutation.RouteOwner(); exists {
 			s.SetIgnore(teamconfig.FieldRouteOwner)
@@ -809,6 +835,9 @@ func (u *TeamConfigUpsertBulk) UpdateNewValues() *TeamConfigUpsertBulk {
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(teamconfig.FieldCreatedAt)
+			}
+			if _, exists := b.mutation.Builtin(); exists {
+				s.SetIgnore(teamconfig.FieldBuiltin)
 			}
 			if _, exists := b.mutation.RouteOwner(); exists {
 				s.SetIgnore(teamconfig.FieldRouteOwner)
