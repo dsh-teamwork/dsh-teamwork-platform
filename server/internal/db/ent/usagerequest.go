@@ -42,6 +42,14 @@ type UsageRequest struct {
 	DeadlineAt *time.Time `json:"deadline_at,omitempty"`
 	// RateID holds the value of the "rate_id" field.
 	RateID string `json:"rate_id,omitempty"`
+	// RouteOwner holds the value of the "route_owner" field.
+	RouteOwner string `json:"route_owner,omitempty"`
+	// AdmittedUnits holds the value of the "admitted_units" field.
+	AdmittedUnits *int64 `json:"admitted_units,omitempty"`
+	// AdmittedInput holds the value of the "admitted_input" field.
+	AdmittedInput *int64 `json:"admitted_input,omitempty"`
+	// AdmittedOutput holds the value of the "admitted_output" field.
+	AdmittedOutput *int64 `json:"admitted_output,omitempty"`
 	// Rates holds the value of the "rates" field.
 	Rates json.RawMessage `json:"rates,omitempty"`
 	// PointUnits holds the value of the "point_units" field.
@@ -74,9 +82,9 @@ func (*UsageRequest) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case usagerequest.FieldStream:
 			values[i] = new(sql.NullBool)
-		case usagerequest.FieldPointUnits, usagerequest.FieldInputTokens, usagerequest.FieldCacheReadTokens, usagerequest.FieldCacheWriteTokens, usagerequest.FieldOutputTokens, usagerequest.FieldReasoningTokens:
+		case usagerequest.FieldAdmittedUnits, usagerequest.FieldAdmittedInput, usagerequest.FieldAdmittedOutput, usagerequest.FieldPointUnits, usagerequest.FieldInputTokens, usagerequest.FieldCacheReadTokens, usagerequest.FieldCacheWriteTokens, usagerequest.FieldOutputTokens, usagerequest.FieldReasoningTokens:
 			values[i] = new(sql.NullInt64)
-		case usagerequest.FieldID, usagerequest.FieldTeamID, usagerequest.FieldUserID, usagerequest.FieldAppURL, usagerequest.FieldSubmittedConfigID, usagerequest.FieldConfigID, usagerequest.FieldProvider, usagerequest.FieldModel, usagerequest.FieldState, usagerequest.FieldRateID, usagerequest.FieldProviderRequestID, usagerequest.FieldErrorCode:
+		case usagerequest.FieldID, usagerequest.FieldTeamID, usagerequest.FieldUserID, usagerequest.FieldAppURL, usagerequest.FieldSubmittedConfigID, usagerequest.FieldConfigID, usagerequest.FieldProvider, usagerequest.FieldModel, usagerequest.FieldState, usagerequest.FieldRateID, usagerequest.FieldRouteOwner, usagerequest.FieldProviderRequestID, usagerequest.FieldErrorCode:
 			values[i] = new(sql.NullString)
 		case usagerequest.FieldCreatedAt, usagerequest.FieldDeadlineAt, usagerequest.FieldFinishedAt:
 			values[i] = new(sql.NullTime)
@@ -173,6 +181,33 @@ func (_m *UsageRequest) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field rate_id", values[i])
 			} else if value.Valid {
 				_m.RateID = value.String
+			}
+		case usagerequest.FieldRouteOwner:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field route_owner", values[i])
+			} else if value.Valid {
+				_m.RouteOwner = value.String
+			}
+		case usagerequest.FieldAdmittedUnits:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field admitted_units", values[i])
+			} else if value.Valid {
+				_m.AdmittedUnits = new(int64)
+				*_m.AdmittedUnits = value.Int64
+			}
+		case usagerequest.FieldAdmittedInput:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field admitted_input", values[i])
+			} else if value.Valid {
+				_m.AdmittedInput = new(int64)
+				*_m.AdmittedInput = value.Int64
+			}
+		case usagerequest.FieldAdmittedOutput:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field admitted_output", values[i])
+			} else if value.Valid {
+				_m.AdmittedOutput = new(int64)
+				*_m.AdmittedOutput = value.Int64
 			}
 		case usagerequest.FieldRates:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -316,6 +351,24 @@ func (_m *UsageRequest) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("rate_id=")
 	builder.WriteString(_m.RateID)
+	builder.WriteString(", ")
+	builder.WriteString("route_owner=")
+	builder.WriteString(_m.RouteOwner)
+	builder.WriteString(", ")
+	if v := _m.AdmittedUnits; v != nil {
+		builder.WriteString("admitted_units=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.AdmittedInput; v != nil {
+		builder.WriteString("admitted_input=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.AdmittedOutput; v != nil {
+		builder.WriteString("admitted_output=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("rates=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Rates))

@@ -501,6 +501,7 @@
     "rate": "积分单价",
     "rateTitle": "参考单价 · {name}",
     "rateHint": "单位为元／百万 Token，1 元折合 1,000 参考积分。此处计价不会扣除托管服务余额。",
+    "hostedRateHint": "托管模型价格由平台发布，团队预算也按此价格计量积分。",
     "unpricedHint": "当前模型尚未定价。会记录 Token 用量，积分显示为未定价。",
     "weightHint": "将这些价格作为内部使用权重，而非供应商成本估算。",
     "prices": { "input": "非缓存输入", "cacheRead": "缓存输入", "cacheWrite": "缓存写入（如支持）", "output": "输出（含推理）" },
@@ -637,6 +638,10 @@
     "provider_address_refused": "本服务器不允许调用这个地址。",
     "provider_keys_unavailable": "本服务器无法读取或保存提供方密钥：PROVIDER_KEYS_SECRET 未设置或已更改。",
     "model_in_use": "还有预设在用这个模型。先让这些预设改用别的模型，再删除。",
-    "plugin_in_use": "还有预设依赖这个插件。先从这些预设里去掉它，再删除。"
+    "plugin_in_use": "还有预设依赖这个插件。先从这些预设里去掉它，再删除。",
+    "config_owned": "此模型由平台管理。",
+    "funding_unavailable": "托管模型暂不可用。",
+    "wallet_insufficient": "团队可用模型余额不足。",
+    "usage_funding_resolution_required": "托管模型用量需要由平台运营人员核对。"
   }
 }

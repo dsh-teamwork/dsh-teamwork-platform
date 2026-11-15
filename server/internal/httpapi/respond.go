@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -72,7 +73,10 @@ func fail(w http.ResponseWriter, r *http.Request, err error) {
 	var we *wire.Error
 	var invalid *wire.Invalid
 	var refusal *auth.Refusal
+	var funding *edition.FundingError
 	switch {
+	case errors.As(err, &funding) && funding.Status >= 400 && funding.Status <= 503:
+		writeJSON(w, funding.Status, map[string]string{"error": funding.Code})
 	case errors.As(err, &we):
 		body := map[string]any{"error": we.Code}
 		if we.Scope != "" {

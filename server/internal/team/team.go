@@ -126,10 +126,11 @@ type ConfigView struct {
 	Data      json.RawMessage `json:"data"`
 	Version   int             `json:"version"`
 	UpdatedAt string          `json:"updatedAt"`
+	Owner     string          `json:"owner,omitempty"`
 }
 
 func configView(c *ent.TeamConfig) ConfigView {
-	return ConfigView{ID: c.ID, Kind: string(c.Kind), Name: c.Name, Data: c.Data, Version: c.Version, UpdatedAt: Time(c.UpdatedAt)}
+	return ConfigView{ID: c.ID, Kind: string(c.Kind), Name: c.Name, Data: c.Data, Version: c.Version, UpdatedAt: Time(c.UpdatedAt), Owner: c.RouteOwner}
 }
 
 var kindOrder = map[teamconfig.Kind]int{teamconfig.KindModel: 0, teamconfig.KindPreset: 1, teamconfig.KindPlugin: 2}

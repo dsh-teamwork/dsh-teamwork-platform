@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering and budget slices; hosted integration pending · **Updated:** 2026-11-15
+> **Status:** Current — community metering, budgets and optional atomic model funding · **Updated:** 2026-11-15
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -8,6 +8,16 @@ reference budgets without a hosted account, payment service or subscription
 the implementation and its current provider limits.
 
 ## Ownership and prices
+
+Optional model funding uses the public transaction described in
+[ADR 0018](../adr/0018-atomic-model-funding.md). `edition.Host` registers a
+named participant, lends a lifetime-bound SQL executor, and publishes protected
+model configurations. Its immutable quote supplies the public request price;
+team admins can read that rate but cannot replace it with a BYOK reference rate.
+An absent participant refuses the owned route. BYOK never falls back to funded
+capacity. Funding owners implement their own monetary records and do not parse
+provider responses independently. Operator-only recovery records estimates and
+settles both resource sets together; the team API remains limited to BYOK.
 
 `server/internal/usage` owns normalization, immutable model rates, usage rows,
 policy/window reservations, settlement, recovery and notification work. The

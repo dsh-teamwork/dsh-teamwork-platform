@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sort"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetpolicy"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetwindow"
@@ -104,40 +105,49 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 		return nil, err
 	}
 	priced := rate != nil && rate.Provider == call.Provider && rate.Model == call.Model
+	var rates Rates
+	rateID := ""
+	if priced {
+		rates, rateID = ratesOf(rate), rate.ID
+	}
+	if call.Owner != "" {
+		if s.Funding[call.Owner] == nil || call.Quote == nil {
+			return nil, wire.E(http.StatusServiceUnavailable, "funding_unavailable")
+		}
+		rates, rateID, priced = call.Quote.Rates, call.Quote.RateID, true
+	}
 	var bound Tokens
 	bounded := false
+	needBound := call.Owner != ""
 	for _, p := range policies {
-		if !p.Enabled {
-			continue
-		}
-		if p.PointLimit != nil && !priced {
+		if p.Enabled && p.PointLimit != nil && !priced {
 			return nil, limitError("budget_model_unpriced", p, nil)
 		}
-		if !bounded {
-			suspended, e := db.UsageRequest.Query().Where(usagerequest.TeamID(call.TeamID), usagerequest.Provider(call.Provider),
-				usagerequest.Model(call.Model), usagerequest.ErrorCodeIn("usage_bound_exceeded", "usage_amount_overflow")).Exist(ctx)
-			if e != nil {
-				return nil, e
-			}
-			if suspended {
-				return nil, limitError("budget_route_suspended", p, nil)
-			}
-			if call.Bounds == nil {
-				return nil, limitError("budget_bound_unavailable", p, nil)
-			}
-			bound, err = call.Bounds()
-			if err != nil {
-				return nil, err
-			}
-			if !bound.Valid() || bound.Input <= 0 || bound.Output <= 0 {
-				return nil, errors.New("invalid trusted route bound")
-			}
-			bounded = true
+		needBound = needBound || p.Enabled
+	}
+	if needBound {
+		suspended, e := db.UsageRequest.Query().Where(usagerequest.TeamID(call.TeamID), usagerequest.Provider(call.Provider), usagerequest.Model(call.Model), usagerequest.ErrorCodeIn("usage_bound_exceeded", "usage_amount_overflow")).Exist(ctx)
+		if e != nil {
+			return nil, e
 		}
+		if suspended {
+			return nil, wire.E(http.StatusForbidden, "budget_route_suspended")
+		}
+		if call.Bounds == nil {
+			return nil, wire.E(http.StatusForbidden, "budget_bound_unavailable")
+		}
+		bound, err = call.Bounds()
+		if err != nil {
+			return nil, err
+		}
+		if !bound.Valid() || bound.Input <= 0 || bound.Output <= 0 {
+			return nil, errors.New("invalid trusted route bound")
+		}
+		bounded = true
 	}
 	var heldUnits int64
 	if bounded && priced {
-		heldUnits, err = ratesOf(rate).Bound(bound.Input, bound.Output)
+		heldUnits, err = rates.Bound(bound.Input, bound.Output)
 		if err != nil {
 			return nil, wire.E(http.StatusBadRequest, "budget_amount_too_large")
 		}
@@ -145,10 +155,13 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 	now := s.now()
 	create := db.UsageRequest.Create().SetCreatedAt(now).SetDeadlineAt(now.Add(MaxCallDuration)).SetAppURL(s.AppURL).SetTeamID(call.TeamID).SetUserID(call.UserID).
 		SetSubmittedConfigID(call.SubmittedConfigID).SetConfigID(call.ConfigID).
-		SetProvider(call.Provider).SetModel(call.Model).SetStream(call.Stream)
+		SetProvider(call.Provider).SetModel(call.Model).SetStream(call.Stream).SetRouteOwner(call.Owner)
 	if priced {
-		data, _ := json.Marshal(ratesOf(rate))
-		create.SetRateID(rate.ID).SetRates(data)
+		data, _ := json.Marshal(rates)
+		create.SetRateID(rateID).SetRates(data)
+	}
+	if bounded {
+		create.SetAdmittedInput(bound.Input).SetAdmittedOutput(bound.Output).SetAdmittedUnits(heldUnits)
 	}
 	request, err := create.Save(ctx)
 	if err != nil {
@@ -211,6 +224,12 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 		if err := db.BudgetEvent.Create().SetCreatedAt(now).SetTeamID(call.TeamID).SetWindowID(w.ID).
 			SetRequestID(request.ID).SetPolicyID(p.ID).SetKind("reserve").
 			SetActionKey(fmt.Sprintf("reserve:%s:%s", request.ID, w.ID)).SetData(data).Exec(ctx); err != nil {
+			return nil, err
+		}
+	}
+	if call.Owner != "" {
+		in := edition.FundingAdmission{RequestID: request.ID, TeamID: call.TeamID, UserID: call.UserID, ConfigID: call.ConfigID, Reference: call.Reference, Model: call.Model, RateID: rateID, HeldUnits: heldUnits}
+		if err := participate(db, call.TeamID, call.Owner, func(tx edition.SQLExecutor) error { return s.Funding[call.Owner].Reserve(ctx, tx, in) }); err != nil {
 			return nil, err
 		}
 	}

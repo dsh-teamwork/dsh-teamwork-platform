@@ -77,6 +77,34 @@ func (_c *TeamConfigCreate) SetData(v json.RawMessage) *TeamConfigCreate {
 	return _c
 }
 
+// SetRouteOwner sets the "route_owner" field.
+func (_c *TeamConfigCreate) SetRouteOwner(v string) *TeamConfigCreate {
+	_c.mutation.SetRouteOwner(v)
+	return _c
+}
+
+// SetNillableRouteOwner sets the "route_owner" field if the given value is not nil.
+func (_c *TeamConfigCreate) SetNillableRouteOwner(v *string) *TeamConfigCreate {
+	if v != nil {
+		_c.SetRouteOwner(*v)
+	}
+	return _c
+}
+
+// SetRouteReference sets the "route_reference" field.
+func (_c *TeamConfigCreate) SetRouteReference(v string) *TeamConfigCreate {
+	_c.mutation.SetRouteReference(v)
+	return _c
+}
+
+// SetNillableRouteReference sets the "route_reference" field if the given value is not nil.
+func (_c *TeamConfigCreate) SetNillableRouteReference(v *string) *TeamConfigCreate {
+	if v != nil {
+		_c.SetRouteReference(*v)
+	}
+	return _c
+}
+
 // SetVersion sets the "version" field.
 func (_c *TeamConfigCreate) SetVersion(v int) *TeamConfigCreate {
 	_c.mutation.SetVersion(v)
@@ -153,6 +181,14 @@ func (_c *TeamConfigCreate) defaults() {
 		v := teamconfig.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.RouteOwner(); !ok {
+		v := teamconfig.DefaultRouteOwner
+		_c.mutation.SetRouteOwner(v)
+	}
+	if _, ok := _c.mutation.RouteReference(); !ok {
+		v := teamconfig.DefaultRouteReference
+		_c.mutation.SetRouteReference(v)
+	}
 	if _, ok := _c.mutation.Version(); !ok {
 		v := teamconfig.DefaultVersion
 		_c.mutation.SetVersion(v)
@@ -197,6 +233,22 @@ func (_c *TeamConfigCreate) check() error {
 	}
 	if _, ok := _c.mutation.Data(); !ok {
 		return &ValidationError{Name: "data", err: errors.New(`ent: missing required field "TeamConfig.data"`)}
+	}
+	if _, ok := _c.mutation.RouteOwner(); !ok {
+		return &ValidationError{Name: "route_owner", err: errors.New(`ent: missing required field "TeamConfig.route_owner"`)}
+	}
+	if v, ok := _c.mutation.RouteOwner(); ok {
+		if err := teamconfig.RouteOwnerValidator(v); err != nil {
+			return &ValidationError{Name: "route_owner", err: fmt.Errorf(`ent: validator failed for field "TeamConfig.route_owner": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.RouteReference(); !ok {
+		return &ValidationError{Name: "route_reference", err: errors.New(`ent: missing required field "TeamConfig.route_reference"`)}
+	}
+	if v, ok := _c.mutation.RouteReference(); ok {
+		if err := teamconfig.RouteReferenceValidator(v); err != nil {
+			return &ValidationError{Name: "route_reference", err: fmt.Errorf(`ent: validator failed for field "TeamConfig.route_reference": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "TeamConfig.version"`)}
@@ -264,6 +316,14 @@ func (_c *TeamConfigCreate) createSpec() (*TeamConfig, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Data(); ok {
 		_spec.SetField(teamconfig.FieldData, field.TypeJSON, value)
 		_node.Data = value
+	}
+	if value, ok := _c.mutation.RouteOwner(); ok {
+		_spec.SetField(teamconfig.FieldRouteOwner, field.TypeString, value)
+		_node.RouteOwner = value
+	}
+	if value, ok := _c.mutation.RouteReference(); ok {
+		_spec.SetField(teamconfig.FieldRouteReference, field.TypeString, value)
+		_node.RouteReference = value
 	}
 	if value, ok := _c.mutation.Version(); ok {
 		_spec.SetField(teamconfig.FieldVersion, field.TypeInt, value)
@@ -435,6 +495,12 @@ func (u *TeamConfigUpsertOne) UpdateNewValues() *TeamConfigUpsertOne {
 		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(teamconfig.FieldCreatedAt)
+		}
+		if _, exists := u.create.mutation.RouteOwner(); exists {
+			s.SetIgnore(teamconfig.FieldRouteOwner)
+		}
+		if _, exists := u.create.mutation.RouteReference(); exists {
+			s.SetIgnore(teamconfig.FieldRouteReference)
 		}
 	}))
 	return u
@@ -743,6 +809,12 @@ func (u *TeamConfigUpsertBulk) UpdateNewValues() *TeamConfigUpsertBulk {
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(teamconfig.FieldCreatedAt)
+			}
+			if _, exists := b.mutation.RouteOwner(); exists {
+				s.SetIgnore(teamconfig.FieldRouteOwner)
+			}
+			if _, exists := b.mutation.RouteReference(); exists {
+				s.SetIgnore(teamconfig.FieldRouteReference)
 			}
 		}
 	}))

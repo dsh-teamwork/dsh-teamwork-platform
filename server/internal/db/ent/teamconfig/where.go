@@ -85,6 +85,16 @@ func Name(v string) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldEQ(FieldName, v))
 }
 
+// RouteOwner applies equality check predicate on the "route_owner" field. It's identical to RouteOwnerEQ.
+func RouteOwner(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldRouteOwner, v))
+}
+
+// RouteReference applies equality check predicate on the "route_reference" field. It's identical to RouteReferenceEQ.
+func RouteReference(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldRouteReference, v))
+}
+
 // Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
 func Version(v int) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldEQ(FieldVersion, v))
@@ -318,6 +328,136 @@ func NameEqualFold(v string) predicate.TeamConfig {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldContainsFold(FieldName, v))
+}
+
+// RouteOwnerEQ applies the EQ predicate on the "route_owner" field.
+func RouteOwnerEQ(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldRouteOwner, v))
+}
+
+// RouteOwnerNEQ applies the NEQ predicate on the "route_owner" field.
+func RouteOwnerNEQ(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNEQ(FieldRouteOwner, v))
+}
+
+// RouteOwnerIn applies the In predicate on the "route_owner" field.
+func RouteOwnerIn(vs ...string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldIn(FieldRouteOwner, vs...))
+}
+
+// RouteOwnerNotIn applies the NotIn predicate on the "route_owner" field.
+func RouteOwnerNotIn(vs ...string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNotIn(FieldRouteOwner, vs...))
+}
+
+// RouteOwnerGT applies the GT predicate on the "route_owner" field.
+func RouteOwnerGT(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldGT(FieldRouteOwner, v))
+}
+
+// RouteOwnerGTE applies the GTE predicate on the "route_owner" field.
+func RouteOwnerGTE(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldGTE(FieldRouteOwner, v))
+}
+
+// RouteOwnerLT applies the LT predicate on the "route_owner" field.
+func RouteOwnerLT(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldLT(FieldRouteOwner, v))
+}
+
+// RouteOwnerLTE applies the LTE predicate on the "route_owner" field.
+func RouteOwnerLTE(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldLTE(FieldRouteOwner, v))
+}
+
+// RouteOwnerContains applies the Contains predicate on the "route_owner" field.
+func RouteOwnerContains(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldContains(FieldRouteOwner, v))
+}
+
+// RouteOwnerHasPrefix applies the HasPrefix predicate on the "route_owner" field.
+func RouteOwnerHasPrefix(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldHasPrefix(FieldRouteOwner, v))
+}
+
+// RouteOwnerHasSuffix applies the HasSuffix predicate on the "route_owner" field.
+func RouteOwnerHasSuffix(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldHasSuffix(FieldRouteOwner, v))
+}
+
+// RouteOwnerEqualFold applies the EqualFold predicate on the "route_owner" field.
+func RouteOwnerEqualFold(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEqualFold(FieldRouteOwner, v))
+}
+
+// RouteOwnerContainsFold applies the ContainsFold predicate on the "route_owner" field.
+func RouteOwnerContainsFold(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldContainsFold(FieldRouteOwner, v))
+}
+
+// RouteReferenceEQ applies the EQ predicate on the "route_reference" field.
+func RouteReferenceEQ(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldRouteReference, v))
+}
+
+// RouteReferenceNEQ applies the NEQ predicate on the "route_reference" field.
+func RouteReferenceNEQ(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNEQ(FieldRouteReference, v))
+}
+
+// RouteReferenceIn applies the In predicate on the "route_reference" field.
+func RouteReferenceIn(vs ...string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldIn(FieldRouteReference, vs...))
+}
+
+// RouteReferenceNotIn applies the NotIn predicate on the "route_reference" field.
+func RouteReferenceNotIn(vs ...string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNotIn(FieldRouteReference, vs...))
+}
+
+// RouteReferenceGT applies the GT predicate on the "route_reference" field.
+func RouteReferenceGT(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldGT(FieldRouteReference, v))
+}
+
+// RouteReferenceGTE applies the GTE predicate on the "route_reference" field.
+func RouteReferenceGTE(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldGTE(FieldRouteReference, v))
+}
+
+// RouteReferenceLT applies the LT predicate on the "route_reference" field.
+func RouteReferenceLT(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldLT(FieldRouteReference, v))
+}
+
+// RouteReferenceLTE applies the LTE predicate on the "route_reference" field.
+func RouteReferenceLTE(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldLTE(FieldRouteReference, v))
+}
+
+// RouteReferenceContains applies the Contains predicate on the "route_reference" field.
+func RouteReferenceContains(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldContains(FieldRouteReference, v))
+}
+
+// RouteReferenceHasPrefix applies the HasPrefix predicate on the "route_reference" field.
+func RouteReferenceHasPrefix(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldHasPrefix(FieldRouteReference, v))
+}
+
+// RouteReferenceHasSuffix applies the HasSuffix predicate on the "route_reference" field.
+func RouteReferenceHasSuffix(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldHasSuffix(FieldRouteReference, v))
+}
+
+// RouteReferenceEqualFold applies the EqualFold predicate on the "route_reference" field.
+func RouteReferenceEqualFold(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEqualFold(FieldRouteReference, v))
+}
+
+// RouteReferenceContainsFold applies the ContainsFold predicate on the "route_reference" field.
+func RouteReferenceContainsFold(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldContainsFold(FieldRouteReference, v))
 }
 
 // VersionEQ applies the EQ predicate on the "version" field.

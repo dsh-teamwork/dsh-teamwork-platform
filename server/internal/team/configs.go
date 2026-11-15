@@ -41,6 +41,9 @@ func (s *Service) UpdateConfig(ctx context.Context, userID, teamID, configID str
 	if err != nil && !ent.IsNotFound(err) {
 		return ConfigView{}, err
 	}
+	if current != nil && current.RouteOwner != "" {
+		return ConfigView{}, wire.E(http.StatusForbidden, "config_owned")
+	}
 	if current != nil && string(current.Kind) != in.Kind {
 		var is wire.Issues
 		is.Add("A configuration's kind does not change", "kind")

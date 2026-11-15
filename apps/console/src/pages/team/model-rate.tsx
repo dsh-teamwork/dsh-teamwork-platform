@@ -28,9 +28,9 @@ function RateDialog({ teamId, configId, name, admin, close }: { teamId: string; 
   const rate = useApi<Rate>(path);
   return <Dialog open onOpenChange={(open) => { if (!open) close(); }}>
     <DialogContent>
-      <DialogHeader><DialogTitle>{t('rateTitle', { name })}</DialogTitle><DialogDescription>{t('rateHint')}</DialogDescription></DialogHeader>
+      <DialogHeader><DialogTitle>{t('rateTitle', { name })}</DialogTitle><DialogDescription>{t(rate.data?.readOnly ? 'hostedRateHint' : 'rateHint')}</DialogDescription></DialogHeader>
       {!!rate.error && <p role="alert" className="text-sm text-destructive">{word(rate.error)}</p>}
-      {rate.data && <RateForm key={rate.data.revision} value={rate.data} path={path} admin={admin} reload={rate.reload} close={close} />}
+      {rate.data && <RateForm key={rate.data.revision} value={rate.data} path={path} admin={admin && !rate.data.readOnly} reload={rate.reload} close={close} />}
     </DialogContent>
   </Dialog>;
 }

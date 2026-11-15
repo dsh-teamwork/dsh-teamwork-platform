@@ -379,6 +379,8 @@ var (
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"model", "preset", "plugin"}},
 		{Name: "name", Type: field.TypeString, Size: 400},
 		{Name: "data", Type: field.TypeJSON},
+		{Name: "route_owner", Type: field.TypeString, Size: 40, Default: ""},
+		{Name: "route_reference", Type: field.TypeString, Size: 100, Default: ""},
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "team_id", Type: field.TypeString, Size: 32},
 	}
@@ -390,7 +392,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "team_configs_teams_configs",
-				Columns:    []*schema.Column{TeamConfigsColumns[7]},
+				Columns:    []*schema.Column{TeamConfigsColumns[9]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -399,7 +401,7 @@ var (
 			{
 				Name:    "teamconfig_team_id_kind_name",
 				Unique:  true,
-				Columns: []*schema.Column{TeamConfigsColumns[7], TeamConfigsColumns[3], TeamConfigsColumns[4]},
+				Columns: []*schema.Column{TeamConfigsColumns[9], TeamConfigsColumns[3], TeamConfigsColumns[4]},
 			},
 		},
 	}
@@ -449,6 +451,10 @@ var (
 		{Name: "state", Type: field.TypeEnum, Enums: []string{"running", "settled", "unpriced", "pending", "failed", "estimated"}, Default: "running"},
 		{Name: "deadline_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "rate_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "route_owner", Type: field.TypeString, Size: 40, Default: ""},
+		{Name: "admitted_units", Type: field.TypeInt64, Nullable: true},
+		{Name: "admitted_input", Type: field.TypeInt64, Nullable: true},
+		{Name: "admitted_output", Type: field.TypeInt64, Nullable: true},
 		{Name: "rates", Type: field.TypeJSON, Nullable: true},
 		{Name: "point_units", Type: field.TypeInt64, Nullable: true},
 		{Name: "input_tokens", Type: field.TypeInt64, Nullable: true},

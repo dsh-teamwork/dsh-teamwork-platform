@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Optional model funding shares budget transactions
+
+- **What:** A named edition participant supplies protected model routes and immutable retail quotes, then reserves and settles through the public accounting transaction. The host lends a transaction-bound executor, team permissions and scoped model publication. Missing participants fail closed; BYOK never invokes funding. Hosted reconciliation is operator-only, and every strict request retains its admitted bounds even without a team policy. The console displays protected prices as read-only.
+- **Why:** A separate prepaid check can overspend or leave wallet and budget counters inconsistent after failure.
+- **Upgrade:** The binary applies the append-only route/bound migrations. Community installations register no funding participant and keep their existing BYOK behavior. No hosted credit or payment processor is activated by this change.
+- **Refs:** `docs/adr/0018-atomic-model-funding.md`, `server/edition/funding.go`.
+
 ## 2026-11-15 — Community budgets, recovery and usage export
 
 - **What:** Daily/monthly team, per-member default/override and provider point/token caps reserve atomically before dispatch and settle against immutable prices. Policy edits preserve consumption; timezone changes wait for a boundary. The console adds budget management, scoped CSV exports, explicit estimated reconciliation and optional 80/95/100 percent SMTP alerts with retry history. Lost calls retain their holds; observed bound overruns suspend the route until reviewed.

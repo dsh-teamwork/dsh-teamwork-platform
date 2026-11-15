@@ -565,6 +565,15 @@ func (_u *UsageRequestUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if value, ok := _u.mutation.RateID(); ok {
 		_spec.SetField(usagerequest.FieldRateID, field.TypeString, value)
 	}
+	if _u.mutation.AdmittedUnitsCleared() {
+		_spec.ClearField(usagerequest.FieldAdmittedUnits, field.TypeInt64)
+	}
+	if _u.mutation.AdmittedInputCleared() {
+		_spec.ClearField(usagerequest.FieldAdmittedInput, field.TypeInt64)
+	}
+	if _u.mutation.AdmittedOutputCleared() {
+		_spec.ClearField(usagerequest.FieldAdmittedOutput, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Rates(); ok {
 		_spec.SetField(usagerequest.FieldRates, field.TypeJSON, value)
 	}
@@ -1227,6 +1236,15 @@ func (_u *UsageRequestUpdateOne) sqlSave(ctx context.Context) (_node *UsageReque
 	}
 	if value, ok := _u.mutation.RateID(); ok {
 		_spec.SetField(usagerequest.FieldRateID, field.TypeString, value)
+	}
+	if _u.mutation.AdmittedUnitsCleared() {
+		_spec.ClearField(usagerequest.FieldAdmittedUnits, field.TypeInt64)
+	}
+	if _u.mutation.AdmittedInputCleared() {
+		_spec.ClearField(usagerequest.FieldAdmittedInput, field.TypeInt64)
+	}
+	if _u.mutation.AdmittedOutputCleared() {
+		_spec.ClearField(usagerequest.FieldAdmittedOutput, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Rates(); ok {
 		_spec.SetField(usagerequest.FieldRates, field.TypeJSON, value)

@@ -149,6 +149,9 @@ func TestBudgetPermissionsReconciliationNoticesAndExport(t *testing.T) {
 		refused(t, "member resolution", member.post(path+"/usage/"+request.ID+"/resolve", resolution), 403, "admin_required")
 		otherTeam := newTeam(t, admin, "Other")
 		refused(t, "cross-team resolution", admin.post("/api/teams/"+otherTeam+"/usage/"+request.ID+"/resolve", resolution), 404, "usage_not_found")
+		for _, body := range []map[string]any{{"reason": "Missing token evidence must not imply zero"}, {"reason": "Null token evidence must not imply zero", "tokens": nil}} {
+			refused(t, "missing resolution evidence", admin.post(path+"/usage/"+request.ID+"/resolve", body), 400, "invalid_request")
+		}
 		must(t, admin.post(path+"/usage/"+request.ID+"/resolve", resolution), 204)
 		refused(t, "duplicate resolution", admin.post(path+"/usage/"+request.ID+"/resolve", resolution), 409, "usage_already_resolved")
 		// A member cannot inspect another member's per-person window or policy.

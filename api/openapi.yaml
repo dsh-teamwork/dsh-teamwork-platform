@@ -892,6 +892,7 @@ components:
         - type: object
           required: [configured]
           properties:
+            readOnly: { type: boolean }
             configured: { type: boolean }
     UsageEntry:
       type: object
@@ -1053,6 +1054,7 @@ components:
       type: object
       required: [id, kind, name, data, version, updatedAt]
       properties:
+        owner: { type: string, description: Protected route owner; absent for ordinary BYOK configurations. }
         id: { type: string }
         kind: { type: string, enum: [model, preset, plugin] }
         name: { type: string }

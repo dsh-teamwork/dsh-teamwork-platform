@@ -57,6 +57,8 @@ func (TeamConfig) Fields() []ent.Field {
 		field.Enum("kind").Values("model", "preset", "plugin"),
 		field.String("name").MaxLen(runes(100)),
 		field.JSON("data", json.RawMessage{}),
+		field.String("route_owner").MaxLen(40).Default("").Immutable(),
+		field.String("route_reference").MaxLen(100).Default("").Immutable(),
 		field.Int("version").Default(1),
 	}
 }

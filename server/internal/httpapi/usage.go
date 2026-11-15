@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
@@ -40,7 +41,7 @@ func (s *Server) rateCall(r *http.Request, admin bool) (usage.Call, error) {
 	if json.Unmarshal(config.Data, &model) != nil || model.ModelConfigID != "" {
 		return usage.Call{}, wire.E(http.StatusBadRequest, "rate_model_required")
 	}
-	return usage.Call{TeamID: teamID, UserID: c.user.ID, ConfigID: config.ID, Provider: model.Provider, Model: model.Model}, nil
+	return usage.Call{TeamID: teamID, UserID: c.user.ID, ConfigID: config.ID, Provider: model.Provider, Model: model.Model, Owner: config.RouteOwner, Reference: config.RouteReference}, nil
 }
 
 func (s *Server) getModelRate(w http.ResponseWriter, r *http.Request) error {
@@ -48,7 +49,16 @@ func (s *Server) getModelRate(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	v, err := s.Usage.Rate(r.Context(), call.TeamID, call.ConfigID, call.Provider, call.Model)
+	var v usage.RateView
+	if call.Owner != "" {
+		q, e := s.Usage.Quote(r.Context(), call.Owner, edition.ModelReference{TeamID: call.TeamID, ConfigID: call.ConfigID, Reference: call.Reference})
+		if e != nil {
+			return e
+		}
+		v = usage.QuoteRateView(q)
+	} else {
+		v, err = s.Usage.Rate(r.Context(), call.TeamID, call.ConfigID, call.Provider, call.Model)
+	}
 	if err != nil {
 		return err
 	}
@@ -61,6 +71,9 @@ func (s *Server) setModelRate(w http.ResponseWriter, r *http.Request) error {
 	call, err := s.rateCall(r, true)
 	if err != nil {
 		return err
+	}
+	if call.Owner != "" {
+		return wire.E(http.StatusForbidden, "config_owned")
 	}
 	var in usage.RateInput
 	if err := decode(r, &in); err != nil {

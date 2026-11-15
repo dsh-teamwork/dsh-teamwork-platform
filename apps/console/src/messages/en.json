@@ -501,6 +501,7 @@
     "rate": "Point rates",
     "rateTitle": "Reference rates · {name}",
     "rateHint": "CNY per million tokens. CNY 1 = 1,000 reference points. These rates do not charge a hosted balance.",
+    "hostedRateHint": "Hosted prices are published by the service. These prices also determine the points counted against your team budgets.",
     "unpricedHint": "No current reference rate. Token usage is recorded, but points stay unpriced.",
     "weightHint": "Use these prices as internal usage weights rather than estimated supplier costs.",
     "prices": { "input": "Uncached input", "cacheRead": "Cached input", "cacheWrite": "Cache write (if supported)", "output": "Output, including reasoning" },
@@ -637,6 +638,10 @@
     "provider_address_refused": "This server may not call that address.",
     "provider_keys_unavailable": "Provider keys cannot be read or stored on this server: PROVIDER_KEYS_SECRET is missing or has changed.",
     "model_in_use": "Presets still use this model. Point them at another model first, then remove it.",
-    "plugin_in_use": "Presets still depend on this plugin. Remove it from those presets first, then remove it."
+    "plugin_in_use": "Presets still depend on this plugin. Remove it from those presets first, then remove it.",
+    "config_owned": "This model is managed by the service.",
+    "funding_unavailable": "Hosted models are temporarily unavailable.",
+    "wallet_insufficient": "The team has insufficient available model credit.",
+    "usage_funding_resolution_required": "Hosted usage must be reconciled by the service operator."
   }
 }

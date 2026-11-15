@@ -136,6 +136,62 @@ func (_c *UsageRequestCreate) SetNillableRateID(v *string) *UsageRequestCreate {
 	return _c
 }
 
+// SetRouteOwner sets the "route_owner" field.
+func (_c *UsageRequestCreate) SetRouteOwner(v string) *UsageRequestCreate {
+	_c.mutation.SetRouteOwner(v)
+	return _c
+}
+
+// SetNillableRouteOwner sets the "route_owner" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableRouteOwner(v *string) *UsageRequestCreate {
+	if v != nil {
+		_c.SetRouteOwner(*v)
+	}
+	return _c
+}
+
+// SetAdmittedUnits sets the "admitted_units" field.
+func (_c *UsageRequestCreate) SetAdmittedUnits(v int64) *UsageRequestCreate {
+	_c.mutation.SetAdmittedUnits(v)
+	return _c
+}
+
+// SetNillableAdmittedUnits sets the "admitted_units" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableAdmittedUnits(v *int64) *UsageRequestCreate {
+	if v != nil {
+		_c.SetAdmittedUnits(*v)
+	}
+	return _c
+}
+
+// SetAdmittedInput sets the "admitted_input" field.
+func (_c *UsageRequestCreate) SetAdmittedInput(v int64) *UsageRequestCreate {
+	_c.mutation.SetAdmittedInput(v)
+	return _c
+}
+
+// SetNillableAdmittedInput sets the "admitted_input" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableAdmittedInput(v *int64) *UsageRequestCreate {
+	if v != nil {
+		_c.SetAdmittedInput(*v)
+	}
+	return _c
+}
+
+// SetAdmittedOutput sets the "admitted_output" field.
+func (_c *UsageRequestCreate) SetAdmittedOutput(v int64) *UsageRequestCreate {
+	_c.mutation.SetAdmittedOutput(v)
+	return _c
+}
+
+// SetNillableAdmittedOutput sets the "admitted_output" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableAdmittedOutput(v *int64) *UsageRequestCreate {
+	if v != nil {
+		_c.SetAdmittedOutput(*v)
+	}
+	return _c
+}
+
 // SetRates sets the "rates" field.
 func (_c *UsageRequestCreate) SetRates(v json.RawMessage) *UsageRequestCreate {
 	_c.mutation.SetRates(v)
@@ -333,6 +389,10 @@ func (_c *UsageRequestCreate) defaults() {
 		v := usagerequest.DefaultRateID
 		_c.mutation.SetRateID(v)
 	}
+	if _, ok := _c.mutation.RouteOwner(); !ok {
+		v := usagerequest.DefaultRouteOwner
+		_c.mutation.SetRouteOwner(v)
+	}
 	if _, ok := _c.mutation.ProviderRequestID(); !ok {
 		v := usagerequest.DefaultProviderRequestID
 		_c.mutation.SetProviderRequestID(v)
@@ -425,6 +485,14 @@ func (_c *UsageRequestCreate) check() error {
 	if v, ok := _c.mutation.RateID(); ok {
 		if err := usagerequest.RateIDValidator(v); err != nil {
 			return &ValidationError{Name: "rate_id", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.rate_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.RouteOwner(); !ok {
+		return &ValidationError{Name: "route_owner", err: errors.New(`ent: missing required field "UsageRequest.route_owner"`)}
+	}
+	if v, ok := _c.mutation.RouteOwner(); ok {
+		if err := usagerequest.RouteOwnerValidator(v); err != nil {
+			return &ValidationError{Name: "route_owner", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.route_owner": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.ProviderRequestID(); !ok {
@@ -531,6 +599,22 @@ func (_c *UsageRequestCreate) createSpec() (*UsageRequest, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.RateID(); ok {
 		_spec.SetField(usagerequest.FieldRateID, field.TypeString, value)
 		_node.RateID = value
+	}
+	if value, ok := _c.mutation.RouteOwner(); ok {
+		_spec.SetField(usagerequest.FieldRouteOwner, field.TypeString, value)
+		_node.RouteOwner = value
+	}
+	if value, ok := _c.mutation.AdmittedUnits(); ok {
+		_spec.SetField(usagerequest.FieldAdmittedUnits, field.TypeInt64, value)
+		_node.AdmittedUnits = &value
+	}
+	if value, ok := _c.mutation.AdmittedInput(); ok {
+		_spec.SetField(usagerequest.FieldAdmittedInput, field.TypeInt64, value)
+		_node.AdmittedInput = &value
+	}
+	if value, ok := _c.mutation.AdmittedOutput(); ok {
+		_spec.SetField(usagerequest.FieldAdmittedOutput, field.TypeInt64, value)
+		_node.AdmittedOutput = &value
 	}
 	if value, ok := _c.mutation.Rates(); ok {
 		_spec.SetField(usagerequest.FieldRates, field.TypeJSON, value)
@@ -985,6 +1069,18 @@ func (u *UsageRequestUpsertOne) UpdateNewValues() *UsageRequestUpsertOne {
 		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(usagerequest.FieldCreatedAt)
+		}
+		if _, exists := u.create.mutation.RouteOwner(); exists {
+			s.SetIgnore(usagerequest.FieldRouteOwner)
+		}
+		if _, exists := u.create.mutation.AdmittedUnits(); exists {
+			s.SetIgnore(usagerequest.FieldAdmittedUnits)
+		}
+		if _, exists := u.create.mutation.AdmittedInput(); exists {
+			s.SetIgnore(usagerequest.FieldAdmittedInput)
+		}
+		if _, exists := u.create.mutation.AdmittedOutput(); exists {
+			s.SetIgnore(usagerequest.FieldAdmittedOutput)
 		}
 	}))
 	return u
@@ -1601,6 +1697,18 @@ func (u *UsageRequestUpsertBulk) UpdateNewValues() *UsageRequestUpsertBulk {
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(usagerequest.FieldCreatedAt)
+			}
+			if _, exists := b.mutation.RouteOwner(); exists {
+				s.SetIgnore(usagerequest.FieldRouteOwner)
+			}
+			if _, exists := b.mutation.AdmittedUnits(); exists {
+				s.SetIgnore(usagerequest.FieldAdmittedUnits)
+			}
+			if _, exists := b.mutation.AdmittedInput(); exists {
+				s.SetIgnore(usagerequest.FieldAdmittedInput)
+			}
+			if _, exists := b.mutation.AdmittedOutput(); exists {
+				s.SetIgnore(usagerequest.FieldAdmittedOutput)
 			}
 		}
 	}))

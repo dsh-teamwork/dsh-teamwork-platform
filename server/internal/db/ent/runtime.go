@@ -724,8 +724,20 @@ func init() {
 	teamconfigDescName := teamconfigFields[2].Descriptor()
 	// teamconfig.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	teamconfig.NameValidator = teamconfigDescName.Validators[0].(func(string) error)
+	// teamconfigDescRouteOwner is the schema descriptor for route_owner field.
+	teamconfigDescRouteOwner := teamconfigFields[4].Descriptor()
+	// teamconfig.DefaultRouteOwner holds the default value on creation for the route_owner field.
+	teamconfig.DefaultRouteOwner = teamconfigDescRouteOwner.Default.(string)
+	// teamconfig.RouteOwnerValidator is a validator for the "route_owner" field. It is called by the builders before save.
+	teamconfig.RouteOwnerValidator = teamconfigDescRouteOwner.Validators[0].(func(string) error)
+	// teamconfigDescRouteReference is the schema descriptor for route_reference field.
+	teamconfigDescRouteReference := teamconfigFields[5].Descriptor()
+	// teamconfig.DefaultRouteReference holds the default value on creation for the route_reference field.
+	teamconfig.DefaultRouteReference = teamconfigDescRouteReference.Default.(string)
+	// teamconfig.RouteReferenceValidator is a validator for the "route_reference" field. It is called by the builders before save.
+	teamconfig.RouteReferenceValidator = teamconfigDescRouteReference.Validators[0].(func(string) error)
 	// teamconfigDescVersion is the schema descriptor for version field.
-	teamconfigDescVersion := teamconfigFields[4].Descriptor()
+	teamconfigDescVersion := teamconfigFields[6].Descriptor()
 	// teamconfig.DefaultVersion holds the default value on creation for the version field.
 	teamconfig.DefaultVersion = teamconfigDescVersion.Default.(int)
 	// teamconfigDescID is the schema descriptor for id field.
@@ -842,14 +854,20 @@ func init() {
 	usagerequest.DefaultRateID = usagerequestDescRateID.Default.(string)
 	// usagerequest.RateIDValidator is a validator for the "rate_id" field. It is called by the builders before save.
 	usagerequest.RateIDValidator = usagerequestDescRateID.Validators[0].(func(string) error)
+	// usagerequestDescRouteOwner is the schema descriptor for route_owner field.
+	usagerequestDescRouteOwner := usagerequestFields[11].Descriptor()
+	// usagerequest.DefaultRouteOwner holds the default value on creation for the route_owner field.
+	usagerequest.DefaultRouteOwner = usagerequestDescRouteOwner.Default.(string)
+	// usagerequest.RouteOwnerValidator is a validator for the "route_owner" field. It is called by the builders before save.
+	usagerequest.RouteOwnerValidator = usagerequestDescRouteOwner.Validators[0].(func(string) error)
 	// usagerequestDescProviderRequestID is the schema descriptor for provider_request_id field.
-	usagerequestDescProviderRequestID := usagerequestFields[18].Descriptor()
+	usagerequestDescProviderRequestID := usagerequestFields[22].Descriptor()
 	// usagerequest.DefaultProviderRequestID holds the default value on creation for the provider_request_id field.
 	usagerequest.DefaultProviderRequestID = usagerequestDescProviderRequestID.Default.(string)
 	// usagerequest.ProviderRequestIDValidator is a validator for the "provider_request_id" field. It is called by the builders before save.
 	usagerequest.ProviderRequestIDValidator = usagerequestDescProviderRequestID.Validators[0].(func(string) error)
 	// usagerequestDescErrorCode is the schema descriptor for error_code field.
-	usagerequestDescErrorCode := usagerequestFields[19].Descriptor()
+	usagerequestDescErrorCode := usagerequestFields[23].Descriptor()
 	// usagerequest.DefaultErrorCode holds the default value on creation for the error_code field.
 	usagerequest.DefaultErrorCode = usagerequestDescErrorCode.Default.(string)
 	// usagerequest.ErrorCodeValidator is a validator for the "error_code" field. It is called by the builders before save.

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetreservation"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
@@ -58,6 +59,22 @@ func (s *Service) settle(ctx context.Context, request *ent.UsageRequest, observa
 		}
 	}
 	if state == usagerequest.StateSettled || state == usagerequest.StateUnpriced {
+		if current.AdmittedInput != nil && current.AdmittedOutput != nil &&
+			(observation.Tokens.Input > *current.AdmittedInput || observation.Tokens.Output > *current.AdmittedOutput ||
+				units != nil && current.AdmittedUnits != nil && *units > *current.AdmittedUnits) {
+			code = "usage_bound_exceeded"
+		}
+		if current.RouteOwner != "" {
+			p := s.Funding[current.RouteOwner]
+			if p == nil || units == nil {
+				return errors.New("funding participant unavailable for settlement")
+			}
+			if err := participate(db, current.TeamID, current.RouteOwner, func(tx edition.SQLExecutor) error {
+				return p.Settle(ctx, tx, edition.FundingSettlement{RequestID: current.ID, TeamID: current.TeamID, Units: *units, Tokens: observation.Tokens})
+			}); err != nil {
+				return err
+			}
+		}
 		reservations, err := db.BudgetReservation.Query().Where(budgetreservation.RequestID(current.ID), budgetreservation.Settled(false)).All(ctx)
 		if err != nil {
 			return err

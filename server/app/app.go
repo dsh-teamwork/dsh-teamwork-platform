@@ -145,6 +145,22 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		DB: conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		Users: NewUsers(client), Env: env,
+		WithTeamTx:          meter.WithTeamTx,
+		ResolveFundingUsage: meter.ResolveFunding,
+		TeamExists: func(ctx context.Context, id string) (bool, error) {
+			_, err := client.Team.Get(ctx, id)
+			if ent.IsNotFound(err) {
+				return false, nil
+			}
+			return err == nil, err
+		},
+		TeamRole: func(ctx context.Context, userID, teamID string, admin bool) (string, error) {
+			m, err := teams.RequireMembership(ctx, userID, teamID, admin)
+			if err != nil {
+				return "", err
+			}
+			return string(m.Role), nil
+		},
 	}
 	stops := []func(){meter.StartMaintenance()}
 	stop := func() {
@@ -153,6 +169,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		}
 	}
 	for _, e := range exts {
+		host.RegisterFunding = func(p edition.ModelFunding) (edition.FundingHost, error) { return meter.RegisterFunding(e.Name, p) }
 		s, err := e.Mount(host)
 		if err != nil {
 			stop()

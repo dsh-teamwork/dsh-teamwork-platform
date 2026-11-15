@@ -17,6 +17,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0015](0015-community-usage-and-budgets.md) — usage points and budgets are community features; hosted wallets and payment settlement stay closed.
 - [0016](0016-reference-usage-accounting.md) — exact reference points, immutable rates and per-call usage snapshots; incomplete usage remains pending.
 - [0017](0017-community-budget-reservations.md) — atomic scope reservations, calendar windows, explicit recovery and transactional budget notifications.
+- [0018](0018-atomic-model-funding.md) — protected model routes and optional funding share the public accounting transaction.
 
 The template:
 

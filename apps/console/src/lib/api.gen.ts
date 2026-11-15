@@ -1985,6 +1985,7 @@ export interface components {
             output: string;
         };
         ModelRate: components["schemas"]["ModelRateInput"] & {
+            readOnly?: boolean;
             configured: boolean;
         };
         UsageEntry: {
@@ -2102,6 +2103,8 @@ export interface components {
             data: components["schemas"]["ModelData"] | components["schemas"]["PresetData"] | components["schemas"]["PluginData"];
         };
         Config: {
+            /** @description Protected route owner; absent for ordinary BYOK configurations. */
+            owner?: string;
             id: string;
             /** @enum {string} */
             kind: "model" | "preset" | "plugin";

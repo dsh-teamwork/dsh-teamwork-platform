@@ -38,6 +38,14 @@ const (
 	FieldDeadlineAt = "deadline_at"
 	// FieldRateID holds the string denoting the rate_id field in the database.
 	FieldRateID = "rate_id"
+	// FieldRouteOwner holds the string denoting the route_owner field in the database.
+	FieldRouteOwner = "route_owner"
+	// FieldAdmittedUnits holds the string denoting the admitted_units field in the database.
+	FieldAdmittedUnits = "admitted_units"
+	// FieldAdmittedInput holds the string denoting the admitted_input field in the database.
+	FieldAdmittedInput = "admitted_input"
+	// FieldAdmittedOutput holds the string denoting the admitted_output field in the database.
+	FieldAdmittedOutput = "admitted_output"
 	// FieldRates holds the string denoting the rates field in the database.
 	FieldRates = "rates"
 	// FieldPointUnits holds the string denoting the point_units field in the database.
@@ -77,6 +85,10 @@ var Columns = []string{
 	FieldState,
 	FieldDeadlineAt,
 	FieldRateID,
+	FieldRouteOwner,
+	FieldAdmittedUnits,
+	FieldAdmittedInput,
+	FieldAdmittedOutput,
 	FieldRates,
 	FieldPointUnits,
 	FieldInputTokens,
@@ -122,6 +134,10 @@ var (
 	DefaultRateID string
 	// RateIDValidator is a validator for the "rate_id" field. It is called by the builders before save.
 	RateIDValidator func(string) error
+	// DefaultRouteOwner holds the default value on creation for the "route_owner" field.
+	DefaultRouteOwner string
+	// RouteOwnerValidator is a validator for the "route_owner" field. It is called by the builders before save.
+	RouteOwnerValidator func(string) error
 	// DefaultProviderRequestID holds the default value on creation for the "provider_request_id" field.
 	DefaultProviderRequestID string
 	// ProviderRequestIDValidator is a validator for the "provider_request_id" field. It is called by the builders before save.
@@ -232,6 +248,26 @@ func ByDeadlineAt(opts ...sql.OrderTermOption) OrderOption {
 // ByRateID orders the results by the rate_id field.
 func ByRateID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRateID, opts...).ToFunc()
+}
+
+// ByRouteOwner orders the results by the route_owner field.
+func ByRouteOwner(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRouteOwner, opts...).ToFunc()
+}
+
+// ByAdmittedUnits orders the results by the admitted_units field.
+func ByAdmittedUnits(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAdmittedUnits, opts...).ToFunc()
+}
+
+// ByAdmittedInput orders the results by the admitted_input field.
+func ByAdmittedInput(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAdmittedInput, opts...).ToFunc()
+}
+
+// ByAdmittedOutput orders the results by the admitted_output field.
+func ByAdmittedOutput(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAdmittedOutput, opts...).ToFunc()
 }
 
 // ByPointUnits orders the results by the point_units field.

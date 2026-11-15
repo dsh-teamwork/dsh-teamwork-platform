@@ -119,6 +119,26 @@ func RateID(v string) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldRateID, v))
 }
 
+// RouteOwner applies equality check predicate on the "route_owner" field. It's identical to RouteOwnerEQ.
+func RouteOwner(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldRouteOwner, v))
+}
+
+// AdmittedUnits applies equality check predicate on the "admitted_units" field. It's identical to AdmittedUnitsEQ.
+func AdmittedUnits(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldAdmittedUnits, v))
+}
+
+// AdmittedInput applies equality check predicate on the "admitted_input" field. It's identical to AdmittedInputEQ.
+func AdmittedInput(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldAdmittedInput, v))
+}
+
+// AdmittedOutput applies equality check predicate on the "admitted_output" field. It's identical to AdmittedOutputEQ.
+func AdmittedOutput(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldAdmittedOutput, v))
+}
+
 // PointUnits applies equality check predicate on the "point_units" field. It's identical to PointUnitsEQ.
 func PointUnits(v int64) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldPointUnits, v))
@@ -802,6 +822,221 @@ func RateIDEqualFold(v string) predicate.UsageRequest {
 // RateIDContainsFold applies the ContainsFold predicate on the "rate_id" field.
 func RateIDContainsFold(v string) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldContainsFold(FieldRateID, v))
+}
+
+// RouteOwnerEQ applies the EQ predicate on the "route_owner" field.
+func RouteOwnerEQ(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldRouteOwner, v))
+}
+
+// RouteOwnerNEQ applies the NEQ predicate on the "route_owner" field.
+func RouteOwnerNEQ(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldRouteOwner, v))
+}
+
+// RouteOwnerIn applies the In predicate on the "route_owner" field.
+func RouteOwnerIn(vs ...string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldRouteOwner, vs...))
+}
+
+// RouteOwnerNotIn applies the NotIn predicate on the "route_owner" field.
+func RouteOwnerNotIn(vs ...string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldRouteOwner, vs...))
+}
+
+// RouteOwnerGT applies the GT predicate on the "route_owner" field.
+func RouteOwnerGT(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldRouteOwner, v))
+}
+
+// RouteOwnerGTE applies the GTE predicate on the "route_owner" field.
+func RouteOwnerGTE(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldRouteOwner, v))
+}
+
+// RouteOwnerLT applies the LT predicate on the "route_owner" field.
+func RouteOwnerLT(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldRouteOwner, v))
+}
+
+// RouteOwnerLTE applies the LTE predicate on the "route_owner" field.
+func RouteOwnerLTE(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldRouteOwner, v))
+}
+
+// RouteOwnerContains applies the Contains predicate on the "route_owner" field.
+func RouteOwnerContains(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldContains(FieldRouteOwner, v))
+}
+
+// RouteOwnerHasPrefix applies the HasPrefix predicate on the "route_owner" field.
+func RouteOwnerHasPrefix(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldHasPrefix(FieldRouteOwner, v))
+}
+
+// RouteOwnerHasSuffix applies the HasSuffix predicate on the "route_owner" field.
+func RouteOwnerHasSuffix(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldHasSuffix(FieldRouteOwner, v))
+}
+
+// RouteOwnerEqualFold applies the EqualFold predicate on the "route_owner" field.
+func RouteOwnerEqualFold(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEqualFold(FieldRouteOwner, v))
+}
+
+// RouteOwnerContainsFold applies the ContainsFold predicate on the "route_owner" field.
+func RouteOwnerContainsFold(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldContainsFold(FieldRouteOwner, v))
+}
+
+// AdmittedUnitsEQ applies the EQ predicate on the "admitted_units" field.
+func AdmittedUnitsEQ(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldAdmittedUnits, v))
+}
+
+// AdmittedUnitsNEQ applies the NEQ predicate on the "admitted_units" field.
+func AdmittedUnitsNEQ(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldAdmittedUnits, v))
+}
+
+// AdmittedUnitsIn applies the In predicate on the "admitted_units" field.
+func AdmittedUnitsIn(vs ...int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldAdmittedUnits, vs...))
+}
+
+// AdmittedUnitsNotIn applies the NotIn predicate on the "admitted_units" field.
+func AdmittedUnitsNotIn(vs ...int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldAdmittedUnits, vs...))
+}
+
+// AdmittedUnitsGT applies the GT predicate on the "admitted_units" field.
+func AdmittedUnitsGT(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldAdmittedUnits, v))
+}
+
+// AdmittedUnitsGTE applies the GTE predicate on the "admitted_units" field.
+func AdmittedUnitsGTE(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldAdmittedUnits, v))
+}
+
+// AdmittedUnitsLT applies the LT predicate on the "admitted_units" field.
+func AdmittedUnitsLT(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldAdmittedUnits, v))
+}
+
+// AdmittedUnitsLTE applies the LTE predicate on the "admitted_units" field.
+func AdmittedUnitsLTE(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldAdmittedUnits, v))
+}
+
+// AdmittedUnitsIsNil applies the IsNil predicate on the "admitted_units" field.
+func AdmittedUnitsIsNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIsNull(FieldAdmittedUnits))
+}
+
+// AdmittedUnitsNotNil applies the NotNil predicate on the "admitted_units" field.
+func AdmittedUnitsNotNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotNull(FieldAdmittedUnits))
+}
+
+// AdmittedInputEQ applies the EQ predicate on the "admitted_input" field.
+func AdmittedInputEQ(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldAdmittedInput, v))
+}
+
+// AdmittedInputNEQ applies the NEQ predicate on the "admitted_input" field.
+func AdmittedInputNEQ(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldAdmittedInput, v))
+}
+
+// AdmittedInputIn applies the In predicate on the "admitted_input" field.
+func AdmittedInputIn(vs ...int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldAdmittedInput, vs...))
+}
+
+// AdmittedInputNotIn applies the NotIn predicate on the "admitted_input" field.
+func AdmittedInputNotIn(vs ...int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldAdmittedInput, vs...))
+}
+
+// AdmittedInputGT applies the GT predicate on the "admitted_input" field.
+func AdmittedInputGT(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldAdmittedInput, v))
+}
+
+// AdmittedInputGTE applies the GTE predicate on the "admitted_input" field.
+func AdmittedInputGTE(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldAdmittedInput, v))
+}
+
+// AdmittedInputLT applies the LT predicate on the "admitted_input" field.
+func AdmittedInputLT(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldAdmittedInput, v))
+}
+
+// AdmittedInputLTE applies the LTE predicate on the "admitted_input" field.
+func AdmittedInputLTE(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldAdmittedInput, v))
+}
+
+// AdmittedInputIsNil applies the IsNil predicate on the "admitted_input" field.
+func AdmittedInputIsNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIsNull(FieldAdmittedInput))
+}
+
+// AdmittedInputNotNil applies the NotNil predicate on the "admitted_input" field.
+func AdmittedInputNotNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotNull(FieldAdmittedInput))
+}
+
+// AdmittedOutputEQ applies the EQ predicate on the "admitted_output" field.
+func AdmittedOutputEQ(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldAdmittedOutput, v))
+}
+
+// AdmittedOutputNEQ applies the NEQ predicate on the "admitted_output" field.
+func AdmittedOutputNEQ(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldAdmittedOutput, v))
+}
+
+// AdmittedOutputIn applies the In predicate on the "admitted_output" field.
+func AdmittedOutputIn(vs ...int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldAdmittedOutput, vs...))
+}
+
+// AdmittedOutputNotIn applies the NotIn predicate on the "admitted_output" field.
+func AdmittedOutputNotIn(vs ...int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldAdmittedOutput, vs...))
+}
+
+// AdmittedOutputGT applies the GT predicate on the "admitted_output" field.
+func AdmittedOutputGT(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldAdmittedOutput, v))
+}
+
+// AdmittedOutputGTE applies the GTE predicate on the "admitted_output" field.
+func AdmittedOutputGTE(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldAdmittedOutput, v))
+}
+
+// AdmittedOutputLT applies the LT predicate on the "admitted_output" field.
+func AdmittedOutputLT(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldAdmittedOutput, v))
+}
+
+// AdmittedOutputLTE applies the LTE predicate on the "admitted_output" field.
+func AdmittedOutputLTE(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldAdmittedOutput, v))
+}
+
+// AdmittedOutputIsNil applies the IsNil predicate on the "admitted_output" field.
+func AdmittedOutputIsNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIsNull(FieldAdmittedOutput))
+}
+
+// AdmittedOutputNotNil applies the NotNil predicate on the "admitted_output" field.
+func AdmittedOutputNotNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotNull(FieldAdmittedOutput))
 }
 
 // RatesIsNil applies the IsNil predicate on the "rates" field.

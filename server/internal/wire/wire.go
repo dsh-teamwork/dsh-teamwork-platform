@@ -48,7 +48,9 @@ type Error struct {
 	ResetAt *time.Time
 }
 
-func (e *Error) Error() string { return e.Code }
+func (e *Error) Error() string     { return e.Code }
+func (e *Error) HTTPStatus() int   { return e.Status }
+func (e *Error) ErrorCode() string { return e.Code }
 
 // E makes an Error.
 func E(status int, code string) *Error { return &Error{Status: status, Code: code} }

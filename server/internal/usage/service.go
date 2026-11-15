@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
@@ -17,6 +18,7 @@ type Service struct {
 	Now        func() time.Time
 	AppURL     string
 	SendNotice func(context.Context, NoticeMessage) error
+	Funding    map[string]edition.ModelFunding
 }
 
 const MaxCallDuration = 15 * time.Minute
@@ -33,6 +35,8 @@ type Call struct {
 	TeamID, UserID, SubmittedConfigID, ConfigID, Provider, Model string
 	Stream                                                       bool
 	Bounds                                                       func() (Tokens, error)
+	Owner, Reference                                             string
+	Quote                                                        *edition.FundingQuote
 }
 
 func (s *Service) latestRate(ctx context.Context, teamID, configID string) (*ent.ModelRate, error) {
@@ -58,6 +62,11 @@ type RateView struct {
 	CacheRead  string `json:"cacheRead"`
 	CacheWrite string `json:"cacheWrite"`
 	Output     string `json:"output"`
+	ReadOnly   bool   `json:"readOnly"`
+}
+
+func QuoteRateView(q edition.FundingQuote) RateView {
+	return RateView{Configured: true, Revision: q.Revision, Basis: "cost", Input: rateDecimal(q.Rates.Input), CacheRead: rateDecimal(q.Rates.CacheRead), CacheWrite: rateDecimal(q.Rates.CacheWrite), Output: rateDecimal(q.Rates.Output), ReadOnly: true}
 }
 
 func rateDecimal(rate int64) string {

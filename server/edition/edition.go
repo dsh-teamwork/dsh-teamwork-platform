@@ -76,6 +76,15 @@ type Host struct {
 	SameOrigin func(r *http.Request) bool
 	Users      Users
 	Env        func(string) string
+	// TeamRole re-reads one membership. An outsider gets the public 404 error.
+	TeamRole   func(context.Context, string, string, bool) (string, error)
+	TeamExists func(context.Context, string) (bool, error)
+	// RegisterFunding binds protected models to this extension. Called once
+	// during Mount, before serving; community code needs no participant.
+	RegisterFunding func(ModelFunding) (FundingHost, error)
+	// Operator-only recovery. Team APIs never receive this capability.
+	ResolveFundingUsage func(context.Context, string, string, string, string, string, Tokens) error
+	WithTeamTx          func(context.Context, string, func(SQLExecutor) error) error
 }
 
 // Extension is one closed feature.

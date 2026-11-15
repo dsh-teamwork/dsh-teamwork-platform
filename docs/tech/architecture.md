@@ -11,6 +11,9 @@ The gateway records community usage and exact reference points in
 The [usage and budget reference](usage-budgets.md) describes atomic scope
 reservations, calendar limits, explicit recovery and notifications (ADR 0017). These capabilities
 belong to community core ([ADR 0015](../adr/0015-community-usage-and-budgets.md)).
+Optional model funding participates in the same accounting transaction through
+`edition.Host`; protected routes fail closed without their registered owner
+([ADR 0018](../adr/0018-atomic-model-funding.md)).
 
 ## Data flow
 

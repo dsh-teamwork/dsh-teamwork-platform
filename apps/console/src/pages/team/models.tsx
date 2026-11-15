@@ -245,9 +245,9 @@ function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; re
       <td className="px-4 py-3 text-right whitespace-nowrap">
         <ModelRateButton teamId={teamId} configId={model.id} name={model.name} admin={admin} />
         {admin && <>
-          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+          {!model.owner && <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
             {t('edit')}
-          </Button>
+          </Button>}
           <Button
             size="sm"
             variant="ghost"

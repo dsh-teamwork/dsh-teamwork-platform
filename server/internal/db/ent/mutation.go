@@ -10794,23 +10794,25 @@ func (m *TeamMutation) ResetEdge(name string) error {
 // TeamConfigMutation represents an operation that mutates the TeamConfig nodes in the graph.
 type TeamConfigMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	created_at    *time.Time
-	updated_at    *time.Time
-	kind          *teamconfig.Kind
-	name          *string
-	data          *json.RawMessage
-	appenddata    json.RawMessage
-	version       *int
-	addversion    *int
-	clearedFields map[string]struct{}
-	team          *string
-	clearedteam   bool
-	done          bool
-	oldValue      func(context.Context) (*TeamConfig, error)
-	predicates    []predicate.TeamConfig
+	op              Op
+	typ             string
+	id              *string
+	created_at      *time.Time
+	updated_at      *time.Time
+	kind            *teamconfig.Kind
+	name            *string
+	data            *json.RawMessage
+	appenddata      json.RawMessage
+	route_owner     *string
+	route_reference *string
+	version         *int
+	addversion      *int
+	clearedFields   map[string]struct{}
+	team            *string
+	clearedteam     bool
+	done            bool
+	oldValue        func(context.Context) (*TeamConfig, error)
+	predicates      []predicate.TeamConfig
 }
 
 var _ ent.Mutation = (*TeamConfigMutation)(nil)
@@ -11148,6 +11150,78 @@ func (m *TeamConfigMutation) ResetData() {
 	m.appenddata = nil
 }
 
+// SetRouteOwner sets the "route_owner" field.
+func (m *TeamConfigMutation) SetRouteOwner(s string) {
+	m.route_owner = &s
+}
+
+// RouteOwner returns the value of the "route_owner" field in the mutation.
+func (m *TeamConfigMutation) RouteOwner() (r string, exists bool) {
+	v := m.route_owner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRouteOwner returns the old "route_owner" field's value of the TeamConfig entity.
+// If the TeamConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamConfigMutation) OldRouteOwner(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRouteOwner is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRouteOwner requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRouteOwner: %w", err)
+	}
+	return oldValue.RouteOwner, nil
+}
+
+// ResetRouteOwner resets all changes to the "route_owner" field.
+func (m *TeamConfigMutation) ResetRouteOwner() {
+	m.route_owner = nil
+}
+
+// SetRouteReference sets the "route_reference" field.
+func (m *TeamConfigMutation) SetRouteReference(s string) {
+	m.route_reference = &s
+}
+
+// RouteReference returns the value of the "route_reference" field in the mutation.
+func (m *TeamConfigMutation) RouteReference() (r string, exists bool) {
+	v := m.route_reference
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRouteReference returns the old "route_reference" field's value of the TeamConfig entity.
+// If the TeamConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamConfigMutation) OldRouteReference(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRouteReference is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRouteReference requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRouteReference: %w", err)
+	}
+	return oldValue.RouteReference, nil
+}
+
+// ResetRouteReference resets all changes to the "route_reference" field.
+func (m *TeamConfigMutation) ResetRouteReference() {
+	m.route_reference = nil
+}
+
 // SetVersion sets the "version" field.
 func (m *TeamConfigMutation) SetVersion(i int) {
 	m.version = &i
@@ -11265,7 +11339,7 @@ func (m *TeamConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TeamConfigMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, teamconfig.FieldCreatedAt)
 	}
@@ -11283,6 +11357,12 @@ func (m *TeamConfigMutation) Fields() []string {
 	}
 	if m.data != nil {
 		fields = append(fields, teamconfig.FieldData)
+	}
+	if m.route_owner != nil {
+		fields = append(fields, teamconfig.FieldRouteOwner)
+	}
+	if m.route_reference != nil {
+		fields = append(fields, teamconfig.FieldRouteReference)
 	}
 	if m.version != nil {
 		fields = append(fields, teamconfig.FieldVersion)
@@ -11307,6 +11387,10 @@ func (m *TeamConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case teamconfig.FieldData:
 		return m.Data()
+	case teamconfig.FieldRouteOwner:
+		return m.RouteOwner()
+	case teamconfig.FieldRouteReference:
+		return m.RouteReference()
 	case teamconfig.FieldVersion:
 		return m.Version()
 	}
@@ -11330,6 +11414,10 @@ func (m *TeamConfigMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldName(ctx)
 	case teamconfig.FieldData:
 		return m.OldData(ctx)
+	case teamconfig.FieldRouteOwner:
+		return m.OldRouteOwner(ctx)
+	case teamconfig.FieldRouteReference:
+		return m.OldRouteReference(ctx)
 	case teamconfig.FieldVersion:
 		return m.OldVersion(ctx)
 	}
@@ -11382,6 +11470,20 @@ func (m *TeamConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetData(v)
+		return nil
+	case teamconfig.FieldRouteOwner:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRouteOwner(v)
+		return nil
+	case teamconfig.FieldRouteReference:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRouteReference(v)
 		return nil
 	case teamconfig.FieldVersion:
 		v, ok := value.(int)
@@ -11471,6 +11573,12 @@ func (m *TeamConfigMutation) ResetField(name string) error {
 		return nil
 	case teamconfig.FieldData:
 		m.ResetData()
+		return nil
+	case teamconfig.FieldRouteOwner:
+		m.ResetRouteOwner()
+		return nil
+	case teamconfig.FieldRouteReference:
+		m.ResetRouteReference()
 		return nil
 	case teamconfig.FieldVersion:
 		m.ResetVersion()
@@ -12227,6 +12335,13 @@ type UsageRequestMutation struct {
 	state                 *usagerequest.State
 	deadline_at           *time.Time
 	rate_id               *string
+	route_owner           *string
+	admitted_units        *int64
+	addadmitted_units     *int64
+	admitted_input        *int64
+	addadmitted_input     *int64
+	admitted_output       *int64
+	addadmitted_output    *int64
 	rates                 *json.RawMessage
 	appendrates           json.RawMessage
 	point_units           *int64
@@ -12797,6 +12912,252 @@ func (m *UsageRequestMutation) OldRateID(ctx context.Context) (v string, err err
 // ResetRateID resets all changes to the "rate_id" field.
 func (m *UsageRequestMutation) ResetRateID() {
 	m.rate_id = nil
+}
+
+// SetRouteOwner sets the "route_owner" field.
+func (m *UsageRequestMutation) SetRouteOwner(s string) {
+	m.route_owner = &s
+}
+
+// RouteOwner returns the value of the "route_owner" field in the mutation.
+func (m *UsageRequestMutation) RouteOwner() (r string, exists bool) {
+	v := m.route_owner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRouteOwner returns the old "route_owner" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldRouteOwner(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRouteOwner is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRouteOwner requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRouteOwner: %w", err)
+	}
+	return oldValue.RouteOwner, nil
+}
+
+// ResetRouteOwner resets all changes to the "route_owner" field.
+func (m *UsageRequestMutation) ResetRouteOwner() {
+	m.route_owner = nil
+}
+
+// SetAdmittedUnits sets the "admitted_units" field.
+func (m *UsageRequestMutation) SetAdmittedUnits(i int64) {
+	m.admitted_units = &i
+	m.addadmitted_units = nil
+}
+
+// AdmittedUnits returns the value of the "admitted_units" field in the mutation.
+func (m *UsageRequestMutation) AdmittedUnits() (r int64, exists bool) {
+	v := m.admitted_units
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAdmittedUnits returns the old "admitted_units" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldAdmittedUnits(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAdmittedUnits is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAdmittedUnits requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAdmittedUnits: %w", err)
+	}
+	return oldValue.AdmittedUnits, nil
+}
+
+// AddAdmittedUnits adds i to the "admitted_units" field.
+func (m *UsageRequestMutation) AddAdmittedUnits(i int64) {
+	if m.addadmitted_units != nil {
+		*m.addadmitted_units += i
+	} else {
+		m.addadmitted_units = &i
+	}
+}
+
+// AddedAdmittedUnits returns the value that was added to the "admitted_units" field in this mutation.
+func (m *UsageRequestMutation) AddedAdmittedUnits() (r int64, exists bool) {
+	v := m.addadmitted_units
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearAdmittedUnits clears the value of the "admitted_units" field.
+func (m *UsageRequestMutation) ClearAdmittedUnits() {
+	m.admitted_units = nil
+	m.addadmitted_units = nil
+	m.clearedFields[usagerequest.FieldAdmittedUnits] = struct{}{}
+}
+
+// AdmittedUnitsCleared returns if the "admitted_units" field was cleared in this mutation.
+func (m *UsageRequestMutation) AdmittedUnitsCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldAdmittedUnits]
+	return ok
+}
+
+// ResetAdmittedUnits resets all changes to the "admitted_units" field.
+func (m *UsageRequestMutation) ResetAdmittedUnits() {
+	m.admitted_units = nil
+	m.addadmitted_units = nil
+	delete(m.clearedFields, usagerequest.FieldAdmittedUnits)
+}
+
+// SetAdmittedInput sets the "admitted_input" field.
+func (m *UsageRequestMutation) SetAdmittedInput(i int64) {
+	m.admitted_input = &i
+	m.addadmitted_input = nil
+}
+
+// AdmittedInput returns the value of the "admitted_input" field in the mutation.
+func (m *UsageRequestMutation) AdmittedInput() (r int64, exists bool) {
+	v := m.admitted_input
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAdmittedInput returns the old "admitted_input" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldAdmittedInput(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAdmittedInput is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAdmittedInput requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAdmittedInput: %w", err)
+	}
+	return oldValue.AdmittedInput, nil
+}
+
+// AddAdmittedInput adds i to the "admitted_input" field.
+func (m *UsageRequestMutation) AddAdmittedInput(i int64) {
+	if m.addadmitted_input != nil {
+		*m.addadmitted_input += i
+	} else {
+		m.addadmitted_input = &i
+	}
+}
+
+// AddedAdmittedInput returns the value that was added to the "admitted_input" field in this mutation.
+func (m *UsageRequestMutation) AddedAdmittedInput() (r int64, exists bool) {
+	v := m.addadmitted_input
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearAdmittedInput clears the value of the "admitted_input" field.
+func (m *UsageRequestMutation) ClearAdmittedInput() {
+	m.admitted_input = nil
+	m.addadmitted_input = nil
+	m.clearedFields[usagerequest.FieldAdmittedInput] = struct{}{}
+}
+
+// AdmittedInputCleared returns if the "admitted_input" field was cleared in this mutation.
+func (m *UsageRequestMutation) AdmittedInputCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldAdmittedInput]
+	return ok
+}
+
+// ResetAdmittedInput resets all changes to the "admitted_input" field.
+func (m *UsageRequestMutation) ResetAdmittedInput() {
+	m.admitted_input = nil
+	m.addadmitted_input = nil
+	delete(m.clearedFields, usagerequest.FieldAdmittedInput)
+}
+
+// SetAdmittedOutput sets the "admitted_output" field.
+func (m *UsageRequestMutation) SetAdmittedOutput(i int64) {
+	m.admitted_output = &i
+	m.addadmitted_output = nil
+}
+
+// AdmittedOutput returns the value of the "admitted_output" field in the mutation.
+func (m *UsageRequestMutation) AdmittedOutput() (r int64, exists bool) {
+	v := m.admitted_output
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAdmittedOutput returns the old "admitted_output" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldAdmittedOutput(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAdmittedOutput is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAdmittedOutput requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAdmittedOutput: %w", err)
+	}
+	return oldValue.AdmittedOutput, nil
+}
+
+// AddAdmittedOutput adds i to the "admitted_output" field.
+func (m *UsageRequestMutation) AddAdmittedOutput(i int64) {
+	if m.addadmitted_output != nil {
+		*m.addadmitted_output += i
+	} else {
+		m.addadmitted_output = &i
+	}
+}
+
+// AddedAdmittedOutput returns the value that was added to the "admitted_output" field in this mutation.
+func (m *UsageRequestMutation) AddedAdmittedOutput() (r int64, exists bool) {
+	v := m.addadmitted_output
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearAdmittedOutput clears the value of the "admitted_output" field.
+func (m *UsageRequestMutation) ClearAdmittedOutput() {
+	m.admitted_output = nil
+	m.addadmitted_output = nil
+	m.clearedFields[usagerequest.FieldAdmittedOutput] = struct{}{}
+}
+
+// AdmittedOutputCleared returns if the "admitted_output" field was cleared in this mutation.
+func (m *UsageRequestMutation) AdmittedOutputCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldAdmittedOutput]
+	return ok
+}
+
+// ResetAdmittedOutput resets all changes to the "admitted_output" field.
+func (m *UsageRequestMutation) ResetAdmittedOutput() {
+	m.admitted_output = nil
+	m.addadmitted_output = nil
+	delete(m.clearedFields, usagerequest.FieldAdmittedOutput)
 }
 
 // SetRates sets the "rates" field.
@@ -13439,7 +13800,7 @@ func (m *UsageRequestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UsageRequestMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 26)
 	if m.created_at != nil {
 		fields = append(fields, usagerequest.FieldCreatedAt)
 	}
@@ -13475,6 +13836,18 @@ func (m *UsageRequestMutation) Fields() []string {
 	}
 	if m.rate_id != nil {
 		fields = append(fields, usagerequest.FieldRateID)
+	}
+	if m.route_owner != nil {
+		fields = append(fields, usagerequest.FieldRouteOwner)
+	}
+	if m.admitted_units != nil {
+		fields = append(fields, usagerequest.FieldAdmittedUnits)
+	}
+	if m.admitted_input != nil {
+		fields = append(fields, usagerequest.FieldAdmittedInput)
+	}
+	if m.admitted_output != nil {
+		fields = append(fields, usagerequest.FieldAdmittedOutput)
 	}
 	if m.rates != nil {
 		fields = append(fields, usagerequest.FieldRates)
@@ -13538,6 +13911,14 @@ func (m *UsageRequestMutation) Field(name string) (ent.Value, bool) {
 		return m.DeadlineAt()
 	case usagerequest.FieldRateID:
 		return m.RateID()
+	case usagerequest.FieldRouteOwner:
+		return m.RouteOwner()
+	case usagerequest.FieldAdmittedUnits:
+		return m.AdmittedUnits()
+	case usagerequest.FieldAdmittedInput:
+		return m.AdmittedInput()
+	case usagerequest.FieldAdmittedOutput:
+		return m.AdmittedOutput()
 	case usagerequest.FieldRates:
 		return m.Rates()
 	case usagerequest.FieldPointUnits:
@@ -13591,6 +13972,14 @@ func (m *UsageRequestMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldDeadlineAt(ctx)
 	case usagerequest.FieldRateID:
 		return m.OldRateID(ctx)
+	case usagerequest.FieldRouteOwner:
+		return m.OldRouteOwner(ctx)
+	case usagerequest.FieldAdmittedUnits:
+		return m.OldAdmittedUnits(ctx)
+	case usagerequest.FieldAdmittedInput:
+		return m.OldAdmittedInput(ctx)
+	case usagerequest.FieldAdmittedOutput:
+		return m.OldAdmittedOutput(ctx)
 	case usagerequest.FieldRates:
 		return m.OldRates(ctx)
 	case usagerequest.FieldPointUnits:
@@ -13704,6 +14093,34 @@ func (m *UsageRequestMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRateID(v)
 		return nil
+	case usagerequest.FieldRouteOwner:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRouteOwner(v)
+		return nil
+	case usagerequest.FieldAdmittedUnits:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAdmittedUnits(v)
+		return nil
+	case usagerequest.FieldAdmittedInput:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAdmittedInput(v)
+		return nil
+	case usagerequest.FieldAdmittedOutput:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAdmittedOutput(v)
+		return nil
 	case usagerequest.FieldRates:
 		v, ok := value.(json.RawMessage)
 		if !ok {
@@ -13782,6 +14199,15 @@ func (m *UsageRequestMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *UsageRequestMutation) AddedFields() []string {
 	var fields []string
+	if m.addadmitted_units != nil {
+		fields = append(fields, usagerequest.FieldAdmittedUnits)
+	}
+	if m.addadmitted_input != nil {
+		fields = append(fields, usagerequest.FieldAdmittedInput)
+	}
+	if m.addadmitted_output != nil {
+		fields = append(fields, usagerequest.FieldAdmittedOutput)
+	}
 	if m.addpoint_units != nil {
 		fields = append(fields, usagerequest.FieldPointUnits)
 	}
@@ -13808,6 +14234,12 @@ func (m *UsageRequestMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *UsageRequestMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case usagerequest.FieldAdmittedUnits:
+		return m.AddedAdmittedUnits()
+	case usagerequest.FieldAdmittedInput:
+		return m.AddedAdmittedInput()
+	case usagerequest.FieldAdmittedOutput:
+		return m.AddedAdmittedOutput()
 	case usagerequest.FieldPointUnits:
 		return m.AddedPointUnits()
 	case usagerequest.FieldInputTokens:
@@ -13829,6 +14261,27 @@ func (m *UsageRequestMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UsageRequestMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case usagerequest.FieldAdmittedUnits:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAdmittedUnits(v)
+		return nil
+	case usagerequest.FieldAdmittedInput:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAdmittedInput(v)
+		return nil
+	case usagerequest.FieldAdmittedOutput:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAdmittedOutput(v)
+		return nil
 	case usagerequest.FieldPointUnits:
 		v, ok := value.(int64)
 		if !ok {
@@ -13882,6 +14335,15 @@ func (m *UsageRequestMutation) ClearedFields() []string {
 	if m.FieldCleared(usagerequest.FieldDeadlineAt) {
 		fields = append(fields, usagerequest.FieldDeadlineAt)
 	}
+	if m.FieldCleared(usagerequest.FieldAdmittedUnits) {
+		fields = append(fields, usagerequest.FieldAdmittedUnits)
+	}
+	if m.FieldCleared(usagerequest.FieldAdmittedInput) {
+		fields = append(fields, usagerequest.FieldAdmittedInput)
+	}
+	if m.FieldCleared(usagerequest.FieldAdmittedOutput) {
+		fields = append(fields, usagerequest.FieldAdmittedOutput)
+	}
 	if m.FieldCleared(usagerequest.FieldRates) {
 		fields = append(fields, usagerequest.FieldRates)
 	}
@@ -13922,6 +14384,15 @@ func (m *UsageRequestMutation) ClearField(name string) error {
 	switch name {
 	case usagerequest.FieldDeadlineAt:
 		m.ClearDeadlineAt()
+		return nil
+	case usagerequest.FieldAdmittedUnits:
+		m.ClearAdmittedUnits()
+		return nil
+	case usagerequest.FieldAdmittedInput:
+		m.ClearAdmittedInput()
+		return nil
+	case usagerequest.FieldAdmittedOutput:
+		m.ClearAdmittedOutput()
 		return nil
 	case usagerequest.FieldRates:
 		m.ClearRates()
@@ -13990,6 +14461,18 @@ func (m *UsageRequestMutation) ResetField(name string) error {
 		return nil
 	case usagerequest.FieldRateID:
 		m.ResetRateID()
+		return nil
+	case usagerequest.FieldRouteOwner:
+		m.ResetRouteOwner()
+		return nil
+	case usagerequest.FieldAdmittedUnits:
+		m.ResetAdmittedUnits()
+		return nil
+	case usagerequest.FieldAdmittedInput:
+		m.ResetAdmittedInput()
+		return nil
+	case usagerequest.FieldAdmittedOutput:
+		m.ResetAdmittedOutput()
 		return nil
 	case usagerequest.FieldRates:
 		m.ResetRates()
