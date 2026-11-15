@@ -44,3 +44,7 @@ An accepted record is not edited again except for its status; a changed mind
 is a new record. A superseded record stays, with its status pointing at the one
 that replaced it: the reasoning of a reversed decision is exactly what the next
 reader needs.
+
+- [0029 — Team assistant and inherited models](0029-team-assistant-and-inherited-models.md) — transactional provisioning and an explicit local-model choice.
+
+- [0030 — Reviewed resources and history](0030-reviewed-resources-and-publication-history.md) — approval transactions, private plugin artifacts and immutable recovery.

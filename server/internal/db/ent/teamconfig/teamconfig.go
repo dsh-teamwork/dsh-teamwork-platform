@@ -25,6 +25,8 @@ const (
 	FieldKind = "kind"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldBuiltin holds the string denoting the builtin field in the database.
+	FieldBuiltin = "builtin"
 	// FieldData holds the string denoting the data field in the database.
 	FieldData = "data"
 	// FieldRouteOwner holds the string denoting the route_owner field in the database.
@@ -54,6 +56,7 @@ var Columns = []string{
 	FieldTeamID,
 	FieldKind,
 	FieldName,
+	FieldBuiltin,
 	FieldData,
 	FieldRouteOwner,
 	FieldRouteReference,
@@ -81,6 +84,8 @@ var (
 	TeamIDValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// BuiltinValidator is a validator for the "builtin" field. It is called by the builders before save.
+	BuiltinValidator func(string) error
 	// DefaultRouteOwner holds the default value on creation for the "route_owner" field.
 	DefaultRouteOwner string
 	// RouteOwnerValidator is a validator for the "route_owner" field. It is called by the builders before save.
@@ -152,6 +157,11 @@ func ByKind(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByBuiltin orders the results by the builtin field.
+func ByBuiltin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBuiltin, opts...).ToFunc()
 }
 
 // ByRouteOwner orders the results by the route_owner field.

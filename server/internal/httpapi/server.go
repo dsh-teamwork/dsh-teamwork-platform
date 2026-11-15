@@ -6,6 +6,7 @@ package httpapi
 import (
 	"log/slog"
 	"net/http"
+	"path/filepath"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
@@ -52,6 +53,9 @@ func (s *Server) route(h handler, write bool) http.HandlerFunc {
 
 // Handler is every route.
 func (s *Server) Handler() http.Handler {
+	if s.Team != nil && s.Team.ArtifactDir == "" && s.Config.DataDir != "" {
+		s.Team.ArtifactDir = filepath.Join(s.Config.DataDir, "artifacts")
+	}
 	if s.Usage == nil && s.Team != nil {
 		s.Usage = &usage.Service{DB: s.Team.DB, AppURL: s.Config.AppURL}
 	}
@@ -109,6 +113,17 @@ func (s *Server) Handler() http.Handler {
 	write("PUT", "/api/teams/{teamId}/budgets", s.setBudget)
 	get("/api/teams/{teamId}/budgets/notices", s.listBudgetNotices)
 	post("/api/teams/{teamId}/budgets/notices/{noticeId}/retry", s.retryBudgetNotice)
+	get("/api/teams/{teamId}/history", s.history)
+	post("/api/teams/{teamId}/history/{id}/restore", s.restoreRevision)
+	get("/api/teams/{teamId}/history/{id}/export", s.exportRevision)
+	post("/api/teams/{teamId}/artifacts", s.uploadArtifact)
+	get("/api/teams/{teamId}/artifacts/{id}", s.artifactInfo)
+	get("/api/teams/{teamId}/artifacts/{id}/download", s.downloadArtifact)
+	get("/api/teams/{teamId}/submissions/{id}", s.getSubmission)
+	get("/api/teams/{teamId}/submissions", s.listSubmissions)
+	post("/api/teams/{teamId}/submissions", s.saveSubmission)
+	write("PUT", "/api/teams/{teamId}/submissions/{id}", s.saveSubmission)
+	post("/api/teams/{teamId}/submissions/{id}/{action}", s.decideSubmission)
 	get("/api/profile", s.getProfile)
 	write("PATCH", "/api/profile", s.updateProfile)
 	post("/api/locale", s.chooseLocale)

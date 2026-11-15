@@ -275,7 +275,9 @@
       "usage": "使用量",
       "budgets": "预算",
       "presets": "预设",
-      "plugins": "插件"
+      "plugins": "插件",
+      "sharing": "分享与审批",
+      "history": "版本与备份"
     },
     "switcher": {
       "label": "切换团队",
@@ -433,7 +435,7 @@
       "model": "使用的模型",
       "chooseModel": "选择团队模型",
       "keepRoute": "保留独立模型：{route}",
-      "noModels": "还没有团队模型，先到「模型」页接入一个。",
+      "noModels": "可先沿用会话／本地模型，也可由管理员添加团队模型。",
       "tools": "DSH 工具",
       "toolsHint": "必需：缺了就不能选这个预设。可选：有就用，没有时给提示。",
       "tool": {
@@ -453,7 +455,10 @@
       "saved": "已保存，成员下次同步后生效。",
       "added": "已添加「{name}」。",
       "pinStale": "插件版本已变，编辑并保存这个预设即可按新版本固定。",
-      "pinStaleShort": "需重新保存"
+      "pinStaleShort": "需重新保存",
+      "inheritModel": "沿用会话／本地模型",
+      "submitted": "已提交，等待管理员审批",
+      "submitForReview": "提交审批"
     },
     "plugins": {
       "title": "插件",
@@ -478,6 +483,86 @@
       "about": "简介",
       "save": "保存",
       "saved": "已保存，成员下次同步后生效。"
+    },
+    "sharing": {
+      "title": "分享与审批",
+      "adminHint": "检查资源的确切内容后，将其发布给本团队。",
+      "memberHint": "分享预设和插件，管理员审批通过后供团队使用。",
+      "importPreset": "导入预设文件",
+      "invalidFile": "请选择不超过 64 KiB 的预设 JSON 文件。",
+      "note": "更新说明",
+      "submit": "提交审批",
+      "cancel": "取消",
+      "submitted": "已提交审批",
+      "empty": "暂无提交记录。",
+      "compare": "比较内容",
+      "current": "当前已发布内容",
+      "proposed": "本次提交内容",
+      "baseVersion": "基于版本 {version}",
+      "reviewer": "审批人",
+      "approve": "批准并发布",
+      "reject": "拒绝",
+      "withdraw": "撤回",
+      "confirm": "{action}：{name}？仅作用于当前团队。",
+      "reason": "审批说明（拒绝时必填）",
+      "confirmAction": "确认操作",
+      "previous": "上一页",
+      "next": "下一页",
+      "done": "操作已完成",
+      "states": {
+        "draft": "草稿",
+        "pending": "待审批",
+        "published": "已发布",
+        "rejected": "已拒绝",
+        "withdrawn": "已撤回"
+      },
+      "importPlugin": "选择本地插件包",
+      "uploadLimits": "上传前检查文件清单。压缩包上限 10 MiB，解压上限 64 MiB，最多 2000 个条目。",
+      "includedFiles": "包含 {count} 个文件",
+      "target": "发布目标",
+      "newPlugin": "新增团队插件",
+      "uploadSubmit": "确认上传并提交审批",
+      "resourceName": "资源名称",
+      "prompt": "角色提示词",
+      "revise": "修改／重新提交",
+      "formerMember": "原团队成员"
+    },
+    "history": {
+      "title": "版本与备份",
+      "hint": "查看批准发布的历史、导出备份或准备恢复。已发布版本会保留。",
+      "timezone": "时间以 {zone} 显示，结束时间不包含在筛选范围内。",
+      "kind": "资源类型",
+      "allKinds": "全部资源",
+      "presets": "预设",
+      "plugins": "插件",
+      "resourceId": "资源",
+      "author": "提交人",
+      "from": "开始时间",
+      "to": "结束时间",
+      "empty": "该时间范围内暂无发布记录。",
+      "compare": "与当前版本比较",
+      "historical": "历史内容",
+      "current": "当前已发布",
+      "export": "导出备份",
+      "restore": "恢复此版本",
+      "restoreNote": "恢复历史版本 {version}",
+      "draftCreated": "恢复草稿已创建，仍需提交和审批。",
+      "openReview": "前往分享与审批",
+      "confirm": "将历史 v{version} 恢复到当前 v{base}？这会创建草稿，暂不改变已发布内容。",
+      "prepare": "创建恢复草稿",
+      "cancel": "取消",
+      "previous": "上一页",
+      "next": "下一页",
+      "allResources": "全部资源",
+      "allAuthors": "全部提交人",
+      "formerMember": "原团队成员",
+      "reviewedBy": "审批：{name}",
+      "sources": {
+        "system": "系统创建",
+        "legacy": "历史基线",
+        "direct": "管理员发布",
+        "approved": "审批发布"
+      }
     }
   },
   "usage": {
@@ -504,13 +589,22 @@
     "hostedRateHint": "托管模型价格由平台发布，团队预算也按此价格计量积分。",
     "unpricedHint": "当前模型尚未定价。会记录 Token 用量，积分显示为未定价。",
     "weightHint": "将这些价格作为内部使用权重，而非供应商成本估算。",
-    "prices": { "input": "非缓存输入", "cacheRead": "缓存输入", "cacheWrite": "缓存写入（如支持）", "output": "输出（含推理）" },
+    "prices": {
+      "input": "非缓存输入",
+      "cacheRead": "缓存输入",
+      "cacheWrite": "缓存写入（如支持）",
+      "output": "输出（含推理）"
+    },
     "saved": "参考单价已更新",
     "save": "保存单价",
     "close": "关闭",
     "refresh": "刷新",
     "period": "时间范围",
-    "periods": { "day": "最近 24 小时", "week": "最近 7 天", "month": "最近 30 天" },
+    "periods": {
+      "day": "最近 24 小时",
+      "week": "最近 7 天",
+      "month": "最近 30 天"
+    },
     "member": "成员",
     "allMembers": "所有成员",
     "formerMember": "已退出成员",
@@ -523,7 +617,14 @@
     "output": "输出 Token",
     "points": "积分",
     "status": "状态",
-    "states": { "running": "进行中", "settled": "已计量", "unpriced": "未定价", "pending": "待核对", "failed": "失败", "estimated": "管理员估算" },
+    "states": {
+      "running": "进行中",
+      "settled": "已计量",
+      "unpriced": "未定价",
+      "pending": "待核对",
+      "failed": "失败",
+      "estimated": "管理员估算"
+    },
     "accountingHint": "缓存 Token 已包含在输入中，推理 Token 已包含在输出中。横线表示未定价或尚未确认，不代表零消耗。",
     "count": "共 {count} 次调用",
     "previous": "上一页",
@@ -545,8 +646,16 @@
     "loading": "正在读取预算…",
     "emptyAdmin": "尚未配置预算，可以先设置团队上限或成员默认额度。",
     "emptyMember": "团队尚未设置预算。",
-    "scopes": { "team": "团队", "default_member": "每位成员默认", "member": "成员单独额度", "provider": "上游提供方" },
-    "periods": { "day": "自然日", "month": "自然月" },
+    "scopes": {
+      "team": "团队",
+      "default_member": "每位成员默认",
+      "member": "成员单独额度",
+      "provider": "上游提供方"
+    },
+    "periods": {
+      "day": "自然日",
+      "month": "自然月"
+    },
     "pointLimit": "积分上限",
     "usedAndReserved": "已用／预占积分",
     "notLimited": "不限",
@@ -573,15 +682,30 @@
     "exists": "此范围和周期已配置预算，请关闭弹窗后编辑已有卡片。",
     "restoreDefault": "恢复默认",
     "notify": "邮件通知对象",
-    "notifyChoices": { "admins": "团队管理员", "both": "团队管理员和对应成员", "owner": "仅对应成员", "none": "仅显示页面提示" },
+    "notifyChoices": {
+      "admins": "团队管理员",
+      "both": "团队管理员和对应成员",
+      "owner": "仅对应成员",
+      "none": "仅显示页面提示"
+    },
     "notices": "近期邮件告警",
     "noticeHint": "邮件使用实例配置的 SMTP 服务；未配置邮件时仍可查看页面提示。发送失败不会改变消耗或预算限制。",
-    "noticeStates": { "pending": "等待发送", "sending": "发送中", "sent": "已发送", "failed": "发送失败", "skipped": "已不再适用" },
+    "noticeStates": {
+      "pending": "等待发送",
+      "sending": "发送中",
+      "sent": "已发送",
+      "failed": "发送失败",
+      "skipped": "已不再适用"
+    },
     "retry": "重新发送",
     "retryQueued": "已重新加入发送队列",
     "formerMember": "已退出成员",
     "memberMode": "个人额度方式",
-    "memberModes": { "limited": "设置单独上限", "unlimited": "不设个人上限，仍受团队预算限制", "inherit": "沿用成员默认预算" },
+    "memberModes": {
+      "limited": "设置单独上限",
+      "unlimited": "不设个人上限，仍受团队预算限制",
+      "inherit": "沿用成员默认预算"
+    },
     "saved": "预算已更新",
     "save": "保存预算",
     "cancel": "取消"
@@ -642,6 +766,15 @@
     "config_owned": "此模型由平台管理。",
     "funding_unavailable": "托管模型暂不可用。",
     "wallet_insufficient": "团队可用模型余额不足。",
-    "usage_funding_resolution_required": "托管模型用量需要由平台运营人员核对。"
+    "usage_funding_resolution_required": "托管模型用量需要由平台运营人员核对。",
+    "submission_conflict": "提交状态或版本已变化，请刷新后重试。",
+    "submission_not_found": "找不到提交记录。",
+    "submission_author_required": "只有提交人可以执行此操作。",
+    "reason_required": "请填写拒绝原因。",
+    "unsafe_artifact": "插件包不安全或格式不支持，请检查文件内容。",
+    "artifact_version_exists": "该插件版本已存在，请使用新版本号。",
+    "artifact_mismatch": "插件包校验失败。",
+    "artifact_not_found": "找不到可访问的插件包。",
+    "revision_not_found": "找不到历史版本。"
   }
 }

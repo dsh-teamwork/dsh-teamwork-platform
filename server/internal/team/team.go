@@ -24,10 +24,11 @@ import (
 
 // Service is the team rules over one database.
 type Service struct {
-	DB      *ent.Client
-	Keys    *Keys
-	Network *Network
-	Auth    *auth.Service
+	DB          *ent.Client
+	ArtifactDir string
+	Keys        *Keys
+	Network     *Network
+	Auth        *auth.Service
 	// Passwords is whether the instance holds passwords (no SMTP), where an
 	// admin creates members' accounts rather than inviting them.
 	Passwords bool
@@ -90,6 +91,9 @@ func (s *Service) CreateTeam(ctx context.Context, userID string, in wire.CreateT
 	if err := tx.Membership.Create().SetUserID(userID).SetTeamID(t.ID).SetRole(membership.RoleAdmin).Exec(ctx); err != nil {
 		return Created{}, err
 	}
+	if err := provisionAssistant(ctx, tx.Client(), t.ID, t.Name); err != nil {
+		return Created{}, err
+	}
 	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.TeamCreated, TeamID: t.ID, UserID: userID, ActorID: userID}); err != nil {
 		return Created{}, err
 	}
@@ -139,10 +143,11 @@ type ConfigView struct {
 	Version   int             `json:"version"`
 	UpdatedAt string          `json:"updatedAt"`
 	Owner     string          `json:"owner,omitempty"`
+	Builtin   string          `json:"builtin,omitempty"`
 }
 
 func configView(c *ent.TeamConfig) ConfigView {
-	return ConfigView{ID: c.ID, Kind: string(c.Kind), Name: c.Name, Data: c.Data, Version: c.Version, UpdatedAt: Time(c.UpdatedAt), Owner: c.RouteOwner}
+	return ConfigView{ID: c.ID, Kind: string(c.Kind), Name: c.Name, Data: c.Data, Version: c.Version, UpdatedAt: Time(c.UpdatedAt), Owner: c.RouteOwner, Builtin: builtinName(c.Builtin)}
 }
 
 var kindOrder = map[teamconfig.Kind]int{teamconfig.KindModel: 0, teamconfig.KindPreset: 1, teamconfig.KindPlugin: 2}
@@ -158,12 +163,19 @@ func sortConfigs(cs []*ent.TeamConfig) {
 	})
 }
 
+type PluginVersionView struct {
+	ConfigID string          `json:"configId"`
+	Name     string          `json:"name"`
+	Data     wire.PluginData `json:"data"`
+}
+
 // TeamSnapshot is one team in the plugin's snapshot.
 type TeamSnapshot struct {
-	TeamID   string       `json:"teamId"`
-	TeamName string       `json:"teamName"`
-	Role     string       `json:"role"`
-	Configs  []ConfigView `json:"configs"`
+	TeamID         string              `json:"teamId"`
+	TeamName       string              `json:"teamName"`
+	Role           string              `json:"role"`
+	Configs        []ConfigView        `json:"configs"`
+	PluginVersions []PluginVersionView `json:"pluginVersions"`
 }
 
 // Snapshot is GET /api/configs: every team the caller is in, the ones they
@@ -188,7 +200,30 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 		for _, c := range configs {
 			views = append(views, configView(c))
 		}
-		out.Teams = append(out.Teams, TeamSnapshot{TeamID: m.TeamID, TeamName: m.Edges.Team.Name, Role: string(m.Role), Configs: views})
+		pins := []PluginVersionView{}
+		seen := map[string]bool{}
+		for _, c := range configs {
+			if c.Kind != teamconfig.KindPreset {
+				continue
+			}
+			var preset wire.PresetData
+			if json.Unmarshal(c.Data, &preset) != nil {
+				continue
+			}
+			for _, pin := range preset.PluginDependencies {
+				key := pin.PluginConfigID + "@" + pin.Version
+				if seen[key] {
+					continue
+				}
+				seen[key] = true
+				data, name, err := s.resolvePlugin(ctx, m.TeamID, pin.PluginConfigID, pin.Version)
+				if err != nil {
+					return Snapshot{}, err
+				}
+				pins = append(pins, PluginVersionView{ConfigID: pin.PluginConfigID, Name: name, Data: *data})
+			}
+		}
+		out.Teams = append(out.Teams, TeamSnapshot{TeamID: m.TeamID, TeamName: m.Edges.Team.Name, Role: string(m.Role), Configs: views, PluginVersions: pins})
 	}
 	return out, nil
 }
@@ -196,6 +231,9 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 // checkReferences holds what a configuration names to the team: a provider
 // it calls, a team model it references, a plugin it pins at its version.
 func (s *Service) checkReferences(ctx context.Context, teamID string, in *wire.ConfigInput) error {
+	if in.Plugin != nil {
+		return s.checkArtifact(ctx, teamID, in.Plugin)
+	}
 	var provider *string
 	var ctxWin, maxTok *int64
 	switch {
@@ -231,34 +269,15 @@ func (s *Service) checkReferences(ctx context.Context, teamID string, in *wire.C
 		}
 	}
 	for _, d := range in.Preset.PluginDependencies {
-		p, err := s.DB.TeamConfig.Query().Where(teamconfig.ID(d.PluginConfigID), teamconfig.TeamID(teamID), teamconfig.KindEQ(teamconfig.KindPlugin)).Only(ctx)
-		if err != nil && !ent.IsNotFound(err) {
+		if _, _, err := s.resolvePlugin(ctx, teamID, d.PluginConfigID, d.Version); err != nil {
 			return err
 		}
-		var data wire.PluginData
-		if p == nil || json.Unmarshal(p.Data, &data) != nil || data.Version != d.Version {
-			return wire.E(http.StatusBadRequest, wire.PluginDependencyInvalid)
-		}
 	}
+
 	return nil
 }
 
 // CreateConfig publishes a configuration.
 func (s *Service) CreateConfig(ctx context.Context, userID, teamID string, in wire.ConfigInput) (ConfigView, error) {
-	admin, err := s.RequireMembership(ctx, userID, teamID, true)
-	if err != nil {
-		return ConfigView{}, err
-	}
-	if err := s.checkReferences(ctx, admin.TeamID, &in); err != nil {
-		return ConfigView{}, err
-	}
-	c, err := s.DB.TeamConfig.Create().SetTeamID(admin.TeamID).SetKind(teamconfig.Kind(in.Kind)).SetName(in.Name).
-		SetData(in.Canonical()).Save(ctx)
-	if ent.IsConstraintError(err) {
-		return ConfigView{}, wire.E(http.StatusConflict, wire.ConfigExists)
-	}
-	if err != nil {
-		return ConfigView{}, err
-	}
-	return configView(c), nil
+	return s.publishDirect(ctx, userID, teamID, "", 0, in)
 }

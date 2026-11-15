@@ -21,12 +21,15 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetpolicy"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetreservation"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetwindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -54,6 +57,8 @@ type Client struct {
 	BudgetReservation *BudgetReservationClient
 	// BudgetWindow is the client for interacting with the BudgetWindow builders.
 	BudgetWindow *BudgetWindowClient
+	// ConfigRevision is the client for interacting with the ConfigRevision builders.
+	ConfigRevision *ConfigRevisionClient
 	// Identity is the client for interacting with the Identity builders.
 	Identity *IdentityClient
 	// Invite is the client for interacting with the Invite builders.
@@ -66,6 +71,10 @@ type Client struct {
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
 	RateWindow *RateWindowClient
+	// ResourceArtifact is the client for interacting with the ResourceArtifact builders.
+	ResourceArtifact *ResourceArtifactClient
+	// ResourceSubmission is the client for interacting with the ResourceSubmission builders.
+	ResourceSubmission *ResourceSubmissionClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// TeamConfig is the client for interacting with the TeamConfig builders.
@@ -95,12 +104,15 @@ func (c *Client) init() {
 	c.BudgetPolicy = NewBudgetPolicyClient(c.config)
 	c.BudgetReservation = NewBudgetReservationClient(c.config)
 	c.BudgetWindow = NewBudgetWindowClient(c.config)
+	c.ConfigRevision = NewConfigRevisionClient(c.config)
 	c.Identity = NewIdentityClient(c.config)
 	c.Invite = NewInviteClient(c.config)
 	c.Membership = NewMembershipClient(c.config)
 	c.ModelRate = NewModelRateClient(c.config)
 	c.Password = NewPasswordClient(c.config)
 	c.RateWindow = NewRateWindowClient(c.config)
+	c.ResourceArtifact = NewResourceArtifactClient(c.config)
+	c.ResourceSubmission = NewResourceSubmissionClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.TeamConfig = NewTeamConfigClient(c.config)
 	c.TeamProvider = NewTeamProviderClient(c.config)
@@ -197,26 +209,29 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:               ctx,
-		config:            cfg,
-		BudgetEvent:       NewBudgetEventClient(cfg),
-		BudgetGate:        NewBudgetGateClient(cfg),
-		BudgetNotice:      NewBudgetNoticeClient(cfg),
-		BudgetPolicy:      NewBudgetPolicyClient(cfg),
-		BudgetReservation: NewBudgetReservationClient(cfg),
-		BudgetWindow:      NewBudgetWindowClient(cfg),
-		Identity:          NewIdentityClient(cfg),
-		Invite:            NewInviteClient(cfg),
-		Membership:        NewMembershipClient(cfg),
-		ModelRate:         NewModelRateClient(cfg),
-		Password:          NewPasswordClient(cfg),
-		RateWindow:        NewRateWindowClient(cfg),
-		Team:              NewTeamClient(cfg),
-		TeamConfig:        NewTeamConfigClient(cfg),
-		TeamProvider:      NewTeamProviderClient(cfg),
-		UsageRequest:      NewUsageRequestClient(cfg),
-		User:              NewUserClient(cfg),
-		VerificationCode:  NewVerificationCodeClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		BudgetEvent:        NewBudgetEventClient(cfg),
+		BudgetGate:         NewBudgetGateClient(cfg),
+		BudgetNotice:       NewBudgetNoticeClient(cfg),
+		BudgetPolicy:       NewBudgetPolicyClient(cfg),
+		BudgetReservation:  NewBudgetReservationClient(cfg),
+		BudgetWindow:       NewBudgetWindowClient(cfg),
+		ConfigRevision:     NewConfigRevisionClient(cfg),
+		Identity:           NewIdentityClient(cfg),
+		Invite:             NewInviteClient(cfg),
+		Membership:         NewMembershipClient(cfg),
+		ModelRate:          NewModelRateClient(cfg),
+		Password:           NewPasswordClient(cfg),
+		RateWindow:         NewRateWindowClient(cfg),
+		ResourceArtifact:   NewResourceArtifactClient(cfg),
+		ResourceSubmission: NewResourceSubmissionClient(cfg),
+		Team:               NewTeamClient(cfg),
+		TeamConfig:         NewTeamConfigClient(cfg),
+		TeamProvider:       NewTeamProviderClient(cfg),
+		UsageRequest:       NewUsageRequestClient(cfg),
+		User:               NewUserClient(cfg),
+		VerificationCode:   NewVerificationCodeClient(cfg),
 	}, nil
 }
 
@@ -234,26 +249,29 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:               ctx,
-		config:            cfg,
-		BudgetEvent:       NewBudgetEventClient(cfg),
-		BudgetGate:        NewBudgetGateClient(cfg),
-		BudgetNotice:      NewBudgetNoticeClient(cfg),
-		BudgetPolicy:      NewBudgetPolicyClient(cfg),
-		BudgetReservation: NewBudgetReservationClient(cfg),
-		BudgetWindow:      NewBudgetWindowClient(cfg),
-		Identity:          NewIdentityClient(cfg),
-		Invite:            NewInviteClient(cfg),
-		Membership:        NewMembershipClient(cfg),
-		ModelRate:         NewModelRateClient(cfg),
-		Password:          NewPasswordClient(cfg),
-		RateWindow:        NewRateWindowClient(cfg),
-		Team:              NewTeamClient(cfg),
-		TeamConfig:        NewTeamConfigClient(cfg),
-		TeamProvider:      NewTeamProviderClient(cfg),
-		UsageRequest:      NewUsageRequestClient(cfg),
-		User:              NewUserClient(cfg),
-		VerificationCode:  NewVerificationCodeClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		BudgetEvent:        NewBudgetEventClient(cfg),
+		BudgetGate:         NewBudgetGateClient(cfg),
+		BudgetNotice:       NewBudgetNoticeClient(cfg),
+		BudgetPolicy:       NewBudgetPolicyClient(cfg),
+		BudgetReservation:  NewBudgetReservationClient(cfg),
+		BudgetWindow:       NewBudgetWindowClient(cfg),
+		ConfigRevision:     NewConfigRevisionClient(cfg),
+		Identity:           NewIdentityClient(cfg),
+		Invite:             NewInviteClient(cfg),
+		Membership:         NewMembershipClient(cfg),
+		ModelRate:          NewModelRateClient(cfg),
+		Password:           NewPasswordClient(cfg),
+		RateWindow:         NewRateWindowClient(cfg),
+		ResourceArtifact:   NewResourceArtifactClient(cfg),
+		ResourceSubmission: NewResourceSubmissionClient(cfg),
+		Team:               NewTeamClient(cfg),
+		TeamConfig:         NewTeamConfigClient(cfg),
+		TeamProvider:       NewTeamProviderClient(cfg),
+		UsageRequest:       NewUsageRequestClient(cfg),
+		User:               NewUserClient(cfg),
+		VerificationCode:   NewVerificationCodeClient(cfg),
 	}, nil
 }
 
@@ -284,9 +302,10 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
-		c.BudgetReservation, c.BudgetWindow, c.Identity, c.Invite, c.Membership,
-		c.ModelRate, c.Password, c.RateWindow, c.Team, c.TeamConfig, c.TeamProvider,
-		c.UsageRequest, c.User, c.VerificationCode,
+		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
+		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.ResourceArtifact,
+		c.ResourceSubmission, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest,
+		c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -297,9 +316,10 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
-		c.BudgetReservation, c.BudgetWindow, c.Identity, c.Invite, c.Membership,
-		c.ModelRate, c.Password, c.RateWindow, c.Team, c.TeamConfig, c.TeamProvider,
-		c.UsageRequest, c.User, c.VerificationCode,
+		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
+		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.ResourceArtifact,
+		c.ResourceSubmission, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest,
+		c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -320,6 +340,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.BudgetReservation.mutate(ctx, m)
 	case *BudgetWindowMutation:
 		return c.BudgetWindow.mutate(ctx, m)
+	case *ConfigRevisionMutation:
+		return c.ConfigRevision.mutate(ctx, m)
 	case *IdentityMutation:
 		return c.Identity.mutate(ctx, m)
 	case *InviteMutation:
@@ -332,6 +354,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Password.mutate(ctx, m)
 	case *RateWindowMutation:
 		return c.RateWindow.mutate(ctx, m)
+	case *ResourceArtifactMutation:
+		return c.ResourceArtifact.mutate(ctx, m)
+	case *ResourceSubmissionMutation:
+		return c.ResourceSubmission.mutate(ctx, m)
 	case *TeamMutation:
 		return c.Team.mutate(ctx, m)
 	case *TeamConfigMutation:
@@ -1144,6 +1170,139 @@ func (c *BudgetWindowClient) mutate(ctx context.Context, m *BudgetWindowMutation
 		return (&BudgetWindowDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown BudgetWindow mutation op: %q", m.Op())
+	}
+}
+
+// ConfigRevisionClient is a client for the ConfigRevision schema.
+type ConfigRevisionClient struct {
+	config
+}
+
+// NewConfigRevisionClient returns a client for the ConfigRevision from the given config.
+func NewConfigRevisionClient(c config) *ConfigRevisionClient {
+	return &ConfigRevisionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `configrevision.Hooks(f(g(h())))`.
+func (c *ConfigRevisionClient) Use(hooks ...Hook) {
+	c.hooks.ConfigRevision = append(c.hooks.ConfigRevision, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `configrevision.Intercept(f(g(h())))`.
+func (c *ConfigRevisionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ConfigRevision = append(c.inters.ConfigRevision, interceptors...)
+}
+
+// Create returns a builder for creating a ConfigRevision entity.
+func (c *ConfigRevisionClient) Create() *ConfigRevisionCreate {
+	mutation := newConfigRevisionMutation(c.config, OpCreate)
+	return &ConfigRevisionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ConfigRevision entities.
+func (c *ConfigRevisionClient) CreateBulk(builders ...*ConfigRevisionCreate) *ConfigRevisionCreateBulk {
+	return &ConfigRevisionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ConfigRevisionClient) MapCreateBulk(slice any, setFunc func(*ConfigRevisionCreate, int)) *ConfigRevisionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ConfigRevisionCreateBulk{err: fmt.Errorf("calling to ConfigRevisionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ConfigRevisionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ConfigRevisionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ConfigRevision.
+func (c *ConfigRevisionClient) Update() *ConfigRevisionUpdate {
+	mutation := newConfigRevisionMutation(c.config, OpUpdate)
+	return &ConfigRevisionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ConfigRevisionClient) UpdateOne(_m *ConfigRevision) *ConfigRevisionUpdateOne {
+	mutation := newConfigRevisionMutation(c.config, OpUpdateOne, withConfigRevision(_m))
+	return &ConfigRevisionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ConfigRevisionClient) UpdateOneID(id string) *ConfigRevisionUpdateOne {
+	mutation := newConfigRevisionMutation(c.config, OpUpdateOne, withConfigRevisionID(id))
+	return &ConfigRevisionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ConfigRevision.
+func (c *ConfigRevisionClient) Delete() *ConfigRevisionDelete {
+	mutation := newConfigRevisionMutation(c.config, OpDelete)
+	return &ConfigRevisionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ConfigRevisionClient) DeleteOne(_m *ConfigRevision) *ConfigRevisionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ConfigRevisionClient) DeleteOneID(id string) *ConfigRevisionDeleteOne {
+	builder := c.Delete().Where(configrevision.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ConfigRevisionDeleteOne{builder}
+}
+
+// Query returns a query builder for ConfigRevision.
+func (c *ConfigRevisionClient) Query() *ConfigRevisionQuery {
+	return &ConfigRevisionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeConfigRevision},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ConfigRevision entity by its id.
+func (c *ConfigRevisionClient) Get(ctx context.Context, id string) (*ConfigRevision, error) {
+	return c.Query().Where(configrevision.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ConfigRevisionClient) GetX(ctx context.Context, id string) *ConfigRevision {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ConfigRevisionClient) Hooks() []Hook {
+	return c.hooks.ConfigRevision
+}
+
+// Interceptors returns the client interceptors.
+func (c *ConfigRevisionClient) Interceptors() []Interceptor {
+	return c.inters.ConfigRevision
+}
+
+func (c *ConfigRevisionClient) mutate(ctx context.Context, m *ConfigRevisionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ConfigRevisionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ConfigRevisionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ConfigRevisionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ConfigRevisionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ConfigRevision mutation op: %q", m.Op())
 	}
 }
 
@@ -2022,6 +2181,272 @@ func (c *RateWindowClient) mutate(ctx context.Context, m *RateWindowMutation) (V
 		return (&RateWindowDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown RateWindow mutation op: %q", m.Op())
+	}
+}
+
+// ResourceArtifactClient is a client for the ResourceArtifact schema.
+type ResourceArtifactClient struct {
+	config
+}
+
+// NewResourceArtifactClient returns a client for the ResourceArtifact from the given config.
+func NewResourceArtifactClient(c config) *ResourceArtifactClient {
+	return &ResourceArtifactClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `resourceartifact.Hooks(f(g(h())))`.
+func (c *ResourceArtifactClient) Use(hooks ...Hook) {
+	c.hooks.ResourceArtifact = append(c.hooks.ResourceArtifact, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `resourceartifact.Intercept(f(g(h())))`.
+func (c *ResourceArtifactClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ResourceArtifact = append(c.inters.ResourceArtifact, interceptors...)
+}
+
+// Create returns a builder for creating a ResourceArtifact entity.
+func (c *ResourceArtifactClient) Create() *ResourceArtifactCreate {
+	mutation := newResourceArtifactMutation(c.config, OpCreate)
+	return &ResourceArtifactCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ResourceArtifact entities.
+func (c *ResourceArtifactClient) CreateBulk(builders ...*ResourceArtifactCreate) *ResourceArtifactCreateBulk {
+	return &ResourceArtifactCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ResourceArtifactClient) MapCreateBulk(slice any, setFunc func(*ResourceArtifactCreate, int)) *ResourceArtifactCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ResourceArtifactCreateBulk{err: fmt.Errorf("calling to ResourceArtifactClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ResourceArtifactCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ResourceArtifactCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ResourceArtifact.
+func (c *ResourceArtifactClient) Update() *ResourceArtifactUpdate {
+	mutation := newResourceArtifactMutation(c.config, OpUpdate)
+	return &ResourceArtifactUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ResourceArtifactClient) UpdateOne(_m *ResourceArtifact) *ResourceArtifactUpdateOne {
+	mutation := newResourceArtifactMutation(c.config, OpUpdateOne, withResourceArtifact(_m))
+	return &ResourceArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ResourceArtifactClient) UpdateOneID(id string) *ResourceArtifactUpdateOne {
+	mutation := newResourceArtifactMutation(c.config, OpUpdateOne, withResourceArtifactID(id))
+	return &ResourceArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ResourceArtifact.
+func (c *ResourceArtifactClient) Delete() *ResourceArtifactDelete {
+	mutation := newResourceArtifactMutation(c.config, OpDelete)
+	return &ResourceArtifactDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ResourceArtifactClient) DeleteOne(_m *ResourceArtifact) *ResourceArtifactDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ResourceArtifactClient) DeleteOneID(id string) *ResourceArtifactDeleteOne {
+	builder := c.Delete().Where(resourceartifact.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ResourceArtifactDeleteOne{builder}
+}
+
+// Query returns a query builder for ResourceArtifact.
+func (c *ResourceArtifactClient) Query() *ResourceArtifactQuery {
+	return &ResourceArtifactQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeResourceArtifact},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ResourceArtifact entity by its id.
+func (c *ResourceArtifactClient) Get(ctx context.Context, id string) (*ResourceArtifact, error) {
+	return c.Query().Where(resourceartifact.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ResourceArtifactClient) GetX(ctx context.Context, id string) *ResourceArtifact {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ResourceArtifactClient) Hooks() []Hook {
+	return c.hooks.ResourceArtifact
+}
+
+// Interceptors returns the client interceptors.
+func (c *ResourceArtifactClient) Interceptors() []Interceptor {
+	return c.inters.ResourceArtifact
+}
+
+func (c *ResourceArtifactClient) mutate(ctx context.Context, m *ResourceArtifactMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ResourceArtifactCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ResourceArtifactUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ResourceArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ResourceArtifactDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ResourceArtifact mutation op: %q", m.Op())
+	}
+}
+
+// ResourceSubmissionClient is a client for the ResourceSubmission schema.
+type ResourceSubmissionClient struct {
+	config
+}
+
+// NewResourceSubmissionClient returns a client for the ResourceSubmission from the given config.
+func NewResourceSubmissionClient(c config) *ResourceSubmissionClient {
+	return &ResourceSubmissionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `resourcesubmission.Hooks(f(g(h())))`.
+func (c *ResourceSubmissionClient) Use(hooks ...Hook) {
+	c.hooks.ResourceSubmission = append(c.hooks.ResourceSubmission, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `resourcesubmission.Intercept(f(g(h())))`.
+func (c *ResourceSubmissionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ResourceSubmission = append(c.inters.ResourceSubmission, interceptors...)
+}
+
+// Create returns a builder for creating a ResourceSubmission entity.
+func (c *ResourceSubmissionClient) Create() *ResourceSubmissionCreate {
+	mutation := newResourceSubmissionMutation(c.config, OpCreate)
+	return &ResourceSubmissionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ResourceSubmission entities.
+func (c *ResourceSubmissionClient) CreateBulk(builders ...*ResourceSubmissionCreate) *ResourceSubmissionCreateBulk {
+	return &ResourceSubmissionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ResourceSubmissionClient) MapCreateBulk(slice any, setFunc func(*ResourceSubmissionCreate, int)) *ResourceSubmissionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ResourceSubmissionCreateBulk{err: fmt.Errorf("calling to ResourceSubmissionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ResourceSubmissionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ResourceSubmissionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ResourceSubmission.
+func (c *ResourceSubmissionClient) Update() *ResourceSubmissionUpdate {
+	mutation := newResourceSubmissionMutation(c.config, OpUpdate)
+	return &ResourceSubmissionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ResourceSubmissionClient) UpdateOne(_m *ResourceSubmission) *ResourceSubmissionUpdateOne {
+	mutation := newResourceSubmissionMutation(c.config, OpUpdateOne, withResourceSubmission(_m))
+	return &ResourceSubmissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ResourceSubmissionClient) UpdateOneID(id string) *ResourceSubmissionUpdateOne {
+	mutation := newResourceSubmissionMutation(c.config, OpUpdateOne, withResourceSubmissionID(id))
+	return &ResourceSubmissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ResourceSubmission.
+func (c *ResourceSubmissionClient) Delete() *ResourceSubmissionDelete {
+	mutation := newResourceSubmissionMutation(c.config, OpDelete)
+	return &ResourceSubmissionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ResourceSubmissionClient) DeleteOne(_m *ResourceSubmission) *ResourceSubmissionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ResourceSubmissionClient) DeleteOneID(id string) *ResourceSubmissionDeleteOne {
+	builder := c.Delete().Where(resourcesubmission.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ResourceSubmissionDeleteOne{builder}
+}
+
+// Query returns a query builder for ResourceSubmission.
+func (c *ResourceSubmissionClient) Query() *ResourceSubmissionQuery {
+	return &ResourceSubmissionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeResourceSubmission},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ResourceSubmission entity by its id.
+func (c *ResourceSubmissionClient) Get(ctx context.Context, id string) (*ResourceSubmission, error) {
+	return c.Query().Where(resourcesubmission.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ResourceSubmissionClient) GetX(ctx context.Context, id string) *ResourceSubmission {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ResourceSubmissionClient) Hooks() []Hook {
+	return c.hooks.ResourceSubmission
+}
+
+// Interceptors returns the client interceptors.
+func (c *ResourceSubmissionClient) Interceptors() []Interceptor {
+	return c.inters.ResourceSubmission
+}
+
+func (c *ResourceSubmissionClient) mutate(ctx context.Context, m *ResourceSubmissionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ResourceSubmissionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ResourceSubmissionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ResourceSubmissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ResourceSubmissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ResourceSubmission mutation op: %q", m.Op())
 	}
 }
 
@@ -2971,14 +3396,15 @@ func (c *VerificationCodeClient) mutate(ctx context.Context, m *VerificationCode
 type (
 	hooks struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
-		BudgetWindow, Identity, Invite, Membership, ModelRate, Password, RateWindow,
-		Team, TeamConfig, TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
+		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
+		Password, RateWindow, ResourceArtifact, ResourceSubmission, Team, TeamConfig,
+		TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
-		BudgetWindow, Identity, Invite, Membership, ModelRate, Password, RateWindow,
-		Team, TeamConfig, TeamProvider, UsageRequest, User,
-		VerificationCode []ent.Interceptor
+		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
+		Password, RateWindow, ResourceArtifact, ResourceSubmission, Team, TeamConfig,
+		TeamProvider, UsageRequest, User, VerificationCode []ent.Interceptor
 	}
 )
 

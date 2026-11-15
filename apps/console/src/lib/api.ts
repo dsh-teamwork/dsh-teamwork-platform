@@ -74,3 +74,9 @@ type ConfigData = {
 };
 export type ConfigOf<K extends keyof ConfigData> = Omit<Schemas['Config'], 'kind' | 'data'> & { kind: K; data: ConfigData[K] };
 export type TeamConfig = ConfigOf<'model'> | ConfigOf<'preset'> | ConfigOf<'plugin'>;
+
+/** Raw private artifact upload; the server derives the package identity and digest. */
+export async function uploadArtifact<T>(teamId:string,file:File):Promise<T>{
+ const response=await fetch(`/api/teams/${encodeURIComponent(teamId)}/artifacts`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/octet-stream'},body:file});
+ await checkResponse(response);return response.json() as Promise<T>;
+}

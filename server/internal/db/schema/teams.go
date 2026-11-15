@@ -55,7 +55,8 @@ func (TeamConfig) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("team_id").MaxLen(32),
 		field.Enum("kind").Values("model", "preset", "plugin"),
-		field.String("name").MaxLen(runes(100)),
+		field.String("name").MaxLen(runes(120)),
+		field.String("builtin").MaxLen(40).Optional().Nillable().Immutable(),
 		field.JSON("data", json.RawMessage{}),
 		field.String("route_owner").MaxLen(40).Default("").Immutable(),
 		field.String("route_reference").MaxLen(100).Default("").Immutable(),
@@ -66,7 +67,7 @@ func (TeamConfig) Edges() []ent.Edge {
 	return []ent.Edge{edge.From("team", Team.Type).Ref("configs").Field("team_id").Unique().Required()}
 }
 func (TeamConfig) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("team_id", "kind", "name").Unique()}
+	return []ent.Index{index.Fields("team_id", "kind", "name").Unique(), index.Fields("team_id", "builtin").Unique()}
 }
 
 // TeamProvider is a team's model provider (ADR 0006): the address its admin

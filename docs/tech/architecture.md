@@ -23,6 +23,11 @@ extension work or historical replay.
 
 ## Data flow
 
+New teams receive a built-in assistant preset in their creation transaction.
+It inherits the session model until an administrator selects a team model. The
+plugin exposes team-bound read/sync tools. The [team assistant plan](team-assistant.md)
+describes reviewed sharing, private artifacts, publication history and restoration.
+
 ```
 DSH + plugin ──Bearer──► server /api/configs, /api/llm/*  ──► ent ──► SQLite, Postgres or MySQL
                                │
@@ -45,11 +50,11 @@ in DSH's web shell, a Teamwork entry in the sidebar. The panel signs in, shows
 the team, its role and sync state, and applies the team's presets, models and
 pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
-token never reaches the browser. Publishing and members stay in the web
+token never reaches the browser. Publishing and members also have pages in the web
 console, one page per task under `/teams/{teamId}`: the overview, `models`
 (providers from `apps/console/src/lib/provider-catalog.ts`, and team models), `presets` (from
-`lib/preset-templates.ts` or blank), `plugins` and `members`. The panel links
-there for an admin and edits nothing on the server. Its components
+`lib/preset-templates.ts` or blank), `plugins`, `members`, `sharing` and `history`. The panel links
+there for management; separate host-approved agent tools call the same authorized server operations. Its components
 come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
 repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 
@@ -86,6 +91,14 @@ repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 A preset references a team model by id (`modelConfigId`) or names its own
 provider and model, never both; its `pluginDependencies` pin plugin entries of
 the same team at their exact version, checked when the preset is written.
+
+
+Resource sharing adds `resource_submissions` (frozen proposals and decisions),
+`config_revisions` (immutable publication content) and `resource_artifacts`
+(private archive metadata). Artifact bytes live under the persistent data
+directory. Config writes, approval and history commit together; history is
+retained after deletion. The [team assistant reference](team-assistant.md)
+describes exact dependency pins, access checks, export and restoration.
 
 ## A request through the team API
 

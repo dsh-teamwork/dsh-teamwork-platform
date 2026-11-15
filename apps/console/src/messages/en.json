@@ -275,7 +275,9 @@
       "usage": "Usage",
       "budgets": "Budgets",
       "presets": "Presets",
-      "plugins": "Plugins"
+      "plugins": "Plugins",
+      "sharing": "Sharing and review",
+      "history": "Versions and backups"
     },
     "switcher": {
       "label": "Switch team",
@@ -433,7 +435,7 @@
       "model": "Model",
       "chooseModel": "Choose a team model",
       "keepRoute": "Keep its own model: {route}",
-      "noModels": "No team models yet. Connect one on the Models page first.",
+      "noModels": "Inherit a session/local model, or ask an administrator to add a team model.",
       "tools": "DSH tools",
       "toolsHint": "Required: the preset cannot be picked without it. Optional: used when present, with a note when not.",
       "tool": {
@@ -453,7 +455,10 @@
       "saved": "Saved. Members get it at their next sync.",
       "added": "Added “{name}”.",
       "pinStale": "The plugin’s version changed; edit and save this preset to pin the new one.",
-      "pinStaleShort": "save again"
+      "pinStaleShort": "save again",
+      "inheritModel": "Use the session / local model",
+      "submitted": "Submitted for administrator review",
+      "submitForReview": "Submit for review"
     },
     "plugins": {
       "title": "Plugins",
@@ -478,6 +483,86 @@
       "about": "Description",
       "save": "Save",
       "saved": "Saved. Members get it at their next sync."
+    },
+    "sharing": {
+      "title": "Sharing and review",
+      "adminHint": "Review exact resource contents before publishing to this team.",
+      "memberHint": "Share presets and plugins with your team after administrator review.",
+      "importPreset": "Import a preset file",
+      "invalidFile": "Choose a preset JSON file up to 64 KiB.",
+      "note": "Change description",
+      "submit": "Submit for review",
+      "cancel": "Cancel",
+      "submitted": "Submitted for review",
+      "empty": "No submissions.",
+      "compare": "Compare contents",
+      "current": "Currently published",
+      "proposed": "Proposed content",
+      "baseVersion": "Based on version {version}",
+      "reviewer": "Reviewed by",
+      "approve": "Approve and publish",
+      "reject": "Reject",
+      "withdraw": "Withdraw",
+      "confirm": "{action}: {name}? This applies only to the selected team.",
+      "reason": "Review reason (required for rejection)",
+      "confirmAction": "Confirm action",
+      "previous": "Previous",
+      "next": "Next",
+      "done": "Action completed",
+      "states": {
+        "draft": "Draft",
+        "pending": "Awaiting review",
+        "published": "Published",
+        "rejected": "Rejected",
+        "withdrawn": "Withdrawn"
+      },
+      "importPlugin": "Choose a local plugin archive",
+      "uploadLimits": "Review included files before upload. Limits: 10 MiB compressed, 64 MiB expanded, 2000 entries.",
+      "includedFiles": "{count} included files",
+      "target": "Publication target",
+      "newPlugin": "New team plugin",
+      "uploadSubmit": "Confirm upload and submit for review",
+      "resourceName": "Resource name",
+      "prompt": "Role prompt",
+      "revise": "Revise / resubmit",
+      "formerMember": "Former team member"
+    },
+    "history": {
+      "title": "Versions and backups",
+      "hint": "Inspect approved history, export resources, or prepare a reviewed restore. Published versions are retained.",
+      "timezone": "Times shown in {zone}. The end time is exclusive.",
+      "kind": "Resource kind",
+      "allKinds": "All resources",
+      "presets": "Presets",
+      "plugins": "Plugins",
+      "resourceId": "Resource",
+      "author": "Author",
+      "from": "From",
+      "to": "Until",
+      "empty": "No publications in this range.",
+      "compare": "Compare with current version",
+      "historical": "Historical content",
+      "current": "Currently published",
+      "export": "Export backup",
+      "restore": "Restore this version",
+      "restoreNote": "Restore historical version {version}",
+      "draftCreated": "Restore draft created; submission and approval are still required.",
+      "openReview": "Open sharing and review",
+      "confirm": "Restore v{version} onto current v{base}? This creates a draft; no live content changes yet.",
+      "prepare": "Create restore draft",
+      "cancel": "Cancel",
+      "previous": "Previous",
+      "next": "Next",
+      "allResources": "All resources",
+      "allAuthors": "All authors",
+      "formerMember": "Former team member",
+      "reviewedBy": "Reviewed by {name}",
+      "sources": {
+        "system": "System provisioned",
+        "legacy": "Legacy baseline",
+        "direct": "Administrator publication",
+        "approved": "Approved publication"
+      }
     }
   },
   "usage": {
@@ -504,13 +589,22 @@
     "hostedRateHint": "Hosted prices are published by the service. These prices also determine the points counted against your team budgets.",
     "unpricedHint": "No current reference rate. Token usage is recorded, but points stay unpriced.",
     "weightHint": "Use these prices as internal usage weights rather than estimated supplier costs.",
-    "prices": { "input": "Uncached input", "cacheRead": "Cached input", "cacheWrite": "Cache write (if supported)", "output": "Output, including reasoning" },
+    "prices": {
+      "input": "Uncached input",
+      "cacheRead": "Cached input",
+      "cacheWrite": "Cache write (if supported)",
+      "output": "Output, including reasoning"
+    },
     "saved": "Reference rates updated",
     "save": "Save rates",
     "close": "Close",
     "refresh": "Refresh",
     "period": "Time range",
-    "periods": { "day": "Last 24 hours", "week": "Last 7 days", "month": "Last 30 days" },
+    "periods": {
+      "day": "Last 24 hours",
+      "week": "Last 7 days",
+      "month": "Last 30 days"
+    },
     "member": "Member",
     "allMembers": "All members",
     "formerMember": "Former member",
@@ -523,7 +617,14 @@
     "output": "Output tokens",
     "points": "Points",
     "status": "Status",
-    "states": { "running": "In progress", "settled": "Measured", "unpriced": "Unpriced", "pending": "Needs reconciliation", "failed": "Failed", "estimated": "Admin estimate" },
+    "states": {
+      "running": "In progress",
+      "settled": "Measured",
+      "unpriced": "Unpriced",
+      "pending": "Needs reconciliation",
+      "failed": "Failed",
+      "estimated": "Admin estimate"
+    },
     "accountingHint": "Cached tokens are included in input; reasoning is included in output. A dash means unpriced or unconfirmed, not zero consumption.",
     "count": "{count} calls",
     "previous": "Previous",
@@ -545,8 +646,16 @@
     "loading": "Loading budgets…",
     "emptyAdmin": "No budgets configured. Add a team cap or a default member allowance.",
     "emptyMember": "Your team has not configured budgets yet.",
-    "scopes": { "team": "Team", "default_member": "Default per member", "member": "Member override", "provider": "Provider" },
-    "periods": { "day": "Calendar day", "month": "Calendar month" },
+    "scopes": {
+      "team": "Team",
+      "default_member": "Default per member",
+      "member": "Member override",
+      "provider": "Provider"
+    },
+    "periods": {
+      "day": "Calendar day",
+      "month": "Calendar month"
+    },
     "pointLimit": "Point ceiling",
     "usedAndReserved": "Spent / reserved points",
     "notLimited": "Not limited",
@@ -573,15 +682,30 @@
     "exists": "This scope and period already have a budget. Close this dialog and edit its existing card.",
     "restoreDefault": "Restore default",
     "notify": "Email notifications",
-    "notifyChoices": { "admins": "Team admins", "both": "Team admins and the affected member", "owner": "Affected member only", "none": "In-app status only" },
+    "notifyChoices": {
+      "admins": "Team admins",
+      "both": "Team admins and the affected member",
+      "owner": "Affected member only",
+      "none": "In-app status only"
+    },
     "notices": "Recent email alerts",
     "noticeHint": "Alerts use your instance's SMTP service. In-app budget status works without email. Failed delivery never changes usage or limits.",
-    "noticeStates": { "pending": "Queued", "sending": "Sending", "sent": "Sent", "failed": "Delivery failed", "skipped": "No longer applicable" },
+    "noticeStates": {
+      "pending": "Queued",
+      "sending": "Sending",
+      "sent": "Sent",
+      "failed": "Delivery failed",
+      "skipped": "No longer applicable"
+    },
     "retry": "Retry delivery",
     "retryQueued": "Alert queued again",
     "formerMember": "Former member",
     "memberMode": "Personal allowance",
-    "memberModes": { "limited": "Set individual limits", "unlimited": "No personal cap; team limits still apply", "inherit": "Use the default member policy" },
+    "memberModes": {
+      "limited": "Set individual limits",
+      "unlimited": "No personal cap; team limits still apply",
+      "inherit": "Use the default member policy"
+    },
     "saved": "Budget updated",
     "save": "Save budget",
     "cancel": "Cancel"
@@ -642,6 +766,15 @@
     "config_owned": "This model is managed by the service.",
     "funding_unavailable": "Hosted models are temporarily unavailable.",
     "wallet_insufficient": "The team has insufficient available model credit.",
-    "usage_funding_resolution_required": "Hosted usage must be reconciled by the service operator."
+    "usage_funding_resolution_required": "Hosted usage must be reconciled by the service operator.",
+    "submission_conflict": "Submission changed. Refresh and try again.",
+    "submission_not_found": "Submission not found.",
+    "submission_author_required": "Only the author can perform this action.",
+    "reason_required": "A rejection reason is required.",
+    "unsafe_artifact": "Unsafe or unsupported plugin archive. Inspect the included files.",
+    "artifact_version_exists": "This package version already exists. Use a new version.",
+    "artifact_mismatch": "Plugin archive integrity check failed.",
+    "artifact_not_found": "Plugin artifact is unavailable.",
+    "revision_not_found": "Historical version not found."
   }
 }

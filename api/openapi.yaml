@@ -795,6 +795,177 @@ paths:
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/submissions:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Own submissions; administrators see the team
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/ResourceSubmission' } }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      summary: Create a private submission draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmissionInput' }
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceSubmission' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/submissions/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Read the exact owned submission or review it as administrator
+      responses:
+        '200':
+          description: Frozen proposal and current revision
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceSubmission' }
+        default: { $ref: '#/components/responses/Error' }
+    put:
+      summary: Edit an owned draft at its current revision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmissionInput' }
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceSubmission' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/submissions/{id}/{action}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: action, in: path, required: true, schema: { type: string, enum: [submit, approve, reject, withdraw] } }
+    post:
+      summary: Submit, withdraw, or explicitly review the frozen proposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewInput' }
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceSubmission' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/artifacts:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Upload an npm archive privately, up to 10 MiB
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '200':
+          description: Private artifact metadata
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceArtifact' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/artifacts/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Inspect an authorized artifact and its included files
+      responses:
+        '200':
+          description: Private artifact metadata
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceArtifact' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/artifacts/{id}/download:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Download a private plugin archive after a live membership check
+      responses:
+        '200':
+          description: Exact immutable plugin bytes
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/history:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Immutable publication history for team members, newest first
+      parameters:
+        - { name: configId, in: query, schema: { type: string } }
+        - { name: kind, in: query, schema: { type: string, enum: [model, preset, plugin] } }
+        - { name: authorId, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+      responses:
+        '200':
+          description: At most fifty immutable publications
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/ConfigRevision' } }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/history/{id}/restore:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: An administrator prepares a historical resource as a new review draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baseVersion, note]
+              additionalProperties: false
+              properties:
+                baseVersion: { type: integer, minimum: 0 }
+                note: { type: string, maxLength: 2000 }
+      responses:
+        '200':
+          description: Restore draft; not published until submitted and approved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceSubmission' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/history/{id}/export:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Export a resource manifest and retained plugin artifacts; administrator only
+      responses:
+        '200':
+          description: Backup archive, without provider keys or authentication material
+          content:
+            application/gzip:
+              schema: { type: string, format: binary }
+        default: { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     session: { type: apiKey, in: cookie, name: dsh-teamwork-session }
@@ -1032,8 +1203,9 @@ components:
     PresetData:
       type: object
       additionalProperties: false
-      description: References a team model (modelConfigId) or names its own provider and model, never both.
+      description: Inherits the session model, references a team model, or names a provider/model; exactly one choice.
       properties:
+        inheritModel: { type: boolean }
         provider: { type: string }
         model: { type: string }
         contextWindow: { $ref: '#/components/schemas/Tokens' }
@@ -1058,6 +1230,8 @@ components:
       required: [package, version]
       additionalProperties: false
       properties:
+        artifactId: { type: string }
+        sha256: { type: string, pattern: '^[a-f0-9]{64}$' }
         package: { type: string }
         version: { type: string }
         providesTools: { type: array, items: { type: string } }
@@ -1067,7 +1241,7 @@ components:
       required: [kind, name, data]
       properties:
         kind: { type: string, enum: [model, preset, plugin] }
-        name: { type: string, minLength: 1, maxLength: 100 }
+        name: { type: string, minLength: 1, maxLength: 120 }
         data:
           oneOf:
             - { $ref: '#/components/schemas/ModelData' }
@@ -1077,6 +1251,7 @@ components:
       type: object
       required: [id, kind, name, data, version, updatedAt]
       properties:
+        builtin: { type: string, enum: [team-assistant] }
         owner: { type: string, description: Protected route owner; absent for ordinary BYOK configurations. }
         id: { type: string }
         kind: { type: string, enum: [model, preset, plugin] }
@@ -1101,6 +1276,15 @@ components:
               teamName: { type: string }
               role: { type: string, enum: [admin, member] }
               configs: { type: array, items: { $ref: '#/components/schemas/Config' } }
+              pluginVersions:
+                type: array
+                items:
+                  type: object
+                  required: [configId, name, data]
+                  properties:
+                    configId: { type: string }
+                    name: { type: string }
+                    data: { $ref: '#/components/schemas/PluginData' }
     Team:
       type: object
       required: [id, name, role, members]
@@ -1134,3 +1318,63 @@ components:
         name: { type: string, nullable: true }
         image: { type: string, nullable: true }
         locale: { type: string, nullable: true, enum: [en, zh-CN, null] }
+    SubmissionInput:
+      type: object
+      required: [config, baseVersion, note]
+      additionalProperties: false
+      properties:
+        config: { $ref: '#/components/schemas/ConfigInput' }
+        configId: { type: string }
+        baseVersion: { type: integer, minimum: 0 }
+        revision: { type: integer, minimum: 0 }
+        note: { type: string, maxLength: 2000 }
+    ReviewInput:
+      type: object
+      required: [revision]
+      additionalProperties: false
+      properties:
+        revision: { type: integer, minimum: 1 }
+        reason: { type: string, maxLength: 2000 }
+    ResourceSubmission:
+      type: object
+      required: [id, configId, baseVersion, proposal, note, authorId, state, revision, reviewerId, reason, createdAt, updatedAt, decidedAt]
+      properties:
+        id: { type: string }
+        configId: { type: string }
+        baseVersion: { type: integer }
+        proposal: { $ref: '#/components/schemas/ConfigInput' }
+        note: { type: string }
+        authorId: { type: string }
+        state: { type: string, enum: [draft, pending, published, rejected, withdrawn] }
+        revision: { type: integer }
+        reviewerId: { type: string }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        decidedAt: { type: string, format: date-time, nullable: true }
+    ResourceArtifact:
+      type: object
+      required: [id, package, version, sha256, size, files, published]
+      properties:
+        id: { type: string }
+        package: { type: string }
+        version: { type: string }
+        sha256: { type: string }
+        size: { type: integer, minimum: 0 }
+        files: { type: array, items: { type: string } }
+        published: { type: boolean }
+    ConfigRevision:
+      type: object
+      required: [id, configId, kind, name, data, version, authorId, reviewerId, note, source, createdAt]
+      properties:
+        id: { type: string }
+        configId: { type: string }
+        kind: { type: string, enum: [model, preset, plugin] }
+        name: { type: string }
+        data: { type: object, additionalProperties: true }
+        version: { type: integer, minimum: 1 }
+        authorId: { type: string }
+        reviewerId: { type: string }
+        note: { type: string }
+        source: { type: string, enum: [system, legacy, direct, approved] }
+        createdAt: { type: string, format: date-time }

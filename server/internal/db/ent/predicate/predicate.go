@@ -24,6 +24,9 @@ type BudgetReservation func(*sql.Selector)
 // BudgetWindow is the predicate function for budgetwindow builders.
 type BudgetWindow func(*sql.Selector)
 
+// ConfigRevision is the predicate function for configrevision builders.
+type ConfigRevision func(*sql.Selector)
+
 // Identity is the predicate function for identity builders.
 type Identity func(*sql.Selector)
 
@@ -41,6 +44,12 @@ type Password func(*sql.Selector)
 
 // RateWindow is the predicate function for ratewindow builders.
 type RateWindow func(*sql.Selector)
+
+// ResourceArtifact is the predicate function for resourceartifact builders.
+type ResourceArtifact func(*sql.Selector)
+
+// ResourceSubmission is the predicate function for resourcesubmission builders.
+type ResourceSubmission func(*sql.Selector)
 
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)
