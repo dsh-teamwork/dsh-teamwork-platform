@@ -571,6 +571,69 @@ paths:
         '404': { $ref: '#/components/responses/Error' }
         '502': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/model-rates/{configId}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: configId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Read a model's reference price and revision
+      responses:
+        '200':
+          description: Configured rate or an unpriced model
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRate' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+    put:
+      summary: An admin publishes a new immutable reference-price version
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModelRateInput' }
+      responses:
+        '200':
+          description: The new reference price
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRate' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/usage:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: An admin reads team usage; a member reads only their own
+      parameters:
+        - { name: userId, in: query, schema: { type: string } }
+        - { name: configId, in: query, schema: { type: string } }
+        - { name: since, in: query, schema: { type: string, format: date-time } }
+        - { name: until, in: query, schema: { type: string, format: date-time } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 10000 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+      responses:
+        '200':
+          description: Scoped usage; null points mean unpriced or unsettled
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [entries, total, page, size]
+                properties:
+                  entries: { type: array, items: { $ref: '#/components/schemas/UsageEntry' } }
+                  total: { type: integer }
+                  page: { type: integer }
+                  size: { type: integer }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
   /locale:
     post:
       summary: Choose the interface language
@@ -633,6 +696,40 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
   schemas:
+    ModelRateInput:
+      type: object
+      required: [revision, basis, input, cacheRead, cacheWrite, output]
+      properties:
+        revision: { type: integer, minimum: 0, maximum: 1000000000 }
+        basis: { type: string, enum: [cost, weight] }
+        input: { type: string }
+        cacheRead: { type: string }
+        cacheWrite: { type: string }
+        output: { type: string }
+    ModelRate:
+      allOf:
+        - { $ref: '#/components/schemas/ModelRateInput' }
+        - type: object
+          required: [configured]
+          properties:
+            configured: { type: boolean }
+    UsageEntry:
+      type: object
+      required: [id, userId, configId, provider, model, state, createdAt, finishedAt, input, cacheRead, output, reasoning, points]
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        configId: { type: string }
+        provider: { type: string }
+        model: { type: string }
+        state: { type: string, enum: [running, settled, unpriced, pending, failed] }
+        createdAt: { type: string, format: date-time }
+        finishedAt: { type: string, nullable: true, format: date-time }
+        input: { type: integer, nullable: true }
+        cacheRead: { type: integer, nullable: true }
+        output: { type: integer, nullable: true }
+        reasoning: { type: integer, nullable: true }
+        points: { type: string, nullable: true }
     Error:
       type: object
       required: [error]

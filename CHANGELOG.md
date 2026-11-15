@@ -5,6 +5,12 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-14 — Community model reference prices and usage records
+
+- **What:** Admins publish revisioned model reference rates from Models. The gateway snapshots rates before dispatch, observes JSON/SSE token usage and stores exact reference points; Usage shows team records to admins and only personal records to members. Unpriced and interrupted calls stay explicitly unpriced/pending. Referenced presets use their model's rates. Public schemas/migrations cover SQLite, Postgres and MySQL. Console routes load on demand to keep new administration forms out of the initial bundle.
+- **Upgrade:** The binary applies the new public migrations. Set model rates to value future calls; existing calls are not repriced. This slice records usage and does not yet enforce budgets or charge money.
+- **Refs:** `docs/adr/0015-community-usage-and-budgets.md`, `docs/adr/0016-reference-usage-accounting.md`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-14 — The Node server is gone; the Go binary is the only server
 
 - **What:** `apps/web` (Next.js and Auth.js), `packages/db` (Prisma, PGlite and their migrations), the server half of `packages/shared` and the parity run are deleted. `packages/shared` keeps the languages and `matchLocale`, which `apps/console` now imports. `pnpm dev:setup` starts Postgres 16 and MySQL 8.4 for the Go suites and prints the four variables they read; `dev:shared`, `dev:web`, `build:web`, the `postinstall` and every `db:*` script but `db:drift` are gone, as are `railpack.json`, `DATABASE_URL` and `SHADOW_DATABASE_URL` in CI, and the PGlite test run. `CLAUDE.md`, the README, `docs/tech/architecture.md` and `docs/tech/community-edition.md` describe the Go server.

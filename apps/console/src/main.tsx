@@ -1,28 +1,33 @@
 import './globals.css';
 
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
 import { Toaster } from 'sonner';
 import { IntlProvider } from 'use-intl';
 
 import { startAnalytics } from '@/lib/analytics';
+import { Loading } from '@/components/page';
 import { currentLocale } from '@/lib/locale';
 import { RequireUser, SessionProvider } from '@/lib/session';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
-import { AccountPage } from '@/pages/account';
-import { PasswordPage } from '@/pages/password';
-import { PluginPage } from '@/pages/plugin';
-import { SetupPage } from '@/pages/setup';
-import { SignInPage } from '@/pages/sign-in';
-import { TeamLayout } from '@/pages/team/layout';
-import { TeamMembersPage } from '@/pages/team/members';
-import { TeamModelsPage } from '@/pages/team/models';
-import { TeamOverviewPage } from '@/pages/team/overview';
-import { TeamPluginsPage } from '@/pages/team/plugins';
-import { TeamPresetsPage } from '@/pages/team/presets';
-import { TeamsPage } from '@/pages/teams';
+
+// Team administration loads only when opened, keeping sign-in and plugin
+// confirmation independent of the model, usage and budget forms.
+const AccountPage = lazy(() => import('@/pages/account').then((m) => ({ default: m.AccountPage })));
+const PasswordPage = lazy(() => import('@/pages/password').then((m) => ({ default: m.PasswordPage })));
+const PluginPage = lazy(() => import('@/pages/plugin').then((m) => ({ default: m.PluginPage })));
+const SetupPage = lazy(() => import('@/pages/setup').then((m) => ({ default: m.SetupPage })));
+const SignInPage = lazy(() => import('@/pages/sign-in').then((m) => ({ default: m.SignInPage })));
+const TeamLayout = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.TeamLayout })));
+const TeamMembersPage = lazy(() => import('@/pages/team/members').then((m) => ({ default: m.TeamMembersPage })));
+const TeamModelsPage = lazy(() => import('@/pages/team/models').then((m) => ({ default: m.TeamModelsPage })));
+const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamOverviewPage })));
+const TeamPluginsPage = lazy(() => import('@/pages/team/plugins').then((m) => ({ default: m.TeamPluginsPage })));
+const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
+const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
+const TeamsPage = lazy(() => import('@/pages/teams').then((m) => ({ default: m.TeamsPage })));
 
 const locale = currentLocale();
 document.documentElement.lang = locale;
@@ -45,6 +50,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <TeamOverviewPage /> },
           { path: 'models', element: <TeamModelsPage /> },
+          { path: 'usage', element: <TeamUsagePage /> },
           { path: 'presets', element: <TeamPresetsPage /> },
           { path: 'plugins', element: <TeamPluginsPage /> },
           { path: 'members', element: <TeamMembersPage /> },
@@ -59,7 +65,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <IntlProvider locale={locale} messages={locale === 'zh-CN' ? zhCN : en} timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}>
       <SessionProvider>
-        <RouterProvider router={router} />
+        <Suspense fallback={<Loading />}><RouterProvider router={router} /></Suspense>
         <Toaster richColors />
       </SessionProvider>
     </IntlProvider>

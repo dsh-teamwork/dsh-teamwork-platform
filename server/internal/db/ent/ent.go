@@ -15,11 +15,13 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/verificationcode"
 )
@@ -85,11 +87,13 @@ func checkColumn(t, c string) error {
 			identity.Table:         identity.ValidColumn,
 			invite.Table:           invite.ValidColumn,
 			membership.Table:       membership.ValidColumn,
+			modelrate.Table:        modelrate.ValidColumn,
 			password.Table:         password.ValidColumn,
 			ratewindow.Table:       ratewindow.ValidColumn,
 			team.Table:             team.ValidColumn,
 			teamconfig.Table:       teamconfig.ValidColumn,
 			teamprovider.Table:     teamprovider.ValidColumn,
+			usagerequest.Table:     usagerequest.ValidColumn,
 			user.Table:             user.ValidColumn,
 			verificationcode.Table: verificationcode.ValidColumn,
 		})

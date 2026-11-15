@@ -9,14 +9,17 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
@@ -33,11 +36,12 @@ var forwarded = []string{"messages", "stream", "stream_options", "temperature", 
 type Gateway struct {
 	Team   *team.Service
 	Client *http.Client // Team.Network.Client() in production
+	Usage  *usage.Service
 }
 
 type target struct {
-	teamID, provider, model string
-	maxTokens               int64
+	teamID, configID, provider, model string
+	maxTokens                         int64
 }
 
 func forbidden() error { return wire.E(http.StatusForbidden, wire.ModelForbidden) }
@@ -63,6 +67,7 @@ func (g *Gateway) resolve(ctx context.Context, userID, configID string) (target,
 		return target{}, forbidden()
 	}
 	data := c.Data
+	effectiveID := c.ID
 	var ref struct {
 		ModelConfigID *string `json:"modelConfigId"`
 	}
@@ -76,6 +81,7 @@ func (g *Gateway) resolve(ctx context.Context, userID, configID string) (target,
 			return target{}, err
 		}
 		data = m.Data
+		effectiveID = m.ID
 	}
 	var route struct {
 		Provider  string `json:"provider"`
@@ -85,7 +91,7 @@ func (g *Gateway) resolve(ctx context.Context, userID, configID string) (target,
 	if err := json.Unmarshal(data, &route); err != nil || route.Provider == "" || route.Model == "" {
 		return target{}, forbidden()
 	}
-	t := target{teamID: c.TeamID, provider: route.Provider, model: route.Model}
+	t := target{teamID: c.TeamID, configID: effectiveID, provider: route.Provider, model: route.Model}
 	if route.MaxTokens != nil {
 		t.maxTokens = *route.MaxTokens
 	}
@@ -161,6 +167,26 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID str
 	payload["model"], _ = json.Marshal(t.model)
 	out, _ := json.Marshal(payload)
 
+	// Record before dispatch. A caller cannot supply attribution or price facts.
+	meter := g.Usage
+	if meter == nil {
+		meter = &usage.Service{DB: g.Team.DB}
+	}
+	tracked, err := meter.Begin(ctx, usage.Call{TeamID: t.teamID, UserID: userID,
+		SubmittedConfigID: model, ConfigID: t.configID, Provider: t.provider, Model: t.model, Stream: stream})
+	if err != nil {
+		return wire.E(http.StatusServiceUnavailable, "usage_unavailable")
+	}
+	observer := usage.NewObserver(stream)
+	eof, failure := false, "upstream_unavailable"
+	defer func() {
+		settle, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		if err := meter.Finish(settle, tracked, observer.Finish(eof), failure); err != nil {
+			slog.Error("usage settlement failed", "requestId", tracked.ID, "error", err)
+		}
+	}()
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/chat/completions", bytes.NewReader(out))
 	if err != nil {
 		return wire.E(http.StatusBadGateway, wire.UpstreamUnavailable)
@@ -182,6 +208,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID str
 		return wire.E(http.StatusBadGateway, wire.UpstreamUnavailable)
 	}
 	// Upstream headers (cookies, request ids, rate-limit detail) are not passed on.
+	failure = ""
 	h := w.Header()
 	if stream {
 		h.Set("Content-Type", "text/event-stream")
@@ -196,15 +223,19 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID str
 	for {
 		n, err := res.Body.Read(buf)
 		if n > 0 {
+			observer.Write(buf[:n])
 			if _, werr := w.Write(buf[:n]); werr != nil {
+				failure = "client_disconnected"
 				return nil // the caller went away
 			}
 			flush.Flush()
 		}
 		if err == io.EOF {
+			eof = true
 			return nil
 		}
 		if err != nil {
+			failure = "upstream_interrupted"
 			return nil // headers are sent: the stream simply ends
 		}
 	}

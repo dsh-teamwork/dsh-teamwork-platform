@@ -40,6 +40,9 @@ func here() string {
 func build(t *testing.T) string {
 	t.Helper()
 	bin := filepath.Join(t.TempDir(), "dsh-teamwork")
+	if runtime.GOOS == "windows" {
+		bin += ".exe"
+	}
 	cmd := exec.Command("go", "build", "-o", bin, "./cmd/dsh-teamwork")
 	cmd.Dir = filepath.Join(here(), "..")
 	if out, err := cmd.CombinedOutput(); err != nil {
@@ -78,7 +81,11 @@ func serve(t *testing.T, bin, databaseURL string) string {
 	exited := make(chan error, 1)
 	go func() { exited <- cmd.Wait() }()
 	t.Cleanup(func() {
-		cmd.Process.Signal(os.Interrupt)
+		if runtime.GOOS == "windows" {
+			cmd.Process.Kill()
+		} else {
+			cmd.Process.Signal(os.Interrupt)
+		}
 		<-exited
 		if t.Failed() {
 			t.Logf("server log:\n%s", log.String())

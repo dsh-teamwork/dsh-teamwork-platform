@@ -113,6 +113,35 @@ var (
 			},
 		},
 	}
+	// ModelRatesColumns holds the columns for the "model_rates" table.
+	ModelRatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "config_id", Type: field.TypeString, Size: 32},
+		{Name: "provider", Type: field.TypeString, Size: 400},
+		{Name: "model", Type: field.TypeString, Size: 400},
+		{Name: "revision", Type: field.TypeInt},
+		{Name: "basis", Type: field.TypeEnum, Enums: []string{"cost", "weight"}},
+		{Name: "input_rate", Type: field.TypeInt64},
+		{Name: "cache_read_rate", Type: field.TypeInt64},
+		{Name: "cache_write_rate", Type: field.TypeInt64},
+		{Name: "output_rate", Type: field.TypeInt64},
+		{Name: "actor_id", Type: field.TypeString, Size: 32},
+	}
+	// ModelRatesTable holds the schema information for the "model_rates" table.
+	ModelRatesTable = &schema.Table{
+		Name:       "model_rates",
+		Columns:    ModelRatesColumns,
+		PrimaryKey: []*schema.Column{ModelRatesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "modelrate_team_id_config_id_revision",
+				Unique:  true,
+				Columns: []*schema.Column{ModelRatesColumns[2], ModelRatesColumns[3], ModelRatesColumns[6]},
+			},
+		},
+	}
 	// PasswordsColumns holds the columns for the "passwords" table.
 	PasswordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -225,6 +254,58 @@ var (
 			},
 		},
 	}
+	// UsageRequestsColumns holds the columns for the "usage_requests" table.
+	UsageRequestsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "submitted_config_id", Type: field.TypeString, Size: 32},
+		{Name: "config_id", Type: field.TypeString, Size: 32},
+		{Name: "provider", Type: field.TypeString, Size: 400},
+		{Name: "model", Type: field.TypeString, Size: 400},
+		{Name: "stream", Type: field.TypeBool},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"running", "settled", "unpriced", "pending", "failed"}, Default: "running"},
+		{Name: "rate_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "rates", Type: field.TypeJSON, Nullable: true},
+		{Name: "point_units", Type: field.TypeInt64, Nullable: true},
+		{Name: "input_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "cache_read_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "cache_write_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "output_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "reasoning_tokens", Type: field.TypeInt64, Nullable: true},
+		{Name: "provider_request_id", Type: field.TypeString, Size: 200, Default: ""},
+		{Name: "error_code", Type: field.TypeString, Size: 64, Default: ""},
+		{Name: "finished_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// UsageRequestsTable holds the schema information for the "usage_requests" table.
+	UsageRequestsTable = &schema.Table{
+		Name:       "usage_requests",
+		Columns:    UsageRequestsColumns,
+		PrimaryKey: []*schema.Column{UsageRequestsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "usagerequest_team_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[1]},
+			},
+			{
+				Name:    "usagerequest_team_id_user_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[3], UsageRequestsColumns[1]},
+			},
+			{
+				Name:    "usagerequest_team_id_config_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[5], UsageRequestsColumns[1]},
+			},
+			{
+				Name:    "usagerequest_state_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UsageRequestsColumns[9], UsageRequestsColumns[1]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -268,11 +349,13 @@ var (
 		IdentitiesTable,
 		InvitesTable,
 		MembershipsTable,
+		ModelRatesTable,
 		PasswordsTable,
 		RateWindowsTable,
 		TeamsTable,
 		TeamConfigsTable,
 		TeamProvidersTable,
+		UsageRequestsTable,
 		UsersTable,
 		VerificationCodesTable,
 	}
@@ -292,6 +375,10 @@ func init() {
 	MembershipsTable.ForeignKeys[0].RefTable = TeamsTable
 	MembershipsTable.ForeignKeys[1].RefTable = UsersTable
 	MembershipsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	ModelRatesTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}
@@ -315,6 +402,10 @@ func init() {
 	}
 	TeamProvidersTable.ForeignKeys[0].RefTable = TeamsTable
 	TeamProvidersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	UsageRequestsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

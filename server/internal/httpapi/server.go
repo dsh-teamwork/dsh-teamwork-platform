@@ -12,6 +12,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -22,6 +23,7 @@ type Server struct {
 	Auth      *auth.Service
 	Team      *team.Service
 	Gateway   *gateway.Gateway
+	Usage     *usage.Service
 	Mailer    auth.Mailer       // where SMTP_URL is set
 	Google    *auth.Google      // where the Google door is configured
 	Analytics *analytics.Client // nil or keyless sends nothing
@@ -48,6 +50,9 @@ func (s *Server) route(h handler, write bool) http.HandlerFunc {
 
 // Handler is every route.
 func (s *Server) Handler() http.Handler {
+	if s.Usage == nil && s.Team != nil {
+		s.Usage = &usage.Service{DB: s.Team.DB}
+	}
 	mux := s.Mux
 	if mux == nil {
 		mux = http.NewServeMux()
@@ -90,6 +95,9 @@ func (s *Server) Handler() http.Handler {
 	write("PUT", "/api/teams/{teamId}/providers/{id}", s.updateProvider)
 	write("DELETE", "/api/teams/{teamId}/providers/{id}", s.deleteProvider)
 	get("/api/teams/{teamId}/model-catalog", s.modelCatalog)
+	get("/api/teams/{teamId}/model-rates/{configId}", s.getModelRate)
+	write("PUT", "/api/teams/{teamId}/model-rates/{configId}", s.setModelRate)
+	get("/api/teams/{teamId}/usage", s.listUsage)
 	get("/api/profile", s.getProfile)
 	write("PATCH", "/api/profile", s.updateProfile)
 	post("/api/locale", s.chooseLocale)

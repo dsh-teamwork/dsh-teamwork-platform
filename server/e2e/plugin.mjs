@@ -7,10 +7,11 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const { BASE, SETUP_TOKEN, STUB_URL, PLUGIN } = process.env;
-const { TeamworkClient } = await import(join(PLUGIN, 'lib/client.js'));
-const { listenForCode } = await import(join(PLUGIN, 'lib/login-callback.js'));
+const { TeamworkClient } = await import(pathToFileURL(join(PLUGIN, 'lib/client.js')).href);
+const { listenForCode } = await import(pathToFileURL(join(PLUGIN, 'lib/login-callback.js')).href);
 
 // The browser: the site's own Origin, and the session cookie it was given.
 let cookie = '';

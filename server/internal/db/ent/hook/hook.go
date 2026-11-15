@@ -45,6 +45,18 @@ func (f MembershipFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MembershipMutation", m)
 }
 
+// The ModelRateFunc type is an adapter to allow the use of ordinary
+// function as ModelRate mutator.
+type ModelRateFunc func(context.Context, *ent.ModelRateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ModelRateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ModelRateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ModelRateMutation", m)
+}
+
 // The PasswordFunc type is an adapter to allow the use of ordinary
 // function as Password mutator.
 type PasswordFunc func(context.Context, *ent.PasswordMutation) (ent.Value, error)
@@ -103,6 +115,18 @@ func (f TeamProviderFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TeamProviderMutation", m)
+}
+
+// The UsageRequestFunc type is an adapter to allow the use of ordinary
+// function as UsageRequest mutator.
+type UsageRequestFunc func(context.Context, *ent.UsageRequestMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UsageRequestFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UsageRequestMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UsageRequestMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

@@ -15,12 +15,14 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/predicate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/verificationcode"
 )
@@ -37,11 +39,13 @@ const (
 	TypeIdentity         = "Identity"
 	TypeInvite           = "Invite"
 	TypeMembership       = "Membership"
+	TypeModelRate        = "ModelRate"
 	TypePassword         = "Password"
 	TypeRateWindow       = "RateWindow"
 	TypeTeam             = "Team"
 	TypeTeamConfig       = "TeamConfig"
 	TypeTeamProvider     = "TeamProvider"
+	TypeUsageRequest     = "UsageRequest"
 	TypeUser             = "User"
 	TypeVerificationCode = "VerificationCode"
 )
@@ -1810,6 +1814,1100 @@ func (m *MembershipMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Membership edge %s", name)
+}
+
+// ModelRateMutation represents an operation that mutates the ModelRate nodes in the graph.
+type ModelRateMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *string
+	created_at          *time.Time
+	team_id             *string
+	config_id           *string
+	provider            *string
+	model               *string
+	revision            *int
+	addrevision         *int
+	basis               *modelrate.Basis
+	input_rate          *int64
+	addinput_rate       *int64
+	cache_read_rate     *int64
+	addcache_read_rate  *int64
+	cache_write_rate    *int64
+	addcache_write_rate *int64
+	output_rate         *int64
+	addoutput_rate      *int64
+	actor_id            *string
+	clearedFields       map[string]struct{}
+	done                bool
+	oldValue            func(context.Context) (*ModelRate, error)
+	predicates          []predicate.ModelRate
+}
+
+var _ ent.Mutation = (*ModelRateMutation)(nil)
+
+// modelrateOption allows management of the mutation configuration using functional options.
+type modelrateOption func(*ModelRateMutation)
+
+// newModelRateMutation creates new mutation for the ModelRate entity.
+func newModelRateMutation(c config, op Op, opts ...modelrateOption) *ModelRateMutation {
+	m := &ModelRateMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeModelRate,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withModelRateID sets the ID field of the mutation.
+func withModelRateID(id string) modelrateOption {
+	return func(m *ModelRateMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ModelRate
+		)
+		m.oldValue = func(ctx context.Context) (*ModelRate, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ModelRate.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withModelRate sets the old ModelRate of the mutation.
+func withModelRate(node *ModelRate) modelrateOption {
+	return func(m *ModelRateMutation) {
+		m.oldValue = func(context.Context) (*ModelRate, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ModelRateMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ModelRateMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ModelRate entities.
+func (m *ModelRateMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ModelRateMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ModelRateMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ModelRate.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ModelRateMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ModelRateMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ModelRateMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *ModelRateMutation) SetTeamID(s string) {
+	m.team_id = &s
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *ModelRateMutation) TeamID() (r string, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldTeamID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *ModelRateMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetConfigID sets the "config_id" field.
+func (m *ModelRateMutation) SetConfigID(s string) {
+	m.config_id = &s
+}
+
+// ConfigID returns the value of the "config_id" field in the mutation.
+func (m *ModelRateMutation) ConfigID() (r string, exists bool) {
+	v := m.config_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfigID returns the old "config_id" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldConfigID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfigID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfigID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfigID: %w", err)
+	}
+	return oldValue.ConfigID, nil
+}
+
+// ResetConfigID resets all changes to the "config_id" field.
+func (m *ModelRateMutation) ResetConfigID() {
+	m.config_id = nil
+}
+
+// SetProvider sets the "provider" field.
+func (m *ModelRateMutation) SetProvider(s string) {
+	m.provider = &s
+}
+
+// Provider returns the value of the "provider" field in the mutation.
+func (m *ModelRateMutation) Provider() (r string, exists bool) {
+	v := m.provider
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProvider returns the old "provider" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldProvider(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProvider is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProvider requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProvider: %w", err)
+	}
+	return oldValue.Provider, nil
+}
+
+// ResetProvider resets all changes to the "provider" field.
+func (m *ModelRateMutation) ResetProvider() {
+	m.provider = nil
+}
+
+// SetModel sets the "model" field.
+func (m *ModelRateMutation) SetModel(s string) {
+	m.model = &s
+}
+
+// Model returns the value of the "model" field in the mutation.
+func (m *ModelRateMutation) Model() (r string, exists bool) {
+	v := m.model
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldModel returns the old "model" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldModel(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldModel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldModel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldModel: %w", err)
+	}
+	return oldValue.Model, nil
+}
+
+// ResetModel resets all changes to the "model" field.
+func (m *ModelRateMutation) ResetModel() {
+	m.model = nil
+}
+
+// SetRevision sets the "revision" field.
+func (m *ModelRateMutation) SetRevision(i int) {
+	m.revision = &i
+	m.addrevision = nil
+}
+
+// Revision returns the value of the "revision" field in the mutation.
+func (m *ModelRateMutation) Revision() (r int, exists bool) {
+	v := m.revision
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRevision returns the old "revision" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldRevision(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRevision is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRevision requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRevision: %w", err)
+	}
+	return oldValue.Revision, nil
+}
+
+// AddRevision adds i to the "revision" field.
+func (m *ModelRateMutation) AddRevision(i int) {
+	if m.addrevision != nil {
+		*m.addrevision += i
+	} else {
+		m.addrevision = &i
+	}
+}
+
+// AddedRevision returns the value that was added to the "revision" field in this mutation.
+func (m *ModelRateMutation) AddedRevision() (r int, exists bool) {
+	v := m.addrevision
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRevision resets all changes to the "revision" field.
+func (m *ModelRateMutation) ResetRevision() {
+	m.revision = nil
+	m.addrevision = nil
+}
+
+// SetBasis sets the "basis" field.
+func (m *ModelRateMutation) SetBasis(value modelrate.Basis) {
+	m.basis = &value
+}
+
+// Basis returns the value of the "basis" field in the mutation.
+func (m *ModelRateMutation) Basis() (r modelrate.Basis, exists bool) {
+	v := m.basis
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBasis returns the old "basis" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldBasis(ctx context.Context) (v modelrate.Basis, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBasis is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBasis requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBasis: %w", err)
+	}
+	return oldValue.Basis, nil
+}
+
+// ResetBasis resets all changes to the "basis" field.
+func (m *ModelRateMutation) ResetBasis() {
+	m.basis = nil
+}
+
+// SetInputRate sets the "input_rate" field.
+func (m *ModelRateMutation) SetInputRate(i int64) {
+	m.input_rate = &i
+	m.addinput_rate = nil
+}
+
+// InputRate returns the value of the "input_rate" field in the mutation.
+func (m *ModelRateMutation) InputRate() (r int64, exists bool) {
+	v := m.input_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInputRate returns the old "input_rate" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldInputRate(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInputRate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInputRate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInputRate: %w", err)
+	}
+	return oldValue.InputRate, nil
+}
+
+// AddInputRate adds i to the "input_rate" field.
+func (m *ModelRateMutation) AddInputRate(i int64) {
+	if m.addinput_rate != nil {
+		*m.addinput_rate += i
+	} else {
+		m.addinput_rate = &i
+	}
+}
+
+// AddedInputRate returns the value that was added to the "input_rate" field in this mutation.
+func (m *ModelRateMutation) AddedInputRate() (r int64, exists bool) {
+	v := m.addinput_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetInputRate resets all changes to the "input_rate" field.
+func (m *ModelRateMutation) ResetInputRate() {
+	m.input_rate = nil
+	m.addinput_rate = nil
+}
+
+// SetCacheReadRate sets the "cache_read_rate" field.
+func (m *ModelRateMutation) SetCacheReadRate(i int64) {
+	m.cache_read_rate = &i
+	m.addcache_read_rate = nil
+}
+
+// CacheReadRate returns the value of the "cache_read_rate" field in the mutation.
+func (m *ModelRateMutation) CacheReadRate() (r int64, exists bool) {
+	v := m.cache_read_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCacheReadRate returns the old "cache_read_rate" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldCacheReadRate(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCacheReadRate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCacheReadRate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCacheReadRate: %w", err)
+	}
+	return oldValue.CacheReadRate, nil
+}
+
+// AddCacheReadRate adds i to the "cache_read_rate" field.
+func (m *ModelRateMutation) AddCacheReadRate(i int64) {
+	if m.addcache_read_rate != nil {
+		*m.addcache_read_rate += i
+	} else {
+		m.addcache_read_rate = &i
+	}
+}
+
+// AddedCacheReadRate returns the value that was added to the "cache_read_rate" field in this mutation.
+func (m *ModelRateMutation) AddedCacheReadRate() (r int64, exists bool) {
+	v := m.addcache_read_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCacheReadRate resets all changes to the "cache_read_rate" field.
+func (m *ModelRateMutation) ResetCacheReadRate() {
+	m.cache_read_rate = nil
+	m.addcache_read_rate = nil
+}
+
+// SetCacheWriteRate sets the "cache_write_rate" field.
+func (m *ModelRateMutation) SetCacheWriteRate(i int64) {
+	m.cache_write_rate = &i
+	m.addcache_write_rate = nil
+}
+
+// CacheWriteRate returns the value of the "cache_write_rate" field in the mutation.
+func (m *ModelRateMutation) CacheWriteRate() (r int64, exists bool) {
+	v := m.cache_write_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCacheWriteRate returns the old "cache_write_rate" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldCacheWriteRate(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCacheWriteRate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCacheWriteRate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCacheWriteRate: %w", err)
+	}
+	return oldValue.CacheWriteRate, nil
+}
+
+// AddCacheWriteRate adds i to the "cache_write_rate" field.
+func (m *ModelRateMutation) AddCacheWriteRate(i int64) {
+	if m.addcache_write_rate != nil {
+		*m.addcache_write_rate += i
+	} else {
+		m.addcache_write_rate = &i
+	}
+}
+
+// AddedCacheWriteRate returns the value that was added to the "cache_write_rate" field in this mutation.
+func (m *ModelRateMutation) AddedCacheWriteRate() (r int64, exists bool) {
+	v := m.addcache_write_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCacheWriteRate resets all changes to the "cache_write_rate" field.
+func (m *ModelRateMutation) ResetCacheWriteRate() {
+	m.cache_write_rate = nil
+	m.addcache_write_rate = nil
+}
+
+// SetOutputRate sets the "output_rate" field.
+func (m *ModelRateMutation) SetOutputRate(i int64) {
+	m.output_rate = &i
+	m.addoutput_rate = nil
+}
+
+// OutputRate returns the value of the "output_rate" field in the mutation.
+func (m *ModelRateMutation) OutputRate() (r int64, exists bool) {
+	v := m.output_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOutputRate returns the old "output_rate" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldOutputRate(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOutputRate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOutputRate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOutputRate: %w", err)
+	}
+	return oldValue.OutputRate, nil
+}
+
+// AddOutputRate adds i to the "output_rate" field.
+func (m *ModelRateMutation) AddOutputRate(i int64) {
+	if m.addoutput_rate != nil {
+		*m.addoutput_rate += i
+	} else {
+		m.addoutput_rate = &i
+	}
+}
+
+// AddedOutputRate returns the value that was added to the "output_rate" field in this mutation.
+func (m *ModelRateMutation) AddedOutputRate() (r int64, exists bool) {
+	v := m.addoutput_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOutputRate resets all changes to the "output_rate" field.
+func (m *ModelRateMutation) ResetOutputRate() {
+	m.output_rate = nil
+	m.addoutput_rate = nil
+}
+
+// SetActorID sets the "actor_id" field.
+func (m *ModelRateMutation) SetActorID(s string) {
+	m.actor_id = &s
+}
+
+// ActorID returns the value of the "actor_id" field in the mutation.
+func (m *ModelRateMutation) ActorID() (r string, exists bool) {
+	v := m.actor_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActorID returns the old "actor_id" field's value of the ModelRate entity.
+// If the ModelRate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ModelRateMutation) OldActorID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActorID: %w", err)
+	}
+	return oldValue.ActorID, nil
+}
+
+// ResetActorID resets all changes to the "actor_id" field.
+func (m *ModelRateMutation) ResetActorID() {
+	m.actor_id = nil
+}
+
+// Where appends a list predicates to the ModelRateMutation builder.
+func (m *ModelRateMutation) Where(ps ...predicate.ModelRate) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ModelRateMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ModelRateMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ModelRate, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ModelRateMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ModelRateMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ModelRate).
+func (m *ModelRateMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ModelRateMutation) Fields() []string {
+	fields := make([]string, 0, 12)
+	if m.created_at != nil {
+		fields = append(fields, modelrate.FieldCreatedAt)
+	}
+	if m.team_id != nil {
+		fields = append(fields, modelrate.FieldTeamID)
+	}
+	if m.config_id != nil {
+		fields = append(fields, modelrate.FieldConfigID)
+	}
+	if m.provider != nil {
+		fields = append(fields, modelrate.FieldProvider)
+	}
+	if m.model != nil {
+		fields = append(fields, modelrate.FieldModel)
+	}
+	if m.revision != nil {
+		fields = append(fields, modelrate.FieldRevision)
+	}
+	if m.basis != nil {
+		fields = append(fields, modelrate.FieldBasis)
+	}
+	if m.input_rate != nil {
+		fields = append(fields, modelrate.FieldInputRate)
+	}
+	if m.cache_read_rate != nil {
+		fields = append(fields, modelrate.FieldCacheReadRate)
+	}
+	if m.cache_write_rate != nil {
+		fields = append(fields, modelrate.FieldCacheWriteRate)
+	}
+	if m.output_rate != nil {
+		fields = append(fields, modelrate.FieldOutputRate)
+	}
+	if m.actor_id != nil {
+		fields = append(fields, modelrate.FieldActorID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ModelRateMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case modelrate.FieldCreatedAt:
+		return m.CreatedAt()
+	case modelrate.FieldTeamID:
+		return m.TeamID()
+	case modelrate.FieldConfigID:
+		return m.ConfigID()
+	case modelrate.FieldProvider:
+		return m.Provider()
+	case modelrate.FieldModel:
+		return m.Model()
+	case modelrate.FieldRevision:
+		return m.Revision()
+	case modelrate.FieldBasis:
+		return m.Basis()
+	case modelrate.FieldInputRate:
+		return m.InputRate()
+	case modelrate.FieldCacheReadRate:
+		return m.CacheReadRate()
+	case modelrate.FieldCacheWriteRate:
+		return m.CacheWriteRate()
+	case modelrate.FieldOutputRate:
+		return m.OutputRate()
+	case modelrate.FieldActorID:
+		return m.ActorID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ModelRateMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case modelrate.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case modelrate.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case modelrate.FieldConfigID:
+		return m.OldConfigID(ctx)
+	case modelrate.FieldProvider:
+		return m.OldProvider(ctx)
+	case modelrate.FieldModel:
+		return m.OldModel(ctx)
+	case modelrate.FieldRevision:
+		return m.OldRevision(ctx)
+	case modelrate.FieldBasis:
+		return m.OldBasis(ctx)
+	case modelrate.FieldInputRate:
+		return m.OldInputRate(ctx)
+	case modelrate.FieldCacheReadRate:
+		return m.OldCacheReadRate(ctx)
+	case modelrate.FieldCacheWriteRate:
+		return m.OldCacheWriteRate(ctx)
+	case modelrate.FieldOutputRate:
+		return m.OldOutputRate(ctx)
+	case modelrate.FieldActorID:
+		return m.OldActorID(ctx)
+	}
+	return nil, fmt.Errorf("unknown ModelRate field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ModelRateMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case modelrate.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case modelrate.FieldTeamID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case modelrate.FieldConfigID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfigID(v)
+		return nil
+	case modelrate.FieldProvider:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProvider(v)
+		return nil
+	case modelrate.FieldModel:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetModel(v)
+		return nil
+	case modelrate.FieldRevision:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRevision(v)
+		return nil
+	case modelrate.FieldBasis:
+		v, ok := value.(modelrate.Basis)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBasis(v)
+		return nil
+	case modelrate.FieldInputRate:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInputRate(v)
+		return nil
+	case modelrate.FieldCacheReadRate:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCacheReadRate(v)
+		return nil
+	case modelrate.FieldCacheWriteRate:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCacheWriteRate(v)
+		return nil
+	case modelrate.FieldOutputRate:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOutputRate(v)
+		return nil
+	case modelrate.FieldActorID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActorID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ModelRate field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ModelRateMutation) AddedFields() []string {
+	var fields []string
+	if m.addrevision != nil {
+		fields = append(fields, modelrate.FieldRevision)
+	}
+	if m.addinput_rate != nil {
+		fields = append(fields, modelrate.FieldInputRate)
+	}
+	if m.addcache_read_rate != nil {
+		fields = append(fields, modelrate.FieldCacheReadRate)
+	}
+	if m.addcache_write_rate != nil {
+		fields = append(fields, modelrate.FieldCacheWriteRate)
+	}
+	if m.addoutput_rate != nil {
+		fields = append(fields, modelrate.FieldOutputRate)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ModelRateMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case modelrate.FieldRevision:
+		return m.AddedRevision()
+	case modelrate.FieldInputRate:
+		return m.AddedInputRate()
+	case modelrate.FieldCacheReadRate:
+		return m.AddedCacheReadRate()
+	case modelrate.FieldCacheWriteRate:
+		return m.AddedCacheWriteRate()
+	case modelrate.FieldOutputRate:
+		return m.AddedOutputRate()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ModelRateMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case modelrate.FieldRevision:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRevision(v)
+		return nil
+	case modelrate.FieldInputRate:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddInputRate(v)
+		return nil
+	case modelrate.FieldCacheReadRate:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCacheReadRate(v)
+		return nil
+	case modelrate.FieldCacheWriteRate:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCacheWriteRate(v)
+		return nil
+	case modelrate.FieldOutputRate:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOutputRate(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ModelRate numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ModelRateMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ModelRateMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ModelRateMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ModelRate nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ModelRateMutation) ResetField(name string) error {
+	switch name {
+	case modelrate.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case modelrate.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case modelrate.FieldConfigID:
+		m.ResetConfigID()
+		return nil
+	case modelrate.FieldProvider:
+		m.ResetProvider()
+		return nil
+	case modelrate.FieldModel:
+		m.ResetModel()
+		return nil
+	case modelrate.FieldRevision:
+		m.ResetRevision()
+		return nil
+	case modelrate.FieldBasis:
+		m.ResetBasis()
+		return nil
+	case modelrate.FieldInputRate:
+		m.ResetInputRate()
+		return nil
+	case modelrate.FieldCacheReadRate:
+		m.ResetCacheReadRate()
+		return nil
+	case modelrate.FieldCacheWriteRate:
+		m.ResetCacheWriteRate()
+		return nil
+	case modelrate.FieldOutputRate:
+		m.ResetOutputRate()
+		return nil
+	case modelrate.FieldActorID:
+		m.ResetActorID()
+		return nil
+	}
+	return fmt.Errorf("unknown ModelRate field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ModelRateMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ModelRateMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ModelRateMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ModelRateMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ModelRateMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ModelRateMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ModelRateMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown ModelRate unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ModelRateMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown ModelRate edge %s", name)
 }
 
 // PasswordMutation represents an operation that mutates the Password nodes in the graph.
@@ -5088,6 +6186,1743 @@ func (m *TeamProviderMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown TeamProvider edge %s", name)
+}
+
+// UsageRequestMutation represents an operation that mutates the UsageRequest nodes in the graph.
+type UsageRequestMutation struct {
+	config
+	op                    Op
+	typ                   string
+	id                    *string
+	created_at            *time.Time
+	team_id               *string
+	user_id               *string
+	submitted_config_id   *string
+	config_id             *string
+	provider              *string
+	model                 *string
+	stream                *bool
+	state                 *usagerequest.State
+	rate_id               *string
+	rates                 *json.RawMessage
+	appendrates           json.RawMessage
+	point_units           *int64
+	addpoint_units        *int64
+	input_tokens          *int64
+	addinput_tokens       *int64
+	cache_read_tokens     *int64
+	addcache_read_tokens  *int64
+	cache_write_tokens    *int64
+	addcache_write_tokens *int64
+	output_tokens         *int64
+	addoutput_tokens      *int64
+	reasoning_tokens      *int64
+	addreasoning_tokens   *int64
+	provider_request_id   *string
+	error_code            *string
+	finished_at           *time.Time
+	clearedFields         map[string]struct{}
+	done                  bool
+	oldValue              func(context.Context) (*UsageRequest, error)
+	predicates            []predicate.UsageRequest
+}
+
+var _ ent.Mutation = (*UsageRequestMutation)(nil)
+
+// usagerequestOption allows management of the mutation configuration using functional options.
+type usagerequestOption func(*UsageRequestMutation)
+
+// newUsageRequestMutation creates new mutation for the UsageRequest entity.
+func newUsageRequestMutation(c config, op Op, opts ...usagerequestOption) *UsageRequestMutation {
+	m := &UsageRequestMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUsageRequest,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUsageRequestID sets the ID field of the mutation.
+func withUsageRequestID(id string) usagerequestOption {
+	return func(m *UsageRequestMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *UsageRequest
+		)
+		m.oldValue = func(ctx context.Context) (*UsageRequest, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().UsageRequest.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUsageRequest sets the old UsageRequest of the mutation.
+func withUsageRequest(node *UsageRequest) usagerequestOption {
+	return func(m *UsageRequestMutation) {
+		m.oldValue = func(context.Context) (*UsageRequest, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UsageRequestMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UsageRequestMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of UsageRequest entities.
+func (m *UsageRequestMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UsageRequestMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UsageRequestMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().UsageRequest.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UsageRequestMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UsageRequestMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *UsageRequestMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *UsageRequestMutation) SetTeamID(s string) {
+	m.team_id = &s
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *UsageRequestMutation) TeamID() (r string, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldTeamID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *UsageRequestMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *UsageRequestMutation) SetUserID(s string) {
+	m.user_id = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *UsageRequestMutation) UserID() (r string, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *UsageRequestMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetSubmittedConfigID sets the "submitted_config_id" field.
+func (m *UsageRequestMutation) SetSubmittedConfigID(s string) {
+	m.submitted_config_id = &s
+}
+
+// SubmittedConfigID returns the value of the "submitted_config_id" field in the mutation.
+func (m *UsageRequestMutation) SubmittedConfigID() (r string, exists bool) {
+	v := m.submitted_config_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubmittedConfigID returns the old "submitted_config_id" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldSubmittedConfigID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubmittedConfigID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubmittedConfigID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubmittedConfigID: %w", err)
+	}
+	return oldValue.SubmittedConfigID, nil
+}
+
+// ResetSubmittedConfigID resets all changes to the "submitted_config_id" field.
+func (m *UsageRequestMutation) ResetSubmittedConfigID() {
+	m.submitted_config_id = nil
+}
+
+// SetConfigID sets the "config_id" field.
+func (m *UsageRequestMutation) SetConfigID(s string) {
+	m.config_id = &s
+}
+
+// ConfigID returns the value of the "config_id" field in the mutation.
+func (m *UsageRequestMutation) ConfigID() (r string, exists bool) {
+	v := m.config_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfigID returns the old "config_id" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldConfigID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfigID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfigID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfigID: %w", err)
+	}
+	return oldValue.ConfigID, nil
+}
+
+// ResetConfigID resets all changes to the "config_id" field.
+func (m *UsageRequestMutation) ResetConfigID() {
+	m.config_id = nil
+}
+
+// SetProvider sets the "provider" field.
+func (m *UsageRequestMutation) SetProvider(s string) {
+	m.provider = &s
+}
+
+// Provider returns the value of the "provider" field in the mutation.
+func (m *UsageRequestMutation) Provider() (r string, exists bool) {
+	v := m.provider
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProvider returns the old "provider" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldProvider(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProvider is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProvider requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProvider: %w", err)
+	}
+	return oldValue.Provider, nil
+}
+
+// ResetProvider resets all changes to the "provider" field.
+func (m *UsageRequestMutation) ResetProvider() {
+	m.provider = nil
+}
+
+// SetModel sets the "model" field.
+func (m *UsageRequestMutation) SetModel(s string) {
+	m.model = &s
+}
+
+// Model returns the value of the "model" field in the mutation.
+func (m *UsageRequestMutation) Model() (r string, exists bool) {
+	v := m.model
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldModel returns the old "model" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldModel(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldModel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldModel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldModel: %w", err)
+	}
+	return oldValue.Model, nil
+}
+
+// ResetModel resets all changes to the "model" field.
+func (m *UsageRequestMutation) ResetModel() {
+	m.model = nil
+}
+
+// SetStream sets the "stream" field.
+func (m *UsageRequestMutation) SetStream(b bool) {
+	m.stream = &b
+}
+
+// Stream returns the value of the "stream" field in the mutation.
+func (m *UsageRequestMutation) Stream() (r bool, exists bool) {
+	v := m.stream
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStream returns the old "stream" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldStream(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStream is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStream requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStream: %w", err)
+	}
+	return oldValue.Stream, nil
+}
+
+// ResetStream resets all changes to the "stream" field.
+func (m *UsageRequestMutation) ResetStream() {
+	m.stream = nil
+}
+
+// SetState sets the "state" field.
+func (m *UsageRequestMutation) SetState(u usagerequest.State) {
+	m.state = &u
+}
+
+// State returns the value of the "state" field in the mutation.
+func (m *UsageRequestMutation) State() (r usagerequest.State, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldState returns the old "state" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldState(ctx context.Context) (v usagerequest.State, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldState: %w", err)
+	}
+	return oldValue.State, nil
+}
+
+// ResetState resets all changes to the "state" field.
+func (m *UsageRequestMutation) ResetState() {
+	m.state = nil
+}
+
+// SetRateID sets the "rate_id" field.
+func (m *UsageRequestMutation) SetRateID(s string) {
+	m.rate_id = &s
+}
+
+// RateID returns the value of the "rate_id" field in the mutation.
+func (m *UsageRequestMutation) RateID() (r string, exists bool) {
+	v := m.rate_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRateID returns the old "rate_id" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldRateID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRateID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRateID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRateID: %w", err)
+	}
+	return oldValue.RateID, nil
+}
+
+// ResetRateID resets all changes to the "rate_id" field.
+func (m *UsageRequestMutation) ResetRateID() {
+	m.rate_id = nil
+}
+
+// SetRates sets the "rates" field.
+func (m *UsageRequestMutation) SetRates(jm json.RawMessage) {
+	m.rates = &jm
+	m.appendrates = nil
+}
+
+// Rates returns the value of the "rates" field in the mutation.
+func (m *UsageRequestMutation) Rates() (r json.RawMessage, exists bool) {
+	v := m.rates
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRates returns the old "rates" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldRates(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRates is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRates requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRates: %w", err)
+	}
+	return oldValue.Rates, nil
+}
+
+// AppendRates adds jm to the "rates" field.
+func (m *UsageRequestMutation) AppendRates(jm json.RawMessage) {
+	m.appendrates = append(m.appendrates, jm...)
+}
+
+// AppendedRates returns the list of values that were appended to the "rates" field in this mutation.
+func (m *UsageRequestMutation) AppendedRates() (json.RawMessage, bool) {
+	if len(m.appendrates) == 0 {
+		return nil, false
+	}
+	return m.appendrates, true
+}
+
+// ClearRates clears the value of the "rates" field.
+func (m *UsageRequestMutation) ClearRates() {
+	m.rates = nil
+	m.appendrates = nil
+	m.clearedFields[usagerequest.FieldRates] = struct{}{}
+}
+
+// RatesCleared returns if the "rates" field was cleared in this mutation.
+func (m *UsageRequestMutation) RatesCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldRates]
+	return ok
+}
+
+// ResetRates resets all changes to the "rates" field.
+func (m *UsageRequestMutation) ResetRates() {
+	m.rates = nil
+	m.appendrates = nil
+	delete(m.clearedFields, usagerequest.FieldRates)
+}
+
+// SetPointUnits sets the "point_units" field.
+func (m *UsageRequestMutation) SetPointUnits(i int64) {
+	m.point_units = &i
+	m.addpoint_units = nil
+}
+
+// PointUnits returns the value of the "point_units" field in the mutation.
+func (m *UsageRequestMutation) PointUnits() (r int64, exists bool) {
+	v := m.point_units
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPointUnits returns the old "point_units" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldPointUnits(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPointUnits is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPointUnits requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPointUnits: %w", err)
+	}
+	return oldValue.PointUnits, nil
+}
+
+// AddPointUnits adds i to the "point_units" field.
+func (m *UsageRequestMutation) AddPointUnits(i int64) {
+	if m.addpoint_units != nil {
+		*m.addpoint_units += i
+	} else {
+		m.addpoint_units = &i
+	}
+}
+
+// AddedPointUnits returns the value that was added to the "point_units" field in this mutation.
+func (m *UsageRequestMutation) AddedPointUnits() (r int64, exists bool) {
+	v := m.addpoint_units
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPointUnits clears the value of the "point_units" field.
+func (m *UsageRequestMutation) ClearPointUnits() {
+	m.point_units = nil
+	m.addpoint_units = nil
+	m.clearedFields[usagerequest.FieldPointUnits] = struct{}{}
+}
+
+// PointUnitsCleared returns if the "point_units" field was cleared in this mutation.
+func (m *UsageRequestMutation) PointUnitsCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldPointUnits]
+	return ok
+}
+
+// ResetPointUnits resets all changes to the "point_units" field.
+func (m *UsageRequestMutation) ResetPointUnits() {
+	m.point_units = nil
+	m.addpoint_units = nil
+	delete(m.clearedFields, usagerequest.FieldPointUnits)
+}
+
+// SetInputTokens sets the "input_tokens" field.
+func (m *UsageRequestMutation) SetInputTokens(i int64) {
+	m.input_tokens = &i
+	m.addinput_tokens = nil
+}
+
+// InputTokens returns the value of the "input_tokens" field in the mutation.
+func (m *UsageRequestMutation) InputTokens() (r int64, exists bool) {
+	v := m.input_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInputTokens returns the old "input_tokens" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldInputTokens(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInputTokens is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInputTokens requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInputTokens: %w", err)
+	}
+	return oldValue.InputTokens, nil
+}
+
+// AddInputTokens adds i to the "input_tokens" field.
+func (m *UsageRequestMutation) AddInputTokens(i int64) {
+	if m.addinput_tokens != nil {
+		*m.addinput_tokens += i
+	} else {
+		m.addinput_tokens = &i
+	}
+}
+
+// AddedInputTokens returns the value that was added to the "input_tokens" field in this mutation.
+func (m *UsageRequestMutation) AddedInputTokens() (r int64, exists bool) {
+	v := m.addinput_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearInputTokens clears the value of the "input_tokens" field.
+func (m *UsageRequestMutation) ClearInputTokens() {
+	m.input_tokens = nil
+	m.addinput_tokens = nil
+	m.clearedFields[usagerequest.FieldInputTokens] = struct{}{}
+}
+
+// InputTokensCleared returns if the "input_tokens" field was cleared in this mutation.
+func (m *UsageRequestMutation) InputTokensCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldInputTokens]
+	return ok
+}
+
+// ResetInputTokens resets all changes to the "input_tokens" field.
+func (m *UsageRequestMutation) ResetInputTokens() {
+	m.input_tokens = nil
+	m.addinput_tokens = nil
+	delete(m.clearedFields, usagerequest.FieldInputTokens)
+}
+
+// SetCacheReadTokens sets the "cache_read_tokens" field.
+func (m *UsageRequestMutation) SetCacheReadTokens(i int64) {
+	m.cache_read_tokens = &i
+	m.addcache_read_tokens = nil
+}
+
+// CacheReadTokens returns the value of the "cache_read_tokens" field in the mutation.
+func (m *UsageRequestMutation) CacheReadTokens() (r int64, exists bool) {
+	v := m.cache_read_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCacheReadTokens returns the old "cache_read_tokens" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldCacheReadTokens(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCacheReadTokens is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCacheReadTokens requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCacheReadTokens: %w", err)
+	}
+	return oldValue.CacheReadTokens, nil
+}
+
+// AddCacheReadTokens adds i to the "cache_read_tokens" field.
+func (m *UsageRequestMutation) AddCacheReadTokens(i int64) {
+	if m.addcache_read_tokens != nil {
+		*m.addcache_read_tokens += i
+	} else {
+		m.addcache_read_tokens = &i
+	}
+}
+
+// AddedCacheReadTokens returns the value that was added to the "cache_read_tokens" field in this mutation.
+func (m *UsageRequestMutation) AddedCacheReadTokens() (r int64, exists bool) {
+	v := m.addcache_read_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCacheReadTokens clears the value of the "cache_read_tokens" field.
+func (m *UsageRequestMutation) ClearCacheReadTokens() {
+	m.cache_read_tokens = nil
+	m.addcache_read_tokens = nil
+	m.clearedFields[usagerequest.FieldCacheReadTokens] = struct{}{}
+}
+
+// CacheReadTokensCleared returns if the "cache_read_tokens" field was cleared in this mutation.
+func (m *UsageRequestMutation) CacheReadTokensCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldCacheReadTokens]
+	return ok
+}
+
+// ResetCacheReadTokens resets all changes to the "cache_read_tokens" field.
+func (m *UsageRequestMutation) ResetCacheReadTokens() {
+	m.cache_read_tokens = nil
+	m.addcache_read_tokens = nil
+	delete(m.clearedFields, usagerequest.FieldCacheReadTokens)
+}
+
+// SetCacheWriteTokens sets the "cache_write_tokens" field.
+func (m *UsageRequestMutation) SetCacheWriteTokens(i int64) {
+	m.cache_write_tokens = &i
+	m.addcache_write_tokens = nil
+}
+
+// CacheWriteTokens returns the value of the "cache_write_tokens" field in the mutation.
+func (m *UsageRequestMutation) CacheWriteTokens() (r int64, exists bool) {
+	v := m.cache_write_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCacheWriteTokens returns the old "cache_write_tokens" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldCacheWriteTokens(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCacheWriteTokens is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCacheWriteTokens requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCacheWriteTokens: %w", err)
+	}
+	return oldValue.CacheWriteTokens, nil
+}
+
+// AddCacheWriteTokens adds i to the "cache_write_tokens" field.
+func (m *UsageRequestMutation) AddCacheWriteTokens(i int64) {
+	if m.addcache_write_tokens != nil {
+		*m.addcache_write_tokens += i
+	} else {
+		m.addcache_write_tokens = &i
+	}
+}
+
+// AddedCacheWriteTokens returns the value that was added to the "cache_write_tokens" field in this mutation.
+func (m *UsageRequestMutation) AddedCacheWriteTokens() (r int64, exists bool) {
+	v := m.addcache_write_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCacheWriteTokens clears the value of the "cache_write_tokens" field.
+func (m *UsageRequestMutation) ClearCacheWriteTokens() {
+	m.cache_write_tokens = nil
+	m.addcache_write_tokens = nil
+	m.clearedFields[usagerequest.FieldCacheWriteTokens] = struct{}{}
+}
+
+// CacheWriteTokensCleared returns if the "cache_write_tokens" field was cleared in this mutation.
+func (m *UsageRequestMutation) CacheWriteTokensCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldCacheWriteTokens]
+	return ok
+}
+
+// ResetCacheWriteTokens resets all changes to the "cache_write_tokens" field.
+func (m *UsageRequestMutation) ResetCacheWriteTokens() {
+	m.cache_write_tokens = nil
+	m.addcache_write_tokens = nil
+	delete(m.clearedFields, usagerequest.FieldCacheWriteTokens)
+}
+
+// SetOutputTokens sets the "output_tokens" field.
+func (m *UsageRequestMutation) SetOutputTokens(i int64) {
+	m.output_tokens = &i
+	m.addoutput_tokens = nil
+}
+
+// OutputTokens returns the value of the "output_tokens" field in the mutation.
+func (m *UsageRequestMutation) OutputTokens() (r int64, exists bool) {
+	v := m.output_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOutputTokens returns the old "output_tokens" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldOutputTokens(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOutputTokens is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOutputTokens requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOutputTokens: %w", err)
+	}
+	return oldValue.OutputTokens, nil
+}
+
+// AddOutputTokens adds i to the "output_tokens" field.
+func (m *UsageRequestMutation) AddOutputTokens(i int64) {
+	if m.addoutput_tokens != nil {
+		*m.addoutput_tokens += i
+	} else {
+		m.addoutput_tokens = &i
+	}
+}
+
+// AddedOutputTokens returns the value that was added to the "output_tokens" field in this mutation.
+func (m *UsageRequestMutation) AddedOutputTokens() (r int64, exists bool) {
+	v := m.addoutput_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearOutputTokens clears the value of the "output_tokens" field.
+func (m *UsageRequestMutation) ClearOutputTokens() {
+	m.output_tokens = nil
+	m.addoutput_tokens = nil
+	m.clearedFields[usagerequest.FieldOutputTokens] = struct{}{}
+}
+
+// OutputTokensCleared returns if the "output_tokens" field was cleared in this mutation.
+func (m *UsageRequestMutation) OutputTokensCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldOutputTokens]
+	return ok
+}
+
+// ResetOutputTokens resets all changes to the "output_tokens" field.
+func (m *UsageRequestMutation) ResetOutputTokens() {
+	m.output_tokens = nil
+	m.addoutput_tokens = nil
+	delete(m.clearedFields, usagerequest.FieldOutputTokens)
+}
+
+// SetReasoningTokens sets the "reasoning_tokens" field.
+func (m *UsageRequestMutation) SetReasoningTokens(i int64) {
+	m.reasoning_tokens = &i
+	m.addreasoning_tokens = nil
+}
+
+// ReasoningTokens returns the value of the "reasoning_tokens" field in the mutation.
+func (m *UsageRequestMutation) ReasoningTokens() (r int64, exists bool) {
+	v := m.reasoning_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReasoningTokens returns the old "reasoning_tokens" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldReasoningTokens(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReasoningTokens is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReasoningTokens requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReasoningTokens: %w", err)
+	}
+	return oldValue.ReasoningTokens, nil
+}
+
+// AddReasoningTokens adds i to the "reasoning_tokens" field.
+func (m *UsageRequestMutation) AddReasoningTokens(i int64) {
+	if m.addreasoning_tokens != nil {
+		*m.addreasoning_tokens += i
+	} else {
+		m.addreasoning_tokens = &i
+	}
+}
+
+// AddedReasoningTokens returns the value that was added to the "reasoning_tokens" field in this mutation.
+func (m *UsageRequestMutation) AddedReasoningTokens() (r int64, exists bool) {
+	v := m.addreasoning_tokens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearReasoningTokens clears the value of the "reasoning_tokens" field.
+func (m *UsageRequestMutation) ClearReasoningTokens() {
+	m.reasoning_tokens = nil
+	m.addreasoning_tokens = nil
+	m.clearedFields[usagerequest.FieldReasoningTokens] = struct{}{}
+}
+
+// ReasoningTokensCleared returns if the "reasoning_tokens" field was cleared in this mutation.
+func (m *UsageRequestMutation) ReasoningTokensCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldReasoningTokens]
+	return ok
+}
+
+// ResetReasoningTokens resets all changes to the "reasoning_tokens" field.
+func (m *UsageRequestMutation) ResetReasoningTokens() {
+	m.reasoning_tokens = nil
+	m.addreasoning_tokens = nil
+	delete(m.clearedFields, usagerequest.FieldReasoningTokens)
+}
+
+// SetProviderRequestID sets the "provider_request_id" field.
+func (m *UsageRequestMutation) SetProviderRequestID(s string) {
+	m.provider_request_id = &s
+}
+
+// ProviderRequestID returns the value of the "provider_request_id" field in the mutation.
+func (m *UsageRequestMutation) ProviderRequestID() (r string, exists bool) {
+	v := m.provider_request_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderRequestID returns the old "provider_request_id" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldProviderRequestID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderRequestID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderRequestID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderRequestID: %w", err)
+	}
+	return oldValue.ProviderRequestID, nil
+}
+
+// ResetProviderRequestID resets all changes to the "provider_request_id" field.
+func (m *UsageRequestMutation) ResetProviderRequestID() {
+	m.provider_request_id = nil
+}
+
+// SetErrorCode sets the "error_code" field.
+func (m *UsageRequestMutation) SetErrorCode(s string) {
+	m.error_code = &s
+}
+
+// ErrorCode returns the value of the "error_code" field in the mutation.
+func (m *UsageRequestMutation) ErrorCode() (r string, exists bool) {
+	v := m.error_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorCode returns the old "error_code" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldErrorCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorCode: %w", err)
+	}
+	return oldValue.ErrorCode, nil
+}
+
+// ResetErrorCode resets all changes to the "error_code" field.
+func (m *UsageRequestMutation) ResetErrorCode() {
+	m.error_code = nil
+}
+
+// SetFinishedAt sets the "finished_at" field.
+func (m *UsageRequestMutation) SetFinishedAt(t time.Time) {
+	m.finished_at = &t
+}
+
+// FinishedAt returns the value of the "finished_at" field in the mutation.
+func (m *UsageRequestMutation) FinishedAt() (r time.Time, exists bool) {
+	v := m.finished_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFinishedAt returns the old "finished_at" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldFinishedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFinishedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFinishedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFinishedAt: %w", err)
+	}
+	return oldValue.FinishedAt, nil
+}
+
+// ClearFinishedAt clears the value of the "finished_at" field.
+func (m *UsageRequestMutation) ClearFinishedAt() {
+	m.finished_at = nil
+	m.clearedFields[usagerequest.FieldFinishedAt] = struct{}{}
+}
+
+// FinishedAtCleared returns if the "finished_at" field was cleared in this mutation.
+func (m *UsageRequestMutation) FinishedAtCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldFinishedAt]
+	return ok
+}
+
+// ResetFinishedAt resets all changes to the "finished_at" field.
+func (m *UsageRequestMutation) ResetFinishedAt() {
+	m.finished_at = nil
+	delete(m.clearedFields, usagerequest.FieldFinishedAt)
+}
+
+// Where appends a list predicates to the UsageRequestMutation builder.
+func (m *UsageRequestMutation) Where(ps ...predicate.UsageRequest) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UsageRequestMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UsageRequestMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.UsageRequest, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UsageRequestMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UsageRequestMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (UsageRequest).
+func (m *UsageRequestMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UsageRequestMutation) Fields() []string {
+	fields := make([]string, 0, 20)
+	if m.created_at != nil {
+		fields = append(fields, usagerequest.FieldCreatedAt)
+	}
+	if m.team_id != nil {
+		fields = append(fields, usagerequest.FieldTeamID)
+	}
+	if m.user_id != nil {
+		fields = append(fields, usagerequest.FieldUserID)
+	}
+	if m.submitted_config_id != nil {
+		fields = append(fields, usagerequest.FieldSubmittedConfigID)
+	}
+	if m.config_id != nil {
+		fields = append(fields, usagerequest.FieldConfigID)
+	}
+	if m.provider != nil {
+		fields = append(fields, usagerequest.FieldProvider)
+	}
+	if m.model != nil {
+		fields = append(fields, usagerequest.FieldModel)
+	}
+	if m.stream != nil {
+		fields = append(fields, usagerequest.FieldStream)
+	}
+	if m.state != nil {
+		fields = append(fields, usagerequest.FieldState)
+	}
+	if m.rate_id != nil {
+		fields = append(fields, usagerequest.FieldRateID)
+	}
+	if m.rates != nil {
+		fields = append(fields, usagerequest.FieldRates)
+	}
+	if m.point_units != nil {
+		fields = append(fields, usagerequest.FieldPointUnits)
+	}
+	if m.input_tokens != nil {
+		fields = append(fields, usagerequest.FieldInputTokens)
+	}
+	if m.cache_read_tokens != nil {
+		fields = append(fields, usagerequest.FieldCacheReadTokens)
+	}
+	if m.cache_write_tokens != nil {
+		fields = append(fields, usagerequest.FieldCacheWriteTokens)
+	}
+	if m.output_tokens != nil {
+		fields = append(fields, usagerequest.FieldOutputTokens)
+	}
+	if m.reasoning_tokens != nil {
+		fields = append(fields, usagerequest.FieldReasoningTokens)
+	}
+	if m.provider_request_id != nil {
+		fields = append(fields, usagerequest.FieldProviderRequestID)
+	}
+	if m.error_code != nil {
+		fields = append(fields, usagerequest.FieldErrorCode)
+	}
+	if m.finished_at != nil {
+		fields = append(fields, usagerequest.FieldFinishedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UsageRequestMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case usagerequest.FieldCreatedAt:
+		return m.CreatedAt()
+	case usagerequest.FieldTeamID:
+		return m.TeamID()
+	case usagerequest.FieldUserID:
+		return m.UserID()
+	case usagerequest.FieldSubmittedConfigID:
+		return m.SubmittedConfigID()
+	case usagerequest.FieldConfigID:
+		return m.ConfigID()
+	case usagerequest.FieldProvider:
+		return m.Provider()
+	case usagerequest.FieldModel:
+		return m.Model()
+	case usagerequest.FieldStream:
+		return m.Stream()
+	case usagerequest.FieldState:
+		return m.State()
+	case usagerequest.FieldRateID:
+		return m.RateID()
+	case usagerequest.FieldRates:
+		return m.Rates()
+	case usagerequest.FieldPointUnits:
+		return m.PointUnits()
+	case usagerequest.FieldInputTokens:
+		return m.InputTokens()
+	case usagerequest.FieldCacheReadTokens:
+		return m.CacheReadTokens()
+	case usagerequest.FieldCacheWriteTokens:
+		return m.CacheWriteTokens()
+	case usagerequest.FieldOutputTokens:
+		return m.OutputTokens()
+	case usagerequest.FieldReasoningTokens:
+		return m.ReasoningTokens()
+	case usagerequest.FieldProviderRequestID:
+		return m.ProviderRequestID()
+	case usagerequest.FieldErrorCode:
+		return m.ErrorCode()
+	case usagerequest.FieldFinishedAt:
+		return m.FinishedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UsageRequestMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case usagerequest.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case usagerequest.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case usagerequest.FieldUserID:
+		return m.OldUserID(ctx)
+	case usagerequest.FieldSubmittedConfigID:
+		return m.OldSubmittedConfigID(ctx)
+	case usagerequest.FieldConfigID:
+		return m.OldConfigID(ctx)
+	case usagerequest.FieldProvider:
+		return m.OldProvider(ctx)
+	case usagerequest.FieldModel:
+		return m.OldModel(ctx)
+	case usagerequest.FieldStream:
+		return m.OldStream(ctx)
+	case usagerequest.FieldState:
+		return m.OldState(ctx)
+	case usagerequest.FieldRateID:
+		return m.OldRateID(ctx)
+	case usagerequest.FieldRates:
+		return m.OldRates(ctx)
+	case usagerequest.FieldPointUnits:
+		return m.OldPointUnits(ctx)
+	case usagerequest.FieldInputTokens:
+		return m.OldInputTokens(ctx)
+	case usagerequest.FieldCacheReadTokens:
+		return m.OldCacheReadTokens(ctx)
+	case usagerequest.FieldCacheWriteTokens:
+		return m.OldCacheWriteTokens(ctx)
+	case usagerequest.FieldOutputTokens:
+		return m.OldOutputTokens(ctx)
+	case usagerequest.FieldReasoningTokens:
+		return m.OldReasoningTokens(ctx)
+	case usagerequest.FieldProviderRequestID:
+		return m.OldProviderRequestID(ctx)
+	case usagerequest.FieldErrorCode:
+		return m.OldErrorCode(ctx)
+	case usagerequest.FieldFinishedAt:
+		return m.OldFinishedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown UsageRequest field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UsageRequestMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case usagerequest.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case usagerequest.FieldTeamID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case usagerequest.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case usagerequest.FieldSubmittedConfigID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubmittedConfigID(v)
+		return nil
+	case usagerequest.FieldConfigID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfigID(v)
+		return nil
+	case usagerequest.FieldProvider:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProvider(v)
+		return nil
+	case usagerequest.FieldModel:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetModel(v)
+		return nil
+	case usagerequest.FieldStream:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStream(v)
+		return nil
+	case usagerequest.FieldState:
+		v, ok := value.(usagerequest.State)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetState(v)
+		return nil
+	case usagerequest.FieldRateID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRateID(v)
+		return nil
+	case usagerequest.FieldRates:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRates(v)
+		return nil
+	case usagerequest.FieldPointUnits:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPointUnits(v)
+		return nil
+	case usagerequest.FieldInputTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInputTokens(v)
+		return nil
+	case usagerequest.FieldCacheReadTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCacheReadTokens(v)
+		return nil
+	case usagerequest.FieldCacheWriteTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCacheWriteTokens(v)
+		return nil
+	case usagerequest.FieldOutputTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOutputTokens(v)
+		return nil
+	case usagerequest.FieldReasoningTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReasoningTokens(v)
+		return nil
+	case usagerequest.FieldProviderRequestID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderRequestID(v)
+		return nil
+	case usagerequest.FieldErrorCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorCode(v)
+		return nil
+	case usagerequest.FieldFinishedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFinishedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UsageRequest field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UsageRequestMutation) AddedFields() []string {
+	var fields []string
+	if m.addpoint_units != nil {
+		fields = append(fields, usagerequest.FieldPointUnits)
+	}
+	if m.addinput_tokens != nil {
+		fields = append(fields, usagerequest.FieldInputTokens)
+	}
+	if m.addcache_read_tokens != nil {
+		fields = append(fields, usagerequest.FieldCacheReadTokens)
+	}
+	if m.addcache_write_tokens != nil {
+		fields = append(fields, usagerequest.FieldCacheWriteTokens)
+	}
+	if m.addoutput_tokens != nil {
+		fields = append(fields, usagerequest.FieldOutputTokens)
+	}
+	if m.addreasoning_tokens != nil {
+		fields = append(fields, usagerequest.FieldReasoningTokens)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UsageRequestMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case usagerequest.FieldPointUnits:
+		return m.AddedPointUnits()
+	case usagerequest.FieldInputTokens:
+		return m.AddedInputTokens()
+	case usagerequest.FieldCacheReadTokens:
+		return m.AddedCacheReadTokens()
+	case usagerequest.FieldCacheWriteTokens:
+		return m.AddedCacheWriteTokens()
+	case usagerequest.FieldOutputTokens:
+		return m.AddedOutputTokens()
+	case usagerequest.FieldReasoningTokens:
+		return m.AddedReasoningTokens()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UsageRequestMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case usagerequest.FieldPointUnits:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPointUnits(v)
+		return nil
+	case usagerequest.FieldInputTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddInputTokens(v)
+		return nil
+	case usagerequest.FieldCacheReadTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCacheReadTokens(v)
+		return nil
+	case usagerequest.FieldCacheWriteTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCacheWriteTokens(v)
+		return nil
+	case usagerequest.FieldOutputTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOutputTokens(v)
+		return nil
+	case usagerequest.FieldReasoningTokens:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReasoningTokens(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UsageRequest numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UsageRequestMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(usagerequest.FieldRates) {
+		fields = append(fields, usagerequest.FieldRates)
+	}
+	if m.FieldCleared(usagerequest.FieldPointUnits) {
+		fields = append(fields, usagerequest.FieldPointUnits)
+	}
+	if m.FieldCleared(usagerequest.FieldInputTokens) {
+		fields = append(fields, usagerequest.FieldInputTokens)
+	}
+	if m.FieldCleared(usagerequest.FieldCacheReadTokens) {
+		fields = append(fields, usagerequest.FieldCacheReadTokens)
+	}
+	if m.FieldCleared(usagerequest.FieldCacheWriteTokens) {
+		fields = append(fields, usagerequest.FieldCacheWriteTokens)
+	}
+	if m.FieldCleared(usagerequest.FieldOutputTokens) {
+		fields = append(fields, usagerequest.FieldOutputTokens)
+	}
+	if m.FieldCleared(usagerequest.FieldReasoningTokens) {
+		fields = append(fields, usagerequest.FieldReasoningTokens)
+	}
+	if m.FieldCleared(usagerequest.FieldFinishedAt) {
+		fields = append(fields, usagerequest.FieldFinishedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UsageRequestMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UsageRequestMutation) ClearField(name string) error {
+	switch name {
+	case usagerequest.FieldRates:
+		m.ClearRates()
+		return nil
+	case usagerequest.FieldPointUnits:
+		m.ClearPointUnits()
+		return nil
+	case usagerequest.FieldInputTokens:
+		m.ClearInputTokens()
+		return nil
+	case usagerequest.FieldCacheReadTokens:
+		m.ClearCacheReadTokens()
+		return nil
+	case usagerequest.FieldCacheWriteTokens:
+		m.ClearCacheWriteTokens()
+		return nil
+	case usagerequest.FieldOutputTokens:
+		m.ClearOutputTokens()
+		return nil
+	case usagerequest.FieldReasoningTokens:
+		m.ClearReasoningTokens()
+		return nil
+	case usagerequest.FieldFinishedAt:
+		m.ClearFinishedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown UsageRequest nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UsageRequestMutation) ResetField(name string) error {
+	switch name {
+	case usagerequest.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case usagerequest.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case usagerequest.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case usagerequest.FieldSubmittedConfigID:
+		m.ResetSubmittedConfigID()
+		return nil
+	case usagerequest.FieldConfigID:
+		m.ResetConfigID()
+		return nil
+	case usagerequest.FieldProvider:
+		m.ResetProvider()
+		return nil
+	case usagerequest.FieldModel:
+		m.ResetModel()
+		return nil
+	case usagerequest.FieldStream:
+		m.ResetStream()
+		return nil
+	case usagerequest.FieldState:
+		m.ResetState()
+		return nil
+	case usagerequest.FieldRateID:
+		m.ResetRateID()
+		return nil
+	case usagerequest.FieldRates:
+		m.ResetRates()
+		return nil
+	case usagerequest.FieldPointUnits:
+		m.ResetPointUnits()
+		return nil
+	case usagerequest.FieldInputTokens:
+		m.ResetInputTokens()
+		return nil
+	case usagerequest.FieldCacheReadTokens:
+		m.ResetCacheReadTokens()
+		return nil
+	case usagerequest.FieldCacheWriteTokens:
+		m.ResetCacheWriteTokens()
+		return nil
+	case usagerequest.FieldOutputTokens:
+		m.ResetOutputTokens()
+		return nil
+	case usagerequest.FieldReasoningTokens:
+		m.ResetReasoningTokens()
+		return nil
+	case usagerequest.FieldProviderRequestID:
+		m.ResetProviderRequestID()
+		return nil
+	case usagerequest.FieldErrorCode:
+		m.ResetErrorCode()
+		return nil
+	case usagerequest.FieldFinishedAt:
+		m.ResetFinishedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown UsageRequest field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UsageRequestMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UsageRequestMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UsageRequestMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UsageRequestMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UsageRequestMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UsageRequestMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UsageRequestMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown UsageRequest unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UsageRequestMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown UsageRequest edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.

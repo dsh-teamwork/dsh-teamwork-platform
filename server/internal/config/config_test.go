@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -18,7 +19,7 @@ func TestSecretsAreWrittenOnFirstStart(t *testing.T) {
 		t.Fatal(err)
 	}
 	info, err := os.Stat(filepath.Join(dir, "secrets.json"))
-	if err != nil || info.Mode().Perm() != 0o600 {
+	if err != nil || runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		t.Fatalf("secrets.json: %v %v", info, err)
 	}
 	again, err := Load([]string{"--data", dir}, env(nil))

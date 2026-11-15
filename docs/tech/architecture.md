@@ -6,6 +6,12 @@ How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
 live in `CLAUDE.md`; this file shows the mechanism behind them.
 
+The gateway records community usage and exact reference points in
+`server/internal/usage`, with immutable team model rates (ADR 0016).
+The [usage and budget plan](usage-budgets.md) describes that API and the
+remaining reservation, enforcement and recovery work. These capabilities
+belong to community core ([ADR 0015](../adr/0015-community-usage-and-budgets.md)).
+
 ## Data flow
 
 ```

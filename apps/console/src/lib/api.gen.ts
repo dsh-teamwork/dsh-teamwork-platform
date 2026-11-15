@@ -1383,6 +1383,140 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/model-rates/{configId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                configId: string;
+            };
+            cookie?: never;
+        };
+        /** Read a model's reference price and revision */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    configId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Configured rate or an unpriced model */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ModelRate"];
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        /** An admin publishes a new immutable reference-price version */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    configId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ModelRateInput"];
+                };
+            };
+            responses: {
+                /** @description The new reference price */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ModelRate"];
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                409: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** An admin reads team usage; a member reads only their own */
+        get: {
+            parameters: {
+                query?: {
+                    userId?: string;
+                    configId?: string;
+                    since?: string;
+                    until?: string;
+                    page?: number;
+                    size?: number;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Scoped usage; null points mean unpriced or unsettled */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            entries: components["schemas"]["UsageEntry"][];
+                            total: number;
+                            page: number;
+                            size: number;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/locale": {
         parameters: {
             query?: never;
@@ -1502,6 +1636,36 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ModelRateInput: {
+            revision: number;
+            /** @enum {string} */
+            basis: "cost" | "weight";
+            input: string;
+            cacheRead: string;
+            cacheWrite: string;
+            output: string;
+        };
+        ModelRate: components["schemas"]["ModelRateInput"] & {
+            configured: boolean;
+        };
+        UsageEntry: {
+            id: string;
+            userId: string;
+            configId: string;
+            provider: string;
+            model: string;
+            /** @enum {string} */
+            state: "running" | "settled" | "unpriced" | "pending" | "failed";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            finishedAt: string | null;
+            input: number | null;
+            cacheRead: number | null;
+            output: number | null;
+            reasoning: number | null;
+            points: string | null;
+        };
         Error: {
             error: string;
             issues?: {

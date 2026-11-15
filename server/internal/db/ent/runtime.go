@@ -8,11 +8,13 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/verificationcode"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/schema"
@@ -120,6 +122,75 @@ func init() {
 	// membership.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	membership.IDValidator = func() func(string) error {
 		validators := membershipDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	modelrateMixin := schema.ModelRate{}.Mixin()
+	modelrateMixinFields0 := modelrateMixin[0].Fields()
+	_ = modelrateMixinFields0
+	modelrateFields := schema.ModelRate{}.Fields()
+	_ = modelrateFields
+	// modelrateDescCreatedAt is the schema descriptor for created_at field.
+	modelrateDescCreatedAt := modelrateMixinFields0[1].Descriptor()
+	// modelrate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	modelrate.DefaultCreatedAt = modelrateDescCreatedAt.Default.(func() time.Time)
+	// modelrateDescTeamID is the schema descriptor for team_id field.
+	modelrateDescTeamID := modelrateFields[0].Descriptor()
+	// modelrate.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	modelrate.TeamIDValidator = modelrateDescTeamID.Validators[0].(func(string) error)
+	// modelrateDescConfigID is the schema descriptor for config_id field.
+	modelrateDescConfigID := modelrateFields[1].Descriptor()
+	// modelrate.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
+	modelrate.ConfigIDValidator = modelrateDescConfigID.Validators[0].(func(string) error)
+	// modelrateDescProvider is the schema descriptor for provider field.
+	modelrateDescProvider := modelrateFields[2].Descriptor()
+	// modelrate.ProviderValidator is a validator for the "provider" field. It is called by the builders before save.
+	modelrate.ProviderValidator = modelrateDescProvider.Validators[0].(func(string) error)
+	// modelrateDescModel is the schema descriptor for model field.
+	modelrateDescModel := modelrateFields[3].Descriptor()
+	// modelrate.ModelValidator is a validator for the "model" field. It is called by the builders before save.
+	modelrate.ModelValidator = modelrateDescModel.Validators[0].(func(string) error)
+	// modelrateDescRevision is the schema descriptor for revision field.
+	modelrateDescRevision := modelrateFields[4].Descriptor()
+	// modelrate.RevisionValidator is a validator for the "revision" field. It is called by the builders before save.
+	modelrate.RevisionValidator = modelrateDescRevision.Validators[0].(func(int) error)
+	// modelrateDescInputRate is the schema descriptor for input_rate field.
+	modelrateDescInputRate := modelrateFields[6].Descriptor()
+	// modelrate.InputRateValidator is a validator for the "input_rate" field. It is called by the builders before save.
+	modelrate.InputRateValidator = modelrateDescInputRate.Validators[0].(func(int64) error)
+	// modelrateDescCacheReadRate is the schema descriptor for cache_read_rate field.
+	modelrateDescCacheReadRate := modelrateFields[7].Descriptor()
+	// modelrate.CacheReadRateValidator is a validator for the "cache_read_rate" field. It is called by the builders before save.
+	modelrate.CacheReadRateValidator = modelrateDescCacheReadRate.Validators[0].(func(int64) error)
+	// modelrateDescCacheWriteRate is the schema descriptor for cache_write_rate field.
+	modelrateDescCacheWriteRate := modelrateFields[8].Descriptor()
+	// modelrate.CacheWriteRateValidator is a validator for the "cache_write_rate" field. It is called by the builders before save.
+	modelrate.CacheWriteRateValidator = modelrateDescCacheWriteRate.Validators[0].(func(int64) error)
+	// modelrateDescOutputRate is the schema descriptor for output_rate field.
+	modelrateDescOutputRate := modelrateFields[9].Descriptor()
+	// modelrate.OutputRateValidator is a validator for the "output_rate" field. It is called by the builders before save.
+	modelrate.OutputRateValidator = modelrateDescOutputRate.Validators[0].(func(int64) error)
+	// modelrateDescActorID is the schema descriptor for actor_id field.
+	modelrateDescActorID := modelrateFields[10].Descriptor()
+	// modelrate.ActorIDValidator is a validator for the "actor_id" field. It is called by the builders before save.
+	modelrate.ActorIDValidator = modelrateDescActorID.Validators[0].(func(string) error)
+	// modelrateDescID is the schema descriptor for id field.
+	modelrateDescID := modelrateMixinFields0[0].Descriptor()
+	// modelrate.DefaultID holds the default value on creation for the id field.
+	modelrate.DefaultID = modelrateDescID.Default.(func() string)
+	// modelrate.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	modelrate.IDValidator = func() func(string) error {
+		validators := modelrateDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
@@ -333,6 +404,77 @@ func init() {
 	// teamprovider.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	teamprovider.IDValidator = func() func(string) error {
 		validators := teamproviderDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	usagerequestMixin := schema.UsageRequest{}.Mixin()
+	usagerequestMixinFields0 := usagerequestMixin[0].Fields()
+	_ = usagerequestMixinFields0
+	usagerequestFields := schema.UsageRequest{}.Fields()
+	_ = usagerequestFields
+	// usagerequestDescCreatedAt is the schema descriptor for created_at field.
+	usagerequestDescCreatedAt := usagerequestMixinFields0[1].Descriptor()
+	// usagerequest.DefaultCreatedAt holds the default value on creation for the created_at field.
+	usagerequest.DefaultCreatedAt = usagerequestDescCreatedAt.Default.(func() time.Time)
+	// usagerequestDescTeamID is the schema descriptor for team_id field.
+	usagerequestDescTeamID := usagerequestFields[0].Descriptor()
+	// usagerequest.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	usagerequest.TeamIDValidator = usagerequestDescTeamID.Validators[0].(func(string) error)
+	// usagerequestDescUserID is the schema descriptor for user_id field.
+	usagerequestDescUserID := usagerequestFields[1].Descriptor()
+	// usagerequest.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	usagerequest.UserIDValidator = usagerequestDescUserID.Validators[0].(func(string) error)
+	// usagerequestDescSubmittedConfigID is the schema descriptor for submitted_config_id field.
+	usagerequestDescSubmittedConfigID := usagerequestFields[2].Descriptor()
+	// usagerequest.SubmittedConfigIDValidator is a validator for the "submitted_config_id" field. It is called by the builders before save.
+	usagerequest.SubmittedConfigIDValidator = usagerequestDescSubmittedConfigID.Validators[0].(func(string) error)
+	// usagerequestDescConfigID is the schema descriptor for config_id field.
+	usagerequestDescConfigID := usagerequestFields[3].Descriptor()
+	// usagerequest.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
+	usagerequest.ConfigIDValidator = usagerequestDescConfigID.Validators[0].(func(string) error)
+	// usagerequestDescProvider is the schema descriptor for provider field.
+	usagerequestDescProvider := usagerequestFields[4].Descriptor()
+	// usagerequest.ProviderValidator is a validator for the "provider" field. It is called by the builders before save.
+	usagerequest.ProviderValidator = usagerequestDescProvider.Validators[0].(func(string) error)
+	// usagerequestDescModel is the schema descriptor for model field.
+	usagerequestDescModel := usagerequestFields[5].Descriptor()
+	// usagerequest.ModelValidator is a validator for the "model" field. It is called by the builders before save.
+	usagerequest.ModelValidator = usagerequestDescModel.Validators[0].(func(string) error)
+	// usagerequestDescRateID is the schema descriptor for rate_id field.
+	usagerequestDescRateID := usagerequestFields[8].Descriptor()
+	// usagerequest.DefaultRateID holds the default value on creation for the rate_id field.
+	usagerequest.DefaultRateID = usagerequestDescRateID.Default.(string)
+	// usagerequest.RateIDValidator is a validator for the "rate_id" field. It is called by the builders before save.
+	usagerequest.RateIDValidator = usagerequestDescRateID.Validators[0].(func(string) error)
+	// usagerequestDescProviderRequestID is the schema descriptor for provider_request_id field.
+	usagerequestDescProviderRequestID := usagerequestFields[16].Descriptor()
+	// usagerequest.DefaultProviderRequestID holds the default value on creation for the provider_request_id field.
+	usagerequest.DefaultProviderRequestID = usagerequestDescProviderRequestID.Default.(string)
+	// usagerequest.ProviderRequestIDValidator is a validator for the "provider_request_id" field. It is called by the builders before save.
+	usagerequest.ProviderRequestIDValidator = usagerequestDescProviderRequestID.Validators[0].(func(string) error)
+	// usagerequestDescErrorCode is the schema descriptor for error_code field.
+	usagerequestDescErrorCode := usagerequestFields[17].Descriptor()
+	// usagerequest.DefaultErrorCode holds the default value on creation for the error_code field.
+	usagerequest.DefaultErrorCode = usagerequestDescErrorCode.Default.(string)
+	// usagerequest.ErrorCodeValidator is a validator for the "error_code" field. It is called by the builders before save.
+	usagerequest.ErrorCodeValidator = usagerequestDescErrorCode.Validators[0].(func(string) error)
+	// usagerequestDescID is the schema descriptor for id field.
+	usagerequestDescID := usagerequestMixinFields0[0].Descriptor()
+	// usagerequest.DefaultID holds the default value on creation for the id field.
+	usagerequest.DefaultID = usagerequestDescID.Default.(func() string)
+	// usagerequest.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	usagerequest.IDValidator = func() func(string) error {
+		validators := usagerequestDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),

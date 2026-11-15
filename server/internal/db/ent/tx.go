@@ -20,6 +20,8 @@ type Tx struct {
 	Invite *InviteClient
 	// Membership is the client for interacting with the Membership builders.
 	Membership *MembershipClient
+	// ModelRate is the client for interacting with the ModelRate builders.
+	ModelRate *ModelRateClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
@@ -30,6 +32,8 @@ type Tx struct {
 	TeamConfig *TeamConfigClient
 	// TeamProvider is the client for interacting with the TeamProvider builders.
 	TeamProvider *TeamProviderClient
+	// UsageRequest is the client for interacting with the UsageRequest builders.
+	UsageRequest *UsageRequestClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// VerificationCode is the client for interacting with the VerificationCode builders.
@@ -168,11 +172,13 @@ func (tx *Tx) init() {
 	tx.Identity = NewIdentityClient(tx.config)
 	tx.Invite = NewInviteClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
+	tx.ModelRate = NewModelRateClient(tx.config)
 	tx.Password = NewPasswordClient(tx.config)
 	tx.RateWindow = NewRateWindowClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.TeamConfig = NewTeamConfigClient(tx.config)
 	tx.TeamProvider = NewTeamProviderClient(tx.config)
+	tx.UsageRequest = NewUsageRequestClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.VerificationCode = NewVerificationCodeClient(tx.config)
 }

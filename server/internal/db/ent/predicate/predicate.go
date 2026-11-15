@@ -15,6 +15,9 @@ type Invite func(*sql.Selector)
 // Membership is the predicate function for membership builders.
 type Membership func(*sql.Selector)
 
+// ModelRate is the predicate function for modelrate builders.
+type ModelRate func(*sql.Selector)
+
 // Password is the predicate function for password builders.
 type Password func(*sql.Selector)
 
@@ -29,6 +32,9 @@ type TeamConfig func(*sql.Selector)
 
 // TeamProvider is the predicate function for teamprovider builders.
 type TeamProvider func(*sql.Selector)
+
+// UsageRequest is the predicate function for usagerequest builders.
+type UsageRequest func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

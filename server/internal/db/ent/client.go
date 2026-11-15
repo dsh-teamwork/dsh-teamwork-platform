@@ -18,11 +18,13 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/verificationcode"
 
@@ -40,6 +42,8 @@ type Client struct {
 	Invite *InviteClient
 	// Membership is the client for interacting with the Membership builders.
 	Membership *MembershipClient
+	// ModelRate is the client for interacting with the ModelRate builders.
+	ModelRate *ModelRateClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
@@ -50,6 +54,8 @@ type Client struct {
 	TeamConfig *TeamConfigClient
 	// TeamProvider is the client for interacting with the TeamProvider builders.
 	TeamProvider *TeamProviderClient
+	// UsageRequest is the client for interacting with the UsageRequest builders.
+	UsageRequest *UsageRequestClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// VerificationCode is the client for interacting with the VerificationCode builders.
@@ -68,11 +74,13 @@ func (c *Client) init() {
 	c.Identity = NewIdentityClient(c.config)
 	c.Invite = NewInviteClient(c.config)
 	c.Membership = NewMembershipClient(c.config)
+	c.ModelRate = NewModelRateClient(c.config)
 	c.Password = NewPasswordClient(c.config)
 	c.RateWindow = NewRateWindowClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.TeamConfig = NewTeamConfigClient(c.config)
 	c.TeamProvider = NewTeamProviderClient(c.config)
+	c.UsageRequest = NewUsageRequestClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.VerificationCode = NewVerificationCodeClient(c.config)
 }
@@ -170,11 +178,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Identity:         NewIdentityClient(cfg),
 		Invite:           NewInviteClient(cfg),
 		Membership:       NewMembershipClient(cfg),
+		ModelRate:        NewModelRateClient(cfg),
 		Password:         NewPasswordClient(cfg),
 		RateWindow:       NewRateWindowClient(cfg),
 		Team:             NewTeamClient(cfg),
 		TeamConfig:       NewTeamConfigClient(cfg),
 		TeamProvider:     NewTeamProviderClient(cfg),
+		UsageRequest:     NewUsageRequestClient(cfg),
 		User:             NewUserClient(cfg),
 		VerificationCode: NewVerificationCodeClient(cfg),
 	}, nil
@@ -199,11 +209,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Identity:         NewIdentityClient(cfg),
 		Invite:           NewInviteClient(cfg),
 		Membership:       NewMembershipClient(cfg),
+		ModelRate:        NewModelRateClient(cfg),
 		Password:         NewPasswordClient(cfg),
 		RateWindow:       NewRateWindowClient(cfg),
 		Team:             NewTeamClient(cfg),
 		TeamConfig:       NewTeamConfigClient(cfg),
 		TeamProvider:     NewTeamProviderClient(cfg),
+		UsageRequest:     NewUsageRequestClient(cfg),
 		User:             NewUserClient(cfg),
 		VerificationCode: NewVerificationCodeClient(cfg),
 	}, nil
@@ -235,8 +247,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Identity, c.Invite, c.Membership, c.Password, c.RateWindow, c.Team,
-		c.TeamConfig, c.TeamProvider, c.User, c.VerificationCode,
+		c.Identity, c.Invite, c.Membership, c.ModelRate, c.Password, c.RateWindow,
+		c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User,
+		c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -246,8 +259,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Identity, c.Invite, c.Membership, c.Password, c.RateWindow, c.Team,
-		c.TeamConfig, c.TeamProvider, c.User, c.VerificationCode,
+		c.Identity, c.Invite, c.Membership, c.ModelRate, c.Password, c.RateWindow,
+		c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User,
+		c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -262,6 +276,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Invite.mutate(ctx, m)
 	case *MembershipMutation:
 		return c.Membership.mutate(ctx, m)
+	case *ModelRateMutation:
+		return c.ModelRate.mutate(ctx, m)
 	case *PasswordMutation:
 		return c.Password.mutate(ctx, m)
 	case *RateWindowMutation:
@@ -272,6 +288,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.TeamConfig.mutate(ctx, m)
 	case *TeamProviderMutation:
 		return c.TeamProvider.mutate(ctx, m)
+	case *UsageRequestMutation:
+		return c.UsageRequest.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *VerificationCodeMutation:
@@ -741,6 +759,139 @@ func (c *MembershipClient) mutate(ctx context.Context, m *MembershipMutation) (V
 		return (&MembershipDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Membership mutation op: %q", m.Op())
+	}
+}
+
+// ModelRateClient is a client for the ModelRate schema.
+type ModelRateClient struct {
+	config
+}
+
+// NewModelRateClient returns a client for the ModelRate from the given config.
+func NewModelRateClient(c config) *ModelRateClient {
+	return &ModelRateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `modelrate.Hooks(f(g(h())))`.
+func (c *ModelRateClient) Use(hooks ...Hook) {
+	c.hooks.ModelRate = append(c.hooks.ModelRate, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `modelrate.Intercept(f(g(h())))`.
+func (c *ModelRateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ModelRate = append(c.inters.ModelRate, interceptors...)
+}
+
+// Create returns a builder for creating a ModelRate entity.
+func (c *ModelRateClient) Create() *ModelRateCreate {
+	mutation := newModelRateMutation(c.config, OpCreate)
+	return &ModelRateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ModelRate entities.
+func (c *ModelRateClient) CreateBulk(builders ...*ModelRateCreate) *ModelRateCreateBulk {
+	return &ModelRateCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ModelRateClient) MapCreateBulk(slice any, setFunc func(*ModelRateCreate, int)) *ModelRateCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ModelRateCreateBulk{err: fmt.Errorf("calling to ModelRateClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ModelRateCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ModelRateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ModelRate.
+func (c *ModelRateClient) Update() *ModelRateUpdate {
+	mutation := newModelRateMutation(c.config, OpUpdate)
+	return &ModelRateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ModelRateClient) UpdateOne(_m *ModelRate) *ModelRateUpdateOne {
+	mutation := newModelRateMutation(c.config, OpUpdateOne, withModelRate(_m))
+	return &ModelRateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ModelRateClient) UpdateOneID(id string) *ModelRateUpdateOne {
+	mutation := newModelRateMutation(c.config, OpUpdateOne, withModelRateID(id))
+	return &ModelRateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ModelRate.
+func (c *ModelRateClient) Delete() *ModelRateDelete {
+	mutation := newModelRateMutation(c.config, OpDelete)
+	return &ModelRateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ModelRateClient) DeleteOne(_m *ModelRate) *ModelRateDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ModelRateClient) DeleteOneID(id string) *ModelRateDeleteOne {
+	builder := c.Delete().Where(modelrate.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ModelRateDeleteOne{builder}
+}
+
+// Query returns a query builder for ModelRate.
+func (c *ModelRateClient) Query() *ModelRateQuery {
+	return &ModelRateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeModelRate},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ModelRate entity by its id.
+func (c *ModelRateClient) Get(ctx context.Context, id string) (*ModelRate, error) {
+	return c.Query().Where(modelrate.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ModelRateClient) GetX(ctx context.Context, id string) *ModelRate {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ModelRateClient) Hooks() []Hook {
+	return c.hooks.ModelRate
+}
+
+// Interceptors returns the client interceptors.
+func (c *ModelRateClient) Interceptors() []Interceptor {
+	return c.inters.ModelRate
+}
+
+func (c *ModelRateClient) mutate(ctx context.Context, m *ModelRateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ModelRateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ModelRateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ModelRateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ModelRateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ModelRate mutation op: %q", m.Op())
 	}
 }
 
@@ -1521,6 +1672,139 @@ func (c *TeamProviderClient) mutate(ctx context.Context, m *TeamProviderMutation
 	}
 }
 
+// UsageRequestClient is a client for the UsageRequest schema.
+type UsageRequestClient struct {
+	config
+}
+
+// NewUsageRequestClient returns a client for the UsageRequest from the given config.
+func NewUsageRequestClient(c config) *UsageRequestClient {
+	return &UsageRequestClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `usagerequest.Hooks(f(g(h())))`.
+func (c *UsageRequestClient) Use(hooks ...Hook) {
+	c.hooks.UsageRequest = append(c.hooks.UsageRequest, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `usagerequest.Intercept(f(g(h())))`.
+func (c *UsageRequestClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UsageRequest = append(c.inters.UsageRequest, interceptors...)
+}
+
+// Create returns a builder for creating a UsageRequest entity.
+func (c *UsageRequestClient) Create() *UsageRequestCreate {
+	mutation := newUsageRequestMutation(c.config, OpCreate)
+	return &UsageRequestCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UsageRequest entities.
+func (c *UsageRequestClient) CreateBulk(builders ...*UsageRequestCreate) *UsageRequestCreateBulk {
+	return &UsageRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UsageRequestClient) MapCreateBulk(slice any, setFunc func(*UsageRequestCreate, int)) *UsageRequestCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UsageRequestCreateBulk{err: fmt.Errorf("calling to UsageRequestClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UsageRequestCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UsageRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UsageRequest.
+func (c *UsageRequestClient) Update() *UsageRequestUpdate {
+	mutation := newUsageRequestMutation(c.config, OpUpdate)
+	return &UsageRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UsageRequestClient) UpdateOne(_m *UsageRequest) *UsageRequestUpdateOne {
+	mutation := newUsageRequestMutation(c.config, OpUpdateOne, withUsageRequest(_m))
+	return &UsageRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UsageRequestClient) UpdateOneID(id string) *UsageRequestUpdateOne {
+	mutation := newUsageRequestMutation(c.config, OpUpdateOne, withUsageRequestID(id))
+	return &UsageRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UsageRequest.
+func (c *UsageRequestClient) Delete() *UsageRequestDelete {
+	mutation := newUsageRequestMutation(c.config, OpDelete)
+	return &UsageRequestDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UsageRequestClient) DeleteOne(_m *UsageRequest) *UsageRequestDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UsageRequestClient) DeleteOneID(id string) *UsageRequestDeleteOne {
+	builder := c.Delete().Where(usagerequest.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UsageRequestDeleteOne{builder}
+}
+
+// Query returns a query builder for UsageRequest.
+func (c *UsageRequestClient) Query() *UsageRequestQuery {
+	return &UsageRequestQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUsageRequest},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UsageRequest entity by its id.
+func (c *UsageRequestClient) Get(ctx context.Context, id string) (*UsageRequest, error) {
+	return c.Query().Where(usagerequest.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UsageRequestClient) GetX(ctx context.Context, id string) *UsageRequest {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *UsageRequestClient) Hooks() []Hook {
+	return c.hooks.UsageRequest
+}
+
+// Interceptors returns the client interceptors.
+func (c *UsageRequestClient) Interceptors() []Interceptor {
+	return c.inters.UsageRequest
+}
+
+func (c *UsageRequestClient) mutate(ctx context.Context, m *UsageRequestMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UsageRequestCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UsageRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UsageRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UsageRequestDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UsageRequest mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -1838,12 +2122,12 @@ func (c *VerificationCodeClient) mutate(ctx context.Context, m *VerificationCode
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Identity, Invite, Membership, Password, RateWindow, Team, TeamConfig,
-		TeamProvider, User, VerificationCode []ent.Hook
+		Identity, Invite, Membership, ModelRate, Password, RateWindow, Team, TeamConfig,
+		TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
-		Identity, Invite, Membership, Password, RateWindow, Team, TeamConfig,
-		TeamProvider, User, VerificationCode []ent.Interceptor
+		Identity, Invite, Membership, ModelRate, Password, RateWindow, Team, TeamConfig,
+		TeamProvider, UsageRequest, User, VerificationCode []ent.Interceptor
 	}
 )
 
