@@ -17,14 +17,14 @@ const SURFACE = 'M-160 300Q-120 282 -80 300T0 300T80 300T160 300T240 300T320 300
 export function Sea() {
   return (
     <svg
-      viewBox="0 0 1600 460"
+      viewBox="0 0 1600 360"
       preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
-      className="block h-[clamp(220px,30vw,440px)] w-full"
+      className="block h-[clamp(172px,23.5vw,344px)] w-full"
     >
       <path className="fill-foreground opacity-[0.07]" d={FLUKE} transform="translate(960 310) rotate(-15) scale(8.6) translate(-32 -44)" />
       <g className="sea-drift">
-        <path className="fill-background" d={`${SURFACE}V460H-160Z`} />
+        <path className="fill-background" d={`${SURFACE}V360H-160Z`} />
         <path className="fill-none stroke-foreground" strokeWidth={1.5} vectorEffect="non-scaling-stroke" d={SURFACE} />
       </g>
     </svg>

@@ -110,8 +110,8 @@ Both declare the same scale; the console adds three outcome colours.
 | `--accent-foreground` | `oklch(0.145 0.002 286)` | `oklch(0.967 0.001 286)` | |
 | `--destructive` | `oklch(0.529 0.193 29)` | `oklch(0.711 0.166 22)` | Deleting, failing |
 | `--destructive-foreground` | `oklch(1 0 0)` | `oklch(0.15 0.002 286)` | |
-| `--brand` | `oklch(0.33 0.11 268)` | `oklch(0.766 0.095 271)` | Navy: team identity (below) |
-| `--brand-foreground` | `oklch(1 0 0)` | `oklch(0.15 0.002 286)` | Text on brand |
+| `--brand` | `oklch(0.33 0.11 268)` | `oklch(0.452 0.124 270)` | Navy: team identity (below); in dark a lighter navy, still a fill under white text |
+| `--brand-foreground` | `oklch(1 0 0)` | `oklch(1 0 0)` | Text on brand |
 | `--signal` | `oklch(0.765 0.14 73)` | `oklch(0.807 0.137 78)` | Amber: attention, as a dot or a line, never text |
 | `--border` | `oklch(0.932 0.003 286)` | `oklch(0.287 0.007 286)` | Hairlines |
 | `--input` | `oklch(0.887 0.007 286)` | `oklch(0.351 0.01 286)` | Field and outline-button border |
