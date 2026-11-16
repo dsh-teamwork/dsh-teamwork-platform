@@ -31,3 +31,5 @@ Account suspension, individual session/token revocation, team lifecycle writes a
 `server/manage` owns authentication guards, common routes and embedded community assets. `apps/manage` exports the shell, base-path handling and shared components through `@dsh-teamwork/manage-core`. `Host.AddAdminRoutes` adds routes under the same guard and index. `GoogleOnly` financial routes require an actual allowlisted Google session even when an automation key is otherwise valid. `Host.SetAdminConsole` selects edition assets, base path and session-door restriction. Editions must disable user-only mounts and workers on the management role; shared financial participants may still register for operator recovery.
 
 The role is a server boundary, not merely a navigation flag. Tests exercise both forbidden surfaces with valid credentials, ordinary administrator authentication, key precedence, CSRF, search and pagination.
+
+`mountAdmin` accepts `teamActions(team)` to place edition-owned navigation beside each team and in its detail header. The community default adds no action; the shared directory owns search and membership rendering.

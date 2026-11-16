@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Edition actions in the instance team directory
+
+- **What:** The shared management console accepts team actions in directory rows and detail headers.
+- **Why:** Editions can link a selected team to their operations without copying the directory.
+- **Upgrade:** Nothing; the community default is unchanged.
+- **Refs:** `docs/tech/system-management.md`.
+
 ## 2026-11-15 — Community instance management and explicit service roles
 
 - **What:** Platform owns the shared `/manage` console and administrator API, user/team directories, instance counts and non-secret diagnostics. Editions extend its routes and UI. `SERVICE_ROLE` selects combined, user or management surfaces.

@@ -1,4 +1,5 @@
 import { useTitle } from '../lib/session';
+import type { ReactNode } from 'react';
 import { t } from '../lib/copy';
 import { Link, useParams } from 'react-router';
 import { useApi } from '../lib/use-api';
@@ -14,7 +15,8 @@ import {
 
 type Team = { id: string; name: string; createdAt: string };
 type Page = { teams: Team[]; total: number; page: number; totalPages: number };
-export function TeamsPage() {
+type TeamActions = { actions?: (team: Team) => ReactNode };
+export function TeamsPage({ actions }: TeamActions) {
   useTitle(t('teams'));
   const { params, set, href } = useQueryParams<{ q?: string; page?: string }>();
   const { data, error } = useApi<Page>('/api/admin/teams', params);
@@ -50,6 +52,7 @@ export function TeamsPage() {
                       <Link className="underline" to={'/teams/' + t.id}>
                         {t.name}
                       </Link>
+                      {actions && <span className="ml-4 inline-flex">{actions(t)}</span>}
                     </td>
                     <td className="p-3 font-mono">{t.id}</td>
                     <td className="p-3">{t.createdAt.slice(0, 10)}</td>
@@ -75,7 +78,7 @@ export function TeamsPage() {
     </div>
   );
 }
-export function TeamPage() {
+export function TeamPage({ actions }: TeamActions) {
   useTitle(t('team'));
   const { id } = useParams();
   const { params, href } = useQueryParams<{ page?: string }>();
@@ -94,7 +97,7 @@ export function TeamPage() {
   >('/api/admin/teams/' + encodeURIComponent(id ?? ''), params);
   return (
     <div>
-      <PageHeader title={data?.name ?? t('team')} description={id ?? ''} />
+      <PageHeader title={data?.name ?? t('team')} description={id ?? ''} actions={data && actions?.(data)} />
       <ErrorBanner error={error} />
       {data && (
         <>
