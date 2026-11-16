@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition/editiontest"
@@ -313,4 +314,27 @@ func TestRolesAndTeamDirectory(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestRootMountedEditionConsole(t *testing.T) {
+	ext := edition.Extension{Name: "operator", Mount: func(h edition.Host) (func(), error) {
+		h.SetAdminConsole(edition.AdminConsole{Base: "", GoogleOnly: true, Files: fstest.MapFS{"index.html": {Data: []byte("management test")}}})
+		return nil, nil
+	}}
+	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{Env: map[string]string{"SERVICE_ROLE": "manage", "ADMIN_EMAILS": "root@example.test"}}, func(t *testing.T, in *editiontest.Instance) {
+		for _, path := range []string{"/", "/users"} {
+			res, err := http.Get(in.URL + path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			res.Body.Close()
+			if res.StatusCode != 200 {
+				t.Fatalf("page %s: %d", path, res.StatusCode)
+			}
+		}
+		w := world{t: t, in: in}
+		if s, _ := w.do(request{method: "GET", path: "/api/teams"}); s != 404 {
+			t.Fatalf("API fallback: %d", s)
+		}
+	})
 }

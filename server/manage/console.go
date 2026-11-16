@@ -30,6 +30,11 @@ func mountConsole(mux *http.ServeMux, console edition.AdminConsole) {
 	}
 	files := http.FileServerFS(root)
 	page := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		w.Header().Set("Content-Security-Policy", csp)
 		name := strings.TrimPrefix(r.URL.Path, console.Base+"/")
 		if name != "" && !strings.HasSuffix(name, "/") {
@@ -48,7 +53,7 @@ func mountConsole(mux *http.ServeMux, console edition.AdminConsole) {
 		w.Header().Set("Cache-Control", "no-store")
 		http.ServeFileFS(w, r, root, "index.html")
 	}
-	mux.HandleFunc("GET "+console.Base+"/", page)
+	mux.HandleFunc(console.Base+"/", page)
 	if console.Base != "" {
 		mux.Handle("GET "+console.Base, http.RedirectHandler(console.Base+"/", http.StatusMovedPermanently))
 	}
