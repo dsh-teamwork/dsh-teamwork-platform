@@ -100,7 +100,7 @@ Both declare the same scale; the console adds three outcome colours.
 | `--foreground` | `oklch(0.145 0.002 286)` | `oklch(0.967 0.001 286)` | Body text |
 | `--card` | `oklch(1 0 0)` | `oklch(0.192 0.004 286)` | Raised surface |
 | `--card-foreground` | `oklch(0.145 0.002 286)` | `oklch(0.967 0.001 286)` | Text on a card |
-| `--muted` | `oklch(0.976 0.001 286)` | `oklch(0.192 0.004 286)` | Quiet ground: the sidebar, a code block |
+| `--muted` | `oklch(0.976 0.001 286)` | `oklch(0.232 0.006 286)` | Quiet ground: the sidebar, a code block |
 | `--muted-foreground` | `oklch(0.478 0.016 286)` | `oklch(0.712 0.013 286)` | Secondary text |
 | `--primary` | `oklch(0.145 0.002 286)` | `oklch(0.967 0.001 286)` | The one CTA per form: black in light, white in dark |
 | `--primary-foreground` | `oklch(1 0 0)` | `oklch(0.15 0.002 286)` | Text on primary |
