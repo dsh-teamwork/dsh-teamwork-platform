@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-16 — The brand mark's fluke rises from a layered sea
+
+- **What:** The mark's thin wave line becomes a full sea in three tones (deep water, a light surface, two swell bands) that covers the fluke's stalk; the fluke keeps its size and the surface its height. Every icon and logo is re-exported.
+- **Why:** The stalk cut off below a thin line read as a severed tail.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0035, `docs/design.md`, `docs/brand/icon.svg`.
+
 ## 2026-11-16 — Bilingual product documentation and self-hosting guide
 
 - **What:** English-first and Simplified Chinese user READMEs explain team resources, reviewed sharing, service boundaries and supported installation paths. A self-hosting runbook covers retained local/S3 artifacts, verification and consistent backups.

@@ -1,14 +1,15 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-15
+> **Status:** Current · **Updated:** 2026-11-16
 
 The DSH Teamwork visual system — the whale mark, the indigo-and-paper palette, type, spacing and icons — and the file in code that owns each part.
 
-The brand is one picture: a whale sounding, its fluke tilted into a calm sea,
-in paper on an indigo plate. What surfaces is this one piece of work; what goes
-under is what the team keeps: *work done with AI comes back to the team*.
-Every surface is drawn from two colours, **indigo**
-and **paper**, with indigo-tinted ink for text. **The stylesheets are the
+The brand is one picture: a whale sounding, its paper fluke rising from a sea
+that settles in layers under an indigo sky. What surfaces is this one piece of
+work; what goes under, layer on layer, is what the team keeps: *work done with
+AI comes back to the team*. Every surface is drawn from two colours, **indigo**
+and **paper**, with indigo-tinted ink for text; the mark alone adds three sea
+tones of the same indigo. **The stylesheets are the
 source of truth and this file describes them**: where the two disagree, the
 stylesheet is right and this file is stale.
 
@@ -25,23 +26,29 @@ stylesheet is right and this file is stale.
 ## The mark
 
 `docs/brand/icon.svg` is a 400×400 artboard: an indigo plate
-(`<rect id="plate" fill="#1E2F6D">`) and one paper-coloured path
-(`<path id="mark" fill="#F8F5EF">`).
+(`<rect id="plate" fill="#1E2F6D">`) for the sky, then four filled paths drawn
+in this order — `mark` (the paper fluke), `sea`, `surface` and `swell`. Why it
+is a layered sea and which versions were turned down is
+[ADR 0035](adr/0035-the-fluke-rises-from-a-layered-sea.md).
 
-- **What is drawn.** A humpback fluke, scaled to fill most of the plate and
-  tilted 15° about the point where it enters the water; a sea surface that is a
-  low, even wave (amplitude ≈ 1.25 % of the side, stroke ≈ 7 %) running off both
-  edges of the plate; and a narrow gap in the wave on each side of the stalk, so
-  the stalk reads as passing through the surface. The fluke is centred on its
-  own rotated bounds, and the picture — fluke tip to wave — on the plate.
-- **One flat path, no effects.** The wave, the gaps and the clipping of the
-  stalk at the surface are resolved into plain filled geometry: no strokes,
-  masks, clip paths or opacity. Edit the geometry, not the effects.
+- **What is drawn.** A humpback fluke the hero's shape (`sea.tsx`), tilted 15°
+  about its stalk and filling most of the plate's width; below it a sea whose
+  surface is a wave running off both edges (mean height 72.5 % of the side,
+  amplitude 2 %, period a quarter of the side), with a crest under the stalk.
+  The sea is the deep tone and covers the stalk, so the fluke enters the water
+  instead of ending at a line. A light band traces the surface, and two thinner
+  swell bands, each lower and calmer than the last, lie in the deep water.
+- **Every part is its own colour.** Fluke, surface, deep sea, swell and sky
+  never share a fill, so the fluke never merges into the water and the sea
+  never merges into the sky.
+- **Flat paths, no effects.** Waves and bands are filled outlines and the
+  stalk is hidden by painting order: no strokes, masks, clip paths or
+  opacity. Edit the geometry, not the effects.
 - **The plate is part of the mark.** The sea is drawn edge to edge, so the mark
   is never shown without its plate and never recoloured. There is no
   monochrome or plate-less variant.
-- **Small sizes.** It is the same picture at every size; at 16 px it still
-  reads as a fluke over a line of sea.
+- **Small sizes.** It is the same picture at every size; at 16 px the swell
+  bands blur into the deep sea and it still reads as a fluke rising from water.
 - **What it must not become.** A fluke above short, centred, shrinking lines
   reads as a goblet or a trophy; the sea always spans the full plate. The
   fluke is seen from behind, never a whale in profile, which keeps it apart
@@ -72,7 +79,10 @@ dark grounds are indigo-black and text is paper.
 | Name | Value | Hex (for raster and share cards) | Use |
 | --- | --- | --- | --- |
 | Indigo | `oklch(0.33 0.11 268)` | `#1E2F6D` | The plate; `--brand` in light |
-| Paper | `oklch(0.97 0.008 85)` | `#F8F5EF` | The mark; `--brand-foreground` in light |
+| Paper | `oklch(0.97 0.008 85)` | `#F8F5EF` | The fluke; `--brand-foreground` in light |
+| Surface | `oklch(0.67 0.103 270)` | `#7B91D4` | The mark's sea surface only |
+| Swell | `oklch(0.39 0.121 268)` | `#2B3F86` | The mark's swell bands only |
+| Deep | `oklch(0.24 0.077 270)` | `#111A42` | The mark's deep sea only |
 
 ### Web and console
 

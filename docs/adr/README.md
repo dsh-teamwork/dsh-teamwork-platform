@@ -24,6 +24,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0032 — Shared instance management](0032-shared-instance-management.md) — community administration and isolated service roles.
 - [0033 — Private artifact storage providers](0033-private-artifact-storage-providers.md) — local defaults, private S3 storage and verified migration.
 - [0034 — Team-scoped artifact paths](0034-team-scoped-artifact-paths.md) — per-team object keys, verified migration and retained flat sources.
+- [0035 — The fluke rises from a layered sea](0035-the-fluke-rises-from-a-layered-sea.md) — the brand mark's sea, its colours and the versions turned down.
 
 The template:
 
