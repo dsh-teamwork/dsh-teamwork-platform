@@ -55,7 +55,30 @@ type Users interface {
 }
 
 // Host is what the server lends an extension.
+type AdminRoute struct {
+	Method      string                                                 `json:"method"`
+	Path        string                                                 `json:"path"`
+	Access      string                                                 `json:"access"`
+	Description string                                                 `json:"description"`
+	Query       map[string]any                                         `json:"query,omitempty"`
+	Body        map[string]any                                         `json:"body,omitempty"`
+	Response    map[string]any                                         `json:"response"`
+	GoogleOnly  bool                                                   `json:"-"`
+	Handle      func(http.ResponseWriter, *http.Request, string) error `json:"-"`
+}
+
+// AdminConsole replaces the community assets while retaining its API and guard.
+type AdminConsole struct {
+	Files      fs.FS
+	Base       string
+	GoogleOnly bool
+}
+
 type Host struct {
+	ServiceRole     string
+	AddAdminRoutes  func([]AdminRoute)
+	SetAdminConsole func(AdminConsole)
+
 	// DB is the server's connection, and Dialect its kind: "sqlite3",
 	// "postgres" or "mysql". The extension's own tables are there.
 	DB      *sql.DB

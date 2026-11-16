@@ -1,0 +1,12 @@
+# dependencies
+/node_modules
+
+# build output
+/dist
+
+# local env files
+.env*.local
+.env
+
+# typescript
+*.tsbuildinfo

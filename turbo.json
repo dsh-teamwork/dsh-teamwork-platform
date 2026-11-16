@@ -15,7 +15,7 @@
     // rather than copying it themselves.
     "@dsh-teamwork/go-server#build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "internal/web/dist/**"]
+      "outputs": ["dist/**", "internal/web/dist/**", "manage/dist/**"]
     },
     "@dsh-teamwork/go-server#lint": {
       "dependsOn": ["build"],

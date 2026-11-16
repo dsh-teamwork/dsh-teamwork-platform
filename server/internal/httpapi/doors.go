@@ -86,7 +86,11 @@ const oauthCookie = "dsh-teamwork-oauth"
 const oauthTTL = 10 * time.Minute
 
 func (s *Server) signInFailed(w http.ResponseWriter, r *http.Request, code string) error {
-	http.Redirect(w, r, "/sign-in?error="+code, http.StatusFound)
+	login := "/sign-in"
+	if s.ManageRoot {
+		login = "/login"
+	}
+	http.Redirect(w, r, login+"?error="+code, http.StatusFound)
 	return nil
 }
 

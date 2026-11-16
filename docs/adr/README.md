@@ -21,6 +21,8 @@ or the hosted service, kept with the closed edition rather than here.
 - [0026](0026-transactional-team-events.md) — edition provisioning joins real team creation and member insertion transactions.
 - [0028](0028-edition-team-navigation.md) — registered same-origin team pages appear in the console and survive sign-in returns without closed route imports.
 
+- [0032 — Shared instance management](0032-shared-instance-management.md) — community administration and isolated service roles.
+
 The template:
 
 ```markdown

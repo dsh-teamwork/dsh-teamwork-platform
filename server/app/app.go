@@ -30,6 +30,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/manage"
 )
 
 // Main runs the server with the process's arguments and environment, and
@@ -113,6 +114,15 @@ func run(version string) error {
 // tests. stop ends what the extensions hold; call it once the server has
 // stopped taking requests, before the database closes.
 func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, exts []edition.Extension, env func(string) string) (*httpapi.Server, http.Handler, func(), error) {
+	if cfg.ServiceRole == "" {
+		cfg.ServiceRole = env("SERVICE_ROLE")
+		if cfg.ServiceRole == "" {
+			cfg.ServiceRole = "combined"
+		}
+	}
+	if cfg.ServiceRole != "user" && cfg.ServiceRole != "manage" && cfg.ServiceRole != "combined" {
+		return nil, nil, nil, errors.New("invalid SERVICE_ROLE")
+	}
 	keys, err := team.NewKeys(cfg.ProviderKeysSecret)
 	if err != nil {
 		return nil, nil, nil, err
@@ -157,8 +167,13 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		}
 		return nil
 	}
+	console := edition.AdminConsole{Base: "/manage"}
+	var adminRoutes []edition.AdminRoute
 	host := edition.Host{
-		DB: conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
+		ServiceRole:     cfg.ServiceRole,
+		AddAdminRoutes:  func(routes []edition.AdminRoute) { adminRoutes = append(adminRoutes, routes...) },
+		SetAdminConsole: func(c edition.AdminConsole) { console = c },
+		DB:              conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		Users: NewUsers(client), Env: env,
 		WithTeamTx: meter.WithTeamTx,
@@ -197,7 +212,10 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			return string(m.Role), nil
 		},
 	}
-	stops := []func(){meter.StartMaintenance()}
+	stops := []func(){}
+	if cfg.ServiceRole != "manage" {
+		stops = append(stops, meter.StartMaintenance())
+	}
 	stop := func() {
 		for i := len(stops) - 1; i >= 0; i-- {
 			stops[i]()
@@ -226,5 +244,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			stops = append(stops, s)
 		}
 	}
+	manage.Mount(host, client, console, adminRoutes)
+	srv.ManageRoot = cfg.ServiceRole == "manage" && console.Base == "" && env("ADMIN_EMAILS") != ""
 	return srv, srv.Handler(), stop, nil
 }

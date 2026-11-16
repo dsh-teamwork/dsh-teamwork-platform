@@ -17,3 +17,7 @@ if (!existsSync(join(from, 'index.html'))) {
 rmSync(to, { recursive: true, force: true });
 mkdirSync(to, { recursive: true });
 cpSync(from, to, { recursive: true });
+
+const management = join(server, '..', 'apps', 'manage', 'dist');
+if (!existsSync(join(management, 'index.html'))) throw new Error('Build @dsh-teamwork/manage-core first');
+cpSync(management, join(server, 'manage', 'dist'), {recursive:true});

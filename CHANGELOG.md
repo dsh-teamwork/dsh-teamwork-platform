@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Community instance management and explicit service roles
+
+- **What:** Platform owns the shared `/manage` console and administrator API, user/team directories, instance counts and non-secret diagnostics. Editions extend its routes and UI. `SERVICE_ROLE` selects combined, user or management surfaces.
+- **Why:** Self-hosted teams need instance administration, while separate operator services must not expose member workloads.
+- **Breaking:** Isolated user processes refuse management; management processes refuse team APIs, plugin authorization and model calls. An instance administrator is an explicit `ADMIN_EMAILS` entry, not a team role.
+- **Upgrade:** Build both console apps before embedding. Set `ADMIN_EMAILS`; optionally choose `SERVICE_ROLE`. No database migration. Separate user and management services share the database and provider encryption key but retain distinct session secrets.
+- **Refs:** `docs/tech/system-management.md`, ADR 0032.
+
 ## 2026-11-15 — Linux CI with community distribution checks owned by Platform
 
 - **What:** Both repositories run CI on Linux. Platform packs and smoke-tests npm packages in one job and owns Docker self-host verification; downstream editions retain the full integrated build gate. New runs cancel older runs for the same pull request or branch.

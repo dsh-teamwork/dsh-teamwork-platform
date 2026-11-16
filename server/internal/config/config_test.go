@@ -83,3 +83,24 @@ func TestProviderKeysSecretEncodings(t *testing.T) {
 		}
 	}
 }
+
+func TestServiceRoleValidation(t *testing.T) {
+	for _, role := range []string{"", "combined", "user", "manage", "manager"} {
+		c, err := Load([]string{"--data", t.TempDir()}, env(map[string]string{"SERVICE_ROLE": role}))
+		if role == "manager" {
+			if err == nil {
+				t.Fatal("invalid role accepted")
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if role == "" {
+			role = "combined"
+		}
+		if c.ServiceRole != role {
+			t.Fatalf("role %q", c.ServiceRole)
+		}
+	}
+}

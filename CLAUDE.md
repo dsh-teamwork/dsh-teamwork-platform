@@ -276,7 +276,7 @@ editions run the complete build gate without repeating those community
 distribution checks. A tag `v<version>` runs `.github/workflows/release.yaml`:
 npm, release binaries and the image on ghcr.io (it needs an `NPM_TOKEN`
 secret); `node server/scripts/pack.mjs <version>` is its packing step, run by
-hand after `pnpm --filter @dsh-teamwork/console build`. `.husky/pre-push` runs
+hand after `pnpm --filter @dsh-teamwork/console --filter @dsh-teamwork/manage-core build`. `.husky/pre-push` runs
 the gate before a branch leaves your machine. `git push --no-verify` is for a
 work-in-progress branch nobody will merge yet, not for landing a red `main`.
 The `@claude` workflow (`.github/workflows/claude.yml`) needs a
@@ -316,6 +316,12 @@ and the server refuses to start when one was.
   resolves to is decided by the day the lockfile was written.
 
 ## Architecture
+
+**Instance management** is public: `server/manage` and `apps/manage`, served at
+`/manage` when `ADMIN_EMAILS` is configured. Read `docs/tech/system-management.md`
+before changing operator access or mounting an edition console. `SERVICE_ROLE`
+is `combined` (default), `user`, or `manage`; isolated management processes serve
+no user business routes. `@dsh-teamwork/manage-core` exports the shared console.
 
 ```
 server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs

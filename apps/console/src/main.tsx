@@ -39,7 +39,7 @@ void startAnalytics();
 function FallbackPage() {
   const { session } = useSession();
   const location = useLocation();
-  const edition = session.teamPages.some((page) => location.pathname.startsWith(page.path));
+  const edition = location.pathname === "/manage" || location.pathname.startsWith("/manage/") || session.teamPages.some((page) => location.pathname.startsWith(page.path));
   useEffect(() => {
     if (edition) window.location.replace(`${location.pathname}${location.search}${location.hash}`);
   }, [edition, location]);
