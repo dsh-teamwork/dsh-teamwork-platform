@@ -89,10 +89,10 @@ dsh web
 ```sh
 pnpm install --frozen-lockfile
 pnpm build
-./server/dist/dsh-teamwork --data ./local-data
+./server/dist/dsh-teamwork
 ```
 
-本地默认地址为 `http://127.0.0.1:3800`，启动后按照输出链接创建首个账号。[CLAUDE.md](CLAUDE.md)（英文）包含开发命令和完整推送前检查。PR 会运行这些检查；提交使用 `git commit -s` 加入 `Signed-off-by:`，确认 [DCO](https://developercertificate.org/)。问题反馈到 [Issues](https://github.com/dsh-teamwork/dsh-teamwork-platform/issues)。
+本地默认地址为 `http://127.0.0.1:3800`，私有数据保存在 `~/.dsh-teamwork`，启动后按照输出链接创建首个账号。[CLAUDE.md](CLAUDE.md)（英文）包含开发命令和完整推送前检查。PR 会运行这些检查；提交使用 `git commit -s` 加入 `Signed-off-by:`，确认 [DCO](https://developercertificate.org/)。问题反馈到 [Issues](https://github.com/dsh-teamwork/dsh-teamwork-platform/issues)。
 
 ## 许可证
 

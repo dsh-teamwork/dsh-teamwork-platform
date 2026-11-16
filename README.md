@@ -120,10 +120,11 @@ Use the repository's Node version (`.nvmrc`), pnpm 10.18.1 and the Go version in
 ```sh
 pnpm install --frozen-lockfile
 pnpm build
-./server/dist/dsh-teamwork --data ./local-data
+./server/dist/dsh-teamwork
 ```
 
-The local default is `http://127.0.0.1:3800`. Follow the setup link printed at
+The local default is `http://127.0.0.1:3800`, with private data in
+`~/.dsh-teamwork`. Follow the setup link printed at
 startup. [CLAUDE.md](CLAUDE.md) contains development commands and the complete
 pre-push gate. Pull requests run that gate; commits carry a `Signed-off-by:`
 line (`git commit -s`) certifying the [DCO](https://developercertificate.org/).

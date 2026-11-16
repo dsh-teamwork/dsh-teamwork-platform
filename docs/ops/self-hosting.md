@@ -37,10 +37,11 @@ version from `server/go.mod`:
 ```sh
 pnpm install --frozen-lockfile
 pnpm build
-./server/dist/dsh-teamwork --data ./local-data
+./server/dist/dsh-teamwork
 ```
 
-This listens on `127.0.0.1:3800`. Use the binary from a service manager for a
+This listens on `127.0.0.1:3800` and keeps private data in `~/.dsh-teamwork`,
+outside the source checkout. Use the binary from a service manager for a
 persistent source installation. `--data` selects its private data directory.
 Without `DATABASE_URL` it uses SQLite; migrations apply before serving.
 
