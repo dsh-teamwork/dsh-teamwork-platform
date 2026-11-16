@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -31,47 +32,26 @@ func (s *Service) ListConfigs(ctx context.Context, userID, teamID string) ([]Con
 // UpdateConfig edits a configuration, naming the version it was read at; a
 // stale one is config_conflict.
 func (s *Service) UpdateConfig(ctx context.Context, userID, teamID, configID string, in wire.UpdateConfig) (ConfigView, error) {
-	admin, err := s.RequireMembership(ctx, userID, teamID, true)
-	if err != nil {
-		return ConfigView{}, err
-	}
-	// A configuration keeps its kind: a model a preset references must not
-	// become a plugin, which would also take it past the in-use checks.
-	current, err := s.DB.TeamConfig.Query().Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID)).Only(ctx)
-	if err != nil && !ent.IsNotFound(err) {
-		return ConfigView{}, err
-	}
-	if current != nil && current.RouteOwner != "" {
-		return ConfigView{}, wire.E(http.StatusForbidden, "config_owned")
-	}
-	if current != nil && string(current.Kind) != in.Kind {
-		var is wire.Issues
-		is.Add("A configuration's kind does not change", "kind")
-		return ConfigView{}, is.Err()
-	}
-	if err := s.checkReferences(ctx, admin.TeamID, &in.ConfigInput); err != nil {
-		return ConfigView{}, err
-	}
-	changed, err := s.DB.TeamConfig.Update().
-		Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID), teamconfig.Version(in.Version)).
-		SetKind(teamconfig.Kind(in.Kind)).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
-	if err != nil {
-		return ConfigView{}, conflict(err, wire.ConfigExists)
-	}
-	if changed == 0 {
-		return ConfigView{}, wire.E(http.StatusConflict, "config_conflict")
-	}
-	c, err := s.DB.TeamConfig.Get(ctx, configID)
-	if err != nil {
-		return ConfigView{}, err
-	}
-	return configView(c), nil
+	return s.publishDirect(ctx, userID, teamID, configID, in.Version, in.ConfigInput)
 }
 
 // DeleteConfig removes a configuration no preset of the team still uses: a
 // model a preset references, or a plugin a preset pins, stays until those
 // presets change, as a provider stays while a model calls it.
 func (s *Service) DeleteConfig(ctx context.Context, userID, teamID, configID string) error {
+	tx, err := s.DB.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	local := *s
+	local.DB = tx.Client()
+	if err := local.deleteConfig(ctx, userID, teamID, configID); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+func (s *Service) deleteConfig(ctx context.Context, userID, teamID, configID string) error {
 	admin, err := s.RequireMembership(ctx, userID, teamID, true)
 	if err != nil {
 		return err
@@ -79,6 +59,9 @@ func (s *Service) DeleteConfig(ctx context.Context, userID, teamID, configID str
 	target, err := s.DB.TeamConfig.Query().Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID)).Only(ctx)
 	if err != nil && !ent.IsNotFound(err) {
 		return err
+	}
+	if target != nil && target.RouteOwner != "" {
+		return wire.E(http.StatusForbidden, "config_owned")
 	}
 	if target != nil && target.Kind != teamconfig.KindPreset {
 		presets, err := s.DB.TeamConfig.Query().Where(teamconfig.TeamID(admin.TeamID), teamconfig.KindEQ(teamconfig.KindPreset)).All(ctx)
@@ -97,6 +80,17 @@ func (s *Service) DeleteConfig(ctx context.Context, userID, teamID, configID str
 				if target.Kind == teamconfig.KindPlugin && d.PluginConfigID == configID {
 					return wire.E(http.StatusConflict, "plugin_in_use")
 				}
+			}
+		}
+	}
+	if target != nil {
+		exists, err := s.DB.ConfigRevision.Query().Where(configrevision.TeamID(teamID), configrevision.ConfigID(configID), configrevision.Version(target.Version)).Exist(ctx)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			if err := recordRevision(ctx, s.DB, target, "", "", "Pre-deletion baseline", "legacy"); err != nil {
+				return err
 			}
 		}
 	}

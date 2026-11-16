@@ -85,6 +85,11 @@ func Name(v string) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldEQ(FieldName, v))
 }
 
+// Builtin applies equality check predicate on the "builtin" field. It's identical to BuiltinEQ.
+func Builtin(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldBuiltin, v))
+}
+
 // RouteOwner applies equality check predicate on the "route_owner" field. It's identical to RouteOwnerEQ.
 func RouteOwner(v string) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldEQ(FieldRouteOwner, v))
@@ -328,6 +333,81 @@ func NameEqualFold(v string) predicate.TeamConfig {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldContainsFold(FieldName, v))
+}
+
+// BuiltinEQ applies the EQ predicate on the "builtin" field.
+func BuiltinEQ(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldBuiltin, v))
+}
+
+// BuiltinNEQ applies the NEQ predicate on the "builtin" field.
+func BuiltinNEQ(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNEQ(FieldBuiltin, v))
+}
+
+// BuiltinIn applies the In predicate on the "builtin" field.
+func BuiltinIn(vs ...string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldIn(FieldBuiltin, vs...))
+}
+
+// BuiltinNotIn applies the NotIn predicate on the "builtin" field.
+func BuiltinNotIn(vs ...string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNotIn(FieldBuiltin, vs...))
+}
+
+// BuiltinGT applies the GT predicate on the "builtin" field.
+func BuiltinGT(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldGT(FieldBuiltin, v))
+}
+
+// BuiltinGTE applies the GTE predicate on the "builtin" field.
+func BuiltinGTE(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldGTE(FieldBuiltin, v))
+}
+
+// BuiltinLT applies the LT predicate on the "builtin" field.
+func BuiltinLT(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldLT(FieldBuiltin, v))
+}
+
+// BuiltinLTE applies the LTE predicate on the "builtin" field.
+func BuiltinLTE(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldLTE(FieldBuiltin, v))
+}
+
+// BuiltinContains applies the Contains predicate on the "builtin" field.
+func BuiltinContains(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldContains(FieldBuiltin, v))
+}
+
+// BuiltinHasPrefix applies the HasPrefix predicate on the "builtin" field.
+func BuiltinHasPrefix(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldHasPrefix(FieldBuiltin, v))
+}
+
+// BuiltinHasSuffix applies the HasSuffix predicate on the "builtin" field.
+func BuiltinHasSuffix(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldHasSuffix(FieldBuiltin, v))
+}
+
+// BuiltinIsNil applies the IsNil predicate on the "builtin" field.
+func BuiltinIsNil() predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldIsNull(FieldBuiltin))
+}
+
+// BuiltinNotNil applies the NotNil predicate on the "builtin" field.
+func BuiltinNotNil() predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNotNull(FieldBuiltin))
+}
+
+// BuiltinEqualFold applies the EqualFold predicate on the "builtin" field.
+func BuiltinEqualFold(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEqualFold(FieldBuiltin, v))
+}
+
+// BuiltinContainsFold applies the ContainsFold predicate on the "builtin" field.
+func BuiltinContainsFold(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldContainsFold(FieldBuiltin, v))
 }
 
 // RouteOwnerEQ applies the EQ predicate on the "route_owner" field.

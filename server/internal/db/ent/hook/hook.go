@@ -81,6 +81,18 @@ func (f BudgetWindowFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BudgetWindowMutation", m)
 }
 
+// The ConfigRevisionFunc type is an adapter to allow the use of ordinary
+// function as ConfigRevision mutator.
+type ConfigRevisionFunc func(context.Context, *ent.ConfigRevisionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ConfigRevisionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ConfigRevisionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ConfigRevisionMutation", m)
+}
+
 // The IdentityFunc type is an adapter to allow the use of ordinary
 // function as Identity mutator.
 type IdentityFunc func(context.Context, *ent.IdentityMutation) (ent.Value, error)
@@ -151,6 +163,30 @@ func (f RateWindowFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RateWindowMutation", m)
+}
+
+// The ResourceArtifactFunc type is an adapter to allow the use of ordinary
+// function as ResourceArtifact mutator.
+type ResourceArtifactFunc func(context.Context, *ent.ResourceArtifactMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ResourceArtifactFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ResourceArtifactMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ResourceArtifactMutation", m)
+}
+
+// The ResourceSubmissionFunc type is an adapter to allow the use of ordinary
+// function as ResourceSubmission mutator.
+type ResourceSubmissionFunc func(context.Context, *ent.ResourceSubmissionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ResourceSubmissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ResourceSubmissionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ResourceSubmissionMutation", m)
 }
 
 // The TeamFunc type is an adapter to allow the use of ordinary

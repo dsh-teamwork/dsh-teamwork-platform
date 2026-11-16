@@ -25,6 +25,8 @@ const TeamMembersPage = lazy(() => import('@/pages/team/members').then((m) => ({
 const TeamModelsPage = lazy(() => import('@/pages/team/models').then((m) => ({ default: m.TeamModelsPage })));
 const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamOverviewPage })));
 const TeamPluginsPage = lazy(() => import('@/pages/team/plugins').then((m) => ({ default: m.TeamPluginsPage })));
+const TeamHistoryPage = lazy(() => import('@/pages/team/history').then((m) => ({ default: m.TeamHistoryPage })));
+const TeamSharingPage = lazy(() => import('@/pages/team/sharing').then((m) => ({ default: m.TeamSharingPage })));
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
 const TeamBudgetsPage = lazy(() => import('@/pages/team/budgets').then((m) => ({ default: m.TeamBudgetsPage })));
@@ -65,6 +67,8 @@ const router = createBrowserRouter([
           { path: 'models', element: <TeamModelsPage /> },
           { path: 'usage', element: <TeamUsagePage /> },
           { path: 'budgets', element: <TeamBudgetsPage /> },
+          { path: 'history', element: <TeamHistoryPage /> },
+          { path: 'sharing', element: <TeamSharingPage /> },
           { path: 'presets', element: <TeamPresetsPage /> },
           { path: 'plugins', element: <TeamPluginsPage /> },
           { path: 'members', element: <TeamMembersPage /> },

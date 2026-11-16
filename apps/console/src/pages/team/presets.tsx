@@ -59,7 +59,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
   const t = useTranslations('team.presets');
   const tt = useTranslations('team.templates');
   const admin = team.role === 'admin';
-  const presets = configs.filter((c): c is Preset => c.kind === 'preset');
+  const presets = configs.filter((c): c is Preset => c.kind === 'preset').sort((a,b)=>Number(b.builtin === 'team-assistant')-Number(a.builtin === 'team-assistant'));
   const models = configs.filter((c): c is Model => c.kind === 'model');
   const plugins = configs.filter((c): c is Plugin => c.kind === 'plugin');
   const [editing, setEditing] = useState<{ draft: Draft; preset?: Preset; template?: string } | null>(null);
@@ -67,7 +67,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
   const blank = (): Draft => ({
     name: '',
     description: '',
-    modelConfigId: models[0]?.id ?? '',
+    modelConfigId: models[0]?.id ?? '__inherit__',
     route: null,
     outputDescription: '',
     instructions: '',
@@ -89,7 +89,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
   const fromPreset = (preset: Preset): Draft => ({
     name: preset.name,
     description: preset.data.description,
-    modelConfigId: preset.data.modelConfigId ?? '',
+    modelConfigId: preset.data.inheritModel ? '__inherit__' : preset.data.modelConfigId ?? '',
     route: preset.data.modelConfigId || !preset.data.provider || !preset.data.model
       ? null
       : { provider: preset.data.provider, model: preset.data.model, contextWindow: preset.data.contextWindow, maxTokens: preset.data.maxTokens },
@@ -107,7 +107,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
         title={t('title')}
         description={admin ? t('descriptionAdmin') : t('descriptionMember')}
         action={
-          admin && (
+          (
             <Button variant="outline" onClick={() => setEditing({ draft: blank() })}>
               <Plus />
               {t('blank')}
@@ -137,7 +137,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
         </ul>
       )}
 
-      {admin && (
+      {(
         <section className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <h2 className="text-base font-semibold">{t('templatesTitle')}</h2>
@@ -167,9 +167,10 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
         </section>
       )}
 
-      {admin && editing && (
+      {editing && (
         <PresetEditor
           teamId={team.id}
+          submitForReview={!admin}
           reload={reload}
           initial={editing.draft}
           preset={editing.preset}
@@ -220,7 +221,7 @@ function PresetCard({
   const t = useTranslations('team.presets');
   const { pending, run } = useMutation(reload);
   const [open, setOpen] = useState(false);
-  const route = preset.data.modelConfigId ? (model?.name ?? t('modelMissing')) : `${preset.data.provider} / ${preset.data.model}`;
+  const route = preset.data.inheritModel ? t('inheritModel') : preset.data.modelConfigId ? (model?.name ?? t('modelMissing')) : `${preset.data.provider} / ${preset.data.model}`;
   const pinned = preset.data.pluginDependencies.map((d) => {
     const plugin = plugins.find((p) => p.id === d.pluginConfigId);
     return plugin ? `${plugin.name} @${d.version}` : t('pluginMissing');
@@ -254,12 +255,12 @@ function PresetCard({
             {t('details')}
             <ChevronDown className={cn('transition-transform', open && 'rotate-180')} />
           </Button>
-          {admin && (
+          {(
             <>
               <Button size="sm" variant="ghost" onClick={onEdit}>
                 {t('edit')}
               </Button>
-              <Button
+              {admin && <Button
                 size="sm"
                 variant="ghost"
                 disabled={pending}
@@ -268,7 +269,7 @@ function PresetCard({
                 }}
               >
                 {t('remove')}
-              </Button>
+              </Button>}
             </>
           )}
         </span>
@@ -302,6 +303,7 @@ type Tab = 'basics' | 'tools' | 'persona';
 /** Publish or edit one preset; the server checks its model and plugin pins belong to the team, at those versions. */
 function PresetEditor({
   teamId,
+  submitForReview,
   reload,
   initial,
   preset,
@@ -311,6 +313,7 @@ function PresetEditor({
   onClose,
 }: {
   teamId: string;
+  submitForReview: boolean;
   reload: Reload;
   initial: Draft;
   preset?: Preset;
@@ -348,7 +351,7 @@ function PresetEditor({
 
   async function save() {
     const data = {
-      ...(draft.modelConfigId ? { modelConfigId: draft.modelConfigId } : draft.route),
+      ...(draft.modelConfigId === '__inherit__' ? {inheritModel:true} : draft.modelConfigId ? { modelConfigId: draft.modelConfigId } : draft.route),
       description: draft.description,
       outputDescription: draft.outputDescription,
       instructions: draft.instructions,
@@ -362,8 +365,8 @@ function PresetEditor({
     };
     const body = { kind: 'preset', name: draft.name.trim(), data, ...(preset ? { version: preset.version } : {}) };
     const saved = await run(
-      () => api(preset ? `teams/${teamId}/configs/${preset.id}` : `teams/${teamId}/configs`, { method: preset ? 'PATCH' : 'POST', body }),
-      preset ? t('saved') : t('added', { name: body.name }),
+      () => submitForReview ? (async()=>{const draft=await api<{id:string;revision:number}>(`teams/${teamId}/submissions`,{body:{config:{kind:'preset',name:body.name,data},configId:preset?.id,baseVersion:preset?.version ?? 0,note:''}});return api(`teams/${teamId}/submissions/${draft.id}/submit`,{body:{revision:draft.revision}});})() : api(preset ? `teams/${teamId}/configs/${preset.id}` : `teams/${teamId}/configs`, { method: preset ? 'PATCH' : 'POST', body }),
+      submitForReview ? t('submitted') : preset ? t('saved') : t('added', { name: body.name }),
     );
     if (saved) onClose();
   }
@@ -405,7 +408,7 @@ function PresetEditor({
           {tab === 'basics' && (
             <>
               <Field id="preset-name" label={t('name')}>
-                <Input id="preset-name" value={draft.name} onChange={(e) => set('name', e.target.value)} maxLength={100} required />
+                <Input id="preset-name" value={draft.name} onChange={(e) => set('name', e.target.value)} maxLength={120} required />
               </Field>
               <Field id="preset-description" label={t('description')} hint={t('descriptionHint')}>
                 <Input id="preset-description" value={draft.description} onChange={(e) => set('description', e.target.value)} maxLength={500} />
@@ -417,6 +420,7 @@ function PresetEditor({
                   onChange={(e) => set('modelConfigId', e.target.value)}
                   required={!draft.route}
                 >
+                  <option value="__inherit__">{t('inheritModel')}</option>
                   {draft.route ? (
                     <option value="">{t('keepRoute', { route: `${draft.route.provider} / ${draft.route.model}` })}</option>
                   ) : (
@@ -534,7 +538,7 @@ function PresetEditor({
             {t('cancel')}
           </Button>
           <Button type="submit" form="preset-editor" disabled={pending || !ready}>
-            {preset ? t('save') : t('create')}
+            {submitForReview ? t('submitForReview') : preset ? t('save') : t('create')}
           </Button>
         </DialogFooter>
       </DialogContent>

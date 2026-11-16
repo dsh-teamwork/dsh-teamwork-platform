@@ -1902,6 +1902,466 @@ export interface paths {
         };
         trace?: never;
     };
+    "/teams/{teamId}/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Own submissions; administrators see the team */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResourceSubmission"][];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        /** Create a private submission draft */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SubmissionInput"];
+                };
+            };
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResourceSubmission"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/submissions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Read the exact owned submission or review it as administrator */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Frozen proposal and current revision */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResourceSubmission"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        /** Edit an owned draft at its current revision */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SubmissionInput"];
+                };
+            };
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResourceSubmission"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/submissions/{id}/{action}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+                action: "submit" | "approve" | "reject" | "withdraw";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit, withdraw, or explicitly review the frozen proposal */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                    action: "submit" | "approve" | "reject" | "withdraw";
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ReviewInput"];
+                };
+            };
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResourceSubmission"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/artifacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload an npm archive privately, up to 10 MiB */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            responses: {
+                /** @description Private artifact metadata */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResourceArtifact"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/artifacts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Inspect an authorized artifact and its included files */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Private artifact metadata */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResourceArtifact"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/artifacts/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Download a private plugin archive after a live membership check */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Exact immutable plugin bytes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/octet-stream": string;
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Immutable publication history for team members, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    configId?: string;
+                    kind?: "model" | "preset" | "plugin";
+                    authorId?: string;
+                    from?: string;
+                    to?: string;
+                    offset?: number;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description At most fifty immutable publications */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ConfigRevision"][];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/history/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** An administrator prepares a historical resource as a new review draft */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        baseVersion: number;
+                        note: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Restore draft; not published until submitted and approved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResourceSubmission"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/history/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Export a resource manifest and retained plugin artifacts; administrator only */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Backup archive, without provider keys or authentication material */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/gzip": string;
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2093,8 +2553,9 @@ export interface components {
             contextWindow?: components["schemas"]["Tokens"];
             maxTokens?: components["schemas"]["Tokens"];
         };
-        /** @description References a team model (modelConfigId) or names its own provider and model, never both. */
+        /** @description Inherits the session model, references a team model, or names a provider/model; exactly one choice. */
         PresetData: {
+            inheritModel?: boolean;
             provider?: string;
             model?: string;
             contextWindow?: components["schemas"]["Tokens"];
@@ -2112,6 +2573,8 @@ export interface components {
             systemPrompt?: string;
         };
         PluginData: {
+            artifactId?: string;
+            sha256?: string;
             package: string;
             version: string;
             providesTools?: string[];
@@ -2124,6 +2587,8 @@ export interface components {
             data: components["schemas"]["ModelData"] | components["schemas"]["PresetData"] | components["schemas"]["PluginData"];
         };
         Config: {
+            /** @enum {string} */
+            builtin?: "team-assistant";
             /** @description Protected route owner; absent for ordinary BYOK configurations. */
             owner?: string;
             id: string;
@@ -2145,6 +2610,11 @@ export interface components {
                 /** @enum {string} */
                 role: "admin" | "member";
                 configs: components["schemas"]["Config"][];
+                pluginVersions?: {
+                    configId: string;
+                    name: string;
+                    data: components["schemas"]["PluginData"];
+                }[];
             }[];
         };
         Team: {
@@ -2173,6 +2643,63 @@ export interface components {
             image: string | null;
             /** @enum {string|null} */
             locale: "en" | "zh-CN" | null;
+        };
+        SubmissionInput: {
+            config: components["schemas"]["ConfigInput"];
+            configId?: string;
+            baseVersion: number;
+            revision?: number;
+            note: string;
+        };
+        ReviewInput: {
+            revision: number;
+            reason?: string;
+        };
+        ResourceSubmission: {
+            id: string;
+            configId: string;
+            baseVersion: number;
+            proposal: components["schemas"]["ConfigInput"];
+            note: string;
+            authorId: string;
+            /** @enum {string} */
+            state: "draft" | "pending" | "published" | "rejected" | "withdrawn";
+            revision: number;
+            reviewerId: string;
+            reason: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+        };
+        ResourceArtifact: {
+            id: string;
+            package: string;
+            version: string;
+            sha256: string;
+            size: number;
+            files: string[];
+            published: boolean;
+        };
+        ConfigRevision: {
+            id: string;
+            configId: string;
+            /** @enum {string} */
+            kind: "model" | "preset" | "plugin";
+            name: string;
+            data: {
+                [key: string]: unknown;
+            };
+            version: number;
+            authorId: string;
+            reviewerId: string;
+            note: string;
+            /** @enum {string} */
+            source: "system" | "legacy" | "direct" | "approved";
+            /** Format: date-time */
+            createdAt: string;
         };
     };
     responses: {

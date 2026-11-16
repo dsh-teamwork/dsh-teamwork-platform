@@ -56,7 +56,7 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	ts := httptest.NewUnstartedServer(nil)
 	appURL := "http://" + ts.Listener.Addr().String()
 	srv := &httpapi.Server{
-		Config:  config.Config{AppURL: appURL, AuthSecret: secret, SMTPURL: o.smtp},
+		Config:  config.Config{DataDir: t.TempDir(), AppURL: appURL, AuthSecret: secret, SMTPURL: o.smtp},
 		Auth:    authn,
 		Team:    teams,
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client()},

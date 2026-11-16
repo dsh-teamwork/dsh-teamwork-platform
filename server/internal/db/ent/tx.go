@@ -26,6 +26,8 @@ type Tx struct {
 	BudgetReservation *BudgetReservationClient
 	// BudgetWindow is the client for interacting with the BudgetWindow builders.
 	BudgetWindow *BudgetWindowClient
+	// ConfigRevision is the client for interacting with the ConfigRevision builders.
+	ConfigRevision *ConfigRevisionClient
 	// Identity is the client for interacting with the Identity builders.
 	Identity *IdentityClient
 	// Invite is the client for interacting with the Invite builders.
@@ -38,6 +40,10 @@ type Tx struct {
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
 	RateWindow *RateWindowClient
+	// ResourceArtifact is the client for interacting with the ResourceArtifact builders.
+	ResourceArtifact *ResourceArtifactClient
+	// ResourceSubmission is the client for interacting with the ResourceSubmission builders.
+	ResourceSubmission *ResourceSubmissionClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// TeamConfig is the client for interacting with the TeamConfig builders.
@@ -187,12 +193,15 @@ func (tx *Tx) init() {
 	tx.BudgetPolicy = NewBudgetPolicyClient(tx.config)
 	tx.BudgetReservation = NewBudgetReservationClient(tx.config)
 	tx.BudgetWindow = NewBudgetWindowClient(tx.config)
+	tx.ConfigRevision = NewConfigRevisionClient(tx.config)
 	tx.Identity = NewIdentityClient(tx.config)
 	tx.Invite = NewInviteClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
 	tx.ModelRate = NewModelRateClient(tx.config)
 	tx.Password = NewPasswordClient(tx.config)
 	tx.RateWindow = NewRateWindowClient(tx.config)
+	tx.ResourceArtifact = NewResourceArtifactClient(tx.config)
+	tx.ResourceSubmission = NewResourceSubmissionClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.TeamConfig = NewTeamConfigClient(tx.config)
 	tx.TeamProvider = NewTeamProviderClient(tx.config)

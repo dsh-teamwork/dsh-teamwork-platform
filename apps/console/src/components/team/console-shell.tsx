@@ -17,13 +17,15 @@ import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
 /** Each page of a team's console: its path below `/teams/{teamId}` and its icon. */
-const SECTIONS: { path: string; key: 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets'; icon: LucideIcon }[] = [
+const SECTIONS: { path: string; key: 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets' | 'sharing' | 'history'; icon: LucideIcon }[] = [
   { path: '', key: 'overview', icon: LayoutDashboard },
   { path: 'models', key: 'models', icon: Cpu },
   { path: 'usage', key: 'usage', icon: ChartNoAxesCombined },
   { path: 'budgets', key: 'budgets', icon: Gauge },
   { path: 'presets', key: 'presets', icon: Layers },
   { path: 'plugins', key: 'plugins', icon: Puzzle },
+  { path: 'sharing', key: 'sharing', icon: Layers },
+  { path: 'history', key: 'history', icon: Layers },
   { path: 'members', key: 'members', icon: Users },
 ];
 
