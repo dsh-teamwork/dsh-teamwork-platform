@@ -102,9 +102,49 @@ Live deletion retains history.
 
 ## Private plugin artifacts
 
-A local plugin is an npm-compatible archive stored privately under the server's
-persistent data directory, not public web assets or public npm. An existing
+A local plugin is an npm-compatible archive stored privately through the
+local-directory or S3 provider, not public web assets or public npm. An existing
 public npm package can still be shared by exact package name/version.
+
+`server/internal/artifactstore` owns byte storage in both editions (ADR 0033).
+Community deployments default to `<data>/artifacts`; all member processes in
+an S3 deployment use the same private bucket. Keys remain `<artifactId>.tgz`,
+independent of team names or filenames. No bucket URL or credential reaches
+the client. Management-only processes do not initialize artifact storage.
+
+| Variable | Meaning |
+| --- | --- |
+| `ARTIFACT_STORAGE_PROVIDER` | `local` (default) or `s3`; unknown values fail startup |
+| `ARTIFACT_LOCAL_DIR` | Optional local directory; defaults to `<data>/artifacts`; also the migration source |
+| `ARTIFACT_S3_BUCKET` | Required S3 bucket name; use a dedicated private bucket per installation |
+| `ARTIFACT_S3_REGION` | Required signing region, including `auto` where the compatible provider specifies it |
+| `ARTIFACT_S3_ENDPOINT` | Optional HTTPS origin; absent uses AWS's regional endpoint |
+| `ARTIFACT_S3_ACCESS_KEY_ID`, `ARTIFACT_S3_SECRET_ACCESS_KEY` | Required server-side credentials with object read/write/delete permissions |
+| `ARTIFACT_S3_SESSION_TOKEN` | Optional token for temporary credentials |
+| `ARTIFACT_S3_PATH_STYLE` | Boolean, default `false` (virtual-host addressing); set to the bucket provider's required style |
+
+An explicitly selected S3 provider never falls back to local disk. Incomplete
+configuration fails startup; access/network failures fail the operation without
+publishing metadata. Before serving, an S3 user process writes, reads and removes
+a random probe; failed access prevents readiness. Runtime scratch files still
+use the OS temporary directory and are removed after use. The root HTTP
+healthcheck does not continuously probe the bucket.
+
+To migrate an existing local installation, stop all writing instances and take
+a consistent database and artifact-directory backup. Run the matching binary
+with the same database/secrets, S3 environment variables and
+`--data <existing-data> --migrate-artifacts`. The command exits without serving,
+copies each database artifact and verifies both source and destination size and
+SHA-256. Missing or corrupt bytes abort with the artifact ID. It is safe to retry;
+source files and metadata are never deleted. Only switch all member instances to
+S3 after a successful run. Verify an authenticated download and backup export,
+then repeat the download after a restart. If no artifact rows exist, no byte
+migration is needed. Preserve source backups until recovery has been tested.
+
+To roll back after S3 has accepted new uploads, stop writers and copy **all**
+current bucket objects back to the local artifact directory, preserving keys;
+verify the database digests before selecting `local`. Merely changing the provider
+would make newer archives unavailable. Storage is not replicated automatically.
 
 Limits are 10 MiB compressed, 64 MiB expanded and 2000 archive entries. Local
 previews inspect actual packed bytes before upload. The server independently
@@ -158,7 +198,7 @@ A deleted resource can be restored under its original logical identity.
 
 All approved versions and artifacts are retained. This application history is
 not protection from losing the database or disk: infrastructure backups must
-capture the database and artifact directory consistently and preserve the
+capture the database and artifact directory or S3 bucket consistently and preserve the
 configured signing/encryption secrets securely. A full data-directory backup
 includes generated `secrets.json`; tenant resource exports never do. A
 stopped-server copy/restart recovery check verifies the retained state. Cross-team sharing, automatic

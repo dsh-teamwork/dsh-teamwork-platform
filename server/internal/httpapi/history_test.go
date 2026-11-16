@@ -8,6 +8,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
 
@@ -62,50 +63,58 @@ func TestHistoryRestorePublishesNewVersionAndRetainsDeletedIdentity(t *testing.T
 	})
 }
 func TestBackupContainsExactPrivateArtifact(t *testing.T) {
-	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
-		e := start(t, d, options{})
-		admin := e.admin("admin@x.io")
-		teamID := newTeam(t, admin, "Backup")
-		base := "/api/teams/" + teamID
-		archive := pluginArchive(t, "")
-		a := must(t, admin.post(base+"/artifacts", string(archive)), 200)
-		c := must(t, admin.post(base+"/configs", map[string]any{"kind": "plugin", "name": "Private", "data": map[string]any{"package": a["package"], "version": a["version"], "artifactId": a["id"], "sha256": a["sha256"]}}), 201)
-		history := jsonArray(t, admin.get(base+"/history?configId="+c["id"].(string)))
-		r := history[0].(map[string]any)
-		download := admin.get(base + "/history/" + r["id"].(string) + "/export")
-		if download.status != 200 {
-			t.Fatalf("export %d: %s", download.status, download.body)
-		}
-		gz, err := gzip.NewReader(bytes.NewReader(download.body))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer gz.Close()
-		tr := tar.NewReader(gz)
-		found := false
-		manifest := false
-		for {
-			h, err := tr.Next()
-			if err == io.EOF {
-				break
+	eachArtifactStore(t, func(t *testing.T, store artifactstore.Store) {
+		testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+			e := start(t, d, options{artifacts: store})
+			admin := e.admin("admin@x.io")
+			teamID := newTeam(t, admin, "Backup")
+			base := "/api/teams/" + teamID
+			archive := pluginArchive(t, "")
+			a := must(t, admin.post(base+"/artifacts", string(archive)), 200)
+			c := must(t, admin.post(base+"/configs", map[string]any{"kind": "plugin", "name": "Private", "data": map[string]any{"package": a["package"], "version": a["version"], "artifactId": a["id"], "sha256": a["sha256"]}}), 201)
+			history := jsonArray(t, admin.get(base+"/history?configId="+c["id"].(string)))
+			r := history[0].(map[string]any)
+			download := admin.get(base + "/history/" + r["id"].(string) + "/export")
+			if download.status != 200 {
+				t.Fatalf("export %d: %s", download.status, download.body)
 			}
+			gz, err := gzip.NewReader(bytes.NewReader(download.body))
 			if err != nil {
 				t.Fatal(err)
 			}
-			data, _ := io.ReadAll(tr)
-			if h.Name == "manifest.json" {
-				var m map[string]any
-				if json.Unmarshal(data, &m) != nil || m["format"] != float64(1) {
-					t.Fatal("invalid backup manifest")
+			defer gz.Close()
+			tr := tar.NewReader(gz)
+			found := false
+			manifest := false
+			for {
+				h, err := tr.Next()
+				if err == io.EOF {
+					break
 				}
-				manifest = true
-			} else if bytes.Equal(data, archive) {
-				found = true
+				if err != nil {
+					t.Fatal(err)
+				}
+				data, _ := io.ReadAll(tr)
+				if h.Name == "manifest.json" {
+					var m map[string]any
+					if json.Unmarshal(data, &m) != nil || m["format"] != float64(1) {
+						t.Fatal("invalid backup manifest")
+					}
+					manifest = true
+				} else if bytes.Equal(data, archive) {
+					found = true
+				}
 			}
-		}
-		if !found || !manifest {
-			t.Fatal("backup omitted manifest or exact plugin bytes")
-		}
+			if !found || !manifest {
+				t.Fatal("backup omitted manifest or exact plugin bytes")
+			}
+			// Corruption in either backend must stop export and restoration.
+			bad := []byte("corrupt archive")
+			if err := store.Put(t.Context(), a["id"].(string), bytes.NewReader(bad), int64(len(bad))); err != nil {
+				t.Fatal(err)
+			}
+			refused(t, "corrupt export", admin.get(base+"/history/"+r["id"].(string)+"/export"), 409, "artifact_mismatch")
+		})
 	})
 }
 

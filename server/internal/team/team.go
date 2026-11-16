@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
@@ -24,11 +25,11 @@ import (
 
 // Service is the team rules over one database.
 type Service struct {
-	DB          *ent.Client
-	ArtifactDir string
-	Keys        *Keys
-	Network     *Network
-	Auth        *auth.Service
+	DB        *ent.Client
+	Artifacts artifactstore.Store
+	Keys      *Keys
+	Network   *Network
+	Auth      *auth.Service
 	// Passwords is whether the instance holds passwords (no SMTP), where an
 	// admin creates members' accounts rather than inviting them.
 	// ProtectedAccount prevents team administrators from controlling instance credentials.

@@ -78,14 +78,17 @@ func (s *Server) exportRevision(w http.ResponseWriter, r *http.Request) error {
 	if e != nil {
 		return e
 	}
-	files := []*os.File{}
+	files := []interface {
+		io.ReadCloser
+		Stat() (os.FileInfo, error)
+	}{}
 	defer func() {
 		for _, f := range files {
 			f.Close()
 		}
 	}()
 	for _, id := range ids {
-		f, e := s.Team.ArtifactFile(id)
+		f, e := s.Team.ArtifactFile(r.Context(), id)
 		if e != nil {
 			return e
 		}

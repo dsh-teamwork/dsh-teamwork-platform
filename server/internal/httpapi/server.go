@@ -6,7 +6,6 @@ package httpapi
 import (
 	"log/slog"
 	"net/http"
-	"path/filepath"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
@@ -54,9 +53,6 @@ func (s *Server) route(h handler, write bool) http.HandlerFunc {
 
 // Handler is every route.
 func (s *Server) Handler() http.Handler {
-	if s.Team != nil && s.Team.ArtifactDir == "" && s.Config.DataDir != "" {
-		s.Team.ArtifactDir = filepath.Join(s.Config.DataDir, "artifacts")
-	}
 	if s.Usage == nil && s.Team != nil {
 		s.Usage = &usage.Service{DB: s.Team.DB, AppURL: s.Config.AppURL}
 	}
