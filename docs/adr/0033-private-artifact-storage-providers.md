@@ -27,7 +27,8 @@ instances can share one S3 bucket without a shared filesystem; management-only
 processes need no bucket credentials. Temporary disk remains necessary for
 bounded archive inspection and seekable downloads. Metadata and object storage
 are not one transaction: upload bytes first, commit metadata second and attempt
-cleanup if the database rejects the insert; failed cleanup is logged. Backups
+cleanup if a constraint rejects the insert; ambiguous database failures retain
+the object for reconciliation, and failed cleanup is logged. Backups
 must include both stores. Provider changes require an offline copy and digest
 verification, not just an environment toggle; the migration command preserves
 sources and does not silently repair missing original files.

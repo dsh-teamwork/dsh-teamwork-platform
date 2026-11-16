@@ -179,16 +179,19 @@ func (s *Service) UploadArtifact(ctx context.Context, userID, teamID string, inp
 	}
 	r, err := s.DB.ResourceArtifact.Create().SetID(id).SetTeamID(teamID).SetAuthorID(userID).SetPackage(pkg).SetVersion(version).SetSha256(digest).SetSize(n).SetFiles(files).Save(ctx)
 	if err != nil {
+		if !ent.IsConstraintError(err) {
+			// A lost DB acknowledgement can follow a committed insert. Retain the
+			// object until reconciliation rather than deleting possibly referenced bytes.
+			slog.Error("artifact metadata outcome unknown; bytes retained", "artifact", id, "error", err)
+			return ArtifactView{}, err
+		}
 		// Request cancellation must not skip cleanup after a rejected DB write.
 		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 		defer cancel()
 		if cleanupErr := s.Artifacts.Delete(cleanup, id); cleanupErr != nil {
 			slog.Error("artifact cleanup failed", "artifact", id, "error", cleanupErr)
 		}
-		if ent.IsConstraintError(err) {
-			return ArtifactView{}, wire.E(409, "artifact_version_exists")
-		}
-		return ArtifactView{}, err
+		return ArtifactView{}, wire.E(409, "artifact_version_exists")
 	}
 	return artifactView(r), nil
 }

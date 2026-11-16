@@ -3,6 +3,7 @@ package httpapi_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
@@ -98,6 +100,38 @@ func TestS3StartupProbe(t *testing.T) {
 	if err := s3Artifacts(t, true).Check(t.Context()); err == nil {
 		t.Fatal("storage with denied writes passed readiness")
 	}
+}
+
+func TestAmbiguousMetadataWriteRetainsStoredBytes(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		store := s3Artifacts(t, false)
+		e := start(t, d, options{artifacts: store})
+		a := e.admin("admin@x.io")
+		teamID := newTeam(t, a, "Ambiguous commit")
+		// Simulate losing the acknowledgement after the database committed.
+		d.Client.ResourceArtifact.Use(func(next ent.Mutator) ent.Mutator {
+			return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+				v, err := next.Mutate(ctx, m)
+				if err != nil {
+					return v, err
+				}
+				return v, errors.New("commit acknowledgement lost")
+			})
+		})
+		archive := pluginArchive(t, "")
+		base := "/api/teams/" + teamID + "/artifacts"
+		if r := a.post(base, string(archive)); r.status != 500 {
+			t.Fatalf("status %d", r.status)
+		}
+		row, err := d.Client.ResourceArtifact.Query().Only(t.Context())
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := a.get(base + "/" + row.ID + "/download")
+		if r.status != 200 || !bytes.Equal(r.body, archive) {
+			t.Fatal("deleted bytes after ambiguous commit")
+		}
+	})
 }
 
 func TestArtifactStorageSurvivesServerReplacement(t *testing.T) {
