@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"syscall"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db"
@@ -70,6 +72,25 @@ func run(version string) error {
 		return err
 	}
 	defer client.Close()
+	if cfg.MigrateArtifacts {
+		store, err := artifactstore.FromEnv(cfg.DataDir, os.Getenv)
+		if err != nil {
+			return err
+		}
+		if _, ok := store.(*artifactstore.S3); !ok {
+			return errors.New("--migrate-artifacts requires ARTIFACT_STORAGE_PROVIDER=s3")
+		}
+		dir := os.Getenv("ARTIFACT_LOCAL_DIR")
+		if dir == "" {
+			dir = filepath.Join(cfg.DataDir, "artifacts")
+		}
+		count, err := (&team.Service{DB: client, Artifacts: store}).MigrateArtifacts(ctx, dir)
+		if err != nil {
+			return err
+		}
+		slog.Info("artifact migration verified", "count", count)
+		return nil
+	}
 
 	srv, handler, stopExtensions, err := Build(cfg, client, conn, target.Dialect, extensions, os.Getenv)
 	if err != nil {
@@ -78,6 +99,15 @@ func run(version string) error {
 	// After the server stops taking requests, and before the deferred close
 	// of the database.
 	defer stopExtensions()
+	if remote, ok := srv.Team.Artifacts.(*artifactstore.S3); ok {
+		checkCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		err := remote.Check(checkCtx)
+		cancel()
+		if err != nil {
+			return fmt.Errorf("S3 artifact storage check: %w", err)
+		}
+		slog.Info("artifact storage verified", "provider", "s3")
+	}
 	if cfg.Passwords() {
 		if open, err := srv.Auth.SetupOpen(ctx); err != nil {
 			slog.Error("could not check for a first account", "error", err)
@@ -130,6 +160,12 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	network := &team.Network{AllowPrivate: cfg.AllowPrivateProviders}
 	authn := &auth.Service{DB: client, Sealer: auth.NewSealer(cfg.AuthSecret, nil), Secret: cfg.AuthSecret}
 	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords()}
+	if cfg.ServiceRole != "manage" {
+		teams.Artifacts, err = artifactstore.FromEnv(cfg.DataDir, env)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+	}
 	teams.ProtectedAccount = func(email string) bool { return manage.IsAdmin(email, env("ADMIN_EMAILS")) }
 	meter := &usage.Service{DB: client, AppURL: cfg.AppURL}
 	srv := &httpapi.Server{

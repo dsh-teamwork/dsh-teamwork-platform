@@ -22,6 +22,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0028](0028-edition-team-navigation.md) — registered same-origin team pages appear in the console and survive sign-in returns without closed route imports.
 
 - [0032 — Shared instance management](0032-shared-instance-management.md) — community administration and isolated service roles.
+- [0033 — Private artifact storage providers](0033-private-artifact-storage-providers.md) — local defaults, private S3 storage and verified migration.
 
 The template:
 

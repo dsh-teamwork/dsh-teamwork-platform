@@ -91,6 +91,14 @@ Apache License 2.0 (`LICENSE`). The name and the whale mark are not licensed
 with the code (`NOTICE`), so a fork uses its own. A directory with its own
 `LICENSE` is covered by that file instead.
 
+## Private plugin storage
+
+Private plugin archives default to `<data>/artifacts` (`--data` selects the data
+directory). Persist this directory alongside the database. Set
+`ARTIFACT_STORAGE_PROVIDER=s3` to use a private S3-compatible bucket instead.
+All downloads still pass through the authenticated team API. Configuration,
+migration and backup steps are in [team assistant](docs/tech/team-assistant.md#private-plugin-artifacts).
+
 ## Instance administration
 
 Set `ADMIN_EMAILS` to the comma-separated addresses of instance administrators

@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Local and S3 private artifact storage
+
+- **What:** Private plugin uploads, downloads, approval and backups use local-directory or S3-compatible storage. Environment variables select the provider; an offline migration command copies and verifies retained bytes.
+- **Why:** Hosted archive files must survive container replacement, while community deployments keep a local default.
+- **Breaking:** None; local directory keys and API metadata are unchanged.
+- **Upgrade:** Local installations need no change. To select S3, provision a private bucket, configure `ARTIFACT_STORAGE_PROVIDER=s3` and its `ARTIFACT_S3_*` variables, stop writes and run `--migrate-artifacts` against the retained local directory before switching. Preserve database and archive backups together.
+- **Refs:** ADR 0033, `docs/tech/team-assistant.md`.
+
 ## 2026-11-15 — Edition actions in the instance team directory
 
 - **What:** The shared management console accepts team actions in directory rows and detail headers.

@@ -7,12 +7,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
@@ -126,18 +128,14 @@ func (s *Service) UploadArtifact(ctx context.Context, userID, teamID string, inp
 	if _, err := s.RequireMembership(ctx, userID, teamID, false); err != nil {
 		return ArtifactView{}, err
 	}
-	if s.ArtifactDir == "" {
+	if s.Artifacts == nil {
 		return ArtifactView{}, wire.E(503, "artifact_storage_unavailable")
 	}
-	if err := os.MkdirAll(s.ArtifactDir, 0700); err != nil {
-		return ArtifactView{}, err
-	}
-	f, err := os.CreateTemp(s.ArtifactDir, "upload-*")
+	f, err := os.CreateTemp("", "teamwork-upload-*")
 	if err != nil {
 		return ArtifactView{}, err
 	}
-	defer f.Close()
-	defer os.Remove(f.Name())
+	defer func() { f.Close(); os.Remove(f.Name()) }()
 	hash := sha256.New()
 	n, err := io.Copy(io.MultiWriter(f, hash), io.LimitReader(input, MaxArtifactSize+1))
 	if err != nil {
@@ -160,24 +158,33 @@ func (s *Service) UploadArtifact(ctx context.Context, userID, teamID string, inp
 	}
 	if existing != nil {
 		if existing.AuthorID == userID && existing.Sha256 == digest {
+			// An identical retry also repairs missing bytes after a failed migration
+			// or an interrupted deployment. Metadata and publication stay unchanged.
+			if _, err := f.Seek(0, 0); err != nil {
+				return ArtifactView{}, err
+			}
+			if err := s.Artifacts.Put(ctx, existing.ID, f, n); err != nil {
+				return ArtifactView{}, err
+			}
 			return artifactView(existing), nil
 		}
 		return ArtifactView{}, wire.E(409, "artifact_version_exists")
 	}
 	id := ids.New()
-	target := filepath.Join(s.ArtifactDir, id+".tgz")
-	if err := f.Sync(); err != nil {
+	if _, err := f.Seek(0, 0); err != nil {
 		return ArtifactView{}, err
 	}
-	if err := f.Close(); err != nil {
-		return ArtifactView{}, err
-	}
-	if err := os.Rename(f.Name(), target); err != nil {
+	if err := s.Artifacts.Put(ctx, id, f, n); err != nil {
 		return ArtifactView{}, err
 	}
 	r, err := s.DB.ResourceArtifact.Create().SetID(id).SetTeamID(teamID).SetAuthorID(userID).SetPackage(pkg).SetVersion(version).SetSha256(digest).SetSize(n).SetFiles(files).Save(ctx)
 	if err != nil {
-		os.Remove(target)
+		// Request cancellation must not skip cleanup after a rejected DB write.
+		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+		defer cancel()
+		if cleanupErr := s.Artifacts.Delete(cleanup, id); cleanupErr != nil {
+			slog.Error("artifact cleanup failed", "artifact", id, "error", cleanupErr)
+		}
 		if ent.IsConstraintError(err) {
 			return ArtifactView{}, wire.E(409, "artifact_version_exists")
 		}
@@ -202,11 +209,46 @@ func (s *Service) Artifact(ctx context.Context, userID, teamID, id string) (*ent
 	}
 	return r, nil
 }
-func (s *Service) ArtifactFile(id string) (*os.File, error) {
-	if len(id) > 32 || !regexp.MustCompile(`^[A-Za-z0-9_-]+$`).MatchString(id) {
-		return nil, wire.E(404, "artifact_not_found")
+
+// artifactFile is a bounded, seekable snapshot for downloads and tar exports.
+// Close removes the temporary copy; durable bytes belong to the provider.
+type artifactFile struct{ *os.File }
+
+func (f *artifactFile) Close() error {
+	closeErr := f.File.Close()
+	removeErr := os.Remove(f.Name())
+	if closeErr != nil {
+		return closeErr
 	}
-	return os.Open(filepath.Join(s.ArtifactDir, id+".tgz"))
+	return removeErr
+}
+
+func (s *Service) ArtifactFile(ctx context.Context, id string) (*artifactFile, error) {
+	if s.Artifacts == nil {
+		return nil, wire.E(503, "artifact_storage_unavailable")
+	}
+	body, err := s.Artifacts.Open(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	f, err := os.CreateTemp("", "teamwork-artifact-*")
+	if err != nil {
+		return nil, err
+	}
+	file := &artifactFile{f}
+	n, err := io.Copy(f, io.LimitReader(body, MaxArtifactSize+1))
+	if err == nil && n > MaxArtifactSize {
+		err = fmt.Errorf("stored artifact exceeds size limit")
+	}
+	if err == nil {
+		_, err = f.Seek(0, 0)
+	}
+	if err != nil {
+		file.Close()
+		return nil, err
+	}
+	return file, nil
 }
 func (s *Service) checkArtifact(ctx context.Context, teamID string, data *wire.PluginData) error {
 	if data.ArtifactID == "" {
@@ -222,7 +264,7 @@ func (s *Service) checkArtifact(ctx context.Context, teamID string, data *wire.P
 	if r.Package != data.Package || r.Version != data.Version || r.Sha256 != data.SHA256 {
 		return wire.E(400, "artifact_mismatch")
 	}
-	f, err := s.ArtifactFile(r.ID)
+	f, err := s.ArtifactFile(ctx, r.ID)
 	if err != nil {
 		return wire.E(409, "artifact_unavailable")
 	}

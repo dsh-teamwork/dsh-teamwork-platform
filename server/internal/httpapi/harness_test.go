@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
@@ -42,6 +43,7 @@ type options struct {
 	lookup        func(ctx context.Context, host string) ([]netip.Addr, error)
 	web           fs.FS        // a console build to serve, as web.New takes it
 	gatewayClient *http.Client // deterministic protocol replay, never a paid upstream
+	artifacts     artifactstore.Store
 }
 
 func start(t *testing.T, d *testdb.DB, o options) *env {
@@ -53,6 +55,10 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	network := &team.Network{AllowPrivate: o.allowPrivate, Lookup: o.lookup}
 	authn := &auth.Service{DB: d.Client, Sealer: auth.NewSealer(secret, nil), Secret: secret}
 	teams := &team.Service{DB: d.Client, Keys: keys, Network: network, Auth: authn, Passwords: o.smtp == ""}
+	teams.Artifacts = o.artifacts
+	if teams.Artifacts == nil {
+		teams.Artifacts = artifactstore.Local{Dir: t.TempDir()}
+	}
 	ts := httptest.NewUnstartedServer(nil)
 	appURL := "http://" + ts.Listener.Addr().String()
 	srv := &httpapi.Server{
