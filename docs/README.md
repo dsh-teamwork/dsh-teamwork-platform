@@ -12,6 +12,8 @@ How documents are laid out, named and kept is the "Documentation" section of
 
 ## Technical
 
+- [System management](tech/system-management.md) — instance administration, service roles, authentication boundaries and edition composition.
+
 - [Architecture](tech/architecture.md) — components, data model, the team API, both sign-in flows and the model gateway.
 - [Team assistant](tech/team-assistant.md) — default assistant, reviewed plugin/preset sharing, publication history and recovery.
 - [Usage points and budgets](tech/usage-budgets.md) — community metering, model prices, team/member limits, reservations, reports and implementation acceptance.

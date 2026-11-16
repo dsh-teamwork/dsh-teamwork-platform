@@ -31,9 +31,11 @@ type Service struct {
 	Auth        *auth.Service
 	// Passwords is whether the instance holds passwords (no SMTP), where an
 	// admin creates members' accounts rather than inviting them.
-	Passwords bool
-	Now       func() time.Time
-	Changed   func(context.Context, *ent.Client, edition.TeamChange) error
+	// ProtectedAccount prevents team administrators from controlling instance credentials.
+	ProtectedAccount func(string) bool
+	Passwords        bool
+	Now              func() time.Time
+	Changed          func(context.Context, *ent.Client, edition.TeamChange) error
 }
 
 func (s *Service) changed(ctx context.Context, db *ent.Client, change edition.TeamChange) error {

@@ -9,6 +9,7 @@
     "db:drift": "node scripts/drift.mjs"
   },
   "devDependencies": {
-    "@dsh-teamwork/console": "workspace:*"
+    "@dsh-teamwork/console": "workspace:*",
+    "@dsh-teamwork/manage-core": "workspace:*"
   }
 }

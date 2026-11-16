@@ -48,8 +48,8 @@ jobs:
 
       - name: Build the console
         run: |
-          pnpm install --frozen-lockfile --ignore-scripts --filter @dsh-teamwork/console...
-          pnpm --filter @dsh-teamwork/console build
+          pnpm install --frozen-lockfile --ignore-scripts --filter @dsh-teamwork/console... --filter @dsh-teamwork/manage-core...
+          pnpm --filter @dsh-teamwork/console --filter @dsh-teamwork/manage-core build
 
       # Built and packed in this job: a binary carried between jobs loses its
       # executable bit, and pack.mjs refuses a tarball without it.

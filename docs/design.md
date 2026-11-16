@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-14
+> **Status:** Current · **Updated:** 2026-11-15
 
 The DSH Teamwork visual system — the whale mark, the indigo-and-paper palette, type, spacing and icons — and the file in code that owns each part.
 
@@ -19,7 +19,7 @@ stylesheet is right and this file is stale.
 | Brand mark | `docs/brand/icon.svg` — the one hand-edited copy; every icon and logo is exported from it |
 | Exports | `scripts/generate-icons.mjs` (`pnpm assets:icons`) |
 | Web colour, radius, faces, the ocean | `apps/console/src/globals.css` |
-| Console colour, radius, faces | `premium/apps/manage/src/app/globals.css` |
+| Console colour, radius, faces | `apps/manage/src/globals.css` |
 | Share card | `apps/console/scripts/prerender.mjs` — the exported `public/logo.svg` beside the name (Onest Bold) and tagline (Onest Regular), on paper |
 
 ## The mark

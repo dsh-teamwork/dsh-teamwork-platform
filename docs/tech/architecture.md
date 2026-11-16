@@ -60,6 +60,8 @@ repository's `ui/` until it moves to `dsh-teamwork/dsh-teamwork-ui`.
 
 ## Components
 
+Instance administration is shared by all editions: [system management](system-management.md) describes `/manage`, instance operators and `SERVICE_ROLE` isolation. Editions add commercial routes and compose the shared console.
+
 | Component | Owns | Lives in |
 | --- | --- | --- |
 | Server | The binary: configuration, migrations, every route, the embedded console | `server/` (`app/`, `cmd/dsh-teamwork`) |

@@ -90,3 +90,16 @@ same gate as `.husky/pre-push`; `CLAUDE.md` is the working agreement.
 Apache License 2.0 (`LICENSE`). The name and the whale mark are not licensed
 with the code (`NOTICE`), so a fork uses its own. A directory with its own
 `LICENSE` is covered by that file instead.
+
+## Instance administration
+
+Set `ADMIN_EMAILS` to the comma-separated addresses of instance administrators
+and open `/manage`. This role is independent of team administration. The console
+provides user and team directories, user display-name maintenance, system counts
+and non-secret configuration diagnostics. Use the configured sign-in method;
+local password installations do not require Google.
+
+`SERVICE_ROLE=combined` is the default self-hosted process. Set `user` to disable
+all management routes, or `manage` for a separate administrator process without
+team APIs or the model gateway. See [system management](docs/tech/system-management.md)
+for isolation, shared storage and edition extensions.

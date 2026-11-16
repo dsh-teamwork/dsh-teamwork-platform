@@ -24,6 +24,7 @@ const MinAuthSecret = 32
 
 // Config is everything the server reads at start.
 type Config struct {
+	ServiceRole string // combined (default), user, or manage
 	DataDir     string
 	Host        string
 	Port        int
@@ -60,6 +61,7 @@ func Load(args []string, env func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	c := Config{
+		ServiceRole:           strings.TrimSpace(env("SERVICE_ROLE")),
 		DataDir:               *data,
 		Host:                  first(*host, env("HOST"), "127.0.0.1"),
 		DatabaseURL:           strings.TrimSpace(env("DATABASE_URL")),
@@ -71,6 +73,12 @@ func Load(args []string, env func(string) string) (Config, error) {
 		GoogleSecret:          strings.TrimSpace(env("AUTH_GOOGLE_SECRET")),
 		PostHogKey:            strings.TrimSpace(env("POSTHOG_KEY")),
 		PostHogHost:           strings.TrimRight(strings.TrimSpace(env("POSTHOG_HOST")), "/"),
+	}
+	if c.ServiceRole == "" {
+		c.ServiceRole = "combined"
+	}
+	if c.ServiceRole != "combined" && c.ServiceRole != "user" && c.ServiceRole != "manage" {
+		return Config{}, fmt.Errorf("SERVICE_ROLE must be combined, user, or manage")
 	}
 	c.Port = *port
 	if c.Port == 0 {

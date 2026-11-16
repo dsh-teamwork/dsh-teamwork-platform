@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-15 — Community instance management and explicit service roles
+
+- **What:** Platform owns the shared `/manage` console and administrator API, user/team directories, instance counts and non-secret diagnostics. Editions extend its routes and UI. `SERVICE_ROLE` selects combined, user or management surfaces.
+- **Why:** Self-hosted teams need instance administration, while separate operator services must not expose member workloads.
+- **Breaking:** Isolated user processes refuse management; management processes refuse team APIs, plugin authorization and model calls. An instance administrator is an explicit `ADMIN_EMAILS` entry, not a team role.
+- **Upgrade:** Build both console apps before embedding. Set `ADMIN_EMAILS`; optionally choose `SERVICE_ROLE`. No database migration. Separate user and management services share the database and provider encryption key but retain distinct session secrets.
+- **Refs:** `docs/tech/system-management.md`, ADR 0032.
+
 ## 2026-11-15 — Reviewed resource sharing and historical backups
 
 - **What:** Members submit preset/plugin creations and updates; admins approve frozen revisions. Direct admin writes share transactional history. Private archives are inspected, digest-pinned and access-controlled. Time-based history supports comparison, resource/dependency export and reviewed restoration, including deleted resources and retained plugin pins. Host-approved assistant tools connect sharing and supported management operations.
