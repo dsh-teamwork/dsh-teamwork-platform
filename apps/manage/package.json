@@ -41,6 +41,10 @@
   },
   "exports": {
     "./app": "./src/app.tsx",
-    "./*": "./src/*"
+    "./components/console": "./src/components/console.tsx",
+    "./lib/api-client": "./src/lib/api-client.ts",
+    "./lib/use-api": "./src/lib/use-api.ts",
+    "./lib/session": "./src/lib/session.tsx",
+    "./lib/use-query-params": "./src/lib/use-query-params.ts"
   }
 }
