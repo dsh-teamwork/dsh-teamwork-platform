@@ -1,6 +1,6 @@
 # Team assistant and shared resources
 
-> **Status:** Current · **Updated:** 2026-11-15
+> **Status:** Current · **Updated:** 2026-11-16
 
 New teams receive a Teamwork assistant. Members submit presets and private
 plugin packages, administrators approve their exact contents, and every
@@ -106,11 +106,36 @@ A local plugin is an npm-compatible archive stored privately through the
 local-directory or S3 provider, not public web assets or public npm. An existing
 public npm package can still be shared by exact package name/version.
 
-`server/internal/artifactstore` owns byte storage in both editions (ADR 0033).
+`server/internal/artifactstore` owns byte storage in both editions (ADRs 0033 and 0034).
 Community deployments default to `<data>/artifacts`; all member processes in
-an S3 deployment use the same private bucket. Keys remain `<artifactId>.tgz`,
-independent of team names or filenames. No bucket URL or credential reaches
+an S3 deployment use the same private bucket. Relative keys are
+`teams/{teamId}/plugins/{artifactId}.tgz`, independent of team names or filenames.
+Both IDs are validated; the team comes from authorized database metadata.
+No bucket URL or credential reaches
 the client. Management-only processes do not initialize artifact storage.
+
+Before serving, member/combined processes scan database artifacts in bounded
+batches, verify current objects and copy missing team-scoped objects from the
+old `<artifactId>.tgz` layout. Copies are checked against the database size and
+SHA-256 before and after writing. An existing corrupt destination, corrupt or
+missing source, or storage error stops startup; no older copy overwrites a
+conflicting destination. Sources and database records are retained. The pass
+is safe to repeat and logs `artifact paths verified` with its verified row count.
+It reads all referenced bytes, so startup time grows with the retained data.
+
+For an offline preflight, use the same database, secrets and storage settings
+with `--migrate-artifact-paths`; it verifies/migrates the configured local or S3
+store and exits without serving. This is separate from the provider-copy command
+below. Authenticated reads also migrate a missing team-scoped object, so an old
+process writing a flat object during a rolling upgrade does not strand it.
+Only a missing object allows this fallback, never an access/network error.
+Downloads and exports verify the exact bytes they serve against the database.
+
+Keep flat source objects and a consistent database/store backup until all old
+processes have stopped and recovery has been checked. Team prefixes support
+inventory and eventual cleanup, but are not an authorization or retention rule:
+pending uploads and historical pins can still reference objects. This release
+does not add automatic cleanup. Unreferenced flat objects are left untouched.
 
 | Variable | Meaning |
 | --- | --- |
@@ -134,7 +159,7 @@ To migrate an existing local installation, stop all writing instances and take
 a consistent database and artifact-directory backup. Run the matching binary
 with the same database/secrets, S3 environment variables and
 `--data <existing-data> --migrate-artifacts`. The command exits without serving,
-copies each database artifact and verifies both source and destination size and
+reads either local layout, writes team-scoped keys and verifies source and destination size and
 SHA-256. Missing or corrupt bytes abort with the artifact ID. It is safe to retry;
 source files and metadata are never deleted. Only switch all member instances to
 S3 after a successful run. Verify an authenticated download and backup export,
@@ -145,6 +170,10 @@ To roll back after S3 has accepted new uploads, stop writers and copy **all**
 current bucket objects back to the local artifact directory, preserving keys;
 verify the database digests before selecting `local`. Merely changing the provider
 would make newer archives unavailable. Storage is not replicated automatically.
+Rolling back to a binary from before ADR 0034 additionally requires verified
+flat copies of **every** current `teams/{teamId}/plugins/{artifactId}.tgz`
+object at `<artifactId>.tgz`, including uploads made after the upgrade. Stop
+writes while preparing those copies and retain the scoped objects.
 
 Limits are 10 MiB compressed, 64 MiB expanded and 2000 archive entries. Local
 previews inspect actual packed bytes before upload. The server independently

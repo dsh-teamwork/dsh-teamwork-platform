@@ -24,13 +24,14 @@ const MinAuthSecret = 32
 
 // Config is everything the server reads at start.
 type Config struct {
-	ServiceRole      string // combined (default), user, or manage
-	DataDir          string
-	Host             string
-	Port             int
-	AppURL           string // the public origin, without a trailing slash
-	DatabaseURL      string
-	MigrateArtifacts bool // copy and verify local archives into configured S3, then exit
+	ServiceRole          string // combined (default), user, or manage
+	DataDir              string
+	Host                 string
+	Port                 int
+	AppURL               string // the public origin, without a trailing slash
+	DatabaseURL          string
+	MigrateArtifacts     bool // copy and verify local archives into configured S3, then exit
+	MigrateArtifactPaths bool // copy flat keys to team-scoped paths in the current store, then exit
 
 	AuthSecret         string // signs sessions, tokens and the setup link
 	ProviderKeysSecret []byte // 32 bytes; seals provider keys
@@ -59,6 +60,7 @@ func Load(args []string, env func(string) string) (Config, error) {
 	host := fl.String("host", "", "address to listen on (default 127.0.0.1; HOST)")
 	port := fl.Int("port", 0, "port to listen on (default 3800; PORT)")
 	migrateArtifacts := fl.Bool("migrate-artifacts", false, "copy local artifacts to configured S3, verify every database digest, then exit without serving")
+	migratePaths := fl.Bool("migrate-artifact-paths", false, "migrate flat artifact keys to team-scoped paths in the configured store, verify, then exit")
 	if err := fl.Parse(args); err != nil {
 		return Config{}, err
 	}
@@ -66,6 +68,7 @@ func Load(args []string, env func(string) string) (Config, error) {
 		ServiceRole:           strings.TrimSpace(env("SERVICE_ROLE")),
 		DataDir:               *data,
 		MigrateArtifacts:      *migrateArtifacts,
+		MigrateArtifactPaths:  *migratePaths,
 		Host:                  first(*host, env("HOST"), "127.0.0.1"),
 		DatabaseURL:           strings.TrimSpace(env("DATABASE_URL")),
 		AllowPrivateProviders: strings.TrimSpace(env("ALLOW_PRIVATE_PROVIDERS")) == "true",
@@ -76,6 +79,9 @@ func Load(args []string, env func(string) string) (Config, error) {
 		GoogleSecret:          strings.TrimSpace(env("AUTH_GOOGLE_SECRET")),
 		PostHogKey:            strings.TrimSpace(env("POSTHOG_KEY")),
 		PostHogHost:           strings.TrimRight(strings.TrimSpace(env("POSTHOG_HOST")), "/"),
+	}
+	if c.MigrateArtifacts && c.MigrateArtifactPaths {
+		return Config{}, errors.New("choose only one artifact migration command")
 	}
 	if c.ServiceRole == "" {
 		c.ServiceRole = "combined"

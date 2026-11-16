@@ -88,7 +88,11 @@ func (s *Server) exportRevision(w http.ResponseWriter, r *http.Request) error {
 		}
 	}()
 	for _, id := range ids {
-		f, e := s.Team.ArtifactFile(r.Context(), id)
+		row, e := s.Team.Artifact(r.Context(), c.user.ID, r.PathValue("teamId"), id)
+		if e != nil {
+			return e
+		}
+		f, e := s.Team.ArtifactFile(r.Context(), row)
 		if e != nil {
 			return e
 		}
