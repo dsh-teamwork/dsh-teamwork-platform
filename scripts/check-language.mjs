@@ -7,7 +7,7 @@
  * a Chinese comment compiles, passes tests, and ships. So it is checked, not
  * asked for.
  *
- * The exemptions below are the product itself: locale files and store listings
+ * The exemptions below are the product itself: user READMEs, locale files and store listings
  * are Chinese *because that is what the user reads*. Everything else is source.
  *
  *   pnpm lint:lang
@@ -32,6 +32,10 @@ import { extname } from 'node:path';
 const CJK = /[぀-ヿ㐀-䶿一-鿿豈-﫿가-힣ᄀ-ᇿㄱ-ㆎ]/;
 
 const ALLOWED = [
+  {
+    match: (f) => f === 'README.zh-CN.md',
+    why: 'The requested Simplified Chinese getting-started guide is user-facing product documentation; developer documentation remains English.',
+  },
   {
     // This file necessarily contains CJK — the range endpoints of the regex
     // above — so it cannot pass its own check.
@@ -80,6 +84,8 @@ for (const file of files) {
   } catch {
     continue; // unreadable or vanished between ls-files and here
   }
+  // Only the language link is localized in the English product README.
+  if (file === 'README.md') text = text.replaceAll('[简体中文](README.zh-CN.md)', '[Chinese](README.zh-CN.md)');
   if (!CJK.test(text)) continue;
   text.split('\n').forEach((line, i) => {
     if (CJK.test(line)) problems.push({ file, line: i + 1, text: line.trim().slice(0, 100) });

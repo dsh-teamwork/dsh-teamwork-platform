@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-16 — Bilingual product documentation and self-hosting guide
+
+- **What:** English-first and Simplified Chinese user READMEs explain team resources, reviewed sharing, service boundaries and supported installation paths. A self-hosting runbook covers retained local/S3 artifacts, verification and consistent backups.
+- **Why:** Members and self-hosted teams need a usable first-run path and documentation that distinguishes the published DSH plugin from the unreleased server package.
+- **Breaking:** None.
+- **Upgrade:** No application migration or configuration change. Documentation checks allow only the requested root Chinese README and its language-navigation label.
+- **Refs:** `README.md`, `README.zh-CN.md`, `docs/ops/self-hosting.md`.
+
 ## 2026-11-16 — Team-scoped private plugin paths
 
 - **What:** Both storage providers use `teams/{teamId}/plugins/{artifactId}.tgz`. Startup and authenticated reads migrate referenced flat objects with size/SHA-256 verification; `--migrate-artifact-paths` runs the same pass offline.

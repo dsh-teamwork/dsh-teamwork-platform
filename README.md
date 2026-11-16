@@ -1,118 +1,143 @@
-# DSH Teamwork
+<p align="center"><img src="https://raw.githubusercontent.com/dsh-teamwork/dsh-teamwork-platform/main/apps/console/public/icon.png" width="72" height="72" alt="DSH Teamwork"></p>
 
-Team configuration for DeepSeek Harness: a team publishes models, presets and
-plugin pins once, and every member's DSH picks them up through the
-`@dsh-teamwork/dsh-teamwork` plugin. Model calls go through this platform, so
-provider keys never leave the server.
+# DSH Teamwork Platform
 
-| | |
+English · [简体中文](README.zh-CN.md)
+
+[![CI](https://github.com/dsh-teamwork/dsh-teamwork-platform/actions/workflows/ci.yaml/badge.svg)](https://github.com/dsh-teamwork/dsh-teamwork-platform/actions/workflows/ci.yaml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+
+**Publish your team's DSH models, presets and approved plugins from one place.**
+
+This is the open-source community server and web console for
+[DSH Teamwork](https://www.dshteamwork.com). Administrators publish shared
+resources; members connect through the
+[DSH plugin](https://github.com/dsh-teamwork/dsh-teamwork). Team model calls
+use the server's gateway, keeping provider keys on the server.
+
+![A demonstration team's presets in the English web console](docs/tech/images/team-presets-en.png)
+
+## What your team gets
+
+| Capability | Community edition |
 | --- | --- |
-| `server` | Go · one binary: the API the plugin calls, sign-in, the model gateway, the console and the public pages, on SQLite, Postgres or MySQL (ADR 0014) |
-| `apps/console` | Vite · React · Tailwind v4 · the console and the public pages, embedded into `server` |
-| `api/openapi.yaml` | The wire contract the server is tested against and the console is typed from |
-| `packages/shared` | The languages and the rule that picks one |
+| Team resources | Shared models, native agent presets and exact plugin versions, across a person's teams. |
+| Team assistant | New teams receive a team-bound assistant; operations follow member/admin permissions and DSH approvals. |
+| Reviewed sharing | Members submit new resources and updates; admins review frozen contents before publication. |
+| Versions and backups | Retained publication history, comparison, resource exports and reviewed restoration. |
+| Usage and budgets | Usage reports, model reference prices and team/member/provider limits. Reference points are not a cash wallet. |
+| Private plugin storage | Local directory or S3-compatible private storage, authenticated downloads and digest checks. |
+| Instance administration | A separate instance-admin role, directories and non-secret diagnostics. |
 
-## Quick start
+The console supports English and Simplified Chinese. Screenshots use a local
+demonstration team. Publication makes resources available to team members;
+it does not install plugins on their computers.
 
-```bash
-nvm use                 # Node 24.19.0, for the console and the tooling
-pnpm install
-pnpm build              # the console, embedded into the server
-cd server && go run ./cmd/dsh-teamwork   # :3800, SQLite in ~/.dsh-teamwork
+## Choose how to use Teamwork
+
+| Route | Start here |
+| --- | --- |
+| Hosted service | Open [www.dshteamwork.com](https://www.dshteamwork.com), create/join a team, then install the DSH plugin. |
+| Self-hosted community edition | Build this repository with Docker Compose or the source commands below. |
+| DSH plugin | Install `@dsh-teamwork/dsh-teamwork` in your DSH host; it connects to either service. |
+
+The hosted relay and matching Teamwork mobile App are separate from this
+community server. The hosted service also owns its commercial account/payment
+features. Community team configuration, resource review and reference budgets
+run without those components.
+
+## Self-host with Docker
+
+Requires Git, Docker and Docker Compose.
+
+```sh
+git clone https://github.com/dsh-teamwork/dsh-teamwork-platform.git
+cd dsh-teamwork-platform
+docker compose up -d --build
+docker compose logs server
 ```
 
-It prints a link that claims the first account. `CLAUDE.md` has the rest:
-the gate, the databases the suites run on, and working on the console with
-`pnpm dev`.
+Open the private first-account setup link printed by the server. The local
+console is at `http://localhost:3000`; Compose retains the database, secrets and
+local plugin archives in its `data` volume. Create a team and add members in
+the console.
 
-## Self-hosting
+For access from other computers, set `APP_URL` to your HTTPS origin and put a
+TLS proxy in front. In each member's Teamwork sign-in panel, select that server
+and authorize DSH. Plain HTTP is accepted by the plugin only on loopback.
 
-The server is one program (ADR 0014): the API, the console and the public
-pages, over a SQLite file in its data directory unless `DATABASE_URL` names a
-Postgres or MySQL database. No Google, PostHog or mail account is needed:
-without `SMTP_URL`, people sign in with an email and a password. It writes
-its own `AUTH_SECRET` and `PROVIDER_KEYS_SECRET` into `secrets.json` in the
-data directory on first start, unless the environment sets them.
+The community npm server package and release binaries are not published yet.
+Use the source/Compose paths above; the DSH **plugin** is already on npm.
+The [self-hosting runbook](docs/ops/self-hosting.md) covers configuration,
+storage, first accounts, upgrades, verification and backups.
 
-1. **Start it**, one of three ways:
+## Connect DSH and try the assistant
 
-   - With Node installed, to try it: `npx @dsh-teamwork/server` (data in
-     `~/.dsh-teamwork`, served on `http://localhost:3800`). Node is needed to
-     install it, not to run it.
-   - As a service: download the binary for your platform from the
-     [releases](https://github.com/dsh-teamwork/dsh-teamwork-platform/releases)
-     (checked against `SHA256SUMS`) and run `dsh-teamwork --data <dir>` from
-     your service manager. Run the binary itself, never `npx`: npm does not
-     pass a stop signal on.
-   - In a container: `docker compose up -d --build` beside `compose.yaml`,
-     which keeps the data in a volume and publishes port 3000 (`PORT` in a
-     `.env` beside it changes that; the container's own address is fixed).
+In **DSH Desktop**, open **Plugins → Add plugin**, install
+`@dsh-teamwork/dsh-teamwork`, enable it, and follow any restart prompt.
+For a **CLI web profile**:
 
-   Every setting is an environment variable (in compose, a `.env` beside
-   `compose.yaml`): `APP_URL`, the address members open; `DATABASE_URL`;
-   `SMTP_URL` and `AUTH_EMAIL_FROM` to send sign-in codes instead of using
-   passwords; `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` for a Google button;
-   `HOST` and `PORT` to listen elsewhere than `127.0.0.1:3800`.
+```sh
+dsh plugin --profile web add @dsh-teamwork/dsh-teamwork
+dsh web
+```
 
-2. **Serve it over HTTPS.** A member's DSH plugin refuses plain HTTP anywhere
-   but on loopback, so put a TLS proxy in front, for example
-   `caddy reverse-proxy --from teamwork.example.com --to localhost:3000`, and
-   set `APP_URL` to that address.
-3. **Claim the first account.** The server prints
-   `Create the first one at …/setup?token=…` when it starts
-   (`docker compose logs server`). Open it, then create your team and add the
-   others by email in its console under `/teams`: each gets a first password
-   to change when they first sign in.
-4. Point each member's DSH plugin at `APP_URL`: in its Teamwork panel, change
-   the server on the sign-in screen (or set `apiEndpoint` in the DSH profile's
-   `cordis.patch.yml`). Then they sign in from the panel or with `/teamwork login`.
+Open Teamwork, choose your self-hosted server on the sign-in screen, authorize,
+and sync. Select your team's assistant preset and create a session with a
+working model. Ask it to inspect team configuration or your usage. New teams
+receive the assistant; existing teams are not automatically changed.
 
-Providers and their keys are the team's own: its admin adds them in the
-team's console, and the keys are stored encrypted under `PROVIDER_KEYS_SECRET`. A model the
-team serves itself on the same network (Ollama, vLLM) can be added by its
-private address, over plain HTTP too, with `ALLOW_PRIVATE_PROVIDERS=true`,
-which `compose.yaml` sets. Set it to `false` if people you do not trust
-share the instance.
+Members can submit presets/plugins. Administrators can review, manage
+configuration and budgets, and prepare historical restorations. Provider keys
+and initial account passwords use the web console's forms.
+See the [plugin user guide](https://github.com/dsh-teamwork/dsh-teamwork/blob/main/docs/en/guide.md)
+for commands and local approval behavior.
 
-The documents — architecture, the community edition, decisions, analytics — are indexed
-in [`docs/README.md`](docs/README.md).
+![Administrator review of a demonstration resource submission](docs/tech/images/review-and-publish-en.png)
 
-## Contributing
+## Data and administration
 
-Pull requests are welcome. Every commit carries a `Signed-off-by:` line
-(`git commit -s`), certifying the [Developer Certificate of
-Origin](https://developercertificate.org/): that you wrote the change, or have
-the right to submit it under this repository's licence. A pull request runs the
-same gate as `.husky/pre-push`; `CLAUDE.md` is the working agreement.
+- The Go binary serves the API, console, model gateway and instance-management
+  console. SQLite is the local default; Postgres and MySQL are supported.
+- Provider keys are encrypted under the server's provider-key secret. Team
+  prompts and model context pass through the gateway to the configured provider.
+- Keep database, private plugin bytes and generated secrets together in an
+  operator backup. Resource exports do not replace a full server backup.
+- An instance administrator is an explicit `ADMIN_EMAILS` entry, independent
+  of team membership; open `/manage` with an allowlisted account. `SERVICE_ROLE` supports combined, user or management
+  processes. Separate artifact-serving processes need the same retained bytes.
+
+Private archives use `teams/{teamId}/plugins/{artifactId}.tgz` in either store.
+Startup verifies and copies referenced flat objects before a member process
+serves, retaining the originals; `--migrate-artifact-paths` runs this pass offline.
+See [storage migration](docs/tech/team-assistant.md#private-plugin-artifacts)
+before an upgrade or rollback.
+
+[Documentation](docs/README.md) explains architecture, team resource contracts,
+usage accounting, storage and administration.
+
+![Retained publication versions and resource backup actions](docs/tech/images/versions-and-backups-en.png)
+
+## Build from source and contribute
+
+Use the repository's Node version (`.nvmrc`), pnpm 10.18.1 and the Go version in
+`server/go.mod`:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm build
+./server/dist/dsh-teamwork
+```
+
+The local default is `http://127.0.0.1:3800`, with private data in
+`~/.dsh-teamwork`. Follow the setup link printed at
+startup. [CLAUDE.md](CLAUDE.md) contains development commands and the complete
+pre-push gate. Pull requests run that gate; commits carry a `Signed-off-by:`
+line (`git commit -s`) certifying the [DCO](https://developercertificate.org/).
+[Report issues here](https://github.com/dsh-teamwork/dsh-teamwork-platform/issues).
 
 ## License
 
-Apache License 2.0 (`LICENSE`). The name and the whale mark are not licensed
-with the code (`NOTICE`), so a fork uses its own. A directory with its own
-`LICENSE` is covered by that file instead.
-
-## Private plugin storage
-
-Private plugin archives default to `<data>/artifacts` (`--data` selects the data
-directory). Persist this directory alongside the database. Set
-`ARTIFACT_STORAGE_PROVIDER=s3` to use a private S3-compatible bucket instead.
-All downloads still pass through the authenticated team API. Configuration,
-migration and backup steps are in [team assistant](docs/tech/team-assistant.md#private-plugin-artifacts).
-
-Both providers organize archives as `teams/{teamId}/plugins/{artifactId}.tgz`.
-Existing flat files are copied and verified automatically before the member
-server serves; original files are retained. `--migrate-artifact-paths` runs the
-same migration offline without serving.
-
-## Instance administration
-
-Set `ADMIN_EMAILS` to the comma-separated addresses of instance administrators
-and open `/manage`. This role is independent of team administration. The console
-provides user and team directories, user display-name maintenance, system counts
-and non-secret configuration diagnostics. Use the configured sign-in method;
-local password installations do not require Google.
-
-`SERVICE_ROLE=combined` is the default self-hosted process. Set `user` to disable
-all management routes, or `manage` for a separate administrator process without
-team APIs or the model gateway. See [system management](docs/tech/system-management.md)
-for isolation, shared storage and edition extensions.
+[Apache License 2.0](LICENSE). The DSH Teamwork name and whale mark are covered
+by [NOTICE](NOTICE); a fork uses its own branding. A directory with its own
+license is covered by that file.

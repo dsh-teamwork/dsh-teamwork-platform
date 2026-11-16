@@ -23,7 +23,8 @@
 // published legal pages are required in a tree only where something publishes
 // them — a tracked pull-legal.mjs inside that tree.
 //
-// Kept verbatim across the sibling repositories; seed is its source. It reads the
+// The shared standard comes from seed; this product also permits its requested
+// root Chinese user README. It reads the
 // tracked tree only (git ls-files), so a generated or ignored file can neither
 // satisfy a link nor fail one, and the answer is the same locally and in CI.
 //
@@ -35,7 +36,8 @@ import { posix } from "node:path";
 
 const CATEGORIES = ["prd", "tech", "adr", "ops", "legal", "brand"];
 const DOCS_ROOT_FILES = ["README.md", "design.md"];
-const ROOT_PROSE = ["README.md", "CLAUDE.md", "AGENTS.md", "CHANGELOG.md"];
+// The root getting-started README also has a user-facing Chinese translation.
+const ROOT_PROSE = ["README.md", "README.zh-CN.md", "CLAUDE.md", "AGENTS.md", "CHANGELOG.md"];
 const STATUS = /^> \*\*Status:\*\* (Draft|Plan|Current|Archived|Superseded by \S.*?)(?: — .+)? · \*\*Updated:\*\* \d{4}-\d{2}-\d{2}$/;
 const ADR_STATUS = /^> \*\*Status:\*\* (Proposed|Accepted|Superseded by \S.*?)(?: — .+)? · \*\*Date:\*\* \d{4}-\d{2}-\d{2}$/;
 const VERSION_LINE = /^\s*(\*\*Version\*\*|\*\*Version:\*\*|Version:)/;
