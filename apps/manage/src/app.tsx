@@ -4,7 +4,7 @@ import { configureNavigation, type NavItem } from './components/layout/nav';
 import { configureBase } from './lib/base';
 import type { RouteObject } from 'react-router';
 
-import { StrictMode } from 'react';
+import { StrictMode, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   createBrowserRouter,
@@ -49,11 +49,13 @@ export function mountAdmin({
   googleOnly = false,
   extraRoutes = [],
   extraNav = [],
+  teamActions,
 }: {
   base?: string;
   googleOnly?: boolean;
   extraRoutes?: RouteObject[];
   extraNav?: NavItem[];
+  teamActions?: (team: { id: string; name: string }) => ReactNode;
 } = {}) {
   configureBase(base, googleOnly);
   configureNavigation(extraNav);
@@ -69,8 +71,8 @@ export function mountAdmin({
             children: [
               { path: '/', element: <DashboardPage /> },
               { path: '/users', element: <UsersPage /> },
-              { path: '/teams', element: <TeamsPage /> },
-              { path: '/teams/:id', element: <TeamPage /> },
+              { path: '/teams', element: <TeamsPage actions={teamActions} /> },
+              { path: '/teams/:id', element: <TeamPage actions={teamActions} /> },
               { path: '/system', element: <SystemPage /> },
               ...extraRoutes,
             ],
