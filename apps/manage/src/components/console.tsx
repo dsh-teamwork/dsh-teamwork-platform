@@ -253,7 +253,7 @@ export function StatCard({
 
   const classes = cn(
     'block rounded-lg border border-border bg-card p-4 transition-colors',
-    href && 'hover:border-brand/60',
+    href && 'hover:border-foreground/30',
     className,
   );
 

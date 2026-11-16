@@ -86,7 +86,7 @@ function TeamsHome({
                       <span className="truncate font-medium">{team.name}</span>
                       <span className="text-xs text-muted-foreground">{t('list.members', { count: team.memberCount })}</span>
                     </span>
-                    <span className={role === 'admin' ? 'rounded-full bg-brand px-2 py-0.5 text-xs font-medium text-brand-foreground' : 'rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground'}>
+                    <span className={role === 'admin' ? 'rounded-full bg-brand px-2 py-0.5 text-xs font-medium text-brand-foreground' : 'rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground'}>
                       {t(`role.${role}`)}
                     </span>
                   </Link>

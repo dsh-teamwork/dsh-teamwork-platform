@@ -389,7 +389,7 @@ function PresetEditor({
               onClick={() => setTab(key)}
               className={cn(
                 '-mb-px border-b-2 px-3 py-2 text-sm',
-                tab === key ? 'border-brand font-medium text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
+                tab === key ? 'border-foreground font-medium text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
               {t(`tab.${key}`)}

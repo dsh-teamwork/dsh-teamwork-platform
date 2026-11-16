@@ -90,7 +90,7 @@ function Overview({
           <Card>
             <CardHeader className="flex-row items-center justify-between gap-3">
               <CardTitle>{t('setup')}</CardTitle>
-              <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', done === steps.length ? 'bg-brand text-brand-foreground' : 'bg-muted text-muted-foreground')}>
+              <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', done === steps.length ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground')}>
                 {done} / {steps.length}
               </span>
             </CardHeader>
@@ -101,7 +101,7 @@ function Overview({
                     <span
                       className={cn(
                         'grid size-6 shrink-0 place-items-center rounded-full border text-xs font-semibold',
-                        step.done ? 'border-brand bg-brand text-brand-foreground' : 'text-muted-foreground',
+                        step.done ? 'border-primary bg-primary text-primary-foreground' : 'text-muted-foreground',
                       )}
                       aria-hidden
                     >

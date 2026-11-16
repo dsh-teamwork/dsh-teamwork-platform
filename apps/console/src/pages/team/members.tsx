@@ -92,7 +92,7 @@ function Members({ invites, reload }: { invites: Invite[]; reload: Reload }) {
                     <span
                       className={cn(
                         'rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap',
-                        m.role === 'admin' ? 'bg-brand text-brand-foreground' : 'bg-muted text-muted-foreground',
+                        m.role === 'admin' ? 'bg-brand text-brand-foreground' : 'bg-secondary text-muted-foreground',
                       )}
                     >
                       {t(`role.${m.role}`)}

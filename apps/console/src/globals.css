@@ -37,19 +37,6 @@
   --input: oklch(0.887 0.007 286);
   --ring: oklch(0.452 0.124 270);
   --radius: 0.5rem;
-  /*
-   * The landing page's ocean (components/home/sea.tsx and the sections below it):
-   * the same sea in both themes, so it is the one part of the scale that does
-   * not swap. `--fluke` does: indigo against a paper sky, paper against a
-   * night one.
-   */
-  --ocean: oklch(0.33 0.11 268);
-  --ocean-deep: oklch(0.17 0.04 268);
-  --ocean-foreground: oklch(0.97 0.008 85);
-  --ocean-muted: oklch(0.8 0.035 268);
-  --ocean-line: oklch(1 0 0 / 13%);
-  --ocean-accent: oklch(0.83 0.14 86);
-  --fluke: oklch(0.33 0.11 268);
 }
 
 .dark {
@@ -73,13 +60,6 @@
   --border: oklch(0.287 0.007 286);
   --input: oklch(0.351 0.01 286);
   --ring: oklch(0.766 0.095 271);
-  --ocean: oklch(0.33 0.11 268);
-  --ocean-deep: oklch(0.17 0.04 268);
-  --ocean-foreground: oklch(0.97 0.008 85);
-  --ocean-muted: oklch(0.8 0.035 268);
-  --ocean-line: oklch(1 0 0 / 13%);
-  --ocean-accent: oklch(0.83 0.14 86);
-  --fluke: oklch(0.96 0.006 85);
 }
 
 @theme inline {
@@ -106,13 +86,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ocean: var(--ocean);
-  --color-ocean-deep: var(--ocean-deep);
-  --color-ocean-foreground: var(--ocean-foreground);
-  --color-ocean-muted: var(--ocean-muted);
-  --color-ocean-line: var(--ocean-line);
-  --color-ocean-accent: var(--ocean-accent);
-  --color-fluke: var(--fluke);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -120,7 +93,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* The hero sea drifts left by one wave period (160 of the SVG's units) and loops. */
+/* The hero's wave line drifts left by one wave period (160 of the SVG's units) and loops. */
 .sea-drift {
   animation: sea-drift 14s linear infinite;
 }

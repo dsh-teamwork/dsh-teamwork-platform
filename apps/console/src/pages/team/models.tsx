@@ -212,7 +212,7 @@ function ProviderCard({ teamId, reload, provider, count, onAddModels }: { teamId
 }
 
 function Mark({ text }: { text: string }) {
-  return <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-xs font-bold text-brand">{text}</span>;
+  return <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-bold text-muted-foreground">{text}</span>;
 }
 
 function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; reload: Reload; model: ModelConfig; admin: boolean; usedBy: string[] }) {

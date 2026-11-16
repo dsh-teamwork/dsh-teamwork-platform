@@ -21,7 +21,7 @@ stylesheet is right and this file is stale.
 | --- | --- |
 | Brand mark | `docs/brand/icon.svg` — the one hand-edited copy; every icon and logo is exported from it |
 | Exports | `scripts/generate-icons.mjs` (`pnpm assets:icons`) |
-| Web colour, radius, faces, the ocean | `apps/console/src/globals.css` |
+| Web colour, radius, faces | `apps/console/src/globals.css` |
 | Console colour, radius, faces | `apps/manage/src/globals.css` |
 | Share card | `apps/console/scripts/prerender.mjs` — the exported `public/logo.svg` beside the name (Onest Bold) and tagline (Onest Regular), in ink on white |
 
@@ -128,20 +128,6 @@ Console only:
 `--warning` is amber dark enough to be read as text; `--signal` is the same hue
 bright enough to be seen as a dot.
 
-The landing page's ocean (`apps/console/src/public/home.tsx`,
-`apps/console/src/public/sea.tsx`), declared beside the web scale. The sea is the same in both themes,
-so these are the one part of the scale that does not swap, except `--fluke`:
-
-| Token | Light | Dark | Role |
-| --- | --- | --- | --- |
-| `--ocean` | `oklch(0.33 0.11 268)` | same | The sea at the surface; the top of the sections' gradient |
-| `--ocean-deep` | `oklch(0.17 0.04 268)` | same | The bottom of the gradient; panels set in the sea |
-| `--ocean-foreground` | `oklch(0.97 0.008 85)` | same | Text and foam on the sea |
-| `--ocean-muted` | `oklch(0.8 0.035 268)` | same | Secondary text on the sea |
-| `--ocean-line` | `oklch(1 0 0 / 13%)` | same | Hairlines on the sea |
-| `--ocean-accent` | `oklch(0.83 0.14 86)` | same | Depth labels and step numbers only |
-| `--fluke` | `oklch(0.33 0.11 268)` | `oklch(0.96 0.006 85)` | The hero fluke: indigo on a paper sky, paper on a night one |
-
 `--info` sits near the brand's hue; it marks a state, and brand chrome never
 borrows it. Each token is exposed to Tailwind as `--color-*` in the file's
 `@theme inline` block, so a page writes `bg-brand`, `text-muted-foreground`,
@@ -190,14 +176,15 @@ icon set.
   card's border and fill are kept for the one block that has to stand apart.
 - **The logo is an image, not a drawing.** Show `public/logo.svg` at its square
   size; never redraw the mark inline or recolour it. The one inline whale is the
-  landing page's hero illustration (`apps/console/src/public/sea.tsx`):
-  the mark's fluke
-  path at hero scale over a full-width sea, drawn from the ocean tokens. It is
-  not the logo, has no plate, and is not exported.
-- **The landing page is one dive.** A paper sky and the fluke sounding,
-  then each section a little deeper in one `--ocean` → `--ocean-deep`
-  gradient, labelled with its depth. It states only what ships; a planned
-  capability is not on it.
+  landing page's hero illustration (`apps/console/src/public/sea.tsx`): the
+  mark's fluke path at hero scale, in `--foreground` at 7 % opacity, behind one
+  `--foreground` wave line that runs the full width; below the line the page's
+  own ground covers the stalk. It is not the logo, has no plate, and is not
+  exported.
+- **The landing page is black on white.** The faint fluke and its wave line,
+  then sections divided by hairlines, each labelled with its depth in mono, and
+  the closing call on one `--brand` band, the page's only large area of
+  colour. It states only what ships; a planned capability is not on it.
 - **The web app's `/` is the landing page on every instance**, self-hosted
   ones included (ADR 0007), so it states only what holds for any instance.
 - **Outcomes in the console** use `--success` / `--warning` / `--info` /
