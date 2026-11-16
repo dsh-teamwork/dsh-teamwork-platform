@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-16 — Team-scoped private plugin paths
+
+- **What:** Both storage providers use `teams/{teamId}/plugins/{artifactId}.tgz`. Startup and authenticated reads migrate referenced flat objects with size/SHA-256 verification; `--migrate-artifact-paths` runs the same pass offline.
+- **Why:** Team-owned prefixes enable inventory and future cleanup without weakening authorization or losing existing archives.
+- **Breaking:** Physical keys change; database identity and API URLs do not. Returning to an old binary requires verified flat copies of uploads made after this upgrade.
+- **Upgrade:** Keep database/store backups and existing credentials. Startup verifies/migrates existing records before serving, retaining flat sources; missing or corrupt bytes stop readiness. No schema migration. Keep old copies until old writers retire; no automatic cleanup is introduced.
+- **Refs:** ADR 0034, `docs/tech/team-assistant.md`.
+
 ## 2026-11-15 — Local and S3 private artifact storage
 
 - **What:** Private plugin uploads, downloads, approval and backups use local-directory or S3-compatible storage. Environment variables select the provider; an offline migration command copies and verifies retained bytes.

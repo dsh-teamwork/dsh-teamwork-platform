@@ -40,7 +40,7 @@ func (s *Server) downloadArtifact(w http.ResponseWriter, r *http.Request) error 
 	if e != nil {
 		return e
 	}
-	file, e := s.Team.ArtifactFile(r.Context(), row.ID)
+	file, e := s.Team.ArtifactFile(r.Context(), row)
 	if e != nil {
 		return e
 	}

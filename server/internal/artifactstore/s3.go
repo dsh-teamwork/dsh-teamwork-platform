@@ -6,7 +6,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -17,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/smithy-go"
 )
 
 // FromEnv is shared by all editions. Management-only services do not call it.
@@ -75,8 +78,8 @@ type S3 struct {
 	Bucket string
 }
 
-func (s *S3) Put(ctx context.Context, id string, body io.ReadSeeker, size int64) error {
-	k, err := key(id)
+func (s *S3) Put(ctx context.Context, teamID, id string, body io.ReadSeeker, size int64) error {
+	k, err := key(teamID, id)
 	if err != nil {
 		return err
 	}
@@ -84,20 +87,38 @@ func (s *S3) Put(ctx context.Context, id string, body io.ReadSeeker, size int64)
 	return err
 }
 
-func (s *S3) Open(ctx context.Context, id string) (io.ReadCloser, error) {
-	k, err := key(id)
+func (s *S3) Open(ctx context.Context, teamID, id string) (io.ReadCloser, error) {
+	k, err := key(teamID, id)
 	if err != nil {
 		return nil, err
 	}
+	return s.open(ctx, k)
+}
+
+func (s *S3) OpenLegacy(ctx context.Context, id string) (io.ReadCloser, error) {
+	k, err := legacyKey(id)
+	if err != nil {
+		return nil, err
+	}
+	return s.open(ctx, k)
+}
+
+func (s *S3) open(ctx context.Context, k string) (io.ReadCloser, error) {
 	result, err := s.Client.GetObject(ctx, &s3.GetObjectInput{Bucket: &s.Bucket, Key: &k})
 	if err != nil {
+		var apiErr smithy.APIError
+		// Only a missing object permits migration. Missing buckets, access denial
+		// and network failures must not be mistaken for a missing destination.
+		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "NoSuchKey" {
+			return nil, fmt.Errorf("artifact object missing: %w", fs.ErrNotExist)
+		}
 		return nil, err
 	}
 	return result.Body, nil
 }
 
-func (s *S3) Delete(ctx context.Context, id string) error {
-	k, err := key(id)
+func (s *S3) Delete(ctx context.Context, teamID, id string) error {
+	k, err := key(teamID, id)
 	if err != nil {
 		return err
 	}
@@ -116,12 +137,12 @@ func (s *S3) Check(ctx context.Context) (err error) {
 	defer func() {
 		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 		defer cancel()
-		err = errors.Join(err, s.Delete(cleanup, id))
+		err = errors.Join(err, s.Delete(cleanup, "_storage_probe", id))
 	}()
-	if err := s.Put(ctx, id, bytes.NewReader(data), int64(len(data))); err != nil {
+	if err := s.Put(ctx, "_storage_probe", id, bytes.NewReader(data), int64(len(data))); err != nil {
 		return err
 	}
-	r, err := s.Open(ctx, id)
+	r, err := s.Open(ctx, "_storage_probe", id)
 	if err != nil {
 		return err
 	}

@@ -7,8 +7,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path"
@@ -163,7 +164,7 @@ func (s *Service) UploadArtifact(ctx context.Context, userID, teamID string, inp
 			if _, err := f.Seek(0, 0); err != nil {
 				return ArtifactView{}, err
 			}
-			if err := s.Artifacts.Put(ctx, existing.ID, f, n); err != nil {
+			if err := s.Artifacts.Put(ctx, existing.TeamID, existing.ID, f, n); err != nil {
 				return ArtifactView{}, err
 			}
 			return artifactView(existing), nil
@@ -174,7 +175,7 @@ func (s *Service) UploadArtifact(ctx context.Context, userID, teamID string, inp
 	if _, err := f.Seek(0, 0); err != nil {
 		return ArtifactView{}, err
 	}
-	if err := s.Artifacts.Put(ctx, id, f, n); err != nil {
+	if err := s.Artifacts.Put(ctx, teamID, id, f, n); err != nil {
 		return ArtifactView{}, err
 	}
 	r, err := s.DB.ResourceArtifact.Create().SetID(id).SetTeamID(teamID).SetAuthorID(userID).SetPackage(pkg).SetVersion(version).SetSha256(digest).SetSize(n).SetFiles(files).Save(ctx)
@@ -188,7 +189,7 @@ func (s *Service) UploadArtifact(ctx context.Context, userID, teamID string, inp
 		// Request cancellation must not skip cleanup after a rejected DB write.
 		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 		defer cancel()
-		if cleanupErr := s.Artifacts.Delete(cleanup, id); cleanupErr != nil {
+		if cleanupErr := s.Artifacts.Delete(cleanup, teamID, id); cleanupErr != nil {
 			slog.Error("artifact cleanup failed", "artifact", id, "error", cleanupErr)
 		}
 		return ArtifactView{}, wire.E(409, "artifact_version_exists")
@@ -226,23 +227,51 @@ func (f *artifactFile) Close() error {
 	return removeErr
 }
 
-func (s *Service) ArtifactFile(ctx context.Context, id string) (*artifactFile, error) {
+// ArtifactFile takes an already authorized database row, never a caller's path.
+// A flat object is copied only when the team-scoped object is absent.
+func (s *Service) ArtifactFile(ctx context.Context, row *ent.ResourceArtifact) (*artifactFile, error) {
 	if s.Artifacts == nil {
 		return nil, wire.E(503, "artifact_storage_unavailable")
 	}
-	body, err := s.Artifacts.Open(ctx, id)
+	body, err := s.Artifacts.Open(ctx, row.TeamID, row.ID)
+	if errors.Is(err, fs.ErrNotExist) {
+		legacy, err := s.Artifacts.OpenLegacy(ctx, row.ID)
+		if err != nil {
+			return nil, err
+		}
+		source, err := artifactSnapshot(legacy, row)
+		if err != nil {
+			return nil, err
+		}
+		defer source.Close()
+		if err := s.Artifacts.Put(ctx, row.TeamID, row.ID, source, row.Size); err != nil {
+			return nil, err
+		}
+		// Verify the destination rather than serving the source and assuming the
+		// remote write succeeded. Retain the original for recovery and rollback.
+		body, err = s.Artifacts.Open(ctx, row.TeamID, row.ID)
+		if err != nil {
+			return nil, err
+		}
+		return artifactSnapshot(body, row)
+	}
 	if err != nil {
 		return nil, err
 	}
+	return artifactSnapshot(body, row)
+}
+
+func artifactSnapshot(body io.ReadCloser, row *ent.ResourceArtifact) (*artifactFile, error) {
 	defer body.Close()
 	f, err := os.CreateTemp("", "teamwork-artifact-*")
 	if err != nil {
 		return nil, err
 	}
 	file := &artifactFile{f}
-	n, err := io.Copy(f, io.LimitReader(body, MaxArtifactSize+1))
-	if err == nil && n > MaxArtifactSize {
-		err = fmt.Errorf("stored artifact exceeds size limit")
+	hash := sha256.New()
+	n, err := io.Copy(io.MultiWriter(f, hash), io.LimitReader(body, MaxArtifactSize+1))
+	if err == nil && (n > MaxArtifactSize || n != row.Size || hex.EncodeToString(hash.Sum(nil)) != row.Sha256) {
+		err = wire.E(409, "artifact_mismatch")
 	}
 	if err == nil {
 		_, err = f.Seek(0, 0)
@@ -267,17 +296,14 @@ func (s *Service) checkArtifact(ctx context.Context, teamID string, data *wire.P
 	if r.Package != data.Package || r.Version != data.Version || r.Sha256 != data.SHA256 {
 		return wire.E(400, "artifact_mismatch")
 	}
-	f, err := s.ArtifactFile(ctx, r.ID)
+	f, err := s.ArtifactFile(ctx, r)
 	if err != nil {
+		var detail *wire.Error
+		if errors.As(err, &detail) {
+			return err
+		}
 		return wire.E(409, "artifact_unavailable")
 	}
 	defer f.Close()
-	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return err
-	}
-	if hex.EncodeToString(h.Sum(nil)) != r.Sha256 {
-		return wire.E(409, "artifact_mismatch")
-	}
 	return nil
 }

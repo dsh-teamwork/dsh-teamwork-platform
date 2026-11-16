@@ -110,7 +110,7 @@ func TestBackupContainsExactPrivateArtifact(t *testing.T) {
 			}
 			// Corruption in either backend must stop export and restoration.
 			bad := []byte("corrupt archive")
-			if err := store.Put(t.Context(), a["id"].(string), bytes.NewReader(bad), int64(len(bad))); err != nil {
+			if err := store.Put(t.Context(), teamID, a["id"].(string), bytes.NewReader(bad), int64(len(bad))); err != nil {
 				t.Fatal(err)
 			}
 			refused(t, "corrupt export", admin.get(base+"/history/"+r["id"].(string)+"/export"), 409, "artifact_mismatch")

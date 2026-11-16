@@ -2,19 +2,64 @@ package team
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
+	"errors"
 	"fmt"
-	"io"
+	"io/fs"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 )
 
-// MigrateArtifacts runs offline with writes stopped. It never deletes source
-// files or changes metadata, and a retry verifies/copies the same immutable keys.
+// MigrateArtifactPaths verifies current objects and copies missing team-scoped
+// objects from the flat layout. Startup runs it before serving; authenticated
+// reads also handle uploads from an old process during a rolling deployment.
+func (s *Service) MigrateArtifactPaths(ctx context.Context) (int, error) {
+	return s.eachArtifact(ctx, func(row *ent.ResourceArtifact) error {
+		f, err := s.ArtifactFile(ctx, row)
+		if err != nil {
+			return err
+		}
+		return f.Close()
+	})
+}
+
+// MigrateArtifacts copies local archives (either layout) into the configured
+// store offline. It verifies both sides and never deletes or changes the source.
 func (s *Service) MigrateArtifacts(ctx context.Context, sourceDir string) (int, error) {
-	source := &Service{Artifacts: artifactstore.Local{Dir: sourceDir}}
+	source := artifactstore.Local{Dir: sourceDir}
+	return s.eachArtifact(ctx, func(row *ent.ResourceArtifact) error {
+		body, err := source.Open(ctx, row.TeamID, row.ID)
+		if errors.Is(err, fs.ErrNotExist) {
+			body, err = source.OpenLegacy(ctx, row.ID)
+		}
+		if err != nil {
+			return err
+		}
+		local, err := artifactSnapshot(body, row)
+		if err != nil {
+			return err
+		}
+		defer local.Close()
+		body, err = s.Artifacts.Open(ctx, row.TeamID, row.ID)
+		if errors.Is(err, fs.ErrNotExist) {
+			if err := s.Artifacts.Put(ctx, row.TeamID, row.ID, local, row.Size); err != nil {
+				return err
+			}
+			body, err = s.Artifacts.Open(ctx, row.TeamID, row.ID)
+		}
+		if err != nil {
+			return err
+		}
+		remote, err := artifactSnapshot(body, row)
+		if err != nil {
+			return err
+		}
+		return remote.Close()
+	})
+}
+
+func (s *Service) eachArtifact(ctx context.Context, visit func(*ent.ResourceArtifact) error) (int, error) {
 	count, after := 0, ""
 	for {
 		rows, err := s.DB.ResourceArtifact.Query().Where(resourceartifact.IDGT(after)).Order(resourceartifact.ByID()).Limit(100).All(ctx)
@@ -25,41 +70,8 @@ func (s *Service) MigrateArtifacts(ctx context.Context, sourceDir string) (int, 
 			return count, nil
 		}
 		for _, row := range rows {
-			err := func() error {
-				local, err := source.ArtifactFile(ctx, row.ID)
-				if err != nil {
-					return err
-				}
-				defer local.Close()
-				verify := func(r io.Reader) error {
-					h := sha256.New()
-					n, err := io.Copy(h, r)
-					if err != nil {
-						return err
-					}
-					if n != row.Size || hex.EncodeToString(h.Sum(nil)) != row.Sha256 {
-						return fmt.Errorf("size or SHA-256 mismatch")
-					}
-					return nil
-				}
-				if err := verify(local); err != nil {
-					return err
-				}
-				if _, err := local.Seek(0, 0); err != nil {
-					return err
-				}
-				if err := s.Artifacts.Put(ctx, row.ID, local, row.Size); err != nil {
-					return err
-				}
-				remote, err := s.ArtifactFile(ctx, row.ID)
-				if err != nil {
-					return err
-				}
-				defer remote.Close()
-				return verify(remote)
-			}()
-			if err != nil {
-				return count, fmt.Errorf("migrate artifact %s: %w", row.ID, err)
+			if err := visit(row); err != nil {
+				return count, fmt.Errorf("migrate artifact %s in team %s: %w", row.ID, row.TeamID, err)
 			}
 			count++
 			after = row.ID

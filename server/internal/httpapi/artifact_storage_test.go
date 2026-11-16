@@ -49,7 +49,9 @@ func s3Artifacts(t *testing.T, rejectWrites bool) *artifactstore.S3 {
 		case "GET":
 			b, ok := objects[r.URL.Path]
 			if !ok {
-				http.Error(w, "missing", 404)
+				w.Header().Set("Content-Type", "application/xml")
+				w.WriteHeader(404)
+				io.WriteString(w, `<Error><Code>NoSuchKey</Code></Error>`)
 				return
 			}
 			w.Header().Set("Content-Length", strconv.Itoa(len(b)))
@@ -180,7 +182,7 @@ func TestArtifactMigrationVerifiesEveryDatabaseRow(t *testing.T) {
 				t.Fatalf("migration count=%d: %v", n, err)
 			}
 		}
-		body, err := remote.Open(t.Context(), id)
+		body, err := remote.Open(t.Context(), teamID, id)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -190,19 +192,19 @@ func TestArtifactMigrationVerifiesEveryDatabaseRow(t *testing.T) {
 			t.Fatal("migration changed bytes", err)
 		}
 		// Missing or corrupt source must abort, leaving the good destination intact.
-		if err := local.Put(t.Context(), id, strings.NewReader("corrupt"), 7); err != nil {
+		if err := local.Put(t.Context(), teamID, id, strings.NewReader("corrupt"), 7); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := svc.MigrateArtifacts(t.Context(), local.Dir); err == nil {
 			t.Fatal("accepted corrupt source")
 		}
-		if err := local.Delete(t.Context(), id); err != nil {
+		if err := local.Delete(t.Context(), teamID, id); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := svc.MigrateArtifacts(t.Context(), local.Dir); err == nil {
 			t.Fatal("accepted missing source")
 		}
-		body, err = remote.Open(t.Context(), id)
+		body, err = remote.Open(t.Context(), teamID, id)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -99,6 +99,11 @@ directory). Persist this directory alongside the database. Set
 All downloads still pass through the authenticated team API. Configuration,
 migration and backup steps are in [team assistant](docs/tech/team-assistant.md#private-plugin-artifacts).
 
+Both providers organize archives as `teams/{teamId}/plugins/{artifactId}.tgz`.
+Existing flat files are copied and verified automatically before the member
+server serves; original files are retained. `--migrate-artifact-paths` runs the
+same migration offline without serving.
+
 ## Instance administration
 
 Set `ADMIN_EMAILS` to the comma-separated addresses of instance administrators

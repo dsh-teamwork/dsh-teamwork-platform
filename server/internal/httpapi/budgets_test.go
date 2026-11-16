@@ -173,7 +173,12 @@ func TestBudgetPermissionsReconciliationNoticesAndExport(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(records) != 2 || records[1][3] != memberID || !strings.HasPrefix(records[1][6], "' \t=") || records[1][14] != "0" {
+		// Nanoids may begin with '-', which correctly receives CSV formula protection.
+		exportedMemberID := memberID
+		if strings.HasPrefix(memberID, "-") {
+			exportedMemberID = "'" + memberID
+		}
+		if len(records) != 2 || records[1][3] != exportedMemberID || !strings.HasPrefix(records[1][6], "' \t=") || records[1][14] != "0" {
 			t.Fatalf("unsafe or unscoped export: %+v", records)
 		}
 		refused(t, "outside export", outsider.get(path+"/usage/export"), 404, "team_not_found")
