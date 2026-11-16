@@ -163,6 +163,9 @@ func (s *Service) AddMember(ctx context.Context, userID, teamID string, in wire.
 	// must not get one an admin knows, or the admin would hold that account
 	// and its place in every other team (ADR 0013).
 	if created {
+		if s.ProtectedAccount != nil && s.ProtectedAccount(in.Email) {
+			return AddedMember{}, wire.E(http.StatusForbidden, wire.NotAllowed)
+		}
 		if err := tx.Password.Create().SetUserID(user.ID).SetHash(hash).SetMustChange(true).Exec(ctx); err != nil {
 			return AddedMember{}, conflict(err, "member_in_team")
 		}
@@ -206,6 +209,13 @@ func (s *Service) ResetMemberPassword(ctx context.Context, userID, teamID, targe
 	}
 	if len(ms) > 1 {
 		return "", wire.E(http.StatusForbidden, "member_in_other_team")
+	}
+	account, err := s.DB.User.Get(ctx, target)
+	if err != nil {
+		return "", err
+	}
+	if account.Email != nil && s.ProtectedAccount != nil && s.ProtectedAccount(*account.Email) {
+		return "", wire.E(http.StatusForbidden, wire.NotAllowed)
 	}
 	pw := auth.GeneratePassword()
 	return pw, s.Auth.SetPassword(ctx, target, pw, true)

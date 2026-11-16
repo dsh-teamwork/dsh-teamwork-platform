@@ -338,3 +338,25 @@ func TestRootMountedEditionConsole(t *testing.T) {
 		}
 	})
 }
+
+func TestTeamAdminsCannotControlInstancePasswords(t *testing.T) {
+	each(t, map[string]string{"ADMIN_EMAILS": "root@example.test,future@example.test"}, func(t *testing.T, w world) {
+		owner := w.in.Account("owner@example.test")
+		root := w.in.Account("root@example.test")
+		team := w.in.Team(owner)
+		w.in.Member(team, root)
+		headers := map[string]string{"Content-Type": "application/json", "Origin": w.in.URL}
+		cookie := w.in.Session(owner, "password")
+		for _, req := range []request{
+			{method: "POST", path: "/api/teams/" + team + "/members", body: `{"email":"future@example.test"}`},
+			{method: "POST", path: "/api/teams/" + team + "/members/" + root + "/password", body: `{}`},
+		} {
+			req.cookie = cookie
+			req.header = headers
+			s, b := w.do(req)
+			if s != 403 || b["error"] != "not_allowed" {
+				t.Fatalf("operator credentials: %d %v", s, b)
+			}
+		}
+	})
+}

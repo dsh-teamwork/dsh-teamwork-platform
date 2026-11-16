@@ -212,7 +212,7 @@ func (a *api) signedIn(r *http.Request) (string, error) {
 // admin is the address of an admin's Google session on r, or "".
 func (a *api) admin(r *http.Request) (string, error) {
 	email, err := a.signedIn(r)
-	if err != nil || !isAdmin(email, a.host.Env("ADMIN_EMAILS")) {
+	if err != nil || !IsAdmin(email, a.host.Env("ADMIN_EMAILS")) {
 		return "", err
 	}
 	return email, nil
@@ -220,8 +220,8 @@ func (a *api) admin(r *http.Request) (string, error) {
 
 func normalizeEmail(s string) string { return strings.ToLower(strings.TrimSpace(s)) }
 
-// isAdmin reports whether email is in the comma-separated list.
-func isAdmin(email, list string) bool {
+// IsAdmin reports whether email is in the comma-separated list.
+func IsAdmin(email, list string) bool {
 	email = normalizeEmail(email)
 	if email == "" {
 		return false
@@ -254,7 +254,7 @@ func me(a *api, w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusInternalServerError, "internal_error")
 	case email == "":
 		fail(w, http.StatusUnauthorized, "unauthorized")
-	case !isAdmin(email, a.host.Env("ADMIN_EMAILS")):
+	case !IsAdmin(email, a.host.Env("ADMIN_EMAILS")):
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden", "email": email})
 	default:
 		writeJSON(w, http.StatusOK, map[string]string{"email": email})
@@ -378,5 +378,5 @@ func (a *api) googleOperator(r *http.Request) bool {
 		return false
 	}
 	who, err := a.host.Session(r)
-	return err == nil && who != nil && who.Via == "google" && isAdmin(who.Email, a.host.Env("ADMIN_EMAILS"))
+	return err == nil && who != nil && who.Via == "google" && IsAdmin(who.Email, a.host.Env("ADMIN_EMAILS"))
 }

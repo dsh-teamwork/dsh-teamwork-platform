@@ -130,6 +130,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	network := &team.Network{AllowPrivate: cfg.AllowPrivateProviders}
 	authn := &auth.Service{DB: client, Sealer: auth.NewSealer(cfg.AuthSecret, nil), Secret: cfg.AuthSecret}
 	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords()}
+	teams.ProtectedAccount = func(email string) bool { return manage.IsAdmin(email, env("ADMIN_EMAILS")) }
 	meter := &usage.Service{DB: client, AppURL: cfg.AppURL}
 	srv := &httpapi.Server{
 		Config:    cfg,

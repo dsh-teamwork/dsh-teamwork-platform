@@ -16,7 +16,7 @@ Platform owns instance administration; editions extend its guarded API and share
 
 Set `APP_URL` to the actual origin. Separate processes share `DATABASE_URL` and the provider encryption secret, but use distinct `AUTH_SECRET` values and host-only cookies. Run the user service for usage recovery and notification work. Configuration changes require process restart; the process reads its supplied administrator/key provider on every request.
 
-The community administrator can use the configured Google, email-code or local password door. The initial password setup link still creates the first account; add that email to `ADMIN_EMAILS` explicitly. An account required to change its password cannot access management before doing so.
+The community administrator can use the configured Google, email-code or local password door. The initial password setup link still creates the first account; add that email to `ADMIN_EMAILS` explicitly. An account required to change its password cannot access management before doing so. Team administrators cannot create initial passwords for allowlisted addresses or reset their passwords. On split community deployments, configure the same `ADMIN_EMAILS` on the user process to reserve those accounts too; `SERVICE_ROLE=user` still refuses all management routes. Only allowlist accounts whose existing credentials the operator trusts.
 
 ## Capabilities and boundary
 
