@@ -1,6 +1,6 @@
 # Community edition split
 
-> **Status:** Current — the first release waits · **Updated:** 2026-11-15
+> **Status:** Current — the first release waits · **Updated:** 2026-11-16
 
 How the open community edition, the public `dsh-teamwork/dsh-teamwork-platform`
 (ADR 0005), and the closed edition built on it stay two repositories with one
@@ -20,9 +20,10 @@ feature adds code and never changes open code.
 
 ## What it gives
 
-1. **Anyone can self-host the community edition with one command**
-   (ADR 0006): `npx @dsh-teamwork/server`, a release binary, or
-   `compose.yaml`. That gives one team the whole open product: sign-in by
+1. **Anyone can self-host the community edition from source**
+   (ADR 0006), using `compose.yaml` or a locally built binary. The npm server
+   package and release binaries remain unpublished until the first release.
+   The [self-hosting runbook](../ops/self-hosting.md) gives the available commands. That gives one team the whole open product: sign-in by
    password, or by an emailed code over SMTP where one is configured, with
    Google optional; teams and invitations; team configuration; the model
    gateway; `/teamwork login` and `/teamwork sync` from DSH. It needs no
@@ -43,11 +44,11 @@ feature adds code and never changes open code.
 
 ## What goes where
 
-**Planned usage and budget ownership is open** ([ADR 0021](../adr/0021-community-usage-and-budgets.md)).
-The [implementation plan](usage-budgets.md) covers model reference prices,
+**Usage and budget ownership is open** ([ADR 0021](../adr/0021-community-usage-and-budgets.md)).
+The [implemented contract](usage-budgets.md) covers model reference prices,
 Token-to-point conversion, team/member/provider budgets, reservations,
 reports, exports and optional SMTP alerts in the community server and console.
-These features are not shipped yet. They run without a hosted account or
+These features run without a hosted account or
 closed component. Hosted supplier accounts, purchased/promotional wallets,
 payments, refunds and commercial reconciliation remain closed. This refines
 ADR 0005's original grouping of usage and billing; its historical text stays.

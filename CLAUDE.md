@@ -200,6 +200,7 @@ if the table and the script disagree, the script is right.
 | --- | --- |
 | `apps/*/src/messages/*.json`, `premium/apps/*/src/messages/*.json`, and an Expo app's `apps/mobile/lib/i18n/locales/*.json` (seed's layout), under `premium/` too | The product ships in `en` and `zh-CN` (`LOCALES` in `@dsh-teamwork/shared`). |
 | `packages/shared/src/locales.ts` | Endonyms: a language picker names each language in itself. |
+| Root `README.zh-CN.md`, and the language-switch link in `README.md` | User-facing Chinese getting-started documentation explicitly requested for the public product. Other documentation remains English. |
 
 Exemption covers the **data**, never the file: keys, comments and test names are
 English. A new entry goes into `ALLOWED` in the script **with a `why`**; an
@@ -540,8 +541,8 @@ other document sits in exactly one category, named by the question it answers:
   publish one; whoever runs the agent installs it and signs in, so
   `docs/ops/.env.example` holds only what this repository issues itself, such
   as `MANAGE_API_KEY`.
-- The repository root holds `README.md`, `CLAUDE.md`, `AGENTS.md` and
-  `CHANGELOG.md`, and no other prose. A plan, a TODO list or a design note at
+- The repository root holds `README.md`, its user-facing `README.zh-CN.md`
+  translation, `CLAUDE.md`, `AGENTS.md` and `CHANGELOG.md`, and no other prose. A plan, a TODO list or a design note at
   the root is a document in the wrong place.
 - A README beside code (`packages/x/README.md`, `assets/README.md`) documents
   that directory and stays beside it. An image sits beside the document that
