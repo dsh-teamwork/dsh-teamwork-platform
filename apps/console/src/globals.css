@@ -8,32 +8,34 @@
  * Every colour is a variable, so light and dark are kept in step in one place
  * and a page never names a Tailwind palette step (`text-gray-600`).
  *
- * The palette is the brand's (docs/design.md): warm paper grounds and indigo
- * ink in light, indigo-black grounds and paper text in dark. The brand hue is
- * `--brand`, and it is NOT `--accent`: `accent` is the subtle hover surface
- * every shadcn-shaped primitive uses, so a brand colour there tints every
- * hover. Brand chrome opts in with `bg-brand`; `--primary` stays a neutral ink.
+ * The palette is neutral black and white (docs/design.md, "Colour"), the
+ * same frame as DeepSeek Harness, with two accents that mean one thing each:
+ * `--brand` (navy) marks what belongs to the team, and `--signal` (amber) marks
+ * what needs attention, only as a dot or a thin line. Neither is `--accent`,
+ * the subtle hover surface every shadcn-shaped primitive uses, and neither is a
+ * button: `--primary` is black in light and white in dark.
  */
 :root {
-  --background: oklch(0.985 0.004 85);
-  --foreground: oklch(0.2 0.03 268);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0.002 286);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.03 268);
-  --muted: oklch(0.96 0.006 85);
-  --muted-foreground: oklch(0.47 0.025 268);
-  --primary: oklch(0.23 0.035 268);
-  --primary-foreground: oklch(0.985 0.004 85);
-  --secondary: oklch(0.96 0.006 85);
-  --secondary-foreground: oklch(0.23 0.035 268);
-  --accent: oklch(0.95 0.008 85);
-  --accent-foreground: oklch(0.23 0.035 268);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
+  --card-foreground: oklch(0.145 0.002 286);
+  --muted: oklch(0.976 0.001 286);
+  --muted-foreground: oklch(0.478 0.016 286);
+  --primary: oklch(0.145 0.002 286);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.953 0.003 286);
+  --secondary-foreground: oklch(0.145 0.002 286);
+  --accent: oklch(0.953 0.003 286);
+  --accent-foreground: oklch(0.145 0.002 286);
+  --destructive: oklch(0.529 0.193 29);
+  --destructive-foreground: oklch(1 0 0);
   --brand: oklch(0.33 0.11 268);
-  --brand-foreground: oklch(0.97 0.008 85);
-  --border: oklch(0.91 0.008 85);
-  --input: oklch(0.91 0.008 85);
-  --ring: oklch(0.62 0.08 268);
+  --brand-foreground: oklch(1 0 0);
+  --signal: oklch(0.765 0.14 73);
+  --border: oklch(0.932 0.003 286);
+  --input: oklch(0.887 0.007 286);
+  --ring: oklch(0.452 0.124 270);
   --radius: 0.5rem;
   /*
    * The landing page's ocean (components/home/sea.tsx and the sections below it):
@@ -51,25 +53,26 @@
 }
 
 .dark {
-  --background: oklch(0.17 0.03 268);
-  --foreground: oklch(0.96 0.006 85);
-  --card: oklch(0.21 0.035 268);
-  --card-foreground: oklch(0.96 0.006 85);
-  --muted: oklch(0.26 0.035 268);
-  --muted-foreground: oklch(0.74 0.025 268);
-  --primary: oklch(0.94 0.008 85);
-  --primary-foreground: oklch(0.21 0.035 268);
-  --secondary: oklch(0.26 0.035 268);
-  --secondary-foreground: oklch(0.96 0.006 85);
-  --accent: oklch(0.26 0.035 268);
-  --accent-foreground: oklch(0.96 0.006 85);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --brand: oklch(0.8 0.085 268);
-  --brand-foreground: oklch(0.19 0.035 268);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.55 0.08 268);
+  --background: oklch(0.15 0.002 286);
+  --foreground: oklch(0.967 0.001 286);
+  --card: oklch(0.192 0.004 286);
+  --card-foreground: oklch(0.967 0.001 286);
+  --muted: oklch(0.192 0.004 286);
+  --muted-foreground: oklch(0.712 0.013 286);
+  --primary: oklch(0.967 0.001 286);
+  --primary-foreground: oklch(0.15 0.002 286);
+  --secondary: oklch(0.232 0.006 286);
+  --secondary-foreground: oklch(0.967 0.001 286);
+  --accent: oklch(0.232 0.006 286);
+  --accent-foreground: oklch(0.967 0.001 286);
+  --destructive: oklch(0.711 0.166 22);
+  --destructive-foreground: oklch(0.15 0.002 286);
+  --brand: oklch(0.766 0.095 271);
+  --brand-foreground: oklch(0.15 0.002 286);
+  --signal: oklch(0.807 0.137 78);
+  --border: oklch(0.287 0.007 286);
+  --input: oklch(0.351 0.01 286);
+  --ring: oklch(0.766 0.095 271);
   --ocean: oklch(0.33 0.11 268);
   --ocean-deep: oklch(0.17 0.04 268);
   --ocean-foreground: oklch(0.97 0.008 85);
@@ -99,6 +102,7 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-signal: var(--signal);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

@@ -65,18 +65,18 @@ rmSync(ssr, { recursive: true, force: true });
 // on purpose: Onest's latin files carry no CJK glyphs, and a share card is
 // fetched by a crawler with no language of its own. The brand's hexes,
 // because this renders outside the stylesheet (docs/design.md, "Component
-// rules"): paper ground, the logo on its indigo plate, indigo-tinted ink.
+// rules"): white ground, the logo on its navy plate, near-black ink.
 const en = JSON.parse(readFileSync(join(app, 'src', 'messages', 'en.json'), 'utf8'));
 const logo = `data:image/svg+xml;base64,${readFileSync(join(app, 'public', 'logo.svg')).toString('base64')}`;
 const onest = (weight) => readFileSync(join(app, 'assets', 'fonts', `onest-latin-${weight}-normal.woff`));
 const div = (style, ...children) => ({ type: 'div', props: { style, children: children.length === 1 ? children[0] : children } });
 const card = div(
-  { width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: 64, padding: 96, background: '#f8f5ef', color: '#101524', fontFamily: 'Onest' },
+  { width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: 64, padding: 96, background: '#ffffff', color: '#0a0a0b', fontFamily: 'Onest' },
   { type: 'img', props: { src: logo, width: 240, height: 240, alt: '' } },
   div(
     { display: 'flex', flexDirection: 'column', flex: 1 },
     div({ fontWeight: 700, fontSize: 84, letterSpacing: -2 }, en.common.appName),
-    div({ fontWeight: 400, marginTop: 24, fontSize: 36, lineHeight: 1.35, color: '#555b69' }, en.home.tagline),
+    div({ fontWeight: 400, marginTop: 24, fontSize: 36, lineHeight: 1.35, color: '#5c5c66' }, en.home.tagline),
   ),
 );
 const svg = await satori(card, {
