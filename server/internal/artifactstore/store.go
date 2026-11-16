@@ -12,25 +12,38 @@ import (
 )
 
 type Store interface {
-	Put(context.Context, string, io.ReadSeeker, int64) error
-	Open(context.Context, string) (io.ReadCloser, error)
-	Delete(context.Context, string) error
+	Put(context.Context, string, string, io.ReadSeeker, int64) error
+	Open(context.Context, string, string) (io.ReadCloser, error)
+	Delete(context.Context, string, string) error
+	// OpenLegacy is only for migrating existing flat objects; new writes are scoped.
+	OpenLegacy(context.Context, string) (io.ReadCloser, error)
 }
 
 var validID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,32}$`)
 
-func key(id string) (string, error) {
+func legacyKey(id string) (string, error) {
 	if !validID.MatchString(id) {
 		return "", errors.New("invalid artifact id")
 	}
 	return id + ".tgz", nil
 }
 
-// Local preserves the existing <data>/artifacts/<id>.tgz layout.
+func key(teamID, id string) (string, error) {
+	if !validID.MatchString(teamID) {
+		return "", errors.New("invalid artifact team id")
+	}
+	name, err := legacyKey(id)
+	if err != nil {
+		return "", err
+	}
+	return "teams/" + teamID + "/plugins/" + name, nil
+}
+
+// Local uses the same team-scoped keys as object storage under Dir.
 type Local struct{ Dir string }
 
-func (s Local) filename(id string) (string, error) {
-	k, err := key(id)
+func (s Local) filename(teamID, id string) (string, error) {
+	k, err := key(teamID, id)
 	if err != nil {
 		return "", err
 	}
@@ -40,18 +53,19 @@ func (s Local) filename(id string) (string, error) {
 	return filepath.Join(s.Dir, k), nil
 }
 
-func (s Local) Put(ctx context.Context, id string, body io.ReadSeeker, size int64) error {
-	target, err := s.filename(id)
+func (s Local) Put(ctx context.Context, teamID, id string, body io.ReadSeeker, size int64) error {
+	target, err := s.filename(teamID, id)
 	if err != nil {
 		return err
 	}
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(s.Dir, 0700); err != nil {
+	dir := filepath.Dir(target)
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return err
 	}
-	f, err := os.CreateTemp(s.Dir, "upload-*")
+	f, err := os.CreateTemp(dir, "upload-*")
 	if err != nil {
 		return err
 	}
@@ -76,8 +90,8 @@ func (s Local) Put(ctx context.Context, id string, body io.ReadSeeker, size int6
 	return os.Rename(f.Name(), target)
 }
 
-func (s Local) Open(ctx context.Context, id string) (io.ReadCloser, error) {
-	name, err := s.filename(id)
+func (s Local) Open(ctx context.Context, teamID, id string) (io.ReadCloser, error) {
+	name, err := s.filename(teamID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +101,8 @@ func (s Local) Open(ctx context.Context, id string) (io.ReadCloser, error) {
 	return os.Open(name)
 }
 
-func (s Local) Delete(ctx context.Context, id string) error {
-	name, err := s.filename(id)
+func (s Local) Delete(ctx context.Context, teamID, id string) error {
+	name, err := s.filename(teamID, id)
 	if err != nil {
 		return err
 	}
@@ -100,4 +114,18 @@ func (s Local) Delete(ctx context.Context, id string) error {
 		return nil
 	}
 	return err
+}
+
+func (s Local) OpenLegacy(ctx context.Context, id string) (io.ReadCloser, error) {
+	k, err := legacyKey(id)
+	if err != nil {
+		return nil, err
+	}
+	if s.Dir == "" {
+		return nil, errors.New("artifact directory is empty")
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	return os.Open(filepath.Join(s.Dir, k))
 }

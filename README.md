@@ -104,8 +104,14 @@ for commands and local approval behavior.
 - Keep database, private plugin bytes and generated secrets together in an
   operator backup. Resource exports do not replace a full server backup.
 - An instance administrator is an explicit `ADMIN_EMAILS` entry, independent
-  of team membership. `SERVICE_ROLE` supports combined, user or management
+  of team membership; open `/manage` with an allowlisted account. `SERVICE_ROLE` supports combined, user or management
   processes. Separate artifact-serving processes need the same retained bytes.
+
+Private archives use `teams/{teamId}/plugins/{artifactId}.tgz` in either store.
+Startup verifies and copies referenced flat objects before a member process
+serves, retaining the originals; `--migrate-artifact-paths` runs this pass offline.
+See [storage migration](docs/tech/team-assistant.md#private-plugin-artifacts)
+before an upgrade or rollback.
 
 [Documentation](docs/README.md) explains architecture, team resource contracts,
 usage accounting, storage and administration.

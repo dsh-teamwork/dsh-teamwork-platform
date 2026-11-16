@@ -13,14 +13,14 @@ func TestLocalCommitAndReopen(t *testing.T) {
 	ctx := context.Background()
 	dir := t.TempDir()
 	s := Local{Dir: dir}
-	if err := s.Put(ctx, "archive", bytes.NewReader([]byte("original")), 8); err != nil {
+	if err := s.Put(ctx, "team", "archive", bytes.NewReader([]byte("original")), 8); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Put(ctx, "archive", bytes.NewReader([]byte("short")), 8); err == nil {
+	if err := s.Put(ctx, "team", "archive", bytes.NewReader([]byte("short")), 8); err == nil {
 		t.Fatal("accepted truncated write")
 	}
 	// A new provider instance must see the committed bytes, not a partial retry.
-	r, err := (Local{Dir: dir}).Open(ctx, "archive")
+	r, err := (Local{Dir: dir}).Open(ctx, "team", "archive")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,26 +29,55 @@ func TestLocalCommitAndReopen(t *testing.T) {
 	if err != nil || string(b) != "original" {
 		t.Fatalf("read: %q, %v", b, err)
 	}
-	entries, err := os.ReadDir(dir)
+	entries, err := os.ReadDir(filepath.Join(dir, "teams", "team", "plugins"))
 	if err != nil || len(entries) != 1 {
 		t.Fatal("temporary upload leaked", err)
 	}
 	for _, id := range []string{"", "../outside", "x/y", `x\y`, "x.tgz"} {
-		if err := s.Put(ctx, id, bytes.NewReader(nil), 0); err == nil {
+		if err := s.Put(ctx, id, "archive", bytes.NewReader(nil), 0); err == nil {
+			t.Fatalf("accepted team %q", id)
+		}
+		if _, err := s.Open(ctx, id, "archive"); err == nil {
+			t.Fatalf("opened team %q", id)
+		}
+		if err := s.Delete(ctx, id, "archive"); err == nil {
+			t.Fatalf("deleted team %q", id)
+		}
+		if err := s.Put(ctx, "team", id, bytes.NewReader(nil), 0); err == nil {
 			t.Fatalf("accepted %q", id)
 		}
-		if _, err := s.Open(ctx, id); err == nil {
+		if _, err := s.Open(ctx, "team", id); err == nil {
 			t.Fatalf("opened %q", id)
 		}
-		if err := s.Delete(ctx, id); err == nil {
+		if err := s.Delete(ctx, "team", id); err == nil {
 			t.Fatalf("deleted %q", id)
 		}
 	}
-	if err := s.Delete(ctx, "archive"); err != nil {
+	if err := s.Delete(ctx, "team", "archive"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "archive.tgz")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(dir, "teams", "team", "plugins", "archive.tgz")); !os.IsNotExist(err) {
 		t.Fatal(err)
+	}
+}
+
+func TestScopedKeys(t *testing.T) {
+	k, err := key("team_1", "artifact-1")
+	if err != nil || k != "teams/team_1/plugins/artifact-1.tgz" {
+		t.Fatalf("key %q: %v", k, err)
+	}
+	s := Local{Dir: t.TempDir()}
+	for _, team := range []string{"alpha", "beta"} {
+		if err := s.Put(t.Context(), team, "same_id", bytes.NewReader([]byte(team)), int64(len(team))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := s.Delete(t.Context(), "alpha", "same_id"); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(filepath.Join(s.Dir, "teams", "beta", "plugins", "same_id.tgz"))
+	if err != nil || string(b) != "beta" {
+		t.Fatal("cross-team deletion", err)
 	}
 }
 

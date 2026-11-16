@@ -96,6 +96,14 @@ The service never falls back to local disk after S3 is explicitly selected.
 The database keeps artifact metadata; a database backup alone cannot recreate
 private archives.
 
+Both providers organize retained objects as `teams/{teamId}/plugins/{artifactId}.tgz`.
+Before a member process serves, startup verifies referenced bytes and copies
+missing scoped objects from the old flat layout, retaining sources. The offline
+`--migrate-artifact-paths` command runs the same pass. Preserve flat sources until
+old writers retire; a rollback to a flat-key binary also needs verified flat
+copies of uploads created after the upgrade. This is separate from copying a
+local store into S3; use the linked storage contract for both procedures.
+
 Instance management is a separate privilege. Use `ADMIN_EMAILS` and `/manage`;
 see [system management](../tech/system-management.md) before separating roles
 or placing services on different origins.

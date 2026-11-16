@@ -72,6 +72,18 @@ func run(version string) error {
 		return err
 	}
 	defer client.Close()
+	if cfg.MigrateArtifactPaths {
+		store, err := artifactstore.FromEnv(cfg.DataDir, os.Getenv)
+		if err != nil {
+			return err
+		}
+		count, err := (&team.Service{DB: client, Artifacts: store}).MigrateArtifactPaths(ctx)
+		if err != nil {
+			return err
+		}
+		slog.Info("artifact paths verified", "count", count)
+		return nil
+	}
 	if cfg.MigrateArtifacts {
 		store, err := artifactstore.FromEnv(cfg.DataDir, os.Getenv)
 		if err != nil {
@@ -99,6 +111,13 @@ func run(version string) error {
 	// After the server stops taking requests, and before the deferred close
 	// of the database.
 	defer stopExtensions()
+	if srv.Team.Artifacts != nil {
+		count, err := srv.Team.MigrateArtifactPaths(ctx)
+		if err != nil {
+			return err
+		}
+		slog.Info("artifact paths verified", "count", count)
+	}
 	if remote, ok := srv.Team.Artifacts.(*artifactstore.S3); ok {
 		checkCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		err := remote.Check(checkCtx)

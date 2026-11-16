@@ -1,6 +1,6 @@
 # 0033. Private artifact storage providers
 
-> **Status:** Accepted · **Date:** 2026-11-15
+> **Status:** Superseded by 0034 for object keys and path migration · **Date:** 2026-11-15
 
 ## Context
 
