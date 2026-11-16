@@ -69,6 +69,6 @@ func getTeam(a *api, w http.ResponseWriter, r *http.Request, _ actor) error {
 }
 func getSystem(a *api, w http.ResponseWriter, _ *http.Request, _ actor) error {
 	configured := func(key string) bool { return strings.TrimSpace(a.host.Env(key)) != "" }
-	writeJSON(w, 200, map[string]any{"serviceRole": a.host.ServiceRole, "database": a.host.Dialect, "google": configured("AUTH_GOOGLE_ID") && configured("AUTH_GOOGLE_SECRET"), "email": configured("SMTP_URL"), "automation": configured("MANAGE_API_KEY"), "privateProviders": a.host.Env("ALLOW_PRIVATE_PROVIDERS") == "true"})
+	writeJSON(w, 200, map[string]any{"serviceRole": a.host.ServiceRole, "database": a.host.Dialect, "google": configured("AUTH_GOOGLE_ID") && configured("AUTH_GOOGLE_SECRET"), "email": configured("SMTP_URL"), "automation": configured("MANAGE_API_KEY"), "privateProviders": strings.TrimSpace(a.host.Env("ALLOW_PRIVATE_PROVIDERS")) == "true"})
 	return nil
 }

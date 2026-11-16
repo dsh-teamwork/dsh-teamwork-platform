@@ -54,5 +54,12 @@
   "couldNotSignOutTryAgain": "退出失败，请重试。",
   "loading": "正在加载…",
   "retry": "重试",
-  "deniedHelp": "不在实例管理员名单中。请联系部署者或使用其他账号登录。"
+  "deniedHelp": "不在实例管理员名单中。请联系部署者或使用其他账号登录。",
+  "serviceRole": "服务角色",
+  "database": "数据库",
+  "google": "Google 登录",
+  "automation": "自动化管理 API",
+  "privateProviders": "私有网络供应商访问",
+  "couldNotUpdate": "更新失败",
+  "emailSignIn": "邮箱验证码登录"
 }

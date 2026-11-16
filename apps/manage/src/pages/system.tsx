@@ -1,3 +1,4 @@
+import { useTitle } from '../lib/session';
 import { t } from '../lib/copy';
 import { Link, useParams } from 'react-router';
 import { useApi } from '../lib/use-api';
@@ -14,6 +15,7 @@ import {
 type Team = { id: string; name: string; createdAt: string };
 type Page = { teams: Team[]; total: number; page: number; totalPages: number };
 export function TeamsPage() {
+  useTitle(t('teams'));
   const { params, set, href } = useQueryParams<{ q?: string; page?: string }>();
   const { data, error } = useApi<Page>('/api/admin/teams', params);
   return (
@@ -74,6 +76,7 @@ export function TeamsPage() {
   );
 }
 export function TeamPage() {
+  useTitle(t('team'));
   const { id } = useParams();
   const { params, href } = useQueryParams<{ page?: string }>();
   const { data, error } = useApi<
@@ -133,6 +136,7 @@ export function TeamPage() {
   );
 }
 export function SystemPage() {
+  useTitle(t('system'));
   const { data, error } = useApi<{
     serviceRole: string;
     database: string;
@@ -152,7 +156,18 @@ export function SystemPage() {
         <dl className="max-w-xl divide-y rounded-xl border p-5">
           {Object.entries(data).map(([key, value]) => (
             <div className="flex justify-between gap-4 py-3" key={key}>
-              <dt>{key}</dt>
+              <dt>
+                {t(
+                  key === 'email'
+                    ? 'emailSignIn'
+                    : (key as
+                        | 'serviceRole'
+                        | 'database'
+                        | 'google'
+                        | 'automation'
+                        | 'privateProviders'),
+                )}
+              </dt>
               <dd>
                 {typeof value === 'boolean'
                   ? value

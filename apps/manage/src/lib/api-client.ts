@@ -27,7 +27,7 @@ export type Query = Record<
 
 /** A same-origin URL, with empty params dropped so a cleared filter leaves no `?q=` behind. */
 export function apiUrl(path: string, query?: Query): string {
-  if (!path.startsWith('/')) {
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) {
     // These requests carry the session cookie and must never leave the origin.
     throw new Error(`api path must be same-origin and absolute, got: ${path}`);
   }

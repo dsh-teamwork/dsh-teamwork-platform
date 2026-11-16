@@ -37,7 +37,7 @@ export function UsersPage() {
       refetch();
     } catch (e) {
       toast.error(
-        `Could not update: ${e instanceof Error ? e.message : String(e)}`,
+        `${t('couldNotUpdate')}: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }

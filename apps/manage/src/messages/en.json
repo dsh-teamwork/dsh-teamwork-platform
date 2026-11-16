@@ -54,5 +54,12 @@
   "couldNotSignOutTryAgain": "Could not sign out. Try again.",
   "loading": "Loading...",
   "retry": "Retry",
-  "deniedHelp": "is not on the instance administrator list. Contact the operator or sign in with another account."
+  "deniedHelp": "is not on the instance administrator list. Contact the operator or sign in with another account.",
+  "serviceRole": "Service role",
+  "database": "Database",
+  "google": "Google sign-in",
+  "automation": "Automation API",
+  "privateProviders": "Private provider access",
+  "couldNotUpdate": "Could not update",
+  "emailSignIn": "Email sign-in"
 }
