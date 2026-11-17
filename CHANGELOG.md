@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-17 — The console names its terms and offers only what the instance can do
 
-- **What:** The Chinese console says 提供商 and 密钥 where it said Provider and Key, as `/docs` does. Usage explains points (the team's own measure of cost, CNY 1 = 1,000 points at the reference rates, counted by budgets) and that a provider still bills its own key directly, in place of "BYOK". A budget form on an instance that sends no email offers no notification choice and creates the policy notifying nobody. A new budget reports "Budget created", not "updated". English budget labels write "token" in lower case, and the Chinese home page's eyebrow is no longer forced to capitals.
+- **What:** The Chinese console translates Provider and Key with the terms `/docs` already uses, instead of leaving them in English. Usage explains points (the team's own measure of cost, CNY 1 = 1,000 points at the reference rates, counted by budgets) and that a provider still bills its own key directly, in place of "BYOK". A budget form on an instance that sends no email offers no notification choice and creates the policy notifying nobody. A new budget reports "Budget created", not "updated". English budget labels write "token" in lower case, and the Chinese home page's eyebrow is no longer forced to capitals.
 - **Why:** Terms a reader did not know, a mixed-language Chinese screen, and an email option that could never send.
 - **Breaking:** None.
 - **Upgrade:** Nothing.
