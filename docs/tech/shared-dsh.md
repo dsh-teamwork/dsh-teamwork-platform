@@ -340,8 +340,11 @@ Each step is a vertical slice, lands green, and brings its ADR.
    handset joining by invite through the relay, and another member refused.
    The invite carries the secret itself rather than a proof of it: the device
    hands it over inside the channel after pinning this DSH's key, so only the
-   DSH reads it, and the roster keeps its hash. Left for this step: the app's
-   join flow and disclosure, and the desktop panel.
+   DSH reads it, and the roster keeps its hash. The app's join flow is done as
+   well: a `dshteamwork://join` link opens the disclosure, then joins, pins the
+   DSH's key and hands the invite over; a joined shared DSH is one of the
+   member's computers. Left for this step: the desktop panel's view of shared
+   mode, members and invites, which `/teamwork share` covers meanwhile.
 5. **The PIN lock** (about 4 days), on the shared DSH and the personal relay
    together, in the plugin and the app.
 6. **The audit archive** (about 6 days; an ADR on its format). Key commands,
