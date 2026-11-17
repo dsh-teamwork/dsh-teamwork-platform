@@ -1,10 +1,10 @@
 // Package web serves what a browser loads that is not the API: the public
 // pages (home, privacy, terms) and the files a crawler reads, and the console
-// (apps/console) for every other path. Both are built into dist and embedded
+// (apps/web) for every other path. Both are built into dist and embedded
 // in the binary.
 //
 // The public pages are prerendered when the console is built
-// (apps/console/scripts/prerender.mjs) into dist/public: home once per locale
+// (apps/web/scripts/prerender.mjs) into dist/public: home once per locale
 // and sign-in state, privacy and terms only when that build had LEGAL_DIR.
 // Each names the site's own address as %APP_URL%, written over with APP_URL
 // here, since the binary is built once and deployed anywhere.
@@ -26,7 +26,7 @@ import (
 var dist embed.FS
 
 // appURLPlaceholder is what a prerendered page names the site's address by
-// (apps/console/src/public/site.ts).
+// (apps/web/src/public/site.ts).
 const appURLPlaceholder = "%APP_URL%"
 
 // Options is what the pages depend on beyond the built files.
@@ -34,7 +34,7 @@ type Options struct {
 	AppURL string // the public origin, without a trailing slash
 
 	// PostHogKey, when set, turns on browser analytics: every page carries it,
-	// and PostHogHost, as meta tags apps/console/src/lib/analytics.ts reads.
+	// and PostHogHost, as meta tags apps/web/src/lib/analytics.ts reads.
 	PostHogKey, PostHogHost string
 
 	// Viewer is who is asking: the signed-in profile's locale ("" for none)
@@ -155,7 +155,7 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if s.index == nil {
-		http.Error(w, "The console is not built into this binary (pnpm --filter console build).", http.StatusNotFound)
+		http.Error(w, "The console is not built into this binary (pnpm --filter @dsh-teamwork/web build).", http.StatusNotFound)
 		return
 	}
 	// The console renders in the viewer's language, the profile's first, as
@@ -170,7 +170,7 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // doc answers /docs and /docs/{slug} with the page in the viewer's language
-// (docs.{slug}.{locale}.html, apps/console/src/public/docs.tsx), as the home
+// (docs.{slug}.{locale}.html, apps/web/src/public/docs.tsx), as the home
 // page picks its own; a page this build does not hold is not found.
 func (s *site) doc(w http.ResponseWriter, r *http.Request, slug string) {
 	profile := ""

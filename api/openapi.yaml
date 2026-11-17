@@ -1,7 +1,7 @@
 # The DSH Teamwork API: what the console, the DSH plugin and the phone app
 # call (docs/tech/go-server.md). Every response the Go server's tests see is
 # validated against this file, and the console's types are generated from it
-# (apps/console/src/lib/api.gen.ts). A route is added here in the same change
+# (apps/web/src/lib/api.gen.ts). A route is added here in the same change
 # that adds it to the server.
 openapi: 3.0.3
 info:

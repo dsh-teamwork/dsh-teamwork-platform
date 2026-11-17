@@ -1,7 +1,7 @@
 /**
  * Light or dark, kept in this browser. A person who has not chosen gets their
  * system's setting and keeps following it until they choose; the member
- * console (apps/console/src/lib/theme.ts) keeps the same key, so one choice
+ * console (apps/web/src/lib/theme.ts) keeps the same key, so one choice
  * holds on every page of the site. `.dark` on <html> swaps the whole scale
  * (globals.css). Set before the first render, from main.tsx: the console's
  * Content Security Policy refuses an inline script in the page.

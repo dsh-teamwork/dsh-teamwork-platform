@@ -37,7 +37,7 @@ const ALLOWED = [
     why: 'The requested Simplified Chinese getting-started guide is user-facing product documentation; developer documentation remains English.',
   },
   {
-    match: (f) => /^apps\/console\/content\/docs\/zh-CN\/[^/]+\.md$/.test(f),
+    match: (f) => /^apps\/web\/content\/docs\/zh-CN\/[^/]+\.md$/.test(f),
     why: 'The published /docs site in Simplified Chinese: product content a user reads in the language they chose, beside its English pages.',
   },
   {

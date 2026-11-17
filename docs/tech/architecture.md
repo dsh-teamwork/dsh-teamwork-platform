@@ -52,7 +52,7 @@ pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
 token never reaches the browser. Publishing and members also have pages in the web
 console, one page per task under `/teams/{teamId}`: the overview, `models`
-(providers from `apps/console/src/lib/provider-catalog.ts`, and team models), `presets` (from
+(providers from `apps/web/src/lib/provider-catalog.ts`, and team models), `presets` (from
 `lib/preset-templates.ts` or blank), `plugins`, `members`, `sharing` and `history`. The panel links
 there for management; separate host-approved agent tools call the same authorized server operations. Its components
 come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
@@ -71,7 +71,7 @@ Instance administration is shared by all editions: [system management](system-ma
 | Sign-in | Google, emailed codes, passwords, identities, sessions and plugin tokens | `server/internal/auth` |
 | Wire | Request shapes, their validation and the error codes | `server/internal/wire`, `api/openapi.yaml` |
 | Schema | Every table and the migrations of three dialects | `server/internal/db` |
-| Console | The team pages, sign-in, `/plugin` and the public pages, prerendered and embedded | `apps/console` |
+| Web | The team pages, sign-in, `/plugin` and the public pages, prerendered and embedded | `apps/web` |
 | Extension point | What a closed package registers: routes, tables, migrations | `server/edition` |
 
 ## Data model

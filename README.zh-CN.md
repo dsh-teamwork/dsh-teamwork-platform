@@ -1,4 +1,4 @@
-<p align="center"><img src="https://raw.githubusercontent.com/dsh-teamwork/dsh-teamwork-platform/main/apps/console/public/icon.png" width="72" height="72" alt="DSH Teamwork"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/dsh-teamwork/dsh-teamwork-platform/main/apps/web/public/icon.png" width="72" height="72" alt="DSH Teamwork"></p>
 
 # DSH Teamwork Platform
 

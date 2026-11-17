@@ -4,9 +4,9 @@
  * never in the URL: a chosen one is the profile's or the `locale` cookie,
  * otherwise the browser's.
  */
-import { LOCALES, type Locale, matchLocale } from '@dsh-teamwork/shared';
+import { isLocale, LOCALES, type Locale, matchLocale } from '@dsh-teamwork/shared';
 
-export { LOCALES, type Locale };
+export { isLocale, LOCALES, matchLocale, type Locale };
 
 /**
  * What the server resolved (the profile's, then the cookie, then the

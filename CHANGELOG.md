@@ -5,6 +5,30 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Development puts the web on 3800 and the API on 3801
+
+- **What:** Root `pnpm dev` now serves the web Vite at :3800 and the watched Go backend at :3801, with `APP_URL=http://localhost:3800`; all Vite API proxies follow. Production and a standalone `go run` retain the Go default :3800.
+- **Why:** Development now uses the requested frontend/backend port assignment consistently in both editions.
+- **Breaking:** Existing development bookmarks and origin-scoped browser storage/cookies belong to the old web port; local OAuth callback configuration must use the new web origin when applicable.
+- **Upgrade:** Restart `pnpm dev` and open `http://localhost:3800`. No production deployment change is needed.
+- **Refs:** `scripts/dev.mjs`, `server/scripts/dev.mjs`, `apps/web/package.json`, `apps/web/vite.config.ts`.
+
+## 2026-11-17 — Vite serves the public pages in development
+
+- **What:** The web Vite server renders `/`, `/docs` and the legal pages through the same `renderPages` used by production, with the viewer's language and home sign-in state. `/` no longer falls into the console SPA's redirect to `/teams` and then sign-in; public source edits need no embedded rebuild.
+- **Why:** Development at :3801 skipped the Go server's public-page interception, while :3800 showed the embedded landing page, making the two development surfaces disagree.
+- **Breaking:** None.
+- **Upgrade:** Nothing. `LEGAL_DIR` keeps its build-time meaning for legal pages in development.
+- **Refs:** `apps/web/vite.config.ts`, `apps/web/src/__tests__/docs.test.ts`, `apps/web/src/public/render.tsx`.
+
+## 2026-11-17 — One web development server and one backend
+
+- **What:** The user frontend is now `apps/web` and `@dsh-teamwork/web`; the shared management app is `@dsh-teamwork/manage`. Root `pnpm dev` starts only that web Vite and the edition's outermost Go server, with `APP_URL=http://localhost:3800` as the default. Go sources, SQL migrations and embedded JSON files restart the backend automatically, including local `replace` modules. The management Vite no longer joins the default run.
+- **Why:** Package names now match the two runtime surfaces, and developing one surface no longer starts every workspace app.
+- **Breaking:** Developers and automation using `apps/console`, `@dsh-teamwork/console` or `@dsh-teamwork/manage-core` must use the new paths and package names. Management development is now explicit: `pnpm --filter @dsh-teamwork/manage dev`, with its backend started separately.
+- **Upgrade:** Update package filters and imports; production build and deployment topology are unchanged.
+- **Refs:** `apps/web/`, `apps/manage/`, `scripts/dev.mjs`, `CLAUDE.md` ("Commands").
+
 ## 2026-11-17 — The landing page's first screen: three pillars, a diagram, and real screens below
 
 - **What:** The hero drops its two buttons and its install card. On the left: one sentence, the three pillars (collaborate, govern, everywhere), *Create a team* with the plugin's package to copy, and a line to the install guide. On the right: a left-to-right diagram of how a team uses DSH Teamwork (`apps/console/src/public/topology.tsx`). Real captures of DSH Desktop's Teamwork panel, the web console, the phone app, the review comparison and the usage page, one set per language in `apps/console/public/home/`, now illustrate the *Everywhere*, *Collaborate* and *Govern* sections, replacing their text-only cells and the terminal transcript.

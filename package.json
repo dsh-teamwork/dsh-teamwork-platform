@@ -8,7 +8,7 @@
     "pnpm": ">=10"
   },
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "node scripts/dev.mjs",
     "dev:setup": "cd dev && ./setup.sh",
     "dev:stop": "cd dev && ./stop.sh",
     "dev:clean": "cd dev && ./clean.sh",

@@ -56,7 +56,7 @@ ADR 0005's original grouping of usage and billing; its historical text stays.
 | Part | Public `dsh-teamwork-platform` | Closed repository only |
 | --- | --- | --- |
 | `server/` | The whole server: every route, the model gateway, sign-in, the schema and migrations of three dialects, and `server/edition`, the extension point | — |
-| `apps/console` | The console and the public pages; `/privacy` and `/terms` from a build's `LEGAL_DIR` | The hosted service's legal text, `premium/docs/legal/` (ADR 0007) |
+| `apps/web` | The web frontend and public pages; `/privacy` and `/terms` from a build's `LEGAL_DIR` | The hosted service's legal text, `premium/docs/legal/` (ADR 0007) |
 | `packages/shared` | The languages and the rule that picks one | — |
 | `premium/server` | — | The closed binary: the open server with the relay and the operator console registered, their tables and migrations |
 | `premium/apps` | — | The operator console's pages and the mobile app |

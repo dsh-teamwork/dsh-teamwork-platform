@@ -89,7 +89,7 @@ Members see their own submissions; administrators see the team's. The list
 takes a `state` filter (`GET …/submissions?state=pending` is the review
 queue), and the console's review page opens on that queue for an admin and on
 the member's own submissions otherwise; each row shows its change field by
-field against the live version (`apps/console/src/lib/config-diff.ts`). Every API
+field against the live version (`apps/web/src/lib/config-diff.ts`). Every API
 request rechecks current membership and required role. An outsider receives
 the same team-not-found response as for a nonexistent team. Artifact ownership
 is checked before a pending package can be attached to a proposal.

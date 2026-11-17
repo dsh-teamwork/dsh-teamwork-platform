@@ -1,10 +1,10 @@
 {
-  "name": "@dsh-teamwork/manage-core",
+  "name": "@dsh-teamwork/manage",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3802",
+    "dev": "vite --port 3802 --strictPort",
     "build": "vite build",
     "lint": "eslint",
     "test": "vitest run",
