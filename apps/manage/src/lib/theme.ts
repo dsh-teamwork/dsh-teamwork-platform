@@ -1,11 +1,14 @@
 /**
- * Light, dark or the system's, kept in this browser. `.dark` on <html> swaps
- * the whole scale (globals.css). Set before the first render, from main.tsx:
- * the console's Content Security Policy refuses an inline script in the page.
+ * Light or dark, kept in this browser. A person who has not chosen gets their
+ * system's setting and keeps following it until they choose; the member
+ * console (apps/console/src/lib/theme.ts) keeps the same key, so one choice
+ * holds on every page of the site. `.dark` on <html> swaps the whole scale
+ * (globals.css). Set before the first render, from main.tsx: the console's
+ * Content Security Policy refuses an inline script in the page.
  */
 import { useSyncExternalStore } from 'react';
 
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark';
 
 const KEY = 'theme';
 const listeners = new Set<() => void>();
@@ -14,31 +17,34 @@ const media = matchMedia('(prefers-color-scheme: dark)');
 function read(): Theme {
   try {
     const saved = localStorage.getItem(KEY);
-    return saved === 'light' || saved === 'dark' ? saved : 'system';
+    if (saved === 'light' || saved === 'dark') return saved;
   } catch {
-    return 'system';
+    // Storage refused: fall back to the system's.
   }
+  return media.matches ? 'dark' : 'light';
+}
+
+function notify() {
+  for (const listener of listeners) listener();
 }
 
 export function applyTheme() {
-  const theme = read();
-  document.documentElement.classList.toggle(
-    'dark',
-    theme === 'dark' || (theme === 'system' && media.matches),
-  );
+  document.documentElement.classList.toggle('dark', read() === 'dark');
 }
 
-media.addEventListener('change', applyTheme);
+media.addEventListener('change', () => {
+  applyTheme();
+  notify();
+});
 
 export function setTheme(theme: Theme) {
   try {
-    if (theme === 'system') localStorage.removeItem(KEY);
-    else localStorage.setItem(KEY, theme);
+    localStorage.setItem(KEY, theme);
   } catch {
     // Storage refused: the choice lasts for this page only.
   }
   applyTheme();
-  for (const listener of listeners) listener();
+  notify();
 }
 
 export function useTheme(): Theme {

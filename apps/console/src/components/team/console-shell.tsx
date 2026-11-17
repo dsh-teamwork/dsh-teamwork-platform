@@ -16,15 +16,11 @@ import {
   Gauge,
   GitPullRequestArrow,
   History,
-  KeyRound,
-  Languages,
   Layers,
   LayoutDashboard,
   LayoutGrid,
-  LogOut,
   Menu,
   Puzzle,
-  UserRound,
   Users,
   X,
   type LucideIcon,
@@ -34,9 +30,9 @@ import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useLocale, useTranslations } from 'use-intl';
 
-import { useChooseLocale } from '@/components/locale-picker';
+import { AccountRow } from '@/components/account';
+import { ThemeToggle } from '@/components/theme-toggle';
 import type { Team, TeamSummary } from '@/lib/api';
-import { LOCALES } from '@/lib/locale';
 import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
@@ -87,15 +83,13 @@ const menuItem = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 
 export function ConsoleShell({
   team,
   teams,
-  email,
-  passwords,
+  reviewsWaiting,
   children,
 }: {
   team: Team;
   teams: TeamSummary[];
-  email: string;
-  /** The instance holds passwords, so the account offers changing one's own. */
-  passwords: boolean;
+  /** Submissions wait for this admin's review: the amber dot beside the review page. */
+  reviewsWaiting: boolean;
   children: ReactNode;
 }) {
   const t = useTranslations('team');
@@ -107,9 +101,10 @@ export function ConsoleShell({
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
       <aside className="hidden flex-col gap-4 border-r bg-muted px-3 py-4 md:sticky md:top-0 md:flex md:h-dvh">
         <TeamSwitcher team={team} teams={teams} section={section} />
-        <Navigation team={team} section={section} />
-        <div className="mt-auto border-t pt-3">
-          <AccountMenu email={email} passwords={passwords} />
+        <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} />
+        <div className="mt-auto flex items-center gap-1 border-t pt-3">
+          <AccountRow detail={t(`role.${team.role}`)} />
+          <ThemeToggle />
         </div>
       </aside>
 
@@ -132,9 +127,10 @@ export function ConsoleShell({
                 <X className="size-4" aria-hidden />
               </Dialog.Close>
             </div>
-            <Navigation team={team} section={section} onNavigate={close} />
-            <div className="mt-auto border-t pt-3">
-              <AccountMenu email={email} passwords={passwords} />
+            <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} onNavigate={close} />
+            <div className="mt-auto flex items-center gap-1 border-t pt-3">
+              <AccountRow detail={t(`role.${team.role}`)} onNavigate={close} />
+              <ThemeToggle />
             </div>
           </Dialog.Content>
         </Dialog.Portal>
@@ -146,7 +142,7 @@ export function ConsoleShell({
 }
 
 /** The console's pages in their groups, then an edition's own team pages under governance. */
-function Navigation({ team, section, onNavigate }: { team: Team; section: string; onNavigate?: () => void }) {
+function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team; section: string; reviewsWaiting: boolean; onNavigate?: () => void }) {
   const t = useTranslations('team');
   const { session } = useSession();
   const locale = useLocale();
@@ -158,7 +154,9 @@ function Navigation({ team, section, onNavigate }: { team: Team; section: string
           {group.sections.map(({ path, key, icon: Icon }) => (
             <Link key={key} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
               <Icon className="size-4" aria-hidden />
-              {t(`nav.${key}`)}
+              <span className="flex-1">{t(`nav.${key}`)}</span>
+              {/* Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules"). */}
+              {key === 'sharing' && reviewsWaiting && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
             </Link>
           ))}
           {group.key === 'governance' &&
@@ -171,71 +169,6 @@ function Navigation({ team, section, onNavigate }: { team: Team; section: string
         </div>
       ))}
     </nav>
-  );
-}
-
-/** The signed-in person: their account, password, language and signing out, behind one button. */
-function AccountMenu({ email, passwords }: { email: string; passwords: boolean }) {
-  const tc = useTranslations('common');
-  const tp = useTranslations('password');
-  const t = useTranslations('team.nav');
-  const { signOut } = useSession();
-  const locale = useLocale();
-  const { pending, choose } = useChooseLocale();
-  return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger className="flex w-full items-center gap-2.5 rounded-md p-1.5 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label={t('account')}>
-        <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold uppercase">
-          {email.slice(0, 1) || '?'}
-        </span>
-        <span className="min-w-0 flex-1 truncate" title={email}>
-          {email}
-        </span>
-        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content side="top" align="start" sideOffset={6} className="z-50 min-w-56 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
-          <DropdownMenu.Item asChild>
-            <Link to="/account" className={menuItem}>
-              <UserRound className="size-4" aria-hidden />
-              {tc('account')}
-            </Link>
-          </DropdownMenu.Item>
-          {passwords && (
-            <DropdownMenu.Item asChild>
-              <Link to="/password" className={menuItem}>
-                <KeyRound className="size-4" aria-hidden />
-                {tp('change')}
-              </Link>
-            </DropdownMenu.Item>
-          )}
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className={menuItem} disabled={pending}>
-              <Languages className="size-4" aria-hidden />
-              <span className="flex-1">{tc('language')}</span>
-              <span className="text-xs text-muted-foreground">{tc(`localeNames.${locale === 'zh-CN' ? 'zh-CN' : 'en'}`)}</span>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent sideOffset={4} className="z-50 min-w-40 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
-                <DropdownMenu.RadioGroup value={locale} onValueChange={(next) => next !== locale && void choose(next)}>
-                  {LOCALES.map((l) => (
-                    <DropdownMenu.RadioItem key={l} value={l} className={menuItem}>
-                      <Check className={cn('size-4', l !== locale && 'invisible')} aria-hidden />
-                      {tc(`localeNames.${l}`)}
-                    </DropdownMenu.RadioItem>
-                  ))}
-                </DropdownMenu.RadioGroup>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.Separator className="my-1 h-px bg-border" />
-          <DropdownMenu.Item className={menuItem} onSelect={() => void signOut()}>
-            <LogOut className="size-4" aria-hidden />
-            {tc('signOut')}
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
   );
 }
 

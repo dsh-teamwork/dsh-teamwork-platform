@@ -9,6 +9,7 @@ import { IntlProvider } from 'use-intl';
 import { startAnalytics } from '@/lib/analytics';
 import { Loading } from '@/components/page';
 import { currentLocale } from '@/lib/locale';
+import { watchSystemTheme } from '@/lib/theme';
 import { RequireUser, SessionProvider, useSession } from '@/lib/session';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
@@ -35,6 +36,7 @@ const TeamsPage = lazy(() => import('@/pages/teams').then((m) => ({ default: m.T
 const locale = currentLocale();
 document.documentElement.lang = locale;
 void startAnalytics();
+watchSystemTheme();
 
 // A sign-in return can target an edition's separately embedded app. Let the
 // server load that document rather than treating it as an unknown public page.

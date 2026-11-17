@@ -13,7 +13,11 @@
     "privacy": "Privacy",
     "terms": "Terms",
     "close": "Close",
-    "retry": "Try again"
+    "retry": "Try again",
+    "theme": {
+      "switchTo": "Switch to {theme, select, dark {dark} other {light}} theme",
+      "toggle": "Switch between light and dark"
+    }
   },
   "signIn": {
     "title": "Sign in",
@@ -62,8 +66,7 @@
     "current": "Current password",
     "next": "New password",
     "hint": "At least 10 characters. A few unrelated words are easy to remember and hard to guess.",
-    "submit": "Change password",
-    "change": "Change password"
+    "submit": "Change password"
   },
   "setup": {
     "title": "Create the first account",
@@ -217,20 +220,53 @@
     }
   },
   "account": {
-    "title": "Account",
-    "email": "Email",
+    "title": "Account settings",
     "name": "Name",
-    "noName": "Not set"
+    "noName": "Add your name",
+    "namePlaceholder": "Your name",
+    "editName": "Click to change your name",
+    "nameSaved": "Name saved.",
+    "nameFailed": "Could not save your name. Try again.",
+    "preferences": "Preferences",
+    "language": "Language",
+    "theme": "Theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "password": "Password",
+    "passwordHint": "Used to sign in on this server.",
+    "passwordSubmit": "Change password",
+    "passwordChanged": "Password changed.",
+    "teams": "Your teams",
+    "allTeams": "All teams",
+    "noTeams": "You are not in a team yet.",
+    "session": "Session",
+    "sessionHint": "Sign out of this browser. Your DSH stays signed in until its token expires."
   },
   "team": {
     "list": {
-      "title": "My teams",
-      "empty": "You are not in any team yet. Create one, or join with an invitation link.",
+      "title": "Your teams",
       "members": "{count, plural, one {# member} other {# members}}",
-      "admin": "Teams I manage",
-      "member": "Teams I joined"
+      "admin": "Teams you manage",
+      "member": "Teams you joined",
+      "subtitle": "Open a team to manage its models, presets and members, or start another one.",
+      "subtitleEmpty": "A team is where your DSH setup is shared: its models, presets, plugins and budget.",
+      "createAction": "Create team",
+      "joinAction": "Join with an invitation",
+      "cancel": "Cancel",
+      "connectHint": "Members connect from their own DSH with the Teamwork plugin.",
+      "connectLink": "Install guide",
+      "welcomeTitle": "Start your first team",
+      "welcomeBody": "Create a team and you become its admin. Joining someone else's? Use the invitation link they sent you.",
+      "welcomeBodyPasswords": "Create a team and you become its admin. Joining someone else's? Ask its admin to add you; you will get a first password.",
+      "step1Title": "Connect a model provider",
+      "step1Body": "Paste a key once; it stays on the server.",
+      "step2Title": "Publish presets and plugins",
+      "step2Body": "Start from a template and make it the team's.",
+      "step3Title": "Bring people in",
+      "step3Body": "Everyone's DSH picks the team's setup up at the next sync."
     },
-    "title": "Team console",
     "overview": {
       "descriptionAdmin": "Your team’s models, presets and plugins, published once and kept the same in every member’s DSH.",
       "descriptionMember": "The models and presets your team publishes sync to your DSH by themselves.",
@@ -257,7 +293,6 @@
       },
       "connectAdmin": "Send this to new members",
       "connectMember": "Connect your DSH",
-      "connectHint": "Install the DSH Teamwork plugin and check that its server is {server} (set it in the Teamwork panel), then run this command and confirm in the browser; DSH finishes signing in by itself.",
       "copy": "Copy",
       "copied": "Copied",
       "copyFailed": "Could not copy; select the command and copy it yourself.",
@@ -270,7 +305,47 @@
       },
       "presets": "Team presets",
       "all": "See all",
-      "noPresets": "Your team has not published a preset yet."
+      "noPresets": "Your team has not published a preset yet.",
+      "waiting": {
+        "title": "Waiting on you",
+        "none": "Nothing waits on you.",
+        "reviews": "{count, plural, one {# submission waits} other {# submissions wait}} for your review",
+        "reviewsMine": "{count, plural, one {# of your submissions is} other {# of your submissions are}} awaiting review",
+        "limitNear": "{who} is {threshold}% used {period, select, day {today} other {this month}}",
+        "limitReached": "{who} is used up {period, select, day {today} other {this month}}",
+        "unresolved": "{count, plural, one {# model call} other {# model calls}} to resolve",
+        "notices": "{count, plural, one {# budget email} other {# budget emails}} could not be sent",
+        "scope": {
+          "team": "The team budget",
+          "you": "Your budget",
+          "member": "{email}'s budget",
+          "provider": "The {name} provider budget"
+        },
+        "titleMember": "Worth knowing"
+      },
+      "figures": {
+        "calls": "Team calls",
+        "myCalls": "Your calls",
+        "points": "Team points",
+        "myPoints": "Your points",
+        "period": "Last 30 days",
+        "unpriced": "Last 30 days · {count} unpriced not counted",
+        "budget": "Budget left to you",
+        "budgetState": {
+          "unlimited": "No limit",
+          "unconfirmed": "Unconfirmed"
+        },
+        "resets": "Resets {at}",
+        "budgetHint": "Points left under your limits",
+        "members": "Members",
+        "membersAdmin": "In this team",
+        "membersMember": "In this team"
+      },
+      "connectInstall": "Install the DSH Teamwork plugin. <link>How to install</link>",
+      "connectServer": "On Teamwork's sign-in screen, the server should be <code>{server}</code>.",
+      "connectSignIn": "Sign in from the Teamwork panel, or run:",
+      "connectMessage": "Join {team} on DSH Teamwork: install the plugin ({server}/docs/install), set the server on Teamwork's sign-in screen to {server}, then sign in.",
+      "copyMessage": "Copy instructions"
     },
     "role": {
       "admin": "Admin",
@@ -342,7 +417,7 @@
       },
       "open": "Open navigation",
       "close": "Close navigation",
-      "account": "Account menu"
+      "waiting": "Waiting for your review"
     },
     "switcher": {
       "label": "Switch team",

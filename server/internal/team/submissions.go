@@ -81,6 +81,17 @@ func (s *Service) ListSubmissions(ctx context.Context, userID, teamID string, of
 	}
 	return out, nil
 }
+
+// PendingSubmissions counts submissions waiting for review: the team's for an
+// admin, who decides them, and the caller's own for a member. The caller's
+// membership is the caller's to check.
+func (s *Service) PendingSubmissions(ctx context.Context, teamID, userID string, admin bool) (int, error) {
+	q := s.DB.ResourceSubmission.Query().Where(resourcesubmission.TeamID(teamID), resourcesubmission.StateEQ(resourcesubmission.StatePending))
+	if !admin {
+		q.Where(resourcesubmission.AuthorID(userID))
+	}
+	return q.Count(ctx)
+}
 func (s *Service) SaveSubmission(ctx context.Context, userID, teamID, id string, in wire.SubmissionInput) (SubmissionView, error) {
 	if err := in.Validate(); err != nil {
 		return SubmissionView{}, err

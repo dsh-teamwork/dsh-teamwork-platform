@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { useTeamError } from '@/components/team/use-mutation';
+import { Select } from '@/components/ui/select';
 import { api } from '@/lib/api';
 import { LOCALES } from '@/lib/locale';
 
@@ -23,26 +24,19 @@ export function useChooseLocale() {
   return { pending, choose };
 }
 
-export function LocalePicker() {
+/** The language, in the console's one select (components/ui/select.tsx); each language named in itself. */
+export function LocalePicker({ className }: { className?: string }) {
   const t = useTranslations('common');
   const locale = useLocale();
   const { pending, choose } = useChooseLocale();
-
   return (
-    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-      {t('language')}
-      <select
-        className="rounded-md border border-input bg-background px-2 py-1 text-foreground"
-        value={locale}
-        disabled={pending}
-        onChange={(event) => void choose(event.target.value)}
-      >
-        {LOCALES.map((l) => (
-          <option key={l} value={l}>
-            {t(`localeNames.${l}`)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <Select
+      label={t('language')}
+      value={locale}
+      disabled={pending}
+      options={LOCALES.map((l) => ({ value: l, label: t(`localeNames.${l}`) }))}
+      change={(next) => next !== locale && void choose(next)}
+      className={className}
+    />
   );
 }

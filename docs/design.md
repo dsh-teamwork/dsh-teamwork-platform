@@ -71,8 +71,12 @@ colour from it and rounds that element for the logos.
 
 ## Colour
 
-Every colour is a variable, and `.dark` on `<html>` swaps the whole scale — on
-the web and in the console through next-themes (`attribute="class"`). Grounds
+Every colour is a variable, and `.dark` on `<html>` swaps the whole scale. There
+are two themes, light and dark. Until a person chooses, they get their system's
+setting and follow it; a choice is kept in the browser under one key (`theme`)
+by `apps/console/src/lib/theme.ts` and the instance console's own
+`apps/manage/src/lib/theme.ts`, so it holds on every page of a site. An inline
+script sets it before the first paint. Grounds
 and text are a neutral grey (hue 286, chroma under 0.02): white grounds and
 near-black text in light, near-black grounds and white text in dark. Colour
 appears in three places only: the mark, the two accents, and the outcome
@@ -203,6 +207,26 @@ icon set.
   and *Governance* (members, usage, budgets, and an edition's own team pages).
   The account is one menu at its foot; below `md` the sidebar is a sheet
   behind a menu button (`apps/console/src/components/team/console-shell.tsx`).
+- **Choosing from a list is one component.** `apps/console/src/components/ui/select.tsx`:
+  an outline trigger and a menu on the card surface, never a native `<select>`.
+  The language picker is one too; the public pages, which run no React, draw
+  the same look in `apps/console/src/public/controls.tsx`.
+- **The theme is one icon button** showing the theme in force (sun or moon)
+  and switching to the other: in the top bar and the footer of the public
+  pages and of `/teams`, and beside the account at the foot of a team's sidebar
+  (`apps/console/src/components/theme-toggle.tsx`).
+- **A person is their avatar, and it leads to their account.** A top bar shows
+  the initial in a circle; a team's sidebar ends, as Router9 Studio's rail does,
+  in a row of the avatar, the person's name and their role in the team, with
+  the theme button beside it. Either goes straight to the account settings
+  (`/account`, `apps/console/src/pages/account.tsx`): the name, edited in
+  place, and the email, then preferences (language, theme), the password,
+  your teams and signing out, in sections divided by hairlines. The email is
+  printed there and nowhere else in the chrome (`apps/console/src/components/account.tsx`).
+- **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as
+  cards (each with the team's initials on navy, and its overview, models and
+  members a click away) grouped by role, a welcome with the first steps when
+  there are none, and creating or joining a team in a dialog.
 - **Outcomes in the console** use `--success` / `--warning` / `--info` /
   `--destructive`, and every mutation reports through a `sonner` toast.
 - **Console chrome comes from `premium/apps/manage/src/components/console.tsx`**

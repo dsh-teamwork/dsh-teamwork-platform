@@ -13,7 +13,11 @@
     "privacy": "隐私政策",
     "terms": "服务条款",
     "close": "关闭",
-    "retry": "重试"
+    "retry": "重试",
+    "theme": {
+      "switchTo": "切换到{theme, select, dark {深色} other {浅色}}主题",
+      "toggle": "切换浅色 / 深色主题"
+    }
   },
   "signIn": {
     "title": "登录",
@@ -62,8 +66,7 @@
     "current": "当前密码",
     "next": "新密码",
     "hint": "至少 10 个字符。几个不相关的词组合起来，既好记又难猜。",
-    "submit": "修改密码",
-    "change": "修改密码"
+    "submit": "修改密码"
   },
   "setup": {
     "title": "创建第一个账号",
@@ -217,20 +220,53 @@
     }
   },
   "account": {
-    "title": "账户",
-    "email": "邮箱",
+    "title": "账号设置",
     "name": "名字",
-    "noName": "未设置"
+    "noName": "添加你的名字",
+    "namePlaceholder": "你的名字",
+    "editName": "点击修改名字",
+    "nameSaved": "名字已保存。",
+    "nameFailed": "名字保存失败，请重试。",
+    "preferences": "偏好",
+    "language": "语言",
+    "theme": "主题",
+    "themes": {
+      "light": "浅色",
+      "dark": "深色"
+    },
+    "password": "密码",
+    "passwordHint": "用于登录这台服务器。",
+    "passwordSubmit": "修改密码",
+    "passwordChanged": "密码已修改。",
+    "teams": "我的团队",
+    "allTeams": "全部团队",
+    "noTeams": "你还没有加入任何团队。",
+    "session": "会话",
+    "sessionHint": "在这个浏览器上退出登录。你的 DSH 会保持登录，直到令牌过期。"
   },
   "team": {
     "list": {
       "title": "我的团队",
-      "empty": "你还不在任何团队里。创建一个，或用邀请链接加入。",
       "members": "{count} 人",
-      "admin": "我管理的",
-      "member": "我加入的"
+      "admin": "我管理的团队",
+      "member": "我加入的团队",
+      "subtitle": "进入团队管理它的模型、预设和成员，或者再创建一个团队。",
+      "subtitleEmpty": "团队是共享 DSH 配置的地方：模型、预设、插件和预算都在这里。",
+      "createAction": "创建团队",
+      "joinAction": "用邀请加入",
+      "cancel": "取消",
+      "connectHint": "成员在自己的 DSH 里安装 Teamwork 插件即可接入。",
+      "connectLink": "安装指南",
+      "welcomeTitle": "创建你的第一个团队",
+      "welcomeBody": "创建团队后你就是它的管理员。要加入别人的团队？使用对方发给你的邀请链接。",
+      "welcomeBodyPasswords": "创建团队后你就是它的管理员。要加入别人的团队？请对方管理员为你添加账号，你会收到初始密码。",
+      "step1Title": "接入模型提供商",
+      "step1Body": "粘贴一次密钥，它只留在服务器上。",
+      "step2Title": "发布预设和插件",
+      "step2Body": "从模板开始，改成团队自己的。",
+      "step3Title": "邀请成员加入",
+      "step3Body": "大家的 DSH 下次同步时就会拿到团队配置。"
     },
-    "title": "团队控制台",
     "overview": {
       "descriptionAdmin": "团队的模型、预设和插件，一处发布，每位成员的 DSH 自动保持一致。",
       "descriptionMember": "团队发布的模型和预设会自动同步到你的 DSH。",
@@ -257,7 +293,6 @@
       },
       "connectAdmin": "发给新成员",
       "connectMember": "在 DSH 里接入",
-      "connectHint": "装好 DSH Teamwork 插件，确认它的服务器是 {server}（在 Teamwork 面板里设置），然后运行下面的命令，在浏览器里确认授权，DSH 随即自动完成登录。",
       "copy": "复制",
       "copied": "已复制",
       "copyFailed": "复制失败，请选中命令自行复制。",
@@ -270,7 +305,47 @@
       },
       "presets": "团队预设",
       "all": "查看全部",
-      "noPresets": "团队还没有发布预设。"
+      "noPresets": "团队还没有发布预设。",
+      "waiting": {
+        "title": "待处理",
+        "none": "目前没有需要你处理的事项。",
+        "reviews": "有 {count} 项提交等待你审核",
+        "reviewsMine": "你有 {count} 项提交正在等待审核",
+        "limitNear": "{who}{period, select, day {今日} other {本月}}已用 {threshold}%",
+        "limitReached": "{who}{period, select, day {今日} other {本月}}已用完",
+        "unresolved": "{count} 次模型调用需要核对",
+        "notices": "{count} 封预算提醒邮件发送失败",
+        "scope": {
+          "team": "团队预算",
+          "you": "你的预算",
+          "member": "{email} 的预算",
+          "provider": "提供商 {name} 的预算"
+        },
+        "titleMember": "需要留意"
+      },
+      "figures": {
+        "calls": "团队调用",
+        "myCalls": "你的调用",
+        "points": "团队积分",
+        "myPoints": "你的积分",
+        "period": "近 30 天",
+        "unpriced": "近 30 天 · {count} 次未计价调用未计入",
+        "budget": "你的剩余预算",
+        "budgetState": {
+          "unlimited": "不限",
+          "unconfirmed": "待确认"
+        },
+        "resets": "{at} 重置",
+        "budgetHint": "在你适用的上限内还剩的积分",
+        "members": "成员",
+        "membersAdmin": "本团队",
+        "membersMember": "本团队"
+      },
+      "connectInstall": "安装 DSH Teamwork 插件。<link>安装方法</link>",
+      "connectServer": "在 Teamwork 登录界面，服务器应为 <code>{server}</code>。",
+      "connectSignIn": "在 Teamwork 面板中登录，或运行：",
+      "connectMessage": "加入 DSH Teamwork 上的 {team}：安装插件（{server}/docs/install），在 Teamwork 登录界面把服务器设为 {server}，然后登录。",
+      "copyMessage": "复制说明"
     },
     "role": {
       "admin": "管理员",
@@ -342,7 +417,7 @@
       },
       "open": "打开导航",
       "close": "关闭导航",
-      "account": "账户菜单"
+      "waiting": "等待你审核"
     },
     "switcher": {
       "label": "切换团队",
