@@ -15,7 +15,7 @@ export function ThemeToggle() {
     <div
       role="radiogroup"
       aria-label={t('theme')}
-      className="flex gap-1 rounded-md border border-border p-0.5"
+      className="flex shrink-0 gap-1 rounded-md border border-border p-0.5"
     >
       {OPTIONS.map(({ value, label, icon: Icon }) => (
         <button

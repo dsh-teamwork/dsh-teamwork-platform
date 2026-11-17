@@ -68,27 +68,36 @@ function Brand() {
   );
 }
 
+/**
+ * The foot of the rail, as the member console draws it: the operator as an
+ * avatar (the address only on hover, never written out), the theme, and
+ * signing out.
+ */
 function Footer({ email }: { email: string }) {
   const { signOut } = useAdmin();
   return (
-    <>
-      <div className="px-3 pb-3">
-        <ThemeToggle />
-      </div>
-      <div className="space-y-2 border-t border-border p-3">
-        <p className="truncate text-xs text-muted-foreground" title={email}>
-          {email}
-        </p>
-        <button
-          type="button"
-          onClick={signOut}
-          className="flex w-full items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <LogOut className="h-3 w-3" />
-          {t('signOut')}
-        </button>
-      </div>
-    </>
+    <div className="flex items-center gap-2 border-t border-border p-3">
+      <span
+        title={email}
+        aria-label={email}
+        className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-xs font-semibold uppercase"
+      >
+        {email.charAt(0) || '?'}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+        {t('operator')}
+      </span>
+      <ThemeToggle />
+      <button
+        type="button"
+        onClick={signOut}
+        title={t('signOut')}
+        aria-label={t('signOut')}
+        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <LogOut className="h-3.5 w-3.5" />
+      </button>
+    </div>
   );
 }
 

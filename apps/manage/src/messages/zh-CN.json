@@ -61,5 +61,6 @@
   "automation": "自动化管理 API",
   "privateProviders": "私有网络供应商访问",
   "couldNotUpdate": "更新失败",
-  "emailSignIn": "邮箱验证码登录"
+  "emailSignIn": "邮箱验证码登录",
+  "operator": "管理员"
 }

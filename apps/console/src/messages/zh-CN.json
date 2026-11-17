@@ -83,7 +83,7 @@
     "selfHostCta": "自己部署",
     "openConsole": "打开团队控制台",
     "install": {
-      "desktop": "在 DSH 桌面版安装：插件 → 添加插件 →",
+      "desktop": "在 DSH 桌面版安装：Plugins → Add plugin →",
       "copy": "复制",
       "more": "CLI 安装、登录与自托管服务器"
     },

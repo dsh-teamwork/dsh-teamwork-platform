@@ -210,7 +210,9 @@ icon set.
 - **Choosing from a list is one component.** `apps/console/src/components/ui/select.tsx`:
   an outline trigger and a menu on the card surface, never a native `<select>`.
   The language picker is one too; the public pages, which run no React, draw
-  the same look in `apps/console/src/public/controls.tsx`.
+  the same look in `apps/console/src/public/controls.tsx`. The operator
+  console has its copy in `apps/manage/src/components/ui/select.tsx`, which an
+  edition's pages import from `@dsh-teamwork/manage-core`.
 - **The theme is one icon button** showing the theme in force (sun or moon)
   and switching to the other: in the top bar and the footer of the public
   pages and of `/teams`, and beside the account at the foot of a team's sidebar
@@ -222,7 +224,9 @@ icon set.
   (`/account`, `apps/console/src/pages/account.tsx`): the name, edited in
   place, and the email, then preferences (language, theme), the password,
   your teams and signing out, in sections divided by hairlines. The email is
-  printed there and nowhere else in the chrome (`apps/console/src/components/account.tsx`).
+  printed there and nowhere else in the chrome (`apps/console/src/components/account.tsx`). The operator
+  console's rail ends the same way: the operator's initial (the address only
+  on hover), the theme and signing out (`apps/manage/src/components/layout/sidebar.tsx`).
 - **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as
   cards (each with the team's initials on navy, and its overview, models and
   members a click away) grouped by role, a welcome with the first steps when

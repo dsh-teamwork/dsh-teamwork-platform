@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The operator console follows the visual system
+
+- **What:** The operator console's rail ends in the operator's initial, the theme and signing out, with the address only on hover; `@dsh-teamwork/manage-core` exports the console's custom `Select` (`./components/ui/select`) so an edition's pages draw no native select. The landing page's Chinese install line names DSH Desktop's menu as the app does, `Plugins → Add plugin`.
+- **Why:** The last screens that printed an email in the chrome or drew a native select; the install line now matches the plugin's own guide.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `docs/design.md`, `apps/manage/src/components/layout/sidebar.tsx`, `apps/manage/src/components/ui/select.tsx`.
+
 ## 2026-11-17 — People can delete their own account, and an admin can hand the role over
 
 - **What:** `DELETE /api/profile` (browser session, email typed back as `confirm`) deletes the account, its identities, password and memberships, and every team it is alone in with all of that team's rows and artifact bytes. It is refused (`admin_of_shared_team`) while the account administers a team with others in it; `POST /api/teams/{teamId}/members/{userId}/admin` hands the admin role to a member, and the caller becomes a member. Editions hear `TeamDeleted` and `AccountDeleted` through `Host.SubscribeTeams` and may refuse. The account page gets a Delete account section; the members page gets Make admin.
