@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
@@ -26,9 +25,8 @@ type Server struct {
 	Team       *team.Service
 	Gateway    *gateway.Gateway
 	Usage      *usage.Service
-	Mailer     auth.Mailer       // where SMTP_URL is set
-	Google     *auth.Google      // where the Google door is configured
-	Analytics  *analytics.Client // nil or keyless sends nothing
+	Mailer     auth.Mailer  // where SMTP_URL is set
+	Google     *auth.Google // where the Google door is configured
 	Web        http.Handler
 	// Mux, when set, is the router Handler adds its routes to: one a closed
 	// edition has already added its own to (server/edition).

@@ -987,7 +987,6 @@
     "member_not_found": "此人不是这个团队的成员。",
     "confirmation_mismatch": "请按页面显示的样子输入你的邮箱。",
     "admin_of_shared_team": "你管理的团队里还有其他成员。请先把管理员转给其中一人。",
-    "browser_only": "请在浏览器中登录后操作。",
     "wallet_has_balance": "要删除的团队里还有已购买的额度。请先用完，或写信给客服申请退款。"
   },
   "docs": {

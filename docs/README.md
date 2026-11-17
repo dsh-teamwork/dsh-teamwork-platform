@@ -28,4 +28,4 @@ How documents are laid out, named and kept is the "Documentation" section of
 
 - [Self-hosting](ops/self-hosting.md) — install, connect DSH, configure storage, verify and back up the community server.
 
-- [Analytics](ops/analytics.md) — what reaches PostHog, under which identity, and how to query it.
+- [Analytics](ops/analytics.md) — the anonymous page counts PostHog receives, and how to query them.

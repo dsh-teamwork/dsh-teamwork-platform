@@ -1952,7 +1952,7 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete the account, with every team it is alone in; refused while it administers a team with others */
+        /** Delete the account, from a session or the app's token, with every team it is alone in; refused while it administers a team with others */
         delete: {
             parameters: {
                 query?: never;

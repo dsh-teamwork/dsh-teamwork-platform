@@ -987,7 +987,6 @@
     "member_not_found": "That person is not a member of this team.",
     "confirmation_mismatch": "Type your email exactly as it is shown.",
     "admin_of_shared_team": "You administer a team with other members in it. Make one of them the admin first.",
-    "browser_only": "Do this in the browser, signed in.",
     "wallet_has_balance": "A team you would delete still holds purchased credit. Spend it, or write to support for a refund, first."
   },
   "docs": {

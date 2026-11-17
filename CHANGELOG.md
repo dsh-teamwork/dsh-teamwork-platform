@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Analytics count pages only; the app's token can delete the account
+
+- **What:** The server sends nothing to PostHog any more: the `user_signed_up` and `profile_updated` events and `server/internal/analytics` are gone. The browser stays cookieless and anonymous and now sends `$pageview` only, with page leaves off. `DELETE /api/profile` also takes a Bearer token with the email typed back, so the phone app can delete the account in place; the `browser_only` refusal is gone.
+- **Why:** No tracking of what a person or an account does; the App Store requires in-app account deletion.
+- **Breaking:** PostHog receives no account events from now on; queries over them stop growing. A plugin token can delete its account given the account's email.
+- **Upgrade:** Nothing. `POSTHOG_KEY` keeps its meaning for the browser.
+- **Refs:** ADR 0040, `docs/ops/analytics.md`, `apps/console/src/lib/analytics.ts`.
+
 ## 2026-11-17 — The operator console follows the visual system
 
 - **What:** The operator console's rail ends in the operator's initial, the theme and signing out, with the address only on hover; `@dsh-teamwork/manage-core` exports the console's custom `Select` (`./components/ui/select`) so an edition's pages draw no native select. The landing page's Chinese install line names DSH Desktop's menu as the app does, `Plugins → Add plugin`.

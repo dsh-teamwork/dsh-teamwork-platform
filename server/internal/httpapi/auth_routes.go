@@ -101,7 +101,6 @@ func (s *Server) setup(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	s.Analytics.Capture(user.ID, "user_signed_up", map[string]any{"via": "password", "client": "web"})
 	if err := s.startSession(w, user, "password"); err != nil {
 		return err
 	}

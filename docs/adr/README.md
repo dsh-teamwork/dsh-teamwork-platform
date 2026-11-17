@@ -28,6 +28,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0036 — Edition meters](0036-edition-meters.md) — an edition's own usage, priced by it, counts against the public point budgets.
 - [0038 — Computer tokens](0038-computer-tokens.md) — a cloud computer's plugin token reaches one team's configuration and models, for an hour.
 - [0039 — Deleting an account](0039-deleting-an-account.md) — self-service deletion, admin handover first, lone teams deleted with it.
+- [0040 — The app deletes the account](0040-the-app-deletes-the-account.md) — the phone app's token deletes the account too, with the email typed back.
 
 The template:
 

@@ -95,11 +95,16 @@ func TestDeletingAnAccount(t *testing.T) {
 	})
 }
 
-func TestDeletingAnAccountNeedsTheBrowser(t *testing.T) {
+// The phone app holds the same kind of token as the plugin, and deletes the
+// account with it (ADR 0040); the email typed back is still the confirmation.
+func TestTheAppDeletesTheAccountWithItsToken(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		e := start(t, d, options{})
 		b := e.admin("solo@x.io")
-		p := e.pluginFor(b)
-		refused(t, "a plugin token deleting the account", p.send("DELETE", "/api/profile", map[string]string{"confirm": "solo@x.io"}), 403, "browser_only")
+		app := e.pluginFor(b)
+		refused(t, "the app without the confirmation", app.send("DELETE", "/api/profile", map[string]string{"confirm": "other@x.io"}), 400, "confirmation_mismatch")
+		must(t, app.send("DELETE", "/api/profile", map[string]string{"confirm": "solo@x.io"}), 204)
+		refused(t, "the token after the deletion", app.get("/api/profile"), 401, "unauthorized")
+		refused(t, "the browser after the deletion", b.get("/api/profile"), 401, "unauthorized")
 	})
 }

@@ -1,14 +1,16 @@
 /**
- * The browser's half of analytics: anonymous pageviews, and nothing else. The
- * console and the public pages (src/public/client.ts) both start it.
+ * The product's only analytics: anonymous page counts, and nothing else
+ * (docs/ops/analytics.md). The console and the public pages
+ * (src/public/client.ts) both start it; nothing on the server reports what an
+ * account does.
  *
  * Cookieless (`cookieless_mode: 'always'`): nothing is written to the visitor's
  * browser, so there is no consent banner to show, and PostHog counts unique
  * visitors from a daily-salted hash on its side — which the project must have
- * switched on (docs/ops/analytics.md §2). The price is that a browser is never
- * identified: who a visitor is, and what they did with their account, is the
- * server's to report. Autocapture, session recording and surveys stay off,
- * since each would read what is on the page.
+ * switched on (docs/ops/analytics.md §2). A browser is never identified, and
+ * no behaviour is recorded: no page leaves, no autocapture, no session
+ * recording and no surveys, since each would follow what a person does or read
+ * what is on the page.
  *
  * **Every URL leaves without its query and fragment, and no page title leaves
  * at all.** Both can carry what somebody typed — a search, a sentence handed
@@ -62,6 +64,7 @@ export async function startAnalytics(): Promise<void> {
     cookieless_mode: 'always',
     person_profiles: 'never',
     capture_pageview: 'history_change',
+    capture_pageleave: false,
     autocapture: false,
     disable_session_recording: true,
     disable_surveys: true,
