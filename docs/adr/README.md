@@ -19,7 +19,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0023](0023-community-budget-reservations.md) — atomic scope reservations, calendar windows, explicit recovery and transactional budget notifications.
 - [0024](0024-atomic-model-funding.md) — protected model routes and optional funding share the public accounting transaction.
 - [0026](0026-transactional-team-events.md) — edition provisioning joins real team creation and member insertion transactions.
-- [0028](0028-edition-team-navigation.md) — registered same-origin team pages appear in the console and survive sign-in returns without closed route imports.
+- [0028](0028-edition-team-navigation.md) — superseded by 0042: registered same-origin team pages appear in the console and survive sign-in returns without closed route imports.
 
 - [0032 — Shared instance management](0032-shared-instance-management.md) — community administration and isolated service roles.
 - [0033 — Private artifact storage providers](0033-private-artifact-storage-providers.md) — local defaults, private S3 storage and verified migration.
@@ -30,6 +30,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0039 — Deleting an account](0039-deleting-an-account.md) — self-service deletion, admin handover first, lone teams deleted with it.
 - [0040 — The app deletes the account](0040-the-app-deletes-the-account.md) — the phone app's token deletes the account too, with the email typed back.
 - [0041 — Editions store objects](0041-editions-store-objects-beside-plugin-archives.md) — an edition's bytes live in the server's store, under a kind of its own.
+- [0042 — A work-first team console](0042-a-work-first-team-console.md) — everyone works in the team; only its admin sees Team management.
 
 The template:
 

@@ -38,7 +38,6 @@ export function TeamPluginsPage() {
 
 function Plugins({ team, configs, reload }: { team: Team; configs: TeamConfig[]; reload: Reload }) {
   const t = useTranslations('team.plugins');
-  const admin = team.role === 'admin';
   const plugins = configs.filter((c): c is Plugin => c.kind === 'plugin');
   const presets = configs.filter((c): c is Preset => c.kind === 'preset');
   const usedBy = (id: string) => presets.filter((p) => p.data.pluginDependencies.some((d) => d.pluginConfigId === id));
@@ -50,12 +49,10 @@ function Plugins({ team, configs, reload }: { team: Team; configs: TeamConfig[];
         title={t('title')}
         description={t('description')}
         action={
-          admin && (
-            <Button onClick={() => setEditing(true)}>
-              <Plus />
-              {t('pin')}
-            </Button>
-          )
+          <Button onClick={() => setEditing(true)}>
+            <Plus />
+            {t('pin')}
+          </Button>
         }
       />
       <Card className="overflow-hidden">
@@ -70,24 +67,24 @@ function Plugins({ team, configs, reload }: { team: Team; configs: TeamConfig[];
                   <th className="px-4 py-2.5 font-medium">{t('package')}</th>
                   <th className="px-4 py-2.5 font-medium">{t('tools')}</th>
                   <th className="px-4 py-2.5 font-medium whitespace-nowrap">{t('usedBy')}</th>
-                  {admin && <th className="px-4 py-2.5" />}
+                  <th className="px-4 py-2.5" />
                 </tr>
               </thead>
               <tbody>
                 {plugins.map((p) => (
-                  <PluginRow key={p.id} teamId={team.id} reload={reload} plugin={p} admin={admin} usedBy={usedBy(p.id).map((preset) => preset.name)} onEdit={() => setEditing(p)} />
+                  <PluginRow key={p.id} teamId={team.id} reload={reload} plugin={p} usedBy={usedBy(p.id).map((preset) => preset.name)} onEdit={() => setEditing(p)} />
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </Card>
-      {admin && editing && <PluginDialog teamId={team.id} reload={reload} plugin={editing === true ? undefined : editing} onClose={() => setEditing(null)} />}
+      {editing && <PluginDialog teamId={team.id} reload={reload} plugin={editing === true ? undefined : editing} onClose={() => setEditing(null)} />}
     </>
   );
 }
 
-function PluginRow({ teamId, reload, plugin, admin, usedBy, onEdit }: { teamId: string; reload: Reload; plugin: Plugin; admin: boolean; usedBy: string[]; onEdit: () => void }) {
+function PluginRow({ teamId, reload, plugin, usedBy, onEdit }: { teamId: string; reload: Reload; plugin: Plugin; usedBy: string[]; onEdit: () => void }) {
   const t = useTranslations('team.plugins');
   const { pending, run } = useMutation(reload);
   return (
@@ -122,25 +119,23 @@ function PluginRow({ teamId, reload, plugin, admin, usedBy, onEdit }: { teamId: 
           <span className="text-xs text-muted-foreground">{t('unused')}</span>
         )}
       </td>
-      {admin && (
-        <td className="px-4 py-3 text-right whitespace-nowrap">
-          <Button size="sm" variant="ghost" onClick={onEdit}>
-            {t('edit')}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            // The server refuses too (plugin_in_use): presets pin it.
-            disabled={pending || usedBy.length > 0}
-            title={usedBy.length ? t('removeUsed', { count: usedBy.length }) : undefined}
-            onClick={() => {
-              if (confirm(t('removeConfirm', { name: plugin.name }))) void run(() => api(`teams/${teamId}/configs/${plugin.id}`, { method: 'DELETE' }), t('removed'));
-            }}
-          >
-            {t('remove')}
-          </Button>
-        </td>
-      )}
+      <td className="px-4 py-3 text-right whitespace-nowrap">
+        <Button size="sm" variant="ghost" onClick={onEdit}>
+          {t('edit')}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          // The server refuses too (plugin_in_use): presets pin it.
+          disabled={pending || usedBy.length > 0}
+          title={usedBy.length ? t('removeUsed', { count: usedBy.length }) : undefined}
+          onClick={() => {
+            if (confirm(t('removeConfirm', { name: plugin.name }))) void run(() => api(`teams/${teamId}/configs/${plugin.id}`, { method: 'DELETE' }), t('removed'));
+          }}
+        >
+          {t('remove')}
+        </Button>
+      </td>
     </tr>
   );
 }

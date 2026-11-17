@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The team console is work first
+
+- **What:** A team's sidebar has two groups: Work for everyone (Home, Team resources, My submissions, an edition's work pages) and Team management for its admin alone (models, presets, plugins, Review, history, members, usage, budgets); a member opening a management page is sent home. Team resources lists the models (with their rates), presets and plugins, and is where a member proposes a preset or a change to one. A member leaves from the team switcher. `edition.TeamPage` gains `Audience` (`work` or `admin`) and `Visible`; `GET /api/teams/{teamId}` returns `pages`, the entries that reader sees in that team; the session's `teamPages` is replaced by `editionPaths`. `GET /api/teams/{teamId}/submissions` takes `mine=true`.
+- **Why:** Most people who open a team work in it; cloud sessions, for every member of a team the operator admits, are the first edition work page.
+- **Breaking:** `Session.teamPages` is gone (the console reads `Team.pages`); an edition calling `AddTeamPage` must name an audience. Members no longer see usage, budgets, history, or the models, presets and plugins management pages.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0042 (supersedes 0028), `server/edition/edition.go`, `apps/console/src/components/team/console-shell.tsx`, `apps/console/src/pages/team/resources.tsx`.
+
 ## 2026-11-17 — Editions can store objects in the server's store
 
 - **What:** `edition.Host.Objects` lends an edition the server's own object store (the data directory, or the `ARTIFACT_STORAGE_PROVIDER=s3` bucket) under keys `teams/{teamId}/{kind}/{id}`, beside the plugin archives and never among them (`plugins` is refused). `Put`, `Open` (a missing object is `fs.ErrNotExist`) and `Delete`; nil on a management process.

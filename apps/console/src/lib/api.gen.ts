@@ -2081,6 +2081,8 @@ export interface paths {
                     offset?: number;
                     /** @description Keep only submissions in this state */
                     state?: "draft" | "pending" | "published" | "rejected" | "withdrawn";
+                    /** @description Only the caller's own submissions, for an administrator too */
+                    mine?: "true";
                 };
                 header?: never;
                 path: {
@@ -2717,13 +2719,8 @@ export interface components {
             };
             setupOpen: boolean;
             mobileRedirectPrefix: string;
-            teamPages: {
-                path: string;
-                labels: {
-                    en: string;
-                    "zh-CN": string;
-                };
-            }[];
+            /** @description Path prefixes an edition's own pages answer under; a sign-in return there is loaded from the server (ADR 0042) */
+            editionPaths: string[];
         };
         PasswordSignIn: {
             email: string;
@@ -2843,6 +2840,16 @@ export interface components {
             name: string;
             /** @enum {string} */
             role: "admin" | "member";
+            /** @description An edition's team entries this person sees in this team (ADR 0042); empty on a community instance */
+            pages: {
+                path: string;
+                labels: {
+                    en: string;
+                    "zh-CN": string;
+                };
+                /** @enum {string} */
+                audience: "work" | "admin";
+            }[];
             members: {
                 userId: string;
                 email: string | null;

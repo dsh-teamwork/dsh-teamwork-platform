@@ -28,6 +28,8 @@ const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => 
 const TeamPluginsPage = lazy(() => import('@/pages/team/plugins').then((m) => ({ default: m.TeamPluginsPage })));
 const TeamHistoryPage = lazy(() => import('@/pages/team/history').then((m) => ({ default: m.TeamHistoryPage })));
 const TeamSharingPage = lazy(() => import('@/pages/team/sharing').then((m) => ({ default: m.TeamSharingPage })));
+const TeamResourcesPage = lazy(() => import('@/pages/team/resources').then((m) => ({ default: m.TeamResourcesPage })));
+const AdminOnly = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.AdminOnly })));
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
 const TeamBudgetsPage = lazy(() => import('@/pages/team/budgets').then((m) => ({ default: m.TeamBudgetsPage })));
@@ -43,7 +45,7 @@ watchSystemTheme();
 function FallbackPage() {
   const { session } = useSession();
   const location = useLocation();
-  const edition = location.pathname === "/manage" || location.pathname.startsWith("/manage/") || session.teamPages.some((page) => location.pathname.startsWith(page.path));
+  const edition = location.pathname === "/manage" || location.pathname.startsWith("/manage/") || session.editionPaths.some((path) => location.pathname.startsWith(path));
   useEffect(() => {
     if (edition) window.location.replace(`${location.pathname}${location.search}${location.hash}`);
   }, [edition, location]);
@@ -65,15 +67,24 @@ const router = createBrowserRouter([
         path: '/teams/:teamId',
         element: <TeamLayout />,
         children: [
+          // Work, for everyone in the team (ADR 0042).
           { index: true, element: <TeamOverviewPage /> },
-          { path: 'models', element: <TeamModelsPage /> },
-          { path: 'usage', element: <TeamUsagePage /> },
-          { path: 'budgets', element: <TeamBudgetsPage /> },
-          { path: 'history', element: <TeamHistoryPage /> },
-          { path: 'sharing', element: <TeamSharingPage /> },
-          { path: 'presets', element: <TeamPresetsPage /> },
-          { path: 'plugins', element: <TeamPluginsPage /> },
-          { path: 'members', element: <TeamMembersPage /> },
+          { path: 'resources', element: <TeamResourcesPage /> },
+          { path: 'submissions', element: <TeamSharingPage view="mine" /> },
+          // Team management, for its admin: a member is sent home.
+          {
+            element: <AdminOnly />,
+            children: [
+              { path: 'models', element: <TeamModelsPage /> },
+              { path: 'presets', element: <TeamPresetsPage /> },
+              { path: 'plugins', element: <TeamPluginsPage /> },
+              { path: 'sharing', element: <TeamSharingPage view="review" /> },
+              { path: 'history', element: <TeamHistoryPage /> },
+              { path: 'members', element: <TeamMembersPage /> },
+              { path: 'usage', element: <TeamUsagePage /> },
+              { path: 'budgets', element: <TeamBudgetsPage /> },
+            ],
+          },
         ],
       },
     ],

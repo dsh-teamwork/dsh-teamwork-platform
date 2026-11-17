@@ -3,12 +3,11 @@
  * one of two ways, decided by the instance (ADR 0006): an invitation link where
  * it sends email, or an account with a first password, shown once, where it
  * holds passwords. The admin can hand the role to a member, which makes them a
- * member (a team keeps one admin). A member sees who is in the team and can
- * leave it.
+ * member (a team keeps one admin). It is Team management's, the admin's alone
+ * (ADR 0042); a member leaves from the team switcher.
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import { CopyButton } from '@/components/copy-button';
@@ -30,7 +29,7 @@ export function TeamMembersPage() {
   const { team, reload, passwords } = useTeam();
   const word = useTeamError();
   // Invitations exist only where the instance sends email; with passwords, an admin creates accounts instead.
-  const listed = team.role === 'admin' && !passwords;
+  const listed = !passwords;
   const invites = useApi<Invite[]>(listed ? `teams/${team.id}/invites` : null);
   if (listed && !invites.data) return invites.error ? <Failure message={word(invites.error)} /> : null;
   return <Members invites={invites.data ?? []} reload={() => Promise.all([reload(), invites.reload()])} />;
@@ -40,38 +39,19 @@ function Members({ invites, reload }: { invites: Invite[]; reload: Reload }) {
   const { me, team, passwords } = useTeam();
   const t = useTranslations('team');
   const { pending, run } = useMutation(reload);
-  const navigate = useNavigate();
-  const admin = team.role === 'admin';
   const path = (rest: string) => `teams/${team.id}/${rest}`;
   // A first password is shown once, beside whose it is, and gone on reload.
   const [handover, setHandover] = useState<{ email: string; password: string | null } | null>(null);
-
-  const leave = !admin && (
-    <Button
-      variant="outline"
-      disabled={pending}
-      onClick={() => {
-        if (!confirm(t('leave.confirm'))) return;
-        run(async () => {
-          await api(path('membership'), { method: 'DELETE' });
-          navigate('/teams');
-        }, t('leave.done'));
-      }}
-    >
-      {t('leave.submit')}
-    </Button>
-  );
 
   return (
     <>
       <PageHeader
         title={t('nav.members')}
-        description={admin ? t(passwords ? 'members.descriptionPasswords' : 'members.descriptionInvites') : t('members.descriptionMember')}
-        action={leave || undefined}
+        description={t(passwords ? 'members.descriptionPasswords' : 'members.descriptionInvites')}
       />
 
-      {admin && passwords && <AddMember teamId={team.id} reload={reload} onAdded={setHandover} />}
-      {admin && !passwords && <Invitations teamId={team.id} reload={reload} invites={invites} />}
+      {passwords && <AddMember teamId={team.id} reload={reload} onAdded={setHandover} />}
+      {!passwords && <Invitations teamId={team.id} reload={reload} invites={invites} />}
       {handover && <Handover {...handover} />}
 
       <Card className="overflow-hidden">
@@ -81,7 +61,7 @@ function Members({ invites, reload }: { invites: Invite[]; reload: Reload }) {
               <tr className="border-b bg-muted text-left text-xs text-muted-foreground">
                 <th className="px-4 py-2.5 font-medium">{t('members.person')}</th>
                 <th className="w-0 px-4 py-2.5 font-medium whitespace-nowrap">{t('members.role')}</th>
-                {admin && <th className="px-4 py-2.5" />}
+                <th className="px-4 py-2.5" />
               </tr>
             </thead>
             <tbody>
@@ -101,50 +81,48 @@ function Members({ invites, reload }: { invites: Invite[]; reload: Reload }) {
                       {t(`role.${m.role}`)}
                     </span>
                   </td>
-                  {admin && (
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      {m.userId !== me && (
-                        <>
-                          {passwords && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              disabled={pending}
-                              onClick={() => {
-                                if (!confirm(t('members.resetConfirm'))) return;
-                                run(async () => {
-                                  const reset = await api<{ password: string }>(path(`members/${m.userId}/password`), { method: 'POST' });
-                                  setHandover({ email: m.email ?? '', password: reset.password });
-                                }, t('members.resetDone'));
-                              }}
-                            >
-                              {t('members.reset')}
-                            </Button>
-                          )}
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    {m.userId !== me && (
+                      <>
+                        {passwords && (
                           <Button
                             size="sm"
                             variant="ghost"
                             disabled={pending}
                             onClick={() => {
-                              if (confirm(t('members.makeAdminConfirm', { email: m.email ?? '' }))) run(() => api(path(`members/${m.userId}/admin`), { method: 'POST' }), t('members.madeAdmin'));
+                              if (!confirm(t('members.resetConfirm'))) return;
+                              run(async () => {
+                                const reset = await api<{ password: string }>(path(`members/${m.userId}/password`), { method: 'POST' });
+                                setHandover({ email: m.email ?? '', password: reset.password });
+                              }, t('members.resetDone'));
                             }}
                           >
-                            {t('members.makeAdmin')}
+                            {t('members.reset')}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            disabled={pending}
-                            onClick={() => {
-                              if (confirm(t('members.removeConfirm'))) run(() => api(path(`members/${m.userId}`), { method: 'DELETE' }), t('members.removed'));
-                            }}
-                          >
-                            {t('members.remove')}
-                          </Button>
-                        </>
-                      )}
-                    </td>
-                  )}
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={pending}
+                          onClick={() => {
+                            if (confirm(t('members.makeAdminConfirm', { email: m.email ?? '' }))) run(() => api(path(`members/${m.userId}/admin`), { method: 'POST' }), t('members.madeAdmin'));
+                          }}
+                        >
+                          {t('members.makeAdmin')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={pending}
+                          onClick={() => {
+                            if (confirm(t('members.removeConfirm'))) run(() => api(path(`members/${m.userId}`), { method: 'DELETE' }), t('members.removed'));
+                          }}
+                        >
+                          {t('members.remove')}
+                        </Button>
+                      </>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

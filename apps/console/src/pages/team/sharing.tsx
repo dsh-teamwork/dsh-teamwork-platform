@@ -1,11 +1,13 @@
 /**
- * Sharing and review (`/teams/{teamId}/sharing`): members submit presets and
- * plugin packages, and an admin approves the exact contents before the team
- * gets them. The page opens on what needs the reader — the review queue for an
- * admin, their own submissions for a member — with the other view one tab
- * away. Submitting a preset or a plugin happens in a dialog; each submission
- * is a row that opens to show, field by field, what it would change
- * (components/team/config-diff.tsx), and the actions its state allows.
+ * Submissions and review: members submit presets and plugin packages, and an
+ * admin approves the exact contents before the team gets them. One page in two
+ * places (ADR 0042): under Work, `/teams/{teamId}/submissions` is the reader's
+ * own submissions and where they send new ones; under Team management,
+ * `/teams/{teamId}/sharing` is the admin's review queue, opening on what
+ * waits, with the team's whole history one tab away. Submitting a preset or a
+ * plugin happens in a dialog; each submission is a row that opens to show,
+ * field by field, what it would change (components/team/config-diff.tsx), and
+ * the actions its state allows.
  */
 
 import { ChevronRight, FileJson, Layers, Package, Puzzle, Upload } from 'lucide-react';
@@ -43,20 +45,20 @@ interface Target {
 
 const PAGE = 50;
 
-export function TeamSharingPage() {
+export function TeamSharingPage({ view }: { view: 'mine' | 'review' }) {
   const { team } = useTeam();
-  return <Sharing key={team.id} team={team} />;
+  return <Sharing key={`${team.id}-${view}`} team={team} review={view === 'review'} />;
 }
 
-function Sharing({ team }: { team: Team }) {
+function Sharing({ team, review }: { team: Team; review: boolean }) {
   const t = useTranslations('team.sharing');
+  const tn = useTranslations('team.nav');
   const word = useTeamError();
   const { reloadSummary } = useTeam();
-  const admin = team.role === 'admin';
-  // An admin opens on what waits for them; a member on everything they sent.
-  const [tab, setTab] = useState<'pending' | 'all'>(admin ? 'pending' : 'all');
+  // The review queue opens on what waits; one's own submissions on everything sent.
+  const [tab, setTab] = useState<'pending' | 'all'>(review ? 'pending' : 'all');
   const [offset, setOffset] = useState(0);
-  const rows = useApi<Submission[]>(`teams/${team.id}/submissions?offset=${offset}${tab === 'pending' ? '&state=pending' : ''}`);
+  const rows = useApi<Submission[]>(`teams/${team.id}/submissions?offset=${offset}${tab === 'pending' ? '&state=pending' : ''}${review ? '' : '&mine=true'}`);
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
   // A decision or a submission changes what waits for review, so the sidebar's dot reads again too.
   const reload = () => Promise.all([rows.reload(), configs.reload(), reloadSummary()]);
@@ -65,28 +67,30 @@ function Sharing({ team }: { team: Team }) {
   const failed = (!rows.data && rows.error) || (!configs.data && configs.error);
   if (failed) return <Failure message={word(failed)} />;
   const names = new Map((configs.data ?? []).map((c) => [c.id, c.name]));
-  const tabs = admin ? (['pending', 'all'] as const) : (['all', 'pending'] as const);
+  const tabs = review ? (['pending', 'all'] as const) : (['all', 'pending'] as const);
 
   return (
     <>
       <PageHeader
-        title={t('title')}
-        description={admin ? t('adminHint') : t('memberHint')}
+        title={tn(review ? 'sharing' : 'submissions')}
+        description={review ? t('adminHint') : t('memberHint')}
         action={
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setDialog({ kind: 'plugin' })}>
-              <Upload />
-              {t('uploadPlugin')}
-            </Button>
-            <Button onClick={() => setDialog({ kind: 'preset' })}>
-              <FileJson />
-              {t('submitPreset')}
-            </Button>
-          </div>
+          !review && (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setDialog({ kind: 'plugin' })}>
+                <Upload />
+                {t('uploadPlugin')}
+              </Button>
+              <Button onClick={() => setDialog({ kind: 'preset' })}>
+                <FileJson />
+                {t('submitPreset')}
+              </Button>
+            </div>
+          )
         }
       />
 
-      <div role="tablist" aria-label={t('title')} className="flex w-fit rounded-lg border p-0.5">
+      <div role="tablist" aria-label={tn(review ? 'sharing' : 'submissions')} className="flex w-fit rounded-lg border p-0.5">
         {tabs.map((key) => (
           <button
             key={key}
@@ -99,7 +103,7 @@ function Sharing({ team }: { team: Team }) {
             }}
             className={cn('rounded-md px-3 py-1.5 text-sm', tab === key ? 'bg-secondary font-medium' : 'text-muted-foreground hover:text-foreground')}
           >
-            {t(key === 'pending' ? 'tabPending' : admin ? 'tabAll' : 'tabMine')}
+            {t(key === 'pending' ? 'tabPending' : review ? 'tabAll' : 'tabMine')}
           </button>
         ))}
       </div>

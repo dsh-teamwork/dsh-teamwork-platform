@@ -130,9 +130,19 @@ type Host struct {
 	AddTeamPage func(TeamPage) error
 }
 
+// TeamPage is an edition's entry in a team's console (ADR 0042): a fixed
+// absolute path prefix, to which the console appends the team id, its label
+// in each locale, which of the console's two groups it joins, and which teams
+// see it. It is navigation, never a permission: the edition's own API decides.
 type TeamPage struct {
 	Path   string            `json:"path"`
 	Labels map[string]string `json:"labels"`
+	// Audience is "work", shown to every member of the team, or "admin",
+	// shown under team management to the team's admin alone.
+	Audience string `json:"audience"`
+	// Visible decides, for one team and one person, whether the entry shows;
+	// nil shows it in every team. It runs on each read of the team.
+	Visible func(ctx context.Context, teamID, userID string) (bool, error) `json:"-"`
 }
 
 // TeamChange identifies a real committed transition, never a browser claim.

@@ -238,7 +238,8 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		Users:             NewUsers(client), Env: env,
 		WithTeamTx: meter.WithTeamTx,
 		AddTeamPage: func(page edition.TeamPage) error {
-			if !regexp.MustCompile(`^/[a-z][a-z0-9/-]*/$`).MatchString(page.Path) || len(page.Path) > 100 || len(page.Labels) != 2 {
+			if !regexp.MustCompile(`^/[a-z][a-z0-9/-]*/$`).MatchString(page.Path) || len(page.Path) > 100 || len(page.Labels) != 2 ||
+				(page.Audience != "work" && page.Audience != "admin") {
 				return errors.New("invalid edition team page")
 			}
 			labels := map[string]string{}
@@ -253,7 +254,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 					return errors.New("duplicate edition team page")
 				}
 			}
-			srv.TeamPages = append(srv.TeamPages, edition.TeamPage{Path: page.Path, Labels: labels})
+			srv.TeamPages = append(srv.TeamPages, edition.TeamPage{Path: page.Path, Labels: labels, Audience: page.Audience, Visible: page.Visible})
 			return nil
 		},
 		ResolveFundingUsage: meter.ResolveFunding,

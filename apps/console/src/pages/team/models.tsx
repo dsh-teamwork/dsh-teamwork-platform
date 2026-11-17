@@ -2,8 +2,9 @@
  * A team's models page (`/teams/{teamId}/models`). An admin connects a
  * provider by picking it from `PROVIDER_CATALOG` and pasting its key, or by
  * entering an OpenAI-compatible address by hand, then reads the provider's
- * model list and publishes the ones the team should use. Members see the team
- * models only: never an address or a key.
+ * model list and publishes the ones the team should use. It is Team
+ * management's (ADR 0042); a member reads the team's models, never an address
+ * or a key, in Team resources.
  */
 
 import { KeyRound, Plus } from 'lucide-react';
@@ -62,28 +63,26 @@ function freeModelName(name: string, provider: string, taken: Set<string>) {
 
 export function TeamModelsPage() {
   const { team } = useTeam();
-  const admin = team.role === 'admin';
   const word = useTeamError();
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
-  const providers = useApi<Provider[]>(admin ? `teams/${team.id}/providers` : null);
-  const failed = (!configs.data && configs.error) || (admin && !providers.data && providers.error);
+  const providers = useApi<Provider[]>(`teams/${team.id}/providers`);
+  const failed = (!configs.data && configs.error) || (!providers.data && providers.error);
   if (failed) return <Failure message={word(failed)} />;
-  if (!configs.data || (admin && !providers.data)) return null;
+  if (!configs.data || !providers.data) return null;
   const reload = () => Promise.all([configs.reload(), providers.reload()]);
-  return <Models team={team} configs={configs.data} providers={providers.data ?? []} reload={reload} />;
+  return <Models team={team} configs={configs.data} providers={providers.data} reload={reload} />;
 }
 
 interface Props {
   team: Team;
   configs: TeamConfig[];
-  /** The team's providers; empty for a member, who does not see them. */
+  /** The team's providers, with their addresses and whether a key is set. */
   providers: Provider[];
   reload: Reload;
 }
 
 function Models({ team, configs, providers, reload }: Props) {
   const t = useTranslations('team.models');
-  const admin = team.role === 'admin';
   const models = configs.filter((c): c is ModelConfig => c.kind === 'model');
   const usedBy = (id: string) => configs.filter((c) => c.kind === 'preset' && c.data.modelConfigId === id);
   // Which provider the dialog connects or adds models to: `true` for a new one.
@@ -93,18 +92,16 @@ function Models({ team, configs, providers, reload }: Props) {
     <>
       <PageHeader
         title={t('title')}
-        description={admin ? t('descriptionAdmin') : t('descriptionMember')}
+        description={t('description')}
         action={
-          admin && (
-            <Button onClick={() => setAdding(true)}>
-              <Plus />
-              {t('addProvider')}
-            </Button>
-          )
+          <Button onClick={() => setAdding(true)}>
+            <Plus />
+            {t('addProvider')}
+          </Button>
         }
       />
 
-      {admin && providers.length > 0 && (
+      {providers.length > 0 && (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {providers.map((p) => (
             <ProviderCard key={p.id} teamId={team.id} reload={reload} provider={p} count={models.filter((m) => m.data.provider === p.name).length} onAddModels={() => setAdding(p)} />
@@ -119,13 +116,11 @@ function Models({ team, configs, providers, reload }: Props) {
         </div>
         {models.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-4 py-10 text-center text-sm text-muted-foreground">
-            {admin ? t('emptyAdmin') : t('emptyMember')}
-            {admin && (
-              <Button variant="outline" onClick={() => setAdding(true)}>
-                <Plus />
-                {t('addProvider')}
-              </Button>
-            )}
+            {t('empty')}
+            <Button variant="outline" onClick={() => setAdding(true)}>
+              <Plus />
+              {t('addProvider')}
+            </Button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -133,7 +128,7 @@ function Models({ team, configs, providers, reload }: Props) {
               <thead>
                 <tr className="border-b bg-muted text-left text-xs text-muted-foreground">
                   <th className="px-4 py-2.5 font-medium">{t('name')}</th>
-                  {admin && <th className="px-4 py-2.5 font-medium">{t('route')}</th>}
+                  <th className="px-4 py-2.5 font-medium">{t('route')}</th>
                   <th className="px-4 py-2.5 font-medium whitespace-nowrap">{t('context')}</th>
                   <th className="px-4 py-2.5 font-medium whitespace-nowrap">{t('maxOutput')}</th>
                   <th className="px-4 py-2.5 font-medium whitespace-nowrap">{t('usedBy')}</th>
@@ -142,7 +137,7 @@ function Models({ team, configs, providers, reload }: Props) {
               </thead>
               <tbody>
                 {models.map((m) => (
-                  <ModelRow key={m.id} teamId={team.id} reload={reload} model={m} admin={admin} usedBy={usedBy(m.id).map((p) => p.name)} />
+                  <ModelRow key={m.id} teamId={team.id} reload={reload} model={m} usedBy={usedBy(m.id).map((p) => p.name)} />
                 ))}
               </tbody>
             </table>
@@ -150,7 +145,7 @@ function Models({ team, configs, providers, reload }: Props) {
         )}
       </Card>
 
-      {admin && adding && (
+      {adding && (
         <ConnectDialog
           teamId={team.id}
           reload={reload}
@@ -215,18 +210,16 @@ function Mark({ text }: { text: string }) {
   return <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-bold text-muted-foreground">{text}</span>;
 }
 
-function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; reload: Reload; model: ModelConfig; admin: boolean; usedBy: string[] }) {
+function ModelRow({ teamId, reload, model, usedBy }: { teamId: string; reload: Reload; model: ModelConfig; usedBy: string[] }) {
   const t = useTranslations('team.models');
   const { pending, run } = useMutation(reload);
   const [editing, setEditing] = useState(false);
   return (
     <tr className="border-b last:border-b-0">
       <td className="px-4 py-3 font-medium">{model.name}</td>
-      {admin && (
-        <td className="px-4 py-3 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
-          {model.data.provider} / {model.data.model}
-        </td>
-      )}
+      <td className="px-4 py-3 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
+        {model.data.provider} / {model.data.model}
+      </td>
       <td className="px-4 py-3 tabular-nums">{tokens(model.data.contextWindow)}</td>
       <td className="px-4 py-3 tabular-nums">{tokens(model.data.maxTokens)}</td>
       <td className="px-4 py-3">
@@ -243,8 +236,8 @@ function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; re
         )}
       </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">
-        <ModelRateButton teamId={teamId} configId={model.id} name={model.name} admin={admin} />
-        {admin && <>
+        <ModelRateButton teamId={teamId} configId={model.id} name={model.name} admin />
+        <>
           {!model.owner && <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
             {t('edit')}
           </Button>}
@@ -261,7 +254,7 @@ function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; re
             {t('remove')}
           </Button>
           {editing && <EditModelDialog teamId={teamId} reload={reload} model={model} onClose={() => setEditing(false)} />}
-        </>}
+        </>
       </td>
     </tr>
   );

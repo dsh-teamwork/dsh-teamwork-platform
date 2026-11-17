@@ -25,9 +25,8 @@ export function TeamBudgetsPage() {
   const t = useTranslations('budgets');
   const word = useTeamError();
   const format = useFormatter();
-  const admin = team.role === 'admin';
   const data = useApi<Budgets>(`teams/${team.id}/budgets`);
-  const providers = useApi<Provider[]>(admin ? `teams/${team.id}/providers` : null);
+  const providers = useApi<Provider[]>(`teams/${team.id}/providers`);
   const notices = useApi<Schemas['BudgetNotice'][]>(`teams/${team.id}/budgets/notices`);
   const resend = useMutation(() => Promise.all([notices.reload(), reloadSummary()]));
   const windows = data.data?.windows ?? [];
@@ -35,29 +34,29 @@ export function TeamBudgetsPage() {
   const names = new Map(team.members.map((m) => [m.userId, m.email || m.userId]));
   return (
     <>
-      <PageHeader title={t('title')} description={t(admin ? 'descriptionAdmin' : 'descriptionMember')} action={
+      <PageHeader title={t('title')} description={t('description')} action={
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => void Promise.all([data.reload(), notices.reload()])}><RefreshCw />{t('refresh')}</Button>
-          {admin && <Button onClick={() => setEditing('new')}><Plus />{t('add')}</Button>}
+          <Button onClick={() => setEditing('new')}><Plus />{t('add')}</Button>
         </div>
       } />
       {!!data.error && <p role="alert" className="text-sm text-destructive">{word(data.error)}</p>}
       {!data.data ? !data.error && <p className="text-sm text-muted-foreground">{t('loading')}</p> : data.data.policies.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted-foreground">{t(admin ? 'emptyAdmin' : 'emptyMember')}</Card>
+        <Card className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</Card>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {data.data.policies.map((policy) => {
             const scope = policy.scope === 'default_member' ? 'member' : policy.scope;
             const subject = policy.scope === 'default_member' ? me : policy.subjectId;
             const window = windows.find((w) => w.scope === scope && w.subjectId === subject && w.period === policy.period);
-            const defaultForAll = admin && policy.scope === 'default_member';
+            const defaultForAll = policy.scope === 'default_member';
             return <Card key={policy.id} className="flex flex-col gap-4 p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="font-semibold">{t(`scopes.${policy.scope}`)}{policy.subjectId && ` · ${names.get(policy.subjectId) ?? policy.subjectId}`}</h2>
                   <p className="mt-1 text-xs text-muted-foreground">{t(`periods.${policy.period}`)} · {policy.activeTimezone}</p>
                 </div>
-                {admin && <Button variant="ghost" size="sm" onClick={() => setEditing(policy)}>{t('edit')}</Button>}
+                <Button variant="ghost" size="sm" onClick={() => setEditing(policy)}>{t('edit')}</Button>
               </div>
               {policy.inheritsDefault ? <p className="text-sm text-muted-foreground">{t('inherits')}</p> : !policy.enabled ? <p className="text-sm text-muted-foreground">{t('disabled')}</p> : (
                 <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
@@ -76,7 +75,7 @@ export function TeamBudgetsPage() {
         </div>
       )}
       <p className="text-xs leading-relaxed text-muted-foreground">{t('rules')}</p>
-      {admin && windows.some((w) => w.scope === 'member') && <Card className="overflow-hidden">
+      {windows.some((w) => w.scope === 'member') && <Card className="overflow-hidden">
         <div className="border-b px-4 py-3"><h2 className="text-sm font-semibold">{t('memberUsage')}</h2><p className="mt-1 text-xs text-muted-foreground">{t('memberUsageHint')}</p></div>
         <div className="overflow-x-auto"><table className="w-full whitespace-nowrap text-left text-sm">
           <thead className="bg-muted text-xs text-muted-foreground"><tr>{(['member', 'period', 'spent', 'reserved', 'remaining', 'resetColumn'] as const).map((key) => <th key={key} className="px-4 py-3 font-medium">{t(key)}</th>)}</tr></thead>
@@ -95,11 +94,11 @@ export function TeamBudgetsPage() {
             <td className="px-4 py-3">{names.get(notice.recipientId) ?? t('formerMember')}</td>
             <td className="px-4 py-3 tabular-nums">{notice.threshold}%</td>
             <td className="px-4 py-3">{t(`noticeStates.${notice.state}`)}</td>
-            <td className="px-4 py-3 text-right">{admin && notice.state === 'failed' && <Button size="sm" variant="ghost" disabled={resend.pending} onClick={() => void resend.run(() => api(`teams/${team.id}/budgets/notices/${notice.id}/retry`, { method: 'POST', body: {} }), t('retryQueued'))}>{t('retry')}</Button>}</td>
+            <td className="px-4 py-3 text-right">{notice.state === 'failed' && <Button size="sm" variant="ghost" disabled={resend.pending} onClick={() => void resend.run(() => api(`teams/${team.id}/budgets/notices/${notice.id}/retry`, { method: 'POST', body: {} }), t('retryQueued'))}>{t('retry')}</Button>}</td>
           </tr>)}
         </tbody></table></div>
       </Card>}
-      {admin && editing && <BudgetDialog key={editing === 'new' ? 'new' : editing.id} current={editing === 'new' ? null : editing} policies={data.data?.policies ?? []} providers={providers.data ?? []} reload={() => Promise.all([data.reload(), reloadSummary()])} close={() => setEditing(null)} />}
+      {editing && <BudgetDialog key={editing === 'new' ? 'new' : editing.id} current={editing === 'new' ? null : editing} policies={data.data?.policies ?? []} providers={providers.data ?? []} reload={() => Promise.all([data.reload(), reloadSummary()])} close={() => setEditing(null)} />}
     </>
   );
 }
