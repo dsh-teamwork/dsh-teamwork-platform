@@ -51,7 +51,8 @@ func New(t *testing.T, name string, extra ...db.Set) *DB {
 	var raw string
 	switch name {
 	case "sqlite":
-		raw = "sqlite://" + filepath.ToSlash(filepath.Join(t.TempDir(), "db.sqlite"))
+		// Escaped: a subtest's directory can hold a #, which a URL reads as its fragment.
+		raw = "sqlite://" + (&url.URL{Path: filepath.ToSlash(filepath.Join(t.TempDir(), "db.sqlite"))}).EscapedPath()
 	case "postgres", "mysql":
 		server := os.Getenv("TEST_" + strings.ToUpper(name) + "_URL")
 		if server == "" {

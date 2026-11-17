@@ -6,6 +6,8 @@ func TestResolve(t *testing.T) {
 	cases := []struct{ url, dialect, dsn string }{
 		{"", "sqlite3", "file:/data/db.sqlite?" + SQLitePragmas},
 		{"sqlite:///srv/x.sqlite", "sqlite3", "file:/srv/x.sqlite?" + SQLitePragmas},
+		// A ? or # in the path is the file's name, not the URI's query or fragment.
+		{"sqlite:///tmp/Test%23a%3Fb/x.sqlite", "sqlite3", "file:/tmp/Test%23a%3Fb/x.sqlite?" + SQLitePragmas},
 		{"postgres://u:p@h:5432/d?sslmode=disable", "postgres", "postgres://u:p@h:5432/d?sslmode=disable"},
 		{"mysql://u:p%40ss@h/d", "mysql", "u:p@ss@tcp(h:3306)/d?charset=utf8mb4&loc=UTC&parseTime=true"},
 		{"mysql://app%40svc@h/d", "mysql", "app@svc@tcp(h:3306)/d?charset=utf8mb4&loc=UTC&parseTime=true"},
