@@ -5,13 +5,21 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
-## 2026-11-17 — Presets are listed as rows, a plugin pin needs only its package, and the landing terminal stays dark
+## 2026-11-17 — Presets are listed as rows, and a plugin pin needs only its package
 
-- **What:** The console's presets are one list of rows instead of two columns of cards, as `docs/design.md` asks of lists; the templates below stay cards. Pinning a plugin asks for the npm package and version first, and its name defaults to the package. The landing page's example terminal is a raised dark surface in the dark theme instead of a white block.
-- **Why:** Uneven card heights, a name field that was easy to fill with the wrong thing, and an inverted block on a dark page.
+- **What:** The console's presets are one list of rows instead of two columns of cards, as `docs/design.md` asks of lists; the templates below stay cards. Pinning a plugin asks for the npm package and version first, and its name defaults to the package.
+- **Why:** Uneven card heights, and a name field that was easy to fill with the wrong thing.
 - **Breaking:** None.
 - **Upgrade:** Nothing.
-- **Refs:** `apps/console/src/pages/team/presets.tsx`, `apps/console/src/pages/team/plugins.tsx`, `apps/console/src/public/home.tsx`.
+- **Refs:** `apps/console/src/pages/team/presets.tsx`, `apps/console/src/pages/team/plugins.tsx`.
+
+## 2026-11-17 — The landing page's first screen: three pillars, a diagram, and real screens below
+
+- **What:** The hero drops its two buttons and its install card. On the left: one sentence, the three pillars (collaborate, govern, everywhere), *Create a team* with the plugin's package to copy, and a line to the install guide. On the right: a left-to-right diagram of how a team uses DSH Teamwork (`apps/console/src/public/topology.tsx`). Real captures of DSH Desktop's Teamwork panel, the web console, the phone app, the review comparison and the usage page, one set per language in `apps/console/public/home/`, now illustrate the *Everywhere*, *Collaborate* and *Govern* sections, replacing their text-only cells and the terminal transcript.
+- **Why:** The first screen repeated the top bar's actions, buried installing, and showed no product; screens crowded into it were too small to read.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/public/home.tsx`, `apps/console/src/public/topology.tsx`, `docs/design.md`.
 
 ## 2026-11-17 — The console names its terms and offers only what the instance can do
 

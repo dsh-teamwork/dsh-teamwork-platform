@@ -86,19 +86,19 @@
     "title": "从超级个体，到超级团队。",
     "tagline": "从超级个体到超级团队：DSH Teamwork 把 DeepSeek Harness 变成团队的 Agent 协作空间。",
     "eyebrow": "DeepSeek Harness 团队版",
-    "lede": "DSH 让一个人顶得上一支小队。DSH Teamwork 让整个团队一起用起来：共享的预设、插件和团队助理，一份大家共同遵守的预算，每天的工作沉淀为团队自己的能力。",
+    "lede": "DSH 让一个人顶得上一支小队。DSH Teamwork 让整个团队一起用起来。",
     "createTeam": "创建团队",
-    "selfHostCta": "自己部署",
     "openConsole": "打开团队控制台",
     "install": {
-      "desktop": "在 DSH 桌面版安装：Plugins → Add plugin →",
+      "plugin": "插件",
       "copy": "复制",
-      "more": "CLI 安装、登录与自托管服务器"
+      "hint": "在 DSH 桌面版打开 Plugins → Add plugin 粘贴安装。命令行和自托管见",
+      "more": "安装指南"
     },
     "nav": {
       "label": "页面章节",
       "menu": "菜单",
-      "everywhere": "全平台",
+      "everywhere": "多端",
       "collaborate": "协作",
       "govern": "治理",
       "assets": "团队资产",
@@ -123,22 +123,45 @@
     },
     "everywhere": {
       "depth": "−10 m",
-      "label": "全平台 · 在工作发生的地方",
-      "title": "同一个团队，出现在你工作的每个地方。",
-      "lede": "Teamwork 不替代 DSH，而是跟着它走。团队配置送达终端、浏览器和手机，下一步还有在云上运行的 Agent。",
+      "label": "多端 · 一个团队，三个入口",
+      "title": "每个人从自己顺手的地方进来。",
+      "lede": "同一个团队、同一套配置和预算，分到最适合的端：成员在 DSH 里干活，管理员在网页里管，人人都能在手机上跟进。",
       "status": {
-        "available": "已上线",
-        "hosted": "托管服务",
         "coming": "即将推出"
       },
-      "terminalTitle": "终端里的 DSH",
-      "terminalBody": "安装 Teamwork 插件并登录一次。团队的模型、预设和插件自动同步，与你自己的配置并存。",
-      "consoleTitle": "网页团队控制台",
-      "consoleBody": "管理员接入模型、发布预设和插件、审核成员分享的内容、设置预算。",
-      "mobileTitle": "移动端 App",
-      "mobileBody": "在手机上驱动你自己电脑上的 DSH：用团队预设开会话、跟进进度、处理授权请求。全程端到端加密。",
-      "cloudTitle": "云端 DSH",
-      "cloudBody": "云端会话和团队机器人，运行在团队自己的云电脑上，可以从网页、App 或你的 DSH 发起。"
+      "desktop": {
+        "who": "成员",
+        "title": "DSH 桌面",
+        "alt": "DSH 桌面版里的 Teamwork 面板，列出团队助理和三个团队预设",
+        "item1Title": "团队的配置，一键用上",
+        "item1Body": "团队预设、团队模型就在 Teamwork 面板里，点「新建会话」直接开工；在终端里同样可用。",
+        "item2Title": "插件版本全队一致",
+        "item2Body": "只装团队批准的版本，换电脑也一样。",
+        "item3Title": "好用的预设分享给团队",
+        "item3Body": "在面板里提交，管理员审核后全队同步。"
+      },
+      "console": {
+        "who": "管理员",
+        "title": "网页控制台",
+        "alt": "团队控制台概览：一条待审核提交，调用次数、积分和预算",
+        "item1Title": "一处发布，全队生效",
+        "item1Body": "接入提供商、发布模型和预设，成员下次同步就拿到。",
+        "item2Title": "待处理一眼可见",
+        "item2Body": "待审核的提交、预算余量、近 30 天的调用都在概览。",
+        "item3Title": "成员和权限",
+        "item3Body": "邀请成员、转交管理员，一个人可以在多个团队。"
+      },
+      "phone": {
+        "who": "托管版",
+        "title": "手机",
+        "alt": "手机 App 的会话列表，一个会话在等你批准",
+        "item1Title": "不在电脑前也不耽误",
+        "item1Body": "DSH 等你批准时推送通知，点开就能「允许」。",
+        "item2Title": "看进度、接着聊",
+        "item2Body": "会话正在做哪一步，手机上都看得到，也能接着发消息。",
+        "item3Title": "只连你自己的电脑",
+        "item3Body": "端到端加密，服务器看不到会话内容。"
+      }
     },
     "collaborate": {
       "depth": "−50 m",
@@ -153,12 +176,7 @@
       "assistantBody": "每个新团队自带一个。在 DSH 里问它团队有哪些资源、用量、预算、成员，或者有什么在等审核。",
       "reviewTitle": "分享与审核",
       "reviewBody": "任何成员都可以从自己的 DSH 提交预设或插件。管理员核对确切内容后批准，团队才会收到。",
-      "terminalCaption": "DSH 终端 · 示例",
-      "termConfirm": "在浏览器中确认授权…",
-      "termSigned": "已登录 acme-infra",
-      "termSynced": "已同步：2 个团队模型、3 个预设、1 个插件",
-      "termSession": "已用团队预设 pr-review 开启新会话",
-      "termNoKey": "本机未保存任何提供商密钥"
+      "alt": "分享与审批：一个新预设的逐字段对比，带「批准并发布」和「拒绝」"
     },
     "govern": {
       "depth": "−200 m",
@@ -174,7 +192,8 @@
       "membersTitle": "每次请求都核对身份",
       "membersBody": "每个请求都会重新读取调用者的成员身份。移除某人，他的下一次请求就会被拒绝。",
       "promise": "调用方发来的任何内容，都指定不了地址、请求头或密钥。",
-      "promiseNote": "模型在你的团队内解析；用哪个提供商、哪把密钥，由服务器决定。"
+      "promiseNote": "模型在你的团队内解析；用哪个提供商、哪把密钥，由服务器决定。",
+      "alt": "使用量：按成员和模型列出每次调用的 Token 与积分"
     },
     "assets": {
       "depth": "−1000 m",
@@ -225,6 +244,81 @@
       "label": "开始",
       "title": "让一群超级个体，成为一支超级团队。",
       "lede": "创建团队，发布第一个预设，邀请一起工作的人。他们下次同步，就加入进来了。"
+    },
+    "pillars": {
+      "collaborate": {
+        "name": "协作",
+        "body": "共享预设、模型和插件，成员一键用上；提交经审核才发布。"
+      },
+      "govern": {
+        "name": "治理",
+        "body": "一份团队预算，按人、按模型看清每一次调用。"
+      },
+      "everywhere": {
+        "name": "多端",
+        "body": "桌面里干活，网页里管理，手机上随时批准。"
+      }
+    },
+    "topology": {
+      "label": "从左到右：成员在 DSH 桌面、终端和手机上，管理员在网页控制台，都连到 DSH Teamwork；它同步团队配置，把模型调用转发给 DeepSeek、OpenAI、通义千问等上游，密钥留在服务器。云端 DSH 即将推出。",
+      "columns": {
+        "people": "团队成员 · 各自的端",
+        "hub": "团队中心",
+        "upstream": "上游与云端"
+      },
+      "people": {
+        "desktop": {
+          "who": "Maya · 成员",
+          "where": "在 DSH 桌面写代码"
+        },
+        "terminal": {
+          "who": "Alex · 成员",
+          "where": "在终端跑 DSH"
+        },
+        "phone": {
+          "who": "Priya · 成员",
+          "where": "在手机上批准"
+        },
+        "admin": {
+          "who": "Sam · 管理员",
+          "where": "在网页控制台管团队"
+        }
+      },
+      "edges": {
+        "sync": "同步 · 调用模型",
+        "approve": "批准 · 看进度",
+        "govern": "发布 · 审核 · 预算",
+        "forward": "转发调用",
+        "keys": "密钥不出服务器"
+      },
+      "hub": {
+        "tagline": "一处治理 · 全队同步",
+        "models": "团队模型",
+        "presets": "预设 · 插件",
+        "review": "审核 · 版本",
+        "budgets": "预算 · 用量",
+        "members": "成员 · 权限",
+        "hosted": "托管服务",
+        "selfHosted": "或你自己的服务器"
+      },
+      "providers": {
+        "title": "上游模型",
+        "body": "按团队接入，可多家",
+        "deepseek": "DeepSeek",
+        "openai": "OpenAI",
+        "qwen": "通义千问",
+        "moonshot": "Kimi",
+        "zhipu": "智谱 GLM",
+        "doubao": "豆包",
+        "minimax": "MiniMax",
+        "siliconflow": "硅基流动",
+        "openrouter": "OpenRouter",
+        "custom": "自定义接入"
+      },
+      "cloud": {
+        "who": "云端 DSH",
+        "where": "即将推出"
+      }
     }
   },
   "account": {
