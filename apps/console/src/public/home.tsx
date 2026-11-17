@@ -30,7 +30,7 @@ import { Sea } from './sea';
  */
 
 /** The language picker: POST /api/locale, then the page again in that language. */
-function LocalePicker({ locale, label, names }: { locale: Locale; label: string; names: (l: Locale) => string }) {
+export function LocalePicker({ locale, label, names }: { locale: Locale; label: string; names: (l: Locale) => string }) {
   return (
     <label className="flex items-center gap-2 text-sm text-muted-foreground">
       {label}
@@ -109,48 +109,28 @@ function Status({ status, label }: { status: 'available' | 'hosted' | 'coming'; 
 
 /** The plugin's npm name: what DSH installs to join a team (the plugin's own README, "Install"). */
 const PLUGIN = '@dsh-teamwork/dsh-teamwork';
-const CLI_INSTALL = `dsh plugin --profile web add ${PLUGIN}`;
-
-/** A command or name to copy; client.ts makes the button copy its `data-copy`. */
-function Copyable({ text, label }: { text: string; label: string }) {
-  return (
-    <span className="flex min-w-0 items-center gap-1 rounded-md bg-muted py-1 pr-1 pl-2.5 font-mono text-[13px]">
-      <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{text}</code>
-      <button type="button" data-copy={text} data-copied={label} className="shrink-0 rounded px-2 py-0.5 font-sans text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
-        {label}
-      </button>
-    </span>
-  );
-}
 
 /**
- * How a member's DSH joins: install the plugin (the desktop app's plugin
- * manager, or the CLI into the profile they run), then sign in from its panel.
- * The server named is this instance's own (`%APP_URL%`, written by the server).
+ * How a member's DSH joins, in one line: DSH Desktop's plugin manager and the
+ * package to enter, with a copy button (wired by client.ts), then a link to
+ * every way to install and sign in (`/docs/install`).
  */
 function Install({ locale }: { locale: Locale }) {
   const t = createTranslator({ locale, messages: locale === 'zh-CN' ? zhCN : en, namespace: 'home' });
   return (
-    <div className="max-w-2xl overflow-hidden rounded-xl ring-1 ring-border">
-      <p className="border-b px-4 py-2.5 text-sm font-semibold">{t('install.title')}</p>
-      <dl className="flex flex-col">
-        <div className="grid gap-2 px-4 py-3 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:items-center">
-          <dt className="text-sm text-muted-foreground">{t('install.desktop')}</dt>
-          <dd className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-sm">{t('install.desktopSteps')}</span>
-            <Copyable text={PLUGIN} label={t('install.copy')} />
-          </dd>
-        </div>
-        <div className="grid gap-2 border-t px-4 py-3 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:items-center">
-          <dt className="text-sm text-muted-foreground">{t('install.cli')}</dt>
-          <dd className="min-w-0">
-            <Copyable text={CLI_INSTALL} label={t('install.copy')} />
-          </dd>
-        </div>
-      </dl>
-      <p className="border-t bg-muted/50 px-4 py-2.5 text-sm text-muted-foreground">
-        {t.rich('install.then', { server: SITE_ORIGIN, code: (c) => <code className="font-mono text-foreground">{c}</code> })}
+    <div className="flex flex-col gap-2">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-muted-foreground">
+        {t('install.desktop')}
+        <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted py-0.5 pr-0.5 pl-2 font-mono text-[13px] text-foreground">
+          <code className="min-w-0 overflow-x-auto whitespace-nowrap">{PLUGIN}</code>
+          <button type="button" data-copy={PLUGIN} className="shrink-0 rounded px-1.5 py-0.5 font-sans text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+            {t('install.copy')}
+          </button>
+        </span>
       </p>
+      <a href="/docs/install" className="w-fit text-sm font-medium underline-offset-4 hover:underline">
+        {t('install.more')} →
+      </a>
     </div>
   );
 }
@@ -178,13 +158,14 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
 
   // Signed out, the way in is creating a team: sign-in returns to /teams, where that happens.
   const start = signedIn ? { href: '/teams', label: t('openConsole') } : { href: '/sign-in?next=%2Fteams', label: t('createTeam') };
+  // The page's sections, then the documentation.
   const nav = [
-    ['everywhere', 'nav.everywhere'],
-    ['collaborate', 'nav.collaborate'],
-    ['govern', 'nav.govern'],
-    ['assets', 'nav.assets'],
-    ['self-host', 'nav.selfhost'],
-    ['faq', 'nav.faq'],
+    ['#everywhere', 'nav.everywhere'],
+    ['#collaborate', 'nav.collaborate'],
+    ['#govern', 'nav.govern'],
+    ['#assets', 'nav.assets'],
+    ['#self-host', 'nav.selfhost'],
+    ['/docs', 'nav.docs'],
   ] as const;
   const faqs = [1, 2, 3, 4, 5, 6] as const;
 
@@ -202,8 +183,8 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
           {tc('appName')}
         </a>
         <nav aria-label={t('nav.label')} className="hidden gap-6 text-sm text-muted-foreground lg:flex">
-          {nav.map(([id, key]) => (
-            <a key={id} href={`#${id}`} className="hover:text-foreground">
+          {nav.map(([href, key]) => (
+            <a key={href} href={href} className="hover:text-foreground">
               {t(key)}
             </a>
           ))}
@@ -222,8 +203,8 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
               </span>
             </summary>
             <div className="absolute right-0 z-10 mt-2 flex w-56 flex-col rounded-lg border bg-background p-1 shadow-lg">
-              {nav.map(([id, key]) => (
-                <a key={id} href={`#${id}`} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
+              {nav.map(([href, key]) => (
+                <a key={href} href={href} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
                   {t(key)}
                 </a>
               ))}
@@ -395,7 +376,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
                     <a href={communityRepo}>{t('community.repo')}</a>
                   </Button>
                   <Button asChild variant="outline">
-                    <a href={`${communityRepo}#self-hosting`}>{t('community.guide')}</a>
+                    <a href="/docs/self-hosting">{t('community.guide')}</a>
                   </Button>
                 </div>
               </div>
@@ -441,6 +422,9 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
                 <img src="/logo.svg" alt="" width={22} height={22} />
                 {tc('appName')}
               </span>
+              <a href="/docs" className="underline-offset-4 hover:underline">
+                {t('nav.docs')}
+              </a>
               {legal && (
                 <>
                   <a href="/privacy" className="underline-offset-4 hover:underline">

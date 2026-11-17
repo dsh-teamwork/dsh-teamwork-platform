@@ -5,9 +5,17 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Documentation at /docs, and a one-line install on the home page
+
+- **What:** Every instance publishes user documentation at `/docs` in English and Chinese: an overview, installing the plugin (Desktop, CLI and web, signing in, choosing the server, common problems), setting up a team, working in one, the command reference, and running your own server. Pages are Markdown in `apps/console/content/docs/{locale}/`, prerendered with the other public pages and served in the viewer's language like the home page; the sitemap lists them. The home page's first screen now shows one line for installing from DSH Desktop and links to the full guide; its header and footer link the docs, and the self-hosting guide button opens `/docs/self-hosting`. The community edition is no longer described as installable from npx, which is not published.
+- **Why:** Installing the plugin is the step everything else depends on, and it needs more than a first screen can hold.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/public/docs.tsx`, `apps/console/content/docs/`, `server/internal/web/web.go`, `CLAUDE.md` ("Language", "In this repository").
+
 ## 2026-11-17 — The landing page tells the team story; the console's sidebar is grouped
 
-- **What:** The home page is rewritten around "from super individual to super team": what changes when a team shares its agents, every platform the team works on (terminal and web console available, the mobile app on the hosted service, DSH in the cloud marked as coming), collaboration (presets, plugins, the team assistant, share and review), governance (budgets, usage, keys, membership) and, on the deep floor, the team's assets (versions, restore, export). Its primary call is "Create a team", with "Run it yourself" beside it; under them the hero shows how to install the DSH plugin (DSH Desktop's plugin manager, or `dsh plugin --profile web add` for the CLI and web) with copy buttons, then where to sign in, naming the instance's own address. Narrow screens get a section menu. The FAQ no longer says a person can be in one team only, and states where provider keys really live. The team console's sidebar groups its pages into Team assets, Collaboration and Governance, gives each page its own icon, moves the account, password, language and sign-out into one menu, and becomes a sheet on narrow screens.
+- **What:** The home page is rewritten around "from super individual to super team": what changes when a team shares its agents, every platform the team works on (terminal and web console available, the mobile app on the hosted service, DSH in the cloud marked as coming), collaboration (presets, plugins, the team assistant, share and review), governance (budgets, usage, keys, membership) and, on the deep floor, the team's assets (versions, restore, export). Its primary call is "Create a team", with "Run it yourself" beside it. Narrow screens get a section menu. The FAQ no longer says a person can be in one team only, and states where provider keys really live. The team console's sidebar groups its pages into Team assets, Collaboration and Governance, gives each page its own icon, moves the account, password, language and sign-out into one menu, and becomes a sheet on narrow screens.
 - **Why:** The page described only configuration sync, while usage, budgets, reviewed sharing, history and the assistant had shipped; and the flat nine-item sidebar mixed what a team publishes with what it governs.
 - **Breaking:** None.
 - **Upgrade:** Nothing.

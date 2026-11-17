@@ -25,6 +25,10 @@ func build(legal bool) fstest.MapFS {
 		"public/home.zh-CN.html":           page("home.zh-CN"),
 		"public/home.zh-CN.signed-in.html": page("home.zh-CN.signed-in"),
 		"public/opengraph-image.png":       {Data: []byte("\x89PNG")},
+		"public/docs.index.en.html":        page("docs.index.en"),
+		"public/docs.index.zh-CN.html":     page("docs.index.zh-CN"),
+		"public/docs.install.en.html":      page("docs.install.en"),
+		"public/docs.install.zh-CN.html":   page("docs.install.zh-CN"),
 	}
 	if legal {
 		b["public/privacy.html"] = page("privacy")
@@ -147,6 +151,35 @@ func TestLegalPagesOnlyWhenBuilt(t *testing.T) {
 	}
 }
 
+// /docs and /docs/{slug} answer in the viewer's language, like the home page,
+// and a page the build does not hold is not found rather than the console.
+func TestDocsPickTheViewersLanguage(t *testing.T) {
+	cases := []struct {
+		path   string
+		header map[string]string
+		v      *viewer
+		want   string
+	}{
+		{"/docs", nil, nil, "docs.index.en"},
+		{"/docs/install", map[string]string{"Accept-Language": "zh-CN"}, nil, "docs.install.zh-CN"},
+		{"/docs/install", map[string]string{"Accept-Language": "zh-CN"}, &viewer{locale: "en"}, "docs.install.en"},
+	}
+	for _, c := range cases {
+		res := serve(t, handler(build(false), c.v), c.path, c.header)
+		if got := body(t, res); res.StatusCode != 200 || !strings.Contains(got, "<body>"+c.want+"</body>") || strings.Contains(got, "%APP_URL%") {
+			t.Fatalf("%s: %d %s", c.path, res.StatusCode, got)
+		}
+		if res.Header.Get("Vary") != vary {
+			t.Fatalf("%s: Vary %q", c.path, res.Header.Get("Vary"))
+		}
+	}
+	for _, p := range []string{"/docs/missing", "/docs/install/more", "/docs/install.en"} {
+		if res := serve(t, handler(build(false), nil), p, nil); res.StatusCode != http.StatusNotFound {
+			t.Fatalf("%s: %d", p, res.StatusCode)
+		}
+	}
+}
+
 func TestTheShareCard(t *testing.T) {
 	res := serve(t, handler(build(false), nil), "/opengraph-image.png", nil)
 	if res.StatusCode != 200 || res.Header.Get("Content-Type") != "image/png" || body(t, res) != "\x89PNG" {
@@ -201,7 +234,7 @@ func TestCrawlerFiles(t *testing.T) {
 		return body(t, res)
 	}
 	t.Run("lists the public pages and none of the signed-in ones", func(t *testing.T) {
-		want := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n<url>\n<loc>https://example.com</loc>\n</url>\n</urlset>\n"
+		want := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n<url>\n<loc>https://example.com</loc>\n</url>\n<url>\n<loc>https://example.com/docs</loc>\n</url>\n<url>\n<loc>https://example.com/docs/install</loc>\n</url>\n</urlset>\n"
 		if got := sitemap(false); got != want {
 			t.Fatalf("%s", got)
 		}
@@ -213,7 +246,7 @@ func TestCrawlerFiles(t *testing.T) {
 				t.Fatalf("%s is missing %s", got, u)
 			}
 		}
-		if strings.Count(got, "<loc>") != 3 {
+		if strings.Count(got, "<loc>") != 5 {
 			t.Fatalf("%s", got)
 		}
 	})

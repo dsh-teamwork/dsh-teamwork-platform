@@ -18,6 +18,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"slices"
 	"strings"
 )
 
@@ -110,6 +111,9 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.html(w, b)
 			return
 		}
+	case "/docs":
+		s.doc(w, r, "index")
+		return
 	case "/privacy", "/terms":
 		if b, ok := s.pages[clean[1:]+".html"]; ok {
 			s.html(w, b)
@@ -133,6 +137,10 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.files.ServeHTTP(w, r2)
 			return
 		}
+	}
+	if slug, ok := strings.CutPrefix(clean, "/docs/"); ok {
+		s.doc(w, r, slug)
+		return
 	}
 	// A file of the build is served as it is, but never a prerendered page
 	// directly: those still hold the placeholder.
@@ -161,6 +169,23 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.html(w, bytes.Replace(s.index, []byte(`<html lang="en">`), []byte(`<html lang="`+locale+`" data-locale="`+locale+`">`), 1))
 }
 
+// doc answers /docs and /docs/{slug} with the page in the viewer's language
+// (docs.{slug}.{locale}.html, apps/console/src/public/docs.tsx), as the home
+// page picks its own; a page this build does not hold is not found.
+func (s *site) doc(w http.ResponseWriter, r *http.Request, slug string) {
+	profile := ""
+	if s.opts.Viewer != nil {
+		profile, _ = s.opts.Viewer(r)
+	}
+	b, ok := s.pages["docs."+slug+"."+viewerLocale(r, profile)+".html"]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Vary", vary)
+	s.html(w, b)
+}
+
 // vary is every request header that chooses which page an address answers
 // with: the session (a cookie, or a Bearer token), the locale cookie and the
 // browser's languages.
@@ -182,8 +207,8 @@ func robotsGroups() []RobotsGroup {
 }
 
 // crawlerFiles are robots.txt and sitemap.xml, from APP_URL and never the
-// Host header, which a stranger can set. The sitemap lists the home page, and
-// the legal pages where this build published them.
+// Host header, which a stranger can set. The sitemap lists the home page, the
+// documentation, and the legal pages where this build published them.
 func (s *site) crawlerFiles() (robots, sitemap []byte) {
 	var b strings.Builder
 	for _, g := range robotsGroups() {
@@ -202,6 +227,23 @@ func (s *site) crawlerFiles() (robots, sitemap []byte) {
 	robots = []byte(b.String())
 
 	urls := []string{s.opts.AppURL}
+	// Each documentation page once, by its English file: the locale is never in the URL.
+	var docs []string
+	for name := range s.pages {
+		if slug, ok := strings.CutPrefix(name, "docs."); ok {
+			if slug, ok := strings.CutSuffix(slug, ".en.html"); ok {
+				docs = append(docs, slug)
+			}
+		}
+	}
+	slices.Sort(docs)
+	for _, slug := range docs {
+		if slug == "index" {
+			urls = append(urls, s.opts.AppURL+"/docs")
+		} else {
+			urls = append(urls, s.opts.AppURL+"/docs/"+slug)
+		}
+	}
 	for _, p := range legalPages {
 		if _, ok := s.pages[p[1:]+".html"]; ok {
 			urls = append(urls, s.opts.AppURL+p)

@@ -193,6 +193,11 @@ icon set.
   capability only the hosted service offers, or one that is planned, appears
   only with its status beside it (*Hosted service*, *Coming*), never as
   something the reader already has.
+- **The documentation at `/docs` reads like the console.** A sidebar of
+  grouped pages with the selected one marked as in the console, the page in
+  `.prose-document` (the legal pages' type), and "On this page" on wide
+  screens; a code block carries its own copy button
+  (`apps/console/src/public/docs.tsx`).
 - **The console's sidebar is grouped by what a team does**: the overview, then
   *Team assets* (models, presets, plugins), *Collaboration* (review, versions)
   and *Governance* (members, usage, budgets, and an edition's own team pages).

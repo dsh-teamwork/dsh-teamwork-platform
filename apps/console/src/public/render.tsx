@@ -1,6 +1,7 @@
 /**
- * The public pages as static HTML: home in each locale and sign-in state, and
- * the legal pages where the build has them. scripts/prerender.mjs builds this
+ * The public pages as static HTML: home in each locale and sign-in state, the
+ * documentation (`/docs`) in each locale, and the legal pages where the build
+ * has them. scripts/prerender.mjs builds this
  * file for Node and calls `renderPages`; the Go server embeds what it writes
  * and picks a page per request (server/internal/web).
  *
@@ -15,6 +16,7 @@ import { LOCALES, type Locale } from '@/lib/locale';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
 
+import { DOC_PAGES, DocsPage, docPath, loadDoc } from './docs';
 import { HomePage } from './home';
 import { LegalDocument } from './legal-document';
 import { SITE_ORIGIN } from './site';
@@ -96,6 +98,16 @@ export function renderPages(assets: Assets, legal: LegalSources | null): Record<
         </Document>,
       );
     }
+  }
+  // `/docs/install` in Chinese is docs.install.zh-CN.html; `/docs` itself is the `index` page.
+  for (const { locale, slug } of DOC_PAGES) {
+    const doc = loadDoc(locale, slug);
+    const docs = (locale === 'zh-CN' ? zhCN : en).docs.title;
+    pages[`docs.${slug}.${locale}.html`] = page(
+      <Document locale={locale} title={`${doc.title} · ${APP_NAME} ${docs}`} description={doc.description} path={docPath(slug)} assets={assets}>
+        <DocsPage locale={locale} slug={slug} />
+      </Document>,
+    );
   }
   if (legal) {
     const documents = [

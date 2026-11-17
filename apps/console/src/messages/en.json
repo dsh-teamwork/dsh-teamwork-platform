@@ -80,12 +80,9 @@
     "selfHostCta": "Run it yourself",
     "openConsole": "Open team console",
     "install": {
-      "title": "Install the DSH plugin",
-      "desktop": "DSH Desktop",
-      "desktopSteps": "Plugins → Add plugin, then enter:",
-      "cli": "DSH CLI / Web",
+      "desktop": "Install in DSH Desktop: Plugins → Add plugin →",
       "copy": "Copy",
-      "then": "Then open Teamwork in the DSH sidebar and sign in. If its sign-in screen names another server, change it to <code>{server}</code>."
+      "more": "CLI install, sign-in and self-hosted servers"
     },
     "nav": {
       "label": "Sections",
@@ -95,7 +92,7 @@
       "govern": "Govern",
       "assets": "Team assets",
       "selfhost": "Self-host",
-      "faq": "Questions"
+      "docs": "Docs"
     },
     "shift": {
       "depth": "0 m",
@@ -191,7 +188,7 @@
       "hostedTitle": "Hosted service",
       "hostedBody": "Nothing to install: sign in, create a team and invite people. It adds hosted models paid in advance, the mobile app and, next, DSH in the cloud.",
       "openTitle": "Community edition",
-      "openBody": "Apache-2.0: teams, models, presets, plugins, the assistant, review and history, usage and budgets, and the gateway. One program from npx, a download or compose.yaml, on SQLite, Postgres or MySQL.",
+      "openBody": "Apache-2.0: teams, models, presets, plugins, the assistant, review and history, usage and budgets, and the gateway. Docker Compose or a source build, on SQLite, Postgres or MySQL.",
       "repo": "Source on GitHub",
       "guide": "Self-hosting guide"
     },
@@ -844,5 +841,23 @@
     "artifact_mismatch": "Plugin archive integrity check failed.",
     "artifact_not_found": "Plugin artifact is unavailable.",
     "revision_not_found": "Historical version not found."
+  },
+  "docs": {
+    "title": "Docs",
+    "label": "Documentation",
+    "menu": "Pages",
+    "console": "Team console",
+    "home": "Home",
+    "issues": "Report a problem",
+    "copy": "Copy",
+    "onThisPage": "On this page",
+    "pager": "More pages",
+    "previous": "Previous",
+    "next": "Next",
+    "sections": {
+      "start": "Get started",
+      "teams": "Teams",
+      "run": "Run it yourself"
+    }
   }
 }

@@ -200,6 +200,7 @@ if the table and the script disagree, the script is right.
 | --- | --- |
 | `apps/*/src/messages/*.json`, `premium/apps/*/src/messages/*.json`, and an Expo app's `apps/mobile/lib/i18n/locales/*.json` (seed's layout), under `premium/` too | The product ships in `en` and `zh-CN` (`LOCALES` in `@dsh-teamwork/shared`). |
 | `packages/shared/src/locales.ts` | Endonyms: a language picker names each language in itself. |
+| `apps/console/content/docs/zh-CN/*.md` | The published `/docs` site's Chinese pages, beside the English ones in `content/docs/en/`. |
 | Root `README.zh-CN.md`, and the language-switch link in `README.md` | User-facing Chinese getting-started documentation explicitly requested for the public product. Other documentation remains English. |
 
 Exemption covers the **data**, never the file: keys, comments and test names are
@@ -689,6 +690,12 @@ mark is drawn edge to edge on its plate, so here the logos keep the plate
 (rounded) instead of seed's plate-less black and white pair.
 
 **Published mailboxes: `privacy@` and `support@` on the product's root domain, and no others.** `privacy@` takes data requests and account deletion, `support@` everything else; no `hello@`, `legal@` or per-purpose address, and no `mail.` or `send.` subdomain in anything a person reads. The sending service may use a subdomain internally; nobody is told to write to one. A product started from seed writes its own domain in place of `[Product domain]`.
+
+`apps/console/content/docs/` is the product's published `/docs` site, written
+for its users in both languages (`src/public/docs.tsx` lists its pages); it is
+product content, not part of `docs/`, and follows neither the header nor the
+index rule above. A change a user would notice in the plugin, the console or
+self-hosting fixes the page that describes it in the same commit.
 
 The published legal pages belong to the hosted service: where they live, their
 one format and the test that holds them are in `premium/CLAUDE.md`, where that
