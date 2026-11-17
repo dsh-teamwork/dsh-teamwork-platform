@@ -24,9 +24,11 @@ type FundingQuote struct {
 	Rates                          Rates
 }
 
+// FundingAdmission is one call to fund. A shared DSH's call (ADR 0042) has a
+// HostID and no UserID.
 type FundingAdmission struct {
-	RequestID, TeamID, UserID, ConfigID, Reference, Model, RateID string
-	HeldUnits                                                     int64
+	RequestID, TeamID, UserID, HostID, ConfigID, Reference, Model, RateID string
+	HeldUnits                                                             int64
 }
 
 type FundingSettlement struct {
