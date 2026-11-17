@@ -257,7 +257,6 @@
       },
       "connectAdmin": "Send this to new members",
       "connectMember": "Connect your DSH",
-      "connectHint": "Install the DSH Teamwork plugin and check that its server is {server} (set it in the Teamwork panel), then run this command and confirm in the browser; DSH finishes signing in by itself.",
       "copy": "Copy",
       "copied": "Copied",
       "copyFailed": "Could not copy; select the command and copy it yourself.",
@@ -270,7 +269,47 @@
       },
       "presets": "Team presets",
       "all": "See all",
-      "noPresets": "Your team has not published a preset yet."
+      "noPresets": "Your team has not published a preset yet.",
+      "waiting": {
+        "title": "Waiting on you",
+        "none": "Nothing waits on you.",
+        "reviews": "{count, plural, one {# submission waits} other {# submissions wait}} for your review",
+        "reviewsMine": "{count, plural, one {# of your submissions is} other {# of your submissions are}} awaiting review",
+        "limitNear": "{who} is {threshold}% used {period, select, day {today} other {this month}}",
+        "limitReached": "{who} is used up {period, select, day {today} other {this month}}",
+        "unresolved": "{count, plural, one {# model call} other {# model calls}} to resolve",
+        "notices": "{count, plural, one {# budget email} other {# budget emails}} could not be sent",
+        "scope": {
+          "team": "The team budget",
+          "you": "Your budget",
+          "member": "{email}'s budget",
+          "provider": "The {name} provider budget"
+        },
+        "titleMember": "Worth knowing"
+      },
+      "figures": {
+        "calls": "Team calls",
+        "myCalls": "Your calls",
+        "points": "Team points",
+        "myPoints": "Your points",
+        "period": "Last 30 days",
+        "unpriced": "Last 30 days · {count} unpriced not counted",
+        "budget": "Budget left to you",
+        "budgetState": {
+          "unlimited": "No limit",
+          "unconfirmed": "Unconfirmed"
+        },
+        "resets": "Resets {at}",
+        "budgetHint": "Points left under your limits",
+        "members": "Members",
+        "membersAdmin": "In this team",
+        "membersMember": "In this team"
+      },
+      "connectInstall": "Install the DSH Teamwork plugin. <link>How to install</link>",
+      "connectServer": "On Teamwork's sign-in screen, the server should be <code>{server}</code>.",
+      "connectSignIn": "Sign in from the Teamwork panel, or run:",
+      "connectMessage": "Join {team} on DSH Teamwork: install the plugin ({server}/docs/install), set the server on Teamwork's sign-in screen to {server}, then sign in.",
+      "copyMessage": "Copy instructions"
     },
     "role": {
       "admin": "Admin",
@@ -342,7 +381,8 @@
       },
       "open": "Open navigation",
       "close": "Close navigation",
-      "account": "Account menu"
+      "account": "Account menu",
+      "waiting": "Waiting for your review"
     },
     "switcher": {
       "label": "Switch team",

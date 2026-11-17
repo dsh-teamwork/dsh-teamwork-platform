@@ -13,7 +13,7 @@ import { CardPage, Loading, useTitle } from '@/components/page';
 import { ConsoleShell } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
-import { ApiError, type Team, type TeamSummary } from '@/lib/api';
+import { ApiError, type Schemas, type Team, type TeamSummary } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
 
@@ -25,6 +25,10 @@ interface TeamState {
   me: string;
   /** The instance holds passwords: members get a first password, not an invitation. */
   passwords: boolean;
+  /** What waits on the person, and recent usage (`GET …/summary`); absent until it is read. */
+  summary?: Schemas['TeamSummary'];
+  /** Reads the summary again, after a write that changes what waits. */
+  reloadSummary: () => Promise<unknown>;
 }
 
 const TeamContext = createContext<TeamState | null>(null);
@@ -44,6 +48,8 @@ export function TeamLayout() {
   const team = useApi<Team>(`teams/${encodeURIComponent(teamId)}`);
   // Only the sidebar needs every team, and it stays mounted while the team or the page beside it changes.
   const teams = useApi<TeamSummary[]>('teams');
+  // Read beside the team, never in front of it: the sidebar's dot and the overview wait for it, nothing else does.
+  const summary = useApi<Schemas['TeamSummary']>(`teams/${encodeURIComponent(teamId)}/summary`);
   useTitle(team.data?.name);
 
   if (team.error instanceof ApiError && team.error.code === 'team_not_found') {
@@ -70,8 +76,16 @@ export function TeamLayout() {
   if (!team.data || !teams.data || !session.user) return <Loading />;
 
   return (
-    <TeamContext.Provider value={{ team: team.data, reload: team.reload, me: session.user.id, passwords: session.doors.password }}>
-      <ConsoleShell team={team.data} teams={teams.data} email={session.user.email ?? ''} passwords={session.doors.password}>
+    <TeamContext.Provider
+      value={{ team: team.data, reload: team.reload, me: session.user.id, passwords: session.doors.password, summary: summary.data, reloadSummary: summary.reload }}
+    >
+      <ConsoleShell
+        team={team.data}
+        teams={teams.data}
+        email={session.user.email ?? ''}
+        passwords={session.doors.password}
+        reviewsWaiting={team.data.role === 'admin' && (summary.data?.pendingReviews ?? 0) > 0}
+      >
         <Outlet />
       </ConsoleShell>
     </TeamContext.Provider>

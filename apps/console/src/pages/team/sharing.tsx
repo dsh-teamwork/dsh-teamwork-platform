@@ -36,8 +36,10 @@ function Sharing({
   const [offset, setOffset] = useState(0);
   const rows = useApi<Submission[]>(`teams/${teamId}/submissions?offset=${offset}`);
   const configs = useApi<TeamConfig[]>(`teams/${teamId}/configs`);
+  const { reloadSummary } = useTeam();
+  // A decision or a submission changes what waits for review, so the sidebar's dot reads again too.
   const { pending, run } = useMutation(async () => {
-    await Promise.all([rows.reload(), configs.reload()]);
+    await Promise.all([rows.reload(), configs.reload(), reloadSummary()]);
   });
   const [reason, setReason] = useState('');
   const [decision, setDecision] = useState<{

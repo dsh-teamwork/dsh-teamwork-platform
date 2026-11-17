@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering, budgets and optional atomic model funding · **Updated:** 2026-11-15
+> **Status:** Current — community metering, budgets and optional atomic model funding · **Updated:** 2026-11-17
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -118,6 +118,7 @@ reference budgets, not supplier invoices or hosted monetary balances.
 | `GET/PUT /budgets` | Applicable policies/current windows; admin revision-checked writes |
 | `GET /budgets/notices` | Latest notification delivery states, own recipient records for members |
 | `POST /budgets/notices/{noticeId}/retry` | Admin retries a failed notice after cooldown |
+| `GET /summary` | The overview's counts: last 30 days' calls and points, unresolved calls, failed notices, windows past a notice threshold, the caller's quota summary and pending reviews |
 
 Members see their own calls, per-person policies/windows and notification rows;
 shared team/provider limits remain visible. Admins inspect the whole team.
@@ -132,6 +133,13 @@ provider caps stay on the detail page. `resetAt` is the earliest policy boundary
 not a guarantee that all exhausted limits reopen then. Reads create no windows.
 Companion clients load this independently of configuration sync, clear it on
 team/account/server changes and never use it as an admission authorization.
+The team summary (`GET /summary`, `usage.Service.Summary`) is what the console's
+overview opens with. It is scoped like the rest: an admin counts the team's
+calls, unresolved calls (from any time), failed notices and every window past a
+notice threshold; a member counts their own calls and sees the windows that
+apply to them, with zero for what only an admin resolves. Its thresholds are the
+notices' (80, 95 and 100 % of a point cap), so the overview and the mail agree.
+Points sum only priced calls; `unpriced` says how many the sum leaves out.
 Outsiders retain team-not-found behavior. Typed failures report exhaustion,
 unconfirmed usage, missing prices, unsupported bounds and accounting failures;
 limit errors include scope/reset time. CSV retains stable user/model ids and

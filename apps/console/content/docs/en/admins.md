@@ -4,7 +4,9 @@ description: Create a team, connect a provider, publish models and presets, brin
 ---
 
 A team is ready when it has a model members can call, a preset to start from,
-and its members. The team's **Overview** in the console tracks these steps.
+and its members. The team's **Overview** in the console tracks these steps, and
+once the team is running it opens with what waits on you: submissions to
+review, budgets near their limit, calls to resolve and budget mail that failed.
 
 ## 1. Create the team
 

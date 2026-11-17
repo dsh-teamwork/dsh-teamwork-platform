@@ -89,6 +89,7 @@ export function ConsoleShell({
   teams,
   email,
   passwords,
+  reviewsWaiting,
   children,
 }: {
   team: Team;
@@ -96,6 +97,8 @@ export function ConsoleShell({
   email: string;
   /** The instance holds passwords, so the account offers changing one's own. */
   passwords: boolean;
+  /** Submissions wait for this admin's review: the amber dot beside the review page. */
+  reviewsWaiting: boolean;
   children: ReactNode;
 }) {
   const t = useTranslations('team');
@@ -107,7 +110,7 @@ export function ConsoleShell({
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
       <aside className="hidden flex-col gap-4 border-r bg-muted px-3 py-4 md:sticky md:top-0 md:flex md:h-dvh">
         <TeamSwitcher team={team} teams={teams} section={section} />
-        <Navigation team={team} section={section} />
+        <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} />
         <div className="mt-auto border-t pt-3">
           <AccountMenu email={email} passwords={passwords} />
         </div>
@@ -132,7 +135,7 @@ export function ConsoleShell({
                 <X className="size-4" aria-hidden />
               </Dialog.Close>
             </div>
-            <Navigation team={team} section={section} onNavigate={close} />
+            <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} onNavigate={close} />
             <div className="mt-auto border-t pt-3">
               <AccountMenu email={email} passwords={passwords} />
             </div>
@@ -146,7 +149,7 @@ export function ConsoleShell({
 }
 
 /** The console's pages in their groups, then an edition's own team pages under governance. */
-function Navigation({ team, section, onNavigate }: { team: Team; section: string; onNavigate?: () => void }) {
+function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team; section: string; reviewsWaiting: boolean; onNavigate?: () => void }) {
   const t = useTranslations('team');
   const { session } = useSession();
   const locale = useLocale();
@@ -158,7 +161,9 @@ function Navigation({ team, section, onNavigate }: { team: Team; section: string
           {group.sections.map(({ path, key, icon: Icon }) => (
             <Link key={key} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
               <Icon className="size-4" aria-hidden />
-              {t(`nav.${key}`)}
+              <span className="flex-1">{t(`nav.${key}`)}</span>
+              {/* Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules"). */}
+              {key === 'sharing' && reviewsWaiting && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
             </Link>
           ))}
           {group.key === 'governance' &&

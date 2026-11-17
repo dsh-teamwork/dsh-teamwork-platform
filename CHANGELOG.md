@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The team overview opens with what waits on you
+
+- **What:** `GET /api/teams/{teamId}/summary` returns, scoped to the caller, the last 30 days' calls and points, calls left unpriced, calls an admin must resolve, budget mail that failed, budget windows past a notice threshold (80, 95, 100 %), the caller's quota summary and submissions awaiting review. The console's overview opens with that list (each row links to the page that deals with it) and a strip of figures, keeps the getting-started checklist only until it is done, and explains joining in three steps with a copyable message for new members. An admin's sidebar marks "Sharing and review" with an amber dot while submissions wait.
+- **Why:** The overview counted configuration rows and could not say what needed doing.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/usage/summary.go`, `apps/console/src/pages/team/overview.tsx`, `docs/tech/usage-budgets.md` ("API and console").
+
 ## 2026-11-17 — Documentation at /docs, and a one-line install on the home page
 
 - **What:** Every instance publishes user documentation at `/docs` in English and Chinese: an overview, installing the plugin (Desktop, CLI and web, signing in, choosing the server, common problems), setting up a team, working in one, the command reference, and running your own server. Pages are Markdown in `apps/console/content/docs/{locale}/`, prerendered with the other public pages and served in the viewer's language like the home page; the sitemap lists them. The home page's first screen now shows one line for installing from DSH Desktop and links to the full guide; its header and footer link the docs, and the self-hosting guide button opens `/docs/self-hosting`. The community edition is no longer described as installable from npx, which is not published.

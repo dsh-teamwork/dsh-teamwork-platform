@@ -257,7 +257,6 @@
       },
       "connectAdmin": "发给新成员",
       "connectMember": "在 DSH 里接入",
-      "connectHint": "装好 DSH Teamwork 插件，确认它的服务器是 {server}（在 Teamwork 面板里设置），然后运行下面的命令，在浏览器里确认授权，DSH 随即自动完成登录。",
       "copy": "复制",
       "copied": "已复制",
       "copyFailed": "复制失败，请选中命令自行复制。",
@@ -270,7 +269,47 @@
       },
       "presets": "团队预设",
       "all": "查看全部",
-      "noPresets": "团队还没有发布预设。"
+      "noPresets": "团队还没有发布预设。",
+      "waiting": {
+        "title": "待处理",
+        "none": "目前没有需要你处理的事项。",
+        "reviews": "有 {count} 项提交等待你审核",
+        "reviewsMine": "你有 {count} 项提交正在等待审核",
+        "limitNear": "{who}{period, select, day {今日} other {本月}}已用 {threshold}%",
+        "limitReached": "{who}{period, select, day {今日} other {本月}}已用完",
+        "unresolved": "{count} 次模型调用需要核对",
+        "notices": "{count} 封预算提醒邮件发送失败",
+        "scope": {
+          "team": "团队预算",
+          "you": "你的预算",
+          "member": "{email} 的预算",
+          "provider": "提供商 {name} 的预算"
+        },
+        "titleMember": "需要留意"
+      },
+      "figures": {
+        "calls": "团队调用",
+        "myCalls": "你的调用",
+        "points": "团队积分",
+        "myPoints": "你的积分",
+        "period": "近 30 天",
+        "unpriced": "近 30 天 · {count} 次未计价调用未计入",
+        "budget": "你的剩余预算",
+        "budgetState": {
+          "unlimited": "不限",
+          "unconfirmed": "待确认"
+        },
+        "resets": "{at} 重置",
+        "budgetHint": "在你适用的上限内还剩的积分",
+        "members": "成员",
+        "membersAdmin": "本团队",
+        "membersMember": "本团队"
+      },
+      "connectInstall": "安装 DSH Teamwork 插件。<link>安装方法</link>",
+      "connectServer": "在 Teamwork 登录界面，服务器应为 <code>{server}</code>。",
+      "connectSignIn": "在 Teamwork 面板中登录，或运行：",
+      "connectMessage": "加入 DSH Teamwork 上的 {team}：安装插件（{server}/docs/install），在 Teamwork 登录界面把服务器设为 {server}，然后登录。",
+      "copyMessage": "复制说明"
     },
     "role": {
       "admin": "管理员",
@@ -342,7 +381,8 @@
       },
       "open": "打开导航",
       "close": "关闭导航",
-      "account": "账户菜单"
+      "account": "账户菜单",
+      "waiting": "等待你审核"
     },
     "switcher": {
       "label": "切换团队",
