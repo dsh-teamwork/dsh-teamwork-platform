@@ -20,7 +20,14 @@ const (
 	PluginHandoff Purpose = "dsh-teamwork.plugin-handoff"
 	PluginBearer  Purpose = "dsh-teamwork.plugin-session"
 	OAuthState    Purpose = "dsh-teamwork.oauth-state"
+	// ComputerBearer is the token a host gives the plugin in a cloud computer
+	// (ADR 0038): one member, one team, at most ComputerTTL, and accepted only
+	// by GET /api/configs and the model gateway.
+	ComputerBearer Purpose = "dsh-teamwork.computer"
 )
+
+// ComputerTTL is the longest a computer token lives; its host renews it.
+const ComputerTTL = time.Hour
 
 // SessionTTL is how long a browser session and a plugin token last. Neither
 // can be revoked before it expires — the price of having no session table;
@@ -36,6 +43,8 @@ type Claims struct {
 	Via       string `json:"via,omitempty"`       // the door: password, email, google, feishu
 	Challenge string `json:"challenge,omitempty"` // a hand-off code's PKCE challenge
 	Next      string `json:"next,omitempty"`      // an OAuth round trip's return path
+	Team      string `json:"team,omitempty"`      // a computer token's one team
+	Host      string `json:"host,omitempty"`      // a computer token's computer or session, for the record
 	Iat       int64  `json:"iat"`
 	Exp       int64  `json:"exp"`
 }

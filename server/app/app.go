@@ -231,7 +231,8 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		SetAdminConsole: func(c edition.AdminConsole) { console = c },
 		DB:              conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
-		Users: NewUsers(client), Env: env,
+		MintComputerToken: srv.MintComputerToken,
+		Users:             NewUsers(client), Env: env,
 		WithTeamTx: meter.WithTeamTx,
 		AddTeamPage: func(page edition.TeamPage) error {
 			if !regexp.MustCompile(`^/[a-z][a-z0-9/-]*/$`).MatchString(page.Path) || len(page.Path) > 100 || len(page.Labels) != 2 {

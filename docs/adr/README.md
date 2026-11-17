@@ -26,6 +26,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0034 — Team-scoped artifact paths](0034-team-scoped-artifact-paths.md) — per-team object keys, verified migration and retained flat sources.
 - [0035 — The fluke rises from a layered sea](0035-the-fluke-rises-from-a-layered-sea.md) — the brand mark's sea, its colours and the versions turned down.
 - [0036 — Edition meters](0036-edition-meters.md) — an edition's own usage, priced by it, counts against the public point budgets.
+- [0038 — Computer tokens](0038-computer-tokens.md) — a cloud computer's plugin token reaches one team's configuration and models, for an hour.
 
 The template:
 

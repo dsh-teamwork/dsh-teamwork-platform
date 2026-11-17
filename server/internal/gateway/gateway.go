@@ -54,7 +54,7 @@ func forbidden() error { return wire.E(http.StatusForbidden, wire.ModelForbidden
 // caller must be a member of that team; a config that does not exist and one
 // in another team get the same answer (ADR 0013). A preset follows its
 // modelConfigId to a model of the same team.
-func (g *Gateway) resolve(ctx context.Context, userID, configID string) (target, error) {
+func (g *Gateway) resolve(ctx context.Context, userID, team, configID string) (target, error) {
 	c, err := g.Team.DB.TeamConfig.Query().
 		Where(teamconfig.ID(configID), teamconfig.KindIn(teamconfig.KindModel, teamconfig.KindPreset)).Only(ctx)
 	if ent.IsNotFound(err) {
@@ -62,6 +62,9 @@ func (g *Gateway) resolve(ctx context.Context, userID, configID string) (target,
 	}
 	if err != nil {
 		return target{}, err
+	}
+	if team != "" && c.TeamID != team {
+		return target{}, forbidden()
 	}
 	in, err := g.Team.DB.Membership.Query().Where(membership.UserID(userID), membership.TeamID(c.TeamID)).Exist(ctx)
 	if err != nil {
@@ -129,14 +132,15 @@ func parse(body []byte) (map[string]json.RawMessage, string, bool, error) {
 }
 
 // Completions answers one call: the provider's body, streamed through, with
-// none of its headers.
-func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID string, body []byte) error {
+// none of its headers. A non-empty team is a computer token's (ADR 0038): a
+// model of any other team is refused.
+func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID, team string, body []byte) error {
 	ctx := r.Context()
 	fields, model, stream, err := parse(body)
 	if err != nil {
 		return err
 	}
-	t, err := g.resolve(ctx, userID, model)
+	t, err := g.resolve(ctx, userID, team, model)
 	if err != nil {
 		return err
 	}

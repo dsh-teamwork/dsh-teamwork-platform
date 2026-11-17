@@ -95,6 +95,11 @@ type Host struct {
 	Bearer func(ctx context.Context, token string) (*Identity, error)
 	// Session is the browser's session on r, or nil.
 	Session func(r *http.Request) (*Identity, error)
+	// MintComputerToken seals a token for the plugin in a cloud computer
+	// (ADR 0038): one member of one team, for at most an hour, accepted only by
+	// GET /api/configs and the model gateway. host names the computer or
+	// session it is for. The member must be in the team.
+	MintComputerToken func(ctx context.Context, userID, teamID, host string, ttl time.Duration) (string, time.Time, error)
 	// SameOrigin reports whether r, a write, came from this site.
 	SameOrigin func(r *http.Request) bool
 	Users      Users
