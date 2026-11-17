@@ -2463,11 +2463,11 @@ export interface components {
             since: string;
             /** @description Model calls in the period; the team's for an admin, the caller's own for a member */
             calls: number;
-            /** @description Reference points of the priced calls in the period */
+            /** @description Reference points spent in the period: priced model calls and edition meters */
             points: string;
             /** @description Calls in the period without a price yet, which points leaves out */
             unpriced: number;
-            /** @description Calls an admin must resolve, from any time; 0 for a member */
+            /** @description Model calls an admin must resolve, from any time; 0 for a member. Metered rows are settled by their edition */
             unresolved: number;
             /** @description Budget mail that could not be delivered; 0 for a member */
             failedNotices: number;

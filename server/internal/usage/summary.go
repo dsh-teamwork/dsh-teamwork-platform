@@ -19,8 +19,10 @@ const SummaryPeriod = 30 * 24 * time.Hour
 // limits that apply to them. The counts are of what waits on somebody;
 // details stay on the usage and budget pages.
 type Summary struct {
-	Since  string `json:"since"`
-	Calls  int    `json:"calls"`
+	Since string `json:"since"`
+	// Model calls in the period.
+	Calls int `json:"calls"`
+	// Points spent in the period: priced model calls and edition meters.
 	Points string `json:"points"`
 	// Unpriced calls in the period: Points leaves them out, so it can undercount.
 	Unpriced int `json:"unpriced"`
@@ -48,7 +50,11 @@ func (s *Service) Summary(ctx context.Context, teamID, userID string, admin bool
 	}
 	out := Summary{Since: f.Since.Format(time.RFC3339Nano), NearLimit: []LimitView{}}
 	var err error
-	if out.Calls, err = s.query(f).Count(ctx); err != nil {
+	// Calls, unpriced and unresolved count model calls only: an edition's metered
+	// row (ADR 0036) is no call, and only its edition settles it. Points count
+	// everything the period spent, meters included.
+	calls := func(q *ent.UsageRequestQuery) *ent.UsageRequestQuery { return q.Where(usagerequest.Meter("")) }
+	if out.Calls, err = calls(s.query(f)).Count(ctx); err != nil {
 		return out, err
 	}
 	var sum []struct {
@@ -62,12 +68,12 @@ func (s *Service) Summary(ctx context.Context, teamID, userID string, admin bool
 		units = sum[0].Sum.Int64
 	}
 	out.Points = FormatPoints(units)
-	if out.Unpriced, err = s.query(f).Where(usagerequest.StateIn(usagerequest.StateUnpriced, usagerequest.StatePending)).Count(ctx); err != nil {
+	if out.Unpriced, err = calls(s.query(f)).Where(usagerequest.StateIn(usagerequest.StateUnpriced, usagerequest.StatePending)).Count(ctx); err != nil {
 		return out, err
 	}
 	if admin {
 		// The same calls the usage page offers to resolve, whenever they were made.
-		out.Unresolved, err = s.query(Filter{TeamID: teamID}).Where(usagerequest.Or(
+		out.Unresolved, err = calls(s.query(Filter{TeamID: teamID})).Where(usagerequest.Or(
 			usagerequest.StateIn(usagerequest.StateUnpriced, usagerequest.StatePending),
 			usagerequest.ErrorCode("usage_bound_exceeded"),
 		)).Count(ctx)

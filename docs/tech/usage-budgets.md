@@ -164,7 +164,9 @@ calls, unresolved calls (from any time), failed notices and every window past a
 notice threshold; a member counts their own calls and sees the windows that
 apply to them, with zero for what only an admin resolves. Its thresholds are the
 notices' (80, 95 and 100 % of a point cap), so the overview and the mail agree.
-Points sum only priced calls; `unpriced` says how many the sum leaves out.
+Points sum what the period spent, edition meters included; calls, `unpriced`
+and `unresolved` count model calls only, since a metered row is settled by its
+edition (ADR 0036). `unpriced` says how many calls the points leave out.
 Outsiders retain team-not-found behavior. Typed failures report exhaustion,
 unconfirmed usage, missing prices, unsupported bounds and accounting failures;
 limit errors include scope/reset time. CSV retains stable user/model ids and
