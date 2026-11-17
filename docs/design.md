@@ -104,9 +104,9 @@ Both declare the same scale; the console adds three outcome colours.
 | `--muted-foreground` | `oklch(0.478 0.016 286)` | `oklch(0.712 0.013 286)` | Secondary text |
 | `--primary` | `oklch(0.145 0.002 286)` | `oklch(0.967 0.001 286)` | The one CTA per form: black in light, white in dark |
 | `--primary-foreground` | `oklch(1 0 0)` | `oklch(0.15 0.002 286)` | Text on primary |
-| `--secondary` | `oklch(0.953 0.003 286)` | `oklch(0.232 0.006 286)` | Secondary button, a selected tab or nav item |
+| `--secondary` | `oklch(0.953 0.003 286)` | `oklch(0.274 0.006 286)` | Secondary button, a selected tab or nav item |
 | `--secondary-foreground` | `oklch(0.145 0.002 286)` | `oklch(0.967 0.001 286)` | |
-| `--accent` | `oklch(0.953 0.003 286)` | `oklch(0.232 0.006 286)` | Hover surface — never the brand |
+| `--accent` | `oklch(0.953 0.003 286)` | `oklch(0.274 0.006 286)` | Hover surface — never the brand |
 | `--accent-foreground` | `oklch(0.145 0.002 286)` | `oklch(0.967 0.001 286)` | |
 | `--destructive` | `oklch(0.529 0.193 29)` | `oklch(0.711 0.166 22)` | Deleting, failing |
 | `--destructive-foreground` | `oklch(1 0 0)` | `oklch(0.15 0.002 286)` | |
