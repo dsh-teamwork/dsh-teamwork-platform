@@ -324,6 +324,34 @@ func (_c *UsageRequestCreate) SetNillableFinishedAt(v *time.Time) *UsageRequestC
 	return _c
 }
 
+// SetMeter sets the "meter" field.
+func (_c *UsageRequestCreate) SetMeter(v string) *UsageRequestCreate {
+	_c.mutation.SetMeter(v)
+	return _c
+}
+
+// SetNillableMeter sets the "meter" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableMeter(v *string) *UsageRequestCreate {
+	if v != nil {
+		_c.SetMeter(*v)
+	}
+	return _c
+}
+
+// SetQuantity sets the "quantity" field.
+func (_c *UsageRequestCreate) SetQuantity(v int64) *UsageRequestCreate {
+	_c.mutation.SetQuantity(v)
+	return _c
+}
+
+// SetNillableQuantity sets the "quantity" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableQuantity(v *int64) *UsageRequestCreate {
+	if v != nil {
+		_c.SetQuantity(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *UsageRequestCreate) SetID(v string) *UsageRequestCreate {
 	_c.mutation.SetID(v)
@@ -400,6 +428,10 @@ func (_c *UsageRequestCreate) defaults() {
 	if _, ok := _c.mutation.ErrorCode(); !ok {
 		v := usagerequest.DefaultErrorCode
 		_c.mutation.SetErrorCode(v)
+	}
+	if _, ok := _c.mutation.Meter(); !ok {
+		v := usagerequest.DefaultMeter
+		_c.mutation.SetMeter(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := usagerequest.DefaultID()
@@ -509,6 +541,14 @@ func (_c *UsageRequestCreate) check() error {
 	if v, ok := _c.mutation.ErrorCode(); ok {
 		if err := usagerequest.ErrorCodeValidator(v); err != nil {
 			return &ValidationError{Name: "error_code", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.error_code": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Meter(); !ok {
+		return &ValidationError{Name: "meter", err: errors.New(`ent: missing required field "UsageRequest.meter"`)}
+	}
+	if v, ok := _c.mutation.Meter(); ok {
+		if err := usagerequest.MeterValidator(v); err != nil {
+			return &ValidationError{Name: "meter", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.meter": %w`, err)}
 		}
 	}
 	if v, ok := _c.mutation.ID(); ok {
@@ -655,6 +695,14 @@ func (_c *UsageRequestCreate) createSpec() (*UsageRequest, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.FinishedAt(); ok {
 		_spec.SetField(usagerequest.FieldFinishedAt, field.TypeTime, value)
 		_node.FinishedAt = &value
+	}
+	if value, ok := _c.mutation.Meter(); ok {
+		_spec.SetField(usagerequest.FieldMeter, field.TypeString, value)
+		_node.Meter = value
+	}
+	if value, ok := _c.mutation.Quantity(); ok {
+		_spec.SetField(usagerequest.FieldQuantity, field.TypeInt64, value)
+		_node.Quantity = &value
 	}
 	return _node, _spec
 }
@@ -1050,6 +1098,30 @@ func (u *UsageRequestUpsert) ClearFinishedAt() *UsageRequestUpsert {
 	return u
 }
 
+// SetQuantity sets the "quantity" field.
+func (u *UsageRequestUpsert) SetQuantity(v int64) *UsageRequestUpsert {
+	u.Set(usagerequest.FieldQuantity, v)
+	return u
+}
+
+// UpdateQuantity sets the "quantity" field to the value that was provided on create.
+func (u *UsageRequestUpsert) UpdateQuantity() *UsageRequestUpsert {
+	u.SetExcluded(usagerequest.FieldQuantity)
+	return u
+}
+
+// AddQuantity adds v to the "quantity" field.
+func (u *UsageRequestUpsert) AddQuantity(v int64) *UsageRequestUpsert {
+	u.Add(usagerequest.FieldQuantity, v)
+	return u
+}
+
+// ClearQuantity clears the value of the "quantity" field.
+func (u *UsageRequestUpsert) ClearQuantity() *UsageRequestUpsert {
+	u.SetNull(usagerequest.FieldQuantity)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1081,6 +1153,9 @@ func (u *UsageRequestUpsertOne) UpdateNewValues() *UsageRequestUpsertOne {
 		}
 		if _, exists := u.create.mutation.AdmittedOutput(); exists {
 			s.SetIgnore(usagerequest.FieldAdmittedOutput)
+		}
+		if _, exists := u.create.mutation.Meter(); exists {
+			s.SetIgnore(usagerequest.FieldMeter)
 		}
 	}))
 	return u
@@ -1512,6 +1587,34 @@ func (u *UsageRequestUpsertOne) ClearFinishedAt() *UsageRequestUpsertOne {
 	})
 }
 
+// SetQuantity sets the "quantity" field.
+func (u *UsageRequestUpsertOne) SetQuantity(v int64) *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.SetQuantity(v)
+	})
+}
+
+// AddQuantity adds v to the "quantity" field.
+func (u *UsageRequestUpsertOne) AddQuantity(v int64) *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.AddQuantity(v)
+	})
+}
+
+// UpdateQuantity sets the "quantity" field to the value that was provided on create.
+func (u *UsageRequestUpsertOne) UpdateQuantity() *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.UpdateQuantity()
+	})
+}
+
+// ClearQuantity clears the value of the "quantity" field.
+func (u *UsageRequestUpsertOne) ClearQuantity() *UsageRequestUpsertOne {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.ClearQuantity()
+	})
+}
+
 // Exec executes the query.
 func (u *UsageRequestUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -1709,6 +1812,9 @@ func (u *UsageRequestUpsertBulk) UpdateNewValues() *UsageRequestUpsertBulk {
 			}
 			if _, exists := b.mutation.AdmittedOutput(); exists {
 				s.SetIgnore(usagerequest.FieldAdmittedOutput)
+			}
+			if _, exists := b.mutation.Meter(); exists {
+				s.SetIgnore(usagerequest.FieldMeter)
 			}
 		}
 	}))
@@ -2138,6 +2244,34 @@ func (u *UsageRequestUpsertBulk) UpdateFinishedAt() *UsageRequestUpsertBulk {
 func (u *UsageRequestUpsertBulk) ClearFinishedAt() *UsageRequestUpsertBulk {
 	return u.Update(func(s *UsageRequestUpsert) {
 		s.ClearFinishedAt()
+	})
+}
+
+// SetQuantity sets the "quantity" field.
+func (u *UsageRequestUpsertBulk) SetQuantity(v int64) *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.SetQuantity(v)
+	})
+}
+
+// AddQuantity adds v to the "quantity" field.
+func (u *UsageRequestUpsertBulk) AddQuantity(v int64) *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.AddQuantity(v)
+	})
+}
+
+// UpdateQuantity sets the "quantity" field to the value that was provided on create.
+func (u *UsageRequestUpsertBulk) UpdateQuantity() *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.UpdateQuantity()
+	})
+}
+
+// ClearQuantity clears the value of the "quantity" field.
+func (u *UsageRequestUpsertBulk) ClearQuantity() *UsageRequestUpsertBulk {
+	return u.Update(func(s *UsageRequestUpsert) {
+		s.ClearQuantity()
 	})
 }
 

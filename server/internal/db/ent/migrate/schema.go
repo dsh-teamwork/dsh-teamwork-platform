@@ -571,6 +571,8 @@ var (
 		{Name: "provider_request_id", Type: field.TypeString, Size: 200, Default: ""},
 		{Name: "error_code", Type: field.TypeString, Size: 64, Default: ""},
 		{Name: "finished_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "meter", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "quantity", Type: field.TypeInt64, Nullable: true},
 	}
 	// UsageRequestsTable holds the schema information for the "usage_requests" table.
 	UsageRequestsTable = &schema.Table{

@@ -2,7 +2,7 @@ import { Download, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { useFormatter, useTranslations } from 'use-intl';
+import { useFormatter, useLocale, useTranslations } from 'use-intl';
 
 import { PageHeader } from '@/components/team/console-shell';
 import { Choice as Filter } from '@/components/team/choice';
@@ -23,6 +23,10 @@ export function TeamUsagePage() {
   const t = useTranslations('usage');
   const word = useTeamError();
   const format = useFormatter();
+  const locale = useLocale();
+  // A metered entry (ADR 0036) names what it measured in its registering edition's words.
+  const what = (row: Entry) => !row.meter ? row.model
+    : `${row.meter.labels[locale] ?? row.meter.name}${row.meter.quantity === null ? '' : ` · ${format.number(row.meter.quantity)} ${row.meter.unitLabels[locale] ?? row.meter.unit}`}`;
   const [resolving, setResolving] = useState<Entry | null>(null);
   const [exporting, setExporting] = useState(false);
   const [params, setParams] = useSearchParams();
@@ -58,10 +62,10 @@ export function TeamUsagePage() {
         <thead className="border-b bg-muted text-xs text-muted-foreground"><tr>{(['when', 'member', 'model', 'input', 'cacheRead', 'output', 'points', 'status'] as const).map((key) => <th key={key} className="px-4 py-3 font-medium">{t(key)}</th>)}{team.role === 'admin' && <th className="px-4 py-3">{t('manage')}</th>}</tr></thead>
         <tbody>{usage.data.entries.map((row) => <tr key={row.id} className="border-b last:border-0">
           <td className="whitespace-nowrap px-4 py-3">{format.dateTime(new Date(row.createdAt), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-          <td className="px-4 py-3">{names.get(row.userId) ?? t('formerMember')}</td><td className="px-4 py-3 font-medium">{row.model}</td>
+          <td className="px-4 py-3">{names.get(row.userId) ?? t('formerMember')}</td><td className="px-4 py-3 font-medium">{what(row)}</td>
           <td className="px-4 py-3 tabular-nums">{row.input ?? '—'}</td><td className="px-4 py-3 tabular-nums">{row.cacheRead ?? '—'}</td><td className="px-4 py-3 tabular-nums">{row.output ?? '—'}</td>
           <td className="px-4 py-3 tabular-nums">{row.points ?? '—'}</td><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{t(`states.${row.state}`)}</td>
-          {team.role === 'admin' && <td className="px-4 py-3 text-right">{(row.state === 'pending' || row.state === 'unpriced' || row.code === 'usage_bound_exceeded') && <Button variant="ghost" size="sm" onClick={() => setResolving(row)}>{t(row.code === 'usage_bound_exceeded' ? 'reviewRoute' : 'resolve')}</Button>}</td>}
+          {team.role === 'admin' && <td className="px-4 py-3 text-right">{!row.meter && (row.state === 'pending' || row.state === 'unpriced' || row.code === 'usage_bound_exceeded') && <Button variant="ghost" size="sm" onClick={() => setResolving(row)}>{t(row.code === 'usage_bound_exceeded' ? 'reviewRoute' : 'resolve')}</Button>}</td>}
         </tr>)}</tbody>
       </table></div>}
     </Card>

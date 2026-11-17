@@ -35,7 +35,7 @@ func (s *Server) exportUsage(w http.ResponseWriter, r *http.Request) error {
 	var out bytes.Buffer
 	writer := csv.NewWriter(&out)
 	writer.UseCRLF = true
-	_ = writer.Write([]string{"request_id", "created_at", "finished_at", "user_id", "config_id", "provider", "model", "state", "code", "input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens", "reasoning_tokens", "points"})
+	_ = writer.Write([]string{"request_id", "created_at", "finished_at", "user_id", "config_id", "provider", "model", "state", "code", "input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens", "reasoning_tokens", "points", "meter", "quantity", "unit"})
 	number := func(n *int64) string {
 		if n == nil {
 			return ""
@@ -50,7 +50,10 @@ func (s *Server) exportUsage(w http.ResponseWriter, r *http.Request) error {
 	}
 	for _, row := range rows {
 		cells := []string{row.ID, row.CreatedAt, value(row.FinishedAt), row.UserID, row.ConfigID, row.Provider, row.Model, row.State, row.Code,
-			number(row.Input), number(row.CacheRead), number(row.CacheWrite), number(row.Output), number(row.Reasoning), value(row.Points)}
+			number(row.Input), number(row.CacheRead), number(row.CacheWrite), number(row.Output), number(row.Reasoning), value(row.Points), "", "", ""}
+		if row.Meter != nil {
+			cells[15], cells[16], cells[17] = row.Meter.Name, number(row.Meter.Quantity), row.Meter.Unit
+		}
 		for i := range cells {
 			cells[i] = csvCell(cells[i])
 		}

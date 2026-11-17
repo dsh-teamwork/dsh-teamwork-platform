@@ -419,6 +419,33 @@ func (_u *UsageRequestUpdate) ClearFinishedAt() *UsageRequestUpdate {
 	return _u
 }
 
+// SetQuantity sets the "quantity" field.
+func (_u *UsageRequestUpdate) SetQuantity(v int64) *UsageRequestUpdate {
+	_u.mutation.ResetQuantity()
+	_u.mutation.SetQuantity(v)
+	return _u
+}
+
+// SetNillableQuantity sets the "quantity" field if the given value is not nil.
+func (_u *UsageRequestUpdate) SetNillableQuantity(v *int64) *UsageRequestUpdate {
+	if v != nil {
+		_u.SetQuantity(*v)
+	}
+	return _u
+}
+
+// AddQuantity adds value to the "quantity" field.
+func (_u *UsageRequestUpdate) AddQuantity(v int64) *UsageRequestUpdate {
+	_u.mutation.AddQuantity(v)
+	return _u
+}
+
+// ClearQuantity clears the value of the "quantity" field.
+func (_u *UsageRequestUpdate) ClearQuantity() *UsageRequestUpdate {
+	_u.mutation.ClearQuantity()
+	return _u
+}
+
 // Mutation returns the UsageRequestMutation object of the builder.
 func (_u *UsageRequestUpdate) Mutation() *UsageRequestMutation {
 	return _u.mutation
@@ -650,6 +677,15 @@ func (_u *UsageRequestUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if _u.mutation.FinishedAtCleared() {
 		_spec.ClearField(usagerequest.FieldFinishedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Quantity(); ok {
+		_spec.SetField(usagerequest.FieldQuantity, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedQuantity(); ok {
+		_spec.AddField(usagerequest.FieldQuantity, field.TypeInt64, value)
+	}
+	if _u.mutation.QuantityCleared() {
+		_spec.ClearField(usagerequest.FieldQuantity, field.TypeInt64)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
@@ -1061,6 +1097,33 @@ func (_u *UsageRequestUpdateOne) ClearFinishedAt() *UsageRequestUpdateOne {
 	return _u
 }
 
+// SetQuantity sets the "quantity" field.
+func (_u *UsageRequestUpdateOne) SetQuantity(v int64) *UsageRequestUpdateOne {
+	_u.mutation.ResetQuantity()
+	_u.mutation.SetQuantity(v)
+	return _u
+}
+
+// SetNillableQuantity sets the "quantity" field if the given value is not nil.
+func (_u *UsageRequestUpdateOne) SetNillableQuantity(v *int64) *UsageRequestUpdateOne {
+	if v != nil {
+		_u.SetQuantity(*v)
+	}
+	return _u
+}
+
+// AddQuantity adds value to the "quantity" field.
+func (_u *UsageRequestUpdateOne) AddQuantity(v int64) *UsageRequestUpdateOne {
+	_u.mutation.AddQuantity(v)
+	return _u
+}
+
+// ClearQuantity clears the value of the "quantity" field.
+func (_u *UsageRequestUpdateOne) ClearQuantity() *UsageRequestUpdateOne {
+	_u.mutation.ClearQuantity()
+	return _u
+}
+
 // Mutation returns the UsageRequestMutation object of the builder.
 func (_u *UsageRequestUpdateOne) Mutation() *UsageRequestMutation {
 	return _u.mutation
@@ -1322,6 +1385,15 @@ func (_u *UsageRequestUpdateOne) sqlSave(ctx context.Context) (_node *UsageReque
 	}
 	if _u.mutation.FinishedAtCleared() {
 		_spec.ClearField(usagerequest.FieldFinishedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Quantity(); ok {
+		_spec.SetField(usagerequest.FieldQuantity, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedQuantity(); ok {
+		_spec.AddField(usagerequest.FieldQuantity, field.TypeInt64, value)
+	}
+	if _u.mutation.QuantityCleared() {
+		_spec.ClearField(usagerequest.FieldQuantity, field.TypeInt64)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	_node = &UsageRequest{config: _u.config}

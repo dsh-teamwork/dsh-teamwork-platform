@@ -165,3 +165,67 @@ func TestEditionTeamNavigationIsSameOriginAndCopied(t *testing.T) {
 		}
 	})
 }
+
+type walletProbe struct{ reserved, settled int }
+
+func (w *walletProbe) ReserveMeter(context.Context, edition.SQLExecutor, edition.MeterAdmission) error {
+	w.reserved++
+	return nil
+}
+func (w *walletProbe) SettleMeter(context.Context, edition.SQLExecutor, edition.MeterSettlement) error {
+	w.settled++
+	return nil
+}
+
+func TestEditionMetersReachTheTeamsUsage(t *testing.T) {
+	var meters edition.MeterHost
+	wallet := &walletProbe{}
+	ext := edition.Extension{Name: "meters", Mount: func(h edition.Host) (func(), error) {
+		*wallet = walletProbe{} // one per database the suite runs on
+		labels := map[string]string{"en": "Cloud computer", "zh-CN": "Cloud computer"}
+		var err error
+		meters, err = h.RegisterMeters([]edition.Meter{{Name: "cloud.vm", Unit: "second", Labels: labels, UnitLabels: map[string]string{"en": "s", "zh-CN": "s"}}}, wallet)
+		if err != nil {
+			return nil, err
+		}
+		labels["en"] = "Mutated after registration"
+		return nil, nil
+	}}
+	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
+		ctx := context.Background()
+		ada := in.Account("ada@example.test")
+		team := in.Team(ada)
+		id, err := meters.Reserve(ctx, edition.MeterUse{TeamID: team, UserID: ada, Meter: "cloud.vm", Points: 1_000_000_000, For: time.Minute})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := meters.Settle(ctx, id, 90, 250_000_000); err != nil {
+			t.Fatal(err)
+		}
+		req, _ := http.NewRequest("GET", in.URL+"/api/teams/"+team+"/usage", nil)
+		req.AddCookie(in.Session(ada, "password"))
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		var page struct {
+			Entries []struct {
+				ID     string  `json:"id"`
+				Points *string `json:"points"`
+				Meter  *struct {
+					Name     string            `json:"name"`
+					Quantity int64             `json:"quantity"`
+					Labels   map[string]string `json:"labels"`
+				} `json:"meter"`
+			} `json:"entries"`
+		}
+		if err := json.NewDecoder(res.Body).Decode(&page); err != nil || res.StatusCode != 200 {
+			t.Fatalf("usage: %d %v", res.StatusCode, err)
+		}
+		if len(page.Entries) != 1 || page.Entries[0].ID != id || page.Entries[0].Meter == nil || page.Entries[0].Meter.Quantity != 90 ||
+			page.Entries[0].Meter.Labels["en"] != "Cloud computer" || *page.Entries[0].Points != "0.25" || wallet.reserved != 1 || wallet.settled != 1 {
+			t.Fatalf("usage page %+v, wallet %+v", page.Entries, wallet)
+		}
+	})
+}

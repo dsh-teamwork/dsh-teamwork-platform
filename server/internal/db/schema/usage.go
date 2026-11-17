@@ -63,6 +63,10 @@ func (UsageRequest) Fields() []ent.Field {
 		field.String("provider_request_id").MaxLen(200).Default(""),
 		field.String("error_code").MaxLen(64).Default(""),
 		field.Time("finished_at").SchemaType(mysqlTime).Optional().Nillable(),
+		// A registered meter's name (ADR 0036); empty for a model call. A meter
+		// row has no config, provider, model or tokens; quantity is in its unit.
+		field.String("meter").MaxLen(runes(64)).Default("").Immutable(),
+		field.Int64("quantity").Optional().Nillable(),
 	}
 }
 func (UsageRequest) Indexes() []ent.Index {

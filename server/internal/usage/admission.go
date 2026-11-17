@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
@@ -167,30 +168,48 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 	if err != nil {
 		return nil, err
 	}
-	for _, p := range policies {
-		w, err := window(ctx, db, p, call.UserID, now)
-		if err != nil {
+	if err := reserve(ctx, db, call.TeamID, call.UserID, request.ID, policies, heldUnits, bound, bounded, priced, now); err != nil {
+		return nil, err
+	}
+	if call.Owner != "" {
+		in := edition.FundingAdmission{RequestID: request.ID, TeamID: call.TeamID, UserID: call.UserID, ConfigID: call.ConfigID, Reference: call.Reference, Model: call.Model, RateID: rateID, HeldUnits: heldUnits}
+		if err := Participate(db, call.TeamID, call.Owner, func(tx edition.SQLExecutor) error { return s.Funding[call.Owner].Reserve(ctx, tx, in) }); err != nil {
 			return nil, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return request, nil
+}
+
+// reserve holds a request's bound in the window of every applicable policy,
+// after checking each enabled cap. The caller holds the team's budget gate.
+func reserve(ctx context.Context, db *ent.Client, teamID, userID, requestID string, policies []*ent.BudgetPolicy, held int64, bound Tokens, bounded, priced bool, now time.Time) error {
+	for _, p := range policies {
+		w, err := window(ctx, db, p, userID, now)
+		if err != nil {
+			return err
 		}
 		if p.Enabled {
 			if w.UnboundedCount > 0 || p.PointLimit != nil && w.UnpricedCount > 0 {
-				return nil, limitError("budget_pending_usage", p, w)
+				return limitError("budget_pending_usage", p, w)
 			}
 			spentTotal, e1 := addProduct(w.SpentInput, w.SpentOutput, 1)
 			reservedTotal, e2 := addProduct(w.ReservedInput, w.ReservedOutput, 1)
 			if e1 != nil || e2 != nil {
-				return nil, errors.New("budget token counters overflowed")
+				return errors.New("budget token counters overflowed")
 			}
-			if !fits(p.PointLimit, w.SpentUnits, w.ReservedUnits, heldUnits) ||
+			if !fits(p.PointLimit, w.SpentUnits, w.ReservedUnits, held) ||
 				!fits(p.InputLimit, w.SpentInput, w.ReservedInput, bound.Input) ||
 				!fits(p.OutputLimit, w.SpentOutput, w.ReservedOutput, bound.Output) ||
 				!fits(p.TotalLimit, spentTotal, reservedTotal, bound.Input+bound.Output) {
-				return nil, limitError("budget_exhausted", p, w)
+				return limitError("budget_exhausted", p, w)
 			}
 		}
-		for _, pair := range [][2]int64{{w.ReservedUnits, heldUnits}, {w.ReservedInput, bound.Input}, {w.ReservedOutput, bound.Output}} {
+		for _, pair := range [][2]int64{{w.ReservedUnits, held}, {w.ReservedInput, bound.Input}, {w.ReservedOutput, bound.Output}} {
 			if _, err := addProduct(pair[0], pair[1], 1); err != nil {
-				return nil, wire.E(http.StatusBadRequest, "budget_amount_too_large")
+				return wire.E(http.StatusBadRequest, "budget_amount_too_large")
 			}
 		}
 		unbounded := !bounded
@@ -208,33 +227,24 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 			budgetwindow.SpentUnits(w.SpentUnits), budgetwindow.ReservedUnits(w.ReservedUnits),
 			budgetwindow.SpentInput(w.SpentInput), budgetwindow.ReservedInput(w.ReservedInput),
 			budgetwindow.SpentOutput(w.SpentOutput), budgetwindow.ReservedOutput(w.ReservedOutput)).
-			AddReservedUnits(heldUnits).AddReservedInput(bound.Input).AddReservedOutput(bound.Output).AddUnboundedCount(n).AddUnpricedCount(unpriced).Save(ctx)
+			AddReservedUnits(held).AddReservedInput(bound.Input).AddReservedOutput(bound.Output).AddUnboundedCount(n).AddUnpricedCount(unpriced).Save(ctx)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if changed != 1 {
-			return nil, errors.New("budget counters changed during admission")
+			return errors.New("budget counters changed during admission")
 		}
-		if err := db.BudgetReservation.Create().SetRequestID(request.ID).SetWindowID(w.ID).
-			SetPolicyID(p.ID).SetPolicyRevision(p.Revision).SetPointUnits(heldUnits).
+		if err := db.BudgetReservation.Create().SetRequestID(requestID).SetWindowID(w.ID).
+			SetPolicyID(p.ID).SetPolicyRevision(p.Revision).SetPointUnits(held).
 			SetInputTokens(bound.Input).SetOutputTokens(bound.Output).SetUnbounded(unbounded).SetUnpriced(!priced).Exec(ctx); err != nil {
-			return nil, err
+			return err
 		}
-		data, _ := json.Marshal(CounterDelta{ReservedUnits: heldUnits, ReservedInput: bound.Input, ReservedOutput: bound.Output, Unbounded: n, Unpriced: unpriced})
-		if err := db.BudgetEvent.Create().SetCreatedAt(now).SetTeamID(call.TeamID).SetWindowID(w.ID).
-			SetRequestID(request.ID).SetPolicyID(p.ID).SetKind("reserve").
-			SetActionKey(fmt.Sprintf("reserve:%s:%s", request.ID, w.ID)).SetData(data).Exec(ctx); err != nil {
-			return nil, err
-		}
-	}
-	if call.Owner != "" {
-		in := edition.FundingAdmission{RequestID: request.ID, TeamID: call.TeamID, UserID: call.UserID, ConfigID: call.ConfigID, Reference: call.Reference, Model: call.Model, RateID: rateID, HeldUnits: heldUnits}
-		if err := Participate(db, call.TeamID, call.Owner, func(tx edition.SQLExecutor) error { return s.Funding[call.Owner].Reserve(ctx, tx, in) }); err != nil {
-			return nil, err
+		data, _ := json.Marshal(CounterDelta{ReservedUnits: held, ReservedInput: bound.Input, ReservedOutput: bound.Output, Unbounded: n, Unpriced: unpriced})
+		if err := db.BudgetEvent.Create().SetCreatedAt(now).SetTeamID(teamID).SetWindowID(w.ID).
+			SetRequestID(requestID).SetPolicyID(p.ID).SetKind("reserve").
+			SetActionKey(fmt.Sprintf("reserve:%s:%s", requestID, w.ID)).SetData(data).Exec(ctx); err != nil {
+			return err
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-	return request, nil
+	return nil
 }
