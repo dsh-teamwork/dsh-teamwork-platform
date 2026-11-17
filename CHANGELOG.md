@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The review and history pages show changes field by field
+
+- **What:** `GET /api/teams/{teamId}/submissions` takes a `state` filter. Sharing and review opens on the review queue for an admin (on a member's own submissions otherwise), with the other view one tab away; submitting a preset or a plugin is a dialog with a drop zone (a plugin archive is still inspected in the browser and checked by digest); each submission is a row that opens to show its change field by field against the live version, and approve, reject (reason required) and withdraw confirm in a dialog. Versions and backups is a timeline with one row of filters (kind, resource, author, any / 7 / 30 days / a custom range of whole days); the live version is marked, any other shows what restoring it would change, and restoring confirms in a dialog that links to review.
+- **Why:** Both pages were native file inputs, raw JSON side by side and inline confirmations.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/pages/team/sharing.tsx`, `apps/console/src/pages/team/history.tsx`, `apps/console/src/lib/config-diff.ts`, `docs/tech/team-assistant.md`.
+
 ## 2026-11-17 — A management process no longer prints or accepts the first-account link
 
 - **What:** With `SERVICE_ROLE=manage`, the server no longer prints `/setup?token=…` at start and no longer serves `POST /api/auth/setup`. The combined and user processes keep both, so a single-process install's first run is unchanged.
@@ -12,6 +20,7 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None for a single-process install. A split install claims its first account on the user process.
 - **Upgrade:** Nothing. A link already printed by a management process stops working there once it is updated.
 - **Refs:** `server/app/app.go`, `server/internal/httpapi/server.go`, `docs/tech/system-management.md`.
+
 ## 2026-11-17 — Computer tokens for a cloud computer's plugin
 
 - **What:** A new kind of sealed Bearer, the computer token: one member, one team, at most an hour, minted only through `edition.Host.MintComputerToken` for a member of that team. `GET /api/configs` returns that team alone for it, the model gateway refuses any other team's model, and every other route treats it as nobody. Membership is re-read on every request.

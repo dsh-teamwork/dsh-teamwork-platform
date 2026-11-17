@@ -1,6 +1,6 @@
 # Team assistant and shared resources
 
-> **Status:** Current · **Updated:** 2026-11-16
+> **Status:** Current · **Updated:** 2026-11-17
 
 New teams receive a Teamwork assistant. Members submit presets and private
 plugin packages, administrators approve their exact contents, and every
@@ -81,7 +81,11 @@ review record and preserves the old rejection or withdrawal. Administrators
 can approve their own submissions, but approval is explicit. Rejection needs
 a reason.
 
-Members see their own submissions; administrators see the team's. Every API
+Members see their own submissions; administrators see the team's. The list
+takes a `state` filter (`GET …/submissions?state=pending` is the review
+queue), and the console's review page opens on that queue for an admin and on
+the member's own submissions otherwise; each row shows its change field by
+field against the live version (`apps/console/src/lib/config-diff.ts`). Every API
 request rechecks current membership and required role. An outsider receives
 the same team-not-found response as for a nonexistent team. Artifact ownership
 is checked before a pending package can be attached to a proposal.
@@ -206,10 +210,12 @@ without `@version` it selects the current catalog entry.
 
 ## History, export and restoration
 
-The history page provides newest-first, deterministic pagination (50 rows),
-resource/kind/author filters, UTC-backed time ranges displayed in the viewer's
-explicit timezone, and comparison with the current live content. The end of
-a time range is exclusive.
+The history page is a newest-first timeline with deterministic pagination
+(50 rows), kind/resource/author filters and a time range (any, the last 7 or
+30 days, or whole local days). The version live now is marked; any other
+opens to show, field by field, what restoring it would change. The API's time
+range stays UTC instants with an exclusive end; the console turns a chosen
+last day into the start of the next.
 
 Administrators export an individual historical resource as `manifest.json`
 plus its referenced private plugin archives in a gzip tar backup. The manifest

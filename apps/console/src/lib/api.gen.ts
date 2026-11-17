@@ -1957,7 +1957,11 @@ export interface paths {
         /** Own submissions; administrators see the team */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    offset?: number;
+                    /** @description Keep only submissions in this state */
+                    state?: "draft" | "pending" | "published" | "rejected" | "withdrawn";
+                };
                 header?: never;
                 path: {
                     teamId: string;
