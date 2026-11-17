@@ -399,7 +399,9 @@ Three doors, all in `server/internal/auth` (ADR 0014):
   which its owner must change before `/teams` or `/plugin` open; the admin
   resets it the same way. The first account is claimed at `/setup?token=…`, a
   link the server prints at start, derived from `AUTH_SECRET` and dead once any
-  password exists.
+  password exists. A management process (`SERVICE_ROLE=manage`) neither prints
+  nor accepts it: the database is shared, so the first account is claimed where
+  members sign in.
 
 Every limit is a conditional update on `rate_windows`, never a lock. **An
 account is not its email**: the `identities` table records each door that

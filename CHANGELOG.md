@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — A management process no longer prints or accepts the first-account link
+
+- **What:** With `SERVICE_ROLE=manage`, the server no longer prints `/setup?token=…` at start and no longer serves `POST /api/auth/setup`. The combined and user processes keep both, so a single-process install's first run is unchanged.
+- **Why:** A management service with no email door fell back to passwords and wrote a live first-account link into its log on every start, where a hosting provider's log viewer shows it, although its accounts are claimed on the shared database where members sign in.
+- **Breaking:** None for a single-process install. A split install claims its first account on the user process.
+- **Upgrade:** Nothing. A link already printed by a management process stops working there once it is updated.
+- **Refs:** `server/app/app.go`, `server/internal/httpapi/server.go`, `docs/tech/system-management.md`.
 ## 2026-11-17 — Computer tokens for a cloud computer's plugin
 
 - **What:** A new kind of sealed Bearer, the computer token: one member, one team, at most an hour, minted only through `edition.Host.MintComputerToken` for a member of that team. `GET /api/configs` returns that team alone for it, the model gateway refuses any other team's model, and every other route treats it as nobody. Membership is re-read on every request.
