@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useFormatter, useTranslations } from 'use-intl';
 
+import { CopyButton } from '@/components/copy-button';
 import { Failure } from '@/components/page';
 import { PageHeader } from '@/components/team/console-shell';
 import { useMutation, useTeamError } from '@/components/team/use-mutation';
@@ -195,7 +196,10 @@ function Handover({ email, password }: { email: string; password: string | null 
         {password ? (
           <>
             <span className="text-muted-foreground">{t('members.firstPassword', { email })}</span>
-            <Input readOnly value={password} className="font-mono" onFocus={(e) => e.currentTarget.select()} />
+            <div className="flex items-center gap-2">
+              <Input readOnly value={password} className="font-mono" onFocus={(e) => e.currentTarget.select()} />
+              <CopyButton text={password} />
+            </div>
           </>
         ) : (
           <span className="text-muted-foreground">{t('members.existing', { email })}</span>

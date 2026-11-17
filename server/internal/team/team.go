@@ -80,8 +80,9 @@ type Created struct {
 	Name string `json:"name"`
 }
 
-// CreateTeam makes a team; the caller is its admin.
-func (s *Service) CreateTeam(ctx context.Context, userID string, in wire.CreateTeam) (Created, error) {
+// CreateTeam makes a team; the caller is its admin. locale is the caller's
+// language, which the team's built-in assistant is named in.
+func (s *Service) CreateTeam(ctx context.Context, userID string, in wire.CreateTeam, locale string) (Created, error) {
 	tx, err := s.DB.Tx(ctx)
 	if err != nil {
 		return Created{}, err
@@ -94,7 +95,7 @@ func (s *Service) CreateTeam(ctx context.Context, userID string, in wire.CreateT
 	if err := tx.Membership.Create().SetUserID(userID).SetTeamID(t.ID).SetRole(membership.RoleAdmin).Exec(ctx); err != nil {
 		return Created{}, err
 	}
-	if err := provisionAssistant(ctx, tx.Client(), t.ID, t.Name); err != nil {
+	if err := provisionAssistant(ctx, tx.Client(), t.ID, t.Name, locale); err != nil {
 		return Created{}, err
 	}
 	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.TeamCreated, TeamID: t.ID, UserID: userID, ActorID: userID}); err != nil {

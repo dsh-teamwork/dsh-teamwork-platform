@@ -11,6 +11,7 @@ export const AUTH_ERRORS = [
   'invalid_credentials',
   'weak_password',
   'setup_closed',
+  'setup_link_invalid',
 ] as const;
 export type AuthError = (typeof AUTH_ERRORS)[number];
 

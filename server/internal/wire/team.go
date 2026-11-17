@@ -24,7 +24,14 @@ const (
 	UpstreamRateLimited     = "upstream_rate_limited"
 	PayloadTooLarge         = "payload_too_large"
 	ProviderExists          = "provider_exists"
-	ProviderAddressRefused  = "provider_address_refused"
+	// Why an address is refused (internal/team/network.go): a private or
+	// loopback address this instance does not allow, plain http to a public
+	// one, or a host that does not resolve.
+	ProviderAddressPrivate    = "provider_address_private"
+	ProviderAddressPlainHTTP  = "provider_address_plain_http"
+	ProviderAddressUnresolved = "provider_address_unresolved"
+	// ProviderKeyRejected is the provider answering 401 or 403 to its key.
+	ProviderKeyRejected     = "provider_key_rejected"
 	ProviderKeysUnavailable = "provider_keys_unavailable"
 )
 
@@ -74,6 +81,25 @@ type Provider struct {
 func (p *Provider) Validate() error {
 	var is Issues
 	name(&is, &p.Name, "name")
+	if !ValidBaseURL(p.BaseURL) {
+		is.Add("An http or https URL with no credentials, query or fragment", "baseUrl")
+	}
+	p.APIKey = strings.TrimSpace(p.APIKey)
+	if length(p.APIKey) < 1 || length(p.APIKey) > 4096 {
+		is.Add("Between 1 and 4096 characters", "apiKey")
+	}
+	return is.Err()
+}
+
+// ProviderCheck is POST /api/teams/{teamId}/providers/check: an address and a
+// key to read a model list with before either is saved.
+type ProviderCheck struct {
+	BaseURL string `json:"baseUrl"`
+	APIKey  string `json:"apiKey"`
+}
+
+func (p *ProviderCheck) Validate() error {
+	var is Issues
 	if !ValidBaseURL(p.BaseURL) {
 		is.Add("An http or https URL with no credentials, query or fragment", "baseUrl")
 	}

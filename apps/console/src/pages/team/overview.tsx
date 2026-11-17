@@ -6,12 +6,12 @@
  * server to the reader: an admin sees the team, a member their own.
  */
 
-import { ArrowRight, Check, CircleCheck, Copy, Gauge, GitPullRequestArrow, MailWarning, ReceiptText } from 'lucide-react';
+import { ArrowRight, Check, CircleCheck, Gauge, GitPullRequestArrow, MailWarning, ReceiptText } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { toast } from 'sonner';
 import { useFormatter, useNow, useTranslations } from 'use-intl';
 
+import { CopyButton } from '@/components/copy-button';
 import { Failure } from '@/components/page';
 import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
@@ -275,7 +275,7 @@ function Connect({ admin, server, team }: { admin: boolean; server: string; team
               {t('connectSignIn')}
               <span className="flex items-center gap-2 rounded-md border bg-muted py-1.5 pr-1.5 pl-3 font-mono text-sm text-foreground">
                 <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{LOGIN}</span>
-                <CopyButton text={LOGIN} label={t('copy')} />
+                <CopyButton text={LOGIN} />
               </span>
             </span>
           </li>
@@ -290,28 +290,6 @@ function Step({ n }: { n: number }) {
     <span aria-hidden className="grid size-5 shrink-0 place-items-center rounded-full border text-[11px] font-semibold text-muted-foreground">
       {n}
     </span>
-  );
-}
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const t = useTranslations('team.overview');
-  return (
-    <Button
-      size="sm"
-      variant="ghost"
-      onClick={async () => {
-        // Unavailable (an insecure origin, say) or refused: the text stays selectable beside the button.
-        try {
-          await navigator.clipboard.writeText(text);
-          toast.success(t('copied'));
-        } catch {
-          toast.error(t('copyFailed'));
-        }
-      }}
-    >
-      <Copy />
-      {label}
-    </Button>
   );
 }
 

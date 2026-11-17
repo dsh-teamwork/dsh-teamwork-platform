@@ -230,6 +230,23 @@ func (s *Server) deleteProvider(w http.ResponseWriter, r *http.Request) error {
 	return noContent(w)
 }
 
+func (s *Server) checkProvider(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in wire.ProviderCheck
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	catalog, err := s.Team.CheckProvider(r.Context(), s.Gateway.Client, c.user.ID, r.PathValue("teamId"), in)
+	if err != nil {
+		return err
+	}
+	writeJSON(w, http.StatusOK, catalog)
+	return nil
+}
+
 func (s *Server) modelCatalog(w http.ResponseWriter, r *http.Request) error {
 	c, err := s.requireUser(r)
 	if err != nil {

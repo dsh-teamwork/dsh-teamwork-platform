@@ -16,9 +16,11 @@ become its admin. Every new team gets a **team assistant** preset.
 ## 2. Connect a provider and publish models
 
 Open **Models → Add provider**. Pick a provider from the list and paste its API
-key, or enter any OpenAI-compatible address under **Custom**. The key is stored
-encrypted and can never be read back. Then tick the models the team should use
-and publish them.
+key, or enter any OpenAI-compatible address under **Custom**. The key is checked
+with the provider before it is saved: a key the provider refuses, or an address
+this server may not call, is shown on the form with what to change. The key is
+stored encrypted and can never be read back. Then tick the models the team
+should use and publish them.
 
 Members see team models only: never the address or the key.
 
@@ -37,8 +39,9 @@ under **Versions and backups**.
 Open **Members**. Depending on how the server signs people in:
 
 - **With email sign-in**, create an invitation link. It works once, for 24 hours.
-- **With passwords**, enter the person's email to create their account. Give
-  them the first password shown; they change it when they first sign in.
+- **With passwords**, enter the person's email to create their account. Copy
+  the first password shown and give it to them; it is not shown again. They sign
+  in with it once and choose their own.
 
 Send new members the [install guide](/docs/install).
 

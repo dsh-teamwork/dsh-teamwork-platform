@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Navigate, useLocation, useSearchParams } from 'react-router';
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
+import { CopyButton } from '@/components/copy-button';
 import { CardPage, Failure, useTitle } from '@/components/page';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { api, type PluginCode } from '@/lib/api';
+import { api, type PluginCode, type TeamSummary } from '@/lib/api';
 import { isLoopback } from '@/lib/return-path';
 import { useSession } from '@/lib/session';
+import { useApi } from '@/lib/use-api';
 
 const CHALLENGE = /^[A-Za-z0-9_-]{43}$/;
 
@@ -21,7 +22,7 @@ const CHALLENGE = /^[A-Za-z0-9_-]{43}$/;
 export function PluginPage() {
   const t = useTranslations('plugin');
   useTitle(t('title'));
-  const { session } = useSession();
+  const { session, signOut } = useSession();
   const location = useLocation();
   const [params] = useSearchParams();
   const challenge = params.get('challenge') ?? '';
@@ -29,6 +30,8 @@ export function PluginPage() {
   const [minted, setMinted] = useState<PluginCode | null>(null);
   const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState(false);
+  // What the code will reach: every team the account is in (the plugin syncs them all, ADR 0013).
+  const teams = useApi<TeamSummary[]>(session.user && !session.user.mustChangePassword ? 'teams' : null);
 
   const to = redirectUri === null ? null : isLoopback(redirectUri) ? 'dsh' : session.mobileRedirectPrefix && redirectUri.startsWith(session.mobileRedirectPrefix) ? 'app' : undefined;
   const valid = CHALLENGE.test(challenge) && to !== undefined;
@@ -61,15 +64,38 @@ export function PluginPage() {
       {minted ? (
         <div className="flex flex-col gap-2 text-sm">
           <p>{minted.returnTo ? t(minted.returnTo.to === 'dsh' ? 'returningDsh' : 'returning') : t('copy')}</p>
-          <Input readOnly value={line ?? ''} onFocus={(e) => e.currentTarget.select()} className="font-mono" />
+          {/* The whole line, wrapped, to select or copy: a field cut it off. */}
+          <div className="flex items-start gap-2 rounded-md border bg-muted py-1.5 pr-1.5 pl-3">
+            <code className="min-w-0 flex-1 py-1 font-mono text-xs [overflow-wrap:anywhere]">{line}</code>
+            {line && <CopyButton text={line} />}
+          </div>
           <p className="text-xs text-muted-foreground">{t('expiry')}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
+          <div className="rounded-md border bg-muted px-3 py-2 text-sm">
+            <p>{t('account', { email: session.user.email ?? '' })}</p>
+            {to === 'dsh' && teams.data && <p className="text-muted-foreground">{t('scope', { count: teams.data.length })}</p>}
+          </div>
           <Failure message={failed ? t('failed') : null} />
-          <Button disabled={pending} onClick={() => void authorize()}>
-            {t('confirm')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button className="flex-1" disabled={pending} onClick={() => void authorize()}>
+              {t('confirm')}
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/teams">{t('cancel')}</Link>
+            </Button>
+          </div>
+          <button
+            type="button"
+            className="self-start text-xs text-muted-foreground underline underline-offset-4"
+            onClick={async () => {
+              await signOut();
+              window.location.assign(`/sign-in?next=${encodeURIComponent(here)}`);
+            }}
+          >
+            {t('notYou')}
+          </button>
         </div>
       )}
     </CardPage>
