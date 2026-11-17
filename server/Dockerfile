@@ -16,16 +16,16 @@ RUN corepack enable
 COPY . .
 ARG LEGAL_DIR
 # Only the console's own modules, and no install scripts: the build needs none.
-RUN pnpm install --frozen-lockfile --ignore-scripts --filter @dsh-teamwork/console... --filter @dsh-teamwork/manage-core... \
-  && pnpm --filter @dsh-teamwork/console build \
-  && pnpm --filter @dsh-teamwork/manage-core build
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter @dsh-teamwork/web... --filter @dsh-teamwork/manage... \
+  && pnpm --filter @dsh-teamwork/web build \
+  && pnpm --filter @dsh-teamwork/manage build
 
 FROM --platform=$BUILDPLATFORM golang:1.26-bookworm AS server
 WORKDIR /src/server
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server/ ./
-COPY --from=console /src/apps/console/dist ./internal/web/dist
+COPY --from=console /src/apps/web/dist ./internal/web/dist
 COPY --from=console /src/apps/manage/dist ./manage/dist
 ARG VERSION=dev TARGETOS TARGETARCH
 RUN mkdir /data && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /dsh-teamwork ./cmd/dsh-teamwork

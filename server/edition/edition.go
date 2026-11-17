@@ -68,6 +68,11 @@ type AdminRoute struct {
 }
 
 // AdminConsole replaces the community assets while retaining its API and guard.
+//
+// SetWebConsole is its counterpart for everything else a browser loads: the
+// edition's web app build (premium/apps/web), laid out as apps/web's is, which
+// composes the open app and adds or replaces pages; the server still decides
+// which page answers which path (server/internal/web).
 type AdminConsole struct {
 	Files      fs.FS
 	Base       string
@@ -78,6 +83,7 @@ type Host struct {
 	ServiceRole     string
 	AddAdminRoutes  func([]AdminRoute)
 	SetAdminConsole func(AdminConsole)
+	SetWebConsole   func(fs.FS)
 
 	// DB is the server's connection, and Dialect its kind: "sqlite3",
 	// "postgres" or "mysql". The extension's own tables are there.
@@ -121,14 +127,6 @@ type Host struct {
 	// network I/O, and return errors to roll back the change and theirs.
 	// Mount-only.
 	SubscribeTeams func(TeamChangeHandler) error
-	// AddTeamPage adds an edition-owned, same-origin team navigation entry.
-	// Path is a fixed absolute prefix ending in /; the console appends team id.
-	AddTeamPage func(TeamPage) error
-}
-
-type TeamPage struct {
-	Path   string            `json:"path"`
-	Labels map[string]string `json:"labels"`
 }
 
 // TeamChange identifies a real committed transition, never a browser claim.

@@ -1,7 +1,7 @@
 # The DSH Teamwork API: what the console, the DSH plugin and the phone app
 # call (docs/tech/go-server.md). Every response the Go server's tests see is
 # validated against this file, and the console's types are generated from it
-# (apps/console/src/lib/api.gen.ts). A route is added here in the same change
+# (apps/web/src/lib/api.gen.ts). A route is added here in the same change
 # that adds it to the server.
 openapi: 3.0.3
 info:
@@ -1246,7 +1246,7 @@ components:
               message: { type: string }
     Session:
       type: object
-      required: [user, doors, setupOpen, mobileRedirectPrefix, teamPages]
+      required: [user, doors, setupOpen, mobileRedirectPrefix]
       properties:
         user:
           type: object
@@ -1269,19 +1269,6 @@ components:
             google: { type: boolean }
         setupOpen: { type: boolean }
         mobileRedirectPrefix: { type: string }
-        teamPages:
-          type: array
-          items:
-            type: object
-            required: [path, labels]
-            properties:
-              path: { type: string }
-              labels:
-                type: object
-                required: [en, zh-CN]
-                properties:
-                  en: { type: string }
-                  zh-CN: { type: string }
     PasswordSignIn:
       type: object
       required: [email, password]

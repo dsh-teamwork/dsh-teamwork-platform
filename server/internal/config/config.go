@@ -44,7 +44,19 @@ type Config struct {
 	GoogleID, GoogleSecret string // both set: the Google door
 
 	PostHogKey, PostHogHost string // POSTHOG_KEY set: anonymous page counts in the browser
+
+	// DevVite (DEV_VITE=1, set by `pnpm dev` and never in production) serves
+	// the web pages from the Vite server on DevWebOrigin and the management
+	// console from the one on DevManageOrigin, instead of the embedded builds.
+	DevVite bool
 }
+
+// The Vite servers DEV_VITE reaches: fixed, so no address can be configured
+// for the server to fetch pages from.
+const (
+	DevWebOrigin    = "http://localhost:3810"
+	DevManageOrigin = "http://localhost:3811"
+)
 
 // Google is whether the Google door is configured.
 func (c Config) Google() bool { return c.GoogleID != "" && c.GoogleSecret != "" }
@@ -89,6 +101,7 @@ func Load(args []string, env func(string) string) (Config, error) {
 	if c.ServiceRole != "combined" && c.ServiceRole != "user" && c.ServiceRole != "manage" {
 		return Config{}, fmt.Errorf("SERVICE_ROLE must be combined, user, or manage")
 	}
+	c.DevVite = strings.TrimSpace(env("DEV_VITE")) == "1"
 	c.Port = *port
 	if c.Port == 0 {
 		c.Port = 3800

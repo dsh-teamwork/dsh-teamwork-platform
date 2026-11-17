@@ -5,13 +5,21 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — `apps/web`, one development address, and editions compose the web app
+
+- **What:** The user frontend is `apps/web` (`@dsh-teamwork/web`) and the shared management app `@dsh-teamwork/manage`. `pnpm dev` runs the edition's outermost Go server on :3800 with `DEV_VITE=1`, which takes the console, its modules and the public pages from the web Vite on :3810 and `/manage` from the management Vite on :3811; Go sources, migrations and embedded JSON restart the server. An edition's web app composes the open one through `mountWeb` (`@dsh-teamwork/web/app`): it adds routes and team pages, replacing an open one at the same path, and adds or replaces public pages by file name, which the server now serves generically (`/{name}` from `{name}.{locale}.html` or `{name}.html`, also in the sitemap). `Host.SetWebConsole` hands the server an edition's web build. `Host.AddTeamPage` and the session's `teamPages` are removed.
+- **Why:** One origin in development, as in production, so the web app and the management console run together and the public pages' routing exists once, in Go; and closed member pages become routes in the open console's shell rather than separate apps (ADR 0041).
+- **Breaking:** `apps/console`, `@dsh-teamwork/console` and `@dsh-teamwork/manage-core` are gone; use the new paths and names. `GET /api/auth/session` no longer has `teamPages`, and editions lose `Host.AddTeamPage` (the closed billing page moves into the closed web app in the same change). Without legal pages, `/privacy` and `/terms` are the console's like any unknown path, rather than 404.
+- **Upgrade:** Run `pnpm dev` and open `http://localhost:3800`; nothing else listens for the browser. Production builds and deployment are unchanged.
+- **Refs:** ADR 0041 (supersedes 0028), `scripts/dev.mjs`, `server/scripts/dev.mjs`, `server/internal/web/web.go`, `apps/web/src/app.tsx`, `apps/web/scripts/vite-pages.mjs`, `apps/web/scripts/prerender.mjs`.
+
 ## 2026-11-17 — Live model metadata and price form suggestions
 
 - **What:** Team model publication/editing can query Models.dev or OpenRouter, select a reference model and apply context/output limits and image support. Known domestic providers default to their Models.dev China-specific namespaces. Rate forms automatically convert supplier USD prices using live Frankfurter USD/CNY FX, apply a multiplier and round suggestions up to readable values. The plugin respects the saved optional `vision` flag.
 - **Why:** Administrators can fill model specifications and reference prices without copying them manually or entering exchange rates.
 - **Breaking:** None. Existing configurations keep their values and unknown capabilities remain unspecified.
 - **Upgrade:** Nothing. No migrations, scheduled jobs, local catalog, persistent cache or upstream associations.
-- **Refs:** `server/internal/httpapi/model_metadata.go`, `apps/console/src/components/team/model-metadata.tsx`, `docs/tech/architecture.md`, `docs/tech/usage-budgets.md`.
+- **Refs:** `server/internal/httpapi/model_metadata.go`, `apps/web/src/components/team/model-metadata.tsx`, `docs/tech/architecture.md`, `docs/tech/usage-budgets.md`.
 
 ## 2026-11-17 — Presets are listed as rows, and a plugin pin needs only its package
 

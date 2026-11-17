@@ -1,6 +1,6 @@
 # Community edition split
 
-> **Status:** Current — the first release waits · **Updated:** 2026-11-16
+> **Status:** Current — the first release waits · **Updated:** 2026-11-17
 
 How the open community edition, the public `dsh-teamwork/dsh-teamwork-platform`
 (ADR 0005), and the closed edition built on it stay two repositories with one
@@ -56,10 +56,10 @@ ADR 0005's original grouping of usage and billing; its historical text stays.
 | Part | Public `dsh-teamwork-platform` | Closed repository only |
 | --- | --- | --- |
 | `server/` | The whole server: every route, the model gateway, sign-in, the schema and migrations of three dialects, and `server/edition`, the extension point | — |
-| `apps/console` | The console and the public pages; `/privacy` and `/terms` from a build's `LEGAL_DIR` | The hosted service's legal text, `premium/docs/legal/` (ADR 0007) |
+| `apps/web` | The web frontend and public pages, and `mountWeb`, which an edition's web app composes (ADR 0041); `/privacy` and `/terms` from a build's `LEGAL_DIR` | The hosted service's legal text, `premium/docs/legal/` (ADR 0007) |
 | `packages/shared` | The languages and the rule that picks one | — |
 | `premium/server` | — | The closed binary: the open server with the relay and the operator console registered, their tables and migrations |
-| `premium/apps` | — | The operator console's pages and the mobile app |
+| `premium/apps` | — | The closed web app (the open one composed, with the member pages it adds), the operator console and the mobile app |
 | Brand | `docs/brand/icon.svg`, `docs/design.md`, the exported icons; the name and mark are not licensed (ADR 0005) | — |
 | Docs | `docs/`, the open ADRs | `premium/docs/`: positioning, the SaaS route, ops, legal, ADRs 0003 and 0004 |
 | Agent instructions | `CLAUDE.md`, `AGENTS.md` | `premium/CLAUDE.md`, read before touching `premium/` |
@@ -88,7 +88,7 @@ never diverges.
 
 The open server's `/` is the landing page on every instance (ADR 0007), and
 each deployment publishes its own legal pages from `LEGAL_DIR`; the hosted
-service builds its image with `premium/docs/legal/`. A self-hosted instance
+service's web app (`premium/apps/web`) renders `premium/docs/legal/` itself. A self-hosted instance
 built without one publishes neither, so no open page links legal text that
 names Shushuo.
 

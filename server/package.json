@@ -3,13 +3,14 @@
   "private": true,
   "description": "The Go binary of ADR 0014, run through the repository's gate like every other package",
   "scripts": {
+    "dev": "node scripts/dev.mjs",
     "lint": "node scripts/lint.mjs",
     "test": "go test ./...",
     "build": "node scripts/embed.mjs && go build -trimpath -o dist/dsh-teamwork ./cmd/dsh-teamwork",
     "db:drift": "node scripts/drift.mjs"
   },
   "devDependencies": {
-    "@dsh-teamwork/console": "workspace:*",
-    "@dsh-teamwork/manage-core": "workspace:*"
+    "@dsh-teamwork/web": "workspace:*",
+    "@dsh-teamwork/manage": "workspace:*"
   }
 }

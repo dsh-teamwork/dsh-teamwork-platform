@@ -33,7 +33,7 @@ import { useLocale, useTranslations } from 'use-intl';
 import { AccountRow } from '@/components/account';
 import { ThemeToggle } from '@/components/theme-toggle';
 import type { Team, TeamSummary } from '@/lib/api';
-import { useSession } from '@/lib/session';
+import { editionTeamPages } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
 type SectionKey = 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets' | 'sharing' | 'history';
@@ -68,10 +68,13 @@ const GROUPS: { key: GroupKey | null; sections: { path: string; key: SectionKey;
 ];
 const PATHS = GROUPS.flatMap((g) => g.sections.map((s) => s.path));
 
+/** An edition's team pages that are not open ones it replaced: listed under governance. */
+const extraPages = () => editionTeamPages().filter((page) => !PATHS.includes(page.path));
+
 /** The section the path is in, so switching team keeps the person on the same kind of page. */
 function sectionOf(pathname: string, teamId: string): string {
   const rest = pathname.slice(`/teams/${teamId}`.length).replace(/^\//, '').split('/')[0] ?? '';
-  return PATHS.includes(rest) ? rest : '';
+  return PATHS.includes(rest) || extraPages().some((page) => page.path === rest) ? rest : '';
 }
 
 const href = (teamId: string, path: string) => (path ? `/teams/${teamId}/${path}` : `/teams/${teamId}`);
@@ -144,7 +147,6 @@ export function ConsoleShell({
 /** The console's pages in their groups, then an edition's own team pages under governance. */
 function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team; section: string; reviewsWaiting: boolean; onNavigate?: () => void }) {
   const t = useTranslations('team');
-  const { session } = useSession();
   const locale = useLocale();
   return (
     <nav aria-label={t('nav.label')} className="flex flex-col gap-4">
@@ -160,11 +162,11 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
             </Link>
           ))}
           {group.key === 'governance' &&
-            session.teamPages.map((page) => (
-              <a key={page.path} href={`${page.path}${encodeURIComponent(team.id)}`} className={item}>
-                <LayoutGrid className="size-4" aria-hidden />
-                {page.labels[locale === 'zh-CN' ? 'zh-CN' : 'en']}
-              </a>
+            extraPages().map(({ path, labels, icon: Icon }) => (
+              <Link key={path} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
+                <Icon className="size-4" aria-hidden />
+                <span className="flex-1">{labels[locale === 'zh-CN' ? 'zh-CN' : 'en']}</span>
+              </Link>
             ))}
         </div>
       ))}

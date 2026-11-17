@@ -1,1 +1,2 @@
-dist/
+/dist/
+!internal/web/dist/
