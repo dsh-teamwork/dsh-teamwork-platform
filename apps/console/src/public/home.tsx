@@ -11,10 +11,10 @@ import { Sea } from './sea';
 
 /*
  * The home page every instance has: what DSH Teamwork is, as an open-source
- * project and as a service, and the one way in. It is one dive (docs/design.md):
- * a paper sky with the fluke sounding into the sea, then sections that sit
- * deeper and darker in one ocean gradient, each carrying its depth. It states
- * only what ships today. A deployment's legal pages are linked when it has
+ * project and as a service, and the one way in. Black on white
+ * (docs/design.md): a wave line with the fluke faint behind it, then sections
+ * divided by hairlines, each still labelled with its depth, and the closing
+ * call on the one navy band. It states only what ships today. A deployment's legal pages are linked when it has
  * them.
  *
  * Prerendered when the console is built (scripts/prerender.mjs), once per
@@ -39,28 +39,28 @@ function LocalePicker({ locale, label, names }: { locale: Locale; label: string;
   );
 }
 
-const code = (chunks: ReactNode) => <code className="rounded bg-ocean-line px-1.5 py-0.5 font-mono text-[0.9em]">{chunks}</code>;
+const code = (chunks: ReactNode) => <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.9em]">{chunks}</code>;
 
 function Depth({ depth, label }: { depth: string; label: string }) {
   return (
-    <p className="mb-6 flex items-center gap-3 font-mono text-xs font-semibold tracking-wider text-ocean-accent">
+    <p className="mb-6 flex items-center gap-3 font-mono text-xs font-semibold tracking-wider text-foreground">
       {depth}
-      <span className="text-ocean-muted">{label}</span>
-      <span aria-hidden="true" className="h-px flex-1 border-t border-dashed border-ocean-line" />
+      <span className="text-muted-foreground">{label}</span>
+      <span aria-hidden="true" className="h-px flex-1 border-t border-dashed border-border" />
     </p>
   );
 }
 
 function Zone({ id, children }: { id?: string; children: ReactNode }) {
   return (
-    <section id={id} className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
-      {children}
+    <section id={id} className="border-t">
+      <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28">{children}</div>
     </section>
   );
 }
 
 const zoneTitle = 'max-w-3xl text-balance text-3xl font-black tracking-tight sm:text-5xl sm:leading-tight';
-const zoneLede = 'mt-5 max-w-2xl text-base text-ocean-muted sm:text-lg';
+const zoneLede = 'mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg';
 
 // The community edition: the open half of this product (ADR 0005), self-hosted.
 const communityRepo = 'https://github.com/dsh-teamwork/dsh-teamwork-platform';
@@ -134,33 +134,33 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
 
         <Sea />
 
-        <div className="-mt-px bg-linear-to-b from-ocean to-ocean-deep text-ocean-foreground">
+        <div>
           <Zone id="how">
             <Depth depth={t('surface.depth')} label={t('surface.label')} />
             <h2 className={zoneTitle}>{t('surface.title')}</h2>
             <p className={zoneLede}>{t('surface.lede')}</p>
-            <ol className="mt-12 grid gap-8 border-t border-ocean-line pt-6 md:grid-cols-3">
+            <ol className="mt-12 grid gap-8 border-t border-border pt-6 md:grid-cols-3">
               {(['step1', 'step2', 'step3'] as const).map((step, i) => (
                 <li key={step} className="flex flex-col gap-2">
-                  <span className="font-mono text-sm font-semibold text-ocean-accent">0{i + 1}</span>
+                  <span className="font-mono text-sm font-semibold text-muted-foreground">0{i + 1}</span>
                   <h3 className="text-lg font-bold">{t(`surface.${step}Title`)}</h3>
-                  <p className="text-sm text-ocean-muted">{t.rich(`surface.${step}Body`, { code })}</p>
+                  <p className="text-sm text-muted-foreground">{t.rich(`surface.${step}Body`, { code })}</p>
                 </li>
               ))}
             </ol>
             <figure className="mt-12 max-w-2xl">
-              <figcaption className="mb-3 text-sm text-ocean-muted">{t('surface.terminalCaption')}</figcaption>
-              <pre className="overflow-x-auto rounded-xl bg-ocean-deep p-5 font-mono text-[13px] leading-relaxed shadow-2xl ring-1 ring-ocean-line">
-                <span className="text-ocean-accent">›</span> /teamwork login{'\n'}
-                <span className="text-ocean-muted">{'  '}{t('surface.termConfirm')}</span>{'\n'}
-                <span className="text-ocean-accent">✓</span> {t('surface.termSigned')}{'\n'}
-                <span className="text-ocean-accent">›</span> /teamwork sync{'\n'}
-                <span className="text-ocean-accent">✓</span> {t('surface.termSynced')}{'\n'}
-                {'  '}team/coder      <span className="text-ocean-muted">{t('surface.termGateway')}</span>{'\n'}
-                {'  '}team/reviewer   <span className="text-ocean-muted">{t('surface.termGateway')}</span>{'\n'}
-                {'  '}pr-review       <span className="text-ocean-muted">→ team/reviewer</span>{'\n'}
-                {'  '}@acme/dsh-lint  <span className="text-ocean-accent">@2.3.1</span>{'\n'}
-                <span className="text-ocean-muted">{'  '}{t('surface.termNoKey')}</span>
+              <figcaption className="mb-3 text-sm text-muted-foreground">{t('surface.terminalCaption')}</figcaption>
+              <pre className="overflow-x-auto rounded-xl bg-primary p-5 font-mono text-[13px] leading-relaxed text-primary-foreground">
+                <span className="text-primary-foreground">›</span> /teamwork login{'\n'}
+                <span className="text-primary-foreground/60">{'  '}{t('surface.termConfirm')}</span>{'\n'}
+                <span className="text-primary-foreground">✓</span> {t('surface.termSigned')}{'\n'}
+                <span className="text-primary-foreground">›</span> /teamwork sync{'\n'}
+                <span className="text-primary-foreground">✓</span> {t('surface.termSynced')}{'\n'}
+                {'  '}team/coder      <span className="text-primary-foreground/60">{t('surface.termGateway')}</span>{'\n'}
+                {'  '}team/reviewer   <span className="text-primary-foreground/60">{t('surface.termGateway')}</span>{'\n'}
+                {'  '}pr-review       <span className="text-primary-foreground/60">→ team/reviewer</span>{'\n'}
+                {'  '}@acme/dsh-lint  <span className="text-primary-foreground">@2.3.1</span>{'\n'}
+                <span className="text-primary-foreground/60">{'  '}{t('surface.termNoKey')}</span>
               </pre>
             </figure>
           </Zone>
@@ -169,17 +169,17 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
             <Depth depth={t('boundary.depth')} label={t('boundary.label')} />
             <h2 className={zoneTitle}>{t('boundary.title')}</h2>
             <p className={zoneLede}>{t('boundary.lede')}</p>
-            <div className="mt-12 grid gap-px overflow-hidden rounded-xl bg-ocean-line ring-1 ring-ocean-line md:grid-cols-3">
+            <div className="mt-12 grid gap-px overflow-hidden rounded-xl bg-border ring-1 ring-border md:grid-cols-3">
               {(['keys', 'check', 'gateway'] as const).map((item) => (
-                <div key={item} className="flex flex-col gap-2 bg-ocean-deep/60 p-6">
+                <div key={item} className="flex flex-col gap-2 bg-background p-6">
                   <h3 className="text-base font-bold">{t(`boundary.${item}Title`)}</h3>
-                  <p className="text-sm text-ocean-muted">{t(`boundary.${item}Body`)}</p>
+                  <p className="text-sm text-muted-foreground">{t(`boundary.${item}Body`)}</p>
                 </div>
               ))}
             </div>
-            <blockquote className="mt-12 border-t border-ocean-line pt-8">
+            <blockquote className="mt-12 border-t border-border pt-8">
               <p className="max-w-3xl text-balance text-xl font-bold sm:text-2xl">“{t('boundary.promise')}”</p>
-              <p className="mt-3 font-mono text-xs text-ocean-muted">{t('boundary.promiseNote')}</p>
+              <p className="mt-3 font-mono text-xs text-muted-foreground">{t('boundary.promiseNote')}</p>
             </blockquote>
           </Zone>
 
@@ -195,12 +195,12 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
                   ['models', 'model'],
                 ] as const
               ).map(([layer, kind]) => (
-                <li key={layer} className="grid grid-cols-[4.5rem_1fr] gap-4 border-t border-ocean-line py-5 last:border-b">
+                <li key={layer} className="grid grid-cols-[4.5rem_1fr] gap-4 border-t border-border py-5 last:border-b">
                   {/* The configuration kind as the product names it (`team_configs.kind`). */}
-                  <span className="pt-1 font-mono text-xs font-semibold text-ocean-accent">{kind}</span>
+                  <span className="pt-1 font-mono text-xs font-semibold text-muted-foreground">{kind}</span>
                   <div>
                     <h3 className="text-base font-bold">{t(`deep.${layer}Title`)}</h3>
-                    <p className="text-sm text-ocean-muted">{t(`deep.${layer}Body`)}</p>
+                    <p className="text-sm text-muted-foreground">{t(`deep.${layer}Body`)}</p>
                   </div>
                 </li>
               ))}
@@ -212,10 +212,10 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
             <h2 className={zoneTitle}>{t('community.title')}</h2>
             <p className={zoneLede}>{t('community.lede')}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="bg-ocean-foreground text-ocean hover:bg-ocean-foreground/90">
+              <Button asChild size="lg">
                 <a href={communityRepo}>{t('community.repo')}</a>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-ocean-line bg-transparent text-ocean-foreground hover:bg-ocean-line">
+              <Button asChild size="lg" variant="outline">
                 <a href={`${communityRepo}#self-hosting`}>{t('community.guide')}</a>
               </Button>
             </div>
@@ -226,31 +226,37 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
             <h2 className={zoneTitle}>{t('faq.title')}</h2>
             <div className="mt-10 max-w-3xl">
               {faqs.map((n) => (
-                <details key={n} open={n === 1} className="group border-t border-ocean-line py-5 last:border-b">
+                <details key={n} open={n === 1} className="group border-t border-border py-5 last:border-b">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold [&::-webkit-details-marker]:hidden">
                     {t(`faq.q${n}`)}
-                    <span aria-hidden="true" className="font-mono text-xl font-normal text-ocean-accent group-open:rotate-45 transition-transform">
+                    <span aria-hidden="true" className="font-mono text-xl font-normal text-muted-foreground group-open:rotate-45 transition-transform">
                       +
                     </span>
                   </summary>
-                  <p className="mt-3 max-w-2xl text-ocean-muted">{t(`faq.a${n}`)}</p>
+                  <p className="mt-3 max-w-2xl text-muted-foreground">{t(`faq.a${n}`)}</p>
                 </details>
               ))}
             </div>
           </Zone>
 
-          <Zone>
-            <Depth depth={t('final.depth')} label={t('final.label')} />
-            <h2 className={zoneTitle}>{t('final.title')}</h2>
-            <p className={zoneLede}>{t('final.lede')}</p>
-            <Button asChild size="lg" className="mt-8 bg-ocean-foreground text-ocean hover:bg-ocean-foreground/90">
-              <a href={start.href}>{start.label}</a>
-            </Button>
-          </Zone>
+          <section className="bg-brand text-brand-foreground">
+            <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
+              <p className="mb-6 flex items-center gap-3 font-mono text-xs font-semibold tracking-wider">
+                <span aria-hidden="true" className="size-1.5 rounded-full bg-signal" />
+                {t('final.depth')}
+                <span className="opacity-75">{t('final.label')}</span>
+              </p>
+              <h2 className={zoneTitle}>{t('final.title')}</h2>
+              <p className="mt-5 max-w-2xl text-base opacity-80 sm:text-lg">{t('final.lede')}</p>
+              <Button asChild size="lg" className="mt-8 bg-background text-foreground hover:bg-background/90">
+                <a href={start.href}>{start.label}</a>
+              </Button>
+            </div>
+          </section>
 
-          <footer className="border-t border-ocean-line">
-            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-8 text-sm text-ocean-muted">
-              <span className="flex items-center gap-2 font-bold text-ocean-foreground">
+          <footer className="border-t border-border">
+            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-8 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2 font-bold text-foreground">
                 <img src="/logo.svg" alt="" width={22} height={22} />
                 {tc('appName')}
               </span>
@@ -264,7 +270,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
                   </a>
                 </>
               )}
-              <div className="ml-auto [&_select]:border-ocean-line [&_select]:bg-ocean-deep [&_select]:text-ocean-foreground [&_label]:text-ocean-muted">
+              <div className="ml-auto">
                 <LocalePicker locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} />
               </div>
             </div>

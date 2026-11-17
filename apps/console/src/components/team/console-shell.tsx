@@ -60,7 +60,7 @@ export function ConsoleShell({
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
-      <aside className="flex flex-col gap-4 border-b bg-card px-3 py-3 md:sticky md:top-0 md:h-dvh md:border-r md:border-b-0 md:py-4">
+      <aside className="flex flex-col gap-4 border-b bg-muted px-3 py-3 md:sticky md:top-0 md:h-dvh md:border-r md:border-b-0 md:py-4">
         <TeamSwitcher team={team} teams={teams} section={section} />
         <nav aria-label={t('nav.label')} className="-mx-1 flex gap-1 overflow-x-auto px-1 md:mx-0 md:flex-col md:overflow-visible md:px-0">
           {SECTIONS.map(({ path, key, icon: Icon }) => (
@@ -69,8 +69,9 @@ export function ConsoleShell({
               to={href(team.id, path)}
               aria-current={section === path ? 'page' : undefined}
               className={cn(
-                'flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm hover:bg-accent',
-                section === path && 'bg-accent font-medium text-brand',
+                'relative flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm hover:bg-accent',
+                // The selected section: a grey fill and, beside it, the navy bar that says this is the team's (docs/design.md, "Component rules").
+                section === path && 'bg-secondary font-medium before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-brand',
               )}
             >
               <Icon className="size-4" aria-hidden />
@@ -114,9 +115,10 @@ function TeamSwitcher({ team, teams, section }: { team: Team; teams: TeamSummary
         <img src="/logo.svg" alt="" width={32} height={32} className="shrink-0" />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-sm font-semibold">{team.name}</span>
-          <span className="text-xs text-muted-foreground">
-            {t(`role.${team.role}`)} · {t('list.members', { count: team.members.length })}
-          </span>
+          <span className="text-xs text-muted-foreground">{t('list.members', { count: team.members.length })}</span>
+        </span>
+        <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold', team.role === 'admin' ? 'bg-brand text-brand-foreground' : 'bg-secondary text-muted-foreground')}>
+          {t(`role.${team.role}`)}
         </span>
         <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       </DropdownMenu.Trigger>

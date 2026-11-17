@@ -5,6 +5,22 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-16 — Neutral black-and-white palette with navy and amber accents
+
+- **What:** The web app and the console drop the warm paper and indigo-tinted scale for neutral greys: black primary buttons in light, white in dark, the same frame as DeepSeek Harness. `--brand` stays navy and marks team identity only; a new `--signal` (amber) marks what needs attention. The landing page drops its navy ocean for a black wave line with the fluke faint behind it and one navy closing band; the console's selected section is a grey fill with a navy bar, and pending reviews carry an amber dot. The share card is drawn on white.
+- **Why:** Teamwork lives inside DSH; a neutral frame lets the plugin, the web app and the mobile app read as one product with it, while navy and amber set the team edition apart.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `docs/design.md` ("Colour", "Component rules"), `apps/console/src/globals.css`, `apps/manage/src/globals.css`, `apps/console/src/public/home.tsx`.
+
+## 2026-11-16 — The brand mark's fluke rises from a layered sea
+
+- **What:** The mark's thin wave line becomes a full sea in three tones (deep water, a light surface, two swell bands) that covers the fluke's stalk; the fluke keeps its size and the surface its height. Every icon and logo is re-exported.
+- **Why:** The stalk cut off below a thin line read as a severed tail.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0035, `docs/design.md`, `docs/brand/icon.svg`.
+
 ## 2026-11-16 — Bilingual product documentation and self-hosting guide
 
 - **What:** English-first and Simplified Chinese user READMEs explain team resources, reviewed sharing, service boundaries and supported installation paths. A self-hosting runbook covers retained local/S3 artifacts, verification and consistent backups.

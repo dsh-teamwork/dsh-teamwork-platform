@@ -271,10 +271,13 @@ function Sharing({
       </section>
       {rows.data.length === 0 && <p className="text-sm text-muted-foreground">{t('empty')}</p>}
       {rows.data.map((row) => (
-        <article key={row.id} className="flex flex-col gap-3 rounded-lg border p-4">
+        <article key={row.id} className="flex flex-col gap-3 border-t py-5">
           <div className="flex flex-wrap justify-between gap-2">
             <h2 className="font-semibold">{row.proposal.name}</h2>
-            <span className="text-sm">{t(`states.${row.state}`)}</span>
+            <span className="flex items-center gap-1.5 text-sm">
+              {row.state === 'pending' && <span aria-hidden className="size-1.5 rounded-full bg-signal" />}
+              {t(`states.${row.state}`)}
+            </span>
           </div>
           <p className="text-xs text-muted-foreground">
             {new Date(row.createdAt).toLocaleString()} ·{' '}
