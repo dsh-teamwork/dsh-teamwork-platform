@@ -33,6 +33,8 @@ const (
 	// ProviderKeyRejected is the provider answering 401 or 403 to its key.
 	ProviderKeyRejected     = "provider_key_rejected"
 	ProviderKeysUnavailable = "provider_keys_unavailable"
+	// ModelMetadataUnavailable is a public model catalog that could not be read.
+	ModelMetadataUnavailable = "model_metadata_unavailable"
 )
 
 var semver = regexp.MustCompile(`^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$`)
@@ -126,6 +128,7 @@ type ModelData struct {
 	Model         string `json:"model"`
 	ContextWindow *int64 `json:"contextWindow,omitempty"`
 	MaxTokens     *int64 `json:"maxTokens,omitempty"`
+	Vision        *bool  `json:"vision,omitempty"`
 }
 
 func (m *ModelData) validate(is *Issues) {

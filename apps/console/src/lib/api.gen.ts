@@ -1419,6 +1419,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/model-metadata/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Query a public upstream live for transient model form suggestions
+         * @description No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented. A catalog that cannot be read is model_metadata_unavailable.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        source: "models_dev" | "openrouter";
+                        provider: string;
+                        query: string;
+                        pricing?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Up to fifty candidates; the administrator explicitly selects a reference */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            models: components["schemas"]["ModelMetadata"][];
+                            /** @description Latest live reference exchange rate, omitted on failure */
+                            usdToCny?: string;
+                            /** Format: date */
+                            exchangeDate?: string;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                502: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teams/{teamId}/providers/check": {
         parameters: {
             query?: never;
@@ -2768,9 +2832,26 @@ export interface components {
             updatedAt: string;
         };
         Tokens: number;
+        ModelMetadata: {
+            id: string;
+            name: string;
+            provider: string;
+            contextWindow?: components["schemas"]["Tokens"];
+            maxTokens?: components["schemas"]["Tokens"];
+            vision?: boolean;
+            outputModalities?: string[];
+            /** @description Base USD per million text tokens. Absent rates are unknown, not free. */
+            prices: {
+                input?: string;
+                output?: string;
+                cacheRead?: string;
+                cacheWrite?: string;
+            };
+        };
         ModelData: {
             provider: string;
             model: string;
+            vision?: boolean;
             contextWindow?: components["schemas"]["Tokens"];
             maxTokens?: components["schemas"]["Tokens"];
         };

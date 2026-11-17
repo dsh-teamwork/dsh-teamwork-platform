@@ -17,20 +17,22 @@ export interface CatalogProvider {
   /** The provider's name in the team, unless the admin renames it to add a second account. */
   id: string;
   baseUrl: string;
+  /** Public metadata namespace; a transient form default, never a saved association. */
+  modelsDevId: string;
   /** Two letters for its tile; no provider's logo is drawn. */
   mark: string;
 }
 
 export const PROVIDER_CATALOG: readonly CatalogProvider[] = [
-  { id: 'deepseek', baseUrl: 'https://api.deepseek.com/v1', mark: 'DS' },
-  { id: 'openai', baseUrl: 'https://api.openai.com/v1', mark: 'OA' },
-  { id: 'qwen', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', mark: 'QW' },
-  { id: 'moonshot', baseUrl: 'https://api.moonshot.cn/v1', mark: 'KM' },
-  { id: 'zhipu', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', mark: 'GL' },
-  { id: 'doubao', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', mark: 'DB' },
-  { id: 'minimax', baseUrl: 'https://api.minimaxi.com/v1', mark: 'MM' },
-  { id: 'siliconflow', baseUrl: 'https://api.siliconflow.cn/v1', mark: 'SF' },
-  { id: 'openrouter', baseUrl: 'https://openrouter.ai/api/v1', mark: 'OR' },
+  { id: 'deepseek', modelsDevId: 'deepseek', baseUrl: 'https://api.deepseek.com/v1', mark: 'DS' },
+  { id: 'openai', modelsDevId: 'openai', baseUrl: 'https://api.openai.com/v1', mark: 'OA' },
+  { id: 'qwen', modelsDevId: 'alibaba-cn', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', mark: 'QW' },
+  { id: 'moonshot', modelsDevId: 'moonshotai-cn', baseUrl: 'https://api.moonshot.cn/v1', mark: 'KM' },
+  { id: 'zhipu', modelsDevId: 'zhipuai', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', mark: 'GL' },
+  { id: 'doubao', modelsDevId: 'volcengine', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', mark: 'DB' },
+  { id: 'minimax', modelsDevId: 'minimax-cn', baseUrl: 'https://api.minimaxi.com/v1', mark: 'MM' },
+  { id: 'siliconflow', modelsDevId: 'siliconflow-cn', baseUrl: 'https://api.siliconflow.cn/v1', mark: 'SF' },
+  { id: 'openrouter', modelsDevId: 'openrouter', baseUrl: 'https://openrouter.ai/api/v1', mark: 'OR' },
 ];
 
 /** The catalog entry a stored provider came from, matched by address: a renamed second account still shows its maker. */

@@ -29,8 +29,14 @@ The scale is `1 CNY = 1,000 reference points` and `1 point = 1,000,000,000`
 integer accounting units ([ADR 0022](../adr/0022-reference-usage-accounting.md)).
 CNY-per-million-token rates accept six decimal places, with checked integer
 arithmetic and decimal-string amounts over HTTP. Admins choose estimated cost
-or deliberate internal weights. Foreign supplier quotes must be converted to
-CNY before entry; automatic FX and provider price templates are not implemented.
+or deliberate internal weights. While the basis is estimated cost, the model-rate form can query Models.dev or OpenRouter live, convert base USD
+text-token prices using Frankfurter's latest USD/CNY reference rate and apply a
+user-selected multiplier. Suggestions round up to two significant digits (at
+least one reference point per million tokens for positive costs). Missing rates
+remain unchanged; a failed or stale FX lookup disables price application rather
+than guessing a rate. Conditional and non-text charges are not represented.
+The administrator reviews the values and saves through the existing rate API;
+lookups never persist data or create an upstream association.
 
 Prices have immutable revisions tied to effective model/provider identity.
 Capture the price before dispatch; changing rates never reprices old calls.

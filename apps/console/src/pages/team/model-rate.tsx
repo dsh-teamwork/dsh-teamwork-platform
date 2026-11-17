@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 
+import { ModelMetadataLookup } from '@/components/team/model-metadata';
 import { Field } from '@/components/team/field';
 import { useMutation, useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
@@ -12,16 +13,16 @@ import { useApi } from '@/lib/use-api';
 type Rate = Schemas['ModelRate'];
 type RateInput = Schemas['ModelRateInput'];
 
-export function ModelRateButton({ teamId, configId, name, admin }: { teamId: string; configId: string; name: string; admin: boolean }) {
+export function ModelRateButton({ teamId, configId, name, admin, provider, model }: { teamId: string; configId: string; name: string; admin: boolean; provider: string; model: string }) {
   const t = useTranslations('usage');
   const [open, setOpen] = useState(false);
   return <>
     <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>{t('rate')}</Button>
-    {open && <RateDialog teamId={teamId} configId={configId} name={name} admin={admin} close={() => setOpen(false)} />}
+    {open && <RateDialog teamId={teamId} configId={configId} name={name} admin={admin} provider={provider} model={model} close={() => setOpen(false)} />}
   </>;
 }
 
-function RateDialog({ teamId, configId, name, admin, close }: { teamId: string; configId: string; name: string; admin: boolean; close: () => void }) {
+function RateDialog({ teamId, configId, name, admin, provider, model, close }: { teamId: string; configId: string; name: string; admin: boolean; provider: string; model: string; close: () => void }) {
   const t = useTranslations('usage');
   const word = useTeamError();
   const path = `teams/${teamId}/model-rates/${configId}`;
@@ -30,12 +31,12 @@ function RateDialog({ teamId, configId, name, admin, close }: { teamId: string; 
     <DialogContent>
       <DialogHeader><DialogTitle>{t('rateTitle', { name })}</DialogTitle><DialogDescription>{t(rate.data?.readOnly ? 'hostedRateHint' : 'rateHint')}</DialogDescription></DialogHeader>
       {!!rate.error && <p role="alert" className="text-sm text-destructive">{word(rate.error)}</p>}
-      {rate.data && <RateForm key={rate.data.revision} value={rate.data} path={path} admin={admin && !rate.data.readOnly} reload={rate.reload} close={close} />}
+      {rate.data && <RateForm key={rate.data.revision} value={rate.data} path={path} teamId={teamId} provider={provider} model={model} admin={admin && !rate.data.readOnly} reload={rate.reload} close={close} />}
     </DialogContent>
   </Dialog>;
 }
 
-function RateForm({ value, path, admin, reload, close }: { value: Rate; path: string; admin: boolean; reload: () => Promise<unknown>; close: () => void }) {
+function RateForm({ value, path, admin, reload, close, teamId, provider, model }: { value: Rate; path: string; admin: boolean; reload: () => Promise<unknown>; close: () => void; teamId: string; provider: string; model: string }) {
   const t = useTranslations('usage');
   const [form, setForm] = useState<RateInput>({ revision: value.revision, basis: value.basis, input: value.input, cacheRead: value.cacheRead, cacheWrite: value.cacheWrite || '0', output: value.output });
   const { pending, run } = useMutation(reload);
@@ -53,6 +54,10 @@ function RateForm({ value, path, admin, reload, close }: { value: Rate; path: st
       <input type="checkbox" className="mt-1" disabled={!admin || pending} checked={form.basis === 'weight'} onChange={(e) => setForm({ ...form, basis: e.target.checked ? 'weight' : 'cost' })} />
       <span>{t('weightHint')}</span>
     </label>
+    {/* Suggestions are supplier costs, so they are offered only while the basis is cost: applying them never switches a weight basis unseen. */}
+    {admin && form.basis === 'cost' && <ModelMetadataLookup teamId={teamId} provider={provider} model={model} pricing current={{ input: form.input, output: form.output, cacheRead: form.cacheRead, cacheWrite: form.cacheWrite }} disabled={pending} apply={(rates) => {
+      if (!('id' in rates)) setForm((current) => ({ ...current, ...rates }));
+    }} />}
     <DialogFooter><Button type="button" variant="outline" onClick={close}>{t('close')}</Button>{admin && <Button type="submit" disabled={pending}>{t('save')}</Button>}</DialogFooter>
   </form>;
 }

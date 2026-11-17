@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Live model metadata and price form suggestions
+
+- **What:** Team model publication/editing can query Models.dev or OpenRouter, select a reference model and apply context/output limits and image support. Known domestic providers default to their Models.dev China-specific namespaces. Rate forms automatically convert supplier USD prices using live Frankfurter USD/CNY FX, apply a multiplier and round suggestions up to readable values. The plugin respects the saved optional `vision` flag.
+- **Why:** Administrators can fill model specifications and reference prices without copying them manually or entering exchange rates.
+- **Breaking:** None. Existing configurations keep their values and unknown capabilities remain unspecified.
+- **Upgrade:** Nothing. No migrations, scheduled jobs, local catalog, persistent cache or upstream associations.
+- **Refs:** `server/internal/httpapi/model_metadata.go`, `apps/console/src/components/team/model-metadata.tsx`, `docs/tech/architecture.md`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-17 — Presets are listed as rows, and a plugin pin needs only its package
 
 - **What:** The console's presets are one list of rows instead of two columns of cards, as `docs/design.md` asks of lists; the templates below stay cards. Pinning a plugin asks for the npm package and version first, and its name defaults to the package.
