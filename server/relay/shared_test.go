@@ -24,6 +24,8 @@ type sharedWorld struct {
 	admin  *http.Cookie
 	member *http.Cookie
 	other  *http.Cookie // an admin of another team
+	// The three accounts' ids, in the same order.
+	adminID, memberID, otherID string
 }
 
 func eachShared(t *testing.T, f func(t *testing.T, w *sharedWorld)) {
@@ -31,11 +33,13 @@ func eachShared(t *testing.T, f func(t *testing.T, w *sharedWorld)) {
 	ext := edition.Extension{
 		Name: "open-relay",
 		Mount: func(h edition.Host) (func(), error) {
-			w.r = newRelay(h, nil, time.Minute)
-			if err := h.SubscribeTeams(w.r.sharedTeamDeleted); err != nil {
+			w.r = newRelay(h, nil, 200*time.Millisecond)
+			if err := h.SubscribeTeams(w.r.teamChanged); err != nil {
 				return nil, err
 			}
+			w.r.routes(h.Mux)
 			w.r.sharedRoutes(h.Mux)
+			w.r.accessRoutes(h.Mux)
 			return w.r.close, nil
 		},
 	}
@@ -46,6 +50,7 @@ func eachShared(t *testing.T, f func(t *testing.T, w *sharedWorld)) {
 		in.Member(w.teamID, memberID)
 		in.Team(otherID)
 		w.admin, w.member, w.other = in.Session(adminID, "password"), in.Session(memberID, "password"), in.Session(otherID, "password")
+		w.adminID, w.memberID, w.otherID = adminID, memberID, otherID
 		f(t, w)
 	})
 }
@@ -187,6 +192,77 @@ func TestSharedHostKeyBindsOneMachineToOneTeam(t *testing.T) {
 		}
 		if n := w.r.db.SharedHost.Query().CountX(context.Background()); n != 0 {
 			t.Fatalf("%d shared hosts left", n)
+		}
+	})
+}
+
+// Members reach a shared DSH through the relay by the server's list: the
+// DSH's socket proves itself with its host token and hears who may reach it;
+// a member's handset joins pending; a member taken off the list loses the
+// pairing at once; deleting the host closes its socket.
+func TestMembersReachASharedDSHByTheServersList(t *testing.T) {
+	eachShared(t, func(t *testing.T, w *sharedWorld) {
+		rw := &world{t: t, in: w.in, r: w.r}
+		base := "/api/teams/" + w.teamID + "/shared-hosts"
+		_, created := w.do("POST", base, w.admin, "", obj{"name": "Build box"})
+		hostID, key := created["host"].(obj)["id"].(string), created["key"].(string)
+		_, token := w.exchange(key, machine(t))
+
+		dsh := rw.open("/relay/plugin", obj{"t": "hello", "token": token["token"], "clientId": "shared-box-1", "name": "box", "dshVersion": "0.2.2-rc.3"})
+		if dsh.hostID() != hostID {
+			t.Fatalf("a shared DSH's relay host is %v, not its shared host %s", dsh.welcome, hostID)
+		}
+		if members := dsh.next(is("members"))["members"].([]any); len(members) != 2 {
+			t.Fatalf("members %v", members)
+		}
+		if reply := dsh.ask(obj{"t": "offer"}); reply["error"] != "shared_host" {
+			t.Fatalf("a shared DSH was given a pairing code: %v", reply)
+		}
+
+		member := handset{w.in.Bearer(w.memberID), keyA}
+		outsider := handset{w.in.Bearer(w.otherID), keyB}
+		if s, out := rw.call(member, "GET", "/relay/shared", nil); s != 200 || len(out["hosts"].([]any)) != 1 || out["hosts"].([]any)[0].(obj)["online"] != true {
+			t.Fatalf("reachable: %d %v", s, out)
+		}
+		if _, out := rw.call(outsider, "GET", "/relay/shared", nil); len(out["hosts"].([]any)) != 0 {
+			t.Fatalf("an outsider sees %v", out)
+		}
+		if s, _ := rw.call(outsider, "POST", "/relay/shared/"+hostID+"/join", obj{"deviceName": "eve"}); s != 404 {
+			t.Fatalf("an outsider joined: %d", s)
+		}
+		s, joined := rw.call(member, "POST", "/relay/shared/"+hostID+"/join", obj{"deviceName": "bob's phone"})
+		if s != 201 || joined["pairing"].(obj)["status"] != "pending" {
+			t.Fatalf("join: %d %v", s, joined)
+		}
+		pairingID := joined["pairing"].(obj)["id"].(string)
+		dsh.next(is("paired"))
+
+		// The pending pairing carries the handshake to the DSH and back.
+		phone := rw.phone(member)
+		phone.send(sealed(pairingID, "invite-handshake"))
+		equal(t, dsh.next(is("sealed")), sealed(pairingID, "invite-handshake"))
+
+		// Listed with the admin alone: the member's pairing ends, and the DSH hears the new list.
+		if s, out := w.do("PUT", base+"/"+hostID+"/members", w.admin, "", obj{"access": "listed", "userIds": []string{w.adminID}}); s != 200 || out["host"].(obj)["access"] != "listed" {
+			t.Fatalf("set members: %d %v", s, out)
+		}
+		if members := dsh.next(func(f obj) bool { return f["t"] == "members" && len(f["members"].([]any)) == 1 }); members == nil {
+			t.Fatal("no new list")
+		}
+		phone.next(func(f obj) bool { return f["t"] == "revoked" && f["pairingId"] == pairingID })
+		if s, _ := rw.call(member, "POST", "/relay/shared/"+hostID+"/join", obj{"deviceName": "again"}); s != 404 {
+			t.Fatalf("an unlisted member joined: %d", s)
+		}
+		if s, _ := w.do("PUT", base+"/"+hostID+"/members", w.admin, "", obj{"access": "listed", "userIds": []string{w.otherID}}); s != 400 {
+			t.Fatalf("listed someone outside the team: %d", s)
+		}
+
+		// Deleting the host closes its socket.
+		w.do("DELETE", base+"/"+hostID, w.admin, "", nil)
+		select {
+		case <-dsh.closed:
+		case <-time.After(5 * time.Second):
+			t.Fatal("the deleted host's socket stayed open")
 		}
 	})
 }

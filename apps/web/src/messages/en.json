@@ -896,7 +896,17 @@
       "keyOnce": "Shown only now. Copy it to the DSH that will be shared; the server keeps no readable copy.",
       "keyHelp": "Run this in that DSH. The first machine to use the key keeps it; on another machine it is refused. Anyone who can reach this DSH can use the team's models through it.",
       "rotateConfirm": "Issue a new key for this DSH? The old key stops working; the same machine keeps the new one.",
-      "deleteConfirm": "Delete this shared DSH? Its key stops working at once, and the DSH loses team access within an hour."
+      "deleteConfirm": "Delete this shared DSH? Its key stops working at once, and the DSH loses team access within an hour.",
+      "access": "Who may reach it",
+      "accessTeam": "Everyone in the team",
+      "accessListed": "{count, plural, one {# member} other {# members}}",
+      "accessListedOption": "Only these members",
+      "editAccess": "Access",
+      "accessTitle": "Who may reach {name}",
+      "accessHelp": "Each member also needs an invite from the DSH itself. Taking someone off this list ends their pairings at once.",
+      "accessSaved": "Access saved.",
+      "save": "Save",
+      "cancel": "Cancel"
     }
   },
   "usage": {

@@ -32,6 +32,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -68,6 +69,7 @@ const (
 	TypeResourceArtifact   = "ResourceArtifact"
 	TypeResourceSubmission = "ResourceSubmission"
 	TypeSharedHost         = "SharedHost"
+	TypeSharedHostMember   = "SharedHostMember"
 	TypeTeam               = "Team"
 	TypeTeamConfig         = "TeamConfig"
 	TypeTeamProvider       = "TeamProvider"
@@ -15025,6 +15027,7 @@ type SharedHostMutation struct {
 	created_by    *string
 	bound_at      *time.Time
 	last_seen_at  *time.Time
+	access        *sharedhost.Access
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*SharedHost, error)
@@ -15462,6 +15465,42 @@ func (m *SharedHostMutation) ResetLastSeenAt() {
 	delete(m.clearedFields, sharedhost.FieldLastSeenAt)
 }
 
+// SetAccess sets the "access" field.
+func (m *SharedHostMutation) SetAccess(s sharedhost.Access) {
+	m.access = &s
+}
+
+// Access returns the value of the "access" field in the mutation.
+func (m *SharedHostMutation) Access() (r sharedhost.Access, exists bool) {
+	v := m.access
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccess returns the old "access" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldAccess(ctx context.Context) (v sharedhost.Access, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccess is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccess requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccess: %w", err)
+	}
+	return oldValue.Access, nil
+}
+
+// ResetAccess resets all changes to the "access" field.
+func (m *SharedHostMutation) ResetAccess() {
+	m.access = nil
+}
+
 // Where appends a list predicates to the SharedHostMutation builder.
 func (m *SharedHostMutation) Where(ps ...predicate.SharedHost) {
 	m.predicates = append(m.predicates, ps...)
@@ -15496,7 +15535,7 @@ func (m *SharedHostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SharedHostMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, sharedhost.FieldCreatedAt)
 	}
@@ -15520,6 +15559,9 @@ func (m *SharedHostMutation) Fields() []string {
 	}
 	if m.last_seen_at != nil {
 		fields = append(fields, sharedhost.FieldLastSeenAt)
+	}
+	if m.access != nil {
+		fields = append(fields, sharedhost.FieldAccess)
 	}
 	return fields
 }
@@ -15545,6 +15587,8 @@ func (m *SharedHostMutation) Field(name string) (ent.Value, bool) {
 		return m.BoundAt()
 	case sharedhost.FieldLastSeenAt:
 		return m.LastSeenAt()
+	case sharedhost.FieldAccess:
+		return m.Access()
 	}
 	return nil, false
 }
@@ -15570,6 +15614,8 @@ func (m *SharedHostMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldBoundAt(ctx)
 	case sharedhost.FieldLastSeenAt:
 		return m.OldLastSeenAt(ctx)
+	case sharedhost.FieldAccess:
+		return m.OldAccess(ctx)
 	}
 	return nil, fmt.Errorf("unknown SharedHost field %s", name)
 }
@@ -15634,6 +15680,13 @@ func (m *SharedHostMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLastSeenAt(v)
+		return nil
+	case sharedhost.FieldAccess:
+		v, ok := value.(sharedhost.Access)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccess(v)
 		return nil
 	}
 	return fmt.Errorf("unknown SharedHost field %s", name)
@@ -15729,6 +15782,9 @@ func (m *SharedHostMutation) ResetField(name string) error {
 	case sharedhost.FieldLastSeenAt:
 		m.ResetLastSeenAt()
 		return nil
+	case sharedhost.FieldAccess:
+		m.ResetAccess()
+		return nil
 	}
 	return fmt.Errorf("unknown SharedHost field %s", name)
 }
@@ -15779,6 +15835,500 @@ func (m *SharedHostMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *SharedHostMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown SharedHost edge %s", name)
+}
+
+// SharedHostMemberMutation represents an operation that mutates the SharedHostMember nodes in the graph.
+type SharedHostMemberMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	host_id       *string
+	user_id       *string
+	added_by      *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*SharedHostMember, error)
+	predicates    []predicate.SharedHostMember
+}
+
+var _ ent.Mutation = (*SharedHostMemberMutation)(nil)
+
+// sharedhostmemberOption allows management of the mutation configuration using functional options.
+type sharedhostmemberOption func(*SharedHostMemberMutation)
+
+// newSharedHostMemberMutation creates new mutation for the SharedHostMember entity.
+func newSharedHostMemberMutation(c config, op Op, opts ...sharedhostmemberOption) *SharedHostMemberMutation {
+	m := &SharedHostMemberMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSharedHostMember,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSharedHostMemberID sets the ID field of the mutation.
+func withSharedHostMemberID(id string) sharedhostmemberOption {
+	return func(m *SharedHostMemberMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SharedHostMember
+		)
+		m.oldValue = func(ctx context.Context) (*SharedHostMember, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SharedHostMember.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSharedHostMember sets the old SharedHostMember of the mutation.
+func withSharedHostMember(node *SharedHostMember) sharedhostmemberOption {
+	return func(m *SharedHostMemberMutation) {
+		m.oldValue = func(context.Context) (*SharedHostMember, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SharedHostMemberMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SharedHostMemberMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of SharedHostMember entities.
+func (m *SharedHostMemberMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SharedHostMemberMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SharedHostMemberMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SharedHostMember.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SharedHostMemberMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SharedHostMemberMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SharedHostMember entity.
+// If the SharedHostMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMemberMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SharedHostMemberMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetHostID sets the "host_id" field.
+func (m *SharedHostMemberMutation) SetHostID(s string) {
+	m.host_id = &s
+}
+
+// HostID returns the value of the "host_id" field in the mutation.
+func (m *SharedHostMemberMutation) HostID() (r string, exists bool) {
+	v := m.host_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostID returns the old "host_id" field's value of the SharedHostMember entity.
+// If the SharedHostMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMemberMutation) OldHostID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostID: %w", err)
+	}
+	return oldValue.HostID, nil
+}
+
+// ResetHostID resets all changes to the "host_id" field.
+func (m *SharedHostMemberMutation) ResetHostID() {
+	m.host_id = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *SharedHostMemberMutation) SetUserID(s string) {
+	m.user_id = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *SharedHostMemberMutation) UserID() (r string, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the SharedHostMember entity.
+// If the SharedHostMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMemberMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *SharedHostMemberMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetAddedBy sets the "added_by" field.
+func (m *SharedHostMemberMutation) SetAddedBy(s string) {
+	m.added_by = &s
+}
+
+// AddedBy returns the value of the "added_by" field in the mutation.
+func (m *SharedHostMemberMutation) AddedBy() (r string, exists bool) {
+	v := m.added_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddedBy returns the old "added_by" field's value of the SharedHostMember entity.
+// If the SharedHostMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMemberMutation) OldAddedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddedBy: %w", err)
+	}
+	return oldValue.AddedBy, nil
+}
+
+// ResetAddedBy resets all changes to the "added_by" field.
+func (m *SharedHostMemberMutation) ResetAddedBy() {
+	m.added_by = nil
+}
+
+// Where appends a list predicates to the SharedHostMemberMutation builder.
+func (m *SharedHostMemberMutation) Where(ps ...predicate.SharedHostMember) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SharedHostMemberMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SharedHostMemberMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SharedHostMember, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SharedHostMemberMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SharedHostMemberMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SharedHostMember).
+func (m *SharedHostMemberMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SharedHostMemberMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.created_at != nil {
+		fields = append(fields, sharedhostmember.FieldCreatedAt)
+	}
+	if m.host_id != nil {
+		fields = append(fields, sharedhostmember.FieldHostID)
+	}
+	if m.user_id != nil {
+		fields = append(fields, sharedhostmember.FieldUserID)
+	}
+	if m.added_by != nil {
+		fields = append(fields, sharedhostmember.FieldAddedBy)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SharedHostMemberMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case sharedhostmember.FieldCreatedAt:
+		return m.CreatedAt()
+	case sharedhostmember.FieldHostID:
+		return m.HostID()
+	case sharedhostmember.FieldUserID:
+		return m.UserID()
+	case sharedhostmember.FieldAddedBy:
+		return m.AddedBy()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SharedHostMemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case sharedhostmember.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case sharedhostmember.FieldHostID:
+		return m.OldHostID(ctx)
+	case sharedhostmember.FieldUserID:
+		return m.OldUserID(ctx)
+	case sharedhostmember.FieldAddedBy:
+		return m.OldAddedBy(ctx)
+	}
+	return nil, fmt.Errorf("unknown SharedHostMember field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SharedHostMemberMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case sharedhostmember.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case sharedhostmember.FieldHostID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostID(v)
+		return nil
+	case sharedhostmember.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case sharedhostmember.FieldAddedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddedBy(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SharedHostMember field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SharedHostMemberMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SharedHostMemberMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SharedHostMemberMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SharedHostMember numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SharedHostMemberMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SharedHostMemberMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SharedHostMemberMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown SharedHostMember nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SharedHostMemberMutation) ResetField(name string) error {
+	switch name {
+	case sharedhostmember.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case sharedhostmember.FieldHostID:
+		m.ResetHostID()
+		return nil
+	case sharedhostmember.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case sharedhostmember.FieldAddedBy:
+		m.ResetAddedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown SharedHostMember field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SharedHostMemberMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SharedHostMemberMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SharedHostMemberMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SharedHostMemberMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SharedHostMemberMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SharedHostMemberMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SharedHostMemberMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown SharedHostMember unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SharedHostMemberMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown SharedHostMember edge %s", name)
 }
 
 // TeamMutation represents an operation that mutates the Team nodes in the graph.

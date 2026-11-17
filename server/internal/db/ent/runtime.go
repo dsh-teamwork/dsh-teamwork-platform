@@ -24,6 +24,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -1157,6 +1158,89 @@ func init() {
 	// sharedhost.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	sharedhost.IDValidator = func() func(string) error {
 		validators := sharedhostDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	sharedhostmemberMixin := schema.SharedHostMember{}.Mixin()
+	sharedhostmemberMixinFields0 := sharedhostmemberMixin[0].Fields()
+	_ = sharedhostmemberMixinFields0
+	sharedhostmemberFields := schema.SharedHostMember{}.Fields()
+	_ = sharedhostmemberFields
+	// sharedhostmemberDescCreatedAt is the schema descriptor for created_at field.
+	sharedhostmemberDescCreatedAt := sharedhostmemberMixinFields0[1].Descriptor()
+	// sharedhostmember.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sharedhostmember.DefaultCreatedAt = sharedhostmemberDescCreatedAt.Default.(func() time.Time)
+	// sharedhostmemberDescHostID is the schema descriptor for host_id field.
+	sharedhostmemberDescHostID := sharedhostmemberFields[0].Descriptor()
+	// sharedhostmember.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
+	sharedhostmember.HostIDValidator = func() func(string) error {
+		validators := sharedhostmemberDescHostID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(host_id string) error {
+			for _, fn := range fns {
+				if err := fn(host_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedhostmemberDescUserID is the schema descriptor for user_id field.
+	sharedhostmemberDescUserID := sharedhostmemberFields[1].Descriptor()
+	// sharedhostmember.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	sharedhostmember.UserIDValidator = func() func(string) error {
+		validators := sharedhostmemberDescUserID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(user_id string) error {
+			for _, fn := range fns {
+				if err := fn(user_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedhostmemberDescAddedBy is the schema descriptor for added_by field.
+	sharedhostmemberDescAddedBy := sharedhostmemberFields[2].Descriptor()
+	// sharedhostmember.AddedByValidator is a validator for the "added_by" field. It is called by the builders before save.
+	sharedhostmember.AddedByValidator = func() func(string) error {
+		validators := sharedhostmemberDescAddedBy.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(added_by string) error {
+			for _, fn := range fns {
+				if err := fn(added_by); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedhostmemberDescID is the schema descriptor for id field.
+	sharedhostmemberDescID := sharedhostmemberMixinFields0[0].Descriptor()
+	// sharedhostmember.DefaultID holds the default value on creation for the id field.
+	sharedhostmember.DefaultID = sharedhostmemberDescID.Default.(func() string)
+	// sharedhostmember.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	sharedhostmember.IDValidator = func() func(string) error {
+		validators := sharedhostmemberDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),

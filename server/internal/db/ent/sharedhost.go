@@ -32,7 +32,9 @@ type SharedHost struct {
 	// BoundAt holds the value of the "bound_at" field.
 	BoundAt *time.Time `json:"bound_at,omitempty"`
 	// LastSeenAt holds the value of the "last_seen_at" field.
-	LastSeenAt   *time.Time `json:"last_seen_at,omitempty"`
+	LastSeenAt *time.Time `json:"last_seen_at,omitempty"`
+	// Access holds the value of the "access" field.
+	Access       sharedhost.Access `json:"access,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -41,7 +43,7 @@ func (*SharedHost) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case sharedhost.FieldID, sharedhost.FieldTeamID, sharedhost.FieldName, sharedhost.FieldKeyHash, sharedhost.FieldIdentityKey, sharedhost.FieldCreatedBy:
+		case sharedhost.FieldID, sharedhost.FieldTeamID, sharedhost.FieldName, sharedhost.FieldKeyHash, sharedhost.FieldIdentityKey, sharedhost.FieldCreatedBy, sharedhost.FieldAccess:
 			values[i] = new(sql.NullString)
 		case sharedhost.FieldCreatedAt, sharedhost.FieldBoundAt, sharedhost.FieldLastSeenAt:
 			values[i] = new(sql.NullTime)
@@ -117,6 +119,12 @@ func (_m *SharedHost) assignValues(columns []string, values []any) error {
 				_m.LastSeenAt = new(time.Time)
 				*_m.LastSeenAt = value.Time
 			}
+		case sharedhost.FieldAccess:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field access", values[i])
+			} else if value.Valid {
+				_m.Access = sharedhost.Access(value.String)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -182,6 +190,9 @@ func (_m *SharedHost) String() string {
 		builder.WriteString("last_seen_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("access=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Access))
 	builder.WriteByte(')')
 	return builder.String()
 }

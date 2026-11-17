@@ -2834,6 +2834,160 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/shared-hosts/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Who may reach a shared DSH; anyone else's pairings with it end at once */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        access: "team" | "listed";
+                        /** @description The team members a listed host admits */
+                        userIds: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description The shared DSH */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            host: components["schemas"]["SharedHost"];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/shared": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The shared DSHs the caller may reach */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The shared DSHs, oldest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            hosts: {
+                                id: string;
+                                name: string;
+                                teamId: string;
+                                teamName: string;
+                                online: boolean;
+                            }[];
+                        };
+                    };
+                };
+                401: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/shared/{hostId}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a handset's pairing with a shared DSH, pending until the DSH checks the member's invite */
+        post: {
+            parameters: {
+                query?: never;
+                header: {
+                    "X-Device-Key": string;
+                };
+                path: {
+                    hostId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        deviceName: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The pending pairing */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            pairing: components["schemas"]["RelayPairing"];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/relay/plugin": {
         parameters: {
             query?: never;
@@ -3206,6 +3360,12 @@ export interface components {
             lastSeenAt: string | null;
             /** Format: date-time */
             createdAt: string;
+            /**
+             * @description Every team member reaches it, or only those listed
+             * @enum {string}
+             */
+            access: "team" | "listed";
+            memberIds: string[];
         };
         SharedHostName: {
             name: string;

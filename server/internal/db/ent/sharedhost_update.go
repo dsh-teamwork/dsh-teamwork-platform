@@ -145,6 +145,20 @@ func (_u *SharedHostUpdate) ClearLastSeenAt() *SharedHostUpdate {
 	return _u
 }
 
+// SetAccess sets the "access" field.
+func (_u *SharedHostUpdate) SetAccess(v sharedhost.Access) *SharedHostUpdate {
+	_u.mutation.SetAccess(v)
+	return _u
+}
+
+// SetNillableAccess sets the "access" field if the given value is not nil.
+func (_u *SharedHostUpdate) SetNillableAccess(v *sharedhost.Access) *SharedHostUpdate {
+	if v != nil {
+		_u.SetAccess(*v)
+	}
+	return _u
+}
+
 // Mutation returns the SharedHostMutation object of the builder.
 func (_u *SharedHostUpdate) Mutation() *SharedHostMutation {
 	return _u.mutation
@@ -204,6 +218,11 @@ func (_u *SharedHostUpdate) check() error {
 			return &ValidationError{Name: "created_by", err: fmt.Errorf(`ent: validator failed for field "SharedHost.created_by": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Access(); ok {
+		if err := sharedhost.AccessValidator(v); err != nil {
+			return &ValidationError{Name: "access", err: fmt.Errorf(`ent: validator failed for field "SharedHost.access": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -254,6 +273,9 @@ func (_u *SharedHostUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if _u.mutation.LastSeenAtCleared() {
 		_spec.ClearField(sharedhost.FieldLastSeenAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Access(); ok {
+		_spec.SetField(sharedhost.FieldAccess, field.TypeEnum, value)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
@@ -393,6 +415,20 @@ func (_u *SharedHostUpdateOne) ClearLastSeenAt() *SharedHostUpdateOne {
 	return _u
 }
 
+// SetAccess sets the "access" field.
+func (_u *SharedHostUpdateOne) SetAccess(v sharedhost.Access) *SharedHostUpdateOne {
+	_u.mutation.SetAccess(v)
+	return _u
+}
+
+// SetNillableAccess sets the "access" field if the given value is not nil.
+func (_u *SharedHostUpdateOne) SetNillableAccess(v *sharedhost.Access) *SharedHostUpdateOne {
+	if v != nil {
+		_u.SetAccess(*v)
+	}
+	return _u
+}
+
 // Mutation returns the SharedHostMutation object of the builder.
 func (_u *SharedHostUpdateOne) Mutation() *SharedHostMutation {
 	return _u.mutation
@@ -465,6 +501,11 @@ func (_u *SharedHostUpdateOne) check() error {
 			return &ValidationError{Name: "created_by", err: fmt.Errorf(`ent: validator failed for field "SharedHost.created_by": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Access(); ok {
+		if err := sharedhost.AccessValidator(v); err != nil {
+			return &ValidationError{Name: "access", err: fmt.Errorf(`ent: validator failed for field "SharedHost.access": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -532,6 +573,9 @@ func (_u *SharedHostUpdateOne) sqlSave(ctx context.Context) (_node *SharedHost, 
 	}
 	if _u.mutation.LastSeenAtCleared() {
 		_spec.ClearField(sharedhost.FieldLastSeenAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Access(); ok {
+		_spec.SetField(sharedhost.FieldAccess, field.TypeEnum, value)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	_node = &SharedHost{config: _u.config}

@@ -66,6 +66,7 @@ func Extension(push SendPush, pingEvery time.Duration) edition.Extension {
 			}
 			r.routes(h.Mux)
 			r.sharedRoutes(h.Mux)
+			r.accessRoutes(h.Mux)
 			return r.close, nil
 		},
 	}
@@ -222,14 +223,49 @@ func (r *relay) keepAlive(s *socket) {
 				s.c.CloseNow()
 				return
 			}
-			if token, _ := s.token.Load().(string); token != "" {
-				if id, err := r.member(s.ctx, token); err == nil && id == "" {
-					s.c.Close(closeUnauthorized, "not a member")
-					return
-				}
+			if token, _ := s.token.Load().(string); token != "" && !r.stillAdmitted(s, token) {
+				s.c.Close(closeUnauthorized, "not a member")
+				return
 			}
 		}
 	}
+}
+
+// stillAdmitted re-checks a socket at its ping: a member's token must still
+// name a member, and a phone's uses of shared DSHs must still be allowed; a
+// shared DSH's token must still name its shared host, whose list it is sent
+// again, so its roster follows a member leaving the team.
+func (r *relay) stillAdmitted(s *socket, token string) bool {
+	id, err := r.member(s.ctx, token)
+	if err != nil {
+		return true
+	}
+	if id == "" {
+		shared, err := r.sharedHostOf(s.ctx, token)
+		if err != nil || shared == "" {
+			return err != nil
+		}
+		r.tellMembers(s.ctx, shared)
+		return true
+	}
+	r.mu.Lock()
+	var held []struct{ pairing, host string }
+	for pairingID, a := range r.attached {
+		if a.phone == s {
+			held = append(held, struct{ pairing, host string }{pairingID, a.hostID})
+		}
+	}
+	r.mu.Unlock()
+	for _, h := range held {
+		if shared, ok, err := r.canReach(s.ctx, id, h.host); err == nil && shared && !ok {
+			r.mu.Lock()
+			delete(r.attached, h.pairing)
+			r.mu.Unlock()
+			s.send(map[string]string{"t": "revoked", "pairingId": h.pairing})
+			r.tell(h.host, map[string]string{"t": "detach", "pairingId": h.pairing})
+		}
+	}
+	return true
 }
 
 // readHello reads a socket's first frame, closing it with 4400 when none
@@ -260,20 +296,28 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	userID, err := r.member(s.ctx, h.token)
+	sharedID := ""
+	if err == nil && userID == "" {
+		// A shared DSH (ADR 0044) proves itself with its host token instead.
+		sharedID, err = r.sharedHostOf(s.ctx, h.token)
+	}
 	if err != nil {
 		slog.Error("relay: member", "error", err)
 		s.c.Close(websocket.StatusInternalError, "internal")
 		return
 	}
-	if userID == "" {
+	if userID == "" && sharedID == "" {
 		s.c.Close(closeUnauthorized, "not a member")
 		return
 	}
-	hostID, err := r.recordHost(s.ctx, userID, h)
-	if err != nil {
-		slog.Error("relay: record host", "error", err)
-		s.c.Close(websocket.StatusInternalError, "internal")
-		return
+	hostID := sharedID
+	if sharedID == "" {
+		hostID, err = r.recordHost(s.ctx, userID, h)
+		if err != nil {
+			slog.Error("relay: record host", "error", err)
+			s.c.Close(websocket.StatusInternalError, "internal")
+			return
+		}
 	}
 	r.mu.Lock()
 	stale := r.hosts[hostID]
@@ -287,6 +331,9 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 	s.token.Store(h.token)
 	s.send(map[string]string{"t": "welcome", "hostId": hostID})
 	defer r.hostLeft(hostID, s)
+	if sharedID != "" {
+		r.tellMembers(s.ctx, sharedID)
+	}
 
 	for {
 		_, data, err := s.c.Read(s.ctx)
@@ -302,6 +349,12 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		} else if wt, ok := parseWaiting(f); ok {
 			go r.notify(hostID, wt)
 		} else if request, ok := parsePluginRequest(f); ok {
+			if sharedID != "" && request.t == "offer" {
+				// A pairing code joins a phone to its owner's own computer; a
+				// shared DSH's members join by invite.
+				s.send(reply{T: "reply", ID: request.id, Error: "shared_host"})
+				continue
+			}
 			go func() { s.send(r.answer(hostID, request)) }()
 		}
 	}
@@ -520,6 +573,11 @@ func (r *relay) forward(ph phone, s *socket, f forwarded) error {
 		if err != nil {
 			return err
 		}
+		if shared, ok, err := r.canReach(s.ctx, ph.userID, hostID); err != nil {
+			return err
+		} else if shared && !ok {
+			return refuse("not_paired")
+		}
 		r.mu.Lock()
 		if r.revoked[f.PairingID] {
 			r.mu.Unlock()
@@ -647,27 +705,7 @@ func (r *relay) pair(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		return
 	}
-	r.mu.Lock()
-	if r.attempts == nil {
-		r.attempts = make(map[string]struct {
-			at    time.Time
-			count int
-		})
-	}
-	now := time.Now()
-	for id, previous := range r.attempts {
-		if now.Sub(previous.at) >= 10*time.Minute {
-			delete(r.attempts, id)
-		}
-	}
-	attempt := r.attempts[ph.userID]
-	if attempt.count == 0 {
-		attempt.at = now
-	}
-	attempt.count++
-	r.attempts[ph.userID] = attempt
-	r.mu.Unlock()
-	if attempt.count > 10 {
+	if r.limited(ph.userID) {
 		errorJSON(w, http.StatusTooManyRequests, "rate_limited")
 		return
 	}

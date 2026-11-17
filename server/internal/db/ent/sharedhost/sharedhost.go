@@ -3,6 +3,7 @@
 package sharedhost
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -29,6 +30,8 @@ const (
 	FieldBoundAt = "bound_at"
 	// FieldLastSeenAt holds the string denoting the last_seen_at field in the database.
 	FieldLastSeenAt = "last_seen_at"
+	// FieldAccess holds the string denoting the access field in the database.
+	FieldAccess = "access"
 	// Table holds the table name of the sharedhost in the database.
 	Table = "shared_hosts"
 )
@@ -44,6 +47,7 @@ var Columns = []string{
 	FieldCreatedBy,
 	FieldBoundAt,
 	FieldLastSeenAt,
+	FieldAccess,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -74,6 +78,32 @@ var (
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(string) error
 )
+
+// Access defines the type for the "access" enum field.
+type Access string
+
+// AccessTeam is the default value of the Access enum.
+const DefaultAccess = AccessTeam
+
+// Access values.
+const (
+	AccessTeam   Access = "team"
+	AccessListed Access = "listed"
+)
+
+func (a Access) String() string {
+	return string(a)
+}
+
+// AccessValidator is a validator for the "access" field enum values. It is called by the builders before save.
+func AccessValidator(a Access) error {
+	switch a {
+	case AccessTeam, AccessListed:
+		return nil
+	default:
+		return fmt.Errorf("sharedhost: invalid enum value for access field: %q", a)
+	}
+}
 
 // OrderOption defines the ordering options for the SharedHost queries.
 type OrderOption func(*sql.Selector)
@@ -121,4 +151,9 @@ func ByBoundAt(opts ...sql.OrderTermOption) OrderOption {
 // ByLastSeenAt orders the results by the last_seen_at field.
 func ByLastSeenAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastSeenAt, opts...).ToFunc()
+}
+
+// ByAccess orders the results by the access field.
+func ByAccess(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAccess, opts...).ToFunc()
 }

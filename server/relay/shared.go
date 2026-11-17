@@ -31,7 +31,9 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 )
 
 const errInvalidInput rejected = "invalid_input"
@@ -98,6 +100,9 @@ type sharedView struct {
 	BoundAt    *string `json:"boundAt"`
 	LastSeenAt *string `json:"lastSeenAt"`
 	CreatedAt  string  `json:"createdAt"`
+	// Access is who may reach it: "team", or "listed" for MemberIDs alone.
+	Access    string   `json:"access"`
+	MemberIDs []string `json:"memberIds"`
 }
 
 func isoPtr(t *time.Time) *string {
@@ -108,8 +113,13 @@ func isoPtr(t *time.Time) *string {
 	return &s
 }
 
-func sharedViewOf(h *ent.SharedHost) sharedView {
-	return sharedView{ID: h.ID, Name: h.Name, Bound: h.IdentityKey != nil, BoundAt: isoPtr(h.BoundAt), LastSeenAt: isoPtr(h.LastSeenAt), CreatedAt: iso(h.CreatedAt)}
+func (r *relay) sharedViewWithMembers(ctx context.Context, h *ent.SharedHost) (sharedView, error) {
+	ids, err := r.db.SharedHostMember.Query().Where(sharedhostmember.HostID(h.ID)).Order(ent.Asc(sharedhostmember.FieldUserID)).Select(sharedhostmember.FieldUserID).Strings(ctx)
+	if err != nil {
+		return sharedView{}, err
+	}
+	return sharedView{ID: h.ID, Name: h.Name, Bound: h.IdentityKey != nil, BoundAt: isoPtr(h.BoundAt), LastSeenAt: isoPtr(h.LastSeenAt),
+		CreatedAt: iso(h.CreatedAt), Access: string(h.Access), MemberIDs: ids}, nil
 }
 
 type adminHandler func(w http.ResponseWriter, req *http.Request, userID, teamID string) error
@@ -211,7 +221,11 @@ func (r *relay) listShared(w http.ResponseWriter, req *http.Request, _, teamID s
 	}
 	out := make([]sharedView, 0, len(rows))
 	for _, h := range rows {
-		out = append(out, sharedViewOf(h))
+		v, err := r.sharedViewWithMembers(req.Context(), h)
+		if err != nil {
+			return err
+		}
+		out = append(out, v)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"hosts": out})
 	return nil
@@ -228,7 +242,11 @@ func (r *relay) createShared(w http.ResponseWriter, req *http.Request, userID, t
 	if err != nil {
 		return err
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"host": sharedViewOf(h), "key": key})
+	v, err := r.sharedViewWithMembers(req.Context(), h)
+	if err != nil {
+		return err
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"host": v, "key": key})
 	return nil
 }
 
@@ -244,7 +262,11 @@ func (r *relay) renameShared(w http.ResponseWriter, req *http.Request, _, teamID
 	if h, err = h.Update().SetName(name).Save(req.Context()); err != nil {
 		return err
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"host": sharedViewOf(h)})
+	v, err := r.sharedViewWithMembers(req.Context(), h)
+	if err != nil {
+		return err
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"host": v})
 	return nil
 }
 
@@ -262,20 +284,33 @@ func (r *relay) rotateShared(w http.ResponseWriter, req *http.Request, _, teamID
 	if h, err = h.Update().SetKeyHash(hash).Save(req.Context()); err != nil {
 		return err
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"host": sharedViewOf(h), "key": key})
+	v, err := r.sharedViewWithMembers(req.Context(), h)
+	if err != nil {
+		return err
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"host": v, "key": key})
 	return nil
 }
 
 // deleteShared revokes a host: its key stops at once, and a host token it
 // already holds lives out at most its hour.
 func (r *relay) deleteShared(w http.ResponseWriter, req *http.Request, _, teamID string) error {
-	n, err := r.db.SharedHost.Delete().Where(sharedhost.ID(req.PathValue("id")), sharedhost.TeamID(teamID)).Exec(req.Context())
+	ctx, id := req.Context(), req.PathValue("id")
+	n := 0
+	err := withTx(ctx, r.db, func(tx *ent.Tx) error {
+		var err error
+		if n, err = tx.SharedHost.Delete().Where(sharedhost.ID(id), sharedhost.TeamID(teamID)).Exec(ctx); err != nil || n == 0 {
+			return err
+		}
+		return deleteSharedRows(ctx, tx.Client(), []string{id})
+	})
 	if err != nil {
 		return err
 	}
 	if n == 0 {
 		return errNotFound
 	}
+	r.dropHost(id)
 	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
@@ -399,6 +434,43 @@ func (r *relay) sharedTeamDeleted(ctx context.Context, tx edition.SQLExecutor, c
 	if change.Kind != edition.TeamDeleted {
 		return nil
 	}
-	_, err := borrowed(r.host.Dialect, tx).SharedHost.Delete().Where(sharedhost.TeamID(change.TeamID)).Exec(ctx)
+	c := borrowed(r.host.Dialect, tx)
+	ids, err := c.SharedHost.Query().Where(sharedhost.TeamID(change.TeamID)).IDs(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := c.SharedHost.Delete().Where(sharedhost.IDIn(ids...)).Exec(ctx); err != nil {
+		return err
+	}
+	return deleteSharedRows(ctx, c, ids)
+}
+
+// deleteSharedRows removes what a deleted shared host leaves: its list and
+// its pairings.
+func deleteSharedRows(ctx context.Context, c *ent.Client, ids []string) error {
+	if _, err := c.SharedHostMember.Delete().Where(sharedhostmember.HostIDIn(ids...)).Exec(ctx); err != nil {
+		return err
+	}
+	_, err := c.RelayPairing.Delete().Where(relaypairing.HostIDIn(ids...)).Exec(ctx)
 	return err
+}
+
+// dropHost closes a deleted shared host's socket and every phone's use of it.
+func (r *relay) dropHost(hostID string) {
+	r.mu.Lock()
+	s := r.hosts[hostID]
+	var pairings []string
+	for id, a := range r.attached {
+		if a.hostID == hostID {
+			pairings = append(pairings, id)
+			r.revoked[id] = true
+		}
+	}
+	r.mu.Unlock()
+	for _, id := range pairings {
+		r.ended(hostID, id)
+	}
+	if s != nil {
+		s.c.Close(closeUnauthorized, "shared host deleted")
+	}
 }

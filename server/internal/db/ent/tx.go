@@ -52,6 +52,8 @@ type Tx struct {
 	ResourceSubmission *ResourceSubmissionClient
 	// SharedHost is the client for interacting with the SharedHost builders.
 	SharedHost *SharedHostClient
+	// SharedHostMember is the client for interacting with the SharedHostMember builders.
+	SharedHostMember *SharedHostMemberClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// TeamConfig is the client for interacting with the TeamConfig builders.
@@ -214,6 +216,7 @@ func (tx *Tx) init() {
 	tx.ResourceArtifact = NewResourceArtifactClient(tx.config)
 	tx.ResourceSubmission = NewResourceSubmissionClient(tx.config)
 	tx.SharedHost = NewSharedHostClient(tx.config)
+	tx.SharedHostMember = NewSharedHostMemberClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.TeamConfig = NewTeamConfigClient(tx.config)
 	tx.TeamProvider = NewTeamProviderClient(tx.config)

@@ -103,6 +103,20 @@ func (_c *SharedHostCreate) SetNillableLastSeenAt(v *time.Time) *SharedHostCreat
 	return _c
 }
 
+// SetAccess sets the "access" field.
+func (_c *SharedHostCreate) SetAccess(v sharedhost.Access) *SharedHostCreate {
+	_c.mutation.SetAccess(v)
+	return _c
+}
+
+// SetNillableAccess sets the "access" field if the given value is not nil.
+func (_c *SharedHostCreate) SetNillableAccess(v *sharedhost.Access) *SharedHostCreate {
+	if v != nil {
+		_c.SetAccess(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *SharedHostCreate) SetID(v string) *SharedHostCreate {
 	_c.mutation.SetID(v)
@@ -156,6 +170,10 @@ func (_c *SharedHostCreate) defaults() {
 		v := sharedhost.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
+	if _, ok := _c.mutation.Access(); !ok {
+		v := sharedhost.DefaultAccess
+		_c.mutation.SetAccess(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := sharedhost.DefaultID()
 		_c.mutation.SetID(v)
@@ -202,6 +220,14 @@ func (_c *SharedHostCreate) check() error {
 	if v, ok := _c.mutation.CreatedBy(); ok {
 		if err := sharedhost.CreatedByValidator(v); err != nil {
 			return &ValidationError{Name: "created_by", err: fmt.Errorf(`ent: validator failed for field "SharedHost.created_by": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Access(); !ok {
+		return &ValidationError{Name: "access", err: errors.New(`ent: missing required field "SharedHost.access"`)}
+	}
+	if v, ok := _c.mutation.Access(); ok {
+		if err := sharedhost.AccessValidator(v); err != nil {
+			return &ValidationError{Name: "access", err: fmt.Errorf(`ent: validator failed for field "SharedHost.access": %w`, err)}
 		}
 	}
 	if v, ok := _c.mutation.ID(); ok {
@@ -276,6 +302,10 @@ func (_c *SharedHostCreate) createSpec() (*SharedHost, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.LastSeenAt(); ok {
 		_spec.SetField(sharedhost.FieldLastSeenAt, field.TypeTime, value)
 		_node.LastSeenAt = &value
+	}
+	if value, ok := _c.mutation.Access(); ok {
+		_spec.SetField(sharedhost.FieldAccess, field.TypeEnum, value)
+		_node.Access = value
 	}
 	return _node, _spec
 }
@@ -428,6 +458,18 @@ func (u *SharedHostUpsert) UpdateLastSeenAt() *SharedHostUpsert {
 // ClearLastSeenAt clears the value of the "last_seen_at" field.
 func (u *SharedHostUpsert) ClearLastSeenAt() *SharedHostUpsert {
 	u.SetNull(sharedhost.FieldLastSeenAt)
+	return u
+}
+
+// SetAccess sets the "access" field.
+func (u *SharedHostUpsert) SetAccess(v sharedhost.Access) *SharedHostUpsert {
+	u.Set(sharedhost.FieldAccess, v)
+	return u
+}
+
+// UpdateAccess sets the "access" field to the value that was provided on create.
+func (u *SharedHostUpsert) UpdateAccess() *SharedHostUpsert {
+	u.SetExcluded(sharedhost.FieldAccess)
 	return u
 }
 
@@ -598,6 +640,20 @@ func (u *SharedHostUpsertOne) UpdateLastSeenAt() *SharedHostUpsertOne {
 func (u *SharedHostUpsertOne) ClearLastSeenAt() *SharedHostUpsertOne {
 	return u.Update(func(s *SharedHostUpsert) {
 		s.ClearLastSeenAt()
+	})
+}
+
+// SetAccess sets the "access" field.
+func (u *SharedHostUpsertOne) SetAccess(v sharedhost.Access) *SharedHostUpsertOne {
+	return u.Update(func(s *SharedHostUpsert) {
+		s.SetAccess(v)
+	})
+}
+
+// UpdateAccess sets the "access" field to the value that was provided on create.
+func (u *SharedHostUpsertOne) UpdateAccess() *SharedHostUpsertOne {
+	return u.Update(func(s *SharedHostUpsert) {
+		s.UpdateAccess()
 	})
 }
 
@@ -935,6 +991,20 @@ func (u *SharedHostUpsertBulk) UpdateLastSeenAt() *SharedHostUpsertBulk {
 func (u *SharedHostUpsertBulk) ClearLastSeenAt() *SharedHostUpsertBulk {
 	return u.Update(func(s *SharedHostUpsert) {
 		s.ClearLastSeenAt()
+	})
+}
+
+// SetAccess sets the "access" field.
+func (u *SharedHostUpsertBulk) SetAccess(v sharedhost.Access) *SharedHostUpsertBulk {
+	return u.Update(func(s *SharedHostUpsert) {
+		s.SetAccess(v)
+	})
+}
+
+// UpdateAccess sets the "access" field to the value that was provided on create.
+func (u *SharedHostUpsertBulk) UpdateAccess() *SharedHostUpsertBulk {
+	return u.Update(func(s *SharedHostUpsert) {
+		s.UpdateAccess()
 	})
 }
 

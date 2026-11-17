@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The relay admits members to a shared DSH
+
+- **What:** A shared DSH's plugin connects to the relay with its host token and is sent who may reach it (`members`) at hello and at every ping; it cannot ask for a pairing code. Members list the shared DSHs they may reach (`GET /relay/shared`) and start a pending pairing with one (`POST /relay/shared/{hostId}/join`), which the DSH confirms once it has checked their invite. A team admin sets who may reach each one, the whole team or listed members (`PUT /api/teams/{teamId}/shared-hosts/{id}/members`, the console's **Access**); anyone taken off the list, or out of the team, loses their pairings with it. Deleting a shared DSH closes its socket.
+- **Why:** Members reach a team's shared DSH through the server's list as well as the DSH's own roster (ADR 0044, `docs/tech/shared-dsh.md`).
+- **Breaking:** None.
+- **Upgrade:** One migration per dialect adds `shared_hosts.access` and `shared_host_members`; the binary applies it at start.
+- **Refs:** `server/relay/access.go`, `docs/tech/relay.md`, `docs/tech/shared-dsh.md`.
+
 ## 2026-11-17 — The relay is open: phone pairing and shared DSHs on every server
 
 - **What:** The relay moved from the hosted edition into `server/relay`, an extension every binary's main imports: `GET /api/relay`, the `/relay/plugin` and `/relay/phone` sockets, phone pairing (`/relay/pair`, `/relay/pairings`), push through Expo, and shared DSHs (`/api/teams/{teamId}/shared-hosts`, `/relay/shared/challenge`, `/relay/shared/token`). Its tables (`relay_hosts`, `relay_pairing_offers`, `relay_pairings`, `shared_hosts`) join the open schema. The console gains **Shared DSHs** under collaboration, and `/docs` describes it.

@@ -35,6 +35,8 @@ export function TeamSharedHostsPage() {
   const [name, setName] = useState('');
   // The key just issued, shown until the page is left or another is issued.
   const [issued, setIssued] = useState<Issued | null>(null);
+  // The host whose access is being edited, and the draft of it.
+  const [editing, setEditing] = useState<{ id: string; access: 'team' | 'listed'; userIds: string[] } | null>(null);
   const when = (at: string | null) => (at ? format.dateTime(new Date(at), { dateStyle: 'medium', timeStyle: 'short' }) : t('never'));
   const command = issued ? `/teamwork share enable ${issued.key}` : '';
 
@@ -85,15 +87,19 @@ export function TeamSharedHostsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm whitespace-nowrap">
               <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
-                <tr>{(['name', 'machine', 'lastSeen', 'actions'] as const).map((key) => <th key={key} className="px-4 py-3 font-medium">{t(key)}</th>)}</tr>
+                <tr>{(['name', 'access', 'machine', 'lastSeen', 'actions'] as const).map((key) => <th key={key} className="px-4 py-3 font-medium">{t(key)}</th>)}</tr>
               </thead>
               <tbody>
                 {hosts.data.hosts.map((host) => (
                   <tr key={host.id} className="border-b last:border-b-0">
                     <td className="px-4 py-3 font-medium">{host.name}</td>
+                    <td className="px-4 py-3">{host.access === 'team' ? t('accessTeam') : t('accessListed', { count: host.memberIds.length })}</td>
                     <td className="px-4 py-3">{host.bound ? t('bound', { at: when(host.boundAt) }) : t('unbound')}</td>
                     <td className="px-4 py-3">{when(host.lastSeenAt)}</td>
                     <td className="flex gap-2 px-4 py-3">
+                      <Button variant="outline" size="sm" disabled={pending} onClick={() => setEditing({ id: host.id, access: host.access, userIds: host.memberIds })}>
+                        {t('editAccess')}
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -124,6 +130,50 @@ export function TeamSharedHostsPage() {
               </tbody>
             </table>
           </div>
+        </Card>
+      )}
+      {editing && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('accessTitle', { name: hosts.data.hosts.find((h) => h.id === editing.id)?.name ?? '' })}</CardTitle>
+            <CardDescription>{t('accessHelp')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            {(['team', 'listed'] as const).map((access) => (
+              <label key={access} className="flex items-center gap-2">
+                <input type="radio" name="access" checked={editing.access === access} onChange={() => setEditing({ ...editing, access })} />
+                {access === 'team' ? t('accessTeam') : t('accessListedOption')}
+              </label>
+            ))}
+            {editing.access === 'listed' && (
+              <div className="flex flex-col gap-2 pl-6">
+                {team.members.map((m) => (
+                  <label key={m.userId} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={editing.userIds.includes(m.userId)}
+                      onChange={(event) => setEditing({ ...editing, userIds: event.target.checked ? [...editing.userIds, m.userId] : editing.userIds.filter((id) => id !== m.userId) })}
+                    />
+                    {m.email ?? m.userId}
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                disabled={pending}
+                onClick={() =>
+                  void run(async () => {
+                    await api(`${root}/${editing.id}/members`, { method: 'PUT', body: { access: editing.access, userIds: editing.access === 'listed' ? editing.userIds : [] } });
+                    setEditing(null);
+                  }, t('accessSaved'))
+                }
+              >
+                {t('save')}
+              </Button>
+              <Button variant="outline" onClick={() => setEditing(null)}>{t('cancel')}</Button>
+            </div>
+          </CardContent>
         </Card>
       )}
     </>

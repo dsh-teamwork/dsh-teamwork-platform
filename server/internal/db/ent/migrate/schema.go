@@ -546,6 +546,7 @@ var (
 		{Name: "created_by", Type: field.TypeString, Size: 32},
 		{Name: "bound_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "access", Type: field.TypeEnum, Enums: []string{"team", "listed"}, Default: "team"},
 	}
 	// SharedHostsTable holds the schema information for the "shared_hosts" table.
 	SharedHostsTable = &schema.Table{
@@ -557,6 +558,27 @@ var (
 				Name:    "shared_hosts_team",
 				Unique:  false,
 				Columns: []*schema.Column{SharedHostsColumns[2]},
+			},
+		},
+	}
+	// SharedHostMembersColumns holds the columns for the "shared_host_members" table.
+	SharedHostMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "host_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "added_by", Type: field.TypeString, Size: 32},
+	}
+	// SharedHostMembersTable holds the schema information for the "shared_host_members" table.
+	SharedHostMembersTable = &schema.Table{
+		Name:       "shared_host_members",
+		Columns:    SharedHostMembersColumns,
+		PrimaryKey: []*schema.Column{SharedHostMembersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "shared_host_members_host_user",
+				Unique:  true,
+				Columns: []*schema.Column{SharedHostMembersColumns[2], SharedHostMembersColumns[3]},
 			},
 		},
 	}
@@ -763,6 +785,7 @@ var (
 		ResourceArtifactsTable,
 		ResourceSubmissionsTable,
 		SharedHostsTable,
+		SharedHostMembersTable,
 		TeamsTable,
 		TeamConfigsTable,
 		TeamProvidersTable,
@@ -851,6 +874,10 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	SharedHostsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	SharedHostMembersTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

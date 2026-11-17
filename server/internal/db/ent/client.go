@@ -34,6 +34,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -87,6 +88,8 @@ type Client struct {
 	ResourceSubmission *ResourceSubmissionClient
 	// SharedHost is the client for interacting with the SharedHost builders.
 	SharedHost *SharedHostClient
+	// SharedHostMember is the client for interacting with the SharedHostMember builders.
+	SharedHostMember *SharedHostMemberClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// TeamConfig is the client for interacting with the TeamConfig builders.
@@ -129,6 +132,7 @@ func (c *Client) init() {
 	c.ResourceArtifact = NewResourceArtifactClient(c.config)
 	c.ResourceSubmission = NewResourceSubmissionClient(c.config)
 	c.SharedHost = NewSharedHostClient(c.config)
+	c.SharedHostMember = NewSharedHostMemberClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.TeamConfig = NewTeamConfigClient(c.config)
 	c.TeamProvider = NewTeamProviderClient(c.config)
@@ -246,6 +250,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ResourceArtifact:   NewResourceArtifactClient(cfg),
 		ResourceSubmission: NewResourceSubmissionClient(cfg),
 		SharedHost:         NewSharedHostClient(cfg),
+		SharedHostMember:   NewSharedHostMemberClient(cfg),
 		Team:               NewTeamClient(cfg),
 		TeamConfig:         NewTeamConfigClient(cfg),
 		TeamProvider:       NewTeamProviderClient(cfg),
@@ -290,6 +295,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ResourceArtifact:   NewResourceArtifactClient(cfg),
 		ResourceSubmission: NewResourceSubmissionClient(cfg),
 		SharedHost:         NewSharedHostClient(cfg),
+		SharedHostMember:   NewSharedHostMemberClient(cfg),
 		Team:               NewTeamClient(cfg),
 		TeamConfig:         NewTeamConfigClient(cfg),
 		TeamProvider:       NewTeamProviderClient(cfg),
@@ -329,8 +335,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
 		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.RelayHost,
 		c.RelayPairing, c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
-		c.SharedHost, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User,
-		c.VerificationCode,
+		c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig, c.TeamProvider,
+		c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -344,8 +350,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
 		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.RelayHost,
 		c.RelayPairing, c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
-		c.SharedHost, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User,
-		c.VerificationCode,
+		c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig, c.TeamProvider,
+		c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -392,6 +398,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ResourceSubmission.mutate(ctx, m)
 	case *SharedHostMutation:
 		return c.SharedHost.mutate(ctx, m)
+	case *SharedHostMemberMutation:
+		return c.SharedHostMember.mutate(ctx, m)
 	case *TeamMutation:
 		return c.Team.mutate(ctx, m)
 	case *TeamConfigMutation:
@@ -3016,6 +3024,139 @@ func (c *SharedHostClient) mutate(ctx context.Context, m *SharedHostMutation) (V
 	}
 }
 
+// SharedHostMemberClient is a client for the SharedHostMember schema.
+type SharedHostMemberClient struct {
+	config
+}
+
+// NewSharedHostMemberClient returns a client for the SharedHostMember from the given config.
+func NewSharedHostMemberClient(c config) *SharedHostMemberClient {
+	return &SharedHostMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sharedhostmember.Hooks(f(g(h())))`.
+func (c *SharedHostMemberClient) Use(hooks ...Hook) {
+	c.hooks.SharedHostMember = append(c.hooks.SharedHostMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sharedhostmember.Intercept(f(g(h())))`.
+func (c *SharedHostMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SharedHostMember = append(c.inters.SharedHostMember, interceptors...)
+}
+
+// Create returns a builder for creating a SharedHostMember entity.
+func (c *SharedHostMemberClient) Create() *SharedHostMemberCreate {
+	mutation := newSharedHostMemberMutation(c.config, OpCreate)
+	return &SharedHostMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SharedHostMember entities.
+func (c *SharedHostMemberClient) CreateBulk(builders ...*SharedHostMemberCreate) *SharedHostMemberCreateBulk {
+	return &SharedHostMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SharedHostMemberClient) MapCreateBulk(slice any, setFunc func(*SharedHostMemberCreate, int)) *SharedHostMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SharedHostMemberCreateBulk{err: fmt.Errorf("calling to SharedHostMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SharedHostMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SharedHostMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SharedHostMember.
+func (c *SharedHostMemberClient) Update() *SharedHostMemberUpdate {
+	mutation := newSharedHostMemberMutation(c.config, OpUpdate)
+	return &SharedHostMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SharedHostMemberClient) UpdateOne(_m *SharedHostMember) *SharedHostMemberUpdateOne {
+	mutation := newSharedHostMemberMutation(c.config, OpUpdateOne, withSharedHostMember(_m))
+	return &SharedHostMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SharedHostMemberClient) UpdateOneID(id string) *SharedHostMemberUpdateOne {
+	mutation := newSharedHostMemberMutation(c.config, OpUpdateOne, withSharedHostMemberID(id))
+	return &SharedHostMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SharedHostMember.
+func (c *SharedHostMemberClient) Delete() *SharedHostMemberDelete {
+	mutation := newSharedHostMemberMutation(c.config, OpDelete)
+	return &SharedHostMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SharedHostMemberClient) DeleteOne(_m *SharedHostMember) *SharedHostMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SharedHostMemberClient) DeleteOneID(id string) *SharedHostMemberDeleteOne {
+	builder := c.Delete().Where(sharedhostmember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SharedHostMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for SharedHostMember.
+func (c *SharedHostMemberClient) Query() *SharedHostMemberQuery {
+	return &SharedHostMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSharedHostMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SharedHostMember entity by its id.
+func (c *SharedHostMemberClient) Get(ctx context.Context, id string) (*SharedHostMember, error) {
+	return c.Query().Where(sharedhostmember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SharedHostMemberClient) GetX(ctx context.Context, id string) *SharedHostMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SharedHostMemberClient) Hooks() []Hook {
+	return c.hooks.SharedHostMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *SharedHostMemberClient) Interceptors() []Interceptor {
+	return c.inters.SharedHostMember
+}
+
+func (c *SharedHostMemberClient) mutate(ctx context.Context, m *SharedHostMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SharedHostMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SharedHostMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SharedHostMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SharedHostMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SharedHostMember mutation op: %q", m.Op())
+	}
+}
+
 // TeamClient is a client for the Team schema.
 type TeamClient struct {
 	config
@@ -3964,15 +4105,16 @@ type (
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
 		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
 		Password, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
-		ResourceArtifact, ResourceSubmission, SharedHost, Team, TeamConfig,
-		TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
+		ResourceArtifact, ResourceSubmission, SharedHost, SharedHostMember, Team,
+		TeamConfig, TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
 		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
 		Password, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
-		ResourceArtifact, ResourceSubmission, SharedHost, Team, TeamConfig,
-		TeamProvider, UsageRequest, User, VerificationCode []ent.Interceptor
+		ResourceArtifact, ResourceSubmission, SharedHost, SharedHostMember, Team,
+		TeamConfig, TeamProvider, UsageRequest, User,
+		VerificationCode []ent.Interceptor
 	}
 )
 

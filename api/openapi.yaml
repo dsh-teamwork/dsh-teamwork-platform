@@ -1170,6 +1170,89 @@ paths:
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/shared-hosts/{id}/members:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: Who may reach a shared DSH; anyone else's pairings with it end at once
+      security: [{ session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [access, userIds]
+              additionalProperties: false
+              properties:
+                access: { type: string, enum: [team, listed] }
+                userIds: { type: array, items: { type: string }, description: The team members a listed host admits }
+      responses:
+        '200':
+          description: The shared DSH
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [host]
+                properties: { host: { $ref: '#/components/schemas/SharedHost' } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /relay/shared:
+    servers: [{ url: / }]
+    get:
+      summary: The shared DSHs the caller may reach
+      security: [{ bearer: [] }]
+      responses:
+        '200':
+          description: The shared DSHs, oldest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hosts]
+                properties:
+                  hosts:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, name, teamId, teamName, online]
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        teamId: { type: string }
+                        teamName: { type: string }
+                        online: { type: boolean }
+        '401': { $ref: '#/components/responses/Error' }
+  /relay/shared/{hostId}/join:
+    servers: [{ url: / }]
+    post:
+      summary: Start a handset's pairing with a shared DSH, pending until the DSH checks the member's invite
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: hostId, in: path, required: true, schema: { type: string } }
+        - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [deviceName], properties: { deviceName: { type: string } } }
+      responses:
+        '201':
+          description: The pending pairing
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pairing]
+                properties: { pairing: { $ref: '#/components/schemas/RelayPairing' } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
   /relay/plugin:
     servers: [{ url: / }]
     get:
@@ -1340,7 +1423,7 @@ components:
   schemas:
     SharedHost:
       type: object
-      required: [id, name, bound, boundAt, lastSeenAt, createdAt]
+      required: [id, name, bound, boundAt, lastSeenAt, createdAt, access, memberIds]
       properties:
         id: { type: string }
         name: { type: string }
@@ -1348,6 +1431,8 @@ components:
         boundAt: { type: string, format: date-time, nullable: true }
         lastSeenAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
+        access: { type: string, enum: [team, listed], description: 'Every team member reaches it, or only those listed' }
+        memberIds: { type: array, items: { type: string } }
     SharedHostName:
       type: object
       required: [name]

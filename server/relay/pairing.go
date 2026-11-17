@@ -21,6 +21,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
 )
 
 const offerTTL = 2 * time.Minute
@@ -262,6 +263,13 @@ func (p *pairings) list(ctx context.Context, s scope) ([]pairingView, error) {
 	}
 	names := map[string]string{}
 	for _, h := range hosts {
+		names[h.ID] = h.Name
+	}
+	shared, err := p.db.SharedHost.Query().Where(sharedhost.IDIn(hostIDs...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, h := range shared {
 		names[h.ID] = h.Name
 	}
 	_, toPhone := s.(phone)

@@ -579,6 +579,26 @@ func LastSeenAtNotNil() predicate.SharedHost {
 	return predicate.SharedHost(sql.FieldNotNull(FieldLastSeenAt))
 }
 
+// AccessEQ applies the EQ predicate on the "access" field.
+func AccessEQ(v Access) predicate.SharedHost {
+	return predicate.SharedHost(sql.FieldEQ(FieldAccess, v))
+}
+
+// AccessNEQ applies the NEQ predicate on the "access" field.
+func AccessNEQ(v Access) predicate.SharedHost {
+	return predicate.SharedHost(sql.FieldNEQ(FieldAccess, v))
+}
+
+// AccessIn applies the In predicate on the "access" field.
+func AccessIn(vs ...Access) predicate.SharedHost {
+	return predicate.SharedHost(sql.FieldIn(FieldAccess, vs...))
+}
+
+// AccessNotIn applies the NotIn predicate on the "access" field.
+func AccessNotIn(vs ...Access) predicate.SharedHost {
+	return predicate.SharedHost(sql.FieldNotIn(FieldAccess, vs...))
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.SharedHost) predicate.SharedHost {
 	return predicate.SharedHost(sql.AndPredicates(predicates...))

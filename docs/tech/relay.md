@@ -68,6 +68,13 @@ needing no call elsewhere on a connection.
 
 ## Identities and tokens
 
+- **A shared DSH** ([shared-dsh.md](shared-dsh.md)) connects with its host
+  token instead. Its relay host id is its shared host's id, so no host row is
+  recorded; it is sent `{ t: 'members', members }`, everyone who may reach
+  it, at its hello and at every ping, may not ask for a pairing code (its
+  members join by invite, `POST /relay/shared/{hostId}/join`), and a phone
+  reaches it only while its account is in the host's team and on its list.
+
 - **The plugin** connects with the 30-day Bearer it already holds ([ADR 0001](../adr/0001-plugin-sign-in.md)).
   On first connection the relay records a **host**: the member's id, a stable
   `hostId` the plugin generates and keeps beside its cache, the machine's

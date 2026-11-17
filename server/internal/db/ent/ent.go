@@ -31,6 +31,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -116,6 +117,7 @@ func checkColumn(t, c string) error {
 			resourceartifact.Table:   resourceartifact.ValidColumn,
 			resourcesubmission.Table: resourcesubmission.ValidColumn,
 			sharedhost.Table:         sharedhost.ValidColumn,
+			sharedhostmember.Table:   sharedhostmember.ValidColumn,
 			team.Table:               team.ValidColumn,
 			teamconfig.Table:         teamconfig.ValidColumn,
 			teamprovider.Table:       teamprovider.ValidColumn,

@@ -327,7 +327,13 @@ Each step is a vertical slice, lands green, and brings its ADR.
 4. **Members reach it** (about 8 days; an ADR "A shared DSH admits a device by
    invite"). Access list, `/relay/shared` and join, invite handshake, roster,
    owner check, the app's join flow and disclosure. Done when a member's phone
-   drives its own sessions and nobody else's, on a community server.
+   drives its own sessions and nobody else's, on a community server. **The
+   relay's part is done (2026-11-17)**: `shared_hosts.access` and
+   `shared_host_members`, the shared DSH's socket on its host token with the
+   `members` list it is sent at hello and at every ping, `GET /relay/shared`,
+   `POST /relay/shared/{hostId}/join`, the list's route and the console's
+   access editor; a member off the list loses their pairings at once, and
+   deleting the host closes its socket.
 5. **The PIN lock** (about 4 days), on the shared DSH and the personal relay
    together, in the plugin and the app.
 6. **The audit archive** (about 6 days; an ADR on its format). Key commands,

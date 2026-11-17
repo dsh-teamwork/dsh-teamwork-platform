@@ -114,8 +114,24 @@ func (SharedHost) Fields() []ent.Field {
 		relayRef("created_by"),
 		relayAt("bound_at"),
 		relayAt("last_seen_at"),
+		// Who may reach it through the relay: every member of the team, or only
+		// those listed in shared_host_members.
+		field.Enum("access").Values("team", "listed").Default("team"),
 	}
 }
 func (SharedHost) Indexes() []ent.Index {
 	return []ent.Index{index.Fields("team_id").StorageKey("shared_hosts_team")}
+}
+
+// SharedHostMember is one member a shared DSH with access "listed" admits. A
+// row for someone no longer in the team admits nobody: membership is checked
+// as well.
+type SharedHostMember struct{ ent.Schema }
+
+func (SharedHostMember) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
+func (SharedHostMember) Fields() []ent.Field {
+	return []ent.Field{relayRef("host_id"), relayRef("user_id"), relayRef("added_by")}
+}
+func (SharedHostMember) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("host_id", "user_id").Unique().StorageKey("shared_host_members_host_user")}
 }
