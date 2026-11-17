@@ -1114,7 +1114,7 @@ components:
             configured: { type: boolean }
     UsageEntry:
       type: object
-      required: [id, userId, configId, provider, model, state, code, createdAt, finishedAt, input, cacheRead, cacheWrite, output, reasoning, points]
+      required: [id, userId, configId, provider, model, state, code, createdAt, finishedAt, input, cacheRead, cacheWrite, output, reasoning, points, meter]
       properties:
         id: { type: string }
         userId: { type: string }
@@ -1131,6 +1131,17 @@ components:
         output: { type: integer, nullable: true }
         reasoning: { type: integer, nullable: true }
         points: { type: string, nullable: true }
+        meter:
+          description: An edition's metered usage (ADR 0036); null on a model call.
+          type: object
+          nullable: true
+          required: [name, unit, quantity, labels, unitLabels]
+          properties:
+            name: { type: string }
+            unit: { type: string }
+            quantity: { type: integer, nullable: true }
+            labels: { type: object, additionalProperties: { type: string } }
+            unitLabels: { type: object, additionalProperties: { type: string } }
     Error:
       type: object
       required: [error]

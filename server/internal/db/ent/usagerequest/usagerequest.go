@@ -66,6 +66,10 @@ const (
 	FieldErrorCode = "error_code"
 	// FieldFinishedAt holds the string denoting the finished_at field in the database.
 	FieldFinishedAt = "finished_at"
+	// FieldMeter holds the string denoting the meter field in the database.
+	FieldMeter = "meter"
+	// FieldQuantity holds the string denoting the quantity field in the database.
+	FieldQuantity = "quantity"
 	// Table holds the table name of the usagerequest in the database.
 	Table = "usage_requests"
 )
@@ -99,6 +103,8 @@ var Columns = []string{
 	FieldProviderRequestID,
 	FieldErrorCode,
 	FieldFinishedAt,
+	FieldMeter,
+	FieldQuantity,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -146,6 +152,10 @@ var (
 	DefaultErrorCode string
 	// ErrorCodeValidator is a validator for the "error_code" field. It is called by the builders before save.
 	ErrorCodeValidator func(string) error
+	// DefaultMeter holds the default value on creation for the "meter" field.
+	DefaultMeter string
+	// MeterValidator is a validator for the "meter" field. It is called by the builders before save.
+	MeterValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -313,4 +323,14 @@ func ByErrorCode(opts ...sql.OrderTermOption) OrderOption {
 // ByFinishedAt orders the results by the finished_at field.
 func ByFinishedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFinishedAt, opts...).ToFunc()
+}
+
+// ByMeter orders the results by the meter field.
+func ByMeter(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMeter, opts...).ToFunc()
+}
+
+// ByQuantity orders the results by the quantity field.
+func ByQuantity(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldQuantity, opts...).ToFunc()
 }

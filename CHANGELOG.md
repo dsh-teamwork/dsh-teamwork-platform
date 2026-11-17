@@ -20,6 +20,13 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None.
 - **Upgrade:** Nothing.
 - **Refs:** `server/internal/usage/summary.go`, `apps/console/src/pages/team/overview.tsx`, `docs/tech/usage-budgets.md` ("API and console").
+## 2026-11-17 — Editions can register meters with the budget engine
+
+- **What:** An edition registers its own kinds of usage (`edition.Host.RegisterMeters`): it holds points for a member before metered work starts and settles the measured quantity and its points afterwards, in the same windows, reservations and transaction as model calls, with its funding participant. Team and member point budgets bound them; provider budgets and token limits do not. `usage_requests` gains `meter` and `quantity`; the usage API's entries gain `meter`, the CSV export gains `meter`, `quantity` and `unit`, and the console's Usage page names a metered row by its labels. An unsettled hold is marked lost and stays held; an administrator cannot resolve a metered row.
+- **Why:** The hosted edition's cloud computers must count against the same member and team budgets as model calls, without a second budget engine.
+- **Breaking:** None. The CSV export has three more columns at its end.
+- **Upgrade:** One migration, applied at start. Nothing else.
+- **Refs:** ADR 0036, `docs/tech/usage-budgets.md` ("Edition meters").
 
 ## 2026-11-17 — Documentation at /docs, and a one-line install on the home page
 

@@ -1072,6 +1072,12 @@ func init() {
 	usagerequest.DefaultErrorCode = usagerequestDescErrorCode.Default.(string)
 	// usagerequest.ErrorCodeValidator is a validator for the "error_code" field. It is called by the builders before save.
 	usagerequest.ErrorCodeValidator = usagerequestDescErrorCode.Validators[0].(func(string) error)
+	// usagerequestDescMeter is the schema descriptor for meter field.
+	usagerequestDescMeter := usagerequestFields[25].Descriptor()
+	// usagerequest.DefaultMeter holds the default value on creation for the meter field.
+	usagerequest.DefaultMeter = usagerequestDescMeter.Default.(string)
+	// usagerequest.MeterValidator is a validator for the "meter" field. It is called by the builders before save.
+	usagerequest.MeterValidator = usagerequestDescMeter.Validators[0].(func(string) error)
 	// usagerequestDescID is the schema descriptor for id field.
 	usagerequestDescID := usagerequestMixinFields0[0].Descriptor()
 	// usagerequest.DefaultID holds the default value on creation for the id field.

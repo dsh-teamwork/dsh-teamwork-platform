@@ -91,6 +91,10 @@ func (s *Service) resolve(ctx context.Context, teamID, actorID, requestID string
 	if err != nil {
 		return err
 	}
+	// A metered entry is settled by the extension that measures it, never estimated here.
+	if current.Meter != "" {
+		return errMeterOwned
+	}
 	if current.RouteOwner != owner {
 		return wire.E(http.StatusForbidden, "usage_funding_resolution_required")
 	}

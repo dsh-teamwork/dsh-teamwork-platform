@@ -2554,6 +2554,18 @@ export interface components {
             output: number | null;
             reasoning: number | null;
             points: string | null;
+            /** @description An edition's metered usage (ADR 0036); null on a model call. */
+            meter: {
+                name: string;
+                unit: string;
+                quantity: number | null;
+                labels: {
+                    [key: string]: string;
+                };
+                unitLabels: {
+                    [key: string]: string;
+                };
+            } | null;
         };
         Error: {
             error: string;

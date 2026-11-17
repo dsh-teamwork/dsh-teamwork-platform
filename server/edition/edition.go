@@ -105,6 +105,9 @@ type Host struct {
 	// RegisterFunding binds protected models to this extension. Called once
 	// during Mount, before serving; community code needs no participant.
 	RegisterFunding func(ModelFunding) (FundingHost, error)
+	// RegisterMeters adds this extension's meters to the public usage and
+	// budget engine (ADR 0036). Called once during Mount, before serving.
+	RegisterMeters func([]Meter, MeterFunding) (MeterHost, error)
 	// Operator-only recovery. Team APIs never receive this capability.
 	ResolveFundingUsage func(context.Context, string, string, string, string, string, Tokens) error
 	WithTeamTx          func(context.Context, string, func(SQLExecutor) error) error
