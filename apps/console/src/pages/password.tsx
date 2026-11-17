@@ -6,7 +6,7 @@ import { CardPage, Failure, useTitle } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { api } from '@/lib/api';
+import { api, type TeamSummary } from '@/lib/api';
 import { authError, type AuthError } from '@/lib/auth-error';
 import { returnPath } from '@/lib/return-path';
 import { useSession } from '@/lib/session';
@@ -30,14 +30,22 @@ export function PasswordPage() {
 
   if (!session.user) return <Navigate to={`/sign-in?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   if (!session.doors.password) return <Navigate to={next} replace />;
+  // The session signed in with the admin-set password just now, so it is not asked for it again (auth.FirstPasswordProven).
+  const proven = session.user.changeWithoutCurrent;
+
+  // Bound for the list of teams (the default), someone in exactly one team goes straight to it instead.
+  async function onlyTeam(): Promise<string> {
+    const teams = await api<TeamSummary[]>('teams').catch(() => []);
+    return teams.length === 1 ? `/teams/${encodeURIComponent(teams[0].id)}` : '/teams';
+  }
 
   async function submit() {
     setError(null);
     setPending(true);
     try {
-      await api('auth/password/change', { body: { current, next: replacement } });
+      await api('auth/password/change', { body: { ...(proven ? {} : { current }), next: replacement } });
       await refresh();
-      navigate(next, { replace: true });
+      navigate(next === '/teams' ? await onlyTeam() : next, { replace: true });
     } catch (failure) {
       setError(authError(failure));
     } finally {
@@ -54,8 +62,12 @@ export function PasswordPage() {
           void submit();
         }}
       >
-        <Label htmlFor="current">{t('current')}</Label>
-        <Input id="current" type="password" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} />
+        {!proven && (
+          <>
+            <Label htmlFor="current">{t('current')}</Label>
+            <Input id="current" type="password" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} />
+          </>
+        )}
         <Label htmlFor="next">{t('next')}</Label>
         <Input id="next" type="password" autoComplete="new-password" minLength={PASSWORD_MIN} required value={replacement} onChange={(e) => setReplacement(e.target.value)} />
         <p className="text-xs text-muted-foreground">{t('hint')}</p>

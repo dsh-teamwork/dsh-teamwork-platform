@@ -161,7 +161,9 @@ under a key derived from `AUTH_SECRET`.
   `POST /api/teams/:teamId/members` and
   `POST /api/teams/:teamId/members/:userId/password` give an admin's member a
   first password, shown once; `/teams` and `/plugin` send its owner to
-  `/password` until it is changed.
+  `/password` until it is changed. The session that signed in with it changes
+  it without typing it again; a session issued before an admin reset still has
+  to (`auth.FirstPasswordProven`).
 
 ## Signing in from the plugin
 

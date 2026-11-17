@@ -13,6 +13,30 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/console/src/public/home.tsx`, `apps/console/src/public/topology.tsx`, `docs/design.md`.
 
+## 2026-11-17 — The console names its terms and offers only what the instance can do
+
+- **What:** The Chinese console translates Provider and Key with the terms `/docs` already uses, instead of leaving them in English. Usage explains points (the team's own measure of cost, CNY 1 = 1,000 points at the reference rates, counted by budgets) and that a provider still bills its own key directly, in place of "BYOK". A budget form on an instance that sends no email offers no notification choice and creates the policy notifying nobody. A new budget reports "Budget created", not "updated". English budget labels write "token" in lower case, and the Chinese home page's eyebrow is no longer forced to capitals.
+- **Why:** Terms a reader did not know, a mixed-language Chinese screen, and an email option that could never send.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/messages/`, `apps/console/src/pages/team/budgets.tsx`, `apps/console/content/docs/*/admins.md`.
+
+## 2026-11-17 — A provider key is checked before it is saved; a new member is not asked for the password just used
+
+- **What:** `POST /api/teams/{teamId}/providers/check` reads a model list with a typed address and key without saving either. The console calls it before connecting or re-keying a provider, so a key the provider answers 401 or 403 to (`provider_key_rejected`, also from `model-catalog`) or a refused address stays on the form beside its field. `provider_address_refused` is replaced by its reason: `provider_address_private`, `provider_address_plain_http`, `provider_address_unresolved`. A session that signed in with an admin-set password changes it without the current one (`ChangePassword.current` is optional; the session's user gains `changeWithoutCurrent`); a session issued before an admin reset still needs it. After that change a member in one team lands in it. The first password and the plugin's code have copy buttons; the plugin's authorization page names the account and how many teams it reaches, and offers Cancel. A wrong `/setup` token is `setup_link_invalid`, no longer `setup_closed`.
+- **Why:** A wrong key was announced as connected; a refused address did not say why; a new member retyped a twenty-character password they had just used; the authorization page did not say who was being authorized.
+- **Breaking:** `provider_address_refused` is gone; a client matching it matches the three reasons.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/team/network.go`, `server/internal/team/providers.go`, `server/internal/auth/auth.go` (`FirstPasswordProven`), `apps/console/src/pages/team/models.tsx`, `apps/console/src/pages/plugin.tsx`, `docs/tech/architecture.md`.
+
+## 2026-11-17 — A new team's assistant is named in its creator's language
+
+- **What:** Creating a team names its built-in assistant, and writes its description, in the creator's language by the pages' rule (profile, cookie, `Accept-Language`): `Acme assistant` in English, the Chinese form in Chinese. It was always the Chinese suffix. `web.ViewerLocale` is exported for the route, and `team.Service.CreateTeam` takes the locale.
+- **Why:** English consoles and the now bilingual DSH panel showed every new team's assistant with a Chinese name.
+- **Breaking:** None. Existing assistants keep their names; an edition calling `CreateTeam` passes a locale.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/team/assistant.go`, `server/internal/team/assistant.json`, `docs/tech/team-assistant.md`.
+
 ## 2026-11-17 — Analytics count pages only; the app's token can delete the account
 
 - **What:** The server sends nothing to PostHog any more: the `user_signed_up` and `profile_updated` events and `server/internal/analytics` are gone. The browser stays cookieless and anonymous and now sends `$pageview` only, with page leaves off. `DELETE /api/profile` also takes a Bearer token with the email typed back, so the phone app can delete the account in place; the `browser_only` refusal is gone.

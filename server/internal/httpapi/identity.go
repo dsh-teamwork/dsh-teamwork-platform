@@ -20,6 +20,7 @@ type caller struct {
 	user   *ent.User
 	via    string
 	bearer bool // the plugin's token, rather than the browser's cookie
+	issued time.Time
 	// team is set for a computer token (ADR 0038): its caller reaches that
 	// one team, and only through requirePlugin's routes.
 	team string
@@ -67,7 +68,7 @@ func (s *Server) identify(r *http.Request) (*caller, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &caller{user: user, via: claims.Via, bearer: bearer}, nil
+	return &caller{user: user, via: claims.Via, bearer: bearer, issued: time.Unix(claims.Iat, 0)}, nil
 }
 
 // requireUser is the caller, or 401. A browser session whose admin-set

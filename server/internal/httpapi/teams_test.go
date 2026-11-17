@@ -10,8 +10,10 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
@@ -442,6 +444,34 @@ func TestAdminCreatedAccounts(t *testing.T) {
 			}
 		})
 
+		// The session that signed in with the admin-set password has proved it;
+		// one from before an admin reset has not, since a reset is often the
+		// answer to a stolen session (auth.FirstPasswordProven).
+		t.Run("changes a first password without it from the session that signed in with it, never from an older one", func(t *testing.T) {
+			added := must(t, admin.post(members, map[string]string{"email": "proven@x.io"}), 201)
+			userID, pw := added["userId"].(string), added["password"].(string)
+			// Set a minute ago, as an admin does before the member signs in; sessions count whole seconds.
+			d.Client.Password.Update().Where(password.UserID(userID)).SetUpdatedAt(time.Now().Add(-time.Minute)).ExecX(context.Background())
+			b, r := e.signIn("proven@x.io", pw)
+			must(t, r, 200)
+			if u := must(t, b.get("/api/auth/session"), 200)["user"].(map[string]any); u["changeWithoutCurrent"] != true {
+				t.Fatalf("session: %v", u)
+			}
+			must(t, b.post("/api/auth/password/change", map[string]string{"next": "my own new password"}), 204)
+			if u := must(t, b.get("/api/auth/session"), 200)["user"].(map[string]any); u["mustChangePassword"] != false || u["changeWithoutCurrent"] != false {
+				t.Fatalf("after the change: %v", u)
+			}
+			refused(t, "without current once chosen", b.post("/api/auth/password/change", map[string]string{"next": "another new password"}), 401, "invalid_credentials")
+
+			// The admin resets it while that session is still open: it now has to type the reset password.
+			reset := must(t, admin.post(members+"/"+userID+"/password", nil), 200)["password"].(string)
+			if u := must(t, b.get("/api/auth/session"), 200)["user"].(map[string]any); u["mustChangePassword"] != true || u["changeWithoutCurrent"] != false {
+				t.Fatalf("an older session after a reset: %v", u)
+			}
+			refused(t, "an older session without current", b.post("/api/auth/password/change", map[string]string{"next": "taken over password"}), 401, "invalid_credentials")
+			must(t, b.post("/api/auth/password/change", map[string]string{"current": reset, "next": "my own newer password"}), 204)
+		})
+
 		t.Run("resets only a member of the admin's own team and the old password stops working", func(t *testing.T) {
 			added := must(t, admin.post(members, map[string]string{"email": "reset@x.io"}), 201)
 			userID, old := added["userId"].(string), added["password"].(string)
@@ -578,8 +608,8 @@ func TestTeamProviders(t *testing.T) {
 				refused(t, "PUT "+url, admin.send("PUT", providers+"/"+ownID, map[string]string{"baseUrl": url}), 400, "invalid_request")
 			}
 			for _, url := range []string{"https://127.0.0.1/v1", "https://169.254.169.254/v1", "http://10.0.0.5/v1"} {
-				refused(t, url, admin.post(providers, map[string]string{"name": "bad", "baseUrl": url, "apiKey": "k"}), 400, "provider_address_refused")
-				refused(t, "PUT "+url, admin.send("PUT", providers+"/"+ownID, map[string]string{"baseUrl": url}), 400, "provider_address_refused")
+				refused(t, url, admin.post(providers, map[string]string{"name": "bad", "baseUrl": url, "apiKey": "k"}), 400, "provider_address_private")
+				refused(t, "PUT "+url, admin.send("PUT", providers+"/"+ownID, map[string]string{"baseUrl": url}), 400, "provider_address_private")
 			}
 		})
 

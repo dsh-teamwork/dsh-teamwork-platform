@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -189,16 +190,27 @@ func TestProviderAddressRuleByResolution(t *testing.T) {
 		sa := strict.admin("a@x.io")
 		st := newTeam(t, sa, "Strict")
 		must(t, save(strict, sa, st, "https://public.example/v1"), 201)
-		for _, url := range []string{"http://127.0.0.1/v1", "http://public.example/v1", "https://private.example/v1", "https://mixed.example/v1", "https://nowhere.example/v1"} {
-			refused(t, "strict "+url, save(strict, sa, st, url), 400, "provider_address_refused")
+		// Each refusal says why, so an admin knows what to change.
+		for url, code := range map[string]string{
+			"http://127.0.0.1/v1":        "provider_address_private",
+			"http://public.example/v1":   "provider_address_plain_http",
+			"https://private.example/v1": "provider_address_private",
+			"https://mixed.example/v1":   "provider_address_private",
+			"https://nowhere.example/v1": "provider_address_unresolved",
+		} {
+			refused(t, "strict "+url, save(strict, sa, st, url), 400, code)
 		}
 
 		open := start(t, testdb.New(t, d.Name), options{allowPrivate: true, lookup: lookup})
 		oa := open.admin("a@x.io")
 		ot := newTeam(t, oa, "Open")
 		must(t, save(open, oa, ot, "http://private.example/v1"), 201)
-		for _, url := range []string{"http://public.example/v1", "http://mixed.example/v1", "https://nowhere.example/v1"} {
-			refused(t, "open "+url, save(open, oa, ot, url), 400, "provider_address_refused")
+		for url, code := range map[string]string{
+			"http://public.example/v1":   "provider_address_plain_http",
+			"http://mixed.example/v1":    "provider_address_plain_http",
+			"https://nowhere.example/v1": "provider_address_unresolved",
+		} {
+			refused(t, "open "+url, save(open, oa, ot, url), 400, code)
 		}
 	})
 }
@@ -256,6 +268,39 @@ func TestModelCatalog(t *testing.T) {
 			}
 		})
 
+		t.Run("names a key the provider refuses, and only a 401 or 403", func(t *testing.T) {
+			for _, status := range []int{401, 403} {
+				answer = func(w http.ResponseWriter) { w.WriteHeader(status); io.WriteString(w, "secret-key") }
+				r := admin.get(catalog + "?provider=stub")
+				refused(t, fmt.Sprint("an upstream ", status), r, 400, "provider_key_rejected")
+				if strings.Contains(string(r.body), "secret-key") {
+					t.Fatalf("%d: the upstream body reached the caller: %s", status, r.body)
+				}
+			}
+			answer = func(w http.ResponseWriter) { w.WriteHeader(500) }
+			refused(t, "an upstream 500", admin.get(catalog+"?provider=stub"), 502, "upstream_unavailable")
+		})
+
+		// The console checks a typed key before saving it (pages/team/models.tsx).
+		t.Run("checks an address and key without saving either", func(t *testing.T) {
+			check := "/api/teams/" + teamID + "/providers/check"
+			answer = func(w http.ResponseWriter) { answerJSON(w, `{"data":[{"id":"kimi"}]}`) }
+			before := d.Client.TeamProvider.Query().CountX(context.Background())
+			got := must(t, admin.post(check, map[string]string{"baseUrl": u.URL, "apiKey": "sk-typed"}), 200)
+			if models := got["models"].([]any); len(models) != 1 || models[0].(map[string]any)["id"] != "kimi" {
+				t.Fatalf("check: %v", got)
+			}
+			if u.auths[len(u.auths)-1] != "Bearer sk-typed" {
+				t.Fatalf("upstream auth: %v", u.auths)
+			}
+			answer = func(w http.ResponseWriter) { w.WriteHeader(401) }
+			refused(t, "a refused key", admin.post(check, map[string]string{"baseUrl": u.URL, "apiKey": "sk-wrong"}), 400, "provider_key_rejected")
+			refused(t, "a refused address", admin.post(check, map[string]string{"baseUrl": "http://203.0.113.10/v1", "apiKey": "k"}), 400, "provider_address_plain_http")
+			if n := d.Client.TeamProvider.Query().CountX(context.Background()); n != before {
+				t.Fatalf("a check saved a provider: %d → %d", before, n)
+			}
+		})
+
 		t.Run("is for admins only", func(t *testing.T) {
 			member, _ := e.person("m@x.io")
 			_, token := invite(t, admin, teamID)
@@ -269,7 +314,6 @@ func TestModelCatalog(t *testing.T) {
 
 		t.Run("answers an upstream error, a malformed list or an oversized one with one code", func(t *testing.T) {
 			for what, a := range map[string]func(w http.ResponseWriter){
-				"an upstream 401": func(w http.ResponseWriter) { w.WriteHeader(401); io.WriteString(w, "secret-key") },
 				"a negative limit": func(w http.ResponseWriter) {
 					answerJSON(w, `{"data":[{"id":"bad","context_length":-1}]}`)
 				},

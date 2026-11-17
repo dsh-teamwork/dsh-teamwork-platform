@@ -134,7 +134,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Replace one's own password, checking the current one */
+        /** Replace one's own password, checking the current one unless the session proved it */
         post: {
             parameters: {
                 query?: never;
@@ -1400,15 +1400,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            provider: string;
-                            models: {
-                                id: string;
-                                name: string;
-                                contextWindow?: number;
-                                maxTokens?: number;
-                            }[];
-                        };
+                        "application/json": components["schemas"]["ModelCatalog"];
                     };
                 };
                 400: components["responses"]["Error"];
@@ -1421,6 +1413,61 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/providers/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * An admin reads a model list with an address and key before saving either
+         * @description Nothing is stored. The address rule holds as it does for saving. A key the provider answers 401 or 403 to is provider_key_rejected; any other failure to read the list is upstream_unavailable, since a provider may simply not list its models.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        baseUrl: string;
+                        apiKey: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The models the key can read; provider is empty, since nothing is saved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ModelCatalog"];
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                502: components["responses"]["Error"];
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2660,6 +2707,8 @@ export interface components {
                 email: string | null;
                 name: string | null;
                 mustChangePassword: boolean;
+                /** @description This session signed in with the admin-set password, so it replaces it without the current one */
+                changeWithoutCurrent: boolean;
             } | null;
             doors: {
                 password: boolean;
@@ -2686,7 +2735,8 @@ export interface components {
             password: string;
         };
         ChangePassword: {
-            current: string;
+            /** @description Required unless the session's changeWithoutCurrent is true */
+            current?: string;
             next: string;
         };
         PluginCodeRequest: {
@@ -2700,6 +2750,15 @@ export interface components {
                 /** @enum {string} */
                 to: "dsh" | "app";
             } | null;
+        };
+        ModelCatalog: {
+            provider: string;
+            models: {
+                id: string;
+                name: string;
+                contextWindow?: number;
+                maxTokens?: number;
+            }[];
         };
         Provider: {
             id: string;

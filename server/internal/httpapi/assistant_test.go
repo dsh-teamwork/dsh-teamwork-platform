@@ -20,7 +20,7 @@ func TestNewTeamHasOneInheritedAssistant(t *testing.T) {
 			t.Fatalf("configs: %v", rows)
 		}
 		c := rows[0].(map[string]any)
-		if c["builtin"] != "team-assistant" || !strings.HasPrefix(c["name"].(string), name) || c["data"].(map[string]any)["inheritModel"] != true {
+		if c["builtin"] != "team-assistant" || c["name"] != name+" assistant" || c["data"].(map[string]any)["inheritModel"] != true {
 			t.Fatalf("assistant: %v", c)
 		}
 		plugin := e.pluginFor(admin)
@@ -29,6 +29,29 @@ func TestNewTeamHasOneInheritedAssistant(t *testing.T) {
 		}
 		if n := d.Client.TeamConfig.Query().Where(teamconfig.TeamID(id)).CountX(context.Background()); n != 1 {
 			t.Fatalf("sync duplicated assistant: %d", n)
+		}
+	})
+}
+
+// The assistant is named in the language the creator reads, chosen as the
+// console's pages choose it, and keeps that name when the creator switches.
+func TestAssistantIsNamedInTheCreatorsLanguage(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{})
+		admin := e.admin("admin@x.io")
+		must(t, admin.post("/api/locale", map[string]string{"locale": "zh-CN"}), 204)
+		id := newTeam(t, admin, "Acme")
+		c := jsonArray(t, admin.get("/api/teams/"+id+"/configs"))[0].(map[string]any)
+		if c["name"] != "Acme\u56e2\u961f\u52a9\u7406" || !strings.Contains(c["data"].(map[string]any)["description"].(string), "\u52a9\u7406") {
+			t.Fatalf("zh-CN assistant: %v", c)
+		}
+		must(t, admin.post("/api/locale", map[string]string{"locale": "en"}), 204)
+		if got := jsonArray(t, admin.get("/api/teams/"+id+"/configs"))[0].(map[string]any)["name"]; got != c["name"] {
+			t.Fatalf("renamed on a language change: %v", got)
+		}
+		id = newTeam(t, admin, "Beta")
+		if got := jsonArray(t, admin.get("/api/teams/"+id+"/configs"))[0].(map[string]any)["name"]; got != "Beta assistant" {
+			t.Fatalf("en assistant: %v", got)
 		}
 	})
 }

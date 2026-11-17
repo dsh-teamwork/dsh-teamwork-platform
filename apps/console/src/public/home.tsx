@@ -237,7 +237,8 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
       <main>
         <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-12 px-6 pt-14 sm:pt-20 lg:grid-cols-[minmax(0,0.66fr)_minmax(0,1.34fr)] lg:items-center lg:gap-10">
           <div className="flex flex-col gap-6">
-            <p className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('eyebrow')}</p>
+            {/* Capitals suit the English label; a Chinese one keeps its Latin product name as written. */}
+            <p className={`font-mono text-xs font-semibold tracking-widest text-muted-foreground ${locale === 'en' ? 'uppercase' : ''}`}>{t('eyebrow')}</p>
             <h1 className="text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-5xl sm:leading-[1.08]">{t('title')}</h1>
             <p className="text-lg text-muted-foreground">{t('lede')}</p>
             <ul className="flex flex-col gap-2.5">

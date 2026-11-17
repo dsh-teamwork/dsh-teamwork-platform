@@ -103,6 +103,7 @@ func (s *Server) Handler() http.Handler {
 		write("PUT", "/api/teams/{teamId}/providers/{id}", s.updateProvider)
 		write("DELETE", "/api/teams/{teamId}/providers/{id}", s.deleteProvider)
 		get("/api/teams/{teamId}/model-catalog", s.modelCatalog)
+		post("/api/teams/{teamId}/providers/check", s.checkProvider)
 		get("/api/teams/{teamId}/model-rates/{configId}", s.getModelRate)
 		write("PUT", "/api/teams/{teamId}/model-rates/{configId}", s.setModelRate)
 		get("/api/teams/{teamId}/summary", s.teamSummary)

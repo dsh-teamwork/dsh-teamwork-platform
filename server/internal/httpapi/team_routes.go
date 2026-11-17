@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
@@ -16,7 +17,12 @@ func (s *Server) createTeam(w http.ResponseWriter, r *http.Request) error {
 	if err := decode(r, &in); err != nil {
 		return err
 	}
-	created, err := s.Team.CreateTeam(r.Context(), c.user.ID, in)
+	// The language the console is showing the creator, by the pages' own rule.
+	profile := ""
+	if c.user.Locale != nil {
+		profile = *c.user.Locale
+	}
+	created, err := s.Team.CreateTeam(r.Context(), c.user.ID, in, web.ViewerLocale(r, profile))
 	if err != nil {
 		return err
 	}
