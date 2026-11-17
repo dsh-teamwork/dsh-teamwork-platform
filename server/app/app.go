@@ -279,6 +279,9 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	}
 	for _, e := range exts {
 		host.RegisterFunding = func(p edition.ModelFunding) (edition.FundingHost, error) { return meter.RegisterFunding(e.Name, p) }
+		host.RegisterMeters = func(m []edition.Meter, f edition.MeterFunding) (edition.MeterHost, error) {
+			return meter.RegisterMeters(e.Name, m, f)
+		}
 		subscribed := false
 		host.SubscribeTeams = func(handle edition.TeamChangeHandler) error {
 			if handle == nil || subscribed {

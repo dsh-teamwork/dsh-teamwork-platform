@@ -15322,6 +15322,9 @@ type UsageRequestMutation struct {
 	provider_request_id   *string
 	error_code            *string
 	finished_at           *time.Time
+	meter                 *string
+	quantity              *int64
+	addquantity           *int64
 	clearedFields         map[string]struct{}
 	done                  bool
 	oldValue              func(context.Context) (*UsageRequest, error)
@@ -16729,6 +16732,112 @@ func (m *UsageRequestMutation) ResetFinishedAt() {
 	delete(m.clearedFields, usagerequest.FieldFinishedAt)
 }
 
+// SetMeter sets the "meter" field.
+func (m *UsageRequestMutation) SetMeter(s string) {
+	m.meter = &s
+}
+
+// Meter returns the value of the "meter" field in the mutation.
+func (m *UsageRequestMutation) Meter() (r string, exists bool) {
+	v := m.meter
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMeter returns the old "meter" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldMeter(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMeter is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMeter requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMeter: %w", err)
+	}
+	return oldValue.Meter, nil
+}
+
+// ResetMeter resets all changes to the "meter" field.
+func (m *UsageRequestMutation) ResetMeter() {
+	m.meter = nil
+}
+
+// SetQuantity sets the "quantity" field.
+func (m *UsageRequestMutation) SetQuantity(i int64) {
+	m.quantity = &i
+	m.addquantity = nil
+}
+
+// Quantity returns the value of the "quantity" field in the mutation.
+func (m *UsageRequestMutation) Quantity() (r int64, exists bool) {
+	v := m.quantity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldQuantity returns the old "quantity" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldQuantity(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldQuantity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldQuantity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldQuantity: %w", err)
+	}
+	return oldValue.Quantity, nil
+}
+
+// AddQuantity adds i to the "quantity" field.
+func (m *UsageRequestMutation) AddQuantity(i int64) {
+	if m.addquantity != nil {
+		*m.addquantity += i
+	} else {
+		m.addquantity = &i
+	}
+}
+
+// AddedQuantity returns the value that was added to the "quantity" field in this mutation.
+func (m *UsageRequestMutation) AddedQuantity() (r int64, exists bool) {
+	v := m.addquantity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearQuantity clears the value of the "quantity" field.
+func (m *UsageRequestMutation) ClearQuantity() {
+	m.quantity = nil
+	m.addquantity = nil
+	m.clearedFields[usagerequest.FieldQuantity] = struct{}{}
+}
+
+// QuantityCleared returns if the "quantity" field was cleared in this mutation.
+func (m *UsageRequestMutation) QuantityCleared() bool {
+	_, ok := m.clearedFields[usagerequest.FieldQuantity]
+	return ok
+}
+
+// ResetQuantity resets all changes to the "quantity" field.
+func (m *UsageRequestMutation) ResetQuantity() {
+	m.quantity = nil
+	m.addquantity = nil
+	delete(m.clearedFields, usagerequest.FieldQuantity)
+}
+
 // Where appends a list predicates to the UsageRequestMutation builder.
 func (m *UsageRequestMutation) Where(ps ...predicate.UsageRequest) {
 	m.predicates = append(m.predicates, ps...)
@@ -16763,7 +16872,7 @@ func (m *UsageRequestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UsageRequestMutation) Fields() []string {
-	fields := make([]string, 0, 26)
+	fields := make([]string, 0, 28)
 	if m.created_at != nil {
 		fields = append(fields, usagerequest.FieldCreatedAt)
 	}
@@ -16842,6 +16951,12 @@ func (m *UsageRequestMutation) Fields() []string {
 	if m.finished_at != nil {
 		fields = append(fields, usagerequest.FieldFinishedAt)
 	}
+	if m.meter != nil {
+		fields = append(fields, usagerequest.FieldMeter)
+	}
+	if m.quantity != nil {
+		fields = append(fields, usagerequest.FieldQuantity)
+	}
 	return fields
 }
 
@@ -16902,6 +17017,10 @@ func (m *UsageRequestMutation) Field(name string) (ent.Value, bool) {
 		return m.ErrorCode()
 	case usagerequest.FieldFinishedAt:
 		return m.FinishedAt()
+	case usagerequest.FieldMeter:
+		return m.Meter()
+	case usagerequest.FieldQuantity:
+		return m.Quantity()
 	}
 	return nil, false
 }
@@ -16963,6 +17082,10 @@ func (m *UsageRequestMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldErrorCode(ctx)
 	case usagerequest.FieldFinishedAt:
 		return m.OldFinishedAt(ctx)
+	case usagerequest.FieldMeter:
+		return m.OldMeter(ctx)
+	case usagerequest.FieldQuantity:
+		return m.OldQuantity(ctx)
 	}
 	return nil, fmt.Errorf("unknown UsageRequest field %s", name)
 }
@@ -17154,6 +17277,20 @@ func (m *UsageRequestMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetFinishedAt(v)
 		return nil
+	case usagerequest.FieldMeter:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMeter(v)
+		return nil
+	case usagerequest.FieldQuantity:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetQuantity(v)
+		return nil
 	}
 	return fmt.Errorf("unknown UsageRequest field %s", name)
 }
@@ -17189,6 +17326,9 @@ func (m *UsageRequestMutation) AddedFields() []string {
 	if m.addreasoning_tokens != nil {
 		fields = append(fields, usagerequest.FieldReasoningTokens)
 	}
+	if m.addquantity != nil {
+		fields = append(fields, usagerequest.FieldQuantity)
+	}
 	return fields
 }
 
@@ -17215,6 +17355,8 @@ func (m *UsageRequestMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedOutputTokens()
 	case usagerequest.FieldReasoningTokens:
 		return m.AddedReasoningTokens()
+	case usagerequest.FieldQuantity:
+		return m.AddedQuantity()
 	}
 	return nil, false
 }
@@ -17287,6 +17429,13 @@ func (m *UsageRequestMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddReasoningTokens(v)
 		return nil
+	case usagerequest.FieldQuantity:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddQuantity(v)
+		return nil
 	}
 	return fmt.Errorf("unknown UsageRequest numeric field %s", name)
 }
@@ -17330,6 +17479,9 @@ func (m *UsageRequestMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(usagerequest.FieldFinishedAt) {
 		fields = append(fields, usagerequest.FieldFinishedAt)
+	}
+	if m.FieldCleared(usagerequest.FieldQuantity) {
+		fields = append(fields, usagerequest.FieldQuantity)
 	}
 	return fields
 }
@@ -17380,6 +17532,9 @@ func (m *UsageRequestMutation) ClearField(name string) error {
 		return nil
 	case usagerequest.FieldFinishedAt:
 		m.ClearFinishedAt()
+		return nil
+	case usagerequest.FieldQuantity:
+		m.ClearQuantity()
 		return nil
 	}
 	return fmt.Errorf("unknown UsageRequest nullable field %s", name)
@@ -17466,6 +17621,12 @@ func (m *UsageRequestMutation) ResetField(name string) error {
 		return nil
 	case usagerequest.FieldFinishedAt:
 		m.ResetFinishedAt()
+		return nil
+	case usagerequest.FieldMeter:
+		m.ResetMeter()
+		return nil
+	case usagerequest.FieldQuantity:
+		m.ResetQuantity()
 		return nil
 	}
 	return fmt.Errorf("unknown UsageRequest field %s", name)

@@ -69,7 +69,11 @@ type UsageRequest struct {
 	// ErrorCode holds the value of the "error_code" field.
 	ErrorCode string `json:"error_code,omitempty"`
 	// FinishedAt holds the value of the "finished_at" field.
-	FinishedAt   *time.Time `json:"finished_at,omitempty"`
+	FinishedAt *time.Time `json:"finished_at,omitempty"`
+	// Meter holds the value of the "meter" field.
+	Meter string `json:"meter,omitempty"`
+	// Quantity holds the value of the "quantity" field.
+	Quantity     *int64 `json:"quantity,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -82,9 +86,9 @@ func (*UsageRequest) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case usagerequest.FieldStream:
 			values[i] = new(sql.NullBool)
-		case usagerequest.FieldAdmittedUnits, usagerequest.FieldAdmittedInput, usagerequest.FieldAdmittedOutput, usagerequest.FieldPointUnits, usagerequest.FieldInputTokens, usagerequest.FieldCacheReadTokens, usagerequest.FieldCacheWriteTokens, usagerequest.FieldOutputTokens, usagerequest.FieldReasoningTokens:
+		case usagerequest.FieldAdmittedUnits, usagerequest.FieldAdmittedInput, usagerequest.FieldAdmittedOutput, usagerequest.FieldPointUnits, usagerequest.FieldInputTokens, usagerequest.FieldCacheReadTokens, usagerequest.FieldCacheWriteTokens, usagerequest.FieldOutputTokens, usagerequest.FieldReasoningTokens, usagerequest.FieldQuantity:
 			values[i] = new(sql.NullInt64)
-		case usagerequest.FieldID, usagerequest.FieldTeamID, usagerequest.FieldUserID, usagerequest.FieldAppURL, usagerequest.FieldSubmittedConfigID, usagerequest.FieldConfigID, usagerequest.FieldProvider, usagerequest.FieldModel, usagerequest.FieldState, usagerequest.FieldRateID, usagerequest.FieldRouteOwner, usagerequest.FieldProviderRequestID, usagerequest.FieldErrorCode:
+		case usagerequest.FieldID, usagerequest.FieldTeamID, usagerequest.FieldUserID, usagerequest.FieldAppURL, usagerequest.FieldSubmittedConfigID, usagerequest.FieldConfigID, usagerequest.FieldProvider, usagerequest.FieldModel, usagerequest.FieldState, usagerequest.FieldRateID, usagerequest.FieldRouteOwner, usagerequest.FieldProviderRequestID, usagerequest.FieldErrorCode, usagerequest.FieldMeter:
 			values[i] = new(sql.NullString)
 		case usagerequest.FieldCreatedAt, usagerequest.FieldDeadlineAt, usagerequest.FieldFinishedAt:
 			values[i] = new(sql.NullTime)
@@ -278,6 +282,19 @@ func (_m *UsageRequest) assignValues(columns []string, values []any) error {
 				_m.FinishedAt = new(time.Time)
 				*_m.FinishedAt = value.Time
 			}
+		case usagerequest.FieldMeter:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field meter", values[i])
+			} else if value.Valid {
+				_m.Meter = value.String
+			}
+		case usagerequest.FieldQuantity:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field quantity", values[i])
+			} else if value.Valid {
+				_m.Quantity = new(int64)
+				*_m.Quantity = value.Int64
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -412,6 +429,14 @@ func (_m *UsageRequest) String() string {
 	if v := _m.FinishedAt; v != nil {
 		builder.WriteString("finished_at=")
 		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("meter=")
+	builder.WriteString(_m.Meter)
+	builder.WriteString(", ")
+	if v := _m.Quantity; v != nil {
+		builder.WriteString("quantity=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')
 	return builder.String()

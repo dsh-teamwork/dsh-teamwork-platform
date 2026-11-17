@@ -19,6 +19,7 @@ type Service struct {
 	AppURL     string
 	SendNotice func(context.Context, NoticeMessage) error
 	Funding    map[string]edition.ModelFunding
+	Meters     map[string]registeredMeter
 }
 
 const MaxCallDuration = 15 * time.Minute
@@ -159,21 +160,22 @@ func (s *Service) Finish(ctx context.Context, request *ent.UsageRequest, observa
 // EntryView is the stable JSON surface; nil points mean unpriced or pending,
 // not zero. Internal rates and provider credentials are never returned.
 type EntryView struct {
-	ID         string  `json:"id"`
-	UserID     string  `json:"userId"`
-	ConfigID   string  `json:"configId"`
-	Provider   string  `json:"provider"`
-	Model      string  `json:"model"`
-	State      string  `json:"state"`
-	Code       string  `json:"code"`
-	CreatedAt  string  `json:"createdAt"`
-	FinishedAt *string `json:"finishedAt"`
-	Input      *int64  `json:"input"`
-	CacheRead  *int64  `json:"cacheRead"`
-	CacheWrite *int64  `json:"cacheWrite"`
-	Output     *int64  `json:"output"`
-	Reasoning  *int64  `json:"reasoning"`
-	Points     *string `json:"points"`
+	ID         string     `json:"id"`
+	UserID     string     `json:"userId"`
+	ConfigID   string     `json:"configId"`
+	Provider   string     `json:"provider"`
+	Model      string     `json:"model"`
+	State      string     `json:"state"`
+	Code       string     `json:"code"`
+	CreatedAt  string     `json:"createdAt"`
+	FinishedAt *string    `json:"finishedAt"`
+	Input      *int64     `json:"input"`
+	CacheRead  *int64     `json:"cacheRead"`
+	CacheWrite *int64     `json:"cacheWrite"`
+	Output     *int64     `json:"output"`
+	Reasoning  *int64     `json:"reasoning"`
+	Points     *string    `json:"points"`
+	Meter      *MeterView `json:"meter"`
 }
 
 type Filter struct {
@@ -218,13 +220,13 @@ func (s *Service) List(ctx context.Context, f Filter) (Page, error) {
 	}
 	p := Page{Entries: []EntryView{}, Total: total, Page: f.Page, Size: f.Size}
 	for _, r := range rows {
-		p.Entries = append(p.Entries, entryView(r))
+		p.Entries = append(p.Entries, s.entryView(r))
 	}
 	return p, nil
 }
 
-func entryView(r *ent.UsageRequest) EntryView {
-	v := EntryView{ID: r.ID, UserID: r.UserID, ConfigID: r.ConfigID, Provider: r.Provider, Model: r.Model,
+func (s *Service) entryView(r *ent.UsageRequest) EntryView {
+	v := EntryView{Meter: s.meterView(r.Meter, r.Quantity), ID: r.ID, UserID: r.UserID, ConfigID: r.ConfigID, Provider: r.Provider, Model: r.Model,
 		State: string(r.State), Code: r.ErrorCode, CreatedAt: r.CreatedAt.UTC().Format(time.RFC3339Nano),
 		Input: r.InputTokens, CacheRead: r.CacheReadTokens, CacheWrite: r.CacheWriteTokens, Output: r.OutputTokens, Reasoning: r.ReasoningTokens}
 	if r.FinishedAt != nil {
@@ -250,7 +252,7 @@ func (s *Service) Export(ctx context.Context, f Filter) ([]EntryView, error) {
 	}
 	entries := make([]EntryView, 0, len(rows))
 	for _, row := range rows {
-		entries = append(entries, entryView(row))
+		entries = append(entries, s.entryView(row))
 	}
 	return entries, nil
 }

@@ -184,6 +184,16 @@ func FinishedAt(v time.Time) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldFinishedAt, v))
 }
 
+// Meter applies equality check predicate on the "meter" field. It's identical to MeterEQ.
+func Meter(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldMeter, v))
+}
+
+// Quantity applies equality check predicate on the "quantity" field. It's identical to QuantityEQ.
+func Quantity(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldQuantity, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldCreatedAt, v))
@@ -1527,6 +1537,121 @@ func FinishedAtIsNil() predicate.UsageRequest {
 // FinishedAtNotNil applies the NotNil predicate on the "finished_at" field.
 func FinishedAtNotNil() predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldNotNull(FieldFinishedAt))
+}
+
+// MeterEQ applies the EQ predicate on the "meter" field.
+func MeterEQ(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldMeter, v))
+}
+
+// MeterNEQ applies the NEQ predicate on the "meter" field.
+func MeterNEQ(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldMeter, v))
+}
+
+// MeterIn applies the In predicate on the "meter" field.
+func MeterIn(vs ...string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldMeter, vs...))
+}
+
+// MeterNotIn applies the NotIn predicate on the "meter" field.
+func MeterNotIn(vs ...string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldMeter, vs...))
+}
+
+// MeterGT applies the GT predicate on the "meter" field.
+func MeterGT(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldMeter, v))
+}
+
+// MeterGTE applies the GTE predicate on the "meter" field.
+func MeterGTE(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldMeter, v))
+}
+
+// MeterLT applies the LT predicate on the "meter" field.
+func MeterLT(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldMeter, v))
+}
+
+// MeterLTE applies the LTE predicate on the "meter" field.
+func MeterLTE(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldMeter, v))
+}
+
+// MeterContains applies the Contains predicate on the "meter" field.
+func MeterContains(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldContains(FieldMeter, v))
+}
+
+// MeterHasPrefix applies the HasPrefix predicate on the "meter" field.
+func MeterHasPrefix(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldHasPrefix(FieldMeter, v))
+}
+
+// MeterHasSuffix applies the HasSuffix predicate on the "meter" field.
+func MeterHasSuffix(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldHasSuffix(FieldMeter, v))
+}
+
+// MeterEqualFold applies the EqualFold predicate on the "meter" field.
+func MeterEqualFold(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEqualFold(FieldMeter, v))
+}
+
+// MeterContainsFold applies the ContainsFold predicate on the "meter" field.
+func MeterContainsFold(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldContainsFold(FieldMeter, v))
+}
+
+// QuantityEQ applies the EQ predicate on the "quantity" field.
+func QuantityEQ(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldQuantity, v))
+}
+
+// QuantityNEQ applies the NEQ predicate on the "quantity" field.
+func QuantityNEQ(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldQuantity, v))
+}
+
+// QuantityIn applies the In predicate on the "quantity" field.
+func QuantityIn(vs ...int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldQuantity, vs...))
+}
+
+// QuantityNotIn applies the NotIn predicate on the "quantity" field.
+func QuantityNotIn(vs ...int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldQuantity, vs...))
+}
+
+// QuantityGT applies the GT predicate on the "quantity" field.
+func QuantityGT(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldQuantity, v))
+}
+
+// QuantityGTE applies the GTE predicate on the "quantity" field.
+func QuantityGTE(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldQuantity, v))
+}
+
+// QuantityLT applies the LT predicate on the "quantity" field.
+func QuantityLT(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldQuantity, v))
+}
+
+// QuantityLTE applies the LTE predicate on the "quantity" field.
+func QuantityLTE(v int64) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldQuantity, v))
+}
+
+// QuantityIsNil applies the IsNil predicate on the "quantity" field.
+func QuantityIsNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIsNull(FieldQuantity))
+}
+
+// QuantityNotNil applies the NotNil predicate on the "quantity" field.
+func QuantityNotNil() predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotNull(FieldQuantity))
 }
 
 // And groups predicates with the AND operator between them.

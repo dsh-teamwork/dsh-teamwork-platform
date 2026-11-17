@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering, budgets and optional atomic model funding · **Updated:** 2026-11-15
+> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-17
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -106,6 +106,31 @@ resolution is retained as separate evidence, without silently replacing the
 estimate. An observed maximum overrun records actual consumption and suspends
 further hard-budget calls for that provider/model until reviewed. This changes
 reference budgets, not supplier invoices or hosted monetary balances.
+
+## Edition meters
+
+An edition may register its own kinds of usage, such as a cloud computer's
+running time ([ADR 0036](../adr/0036-edition-meters.md)), through
+`edition.Host.RegisterMeters` (`server/edition/meter.go`,
+`server/internal/usage/meter.go`). A community instance registers none.
+
+- **A meter** has a name, a unit, and labels for both in `en` and `zh-CN`.
+  Names are unique on the instance, and an extension registers once.
+- **`Reserve`** holds points for one member in every applicable team and
+  member window, under the same budget gate and cap checks as a model call,
+  and calls the edition's `ReserveMeter` in that transaction. It writes a
+  usage row with `meter` set and no config, provider, model or tokens.
+  Provider policies and token limits do not apply. A hold lasts at most 24
+  hours.
+- **`Settle`** records the measured `quantity` and the points the edition
+  prices it at, calls `SettleMeter`, spends the points and releases the hold.
+  Settling twice changes nothing; more points than were held settle and are
+  flagged `usage_bound_exceeded`.
+- **Recovery is the model call's:** an unsettled hold past its time is marked
+  pending with its points still held, and only the owning edition settles
+  it. An administrator's resolution refuses it (`usage_meter_owned`).
+- **Usage and its export show the row** by the meter's labels and quantity
+  (`meter` in `UsageEntry`; `meter`, `quantity` and `unit` columns in CSV).
 
 ## API and console
 

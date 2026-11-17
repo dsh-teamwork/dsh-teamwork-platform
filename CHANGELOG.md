@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Editions can register meters with the budget engine
+
+- **What:** An edition registers its own kinds of usage (`edition.Host.RegisterMeters`): it holds points for a member before metered work starts and settles the measured quantity and its points afterwards, in the same windows, reservations and transaction as model calls, with its funding participant. Team and member point budgets bound them; provider budgets and token limits do not. `usage_requests` gains `meter` and `quantity`; the usage API's entries gain `meter`, the CSV export gains `meter`, `quantity` and `unit`, and the console's Usage page names a metered row by its labels. An unsettled hold is marked lost and stays held; an administrator cannot resolve a metered row.
+- **Why:** The hosted edition's cloud computers must count against the same member and team budgets as model calls, without a second budget engine.
+- **Breaking:** None. The CSV export has three more columns at its end.
+- **Upgrade:** One migration, applied at start. Nothing else.
+- **Refs:** ADR 0036, `docs/tech/usage-budgets.md` ("Edition meters").
+
 ## 2026-11-17 — Documentation at /docs, and a one-line install on the home page
 
 - **What:** Every instance publishes user documentation at `/docs` in English and Chinese: an overview, installing the plugin (Desktop, CLI and web, signing in, choosing the server, common problems), setting up a team, working in one, the command reference, and running your own server. Pages are Markdown in `apps/console/content/docs/{locale}/`, prerendered with the other public pages and served in the viewer's language like the home page; the sitemap lists them. The home page's first screen now shows one line for installing from DSH Desktop and links to the full guide; its header and footer link the docs, and the self-hosting guide button opens `/docs/self-hosting`. The community edition is no longer described as installable from npx, which is not published.
