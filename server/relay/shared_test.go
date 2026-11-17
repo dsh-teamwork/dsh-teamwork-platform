@@ -29,7 +29,7 @@ type sharedWorld struct {
 func eachShared(t *testing.T, f func(t *testing.T, w *sharedWorld)) {
 	w := &sharedWorld{}
 	ext := edition.Extension{
-		Name: "relay", Migrations: Extension(nil, time.Minute).Migrations,
+		Name: "open-relay",
 		Mount: func(h edition.Host) (func(), error) {
 			w.r = newRelay(h, nil, time.Minute)
 			if err := h.SubscribeTeams(w.r.sharedTeamDeleted); err != nil {

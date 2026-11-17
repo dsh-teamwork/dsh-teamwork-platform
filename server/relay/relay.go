@@ -53,7 +53,9 @@ func init() { edition.Register(Extension(throughExpo, 30*time.Second)) }
 // its tables are the open schema's, migrated with the rest.
 func Extension(push SendPush, pingEvery time.Duration) edition.Extension {
 	return edition.Extension{
-		Name: "relay",
+		// Not "relay": the hosted edition's own migrations are recorded under
+		// that name, from when its relay carried them (ADR 0044).
+		Name: "open-relay",
 		Mount: func(h edition.Host) (func(), error) {
 			if h.ServiceRole == "manage" {
 				return nil, nil

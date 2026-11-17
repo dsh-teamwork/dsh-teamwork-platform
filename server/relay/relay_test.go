@@ -48,7 +48,7 @@ type world struct {
 func each(t *testing.T, f func(t *testing.T, w *world)) {
 	var w *world
 	ext := edition.Extension{
-		Name: "relay", Migrations: Extension(nil, time.Minute).Migrations,
+		Name: "open-relay",
 		Mount: func(h edition.Host) (func(), error) {
 			w.r = newRelay(h, func(_ context.Context, m []PushMessage) error {
 				w.mu.Lock()
