@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Computer tokens for a cloud computer's plugin
+
+- **What:** A new kind of sealed Bearer, the computer token: one member, one team, at most an hour, minted only through `edition.Host.MintComputerToken` for a member of that team. `GET /api/configs` returns that team alone for it, the model gateway refuses any other team's model, and every other route treats it as nobody. Membership is re-read on every request.
+- **Why:** An agent in a cloud computer can read the plugin's token; a member's 30-day plugin token would let it act as the member everywhere.
+- **Breaking:** None. `Gateway.Completions` takes the caller's team scope.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0038.
+
 ## 2026-11-17 — Editions can register meters with the budget engine
 
 - **What:** An edition registers its own kinds of usage (`edition.Host.RegisterMeters`): it holds points for a member before metered work starts and settles the measured quantity and its points afterwards, in the same windows, reservations and transaction as model calls, with its funding participant. Team and member point budgets bound them; provider budgets and token limits do not. `usage_requests` gains `meter` and `quantity`; the usage API's entries gain `meter`, the CSV export gains `meter`, `quantity` and `unit`, and the console's Usage page names a metered row by its labels. An unsettled hold is marked lost and stays held; an administrator cannot resolve a metered row.

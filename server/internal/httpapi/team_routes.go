@@ -59,7 +59,7 @@ func (s *Server) createConfig(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *Server) configs(w http.ResponseWriter, r *http.Request) error {
-	c, err := s.requireUser(r)
+	c, err := s.requirePlugin(r)
 	if err != nil {
 		return err
 	}
@@ -67,13 +67,22 @@ func (s *Server) configs(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	if c.team != "" {
+		scoped := snap.Teams[:0]
+		for _, t := range snap.Teams {
+			if t.TeamID == c.team {
+				scoped = append(scoped, t)
+			}
+		}
+		snap.Teams = scoped
+	}
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, snap)
 	return nil
 }
 
 func (s *Server) completions(w http.ResponseWriter, r *http.Request) error {
-	c, err := s.requireUser(r)
+	c, err := s.requirePlugin(r)
 	if err != nil {
 		return err
 	}
@@ -81,5 +90,5 @@ func (s *Server) completions(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return s.Gateway.Completions(w, r, c.user.ID, body)
+	return s.Gateway.Completions(w, r, c.user.ID, c.team, body)
 }

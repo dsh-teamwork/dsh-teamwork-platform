@@ -969,7 +969,10 @@ paths:
 components:
   securitySchemes:
     session: { type: apiKey, in: cookie, name: dsh-teamwork-session }
-    bearer: { type: http, scheme: bearer }
+    bearer:
+      type: http
+      scheme: bearer
+      description: A plugin token. GET /api/configs and the model gateway also accept a computer token (ADR 0038), limited to its one team.
   responses:
     Error:
       description: A refusal
