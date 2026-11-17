@@ -37,6 +37,14 @@ func TestMetadataSupplierUnitsAndUnknownValues(t *testing.T) {
 	if err != nil || structured[0].Prices["input"] != "3.000000000000" || structured[0].Prices["cacheRead"] != "0.300000000000" {
 		t.Fatalf("structured prices: %+v %v", structured, err)
 	}
+	// One malformed entry, in another provider or beside a good one, never fails the lookup.
+	tolerant, err := modelsDevMetadata([]byte(`{"broken":{"models":{"x":{"limit":{"context":"wide"}}}},"provider":{"models":{"bad":{"limit":{"context":1.5}},"odd":{"cost":{"text":[1]},"name":"Odd"},"good":{"name":"Good","limit":{"context":64000}}}}}`), "provider")
+	if err != nil || len(tolerant) != 2 {
+		t.Fatalf("one bad entry failed the lookup: %+v %v", tolerant, err)
+	}
+	if missing, err := modelsDevMetadata([]byte(`{"other":{}}`), "provider"); err != nil || len(missing) != 0 {
+		t.Fatalf("unknown provider: %+v %v", missing, err)
+	}
 }
 
 func TestMetadataAlwaysQueriesFixedUpstream(t *testing.T) {

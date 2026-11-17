@@ -1092,7 +1092,8 @@
     "provider_address_private": "本服务器只调用公网地址。如需在自建服务器上使用本地或内网地址，请设置 ALLOW_PRIVATE_PROVIDERS=true。",
     "provider_address_plain_http": "请使用 https。只有在允许内网地址的服务器上，本地或内网地址才能用 http。",
     "provider_address_unresolved": "找不到这个主机，请检查地址。",
-    "provider_key_rejected": "提供商拒绝了这个 API 密钥，请检查它是否完整、是否仍然有效。"
+    "provider_key_rejected": "提供商拒绝了这个 API 密钥，请检查它是否完整、是否仍然有效。",
+    "model_metadata_unavailable": "无法读取公开模型目录。请重试，或手动填写。"
   },
   "docs": {
     "title": "文档",

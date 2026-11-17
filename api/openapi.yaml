@@ -573,7 +573,7 @@ paths:
       - { name: teamId, in: path, required: true, schema: { type: string } }
     post:
       summary: Query a public upstream live for transient model form suggestions
-      description: No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented.
+      description: No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented. A catalog that cannot be read is model_metadata_unavailable.
       requestBody:
         required: true
         content:

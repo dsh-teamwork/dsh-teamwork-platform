@@ -30,7 +30,8 @@ changes and apply context limits and image understanding to the form. A custom
 call ID stays unchanged. Unknown fields retain your entries, and failed lookups
 do not stop manual configuration. Save separately to publish the values.
 
-In a model's reference-rate dialog, **Get suggested prices** converts public
+In a model's reference-rate dialog, while the rate is an estimated cost rather
+than an internal weight, **Get suggested prices** converts public
 prices to CNY automatically using the latest available reference exchange rate.
 Suggestions are rounded for readability; no exchange rate entry is needed.
 Review the supplier's actual pricing and save separately. These are form

@@ -673,7 +673,7 @@ function ModelFields({ value, change, disabled }: { value: Partial<ModelConfig['
   const tm = useTranslations('modelMetadata');
   const fieldId = useId();
   return <div className="grid gap-3 sm:grid-cols-2">
-    {(['contextWindow', 'maxTokens'] as const).map((key) => <Field key={key} id={`${fieldId}-${key}`} label={t(key === 'contextWindow' ? 'context' : 'maxOutput')}>
+    {(['contextWindow', 'maxTokens'] as const).map((key) => <Field key={key} id={`${fieldId}-${key}`} label={t(key === 'contextWindow' ? 'context' : 'maxOutput')} hint={key === 'maxTokens' ? t('limitsHint') : undefined}>
       <Input id={`${fieldId}-${key}`} type="number" min={1} max={10000000} disabled={disabled} value={value[key] ?? ''} onChange={(e) => change({ ...value, [key]: e.target.value ? Number(e.target.value) : undefined })} />
     </Field>)}
     <Select label={tm('vision')} value={value.vision === undefined ? '' : String(value.vision)} disabled={disabled} options={[{ value: '', label: tm('unknown') }, { value: 'true', label: tm('yes') }, { value: 'false', label: tm('no') }]} change={(v) => change({ ...value, vision: v === '' ? undefined : v === 'true' })} />

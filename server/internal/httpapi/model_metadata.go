@@ -56,7 +56,7 @@ func (s *Server) lookupModelMetadata(w http.ResponseWriter, r *http.Request) err
 	defer cancel()
 	models, err := readMetadata(ctx, s.Gateway.Client, in)
 	if err != nil {
-		return wire.E(http.StatusBadGateway, "model_metadata_unavailable")
+		return wire.E(http.StatusBadGateway, wire.ModelMetadataUnavailable)
 	}
 	noStore(w)
 	result := map[string]any{"models": models}
@@ -87,7 +87,7 @@ func readMetadata(ctx context.Context, client *http.Client, in metadataLookup) (
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return nil, wire.E(http.StatusBadGateway, "model_metadata_unavailable")
+		return nil, wire.E(http.StatusBadGateway, wire.ModelMetadataUnavailable)
 	}
 	const maxSize = 32 << 20
 	body, err := io.ReadAll(io.LimitReader(res.Body, maxSize+1))
@@ -95,7 +95,7 @@ func readMetadata(ctx context.Context, client *http.Client, in metadataLookup) (
 		return nil, err
 	}
 	if len(body) > maxSize {
-		return nil, wire.E(http.StatusBadGateway, "model_metadata_unavailable")
+		return nil, wire.E(http.StatusBadGateway, wire.ModelMetadataUnavailable)
 	}
 	var models []metadataModel
 	if in.Source == "openrouter" {
@@ -182,21 +182,31 @@ func metadataPrice(raw json.RawMessage, multiplier int64) string {
 	return price
 }
 
+// The catalog belongs to a third party: only the requested provider is decoded,
+// and an entry whose shape is unexpected is skipped rather than failing the lookup.
 func modelsDevMetadata(body []byte, provider string) ([]metadataModel, error) {
-	var catalog map[string]struct {
-		Models map[string]struct {
+	var catalog map[string]json.RawMessage
+	if err := json.Unmarshal(body, &catalog); err != nil {
+		return nil, err
+	}
+	var entry struct {
+		Models map[string]json.RawMessage `json:"models"`
+	}
+	if raw, ok := catalog[provider]; !ok || json.Unmarshal(raw, &entry) != nil {
+		return []metadataModel{}, nil
+	}
+	models := make([]metadataModel, 0, len(entry.Models))
+	for id, raw := range entry.Models {
+		var m struct {
 			ID         string                     `json:"id"`
 			Name       string                     `json:"name"`
 			Limit      metadataLimits             `json:"limit"`
 			Modalities metadataModalities         `json:"modalities"`
 			Cost       map[string]json.RawMessage `json:"cost"`
-		} `json:"models"`
-	}
-	if err := json.Unmarshal(body, &catalog); err != nil {
-		return nil, err
-	}
-	models := make([]metadataModel, 0)
-	for id, m := range catalog[provider].Models {
+		}
+		if json.Unmarshal(raw, &m) != nil {
+			continue
+		}
 		prices := map[string]string{}
 		for key, upstream := range map[string]string{"input": "input", "output": "output", "cacheRead": "cache_read", "cacheWrite": "cache_write"} {
 			if p := metadataPrice(m.Cost[upstream], 1); p != "" {
@@ -208,10 +218,7 @@ func modelsDevMetadata(body []byte, provider string) ([]metadataModel, error) {
 			Price json.RawMessage            `json:"price"`
 			Cache map[string]json.RawMessage `json:"cache"`
 		}
-		if raw := m.Cost["text"]; len(raw) > 0 {
-			if err := json.Unmarshal(raw, &text); err != nil {
-				return nil, err
-			}
+		if raw := m.Cost["text"]; len(raw) > 0 && json.Unmarshal(raw, &text) == nil {
 			for _, key := range []string{"input", "output"} {
 				if p := metadataPrice(text[key].Price, 1); p != "" {
 					prices[key] = p

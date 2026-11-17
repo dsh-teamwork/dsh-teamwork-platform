@@ -135,6 +135,7 @@ the team keeps its records under a former member.
 | `GET`, `POST /api/teams/:teamId/configs`; `PATCH`, `DELETE …/configs/:id` | member reads, admin writes | List; publish, edit (with `version`), delete |
 | `GET`, `POST /api/teams/:teamId/providers`; `PUT`, `DELETE …/providers/:id` | admin | Providers, never a key |
 | `GET /api/teams/:teamId/model-catalog?provider=` | admin | One provider's models, read from its `/models` |
+| `POST /api/teams/:teamId/model-metadata/lookup` | admin | Live form suggestions from Models.dev or OpenRouter; nothing stored |
 | `POST /api/llm/chat/completions` | member | The model gateway |
 | `GET`, `PATCH /api/profile`; `POST /api/locale` | anyone signed in | The account's name and locale |
 | `POST /api/auth/plugin/token` | the plugin | `{ code, verifier }` → `{ token, expiresAt }` |

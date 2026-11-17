@@ -1092,7 +1092,8 @@
     "provider_address_private": "This server only calls public addresses. To use a local or private address on your own server, set ALLOW_PRIVATE_PROVIDERS=true.",
     "provider_address_plain_http": "Use https. Plain http is allowed only for a local or private address on a server that permits them.",
     "provider_address_unresolved": "That host could not be found. Check the address.",
-    "provider_key_rejected": "The provider refused this API key. Check that it is complete and still active."
+    "provider_key_rejected": "The provider refused this API key. Check that it is complete and still active.",
+    "model_metadata_unavailable": "The public model catalog could not be read. Retry, or fill the fields in yourself."
   },
   "docs": {
     "title": "Docs",

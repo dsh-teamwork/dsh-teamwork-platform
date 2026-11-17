@@ -1432,7 +1432,7 @@ export interface paths {
         put?: never;
         /**
          * Query a public upstream live for transient model form suggestions
-         * @description No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented.
+         * @description No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented. A catalog that cannot be read is model_metadata_unavailable.
          */
         post: {
             parameters: {
