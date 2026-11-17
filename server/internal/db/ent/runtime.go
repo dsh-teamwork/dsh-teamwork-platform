@@ -1026,54 +1026,60 @@ func init() {
 	usagerequestDescUserID := usagerequestFields[1].Descriptor()
 	// usagerequest.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	usagerequest.UserIDValidator = usagerequestDescUserID.Validators[0].(func(string) error)
+	// usagerequestDescHostID is the schema descriptor for host_id field.
+	usagerequestDescHostID := usagerequestFields[2].Descriptor()
+	// usagerequest.DefaultHostID holds the default value on creation for the host_id field.
+	usagerequest.DefaultHostID = usagerequestDescHostID.Default.(string)
+	// usagerequest.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
+	usagerequest.HostIDValidator = usagerequestDescHostID.Validators[0].(func(string) error)
 	// usagerequestDescAppURL is the schema descriptor for app_url field.
-	usagerequestDescAppURL := usagerequestFields[2].Descriptor()
+	usagerequestDescAppURL := usagerequestFields[3].Descriptor()
 	// usagerequest.DefaultAppURL holds the default value on creation for the app_url field.
 	usagerequest.DefaultAppURL = usagerequestDescAppURL.Default.(string)
 	// usagerequest.AppURLValidator is a validator for the "app_url" field. It is called by the builders before save.
 	usagerequest.AppURLValidator = usagerequestDescAppURL.Validators[0].(func(string) error)
 	// usagerequestDescSubmittedConfigID is the schema descriptor for submitted_config_id field.
-	usagerequestDescSubmittedConfigID := usagerequestFields[3].Descriptor()
+	usagerequestDescSubmittedConfigID := usagerequestFields[4].Descriptor()
 	// usagerequest.SubmittedConfigIDValidator is a validator for the "submitted_config_id" field. It is called by the builders before save.
 	usagerequest.SubmittedConfigIDValidator = usagerequestDescSubmittedConfigID.Validators[0].(func(string) error)
 	// usagerequestDescConfigID is the schema descriptor for config_id field.
-	usagerequestDescConfigID := usagerequestFields[4].Descriptor()
+	usagerequestDescConfigID := usagerequestFields[5].Descriptor()
 	// usagerequest.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
 	usagerequest.ConfigIDValidator = usagerequestDescConfigID.Validators[0].(func(string) error)
 	// usagerequestDescProvider is the schema descriptor for provider field.
-	usagerequestDescProvider := usagerequestFields[5].Descriptor()
+	usagerequestDescProvider := usagerequestFields[6].Descriptor()
 	// usagerequest.ProviderValidator is a validator for the "provider" field. It is called by the builders before save.
 	usagerequest.ProviderValidator = usagerequestDescProvider.Validators[0].(func(string) error)
 	// usagerequestDescModel is the schema descriptor for model field.
-	usagerequestDescModel := usagerequestFields[6].Descriptor()
+	usagerequestDescModel := usagerequestFields[7].Descriptor()
 	// usagerequest.ModelValidator is a validator for the "model" field. It is called by the builders before save.
 	usagerequest.ModelValidator = usagerequestDescModel.Validators[0].(func(string) error)
 	// usagerequestDescRateID is the schema descriptor for rate_id field.
-	usagerequestDescRateID := usagerequestFields[10].Descriptor()
+	usagerequestDescRateID := usagerequestFields[11].Descriptor()
 	// usagerequest.DefaultRateID holds the default value on creation for the rate_id field.
 	usagerequest.DefaultRateID = usagerequestDescRateID.Default.(string)
 	// usagerequest.RateIDValidator is a validator for the "rate_id" field. It is called by the builders before save.
 	usagerequest.RateIDValidator = usagerequestDescRateID.Validators[0].(func(string) error)
 	// usagerequestDescRouteOwner is the schema descriptor for route_owner field.
-	usagerequestDescRouteOwner := usagerequestFields[11].Descriptor()
+	usagerequestDescRouteOwner := usagerequestFields[12].Descriptor()
 	// usagerequest.DefaultRouteOwner holds the default value on creation for the route_owner field.
 	usagerequest.DefaultRouteOwner = usagerequestDescRouteOwner.Default.(string)
 	// usagerequest.RouteOwnerValidator is a validator for the "route_owner" field. It is called by the builders before save.
 	usagerequest.RouteOwnerValidator = usagerequestDescRouteOwner.Validators[0].(func(string) error)
 	// usagerequestDescProviderRequestID is the schema descriptor for provider_request_id field.
-	usagerequestDescProviderRequestID := usagerequestFields[22].Descriptor()
+	usagerequestDescProviderRequestID := usagerequestFields[23].Descriptor()
 	// usagerequest.DefaultProviderRequestID holds the default value on creation for the provider_request_id field.
 	usagerequest.DefaultProviderRequestID = usagerequestDescProviderRequestID.Default.(string)
 	// usagerequest.ProviderRequestIDValidator is a validator for the "provider_request_id" field. It is called by the builders before save.
 	usagerequest.ProviderRequestIDValidator = usagerequestDescProviderRequestID.Validators[0].(func(string) error)
 	// usagerequestDescErrorCode is the schema descriptor for error_code field.
-	usagerequestDescErrorCode := usagerequestFields[23].Descriptor()
+	usagerequestDescErrorCode := usagerequestFields[24].Descriptor()
 	// usagerequest.DefaultErrorCode holds the default value on creation for the error_code field.
 	usagerequest.DefaultErrorCode = usagerequestDescErrorCode.Default.(string)
 	// usagerequest.ErrorCodeValidator is a validator for the "error_code" field. It is called by the builders before save.
 	usagerequest.ErrorCodeValidator = usagerequestDescErrorCode.Validators[0].(func(string) error)
 	// usagerequestDescMeter is the schema descriptor for meter field.
-	usagerequestDescMeter := usagerequestFields[25].Descriptor()
+	usagerequestDescMeter := usagerequestFields[26].Descriptor()
 	// usagerequest.DefaultMeter holds the default value on creation for the meter field.
 	usagerequest.DefaultMeter = usagerequestDescMeter.Default.(string)
 	// usagerequest.MeterValidator is a validator for the "meter" field. It is called by the builders before save.

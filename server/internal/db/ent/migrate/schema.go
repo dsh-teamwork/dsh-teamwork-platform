@@ -548,6 +548,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "team_id", Type: field.TypeString, Size: 32},
 		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "host_id", Type: field.TypeString, Size: 32, Default: ""},
 		{Name: "app_url", Type: field.TypeString, Size: 500, Default: ""},
 		{Name: "submitted_config_id", Type: field.TypeString, Size: 32},
 		{Name: "config_id", Type: field.TypeString, Size: 32},
@@ -593,12 +594,12 @@ var (
 			{
 				Name:    "usagerequest_team_id_config_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[6], UsageRequestsColumns[1]},
+				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[7], UsageRequestsColumns[1]},
 			},
 			{
 				Name:    "usagerequest_state_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageRequestsColumns[10], UsageRequestsColumns[1]},
+				Columns: []*schema.Column{UsageRequestsColumns[11], UsageRequestsColumns[1]},
 			},
 		},
 	}

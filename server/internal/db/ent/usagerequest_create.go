@@ -50,6 +50,20 @@ func (_c *UsageRequestCreate) SetUserID(v string) *UsageRequestCreate {
 	return _c
 }
 
+// SetHostID sets the "host_id" field.
+func (_c *UsageRequestCreate) SetHostID(v string) *UsageRequestCreate {
+	_c.mutation.SetHostID(v)
+	return _c
+}
+
+// SetNillableHostID sets the "host_id" field if the given value is not nil.
+func (_c *UsageRequestCreate) SetNillableHostID(v *string) *UsageRequestCreate {
+	if v != nil {
+		_c.SetHostID(*v)
+	}
+	return _c
+}
+
 // SetAppURL sets the "app_url" field.
 func (_c *UsageRequestCreate) SetAppURL(v string) *UsageRequestCreate {
 	_c.mutation.SetAppURL(v)
@@ -405,6 +419,10 @@ func (_c *UsageRequestCreate) defaults() {
 		v := usagerequest.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
+	if _, ok := _c.mutation.HostID(); !ok {
+		v := usagerequest.DefaultHostID
+		_c.mutation.SetHostID(v)
+	}
 	if _, ok := _c.mutation.AppURL(); !ok {
 		v := usagerequest.DefaultAppURL
 		_c.mutation.SetAppURL(v)
@@ -458,6 +476,14 @@ func (_c *UsageRequestCreate) check() error {
 	if v, ok := _c.mutation.UserID(); ok {
 		if err := usagerequest.UserIDValidator(v); err != nil {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.user_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.HostID(); !ok {
+		return &ValidationError{Name: "host_id", err: errors.New(`ent: missing required field "UsageRequest.host_id"`)}
+	}
+	if v, ok := _c.mutation.HostID(); ok {
+		if err := usagerequest.HostIDValidator(v); err != nil {
+			return &ValidationError{Name: "host_id", err: fmt.Errorf(`ent: validator failed for field "UsageRequest.host_id": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.AppURL(); !ok {
@@ -603,6 +629,10 @@ func (_c *UsageRequestCreate) createSpec() (*UsageRequest, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.UserID(); ok {
 		_spec.SetField(usagerequest.FieldUserID, field.TypeString, value)
 		_node.UserID = value
+	}
+	if value, ok := _c.mutation.HostID(); ok {
+		_spec.SetField(usagerequest.FieldHostID, field.TypeString, value)
+		_node.HostID = value
 	}
 	if value, ok := _c.mutation.AppURL(); ok {
 		_spec.SetField(usagerequest.FieldAppURL, field.TypeString, value)
@@ -1141,6 +1171,9 @@ func (u *UsageRequestUpsertOne) UpdateNewValues() *UsageRequestUpsertOne {
 		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(usagerequest.FieldCreatedAt)
+		}
+		if _, exists := u.create.mutation.HostID(); exists {
+			s.SetIgnore(usagerequest.FieldHostID)
 		}
 		if _, exists := u.create.mutation.RouteOwner(); exists {
 			s.SetIgnore(usagerequest.FieldRouteOwner)
@@ -1800,6 +1833,9 @@ func (u *UsageRequestUpsertBulk) UpdateNewValues() *UsageRequestUpsertBulk {
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(usagerequest.FieldCreatedAt)
+			}
+			if _, exists := b.mutation.HostID(); exists {
+				s.SetIgnore(usagerequest.FieldHostID)
 			}
 			if _, exists := b.mutation.RouteOwner(); exists {
 				s.SetIgnore(usagerequest.FieldRouteOwner)

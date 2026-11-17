@@ -247,6 +247,9 @@ paths:
   /configs:
     get:
       summary: What the plugin syncs — every team the caller is in, with its configuration
+      description: >-
+        A computer token (ADR 0038) or a shared DSH's host token (ADR 0042)
+        receives its one team alone; a host token's team carries role `member`.
       responses:
         '200':
           description: The snapshot
@@ -1201,10 +1204,15 @@ components:
             configured: { type: boolean }
     UsageEntry:
       type: object
-      required: [id, userId, configId, provider, model, state, code, createdAt, finishedAt, input, cacheRead, cacheWrite, output, reasoning, points, meter]
+      required: [id, userId, hostId, configId, provider, model, state, code, createdAt, finishedAt, input, cacheRead, cacheWrite, output, reasoning, points, meter]
       properties:
         id: { type: string }
-        userId: { type: string }
+        userId:
+          description: The member who made the call; empty for a shared DSH's.
+          type: string
+        hostId:
+          description: The shared DSH that made the call (ADR 0042); empty for a member's.
+          type: string
         configId: { type: string }
         provider: { type: string }
         model: { type: string }

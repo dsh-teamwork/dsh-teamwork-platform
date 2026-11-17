@@ -20,6 +20,8 @@ const (
 	FieldTeamID = "team_id"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
+	// FieldHostID holds the string denoting the host_id field in the database.
+	FieldHostID = "host_id"
 	// FieldAppURL holds the string denoting the app_url field in the database.
 	FieldAppURL = "app_url"
 	// FieldSubmittedConfigID holds the string denoting the submitted_config_id field in the database.
@@ -80,6 +82,7 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldTeamID,
 	FieldUserID,
+	FieldHostID,
 	FieldAppURL,
 	FieldSubmittedConfigID,
 	FieldConfigID,
@@ -124,6 +127,10 @@ var (
 	TeamIDValidator func(string) error
 	// UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	UserIDValidator func(string) error
+	// DefaultHostID holds the default value on creation for the "host_id" field.
+	DefaultHostID string
+	// HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
+	HostIDValidator func(string) error
 	// DefaultAppURL holds the default value on creation for the "app_url" field.
 	DefaultAppURL string
 	// AppURLValidator is a validator for the "app_url" field. It is called by the builders before save.
@@ -213,6 +220,11 @@ func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
 // ByUserID orders the results by the user_id field.
 func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUserID, opts...).ToFunc()
+}
+
+// ByHostID orders the results by the host_id field.
+func ByHostID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHostID, opts...).ToFunc()
 }
 
 // ByAppURL orders the results by the app_url field.

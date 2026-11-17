@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Host tokens for a shared DSH
+
+- **What:** A fourth sealed token kind, `auth.HostBearer`, minted only by an edition through `Host.MintHostToken` for a shared DSH: one team, no person, at most an hour. `GET /api/configs` returns that team alone (role `member`) and the gateway calls its models; no other route opens it. Its calls are recorded with `usage_requests.host_id` and an empty `user_id`, held to the team's and providers' budgets and to no member's; usage entries carry `hostId`, and the console's usage list names such a row "Shared DSH".
+- **Why:** A team's shared DSH must sync its team and call its models without belonging to any member (ADR 0042).
+- **Breaking:** `gateway.Completions` takes a `gateway.Caller` instead of a user id and team.
+- **Upgrade:** One migration per dialect adds `usage_requests.host_id`; the binary applies it at start.
+- **Refs:** ADR 0042, `server/internal/httpapi/identity.go`, `server/internal/gateway/gateway.go`, `server/internal/usage/admission.go`.
+
 ## 2026-11-17 — `apps/web`, one development address, and editions compose the web app
 
 - **What:** The user frontend is `apps/web` (`@dsh-teamwork/web`) and the shared management app `@dsh-teamwork/manage`. `pnpm dev` runs the edition's outermost Go server on :3800 with `DEV_VITE=1`, which takes the console, its modules and the public pages from the web Vite on :3810 and `/manage` from the management Vite on :3811; Go sources, migrations and embedded JSON restart the server. An edition's web app composes the open one through `mountWeb` (`@dsh-teamwork/web/app`): it adds routes and team pages, replacing an open one at the same path, and adds or replaces public pages by file name, which the server now serves generically (`/{name}` from `{name}.{locale}.html` or `{name}.html`, also in the sitemap). `Host.SetWebConsole` hands the server an edition's web build. `Host.AddTeamPage` and the session's `teamPages` are removed.

@@ -13,16 +13,21 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetpolicy"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetwindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/predicate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
+// applicable is every budget a call counts against. A shared DSH's call
+// (ADR 0042) is no member's, so only the team's and the provider's apply.
 func applicable(ctx context.Context, db *ent.Client, call Call) ([]*ent.BudgetPolicy, error) {
-	policies, err := db.BudgetPolicy.Query().Where(budgetpolicy.TeamID(call.TeamID), budgetpolicy.Or(
-		budgetpolicy.ScopeEQ(budgetpolicy.ScopeTeam), budgetpolicy.ScopeEQ(budgetpolicy.ScopeDefaultMember),
-		budgetpolicy.And(budgetpolicy.ScopeEQ(budgetpolicy.ScopeMember), budgetpolicy.SubjectID(call.UserID)),
-		budgetpolicy.And(budgetpolicy.ScopeEQ(budgetpolicy.ScopeProvider), budgetpolicy.SubjectID(call.Provider)),
-	)).All(ctx)
+	scopes := []predicate.BudgetPolicy{budgetpolicy.ScopeEQ(budgetpolicy.ScopeTeam),
+		budgetpolicy.And(budgetpolicy.ScopeEQ(budgetpolicy.ScopeProvider), budgetpolicy.SubjectID(call.Provider))}
+	if call.HostID == "" {
+		scopes = append(scopes, budgetpolicy.ScopeEQ(budgetpolicy.ScopeDefaultMember),
+			budgetpolicy.And(budgetpolicy.ScopeEQ(budgetpolicy.ScopeMember), budgetpolicy.SubjectID(call.UserID)))
+	}
+	policies, err := db.BudgetPolicy.Query().Where(budgetpolicy.TeamID(call.TeamID), budgetpolicy.Or(scopes...)).All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +159,7 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 		}
 	}
 	now := s.now()
-	create := db.UsageRequest.Create().SetCreatedAt(now).SetDeadlineAt(now.Add(MaxCallDuration)).SetAppURL(s.AppURL).SetTeamID(call.TeamID).SetUserID(call.UserID).
+	create := db.UsageRequest.Create().SetCreatedAt(now).SetDeadlineAt(now.Add(MaxCallDuration)).SetAppURL(s.AppURL).SetTeamID(call.TeamID).SetUserID(call.UserID).SetHostID(call.HostID).
 		SetSubmittedConfigID(call.SubmittedConfigID).SetConfigID(call.ConfigID).
 		SetProvider(call.Provider).SetModel(call.Model).SetStream(call.Stream).SetRouteOwner(call.Owner)
 	if priced {

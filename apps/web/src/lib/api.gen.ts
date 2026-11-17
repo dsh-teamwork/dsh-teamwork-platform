@@ -528,7 +528,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** What the plugin syncs — every team the caller is in, with its configuration */
+        /**
+         * What the plugin syncs — every team the caller is in, with its configuration
+         * @description A computer token (ADR 0038) or a shared DSH's host token (ADR 0042) receives its one team alone; a host token's team carries role `member`.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -2725,7 +2728,10 @@ export interface components {
         };
         UsageEntry: {
             id: string;
+            /** @description The member who made the call; empty for a shared DSH's. */
             userId: string;
+            /** @description The shared DSH that made the call (ADR 0042); empty for a member's. */
+            hostId: string;
             configId: string;
             provider: string;
             model: string;

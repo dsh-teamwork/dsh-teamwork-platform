@@ -916,6 +916,7 @@
     "member": "成员",
     "allMembers": "所有成员",
     "formerMember": "已退出成员",
+    "sharedDsh": "共享 DSH",
     "loading": "正在读取用量…",
     "empty": "此时间范围内没有模型调用。",
     "when": "时间",

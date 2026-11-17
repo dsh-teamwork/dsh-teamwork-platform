@@ -15289,6 +15289,7 @@ type UsageRequestMutation struct {
 	created_at            *time.Time
 	team_id               *string
 	user_id               *string
+	host_id               *string
 	app_url               *string
 	submitted_config_id   *string
 	config_id             *string
@@ -15541,6 +15542,42 @@ func (m *UsageRequestMutation) OldUserID(ctx context.Context) (v string, err err
 // ResetUserID resets all changes to the "user_id" field.
 func (m *UsageRequestMutation) ResetUserID() {
 	m.user_id = nil
+}
+
+// SetHostID sets the "host_id" field.
+func (m *UsageRequestMutation) SetHostID(s string) {
+	m.host_id = &s
+}
+
+// HostID returns the value of the "host_id" field in the mutation.
+func (m *UsageRequestMutation) HostID() (r string, exists bool) {
+	v := m.host_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostID returns the old "host_id" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldHostID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostID: %w", err)
+	}
+	return oldValue.HostID, nil
+}
+
+// ResetHostID resets all changes to the "host_id" field.
+func (m *UsageRequestMutation) ResetHostID() {
+	m.host_id = nil
 }
 
 // SetAppURL sets the "app_url" field.
@@ -16872,7 +16909,7 @@ func (m *UsageRequestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UsageRequestMutation) Fields() []string {
-	fields := make([]string, 0, 28)
+	fields := make([]string, 0, 29)
 	if m.created_at != nil {
 		fields = append(fields, usagerequest.FieldCreatedAt)
 	}
@@ -16881,6 +16918,9 @@ func (m *UsageRequestMutation) Fields() []string {
 	}
 	if m.user_id != nil {
 		fields = append(fields, usagerequest.FieldUserID)
+	}
+	if m.host_id != nil {
+		fields = append(fields, usagerequest.FieldHostID)
 	}
 	if m.app_url != nil {
 		fields = append(fields, usagerequest.FieldAppURL)
@@ -16971,6 +17011,8 @@ func (m *UsageRequestMutation) Field(name string) (ent.Value, bool) {
 		return m.TeamID()
 	case usagerequest.FieldUserID:
 		return m.UserID()
+	case usagerequest.FieldHostID:
+		return m.HostID()
 	case usagerequest.FieldAppURL:
 		return m.AppURL()
 	case usagerequest.FieldSubmittedConfigID:
@@ -17036,6 +17078,8 @@ func (m *UsageRequestMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldTeamID(ctx)
 	case usagerequest.FieldUserID:
 		return m.OldUserID(ctx)
+	case usagerequest.FieldHostID:
+		return m.OldHostID(ctx)
 	case usagerequest.FieldAppURL:
 		return m.OldAppURL(ctx)
 	case usagerequest.FieldSubmittedConfigID:
@@ -17115,6 +17159,13 @@ func (m *UsageRequestMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserID(v)
+		return nil
+	case usagerequest.FieldHostID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostID(v)
 		return nil
 	case usagerequest.FieldAppURL:
 		v, ok := value.(string)
@@ -17552,6 +17603,9 @@ func (m *UsageRequestMutation) ResetField(name string) error {
 		return nil
 	case usagerequest.FieldUserID:
 		m.ResetUserID()
+		return nil
+	case usagerequest.FieldHostID:
+		m.ResetHostID()
 		return nil
 	case usagerequest.FieldAppURL:
 		m.ResetAppURL()

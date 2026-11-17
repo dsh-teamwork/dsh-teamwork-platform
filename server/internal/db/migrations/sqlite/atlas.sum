@@ -1,4 +1,4 @@
-h1:L+FcKunl0z9uIEPAUpM7yfnjsWANKMqcPAW58hG+VA0=
+h1:xiWU9AgyZvQkgTJTt0RLC3D3JB7XDXcFn1nQaRHsuWI=
 20261114012020_init.sql h1:VowocbRzKwjQnIaTKZMozK1Z3l8owoGztnZ6MKMN/fc=
 20261115041608_usage_metering.sql h1:d4436LY5DD5YZA2SDRyGuJ9DsEWmyrcoVSdhoHdXAYs=
 20261115044854_budget_reservations.sql h1:7x72jZnZ8HqLHjNki/0Y1FNp7uG4MePULMxHjVyOSAU=
@@ -12,3 +12,4 @@ h1:L+FcKunl0z9uIEPAUpM7yfnjsWANKMqcPAW58hG+VA0=
 20261115135103_private_plugin_artifacts.sql h1:icoOkZjyMfDdq46MctgjSwqkC+rg2n6c4eqtZ+zLu7U=
 20261115135922_publication_builtin_identity.sql h1:LMZcb9Aj8ku079x7r5p7y3Oi7W5SLF9FiWWzVbjRLPM=
 20261117032218_usage_meters.sql h1:FzNv39GMs+8WaKC+yND0XkHvFhdx23vG6Cie7ZdCbf8=
+20261117125030_usage_host.sql h1:CxZgPjseTZ0QqaVi0dfiPWaGguIjz0MW9pUXbfBgk4A=

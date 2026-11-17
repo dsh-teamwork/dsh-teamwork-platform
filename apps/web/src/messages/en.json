@@ -916,6 +916,7 @@
     "member": "Member",
     "allMembers": "All members",
     "formerMember": "Former member",
+    "sharedDsh": "Shared DSH",
     "loading": "Loading usage…",
     "empty": "No model calls in this time range.",
     "when": "Time",

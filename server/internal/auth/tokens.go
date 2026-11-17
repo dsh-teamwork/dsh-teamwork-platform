@@ -24,10 +24,17 @@ const (
 	// (ADR 0038): one member, one team, at most ComputerTTL, and accepted only
 	// by GET /api/configs and the model gateway.
 	ComputerBearer Purpose = "dsh-teamwork.computer"
+	// HostBearer is the token a shared DSH holds (ADR 0042): one shared host,
+	// no person, one team, at most HostTTL, and accepted only by
+	// GET /api/configs and the model gateway.
+	HostBearer Purpose = "dsh-teamwork.host"
 )
 
 // ComputerTTL is the longest a computer token lives; its host renews it.
 const ComputerTTL = time.Hour
+
+// HostTTL is the longest a host token lives; the shared DSH renews it.
+const HostTTL = time.Hour
 
 // SessionTTL is how long a browser session and a plugin token last. Neither
 // can be revoked before it expires — the price of having no session table;
@@ -39,11 +46,11 @@ const HandoffTTL = 2 * time.Minute
 
 // Claims is what a sealed value carries.
 type Claims struct {
-	Sub       string `json:"sub"`                 // the user id
+	Sub       string `json:"sub"`                 // the user id; a host token's shared host id
 	Via       string `json:"via,omitempty"`       // the door: password, email, google, feishu
 	Challenge string `json:"challenge,omitempty"` // a hand-off code's PKCE challenge
 	Next      string `json:"next,omitempty"`      // an OAuth round trip's return path
-	Team      string `json:"team,omitempty"`      // a computer token's one team
+	Team      string `json:"team,omitempty"`      // a computer or host token's one team
 	Host      string `json:"host,omitempty"`      // a computer token's computer or session, for the record
 	Iat       int64  `json:"iat"`
 	Exp       int64  `json:"exp"`

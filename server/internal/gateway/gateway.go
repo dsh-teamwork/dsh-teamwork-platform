@@ -48,13 +48,24 @@ type target struct {
 	owner, reference                  string
 }
 
+// Caller is who a call is billed to: a member (UserID), or a shared DSH
+// (HostID, ADR 0042), which has no membership and is held to Team. A
+// non-empty Team is a computer or host token's: any other team's model is
+// refused.
+type Caller struct {
+	UserID, HostID, Team string
+}
+
 func forbidden() error { return wire.E(http.StatusForbidden, wire.ModelForbidden) }
 
 // resolve is the team a configuration id belongs to and what it calls. The
-// caller must be a member of that team; a config that does not exist and one
-// in another team get the same answer (ADR 0013). A preset follows its
-// modelConfigId to a model of the same team.
-func (g *Gateway) resolve(ctx context.Context, userID, team, configID string) (target, error) {
+// caller must be a member of that team, or a shared DSH of it; a config that
+// does not exist and one in another team get the same answer (ADR 0013). A
+// preset follows its modelConfigId to a model of the same team.
+func (g *Gateway) resolve(ctx context.Context, who Caller, configID string) (target, error) {
+	if who.HostID != "" && who.Team == "" {
+		return target{}, forbidden()
+	}
 	c, err := g.Team.DB.TeamConfig.Query().
 		Where(teamconfig.ID(configID), teamconfig.KindIn(teamconfig.KindModel, teamconfig.KindPreset)).Only(ctx)
 	if ent.IsNotFound(err) {
@@ -63,15 +74,17 @@ func (g *Gateway) resolve(ctx context.Context, userID, team, configID string) (t
 	if err != nil {
 		return target{}, err
 	}
-	if team != "" && c.TeamID != team {
+	if who.Team != "" && c.TeamID != who.Team {
 		return target{}, forbidden()
 	}
-	in, err := g.Team.DB.Membership.Query().Where(membership.UserID(userID), membership.TeamID(c.TeamID)).Exist(ctx)
-	if err != nil {
-		return target{}, err
-	}
-	if !in {
-		return target{}, forbidden()
+	if who.HostID == "" {
+		in, err := g.Team.DB.Membership.Query().Where(membership.UserID(who.UserID), membership.TeamID(c.TeamID)).Exist(ctx)
+		if err != nil {
+			return target{}, err
+		}
+		if !in {
+			return target{}, forbidden()
+		}
 	}
 	data := c.Data
 	effectiveID := c.ID
@@ -131,16 +144,15 @@ func parse(body []byte) (map[string]json.RawMessage, string, bool, error) {
 	return fields, model, stream, is.Err()
 }
 
-// Completions answers one call: the provider's body, streamed through, with
-// none of its headers. A non-empty team is a computer token's (ADR 0038): a
-// model of any other team is refused.
-func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID, team string, body []byte) error {
+// Completions answers one call for who: the provider's body, streamed
+// through, with none of its headers.
+func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller, body []byte) error {
 	ctx := r.Context()
 	fields, model, stream, err := parse(body)
 	if err != nil {
 		return err
 	}
-	t, err := g.resolve(ctx, userID, team, model)
+	t, err := g.resolve(ctx, who, model)
 	if err != nil {
 		return err
 	}
@@ -199,7 +211,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, userID, te
 	}
 	payload["model"], _ = json.Marshal(t.model)
 	// Record before dispatch. A caller cannot supply attribution or price facts.
-	tracked, err := meter.Begin(ctx, usage.Call{TeamID: t.teamID, UserID: userID,
+	tracked, err := meter.Begin(ctx, usage.Call{TeamID: t.teamID, UserID: who.UserID, HostID: who.HostID,
 		SubmittedConfigID: model, ConfigID: t.configID, Provider: t.provider, Model: t.model, Stream: stream,
 		Owner: t.owner, Reference: t.reference, Quote: quote,
 		Bounds: func() (usage.Tokens, error) { return usage.DeepSeekBounds(base, t.model, payload) }})
