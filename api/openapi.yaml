@@ -1067,6 +1067,263 @@ paths:
             application/gzip:
               schema: { type: string, format: binary }
         default: { $ref: '#/components/responses/Error' }
+  /relay:
+    get:
+      summary: Where the relay's plugin socket is (ADR 0044; docs/tech/relay.md)
+      security: []
+      responses:
+        '200':
+          description: The plugin socket's address
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url]
+                properties: { url: { type: string } }
+  /teams/{teamId}/shared-hosts:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: A team's shared DSHs, for a team admin's browser session (docs/tech/shared-dsh.md)
+      security: [{ session: [] }]
+      responses:
+        '200':
+          description: The shared DSHs, oldest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hosts]
+                properties: { hosts: { type: array, items: { $ref: '#/components/schemas/SharedHost' } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+    post:
+      summary: Create a shared DSH; its team host key is shown this once
+      security: [{ session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SharedHostName' }
+      responses:
+        '201':
+          description: The shared DSH and its key
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SharedHostKey' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/shared-hosts/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      summary: Rename a shared DSH
+      security: [{ session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SharedHostName' }
+      responses:
+        '200':
+          description: The shared DSH
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [host]
+                properties: { host: { $ref: '#/components/schemas/SharedHost' } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+    delete:
+      summary: Delete a shared DSH; its key stops at once
+      security: [{ session: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/shared-hosts/{id}/rotate:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Give a shared DSH a new key, keeping its machine; shown this once
+      security: [{ session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false }
+      responses:
+        '200':
+          description: The shared DSH and its new key
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SharedHostKey' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /relay/plugin:
+    servers: [{ url: / }]
+    get:
+      summary: The plugin's relay socket (WebSocket); its first frame is a hello with its Bearer token
+      security: []
+      responses:
+        '101':
+          description: Switched to the relay's frames (docs/tech/relay.md, Frames)
+  /relay/phone:
+    servers: [{ url: / }]
+    get:
+      summary: A phone's relay socket (WebSocket); its first frame is a hello with its token and handset credential
+      security: []
+      responses:
+        '101':
+          description: Switched to the relay's frames (docs/tech/relay.md, Frames)
+  /relay/pair:
+    servers: [{ url: / }]
+    post:
+      summary: A phone redeems a pairing code its owner's DSH showed
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, deviceName]
+              properties: { code: { type: string }, deviceName: { type: string } }
+      responses:
+        '201':
+          description: The pending pairing
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pairing]
+                properties: { pairing: { $ref: '#/components/schemas/RelayPairing' } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /relay/pairings:
+    servers: [{ url: / }]
+    get:
+      summary: This handset's pairings
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The pairings
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pairings]
+                properties: { pairings: { type: array, items: { $ref: '#/components/schemas/RelayPairing' } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+  /relay/pairings/{id}:
+    servers: [{ url: / }]
+    delete:
+      summary: Revoke one of this handset's pairings
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Revoked }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /relay/pairings/{id}/push:
+    servers: [{ url: / }]
+    put:
+      summary: Turn a pairing's notifications on (an Expo push token) or off (null)
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pushToken]
+              properties: { pushToken: { type: string, nullable: true }, locale: { type: string } }
+      responses:
+        '204': { description: Saved }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /relay/shared/challenge:
+    servers: [{ url: / }]
+    post:
+      summary: A two-minute nonce for a team host key's exchange (ADR 0042)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [key], properties: { key: { type: string } } }
+      responses:
+        '200':
+          description: The nonce
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [nonce, expiresAt]
+                properties: { nonce: { type: string }, expiresAt: { type: string, format: date-time } }
+        '400': { $ref: '#/components/responses/Error' }
+  /relay/shared/token:
+    servers: [{ url: / }]
+    post:
+      summary: Trade a team host key and a signature of the nonce by the DSH's identity key for a host token
+      description: >-
+        The first exchange binds the key to that identity; another identity is
+        refused with `host_bound_elsewhere`. The signature covers
+        "dsh-teamwork shared host\n" + nonce + "\n" + host id + "\n" + APP_URL.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, publicKey, nonce, signature]
+              properties:
+                key: { type: string }
+                publicKey: { type: string, description: 'The raw Ed25519 public key, base64' }
+                nonce: { type: string }
+                signature: { type: string, description: 'Ed25519, base64' }
+      responses:
+        '200':
+          description: A host token for the shared DSH's team
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, expiresAt, hostId, teamId, name]
+                properties:
+                  token: { type: string }
+                  expiresAt: { type: string, format: date-time }
+                  hostId: { type: string }
+                  teamId: { type: string }
+                  name: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     session: { type: apiKey, in: cookie, name: dsh-teamwork-session }
@@ -1081,6 +1338,40 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
   schemas:
+    SharedHost:
+      type: object
+      required: [id, name, bound, boundAt, lastSeenAt, createdAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        bound: { type: boolean, description: Whether a machine has bound the key }
+        boundAt: { type: string, format: date-time, nullable: true }
+        lastSeenAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+    SharedHostName:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties: { name: { type: string, minLength: 1, maxLength: 100 } }
+    SharedHostKey:
+      type: object
+      required: [host, key]
+      properties:
+        host: { $ref: '#/components/schemas/SharedHost' }
+        key: { type: string, description: 'The team host key, shown this once' }
+    RelayPairing:
+      type: object
+      required: [id, hostId, hostName, deviceName, status, createdAt, lastUsedAt]
+      properties:
+        id: { type: string }
+        hostId: { type: string }
+        hostName: { type: string }
+        deviceName: { type: string }
+        status: { type: string, enum: [pending, confirmed] }
+        createdAt: { type: string, format: date-time }
+        lastUsedAt: { type: string, format: date-time, nullable: true }
+        online: { type: boolean }
+        push: { type: boolean }
     BudgetNotice:
       type: object
       required: [id, recipientId, threshold, state, createdAt, nextAt, code]

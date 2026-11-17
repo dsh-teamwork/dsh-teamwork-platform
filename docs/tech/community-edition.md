@@ -55,10 +55,10 @@ ADR 0005's original grouping of usage and billing; its historical text stays.
 
 | Part | Public `dsh-teamwork-platform` | Closed repository only |
 | --- | --- | --- |
-| `server/` | The whole server: every route, the model gateway, sign-in, the relay and shared DSHs (ADR 0044, moving in from the closed side), the schema and migrations of three dialects, and `server/edition`, the extension point | — |
+| `server/` | The whole server: every route, the model gateway, sign-in, the relay and shared DSHs (ADR 0044), the schema and migrations of three dialects, and `server/edition`, the extension point | — |
 | `apps/web` | The web frontend and public pages, and `mountWeb`, which an edition's web app composes (ADR 0041); `/privacy` and `/terms` from a build's `LEGAL_DIR` | The hosted service's legal text, `premium/docs/legal/` (ADR 0007) |
 | `packages/shared` | The languages and the rule that picks one | — |
-| `premium/server` | — | The closed binary: the open server with billing and the operator console registered (the relay until it moves, ADR 0044), their tables and migrations |
+| `premium/server` | — | The closed binary: the open server with billing and the operator console registered, their tables and migrations |
 | `premium/apps` | — | The closed web app (the open one composed, with the member pages it adds), the operator console and the mobile app, which reaches any server's relay (ADR 0044) |
 | Brand | `docs/brand/icon.svg`, `docs/design.md`, the exported icons; the name and mark are not licensed (ADR 0005) | — |
 | Docs | `docs/`, the open ADRs | `premium/docs/`: positioning, the SaaS route, ops, legal, ADRs 0003 and 0004 |

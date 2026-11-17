@@ -338,7 +338,8 @@ server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
                      rest by concern: config, db, auth, team, gateway,
                      analytics, httpapi (every route), web (the embedded
                      console and public pages), wire (request shapes and
-                     error codes)
+                     error codes); relay/ is the relay and shared DSHs
+                     (docs/tech/relay.md), an extension every main imports
 apps/web             Vite and React: the console and the public pages,
                      prerendered at its build and embedded in the binary;
                      an edition's web app composes it (mountWeb, ADR 0041)
@@ -346,7 +347,7 @@ api/openapi.yaml     the wire contract
 packages/shared      the languages and the rule that picks one, shared by the
                      console and the closed mobile app
 premium/server       the closed Go module: the open server with the closed
-                     packages (the relay, the operator console) registered
+                     packages (billing, the operator console) registered
                      through server/edition
 
 Everything under premium/ is closed and stays out of the community edition

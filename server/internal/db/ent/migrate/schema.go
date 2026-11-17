@@ -393,6 +393,82 @@ var (
 		Columns:    RateWindowsColumns,
 		PrimaryKey: []*schema.Column{RateWindowsColumns[0]},
 	}
+	// RelayHostsColumns holds the columns for the "relay_hosts" table.
+	RelayHostsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "client_id", Type: field.TypeString, Size: 64},
+		{Name: "name", Type: field.TypeString, Size: 400},
+		{Name: "dsh_version", Type: field.TypeString, Size: 160},
+		{Name: "last_seen_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// RelayHostsTable holds the schema information for the "relay_hosts" table.
+	RelayHostsTable = &schema.Table{
+		Name:       "relay_hosts",
+		Columns:    RelayHostsColumns,
+		PrimaryKey: []*schema.Column{RelayHostsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "relayhost_user_id_client_id",
+				Unique:  true,
+				Columns: []*schema.Column{RelayHostsColumns[2], RelayHostsColumns[3]},
+			},
+		},
+	}
+	// RelayPairingsColumns holds the columns for the "relay_pairings" table.
+	RelayPairingsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "host_id", Type: field.TypeString, Size: 32},
+		{Name: "device_name", Type: field.TypeString, Size: 400},
+		{Name: "device_key_hash", Type: field.TypeString, Nullable: true, Size: 64},
+		{Name: "push_token", Type: field.TypeString, Nullable: true, Size: 200},
+		{Name: "push_locale", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "confirmed_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "revoked_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "last_used_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// RelayPairingsTable holds the schema information for the "relay_pairings" table.
+	RelayPairingsTable = &schema.Table{
+		Name:       "relay_pairings",
+		Columns:    RelayPairingsColumns,
+		PrimaryKey: []*schema.Column{RelayPairingsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "relaypairing_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{RelayPairingsColumns[2]},
+			},
+			{
+				Name:    "relaypairing_host_id",
+				Unique:  false,
+				Columns: []*schema.Column{RelayPairingsColumns[3]},
+			},
+		},
+	}
+	// RelayPairingOffersColumns holds the columns for the "relay_pairing_offers" table.
+	RelayPairingOffersColumns = []*schema.Column{
+		{Name: "code_hash", Type: field.TypeString, Size: 64},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "host_id", Type: field.TypeString, Size: 32},
+		{Name: "expires_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "used_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// RelayPairingOffersTable holds the schema information for the "relay_pairing_offers" table.
+	RelayPairingOffersTable = &schema.Table{
+		Name:       "relay_pairing_offers",
+		Columns:    RelayPairingOffersColumns,
+		PrimaryKey: []*schema.Column{RelayPairingOffersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "relaypairingoffer_host_id",
+				Unique:  false,
+				Columns: []*schema.Column{RelayPairingOffersColumns[2]},
+			},
+		},
+	}
 	// ResourceArtifactsColumns holds the columns for the "resource_artifacts" table.
 	ResourceArtifactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -456,6 +532,31 @@ var (
 				Name:    "resourcesubmission_team_id_state",
 				Unique:  false,
 				Columns: []*schema.Column{ResourceSubmissionsColumns[3], ResourceSubmissionsColumns[9]},
+			},
+		},
+	}
+	// SharedHostsColumns holds the columns for the "shared_hosts" table.
+	SharedHostsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "name", Type: field.TypeString, Size: 400},
+		{Name: "key_hash", Type: field.TypeString, Size: 64},
+		{Name: "identity_key", Type: field.TypeString, Nullable: true, Size: 64},
+		{Name: "created_by", Type: field.TypeString, Size: 32},
+		{Name: "bound_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// SharedHostsTable holds the schema information for the "shared_hosts" table.
+	SharedHostsTable = &schema.Table{
+		Name:       "shared_hosts",
+		Columns:    SharedHostsColumns,
+		PrimaryKey: []*schema.Column{SharedHostsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "sharedhost_team_id",
+				Unique:  false,
+				Columns: []*schema.Column{SharedHostsColumns[2]},
 			},
 		},
 	}
@@ -656,8 +757,12 @@ var (
 		ModelRatesTable,
 		PasswordsTable,
 		RateWindowsTable,
+		RelayHostsTable,
+		RelayPairingsTable,
+		RelayPairingOffersTable,
 		ResourceArtifactsTable,
 		ResourceSubmissionsTable,
+		SharedHostsTable,
 		TeamsTable,
 		TeamConfigsTable,
 		TeamProvidersTable,
@@ -725,11 +830,27 @@ func init() {
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}
+	RelayHostsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	RelayPairingsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	RelayPairingOffersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
 	ResourceArtifactsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}
 	ResourceSubmissionsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	SharedHostsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

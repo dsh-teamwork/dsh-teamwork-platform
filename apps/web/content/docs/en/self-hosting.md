@@ -4,8 +4,9 @@ description: Start the open-source community edition, point members' DSH at it, 
 ---
 
 The community edition is open source under Apache-2.0: teams, models, presets,
-plugins, the assistant, review and history, usage and budgets, and the gateway.
-The hosted service's mobile app, relay and prepaid models are not part of it.
+plugins, the assistant, review and history, usage and budgets, the gateway,
+and the relay with shared DSHs. The hosted service's prepaid models are not
+part of it, and its phone app does not yet connect to your own server.
 
 ## Start an instance
 

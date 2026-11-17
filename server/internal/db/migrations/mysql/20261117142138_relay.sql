@@ -1,0 +1,8 @@
+-- Create "relay_hosts" table
+CREATE TABLE `relay_hosts` (`id` varchar(32) NOT NULL, `created_at` datetime(6) NOT NULL, `user_id` varchar(32) NOT NULL, `client_id` varchar(64) NOT NULL, `name` varchar(400) NOT NULL, `dsh_version` varchar(160) NOT NULL, `last_seen_at` datetime(6) NOT NULL, PRIMARY KEY (`id`), UNIQUE INDEX `relayhost_user_id_client_id` (`user_id`, `client_id`)) CHARSET utf8mb4 COLLATE utf8mb4_bin;
+-- Create "relay_pairings" table
+CREATE TABLE `relay_pairings` (`id` varchar(32) NOT NULL, `created_at` datetime(6) NOT NULL, `user_id` varchar(32) NOT NULL, `host_id` varchar(32) NOT NULL, `device_name` varchar(400) NOT NULL, `device_key_hash` varchar(64) NULL, `push_token` varchar(200) NULL, `push_locale` varchar(20) NULL, `confirmed_at` datetime(6) NULL, `revoked_at` datetime(6) NULL, `last_used_at` datetime(6) NULL, PRIMARY KEY (`id`), INDEX `relaypairing_host_id` (`host_id`), INDEX `relaypairing_user_id` (`user_id`)) CHARSET utf8mb4 COLLATE utf8mb4_bin;
+-- Create "relay_pairing_offers" table
+CREATE TABLE `relay_pairing_offers` (`code_hash` varchar(64) NOT NULL, `created_at` datetime(6) NOT NULL, `host_id` varchar(32) NOT NULL, `expires_at` datetime(6) NOT NULL, `used_at` datetime(6) NULL, PRIMARY KEY (`code_hash`), INDEX `relaypairingoffer_host_id` (`host_id`)) CHARSET utf8mb4 COLLATE utf8mb4_bin;
+-- Create "shared_hosts" table
+CREATE TABLE `shared_hosts` (`id` varchar(32) NOT NULL, `created_at` datetime(6) NOT NULL, `team_id` varchar(32) NOT NULL, `name` varchar(400) NOT NULL, `key_hash` varchar(64) NOT NULL, `identity_key` varchar(64) NULL, `created_by` varchar(32) NOT NULL, `bound_at` datetime(6) NULL, `last_seen_at` datetime(6) NULL, PRIMARY KEY (`id`), INDEX `sharedhost_team_id` (`team_id`)) CHARSET utf8mb4 COLLATE utf8mb4_bin;

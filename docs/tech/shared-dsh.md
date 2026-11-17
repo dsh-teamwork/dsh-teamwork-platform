@@ -1,6 +1,6 @@
 # Shared DSH
 
-> **Status:** Plan — steps 0 to 2 done · **Updated:** 2026-11-17
+> **Status:** Plan — steps 0 to 3 done · **Updated:** 2026-11-17
 
 How a team shares one DSH that it runs itself: members reach it from the app
 or the web through the relay, end to end encrypted, and the server can route
@@ -16,8 +16,8 @@ into the teamwork plugin's shared mode on the DSH the team will share. That
 DSH then belongs to one team and to no person: it cannot sign in as an
 account, it syncs that team's configuration, and its team-model calls are
 billed to the team, under the team's budgets and no member's. Members reach it
-through the relay, which forwards end-to-end encrypted records between paired
-devices. Two lists must both admit a member: the server's **access list** for that DSH, which decides who may
+through the relay ([relay.md](relay.md)), which forwards end-to-end encrypted
+records between paired devices. Two lists must both admit a member: the server's **access list** for that DSH, which decides who may
 connect, and the DSH's own **roster** of member device keys, which decides who
 may act. A device joins the roster once, through a single-use invite the admin
 hands over outside the server. Every session belongs to the member who
@@ -231,14 +231,14 @@ A personal computer's bridge is unchanged: its one member owns everything.
 | --- | --- |
 | Done (step 1): `auth.HostBearer`, `requirePlugin`, configs and the gateway for a host caller | `server/internal/auth/tokens.go`, `server/internal/httpapi/identity.go`, `server/internal/gateway/gateway.go` |
 | Done (step 1): `usage_requests.host_id`, held to team and provider budgets only; `hostId` on usage entries and `FundingAdmission`; "Shared DSH" in the usage list | `server/internal/usage`, a migration per dialect, `api/openapi.yaml`, `apps/web` |
-| Step 3: the relay, moved from the hosted edition: sockets, pairing, handset credential, forwarding, push; shared hosts and their key exchange | `server/internal/relay`, its tables in the open schema, routes in `api/openapi.yaml` |
+| Done (step 3): the relay, moved from the hosted edition: sockets, pairing, handset credential, forwarding, push; shared hosts and their key exchange | `server/relay`, its tables in `server/internal/db/schema/relay.go`, routes in `api/openapi.yaml` |
 | Steps 4 to 6: access list, invites, archive storage | the same package |
 
 A budget per shared DSH is not built: a team caps its shared DSH by capping
 the team. It would be a new budget scope if a team asks for one.
 
-Tables, once moved (one migration per dialect; the hosted edition drops its
-own copies, ADR 0044):
+Tables (one migration per dialect; the hosted edition dropped its own copies,
+ADR 0044):
 
 - `relay_hosts`, `relay_pairing_offers`, `relay_pairings`: as the hosted relay
   had them. A host row gains a nullable `shared_host_id`, and its `user_id` is
@@ -289,8 +289,8 @@ HPKE comes from `@hpke/core` at an exact version; no other new dependency.
 ### Clients
 
 - **The open web app** (`apps/web`): the admin's page
-  `/teams/:teamId/shared-hosts` for keys, access and archive download (moved
-  from the hosted edition's web app in step 3), and a member's page
+  `/teams/:teamId/shared-hosts` for keys, access and archive download (done in
+  step 3), and a member's page
   `/teams/:teamId/shared/:hostId` with the sessions screen, its device key a
   non-extractable WebCrypto Ed25519 key in IndexedDB (step 0). The relay
   client, the secure channel and the reader of DSH's wire, which the closed
@@ -316,14 +316,14 @@ Each step is a vertical slice, lands green, and brings its ADR.
    hosted edition first: shared hosts, the key exchange and binding, the
    plugin's `src/shared-mode.ts` and `/teamwork share`, and the admin's page.
    A key binds the first machine that signs with it, and syncs one team.
-3. **The relay moves into the open server** (about 4 days;
-   [ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md)). The relay
-   package, its tables and the shared-host routes join `server/`; the
-   edition's `MintHostToken` gives way to a direct call; the admin's page joins
-   `apps/web`; the relay's end-to-end test runs in `server/e2e`; the hosted
-   edition drops its relay and its tables. Done when the community server's
-   gate runs the relay suite and the plugin's end-to-end tests for pairing and
-   shared mode.
+3. **The relay moves into the open server — done 2026-11-17**
+   ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md)). `server/relay`
+   is an extension every binary's main imports, so it keeps reaching the server
+   through `edition.Host`, `MintHostToken` included; its tables joined the open
+   schema; the admin's page is `apps/web`'s; `server/e2e` drives pairing,
+   forwarding and shared mode with the plugin's own code on all three
+   databases. The hosted edition dropped its relay and tables, and keeps only a
+   check that its app's copy of the channel matches the plugin's.
 4. **Members reach it** (about 8 days; an ADR "A shared DSH admits a device by
    invite"). Access list, `/relay/shared` and join, invite handshake, roster,
    owner check, the app's join flow and disclosure. Done when a member's phone

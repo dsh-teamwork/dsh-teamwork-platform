@@ -45,11 +45,23 @@ type Password func(*sql.Selector)
 // RateWindow is the predicate function for ratewindow builders.
 type RateWindow func(*sql.Selector)
 
+// RelayHost is the predicate function for relayhost builders.
+type RelayHost func(*sql.Selector)
+
+// RelayPairing is the predicate function for relaypairing builders.
+type RelayPairing func(*sql.Selector)
+
+// RelayPairingOffer is the predicate function for relaypairingoffer builders.
+type RelayPairingOffer func(*sql.Selector)
+
 // ResourceArtifact is the predicate function for resourceartifact builders.
 type ResourceArtifact func(*sql.Selector)
 
 // ResourceSubmission is the predicate function for resourcesubmission builders.
 type ResourceSubmission func(*sql.Selector)
+
+// SharedHost is the predicate function for sharedhost builders.
+type SharedHost func(*sql.Selector)
 
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)

@@ -9,6 +9,9 @@ description: 所有 /teamwork 命令，在 DSH 的命令输入框中使用。
 | --- | --- |
 | `/teamwork login` | 打开浏览器登录。 |
 | `/teamwork authorize <code>` | 用网站上的授权码完成登录。 |
+| `/teamwork share enable <key>` | 用**共享 DSH**里的 key 把这台 DSH 设为团队的共享 DSH。 |
+| `/teamwork share disable` | 关闭共享模式并删除 key。 |
+| `/teamwork share status` | 查看共享 DSH 的名称、团队和 token。 |
 | `/teamwork status` | 查看登录、同步状态和最近的错误。 |
 | `/teamwork sync` | 立即刷新团队资源。 |
 | `/teamwork list` | 列出团队资源及其 ID。 |

@@ -39,6 +39,7 @@ const TeamHistoryPage = lazy(() => import('@/pages/team/history').then((m) => ({
 const TeamSharingPage = lazy(() => import('@/pages/team/sharing').then((m) => ({ default: m.TeamSharingPage })));
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
+const TeamSharedHostsPage = lazy(() => import('@/pages/team/shared-hosts').then((m) => ({ default: m.TeamSharedHostsPage })));
 const TeamBudgetsPage = lazy(() => import('@/pages/team/budgets').then((m) => ({ default: m.TeamBudgetsPage })));
 const TeamsPage = lazy(() => import('@/pages/teams').then((m) => ({ default: m.TeamsPage })));
 
@@ -79,6 +80,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { path: 'budgets', element: <TeamBudgetsPage /> },
       { path: 'history', element: <TeamHistoryPage /> },
       { path: 'sharing', element: <TeamSharingPage /> },
+      { path: 'shared-hosts', element: <TeamSharedHostsPage /> },
       { path: 'presets', element: <TeamPresetsPage /> },
       { path: 'plugins', element: <TeamPluginsPage /> },
       { path: 'members', element: <TeamMembersPage /> },

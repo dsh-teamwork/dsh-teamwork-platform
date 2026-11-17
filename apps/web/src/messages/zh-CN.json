@@ -530,7 +530,8 @@
       },
       "open": "打开导航",
       "close": "关闭导航",
-      "waiting": "等待你审核"
+      "waiting": "等待你审核",
+      "sharedHosts": "共享 DSH"
     },
     "switcher": {
       "label": "切换团队",
@@ -871,6 +872,31 @@
       },
       "yes": "是",
       "no": "否"
+    },
+    "sharedHosts": {
+      "title": "共享 DSH",
+      "description": "团队为成员运行的 DSH。它用团队授权 key 登录，从不以个人身份登录，模型调用计入团队。",
+      "adminOnly": "只有团队管理员可以管理共享 DSH。",
+      "name": "名称",
+      "namePlaceholder": "例如：构建机",
+      "create": "创建 key",
+      "created": "已创建共享 DSH。",
+      "machine": "机器",
+      "lastSeen": "最近换取 token",
+      "actions": "操作",
+      "bound": "已绑定 {at}",
+      "unbound": "等待首次使用",
+      "never": "从未",
+      "rotate": "更换 key",
+      "rotated": "已签发新 key。",
+      "delete": "删除",
+      "deleted": "已删除。",
+      "empty": "还没有共享 DSH。填一个名称即可创建它的 key。",
+      "keyTitle": "{name} 的团队授权 key",
+      "keyOnce": "只显示这一次。请复制到要共享的那台 DSH；服务器不保留可读副本。",
+      "keyHelp": "在那台 DSH 里运行这条命令。第一台使用它的机器会绑定这个 key，换到其他机器上会被拒绝。能访问这台 DSH 的人都能通过它使用团队模型。",
+      "rotateConfirm": "为这台 DSH 签发新 key？旧 key 立即失效，同一台机器继续使用新 key。",
+      "deleteConfirm": "删除这台共享 DSH？它的 key 立即失效，DSH 最多一小时内失去团队访问。"
     }
   },
   "usage": {
@@ -1094,7 +1120,9 @@
     "provider_address_plain_http": "请使用 https。只有在允许内网地址的服务器上，本地或内网地址才能用 http。",
     "provider_address_unresolved": "找不到这个主机，请检查地址。",
     "provider_key_rejected": "提供商拒绝了这个 API 密钥，请检查它是否完整、是否仍然有效。",
-    "model_metadata_unavailable": "无法读取公开模型目录。请重试，或手动填写。"
+    "model_metadata_unavailable": "无法读取公开模型目录。请重试，或手动填写。",
+    "host_key_invalid": "团队授权 key 无效。",
+    "host_bound_elsewhere": "这个团队授权 key 已被另一台机器使用。"
   },
   "docs": {
     "title": "文档",

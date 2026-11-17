@@ -25,8 +25,12 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -106,8 +110,12 @@ func checkColumn(t, c string) error {
 			modelrate.Table:          modelrate.ValidColumn,
 			password.Table:           password.ValidColumn,
 			ratewindow.Table:         ratewindow.ValidColumn,
+			relayhost.Table:          relayhost.ValidColumn,
+			relaypairing.Table:       relaypairing.ValidColumn,
+			relaypairingoffer.Table:  relaypairingoffer.ValidColumn,
 			resourceartifact.Table:   resourceartifact.ValidColumn,
 			resourcesubmission.Table: resourcesubmission.ValidColumn,
+			sharedhost.Table:         sharedhost.ValidColumn,
 			team.Table:               team.ValidColumn,
 			teamconfig.Table:         teamconfig.ValidColumn,
 			teamprovider.Table:       teamprovider.ValidColumn,

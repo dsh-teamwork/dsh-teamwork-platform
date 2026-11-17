@@ -530,7 +530,8 @@
       },
       "open": "Open navigation",
       "close": "Close navigation",
-      "waiting": "Waiting for your review"
+      "waiting": "Waiting for your review",
+      "sharedHosts": "Shared DSHs"
     },
     "switcher": {
       "label": "Switch team",
@@ -871,6 +872,31 @@
       },
       "yes": "Yes",
       "no": "No"
+    },
+    "sharedHosts": {
+      "title": "Shared DSHs",
+      "description": "A DSH your team runs for its members. It signs in with a team host key, never as a person, and its model calls are the team's.",
+      "adminOnly": "Only a team admin manages shared DSHs.",
+      "name": "Name",
+      "namePlaceholder": "For example: Build box",
+      "create": "Create key",
+      "created": "Shared DSH created.",
+      "machine": "Machine",
+      "lastSeen": "Last token",
+      "actions": "Actions",
+      "bound": "Bound {at}",
+      "unbound": "Waiting for its first use",
+      "never": "Never",
+      "rotate": "Rotate key",
+      "rotated": "New key issued.",
+      "delete": "Delete",
+      "deleted": "Deleted.",
+      "empty": "No shared DSH yet. Name one to create its key.",
+      "keyTitle": "Team host key for {name}",
+      "keyOnce": "Shown only now. Copy it to the DSH that will be shared; the server keeps no readable copy.",
+      "keyHelp": "Run this in that DSH. The first machine to use the key keeps it; on another machine it is refused. Anyone who can reach this DSH can use the team's models through it.",
+      "rotateConfirm": "Issue a new key for this DSH? The old key stops working; the same machine keeps the new one.",
+      "deleteConfirm": "Delete this shared DSH? Its key stops working at once, and the DSH loses team access within an hour."
     }
   },
   "usage": {
@@ -1094,7 +1120,9 @@
     "provider_address_plain_http": "Use https. Plain http is allowed only for a local or private address on a server that permits them.",
     "provider_address_unresolved": "That host could not be found. Check the address.",
     "provider_key_rejected": "The provider refused this API key. Check that it is complete and still active.",
-    "model_metadata_unavailable": "The public model catalog could not be read. Retry, or fill the fields in yourself."
+    "model_metadata_unavailable": "The public model catalog could not be read. Retry, or fill the fields in yourself.",
+    "host_key_invalid": "That team host key is not valid.",
+    "host_bound_elsewhere": "That team host key is used by another machine."
   },
   "docs": {
     "title": "Docs",

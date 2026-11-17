@@ -165,6 +165,42 @@ func (f RateWindowFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RateWindowMutation", m)
 }
 
+// The RelayHostFunc type is an adapter to allow the use of ordinary
+// function as RelayHost mutator.
+type RelayHostFunc func(context.Context, *ent.RelayHostMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RelayHostFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RelayHostMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RelayHostMutation", m)
+}
+
+// The RelayPairingFunc type is an adapter to allow the use of ordinary
+// function as RelayPairing mutator.
+type RelayPairingFunc func(context.Context, *ent.RelayPairingMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RelayPairingFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RelayPairingMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RelayPairingMutation", m)
+}
+
+// The RelayPairingOfferFunc type is an adapter to allow the use of ordinary
+// function as RelayPairingOffer mutator.
+type RelayPairingOfferFunc func(context.Context, *ent.RelayPairingOfferMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RelayPairingOfferFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RelayPairingOfferMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RelayPairingOfferMutation", m)
+}
+
 // The ResourceArtifactFunc type is an adapter to allow the use of ordinary
 // function as ResourceArtifact mutator.
 type ResourceArtifactFunc func(context.Context, *ent.ResourceArtifactMutation) (ent.Value, error)
@@ -187,6 +223,18 @@ func (f ResourceSubmissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ResourceSubmissionMutation", m)
+}
+
+// The SharedHostFunc type is an adapter to allow the use of ordinary
+// function as SharedHost mutator.
+type SharedHostFunc func(context.Context, *ent.SharedHostMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SharedHostFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SharedHostMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SharedHostMutation", m)
 }
 
 // The TeamFunc type is an adapter to allow the use of ordinary

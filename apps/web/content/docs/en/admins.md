@@ -78,3 +78,12 @@ call by member and model and exports it as CSV.
 Members can submit presets and plugins. Under **Sharing and review**, compare
 the proposed contents with what is live, then approve to publish or reject with
 a reason.
+
+## 7. Share a DSH with the team
+
+Under **Shared DSHs**, name a DSH the team will run for its members and copy
+the command shown once: `/teamwork share enable <key>`. Run it in that DSH. It
+then signs in as the team, never as a person, syncs this team alone, and its
+team-model calls are the team's. The first machine to use a key keeps it;
+**Rotate key** issues a new one for the same machine, and **Delete** cuts it
+off. Members reaching a shared DSH by invite comes in a later release.

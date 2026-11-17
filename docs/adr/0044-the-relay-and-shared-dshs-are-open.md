@@ -29,9 +29,9 @@ community edition has them with no hosted account.**
 - **The whole relay moves into the open server**: the plugin's and the
   phone's sockets, pairing, the handset credential, opaque forwarding, push
   notifications through Expo's public endpoint, and shared DSHs (host keys,
-  the access list, invites, the archive). Its tables join the open schema and
-  its routes the open server; the edition hook that minted host tokens is
-  replaced by a direct call.
+  the access list, invites, the archive). It stays an extension of
+  `server/edition`, which every binary's main imports (`server/relay`), so it
+  reaches the server as before; its tables join the open schema.
 - **The open web app is a client.** It holds the admin's shared-DSH page and a
   member's session page, with a non-extractable WebCrypto device key.
 - **The phone app stays closed but reaches any server.** A release build asks

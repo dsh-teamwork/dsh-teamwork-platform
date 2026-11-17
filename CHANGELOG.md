@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The relay is open: phone pairing and shared DSHs on every server
+
+- **What:** The relay moved from the hosted edition into `server/relay`, an extension every binary's main imports: `GET /api/relay`, the `/relay/plugin` and `/relay/phone` sockets, phone pairing (`/relay/pair`, `/relay/pairings`), push through Expo, and shared DSHs (`/api/teams/{teamId}/shared-hosts`, `/relay/shared/challenge`, `/relay/shared/token`). Its tables (`relay_hosts`, `relay_pairing_offers`, `relay_pairings`, `shared_hosts`) join the open schema. The console gains **Shared DSHs** under collaboration, and `/docs` describes it.
+- **Why:** A team's shared DSH must work on a self-hosted community server (ADR 0044).
+- **Breaking:** None on a community server. The hosted service's pairings and shared hosts are not carried over (its own entry).
+- **Upgrade:** One migration per dialect creates the relay's tables; the binary applies it at start. The plugin needs its shared-mode version for `/teamwork share`.
+- **Refs:** ADR 0044, `server/relay`, `docs/tech/relay.md`, `docs/tech/shared-dsh.md`, `apps/web/src/pages/team/shared-hosts.tsx`.
+
 ## 2026-11-17 — The relay and shared DSHs join the community edition
 
 - **What:** A decision, and the plan for it: the relay (phone pairing and end-to-end encrypted forwarding), shared DSHs and their audit archive move from the hosted edition into the open server and web app, and the closed phone app reaches any server. Nothing has moved yet; `docs/tech/shared-dsh.md` orders the work.

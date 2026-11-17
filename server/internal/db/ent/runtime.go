@@ -18,8 +18,12 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -734,6 +738,205 @@ func init() {
 			return nil
 		}
 	}()
+	relayhostMixin := schema.RelayHost{}.Mixin()
+	relayhostMixinFields0 := relayhostMixin[0].Fields()
+	_ = relayhostMixinFields0
+	relayhostFields := schema.RelayHost{}.Fields()
+	_ = relayhostFields
+	// relayhostDescCreatedAt is the schema descriptor for created_at field.
+	relayhostDescCreatedAt := relayhostMixinFields0[1].Descriptor()
+	// relayhost.DefaultCreatedAt holds the default value on creation for the created_at field.
+	relayhost.DefaultCreatedAt = relayhostDescCreatedAt.Default.(func() time.Time)
+	// relayhostDescUserID is the schema descriptor for user_id field.
+	relayhostDescUserID := relayhostFields[0].Descriptor()
+	// relayhost.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	relayhost.UserIDValidator = func() func(string) error {
+		validators := relayhostDescUserID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(user_id string) error {
+			for _, fn := range fns {
+				if err := fn(user_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// relayhostDescClientID is the schema descriptor for client_id field.
+	relayhostDescClientID := relayhostFields[1].Descriptor()
+	// relayhost.ClientIDValidator is a validator for the "client_id" field. It is called by the builders before save.
+	relayhost.ClientIDValidator = func() func(string) error {
+		validators := relayhostDescClientID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(client_id string) error {
+			for _, fn := range fns {
+				if err := fn(client_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// relayhostDescName is the schema descriptor for name field.
+	relayhostDescName := relayhostFields[2].Descriptor()
+	// relayhost.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	relayhost.NameValidator = relayhostDescName.Validators[0].(func(string) error)
+	// relayhostDescDshVersion is the schema descriptor for dsh_version field.
+	relayhostDescDshVersion := relayhostFields[3].Descriptor()
+	// relayhost.DshVersionValidator is a validator for the "dsh_version" field. It is called by the builders before save.
+	relayhost.DshVersionValidator = relayhostDescDshVersion.Validators[0].(func(string) error)
+	// relayhostDescID is the schema descriptor for id field.
+	relayhostDescID := relayhostMixinFields0[0].Descriptor()
+	// relayhost.DefaultID holds the default value on creation for the id field.
+	relayhost.DefaultID = relayhostDescID.Default.(func() string)
+	// relayhost.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	relayhost.IDValidator = func() func(string) error {
+		validators := relayhostDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	relaypairingMixin := schema.RelayPairing{}.Mixin()
+	relaypairingMixinFields0 := relaypairingMixin[0].Fields()
+	_ = relaypairingMixinFields0
+	relaypairingFields := schema.RelayPairing{}.Fields()
+	_ = relaypairingFields
+	// relaypairingDescCreatedAt is the schema descriptor for created_at field.
+	relaypairingDescCreatedAt := relaypairingMixinFields0[1].Descriptor()
+	// relaypairing.DefaultCreatedAt holds the default value on creation for the created_at field.
+	relaypairing.DefaultCreatedAt = relaypairingDescCreatedAt.Default.(func() time.Time)
+	// relaypairingDescUserID is the schema descriptor for user_id field.
+	relaypairingDescUserID := relaypairingFields[0].Descriptor()
+	// relaypairing.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	relaypairing.UserIDValidator = func() func(string) error {
+		validators := relaypairingDescUserID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(user_id string) error {
+			for _, fn := range fns {
+				if err := fn(user_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// relaypairingDescHostID is the schema descriptor for host_id field.
+	relaypairingDescHostID := relaypairingFields[1].Descriptor()
+	// relaypairing.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
+	relaypairing.HostIDValidator = func() func(string) error {
+		validators := relaypairingDescHostID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(host_id string) error {
+			for _, fn := range fns {
+				if err := fn(host_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// relaypairingDescDeviceName is the schema descriptor for device_name field.
+	relaypairingDescDeviceName := relaypairingFields[2].Descriptor()
+	// relaypairing.DeviceNameValidator is a validator for the "device_name" field. It is called by the builders before save.
+	relaypairing.DeviceNameValidator = relaypairingDescDeviceName.Validators[0].(func(string) error)
+	// relaypairingDescDeviceKeyHash is the schema descriptor for device_key_hash field.
+	relaypairingDescDeviceKeyHash := relaypairingFields[3].Descriptor()
+	// relaypairing.DeviceKeyHashValidator is a validator for the "device_key_hash" field. It is called by the builders before save.
+	relaypairing.DeviceKeyHashValidator = relaypairingDescDeviceKeyHash.Validators[0].(func(string) error)
+	// relaypairingDescPushToken is the schema descriptor for push_token field.
+	relaypairingDescPushToken := relaypairingFields[4].Descriptor()
+	// relaypairing.PushTokenValidator is a validator for the "push_token" field. It is called by the builders before save.
+	relaypairing.PushTokenValidator = relaypairingDescPushToken.Validators[0].(func(string) error)
+	// relaypairingDescPushLocale is the schema descriptor for push_locale field.
+	relaypairingDescPushLocale := relaypairingFields[5].Descriptor()
+	// relaypairing.PushLocaleValidator is a validator for the "push_locale" field. It is called by the builders before save.
+	relaypairing.PushLocaleValidator = relaypairingDescPushLocale.Validators[0].(func(string) error)
+	// relaypairingDescID is the schema descriptor for id field.
+	relaypairingDescID := relaypairingMixinFields0[0].Descriptor()
+	// relaypairing.DefaultID holds the default value on creation for the id field.
+	relaypairing.DefaultID = relaypairingDescID.Default.(func() string)
+	// relaypairing.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	relaypairing.IDValidator = func() func(string) error {
+		validators := relaypairingDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	relaypairingofferMixin := schema.RelayPairingOffer{}.Mixin()
+	relaypairingofferMixinFields0 := relaypairingofferMixin[0].Fields()
+	_ = relaypairingofferMixinFields0
+	relaypairingofferFields := schema.RelayPairingOffer{}.Fields()
+	_ = relaypairingofferFields
+	// relaypairingofferDescCreatedAt is the schema descriptor for created_at field.
+	relaypairingofferDescCreatedAt := relaypairingofferMixinFields0[0].Descriptor()
+	// relaypairingoffer.DefaultCreatedAt holds the default value on creation for the created_at field.
+	relaypairingoffer.DefaultCreatedAt = relaypairingofferDescCreatedAt.Default.(func() time.Time)
+	// relaypairingofferDescHostID is the schema descriptor for host_id field.
+	relaypairingofferDescHostID := relaypairingofferFields[1].Descriptor()
+	// relaypairingoffer.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
+	relaypairingoffer.HostIDValidator = func() func(string) error {
+		validators := relaypairingofferDescHostID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(host_id string) error {
+			for _, fn := range fns {
+				if err := fn(host_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// relaypairingofferDescID is the schema descriptor for id field.
+	relaypairingofferDescID := relaypairingofferFields[0].Descriptor()
+	// relaypairingoffer.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	relaypairingoffer.IDValidator = func() func(string) error {
+		validators := relaypairingofferDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	resourceartifactMixin := schema.ResourceArtifact{}.Mixin()
 	resourceartifactMixinFields0 := resourceartifactMixin[0].Fields()
 	_ = resourceartifactMixinFields0
@@ -849,6 +1052,111 @@ func init() {
 	// resourcesubmission.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	resourcesubmission.IDValidator = func() func(string) error {
 		validators := resourcesubmissionDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	sharedhostMixin := schema.SharedHost{}.Mixin()
+	sharedhostMixinFields0 := sharedhostMixin[0].Fields()
+	_ = sharedhostMixinFields0
+	sharedhostFields := schema.SharedHost{}.Fields()
+	_ = sharedhostFields
+	// sharedhostDescCreatedAt is the schema descriptor for created_at field.
+	sharedhostDescCreatedAt := sharedhostMixinFields0[1].Descriptor()
+	// sharedhost.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sharedhost.DefaultCreatedAt = sharedhostDescCreatedAt.Default.(func() time.Time)
+	// sharedhostDescTeamID is the schema descriptor for team_id field.
+	sharedhostDescTeamID := sharedhostFields[0].Descriptor()
+	// sharedhost.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	sharedhost.TeamIDValidator = func() func(string) error {
+		validators := sharedhostDescTeamID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(team_id string) error {
+			for _, fn := range fns {
+				if err := fn(team_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedhostDescName is the schema descriptor for name field.
+	sharedhostDescName := sharedhostFields[1].Descriptor()
+	// sharedhost.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	sharedhost.NameValidator = func() func(string) error {
+		validators := sharedhostDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedhostDescKeyHash is the schema descriptor for key_hash field.
+	sharedhostDescKeyHash := sharedhostFields[2].Descriptor()
+	// sharedhost.KeyHashValidator is a validator for the "key_hash" field. It is called by the builders before save.
+	sharedhost.KeyHashValidator = func() func(string) error {
+		validators := sharedhostDescKeyHash.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(key_hash string) error {
+			for _, fn := range fns {
+				if err := fn(key_hash); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedhostDescIdentityKey is the schema descriptor for identity_key field.
+	sharedhostDescIdentityKey := sharedhostFields[3].Descriptor()
+	// sharedhost.IdentityKeyValidator is a validator for the "identity_key" field. It is called by the builders before save.
+	sharedhost.IdentityKeyValidator = sharedhostDescIdentityKey.Validators[0].(func(string) error)
+	// sharedhostDescCreatedBy is the schema descriptor for created_by field.
+	sharedhostDescCreatedBy := sharedhostFields[4].Descriptor()
+	// sharedhost.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	sharedhost.CreatedByValidator = func() func(string) error {
+		validators := sharedhostDescCreatedBy.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(created_by string) error {
+			for _, fn := range fns {
+				if err := fn(created_by); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedhostDescID is the schema descriptor for id field.
+	sharedhostDescID := sharedhostMixinFields0[0].Descriptor()
+	// sharedhost.DefaultID holds the default value on creation for the id field.
+	sharedhost.DefaultID = sharedhostDescID.Default.(func() string)
+	// sharedhost.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	sharedhost.IDValidator = func() func(string) error {
+		validators := sharedhostDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),

@@ -40,10 +40,18 @@ type Tx struct {
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
 	RateWindow *RateWindowClient
+	// RelayHost is the client for interacting with the RelayHost builders.
+	RelayHost *RelayHostClient
+	// RelayPairing is the client for interacting with the RelayPairing builders.
+	RelayPairing *RelayPairingClient
+	// RelayPairingOffer is the client for interacting with the RelayPairingOffer builders.
+	RelayPairingOffer *RelayPairingOfferClient
 	// ResourceArtifact is the client for interacting with the ResourceArtifact builders.
 	ResourceArtifact *ResourceArtifactClient
 	// ResourceSubmission is the client for interacting with the ResourceSubmission builders.
 	ResourceSubmission *ResourceSubmissionClient
+	// SharedHost is the client for interacting with the SharedHost builders.
+	SharedHost *SharedHostClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// TeamConfig is the client for interacting with the TeamConfig builders.
@@ -200,8 +208,12 @@ func (tx *Tx) init() {
 	tx.ModelRate = NewModelRateClient(tx.config)
 	tx.Password = NewPasswordClient(tx.config)
 	tx.RateWindow = NewRateWindowClient(tx.config)
+	tx.RelayHost = NewRelayHostClient(tx.config)
+	tx.RelayPairing = NewRelayPairingClient(tx.config)
+	tx.RelayPairingOffer = NewRelayPairingOfferClient(tx.config)
 	tx.ResourceArtifact = NewResourceArtifactClient(tx.config)
 	tx.ResourceSubmission = NewResourceSubmissionClient(tx.config)
+	tx.SharedHost = NewSharedHostClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.TeamConfig = NewTeamConfigClient(tx.config)
 	tx.TeamProvider = NewTeamProviderClient(tx.config)

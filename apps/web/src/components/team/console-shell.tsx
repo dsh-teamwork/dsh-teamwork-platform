@@ -21,6 +21,7 @@ import {
   LayoutGrid,
   Menu,
   Puzzle,
+  Server,
   Users,
   X,
   type LucideIcon,
@@ -36,7 +37,7 @@ import type { Team, TeamSummary } from '@/lib/api';
 import { editionTeamPages } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets' | 'sharing' | 'history';
+type SectionKey = 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets' | 'sharing' | 'history' | 'sharedHosts';
 type GroupKey = 'assets' | 'collaboration' | 'governance';
 
 /** The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon. */
@@ -55,6 +56,7 @@ const GROUPS: { key: GroupKey | null; sections: { path: string; key: SectionKey;
     sections: [
       { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
       { path: 'history', key: 'history', icon: History },
+      { path: 'shared-hosts', key: 'sharedHosts', icon: Server },
     ],
   },
   {
