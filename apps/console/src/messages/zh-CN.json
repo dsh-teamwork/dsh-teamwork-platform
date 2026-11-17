@@ -242,7 +242,18 @@
     "allTeams": "全部团队",
     "noTeams": "你还没有加入任何团队。",
     "session": "会话",
-    "sessionHint": "在这个浏览器上退出登录。你的 DSH 会保持登录，直到令牌过期。"
+    "sessionHint": "在这个浏览器上退出登录。你的 DSH 会保持登录，直到令牌过期。",
+    "delete": "删除账号",
+    "deleteHint": "删除你的资料、登录方式，以及你在每个团队中的成员身份。你在离开的团队里留下的记录（用量、已发布的版本）仍归该团队。",
+    "deleteBlocked": "以下团队由你管理，且还有其他成员。删除账号前，请先把每个团队的管理员转给别人：",
+    "deleteTeams": "以下团队只有你一人，会随账号一起删除，包括其中的模型、预设、插件、用量和历史：",
+    "deleteTitle": "删除你的账号？",
+    "deleteDescription": "此操作无法撤销。你的 DSH 会在下一次请求时停止同步。",
+    "deleteConfirm": "输入 {email} 以确认",
+    "deleteSubmit": "删除我的账号",
+    "deleted": "你的账号已删除。",
+    "openMembers": "成员",
+    "cancel": "取消"
   },
   "team": {
     "list": {
@@ -387,7 +398,10 @@
       "you": "你",
       "descriptionInvites": "邀请链接只能用一次，24 小时内有效。",
       "descriptionPasswords": "这个实例没有配置邮件：直接创建账号，首次密码只显示一次，对方首次登录时必须修改。",
-      "descriptionMember": "团队里的人。退出后，团队的模型和预设会在下次同步时从你的 DSH 里移除。"
+      "descriptionMember": "团队里的人。退出后，团队的模型和预设会在下次同步时从你的 DSH 里移除。",
+      "makeAdmin": "设为管理员",
+      "makeAdminConfirm": "把 {email} 设为团队管理员？你会变成成员，只有对方才能再把管理员交还给你。",
+      "madeAdmin": "已转交管理员。"
     },
     "invites": {
       "create": "生成一次性邀请",
@@ -968,7 +982,13 @@
     "artifact_version_exists": "该插件版本已存在，请使用新版本号。",
     "artifact_mismatch": "插件包校验失败。",
     "artifact_not_found": "找不到可访问的插件包。",
-    "revision_not_found": "找不到历史版本。"
+    "revision_not_found": "找不到历史版本。",
+    "already_admin": "你已经是这个团队的管理员。",
+    "member_not_found": "此人不是这个团队的成员。",
+    "confirmation_mismatch": "请按页面显示的样子输入你的邮箱。",
+    "admin_of_shared_team": "你管理的团队里还有其他成员。请先把管理员转给其中一人。",
+    "browser_only": "请在浏览器中登录后操作。",
+    "wallet_has_balance": "要删除的团队里还有已购买的额度。请先用完，或写信给客服申请退款。"
   },
   "docs": {
     "title": "文档",

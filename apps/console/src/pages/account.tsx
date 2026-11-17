@@ -3,12 +3,13 @@
  * (components/account.tsx). One page in sections divided by hairlines, after
  * Router9 Studio's settings: who you are (the name, edited in place, and the
  * email), preferences (language and theme), the password where the instance
- * holds passwords, your teams, and signing out.
+ * holds passwords, your teams, signing out, and deleting the account
+ * (docs/adr/0039-deleting-an-account.md).
  */
 
-import { Check, LogOut, Moon, Pencil, Sun } from 'lucide-react';
+import { Check, LogOut, Moon, Pencil, Sun, Trash2 } from 'lucide-react';
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
 
@@ -16,7 +17,9 @@ import { Avatar } from '@/components/account';
 import { LocalePicker } from '@/components/locale-picker';
 import { Failure, useTitle } from '@/components/page';
 import { SiteFrame } from '@/components/site-frame';
+import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api, type TeamSummary } from '@/lib/api';
@@ -33,6 +36,7 @@ export function AccountPage() {
   useTitle(t('title'));
   const { session } = useSession();
   const user = session.user;
+  const teams = useApi<TeamSummary[]>(user ? 'teams' : null);
   if (!user) return null; // RequireUser sends a stranger to sign in
 
   return (
@@ -49,8 +53,9 @@ export function AccountPage() {
           </Row>
         </Section>
         {session.doors.password && <PasswordSection />}
-        <TeamsSection />
+        <TeamsSection teams={teams.data} />
         <Section title={t('session')} description={t('sessionHint')} action={<SignOut />} />
+        {teams.data && <DeleteSection email={user.email} teams={teams.data} />}
       </div>
     </SiteFrame>
   );
@@ -235,10 +240,9 @@ function PasswordSection() {
 }
 
 /** The teams the person is in and their role in each, as rows to open. */
-function TeamsSection() {
+function TeamsSection({ teams }: { teams: TeamSummary[] | undefined }) {
   const t = useTranslations('account');
   const tt = useTranslations('team');
-  const teams = useApi<TeamSummary[]>('teams');
   return (
     <Section
       title={t('teams')}
@@ -248,10 +252,10 @@ function TeamsSection() {
         </Button>
       }
     >
-      {teams.data && teams.data.length === 0 && <p className="text-sm text-muted-foreground">{t('noTeams')}</p>}
-      {teams.data && teams.data.length > 0 && (
+      {teams && teams.length === 0 && <p className="text-sm text-muted-foreground">{t('noTeams')}</p>}
+      {teams && teams.length > 0 && (
         <ul className="overflow-hidden rounded-lg border">
-          {teams.data.map((team) => (
+          {teams.map((team) => (
             <li key={team.id} className="border-t first:border-t-0">
               <Link to={`/teams/${team.id}`} className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-accent">
                 <span className="min-w-0 flex-1 truncate font-medium">{team.name}</span>
@@ -276,5 +280,103 @@ function SignOut() {
       <LogOut />
       {tc('signOut')}
     </Button>
+  );
+}
+
+/**
+ * Deleting the account. A team the person administers with others in it
+ * blocks it, listed with a way to its members page to hand the role over; a
+ * team they are alone in goes with the account, and the dialog names it. The
+ * email typed back is the confirmation the server checks too.
+ */
+function DeleteSection({ email, teams }: { email: string | null; teams: TeamSummary[] }) {
+  const t = useTranslations('account');
+  const word = useTeamError();
+  const navigate = useNavigate();
+  const { refresh } = useSession();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState('');
+  const [pending, setPending] = useState(false);
+  const owned = teams.filter((team) => team.role === 'admin');
+  const blocking = owned.filter((team) => team.memberCount > 1);
+  const going = owned.filter((team) => team.memberCount <= 1);
+  const expected = email ?? 'DELETE';
+
+  return (
+    <Section
+      title={t('delete')}
+      description={t('deleteHint')}
+      action={
+        <Button variant="outline" className="text-destructive hover:text-destructive" disabled={blocking.length > 0} onClick={() => setOpen(true)}>
+          <Trash2 />
+          {t('delete')}
+        </Button>
+      }
+    >
+      {blocking.length > 0 && (
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="text-muted-foreground">{t('deleteBlocked')}</p>
+          <ul className="overflow-hidden rounded-lg border">
+            {blocking.map((team) => (
+              <li key={team.id} className="flex items-center gap-3 border-t px-4 py-3 first:border-t-0">
+                <span className="min-w-0 flex-1 truncate font-medium">{team.name}</span>
+                <Button asChild size="sm" variant="outline">
+                  <Link to={`/teams/${team.id}/members`}>{t('openMembers')}</Link>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('deleteTitle')}</DialogTitle>
+            <DialogDescription>{t('deleteDescription')}</DialogDescription>
+          </DialogHeader>
+          {going.length > 0 && (
+            <div className="flex flex-col gap-2 text-sm">
+              <p className="text-muted-foreground">{t('deleteTeams')}</p>
+              <ul className="list-disc pl-5">
+                {going.map((team) => (
+                  <li key={team.id} className="font-medium">
+                    {team.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <form
+            id="delete-account"
+            className="flex flex-col gap-2"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setPending(true);
+              try {
+                await api('profile', { method: 'DELETE', body: { confirm: typed } });
+                toast.success(t('deleted'));
+                await refresh();
+                navigate('/');
+              } catch (failure) {
+                toast.error(word(failure));
+              } finally {
+                setPending(false);
+              }
+            }}
+          >
+            <Label htmlFor="delete-confirm">{t('deleteConfirm', { email: expected })}</Label>
+            <Input id="delete-confirm" autoComplete="off" value={typed} onChange={(e) => setTyped(e.target.value)} />
+          </form>
+          <DialogFooter>
+            <Button variant="outline" disabled={pending} onClick={() => setOpen(false)}>
+              {t('cancel')}
+            </Button>
+            <Button type="submit" form="delete-account" variant="destructive" disabled={pending || typed.trim().toLowerCase() !== expected.toLowerCase()}>
+              {t('deleteSubmit')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Section>
   );
 }

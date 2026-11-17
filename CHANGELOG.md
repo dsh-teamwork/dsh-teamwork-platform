@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — People can delete their own account, and an admin can hand the role over
+
+- **What:** `DELETE /api/profile` (browser session, email typed back as `confirm`) deletes the account, its identities, password and memberships, and every team it is alone in with all of that team's rows and artifact bytes. It is refused (`admin_of_shared_team`) while the account administers a team with others in it; `POST /api/teams/{teamId}/members/{userId}/admin` hands the admin role to a member, and the caller becomes a member. Editions hear `TeamDeleted` and `AccountDeleted` through `Host.SubscribeTeams` and may refuse. The account page gets a Delete account section; the members page gets Make admin.
+- **Why:** Deletion was by email only, and a team's one admin had no way to leave it.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0039, `server/internal/team/account.go`, `apps/console/src/pages/account.tsx`.
+
 ## 2026-11-17 — The review and history pages show changes field by field
 
 - **What:** `GET /api/teams/{teamId}/submissions` takes a `state` filter. Sharing and review opens on the review queue for an admin (on a member's own submissions otherwise), with the other view one tab away; submitting a preset or a plugin is a dialog with a drop zone (a plugin archive is still inspected in the browser and checked by digest); each submission is a row that opens to show its change field by field against the live version, and approve, reject (reason required) and withdraw confirm in a dialog. Versions and backups is a timeline with one row of filters (kind, resource, author, any / 7 / 30 days / a custom range of whole days); the live version is marked, any other shows what restoring it would change, and restoring confirms in a dialog that links to review.

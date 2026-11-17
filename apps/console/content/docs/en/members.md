@@ -42,3 +42,9 @@ Anything it would change still asks for your approval.
 
 You can be in several teams. The plugin syncs all of them; the team selector in
 the Teamwork panel only changes which one you browse.
+
+## Deleting your account
+
+Under **Account settings**, choose **Delete account**. Teams you are alone in
+are deleted with it. If you are the admin of a team with other people in it,
+make one of them the admin first.

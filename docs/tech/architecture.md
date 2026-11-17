@@ -102,6 +102,11 @@ directory. Config writes, approval and history commit together; history is
 retained after deletion. The [team assistant reference](team-assistant.md)
 describes exact dependency pins, access checks, export and restoration.
 
+An account is deleted by its owner (ADR 0039): refused while it administers a
+team with others in it, until the role is handed over; a team it is alone in
+goes with it, rows and artifact bytes; elsewhere only the membership goes, and
+the team keeps its records under a former member.
+
 ## A request through the team API
 
 1. `requireUser` finds the caller: the plugin's `Bearer` first, the session

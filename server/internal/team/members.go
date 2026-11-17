@@ -228,3 +228,39 @@ func conflict(err error, code string) error {
 	}
 	return err
 }
+
+// HandOverAdmin is an admin making another member the team's admin; the
+// caller becomes a member. A team keeps exactly one admin, so the two roles
+// swap in one transaction, and only from the row just read.
+func (s *Service) HandOverAdmin(ctx context.Context, userID, teamID, target string) error {
+	admin, err := s.RequireMembership(ctx, userID, teamID, true)
+	if err != nil {
+		return err
+	}
+	if target == userID {
+		return wire.E(http.StatusBadRequest, "already_admin")
+	}
+	tx, err := s.DB.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	n, err := tx.Membership.Update().Where(membership.UserID(target), membership.TeamID(admin.TeamID), membership.RoleEQ(membership.RoleMember)).
+		SetRole(membership.RoleAdmin).Save(ctx)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return wire.E(http.StatusNotFound, "member_not_found")
+	}
+	n, err = tx.Membership.Update().Where(membership.UserID(userID), membership.TeamID(admin.TeamID), membership.RoleEQ(membership.RoleAdmin)).
+		SetRole(membership.RoleMember).Save(ctx)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		// Somebody else changed this admin's row since it was read.
+		return wire.E(http.StatusForbidden, wire.AdminRequired)
+	}
+	return tx.Commit()
+}

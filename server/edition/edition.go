@@ -116,9 +116,10 @@ type Host struct {
 	// Operator-only recovery. Team APIs never receive this capability.
 	ResolveFundingUsage func(context.Context, string, string, string, string, string, Tokens) error
 	WithTeamTx          func(context.Context, string, func(SQLExecutor) error) error
-	// SubscribeTeams runs inside a successful team creation or member join.
-	// Handlers access only their own tables, perform no network I/O, and return
-	// errors to roll back both the membership and their changes. Mount-only.
+	// SubscribeTeams runs inside a team creation, a member join or an account
+	// deletion (TeamChange). Handlers access only their own tables, perform no
+	// network I/O, and return errors to roll back the change and theirs.
+	// Mount-only.
 	SubscribeTeams func(TeamChangeHandler) error
 	// AddTeamPage adds an edition-owned, same-origin team navigation entry.
 	// Path is a fixed absolute prefix ending in /; the console appends team id.
@@ -132,13 +133,19 @@ type TeamPage struct {
 
 // TeamChange identifies a real committed transition, never a browser claim.
 // Creation includes the creator's initial membership; it emits no separate join.
+// Deleting an account emits TeamDeleted for each team it was alone in, then
+// AccountDeleted with no TeamID; a handler that returns an error refuses the
+// deletion, and one that hears AccountDeleted removes what it keeps for that
+// account.
 type TeamChange struct {
 	Kind, TeamID, UserID, ActorID string
 }
 
 const (
-	TeamCreated  = "created"
-	MemberJoined = "joined"
+	TeamCreated    = "created"
+	MemberJoined   = "joined"
+	TeamDeleted    = "deleted"
+	AccountDeleted = "account_deleted"
 )
 
 type TeamChangeHandler func(context.Context, SQLExecutor, TeamChange) error
