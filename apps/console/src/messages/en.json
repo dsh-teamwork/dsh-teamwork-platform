@@ -736,7 +736,8 @@
       "dialogHint": "This declares the plugin for the team; it installs and grants nothing.",
       "about": "Description",
       "save": "Save",
-      "saved": "Saved. Members get it at their next sync."
+      "saved": "Saved. Members get it at their next sync.",
+      "nameHint": "Leave empty to use the package name."
     },
     "sharing": {
       "title": "Sharing and review",
