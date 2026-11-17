@@ -42,6 +42,9 @@ Open **Members**. Depending on how the server signs people in:
 
 Send new members the [install guide](/docs/install).
 
+A team has one admin. To hand the role to someone else, choose **Make admin**
+beside them; you become a member.
+
 ## 5. Set budgets
 
 Under **Models**, set a reference rate for each model. Then, under **Budgets**,

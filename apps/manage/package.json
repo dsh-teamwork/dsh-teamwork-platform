@@ -45,6 +45,7 @@
     "./lib/api-client": "./src/lib/api-client.ts",
     "./lib/use-api": "./src/lib/use-api.ts",
     "./lib/session": "./src/lib/session.tsx",
-    "./lib/use-query-params": "./src/lib/use-query-params.ts"
+    "./lib/use-query-params": "./src/lib/use-query-params.ts",
+    "./components/ui/select": "./src/components/ui/select.tsx"
   }
 }

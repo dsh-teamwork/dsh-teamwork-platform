@@ -242,7 +242,18 @@
     "allTeams": "All teams",
     "noTeams": "You are not in a team yet.",
     "session": "Session",
-    "sessionHint": "Sign out of this browser. Your DSH stays signed in until its token expires."
+    "sessionHint": "Sign out of this browser. Your DSH stays signed in until its token expires.",
+    "delete": "Delete account",
+    "deleteHint": "Your profile, your sign-in and your place in every team. What you did in a team you leave (usage, published versions) stays with that team.",
+    "deleteBlocked": "You administer these teams with other people in them. Make someone else the admin of each before you delete your account:",
+    "deleteTeams": "These teams have only you in them and are deleted with your account, with their models, presets, plugins, usage and history:",
+    "deleteTitle": "Delete your account?",
+    "deleteDescription": "This cannot be undone. Your DSH stops syncing at its next request.",
+    "deleteConfirm": "Type {email} to confirm",
+    "deleteSubmit": "Delete my account",
+    "deleted": "Your account is deleted.",
+    "openMembers": "Members",
+    "cancel": "Cancel"
   },
   "team": {
     "list": {
@@ -387,7 +398,10 @@
       "you": "you",
       "descriptionInvites": "An invitation link works once, for 24 hours.",
       "descriptionPasswords": "This instance sends no email: create the account here. The first password is shown once and must be changed at first sign-in.",
-      "descriptionMember": "Who is in the team. If you leave, its models and presets leave your DSH at the next sync."
+      "descriptionMember": "Who is in the team. If you leave, its models and presets leave your DSH at the next sync.",
+      "makeAdmin": "Make admin",
+      "makeAdminConfirm": "Make {email} the team's admin? You become a member, and only they can make you admin again.",
+      "madeAdmin": "Admin handed over."
     },
     "invites": {
       "create": "Create a single-use invitation",
@@ -968,7 +982,13 @@
     "artifact_version_exists": "This package version already exists. Use a new version.",
     "artifact_mismatch": "Plugin archive integrity check failed.",
     "artifact_not_found": "Plugin artifact is unavailable.",
-    "revision_not_found": "Historical version not found."
+    "revision_not_found": "Historical version not found.",
+    "already_admin": "You are already this team's admin.",
+    "member_not_found": "That person is not a member of this team.",
+    "confirmation_mismatch": "Type your email exactly as it is shown.",
+    "admin_of_shared_team": "You administer a team with other members in it. Make one of them the admin first.",
+    "browser_only": "Do this in the browser, signed in.",
+    "wallet_has_balance": "A team you would delete still holds purchased credit. Spend it, or write to support for a refund, first."
   },
   "docs": {
     "title": "Docs",

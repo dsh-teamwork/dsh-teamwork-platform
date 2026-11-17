@@ -1008,6 +1008,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/members/{userId}/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The admin hands the admin role to a member and becomes a member */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Handed over */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teams/{teamId}/invites": {
         parameters: {
             query?: never;
@@ -1908,7 +1952,36 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete the account, with every team it is alone in; refused while it administers a team with others */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description The account's email */
+                        confirm: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Deleted; the session cookie is cleared */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                409: components["responses"]["Error"];
+            };
+        };
         options?: never;
         head?: never;
         /** Change the name or the locale; null clears it */

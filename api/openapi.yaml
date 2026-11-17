@@ -414,6 +414,18 @@ paths:
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/members/{userId}/admin:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: userId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: The admin hands the admin role to a member and becomes a member
+      responses:
+        '204': { description: Handed over }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
   /teams/{teamId}/invites:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -809,6 +821,23 @@ paths:
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
+    delete:
+      summary: "Delete the account, with every team it is alone in; refused while it administers a team with others"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: string, minLength: 1, maxLength: 320, description: The account's email }
+      responses:
+        '204': { description: Deleted; the session cookie is cleared }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
   /teams/{teamId}/submissions:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }

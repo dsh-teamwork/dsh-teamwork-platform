@@ -2,7 +2,9 @@
  * A team's members page (`/teams/{teamId}/members`). An admin brings people in
  * one of two ways, decided by the instance (ADR 0006): an invitation link where
  * it sends email, or an account with a first password, shown once, where it
- * holds passwords. A member sees who is in the team and can leave it.
+ * holds passwords. The admin can hand the role to a member, which makes them a
+ * member (a team keeps one admin). A member sees who is in the team and can
+ * leave it.
  */
 
 import { useState } from 'react';
@@ -118,6 +120,16 @@ function Members({ invites, reload }: { invites: Invite[]; reload: Reload }) {
                               {t('members.reset')}
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={pending}
+                            onClick={() => {
+                              if (confirm(t('members.makeAdminConfirm', { email: m.email ?? '' }))) run(() => api(path(`members/${m.userId}/admin`), { method: 'POST' }), t('members.madeAdmin'));
+                            }}
+                          >
+                            {t('members.makeAdmin')}
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"

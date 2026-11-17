@@ -430,3 +430,16 @@ func (o *Optional[T]) UnmarshalJSON(b []byte) error {
 	o.Value = &v
 	return nil
 }
+
+// DeleteAccount is DELETE /api/profile: confirm is the account's email.
+type DeleteAccount struct {
+	Confirm string `json:"confirm"`
+}
+
+func (d *DeleteAccount) Validate() error {
+	var is Issues
+	if length(d.Confirm) < 1 || length(d.Confirm) > 320 {
+		is.Add("The account's email", "confirm")
+	}
+	return is.Err()
+}

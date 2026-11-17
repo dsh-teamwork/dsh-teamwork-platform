@@ -61,5 +61,6 @@
   "automation": "Automation API",
   "privateProviders": "Private provider access",
   "couldNotUpdate": "Could not update",
-  "emailSignIn": "Email sign-in"
+  "emailSignIn": "Email sign-in",
+  "operator": "Operator"
 }

@@ -317,3 +317,35 @@ func client(r *http.Request) string {
 	}
 	return "web"
 }
+
+func (s *Server) handOverAdmin(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	if err := s.Team.HandOverAdmin(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("userId")); err != nil {
+		return err
+	}
+	return noContent(w)
+}
+
+// deleteAccount closes the caller's account and ends this browser's session.
+// A plugin token still held elsewhere opens nothing once the row is gone.
+func (s *Server) deleteAccount(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	if c.bearer {
+		return wire.E(http.StatusForbidden, "browser_only")
+	}
+	var in wire.DeleteAccount
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Team.DeleteAccount(r.Context(), c.user.ID, in.Confirm); err != nil {
+		return err
+	}
+	s.endSession(w)
+	return noContent(w)
+}
