@@ -82,9 +82,9 @@ func AcceptLanguage(header string) []string {
 	return tags
 }
 
-// viewerLocale is the language a page renders in, never from the URL: the
+// ViewerLocale is the language a page renders in, never from the URL: the
 // signed-in profile's choice, then the cookie, then Accept-Language.
-func viewerLocale(r *http.Request, profile string) string {
+func ViewerLocale(r *http.Request, profile string) string {
 	if wire.IsLocale(profile) {
 		return profile
 	}
