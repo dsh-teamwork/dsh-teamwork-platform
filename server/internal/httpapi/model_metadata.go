@@ -47,9 +47,9 @@ func (s *Server) lookupModelMetadata(w http.ResponseWriter, r *http.Request) err
 		return err
 	}
 	in.Provider, in.Query = strings.TrimSpace(in.Provider), strings.TrimSpace(in.Query)
-	if (in.Source != "models_dev" && in.Source != "openrouter") || in.Query == "" || len(in.Query) > 200 || len(in.Provider) > 100 || (in.Source == "models_dev" && in.Provider == "") {
+	if (in.Source != "models_dev" && in.Source != "openrouter") || in.Query == "" || len(in.Query) > 200 || len(in.Provider) > 100 {
 		var issues wire.Issues
-		issues.Add("A source, provider and model query")
+		issues.Add("A source and a model query")
 		return issues.Err()
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
@@ -98,18 +98,22 @@ func readMetadata(ctx context.Context, client *http.Client, in metadataLookup) (
 		return nil, wire.E(http.StatusBadGateway, wire.ModelMetadataUnavailable)
 	}
 	var models []metadataModel
+	everywhere := false
 	if in.Source == "openrouter" {
 		models, err = openRouterMetadata(body)
 	} else {
-		models, err = modelsDevMetadata(body, in.Provider)
+		models, everywhere, err = modelsDevMetadata(body, in.Provider)
 	}
 	if err != nil {
 		return nil, err
 	}
+	// Across every provider a substring would match half the catalog, so only
+	// the exact model id counts there.
 	query := strings.ToLower(in.Query)
 	matches := make([]metadataModel, 0)
 	for _, m := range models {
-		if strings.Contains(strings.ToLower(m.ID), query) || strings.Contains(strings.ToLower(m.Name), query) {
+		id := strings.ToLower(m.ID)
+		if id == query || (!everywhere && (strings.Contains(id, query) || strings.Contains(strings.ToLower(m.Name), query))) {
 			matches = append(matches, m)
 		}
 	}
@@ -118,7 +122,10 @@ func readMetadata(ctx context.Context, client *http.Client, in metadataLookup) (
 		if a != b {
 			return a
 		}
-		return matches[i].ID < matches[j].ID
+		if matches[i].ID != matches[j].ID {
+			return matches[i].ID < matches[j].ID
+		}
+		return matches[i].Provider < matches[j].Provider
 	})
 	if len(matches) > 50 {
 		matches = matches[:50]
@@ -182,18 +189,36 @@ func metadataPrice(raw json.RawMessage, multiplier int64) string {
 	return price
 }
 
-// The catalog belongs to a third party: only the requested provider is decoded,
-// and an entry whose shape is unexpected is skipped rather than failing the lookup.
-func modelsDevMetadata(body []byte, provider string) ([]metadataModel, error) {
+// The catalog belongs to a third party: an entry whose shape is unexpected is
+// skipped rather than failing the lookup. A provider the catalog names is the
+// only one decoded; any other (a team's own proxy, say) decodes every provider,
+// and the second result says so.
+func modelsDevMetadata(body []byte, provider string) ([]metadataModel, bool, error) {
 	var catalog map[string]json.RawMessage
 	if err := json.Unmarshal(body, &catalog); err != nil {
-		return nil, err
+		return nil, false, err
 	}
+	names := []string{provider}
+	everywhere := false
+	if _, ok := catalog[provider]; !ok {
+		everywhere, names = true, make([]string, 0, len(catalog))
+		for name := range catalog {
+			names = append(names, name)
+		}
+	}
+	models := make([]metadataModel, 0)
+	for _, name := range names {
+		models = append(models, modelsDevProvider(catalog[name], name)...)
+	}
+	return models, everywhere, nil
+}
+
+func modelsDevProvider(raw json.RawMessage, provider string) []metadataModel {
 	var entry struct {
 		Models map[string]json.RawMessage `json:"models"`
 	}
-	if raw, ok := catalog[provider]; !ok || json.Unmarshal(raw, &entry) != nil {
-		return []metadataModel{}, nil
+	if json.Unmarshal(raw, &entry) != nil {
+		return nil
 	}
 	models := make([]metadataModel, 0, len(entry.Models))
 	for id, raw := range entry.Models {
@@ -235,7 +260,7 @@ func modelsDevMetadata(body []byte, provider string) ([]metadataModel, error) {
 		}
 		models = append(models, metadataModel{ID: id, Name: m.Name, Provider: provider, ContextWindow: modelLimits(m.Limit.Context), MaxTokens: modelLimits(m.Limit.Output), Vision: visionOf(m.Modalities.Input), OutputModalities: m.Modalities.Output, Prices: prices})
 	}
-	return models, nil
+	return models
 }
 
 func openRouterMetadata(body []byte) ([]metadataModel, error) {

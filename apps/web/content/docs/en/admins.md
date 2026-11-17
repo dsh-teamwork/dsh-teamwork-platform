@@ -26,18 +26,23 @@ should use and publish them.
 
 Members see team models only: never the address or the key.
 
-When publishing or editing a model, **Get model information** queries Models.dev
-or OpenRouter immediately. Choose the reference provider/model, review the
-changes and apply context limits and image understanding to the form. A custom
-call ID stays unchanged. Unknown fields retain your entries, and failed lookups
-do not stop manual configuration. Save separately to publish the values.
+When publishing or editing a model, **Fill from public catalog** fills the
+context window, maximum output and image understanding at once from the entry
+whose ID is exactly the model's: OpenRouter for OpenRouter, Models.dev for
+every other provider (for a provider Models.dev does not know, such as your own
+proxy, it looks the ID up across all its providers). A note under the button
+says where the values came from and what changed, with **Undo**. Unknown values
+leave your entries alone. When there is no exact match, or several providers
+list the same ID, nothing changes and **Choose a reference…** lets you pick one
+by another name. The call ID never changes, and nothing is published until you
+save.
 
 In a model's reference-rate dialog, while the rate is an estimated cost rather
-than an internal weight, **Get suggested prices** converts public
-prices to CNY automatically using the latest available reference exchange rate.
-Suggestions are rounded for readability; no exchange rate entry is needed.
-Review the supplier's actual pricing and save separately. These are form
-suggestions only: there is no periodic synchronization or saved catalog link.
+than an internal weight, **Fill reference prices** does the same with the
+public prices, converted to CNY per million text tokens at the latest reference
+exchange rate and rounded up; the note shows the rate and its date. Review the
+supplier's actual pricing, then save. These only fill the form: nothing is
+synchronized later and no catalog link is saved.
 
 
 ## 3. Add presets and plugins

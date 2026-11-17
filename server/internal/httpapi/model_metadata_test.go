@@ -29,20 +29,20 @@ func TestMetadataSupplierUnitsAndUnknownValues(t *testing.T) {
 	if models[1].Vision != nil || models[1].ContextWindow != nil || len(models[1].Prices) != 0 {
 		t.Fatalf("unknown became a default: %+v", models[1])
 	}
-	models, err = modelsDevMetadata([]byte(`{"provider":{"models":{"same":{"id":"same","name":"Host variant","limit":{"context":32000,"output":4096},"modalities":{"input":["text","image/png"],"output":["text"]},"cost":{"input":2.5,"output":10,"cache_read":0}}}},"other":{"models":{"same":{"cost":{"input":99}}}}}`), "provider")
+	models, _, err = modelsDevMetadata([]byte(`{"provider":{"models":{"same":{"id":"same","name":"Host variant","limit":{"context":32000,"output":4096},"modalities":{"input":["text","image/png"],"output":["text"]},"cost":{"input":2.5,"output":10,"cache_read":0}}}},"other":{"models":{"same":{"cost":{"input":99}}}}}`), "provider")
 	if err != nil || len(models) != 1 || models[0].Prices["input"] != "2.500000000000" || models[0].Vision == nil || !*models[0].Vision {
 		t.Fatalf("provider isolation: %+v %v", models, err)
 	}
-	structured, err := modelsDevMetadata([]byte(`{"provider":{"models":{"m":{"cost":{"text":{"input":{"price":3,"cache":{"read":0.3}},"output":{"price":15}}}}}}}`), "provider")
+	structured, _, err := modelsDevMetadata([]byte(`{"provider":{"models":{"m":{"cost":{"text":{"input":{"price":3,"cache":{"read":0.3}},"output":{"price":15}}}}}}}`), "provider")
 	if err != nil || structured[0].Prices["input"] != "3.000000000000" || structured[0].Prices["cacheRead"] != "0.300000000000" {
 		t.Fatalf("structured prices: %+v %v", structured, err)
 	}
 	// One malformed entry, in another provider or beside a good one, never fails the lookup.
-	tolerant, err := modelsDevMetadata([]byte(`{"broken":{"models":{"x":{"limit":{"context":"wide"}}}},"provider":{"models":{"bad":{"limit":{"context":1.5}},"odd":{"cost":{"text":[1]},"name":"Odd"},"good":{"name":"Good","limit":{"context":64000}}}}}`), "provider")
+	tolerant, _, err := modelsDevMetadata([]byte(`{"broken":{"models":{"x":{"limit":{"context":"wide"}}}},"provider":{"models":{"bad":{"limit":{"context":1.5}},"odd":{"cost":{"text":[1]},"name":"Odd"},"good":{"name":"Good","limit":{"context":64000}}}}}`), "provider")
 	if err != nil || len(tolerant) != 2 {
 		t.Fatalf("one bad entry failed the lookup: %+v %v", tolerant, err)
 	}
-	if missing, err := modelsDevMetadata([]byte(`{"other":{}}`), "provider"); err != nil || len(missing) != 0 {
+	if missing, everywhere, err := modelsDevMetadata([]byte(`{"other":{}}`), "provider"); err != nil || len(missing) != 0 || !everywhere {
 		t.Fatalf("unknown provider: %+v %v", missing, err)
 	}
 }
@@ -70,6 +70,24 @@ func TestMetadataAlwaysQueriesFixedUpstream(t *testing.T) {
 	})
 	if _, err := readMetadata(context.Background(), client, metadataLookup{Source: "models_dev", Provider: "p", Query: "m"}); err == nil {
 		t.Fatal("invalid upstream accepted")
+	}
+}
+
+// A team's own proxy is no Models.dev provider: its model is found by exact id
+// at every provider, and a substring never floods the answer.
+func TestMetadataUnknownProviderSearchesEveryProviderByExactID(t *testing.T) {
+	client := &http.Client{Transport: metadataTransport(func(r *http.Request) (*http.Response, error) {
+		return metadataResponse(`{"a":{"models":{"Deepseek-Chat":{"limit":{"context":64000}},"deepseek-chat-v2":{}}},"b":{"models":{"deepseek-chat":{"limit":{"context":128000}}}},"c":{"models":{"other":{}}}}`), nil
+	})}
+	for _, provider := range []string{"my-proxy", ""} {
+		models, err := readMetadata(context.Background(), client, metadataLookup{Source: "models_dev", Provider: provider, Query: "deepseek-chat"})
+		if err != nil || len(models) != 2 || models[0].Provider != "a" || models[1].Provider != "b" {
+			t.Fatalf("provider %q: %+v %v", provider, models, err)
+		}
+	}
+	models, err := readMetadata(context.Background(), client, metadataLookup{Source: "models_dev", Provider: "a", Query: "deepseek"})
+	if err != nil || len(models) != 2 {
+		t.Fatalf("a known provider still matches substrings: %+v %v", models, err)
 	}
 }
 
