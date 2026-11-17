@@ -121,7 +121,8 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
           <CardContent className="pt-6 text-center text-sm text-muted-foreground">{admin ? t('emptyAdmin') : t('emptyMember')}</CardContent>
         </Card>
       ) : (
-        <ul className="grid gap-3 md:grid-cols-2">
+        // Rows, not cards (docs/design.md, "Lists are rows"): the templates below are the one block set apart.
+        <ul className="divide-y rounded-lg border bg-card">
           {presets.map((p) => (
             <PresetCard
               key={p.id}
@@ -229,14 +230,14 @@ function PresetCard({
   // A pin to a version the plugin no longer has: saving the preset again re-pins it at the current one.
   const stale = preset.data.pluginDependencies.some((d) => plugins.find((p) => p.id === d.pluginConfigId)?.data.version !== d.version);
   return (
-    <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+    <li className="flex flex-col gap-3 px-4 py-4">
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold">{preset.name}</h3>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground tabular-nums">v{preset.version}</span>
       </div>
       {preset.data.description && <p className="text-sm text-muted-foreground">{preset.data.description}</p>}
       <Tools required={preset.data.requiredTools} optional={preset.data.optionalTools} />
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span className="flex flex-wrap items-center gap-3">
           <span className={cn('flex items-center gap-1', preset.data.modelConfigId && !model && 'text-destructive')}>
             <Cpu className="size-3.5" aria-hidden />

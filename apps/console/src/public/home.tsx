@@ -275,18 +275,19 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
               </ul>
               <figure className="min-w-0">
                 <figcaption className="mb-3 text-sm text-muted-foreground">{t('collaborate.terminalCaption')}</figcaption>
-                <pre className="overflow-x-auto rounded-xl bg-primary p-5 font-mono text-[13px] leading-relaxed text-primary-foreground">
+                {/* A terminal stays dark: ink in light, a raised dark surface in dark, never a white block on a dark page. */}
+                <pre className="overflow-x-auto rounded-xl bg-primary p-5 font-mono text-[13px] leading-relaxed text-primary-foreground dark:bg-card dark:text-card-foreground dark:ring-1 dark:ring-border">
                   <span>›</span> /teamwork login{'\n'}
-                  <span className="text-primary-foreground/60">{'  '}{t('collaborate.termConfirm')}</span>{'\n'}
+                  <span className="text-primary-foreground/60 dark:text-muted-foreground">{'  '}{t('collaborate.termConfirm')}</span>{'\n'}
                   <span>✓</span> {t('collaborate.termSigned')}{'\n'}
                   <span>›</span> /teamwork sync{'\n'}
                   <span>✓</span> {t('collaborate.termSynced')}{'\n'}
-                  {'  '}pr-review        <span className="text-primary-foreground/60">→ team/reviewer</span>{'\n'}
-                  {'  '}incident-triage  <span className="text-primary-foreground/60">→ team/coder</span>{'\n'}
+                  {'  '}pr-review        <span className="text-primary-foreground/60 dark:text-muted-foreground">→ team/reviewer</span>{'\n'}
+                  {'  '}incident-triage  <span className="text-primary-foreground/60 dark:text-muted-foreground">→ team/coder</span>{'\n'}
                   {'  '}@acme/dsh-lint   <span>@2.3.1</span>{'\n'}
                   <span>›</span> /teamwork new pr-review{'\n'}
                   <span>✓</span> {t('collaborate.termSession')}{'\n'}
-                  <span className="text-primary-foreground/60">{'  '}{t('collaborate.termNoKey')}</span>
+                  <span className="text-primary-foreground/60 dark:text-muted-foreground">{'  '}{t('collaborate.termNoKey')}</span>
                 </pre>
               </figure>
             </div>

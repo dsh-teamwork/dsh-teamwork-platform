@@ -173,22 +173,23 @@ function PluginDialog({ teamId, reload, plugin, onClose }: { teamId: string; rel
               description: form.description,
               providesTools: form.tools.split(/[,\n]/).map((s) => s.trim()).filter(Boolean),
             };
-            const body = { kind: 'plugin', name: form.name.trim(), data, ...(plugin ? { version: plugin.version } : {}) };
+            // A new pin is named after its package unless the admin names it.
+            const body = { kind: 'plugin', name: form.name.trim() || data.package.slice(0, 100), data, ...(plugin ? { version: plugin.version } : {}) };
             const path = plugin ? `teams/${teamId}/configs/${plugin.id}` : `teams/${teamId}/configs`;
             if (await run(() => api(path, { method: plugin ? 'PATCH' : 'POST', body }), t('saved'))) onClose();
           }}
         >
-          <Field id="plugin-name" label={t('name')}>
-            <Input id="plugin-name" value={form.name} onChange={set('name')} maxLength={100} required />
-          </Field>
           <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
             <Field id="plugin-package" label={t('package')}>
-              <Input id="plugin-package" value={form.package} onChange={set('package')} placeholder="@scope/name" required className="font-mono" />
+              <Input id="plugin-package" value={form.package} onChange={set('package')} placeholder="@scope/name" required autoFocus={!plugin} className="font-mono" />
             </Field>
             <Field id="plugin-version" label={t('version')} hint={plugin ? t('versionHint') : undefined}>
               <Input id="plugin-version" value={form.version} onChange={set('version')} placeholder="1.0.0" required className="font-mono" />
             </Field>
           </div>
+          <Field id="plugin-name" label={t('name')} hint={plugin ? undefined : t('nameHint')}>
+            <Input id="plugin-name" value={form.name} onChange={set('name')} maxLength={100} required={!!plugin} placeholder={plugin ? undefined : form.package.trim()} />
+          </Field>
           <Field id="plugin-description" label={t('about')}>
             <Textarea id="plugin-description" value={form.description} onChange={set('description')} maxLength={1000} />
           </Field>

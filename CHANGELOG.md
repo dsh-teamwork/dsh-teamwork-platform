@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Presets are listed as rows, a plugin pin needs only its package, and the landing terminal stays dark
+
+- **What:** The console's presets are one list of rows instead of two columns of cards, as `docs/design.md` asks of lists; the templates below stay cards. Pinning a plugin asks for the npm package and version first, and its name defaults to the package. The landing page's example terminal is a raised dark surface in the dark theme instead of a white block.
+- **Why:** Uneven card heights, a name field that was easy to fill with the wrong thing, and an inverted block on a dark page.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/pages/team/presets.tsx`, `apps/console/src/pages/team/plugins.tsx`, `apps/console/src/public/home.tsx`.
+
 ## 2026-11-17 — The console names its terms and offers only what the instance can do
 
 - **What:** The Chinese console translates Provider and Key with the terms `/docs` already uses, instead of leaving them in English. Usage explains points (the team's own measure of cost, CNY 1 = 1,000 points at the reference rates, counted by budgets) and that a provider still bills its own key directly, in place of "BYOK". A budget form on an instance that sends no email offers no notification choice and creates the policy notifying nobody. A new budget reports "Budget created", not "updated". English budget labels write "token" in lower case, and the Chinese home page's eyebrow is no longer forced to capitals.
