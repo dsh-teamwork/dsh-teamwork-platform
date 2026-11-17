@@ -17,7 +17,10 @@
     "theme": {
       "switchTo": "Switch to {theme, select, dark {dark} other {light}} theme",
       "toggle": "Switch between light and dark"
-    }
+    },
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy; select the text and copy it yourself."
   },
   "signIn": {
     "title": "Sign in",
@@ -46,7 +49,8 @@
     "unavailable": "Sign-in isn't available right now.",
     "invalid_credentials": "That email and password don't match.",
     "weak_password": "Use at least 10 characters.",
-    "setup_closed": "This instance already has its first account. Sign in instead."
+    "setup_closed": "This instance already has its first account. Sign in instead.",
+    "setup_link_invalid": "This is not the link the server printed. Copy it again from the server’s output."
   },
   "plugin": {
     "title": "Authorize the DSH plugin",
@@ -58,7 +62,11 @@
     "confirm": "Authorize",
     "copy": "Paste this into DSH:",
     "expiry": "The code works for two minutes, and only for the DSH that asked for it.",
-    "failed": "Authorization failed. Sign in again, or run /teamwork login in DSH again."
+    "failed": "Authorization failed. Sign in again, or run /teamwork login in DSH again.",
+    "account": "Signed in as {email}.",
+    "scope": "This DSH will reach {count, plural, =0 {your teams} one {your team} other {all # teams you are in}} through your account for 30 days.",
+    "cancel": "Cancel",
+    "notYou": "Not you? Sign out"
   },
   "password": {
     "title": "Change your password",
@@ -304,9 +312,6 @@
       },
       "connectAdmin": "Send this to new members",
       "connectMember": "Connect your DSH",
-      "copy": "Copy",
-      "copied": "Copied",
-      "copyFailed": "Could not copy; select the command and copy it yourself.",
       "recent": "Recent changes",
       "recentEmpty": "No configuration yet.",
       "kind": {
@@ -508,7 +513,8 @@
       "save": "Save",
       "editTitle": "Edit team model",
       "limitsHint": "Leave a limit empty when the provider does not state it.",
-      "modelSaved": "Saved. Members get it at their next sync."
+      "modelSaved": "Saved. Members get it at their next sync.",
+      "checking": "Checking the key…"
     },
     "templates": {
       "writer": {
@@ -966,7 +972,6 @@
     "member_in_other_team": "That person is also in another team, so only they can change their password.",
     "provider_exists": "Your team already has a provider with that name.",
     "provider_in_use": "A team model or preset still uses this provider.",
-    "provider_address_refused": "This server may not call that address.",
     "provider_keys_unavailable": "Provider keys cannot be read or stored on this server: PROVIDER_KEYS_SECRET is missing or has changed.",
     "model_in_use": "Presets still use this model. Point them at another model first, then remove it.",
     "plugin_in_use": "Presets still depend on this plugin. Remove it from those presets first, then remove it.",
@@ -987,7 +992,11 @@
     "member_not_found": "That person is not a member of this team.",
     "confirmation_mismatch": "Type your email exactly as it is shown.",
     "admin_of_shared_team": "You administer a team with other members in it. Make one of them the admin first.",
-    "wallet_has_balance": "A team you would delete still holds purchased credit. Spend it, or write to support for a refund, first."
+    "wallet_has_balance": "A team you would delete still holds purchased credit. Spend it, or write to support for a refund, first.",
+    "provider_address_private": "This server only calls public addresses. To use a local or private address on your own server, set ALLOW_PRIVATE_PROVIDERS=true.",
+    "provider_address_plain_http": "Use https. Plain http is allowed only for a local or private address on a server that permits them.",
+    "provider_address_unresolved": "That host could not be found. Check the address.",
+    "provider_key_rejected": "The provider refused this API key. Check that it is complete and still active."
   },
   "docs": {
     "title": "Docs",

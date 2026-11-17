@@ -149,13 +149,17 @@ func (s *Service) SetPassword(ctx context.Context, userID, pw string, mustChange
 
 // ChangePassword replaces the signed-in person's password, checking the
 // current one first, which counts as a guess. It clears an admin's
-// must-change mark.
-func (s *Service) ChangePassword(ctx context.Context, user *ent.User, current, next string) error {
+// must-change mark. With proven (FirstPasswordProven) the current one may be
+// left empty: the session already signed in with it.
+func (s *Service) ChangePassword(ctx context.Context, user *ent.User, current, next string, proven bool) error {
 	if !wire.ValidPassword(next) {
 		return refuse(wire.WeakPassword)
 	}
 	if user.Email == nil {
 		return refuse(wire.NotAllowed)
+	}
+	if current == "" && proven {
+		return s.SetPassword(ctx, user.ID, next, false)
 	}
 	checked, err := s.CheckPassword(ctx, *user.Email, current)
 	if err != nil {
@@ -186,7 +190,7 @@ const firstAccountKey = "setup:first-account"
 func (s *Service) ClaimFirstAccount(ctx context.Context, token, email, pw string) (*ent.User, error) {
 	want := SetupToken(s.Secret)
 	if subtle.ConstantTimeCompare([]byte(token), []byte(want)) != 1 {
-		return nil, refuse(wire.SetupClosed)
+		return nil, refuse(wire.SetupLinkInvalid)
 	}
 	addr, ok := wire.Email(email)
 	if !ok {
@@ -239,6 +243,26 @@ func (s *Service) ClaimFirstAccount(ctx context.Context, token, email, pw string
 // inside the caller's transaction; created says whether it was just made.
 func EnsureEmailUser(ctx context.Context, tx *ent.Tx, email string) (*ent.User, bool, error) {
 	return AccountInTx(ctx, tx, EmailProof(email))
+}
+
+// FirstPasswordProven is whether a browser session signed in with the
+// admin-set password its account still has: the password is marked
+// must-change, the session came through the password door, and it was issued
+// after that password was set (to the second, strictly). Such a session may
+// replace the password without typing it again. A session from before an
+// admin reset is not: a reset is often the answer to a stolen session.
+func (s *Service) FirstPasswordProven(ctx context.Context, userID, via string, issued time.Time) (bool, error) {
+	if via != "password" {
+		return false, nil
+	}
+	p, err := s.DB.Password.Query().Where(password.UserID(userID)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return p.MustChange && issued.Unix() > p.UpdatedAt.Unix(), nil
 }
 
 // MustChange is whether an admin-set password is still unchanged.

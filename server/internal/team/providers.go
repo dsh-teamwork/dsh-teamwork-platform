@@ -156,6 +156,27 @@ func (s *Service) ModelCatalog(ctx context.Context, client *http.Client, userID,
 	if err != nil {
 		return Catalog{}, err
 	}
+	return readCatalog(ctx, client, base, key, provider)
+}
+
+// CheckProvider reads a provider's model list with an address and key that
+// are not saved yet, so a key the provider refuses is caught on the form that
+// typed it. Nothing is stored; the address rule holds as it does for saving.
+func (s *Service) CheckProvider(ctx context.Context, client *http.Client, userID, teamID string, in wire.ProviderCheck) (Catalog, error) {
+	if _, err := s.RequireMembership(ctx, userID, teamID, true); err != nil {
+		return Catalog{}, err
+	}
+	u, _ := url.Parse(in.BaseURL)
+	if err := s.Network.Check(ctx, u); err != nil {
+		return Catalog{}, err
+	}
+	return readCatalog(ctx, client, strings.TrimSuffix(u.String(), "/"), in.APIKey, "")
+}
+
+// readCatalog is GET {base}/models with the key. A 401 or 403 is
+// provider_key_rejected; any other failure is upstream_unavailable, since a
+// provider may simply not list its models.
+func readCatalog(ctx context.Context, client *http.Client, base, key, provider string) (Catalog, error) {
 	unavailable := wire.E(http.StatusBadGateway, wire.UpstreamUnavailable)
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
@@ -169,6 +190,9 @@ func (s *Service) ModelCatalog(ctx context.Context, client *http.Client, userID,
 		return Catalog{}, unavailable
 	}
 	defer res.Body.Close()
+	if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+		return Catalog{}, wire.E(http.StatusBadRequest, wire.ProviderKeyRejected)
+	}
 	body, err := io.ReadAll(io.LimitReader(res.Body, 1<<20+1))
 	if err != nil || res.StatusCode < 200 || res.StatusCode > 299 || len(body) > 1<<20 {
 		return Catalog{}, unavailable
@@ -217,7 +241,7 @@ func (s *Service) Route(ctx context.Context, teamID, name string) (string, strin
 	}
 	u, err := url.Parse(p.BaseURL)
 	if err != nil {
-		return "", "", wire.E(http.StatusBadRequest, wire.ProviderAddressRefused)
+		return "", "", wire.E(http.StatusBadRequest, wire.ProviderAddressUnresolved)
 	}
 	if err := s.Network.Check(ctx, u); err != nil {
 		return "", "", err

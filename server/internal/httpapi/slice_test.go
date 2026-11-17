@@ -162,7 +162,7 @@ func TestFirstAccountRace(t *testing.T) {
 		if n := d.Client.Password.Query().CountX(context.Background()); ok.Load() != 1 || n != 1 {
 			t.Fatalf("%d claims succeeded, %d passwords", ok.Load(), n)
 		}
-		if r := e.browser().post("/api/auth/setup", map[string]string{"token": "wrong", "email": "z@x.io", "password": "correct horse battery"}); r.code() != "setup_closed" {
+		if r := e.browser().post("/api/auth/setup", map[string]string{"token": "wrong", "email": "z@x.io", "password": "correct horse battery"}); r.code() != "setup_link_invalid" {
 			t.Fatalf("wrong token: %s", r.body)
 		}
 	})

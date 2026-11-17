@@ -30,6 +30,9 @@ type SessionUser struct {
 	Email              *string `json:"email"`
 	Name               *string `json:"name"`
 	MustChangePassword bool    `json:"mustChangePassword"`
+	// ChangeWithoutCurrent: this session signed in with the admin-set password,
+	// so it replaces it without typing it again (auth.FirstPasswordProven).
+	ChangeWithoutCurrent bool `json:"changeWithoutCurrent"`
 }
 
 func (s *Server) session(w http.ResponseWriter, r *http.Request) error {
@@ -48,7 +51,11 @@ func (s *Server) session(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		v.User = &SessionUser{ID: c.user.ID, Email: c.user.Email, Name: c.user.Name, MustChangePassword: must}
+		proven, err := s.Auth.FirstPasswordProven(r.Context(), c.user.ID, c.via, c.issued)
+		if err != nil {
+			return err
+		}
+		v.User = &SessionUser{ID: c.user.ID, Email: c.user.Email, Name: c.user.Name, MustChangePassword: must, ChangeWithoutCurrent: proven}
 	}
 	if v.Doors.Password {
 		if v.SetupOpen, err = s.Auth.SetupOpen(r.Context()); err != nil {
@@ -123,7 +130,11 @@ func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) error {
 	if err := decode(r, &in); err != nil {
 		return err
 	}
-	if err := s.Auth.ChangePassword(r.Context(), c.user, in.Current, in.Next); err != nil {
+	proven, err := s.Auth.FirstPasswordProven(r.Context(), c.user.ID, c.via, c.issued)
+	if err != nil {
+		return err
+	}
+	if err := s.Auth.ChangePassword(r.Context(), c.user, in.Current, in.Next, proven); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)

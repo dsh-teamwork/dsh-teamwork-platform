@@ -18,6 +18,7 @@ const (
 	InvalidCredentials     = "invalid_credentials"
 	WeakPassword           = "weak_password"
 	SetupClosed            = "setup_closed"
+	SetupLinkInvalid       = "setup_link_invalid"
 	PasswordChangeRequired = "password_change_required"
 )
 

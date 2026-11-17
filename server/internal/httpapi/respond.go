@@ -62,6 +62,7 @@ var refusalStatus = map[string]int{
 	wire.InvalidCode:            http.StatusUnauthorized,
 	wire.TooManyAttempts:        http.StatusTooManyRequests,
 	wire.SetupClosed:            http.StatusForbidden,
+	wire.SetupLinkInvalid:       http.StatusForbidden,
 	wire.NotAllowed:             http.StatusForbidden,
 	wire.PasswordChangeRequired: http.StatusForbidden,
 	wire.Unavailable:            http.StatusServiceUnavailable,
