@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The relay and shared DSHs join the community edition
+
+- **What:** A decision, and the plan for it: the relay (phone pairing and end-to-end encrypted forwarding), shared DSHs and their audit archive move from the hosted edition into the open server and web app, and the closed phone app reaches any server. Nothing has moved yet; `docs/tech/shared-dsh.md` orders the work.
+- **Why:** A team's shared DSH must work on a self-hosted community server (ADR 0044).
+- **Breaking:** None yet. When the relay moves, the hosted service's pairings and shared hosts are not carried over.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0044, `docs/tech/shared-dsh.md`, `docs/tech/community-edition.md`.
+
 ## 2026-11-17 — Host tokens for a shared DSH
 
 - **What:** A fourth sealed token kind, `auth.HostBearer`, minted only by an edition through `Host.MintHostToken` for a shared DSH: one team, no person, at most an hour. `GET /api/configs` returns that team alone (role `member`) and the gateway calls its models; no other route opens it. Its calls are recorded with `usage_requests.host_id` and an empty `user_id`, held to the team's and providers' budgets and to no member's; usage entries carry `hostId`, and the console's usage list names such a row "Shared DSH". `edition.FundingAdmission` gains `HostID`, so an edition funding hosted models sees which calls are a shared DSH's.
