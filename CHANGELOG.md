@@ -13,6 +13,22 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** ADR 0038.
 
+## 2026-11-17 — A redesigned /teams, a wider landing page, a theme switch and one select
+
+- **What:** `/teams` gets the site's top bar and footer, team cards (initials on navy, with overview, models and members one click away) grouped by role, a welcome with the first steps for a person with no team, and create/join in dialogs; an `?invite=` link opens the join dialog filled in. The landing page widens from `max-w-5xl` to `max-w-6xl`. A theme button switches between light and dark (the system's setting until a person chooses; the choice is kept in `localStorage` under `theme`, the instance console's key, whose own picker drops its "system" option) and sits in the top bar and footer of the landing page, the docs and `/teams`, and beside the account in a team's sidebar; the first paint follows it. The person is shown by their avatar: a team's sidebar ends in a row of avatar, name and role (after Router9 Studio's rail) and top bars show the avatar alone, both leading straight to a new account settings page (`/account`: name edited in place, email, language, light or dark, password where the instance holds passwords, your teams, sign out). The account dropdown is gone, and the email is printed only on that page. Every native `<select>` is replaced by one custom select (`components/ui/select.tsx`), the language picker included; the public pages draw the same look without React. The old picker's menu was transparent (`bg-popover` is not a token); it now uses the card surface.
+- **Why:** The teams page was a narrow column with forms always open, the theme could not be chosen, and native selects broke the visual system.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/pages/teams.tsx`, `apps/console/src/lib/theme.ts`, `apps/console/src/components/ui/select.tsx`, `apps/console/src/public/controls.tsx`, `docs/design.md` ("Colour", "Component rules").
+
+## 2026-11-17 — The team overview opens with what waits on you
+
+- **What:** `GET /api/teams/{teamId}/summary` returns, scoped to the caller, the last 30 days' calls and points, calls left unpriced, calls an admin must resolve, budget mail that failed, budget windows past a notice threshold (80, 95, 100 %), the caller's quota summary and submissions awaiting review. The console's overview opens with that list (each row links to the page that deals with it) and a strip of figures, keeps the getting-started checklist only until it is done, and explains joining in three steps with a copyable message for new members. An admin's sidebar marks "Sharing and review" with an amber dot while submissions wait.
+- **Why:** The overview counted configuration rows and could not say what needed doing.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/usage/summary.go`, `apps/console/src/pages/team/overview.tsx`, `docs/tech/usage-budgets.md` ("API and console").
+
 ## 2026-11-17 — Editions can register meters with the budget engine
 
 - **What:** An edition registers its own kinds of usage (`edition.Host.RegisterMeters`): it holds points for a member before metered work starts and settles the measured quantity and its points afterwards, in the same windows, reservations and transaction as model calls, with its funding participant. Team and member point budgets bound them; provider budgets and token limits do not. `usage_requests` gains `meter` and `quantity`; the usage API's entries gain `meter`, the CSV export gains `meter`, `quantity` and `unit`, and the console's Usage page names a metered row by its labels. An unsettled hold is marked lost and stays held; an administrator cannot resolve a metered row.

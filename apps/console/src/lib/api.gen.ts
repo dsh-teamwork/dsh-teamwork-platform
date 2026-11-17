@@ -1681,6 +1681,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Read what waits on the caller and the last 30 days' usage, for the team's overview */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description An admin's team-wide summary, or a member's own calls and the limits that apply to them */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TeamSummary"];
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teams/{teamId}/usage": {
         parameters: {
             query?: never;
@@ -2411,6 +2454,36 @@ export interface components {
             /** Format: date-time */
             effectiveAt: string | null;
             inheritsDefault: boolean;
+        };
+        TeamSummary: {
+            /**
+             * Format: date-time
+             * @description Start of the counted period, 30 days back
+             */
+            since: string;
+            /** @description Model calls in the period; the team's for an admin, the caller's own for a member */
+            calls: number;
+            /** @description Reference points spent in the period: priced model calls and edition meters */
+            points: string;
+            /** @description Calls in the period without a price yet, which points leaves out */
+            unpriced: number;
+            /** @description Model calls an admin must resolve, from any time; 0 for a member. Metered rows are settled by their edition */
+            unresolved: number;
+            /** @description Budget mail that could not be delivered; 0 for a member */
+            failedNotices: number;
+            /** @description Open budget windows at or past a notice threshold */
+            nearLimit: {
+                /** @enum {string} */
+                scope: "team" | "member" | "provider";
+                subjectId: string;
+                /** @enum {string} */
+                period: "day" | "month";
+                /** @enum {integer} */
+                threshold: 80 | 95 | 100;
+            }[];
+            budget: components["schemas"]["QuotaSummary"];
+            /** @description Submissions awaiting review; the team's for an admin, the caller's own for a member */
+            pendingReviews: number;
         };
         QuotaSummary: {
             /** @description Smallest current team/member points allowance after holds; advisory, not a wallet balance */

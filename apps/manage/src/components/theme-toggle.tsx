@@ -1,15 +1,14 @@
 import { t } from '../lib/copy';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { setTheme, useTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
 const OPTIONS = [
   { value: 'light', label: t('light'), icon: Sun },
   { value: 'dark', label: t('dark'), icon: Moon },
-  { value: 'system', label: t('system'), icon: Monitor },
 ] as const;
 
-/** Light / dark / system. */
+/** Light or dark; with no choice yet, the system's is the one shown as chosen. */
 export function ThemeToggle() {
   const theme = useTheme();
   return (

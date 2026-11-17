@@ -143,6 +143,7 @@ running time ([ADR 0036](../adr/0036-edition-meters.md)), through
 | `GET/PUT /budgets` | Applicable policies/current windows; admin revision-checked writes |
 | `GET /budgets/notices` | Latest notification delivery states, own recipient records for members |
 | `POST /budgets/notices/{noticeId}/retry` | Admin retries a failed notice after cooldown |
+| `GET /summary` | The overview's counts: last 30 days' calls and points, unresolved calls, failed notices, windows past a notice threshold, the caller's quota summary and pending reviews |
 
 Members see their own calls, per-person policies/windows and notification rows;
 shared team/provider limits remain visible. Admins inspect the whole team.
@@ -157,6 +158,15 @@ provider caps stay on the detail page. `resetAt` is the earliest policy boundary
 not a guarantee that all exhausted limits reopen then. Reads create no windows.
 Companion clients load this independently of configuration sync, clear it on
 team/account/server changes and never use it as an admission authorization.
+The team summary (`GET /summary`, `usage.Service.Summary`) is what the console's
+overview opens with. It is scoped like the rest: an admin counts the team's
+calls, unresolved calls (from any time), failed notices and every window past a
+notice threshold; a member counts their own calls and sees the windows that
+apply to them, with zero for what only an admin resolves. Its thresholds are the
+notices' (80, 95 and 100 % of a point cap), so the overview and the mail agree.
+Points sum what the period spent, edition meters included; calls, `unpriced`
+and `unresolved` count model calls only, since a metered row is settled by its
+edition (ADR 0036). `unpriced` says how many calls the points leave out.
 Outsiders retain team-not-found behavior. Typed failures report exhaustion,
 unconfirmed usage, missing prices, unsupported bounds and accounting failures;
 limit errors include scope/reset time. CSV retains stable user/model ids and

@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { NativeSelect } from '@/components/ui/native-select';
+import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { api, type ConfigOf, type Team, type TeamConfig } from '@/lib/api';
 import { DSH_TOOLS, PRESET_TEMPLATES, type PresetTemplate } from '@/lib/preset-templates';
@@ -414,24 +414,22 @@ function PresetEditor({
                 <Input id="preset-description" value={draft.description} onChange={(e) => set('description', e.target.value)} maxLength={500} />
               </Field>
               <Field id="preset-model" label={t('model')} hint={models.length || draft.route ? undefined : t('noModels')}>
-                <NativeSelect
+                <Select
                   id="preset-model"
+                  label={t('model')}
                   value={draft.modelConfigId}
-                  onChange={(e) => set('modelConfigId', e.target.value)}
-                  required={!draft.route}
-                >
-                  <option value="__inherit__">{t('inheritModel')}</option>
-                  {draft.route ? (
-                    <option value="">{t('keepRoute', { route: `${draft.route.provider} / ${draft.route.model}` })}</option>
-                  ) : (
-                    !draft.modelConfigId && <option value="">{t('chooseModel')}</option>
-                  )}
-                  {models.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </NativeSelect>
+                  options={[
+                    { value: '__inherit__', label: t('inheritModel') },
+                    ...(draft.route
+                      ? [{ value: '', label: t('keepRoute', { route: `${draft.route.provider} / ${draft.route.model}` }) }]
+                      : draft.modelConfigId
+                        ? []
+                        : [{ value: '', label: t('chooseModel') }]),
+                    ...models.map((m) => ({ value: m.id, label: m.name })),
+                  ]}
+                  change={(value) => set('modelConfigId', value)}
+                  className="w-full"
+                />
               </Field>
               <Field id="preset-deliverable" label={t('deliverable')} hint={t('deliverableHint')}>
                 <Input id="preset-deliverable" value={draft.outputDescription} onChange={(e) => set('outputDescription', e.target.value)} maxLength={2000} />

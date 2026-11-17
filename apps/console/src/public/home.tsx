@@ -3,10 +3,11 @@ import { createTranslator } from 'use-intl';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { LOCALES, type Locale } from '@/lib/locale';
+import type { Locale } from '@/lib/locale';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
 
+import { LocaleMenu, ThemeButton } from './controls';
 import { SITE_ORIGIN } from './site';
 import { Sea } from './sea';
 
@@ -25,25 +26,9 @@ import { Sea } from './sea';
  * Prerendered when the console is built (scripts/prerender.mjs), once per
  * locale and sign-in state; the Go server picks one per request
  * (server/internal/web). It runs no React in the browser: the language picker
- * is a plain <select> that src/public/client.ts wires up, and the narrow
- * screen's menu is a <details>.
+ * and theme controls come from ./controls.tsx and src/public/client.ts wires
+ * them, and the narrow screen's menu is a <details>.
  */
-
-/** The language picker: POST /api/locale, then the page again in that language. */
-export function LocalePicker({ locale, label, names }: { locale: Locale; label: string; names: (l: Locale) => string }) {
-  return (
-    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-      {label}
-      <select data-locale-picker="" className="rounded-md border border-input bg-background px-2 py-1 text-foreground" defaultValue={locale}>
-        {LOCALES.map((l) => (
-          <option key={l} value={l}>
-            {names(l)}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 const code = (chunks: ReactNode) => <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.9em]">{chunks}</code>;
 
@@ -60,7 +45,7 @@ function Depth({ depth, label }: { depth: string; label: string }) {
 function Zone({ id, children }: { id?: string; children: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-4 border-t">
-      <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28">{children}</div>
+      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">{children}</div>
     </section>
   );
 }
@@ -177,7 +162,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
-      <header className="mx-auto flex h-16 max-w-5xl items-center gap-8 px-6">
+      <header className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
         <a href="/" className="flex shrink-0 items-center gap-2.5 text-lg font-bold tracking-tight">
           <img src="/logo.svg" alt="" width={30} height={30} />
           {tc('appName')}
@@ -190,11 +175,12 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <ThemeButton label={tc('theme.toggle')} />
           <Button asChild className="hidden sm:inline-flex">
             <a href={start.href}>{start.label}</a>
           </Button>
           {/* Narrow screens: the sections behind a native disclosure, since this page runs no React. */}
-          <details className="group relative lg:hidden">
+          <details data-menu="" className="group relative lg:hidden">
             <summary className="flex size-9 cursor-pointer list-none items-center justify-center rounded-md border border-input [&::-webkit-details-marker]:hidden" aria-label={t('nav.menu')}>
               <span aria-hidden="true" className="flex w-4 flex-col gap-1">
                 <span className="h-px bg-foreground" />
@@ -217,7 +203,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
       </header>
 
       <main>
-        <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pt-14 sm:pt-24">
+        <section className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pt-14 sm:pt-24">
           <p className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('eyebrow')}</p>
           <h1 className="max-w-4xl text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-6xl sm:leading-[1.08]">{t('title')}</h1>
           <p className="max-w-2xl text-lg text-muted-foreground">{t('lede')}</p>
@@ -402,7 +388,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
           </Zone>
 
           <section className="bg-brand text-brand-foreground">
-            <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
+            <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
               <p className="mb-6 flex items-center gap-3 font-mono text-xs font-semibold tracking-wider">
                 <span aria-hidden="true" className="size-1.5 rounded-full bg-signal" />
                 {t('final.depth')}
@@ -417,7 +403,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
           </section>
 
           <footer className="border-t border-border">
-            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-8 text-sm text-muted-foreground">
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-8 text-sm text-muted-foreground">
               <span className="flex items-center gap-2 font-bold text-foreground">
                 <img src="/logo.svg" alt="" width={22} height={22} />
                 {tc('appName')}
@@ -435,8 +421,9 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
                   </a>
                 </>
               )}
-              <div className="ml-auto">
-                <LocalePicker locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} />
+              <div className="ml-auto flex items-center gap-2">
+                <ThemeButton label={tc('theme.toggle')} />
+                <LocaleMenu locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} />
               </div>
             </div>
           </footer>

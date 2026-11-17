@@ -694,6 +694,20 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
         '409': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/summary:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Read what waits on the caller and the last 30 days' usage, for the team's overview
+      responses:
+        '200':
+          description: An admin's team-wide summary, or a member's own calls and the limits that apply to them
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TeamSummary' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
   /teams/{teamId}/usage:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -1031,6 +1045,29 @@ components:
             activeTimezone: { type: string }
             effectiveAt: { type: string, nullable: true, format: date-time }
             inheritsDefault: { type: boolean }
+    TeamSummary:
+      type: object
+      required: [since, calls, points, unpriced, unresolved, failedNotices, nearLimit, budget, pendingReviews]
+      properties:
+        since: { type: string, format: date-time, description: "Start of the counted period, 30 days back" }
+        calls: { type: integer, minimum: 0, description: "Model calls in the period; the team's for an admin, the caller's own for a member" }
+        points: { type: string, description: "Reference points spent in the period: priced model calls and edition meters" }
+        unpriced: { type: integer, minimum: 0, description: "Calls in the period without a price yet, which points leaves out" }
+        unresolved: { type: integer, minimum: 0, description: "Model calls an admin must resolve, from any time; 0 for a member. Metered rows are settled by their edition" }
+        failedNotices: { type: integer, minimum: 0, description: "Budget mail that could not be delivered; 0 for a member" }
+        nearLimit:
+          type: array
+          description: Open budget windows at or past a notice threshold
+          items:
+            type: object
+            required: [scope, subjectId, period, threshold]
+            properties:
+              scope: { type: string, enum: [team, member, provider] }
+              subjectId: { type: string }
+              period: { type: string, enum: [day, month] }
+              threshold: { type: integer, enum: [80, 95, 100] }
+        budget: { $ref: '#/components/schemas/QuotaSummary' }
+        pendingReviews: { type: integer, minimum: 0, description: "Submissions awaiting review; the team's for an admin, the caller's own for a member" }
     QuotaSummary:
       type: object
       required: [remaining, state, resetAt, tokenLimited, exhausted]

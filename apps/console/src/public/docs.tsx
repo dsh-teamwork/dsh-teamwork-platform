@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
 
-import { LocalePicker } from './home';
+import { LocaleMenu, ThemeButton } from './controls';
 
 /** The sidebar: each section's pages, by slug. `index` is `/docs` itself. */
 export const SECTIONS = [
@@ -166,7 +166,8 @@ export function DocsPage({ locale, slug }: { locale: Locale; slug: Slug }) {
           <a href="/docs" className="text-sm text-muted-foreground hover:text-foreground">
             {t('title')}
           </a>
-          <a href="/teams" className="ml-auto rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+          <ThemeButton label={tc('theme.toggle')} className="ml-auto" />
+          <a href="/teams" className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90">
             {t('console')}
           </a>
         </div>
@@ -179,7 +180,7 @@ export function DocsPage({ locale, slug }: { locale: Locale; slug: Slug }) {
 
         <main className="min-w-0 py-8 md:py-10">
           {/* Narrow screens: the page list behind a native disclosure. */}
-          <details className="mb-6 rounded-lg border md:hidden">
+          <details data-menu="" className="mb-6 rounded-lg border md:hidden">
             <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium">{t('menu')}</summary>
             <div className="border-t px-2 py-3">{nav}</div>
           </details>
@@ -239,8 +240,9 @@ export function DocsPage({ locale, slug }: { locale: Locale; slug: Slug }) {
           <a href="https://github.com/dsh-teamwork/dsh-teamwork/issues" className="hover:text-foreground">
             {t('issues')}
           </a>
-          <div className="ml-auto">
-            <LocalePicker locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} />
+          <div className="ml-auto flex items-center gap-2">
+            <ThemeButton label={tc('theme.toggle')} />
+            <LocaleMenu locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} />
           </div>
         </div>
       </footer>

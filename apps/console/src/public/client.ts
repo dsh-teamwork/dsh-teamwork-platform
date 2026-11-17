@@ -1,33 +1,57 @@
 /**
  * The one script the prerendered public pages load (src/public/render.tsx):
- * browser analytics, and the home page's language picker, which writes the
- * choice (the `locale` cookie, and the profile when signed in) and reloads, so
- * the server picks the page in that language.
+ * browser analytics, and the controls src/public/controls.tsx draws: the
+ * language menu, the theme button, and the copy buttons.
  */
 
 import { startAnalytics } from '@/lib/analytics';
+import { otherTheme, readTheme, setTheme, watchSystemTheme } from '@/lib/theme';
 
 void startAnalytics();
 
-const picker = document.querySelector<HTMLSelectElement>('select[data-locale-picker]');
-picker?.addEventListener('change', async () => {
-  picker.disabled = true;
-  try {
-    const res = await fetch('/api/locale', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ locale: picker.value }),
-    });
-    if (res.ok) {
-      location.reload();
+watchSystemTheme();
+
+// The language menu (src/public/controls.tsx): writes the choice (the `locale`
+// cookie, and the profile when signed in) and reloads, so the server picks the
+// page in that language. A refusal leaves the page as it is.
+for (const item of document.querySelectorAll<HTMLButtonElement>('button[data-locale]')) {
+  item.addEventListener('click', async () => {
+    if (item.getAttribute('aria-checked') === 'true') {
+      item.closest('details')?.removeAttribute('open');
       return;
     }
-  } catch {
-    // Offline: handled below, as a refusal is.
+    item.disabled = true;
+    try {
+      const res = await fetch('/api/locale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale: item.dataset.locale }),
+      });
+      if (res.ok) {
+        location.reload();
+        return;
+      }
+    } catch {
+      // Offline: handled below, as a refusal is.
+    }
+    item.disabled = false;
+  });
+}
+
+// The theme button switches between light and dark; its icon follows `.dark`.
+for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-theme-toggle]')) {
+  button.addEventListener('click', () => setTheme(otherTheme(readTheme())));
+}
+
+// An open menu (<details data-menu>) closes on a click outside it, or on Escape.
+document.addEventListener('click', (event) => {
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('details[data-menu][open]')) {
+    if (!menu.contains(event.target as Node)) menu.open = false;
   }
-  // The page stays in its language, so the picker goes back to saying so.
-  picker.value = Array.from(picker.options).find((o) => o.defaultSelected)?.value ?? picker.value;
-  picker.disabled = false;
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('details[data-menu][open]')) menu.open = false;
 });
 
 // The home page's copy buttons: the command beside each stays selectable when the clipboard is refused.

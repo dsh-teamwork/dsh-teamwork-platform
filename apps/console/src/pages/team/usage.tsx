@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useFormatter, useLocale, useTranslations } from 'use-intl';
 
 import { PageHeader } from '@/components/team/console-shell';
-import { Choice as Filter } from '@/components/team/choice';
+import { Select } from '@/components/ui/select';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,7 +19,7 @@ type Entry = Schemas['UsageEntry'];
 type Page = { entries: Entry[]; total: number; page: number; size: number };
 
 export function TeamUsagePage() {
-  const { team } = useTeam();
+  const { team, reloadSummary } = useTeam();
   const t = useTranslations('usage');
   const word = useTeamError();
   const format = useFormatter();
@@ -53,8 +53,8 @@ export function TeamUsagePage() {
       void download(`teams/${team.id}/usage/export?${filters}`, 'teamwork-usage.csv').catch((error: unknown) => toast.error(word(error))).finally(() => setExporting(false));
     }}><Download />{t('export')}</Button><Button variant="outline" onClick={() => void usage.reload()}><RefreshCw />{t('refresh')}</Button></div>} />
     <div className="flex flex-wrap gap-2">
-      <Filter label={t('period')} value={period} options={(['day', 'week', 'month'] as const).map((value) => ({ value, label: t(`periods.${value}`) }))} change={(v) => update('period', v)} />
-      {team.role === 'admin' && <Filter label={t('member')} value={member} options={[{ value: '', label: t('allMembers') }, ...team.members.map((m) => ({ value: m.userId, label: m.email || m.userId }))]} change={(v) => update('userId', v)} />}
+      <Select label={t('period')} value={period} options={(['day', 'week', 'month'] as const).map((value) => ({ value, label: t(`periods.${value}`) }))} change={(v) => update('period', v)} />
+      {team.role === 'admin' && <Select label={t('member')} value={member} options={[{ value: '', label: t('allMembers') }, ...team.members.map((m) => ({ value: m.userId, label: m.email || m.userId }))]} change={(v) => update('userId', v)} />}
     </div>
     {!!usage.error && <p role="alert" className="text-sm text-destructive">{word(usage.error)}</p>}
     <Card className="overflow-hidden">
@@ -71,6 +71,6 @@ export function TeamUsagePage() {
     </Card>
     <p className="text-xs text-muted-foreground">{t('accountingHint')}</p>
     {usage.data && <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground"><span>{t('count', { count: usage.data.total })}</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => update('page', String(page - 1))}>{t('previous')}</Button><Button variant="outline" size="sm" disabled={page * usage.data.size >= usage.data.total} onClick={() => update('page', String(page + 1))}>{t('next')}</Button></div></div>}
-    {resolving && <UsageResolution teamId={team.id} entry={resolving} reload={usage.reload} close={() => setResolving(null)} />}
+    {resolving && <UsageResolution teamId={team.id} entry={resolving} reload={() => Promise.all([usage.reload(), reloadSummary()])} close={() => setResolving(null)} />}
   </>;
 }

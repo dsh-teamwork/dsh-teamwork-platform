@@ -138,6 +138,33 @@ func (s *Server) usageFilter(r *http.Request) (usage.Filter, error) {
 	return f, nil
 }
 
+// teamSummary is a team's overview: what waits on the caller, and recent usage
+// against the budgets that apply to them (usage.Summary).
+func (s *Server) teamSummary(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	m, err := s.Team.RequireMembership(r.Context(), c.user.ID, r.PathValue("teamId"), false)
+	if err != nil {
+		return err
+	}
+	admin := m.Role == membership.RoleAdmin
+	v := struct {
+		usage.Summary
+		PendingReviews int `json:"pendingReviews"`
+	}{}
+	if v.Summary, err = s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, admin); err != nil {
+		return err
+	}
+	if v.PendingReviews, err = s.Team.PendingSubmissions(r.Context(), m.TeamID, c.user.ID, admin); err != nil {
+		return err
+	}
+	noStore(w)
+	writeJSON(w, http.StatusOK, v)
+	return nil
+}
+
 func (s *Server) listUsage(w http.ResponseWriter, r *http.Request) error {
 	f, err := s.usageFilter(r)
 	if err != nil {

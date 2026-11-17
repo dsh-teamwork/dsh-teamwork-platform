@@ -13,6 +13,7 @@ import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { LOCALES, type Locale } from '@/lib/locale';
+import { THEME_SCRIPT } from '@/lib/theme';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
 
@@ -35,8 +36,6 @@ export interface LegalSources {
 
 const APP_NAME = en.common.appName;
 
-// The theme before the first paint, as the console's index.html does it.
-const THEME = "if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');";
 
 interface DocumentProps {
   locale: Locale;
@@ -73,7 +72,8 @@ function Document({ locale, title, description, path, assets, children }: Docume
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={image} />
-        <script dangerouslySetInnerHTML={{ __html: THEME }} />
+        {/* The theme before the first paint, as the console's index.html does it. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         {assets.css.map((href) => (
           <link key={href} rel="stylesheet" href={href} />
         ))}
