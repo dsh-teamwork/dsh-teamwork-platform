@@ -29,6 +29,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0038 — Computer tokens](0038-computer-tokens.md) — a cloud computer's plugin token reaches one team's configuration and models, for an hour.
 - [0039 — Deleting an account](0039-deleting-an-account.md) — self-service deletion, admin handover first, lone teams deleted with it.
 - [0040 — The app deletes the account](0040-the-app-deletes-the-account.md) — the phone app's token deletes the account too, with the email typed back.
+- [0041 — Editions store objects](0041-editions-store-objects-beside-plugin-archives.md) — an edition's bytes live in the server's store, under a kind of its own.
 
 The template:
 

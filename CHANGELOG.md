@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Editions can store objects in the server's store
+
+- **What:** `edition.Host.Objects` lends an edition the server's own object store (the data directory, or the `ARTIFACT_STORAGE_PROVIDER=s3` bucket) under keys `teams/{teamId}/{kind}/{id}`, beside the plugin archives and never among them (`plugins` is refused). `Put`, `Open` (a missing object is `fs.ErrNotExist`) and `Delete`; nil on a management process.
+- **Why:** The hosted edition keeps each cloud session's record after its VM ends, in the store that already holds plugin archives rather than in a bucket of its own.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0041, `server/internal/artifactstore`, `server/edition/edition.go`.
+
 ## 2026-11-17 — Analytics count pages only; the app's token can delete the account
 
 - **What:** The server sends nothing to PostHog any more: the `user_signed_up` and `profile_updated` events and `server/internal/analytics` are gone. The browser stays cookieless and anonymous and now sends `$pageview` only, with page leaves off. `DELETE /api/profile` also takes a Bearer token with the email typed back, so the phone app can delete the account in place; the `browser_only` refusal is gone.

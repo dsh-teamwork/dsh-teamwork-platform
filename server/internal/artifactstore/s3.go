@@ -87,6 +87,32 @@ func (s *S3) Put(ctx context.Context, teamID, id string, body io.ReadSeeker, siz
 	return err
 }
 
+func (s *S3) PutObject(ctx context.Context, teamID, kind, id string, body io.ReadSeeker, size int64) error {
+	k, err := objectKey(teamID, kind, id)
+	if err != nil {
+		return err
+	}
+	_, err = s.Client.PutObject(ctx, &s3.PutObjectInput{Bucket: &s.Bucket, Key: &k, Body: body, ContentLength: &size, ContentType: aws.String("application/octet-stream")})
+	return err
+}
+
+func (s *S3) OpenObject(ctx context.Context, teamID, kind, id string) (io.ReadCloser, error) {
+	k, err := objectKey(teamID, kind, id)
+	if err != nil {
+		return nil, err
+	}
+	return s.open(ctx, k)
+}
+
+func (s *S3) DeleteObject(ctx context.Context, teamID, kind, id string) error {
+	k, err := objectKey(teamID, kind, id)
+	if err != nil {
+		return err
+	}
+	_, err = s.Client.DeleteObject(ctx, &s3.DeleteObjectInput{Bucket: &s.Bucket, Key: &k})
+	return err
+}
+
 func (s *S3) Open(ctx context.Context, teamID, id string) (io.ReadCloser, error) {
 	k, err := key(teamID, id)
 	if err != nil {

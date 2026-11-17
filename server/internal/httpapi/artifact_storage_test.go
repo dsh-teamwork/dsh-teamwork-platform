@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -212,6 +213,57 @@ func TestArtifactMigrationVerifiesEveryDatabaseRow(t *testing.T) {
 		body.Close()
 		if err != nil || !bytes.Equal(b, archive) {
 			t.Fatal("failed migration damaged destination", err)
+		}
+	})
+}
+
+// An edition's objects (edition.Host.Objects) live beside the plugin archives
+// under keys of their own, and can never name one.
+func TestEditionObjectsKeepToTheirOwnKind(t *testing.T) {
+	eachArtifactStore(t, func(t *testing.T, store artifactstore.Store) {
+		ctx := t.Context()
+		archive := []byte("plugin archive")
+		if err := store.Put(ctx, "team1", "same-id", bytes.NewReader(archive), int64(len(archive))); err != nil {
+			t.Fatal(err)
+		}
+		object := []byte("an edition's object")
+		if err := store.PutObject(ctx, "team1", "cloud-sessions", "same-id", bytes.NewReader(object), int64(len(object))); err != nil {
+			t.Fatal(err)
+		}
+		read := func(r io.ReadCloser, err error) []byte {
+			t.Helper()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer r.Close()
+			b, _ := io.ReadAll(r)
+			return b
+		}
+		if got := read(store.OpenObject(ctx, "team1", "cloud-sessions", "same-id")); !bytes.Equal(got, object) {
+			t.Fatalf("object: %q", got)
+		}
+		if got := read(store.Open(ctx, "team1", "same-id")); !bytes.Equal(got, archive) {
+			t.Fatalf("the plugin archive changed: %q", got)
+		}
+		if _, err := store.OpenObject(ctx, "team2", "cloud-sessions", "same-id"); !errors.Is(err, fs.ErrNotExist) {
+			t.Fatalf("another team's object: %v", err)
+		}
+		for _, k := range [][3]string{{"team1", "plugins", "same-id"}, {"team1", "Cloud", "x"}, {"team1", "cloud-sessions", "../x"}, {"../t", "cloud-sessions", "x"}} {
+			if err := store.PutObject(ctx, k[0], k[1], k[2], bytes.NewReader(object), int64(len(object))); err == nil {
+				t.Fatalf("stored under %v", k)
+			}
+		}
+		if err := store.DeleteObject(ctx, "team1", "cloud-sessions", "same-id"); err != nil {
+			t.Fatal(err)
+		}
+		if err := store.DeleteObject(ctx, "team1", "cloud-sessions", "same-id"); err != nil {
+			t.Fatalf("deleting again: %v", err)
+		}
+		if _, err := store.OpenObject(ctx, "team1", "cloud-sessions", "same-id"); !errors.Is(err, fs.ErrNotExist) {
+			t.Fatalf("after delete: %v", err)
+		}
+		if got := read(store.Open(ctx, "team1", "same-id")); !bytes.Equal(got, archive) {
+			t.Fatal("deleting the object touched the plugin archive")
 		}
 	})
 }
