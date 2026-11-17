@@ -568,6 +568,42 @@ paths:
         '404': { $ref: '#/components/responses/Error' }
         '502': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/model-metadata/lookup:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Query a public upstream live for transient model form suggestions
+      description: No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented. A catalog that cannot be read is model_metadata_unavailable.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [source, provider, query]
+              properties:
+                source: { type: string, enum: [models_dev, openrouter] }
+                provider: { type: string, maxLength: 100 }
+                query: { type: string, minLength: 1, maxLength: 200 }
+                pricing: { type: boolean }
+      responses:
+        '200':
+          description: Up to fifty candidates; the administrator explicitly selects a reference
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [models]
+                properties:
+                  models: { type: array, items: { $ref: '#/components/schemas/ModelMetadata' } }
+                  usdToCny: { type: string, description: "Latest live reference exchange rate, omitted on failure" }
+                  exchangeDate: { type: string, format: date }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
   /teams/{teamId}/providers/check:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -1309,6 +1345,26 @@ components:
         baseUrl: { type: string }
         updatedAt: { type: string, format: date-time }
     Tokens: { type: integer, minimum: 1, maximum: 10000000 }
+    ModelMetadata:
+      type: object
+      required: [id, name, provider, prices]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        provider: { type: string }
+        contextWindow: { $ref: '#/components/schemas/Tokens' }
+        maxTokens: { $ref: '#/components/schemas/Tokens' }
+        vision: { type: boolean }
+        outputModalities: { type: array, items: { type: string } }
+        prices:
+          type: object
+          description: Base USD per million text tokens. Absent rates are unknown, not free.
+          additionalProperties: false
+          properties:
+            input: { type: string }
+            output: { type: string }
+            cacheRead: { type: string }
+            cacheWrite: { type: string }
     ModelData:
       type: object
       required: [provider, model]
@@ -1316,6 +1372,7 @@ components:
       properties:
         provider: { type: string }
         model: { type: string }
+        vision: { type: boolean }
         contextWindow: { $ref: '#/components/schemas/Tokens' }
         maxTokens: { $ref: '#/components/schemas/Tokens' }
     PresetData:

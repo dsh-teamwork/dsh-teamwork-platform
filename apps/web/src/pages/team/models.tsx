@@ -7,9 +7,11 @@
  */
 
 import { KeyRound, Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
+import { ModelMetadataLookup } from '@/components/team/model-metadata';
+import { Select } from '@/components/ui/select';
 import { Failure } from '@/components/page';
 import { PageHeader } from '@/components/team/console-shell';
 import { Field } from '@/components/team/field';
@@ -142,7 +144,7 @@ function Models({ team, configs, providers, reload }: Props) {
               </thead>
               <tbody>
                 {models.map((m) => (
-                  <ModelRow key={m.id} teamId={team.id} reload={reload} model={m} admin={admin} usedBy={usedBy(m.id).map((p) => p.name)} />
+                  <ModelRow key={m.id} teamId={team.id} reload={reload} model={m} admin={admin} referenceProvider={catalogEntry(providers.find((p) => p.name === m.data.provider)?.baseUrl ?? '')?.modelsDevId ?? m.data.provider} usedBy={usedBy(m.id).map((p) => p.name)} />
                 ))}
               </tbody>
             </table>
@@ -215,7 +217,7 @@ function Mark({ text }: { text: string }) {
   return <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-bold text-muted-foreground">{text}</span>;
 }
 
-function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; reload: Reload; model: ModelConfig; admin: boolean; usedBy: string[] }) {
+function ModelRow({ teamId, reload, model, admin, usedBy, referenceProvider }: { teamId: string; reload: Reload; model: ModelConfig; admin: boolean; usedBy: string[]; referenceProvider: string }) {
   const t = useTranslations('team.models');
   const { pending, run } = useMutation(reload);
   const [editing, setEditing] = useState(false);
@@ -243,7 +245,7 @@ function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; re
         )}
       </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">
-        <ModelRateButton teamId={teamId} configId={model.id} name={model.name} admin={admin} />
+        <ModelRateButton teamId={teamId} configId={model.id} name={model.name} admin={admin} provider={referenceProvider} model={model.data.model} />
         {admin && <>
           {!model.owner && <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
             {t('edit')}
@@ -260,7 +262,7 @@ function ModelRow({ teamId, reload, model, admin, usedBy }: { teamId: string; re
           >
             {t('remove')}
           </Button>
-          {editing && <EditModelDialog teamId={teamId} reload={reload} model={model} onClose={() => setEditing(false)} />}
+          {editing && <EditModelDialog teamId={teamId} reload={reload} model={model} referenceProvider={referenceProvider} onClose={() => setEditing(false)} />}
         </>}
       </td>
     </tr>
@@ -308,6 +310,12 @@ function ConnectDialog({
   const [checking, setChecking] = useState(false);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [typed, setTyped] = useState({ id: '', name: '' });
+  const [details, setDetails] = useState<Record<string, Partial<ModelConfig['data']>>>({});
+  const [focus, setFocus] = useState('');
+  const activeModel = manual ? typed.id.trim() : chosen.has(focus) ? focus : [...chosen][0] ?? '';
+  const listedModel = listed?.find((m) => m.id === activeModel);
+  const activeDetails = details[activeModel] ?? { contextWindow: listedModel?.contextWindow, maxTokens: listedModel?.maxTokens };
+  const referenceProvider = catalogEntry(baseUrl)?.modelsDevId ?? connected ?? '';
   const taken = new Set(providers.map((p) => p.name));
   const custom = pick === 'custom';
 
@@ -379,7 +387,7 @@ function ConnectDialog({
         const label = freeModelName(item.name.trim() || item.id, provider, names);
         names.add(label);
         await api(`teams/${teamId}/configs`, {
-          body: { kind: 'model', name: label, data: { provider, model: item.id, contextWindow: item.contextWindow, maxTokens: item.maxTokens } },
+          body: { kind: 'model', name: label, data: { provider, model: item.id, contextWindow: item.contextWindow, maxTokens: item.maxTokens, ...details[item.id] } },
         });
         sent.add(item.id);
       }
@@ -520,6 +528,14 @@ function ConnectDialog({
           </div>
         )}
 
+        {connected && activeModel && <div className="flex flex-col gap-3">
+          {!manual && chosen.size > 1 && <Select label={t('modelId')} value={activeModel} options={[...chosen].map((id) => ({ value: id, label: id }))} change={setFocus} />}
+          <ModelFields value={activeDetails} disabled={pending} change={(value) => setDetails((all) => ({ ...all, [activeModel]: value }))} />
+          <ModelMetadataLookup key={activeModel} teamId={teamId} provider={referenceProvider} model={activeModel} current={{ contextWindow: activeDetails.contextWindow, maxTokens: activeDetails.maxTokens, vision: activeDetails.vision }} disabled={pending} apply={(value) => {
+            if ('id' in value) setDetails((all) => ({ ...all, [activeModel]: { ...activeDetails, ...(value.contextWindow === undefined ? {} : { contextWindow: value.contextWindow }), ...(value.maxTokens === undefined ? {} : { maxTokens: value.maxTokens }), ...(value.vision === undefined ? {} : { vision: value.vision }) } }));
+          }} />
+        </div>}
+
         <DialogFooter>
           {pick && !connected && !existing && (
             <Button variant="outline" onClick={() => setPick(null)}>
@@ -607,13 +623,11 @@ function RekeyDialog({ teamId, reload, provider, onClose }: { teamId: string; re
 }
 
 /** A team model's display name and limits; its provider and model id stay what they were published as. */
-function EditModelDialog({ teamId, reload, model, onClose }: { teamId: string; reload: Reload; model: ModelConfig; onClose: () => void }) {
+function EditModelDialog({ teamId, reload, model, referenceProvider, onClose }: { teamId: string; reload: Reload; model: ModelConfig; referenceProvider: string; onClose: () => void }) {
   const t = useTranslations('team.models');
   const { pending, run } = useMutation(reload);
   const [name, setName] = useState(model.name);
-  const [contextWindow, setContextWindow] = useState(String(model.data.contextWindow ?? ''));
-  const [maxTokens, setMaxTokens] = useState(String(model.data.maxTokens ?? ''));
-  const number = (value: string) => (value ? Number(value) : undefined);
+  const [details, setDetails] = useState<Partial<ModelConfig['data']>>({ contextWindow: model.data.contextWindow, maxTokens: model.data.maxTokens, vision: model.data.vision });
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="text-left">
@@ -630,7 +644,7 @@ function EditModelDialog({ teamId, reload, model, onClose }: { teamId: string; r
             const body = {
               kind: 'model',
               name,
-              data: { provider: model.data.provider, model: model.data.model, contextWindow: number(contextWindow), maxTokens: number(maxTokens) },
+              data: { provider: model.data.provider, model: model.data.model, ...details },
               version: model.version,
             };
             if (await run(() => api(`teams/${teamId}/configs/${model.id}`, { method: 'PATCH', body }), t('modelSaved'))) onClose();
@@ -639,14 +653,10 @@ function EditModelDialog({ teamId, reload, model, onClose }: { teamId: string; r
           <Field id="edit-name" label={t('displayName')}>
             <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="edit-context" label={t('context')}>
-              <Input id="edit-context" type="number" min={1} value={contextWindow} onChange={(e) => setContextWindow(e.target.value)} />
-            </Field>
-            <Field id="edit-max" label={t('maxOutput')} hint={t('limitsHint')}>
-              <Input id="edit-max" type="number" min={1} value={maxTokens} onChange={(e) => setMaxTokens(e.target.value)} />
-            </Field>
-          </div>
+          <ModelFields value={details} change={setDetails} disabled={pending} />
+          <ModelMetadataLookup teamId={teamId} provider={referenceProvider} model={model.data.model} current={{ contextWindow: details.contextWindow, maxTokens: details.maxTokens, vision: details.vision }} disabled={pending} apply={(value) => {
+            if ('id' in value) setDetails((current) => ({ ...current, ...(value.contextWindow === undefined ? {} : { contextWindow: value.contextWindow }), ...(value.maxTokens === undefined ? {} : { maxTokens: value.maxTokens }), ...(value.vision === undefined ? {} : { vision: value.vision }) }));
+          }} />
           <DialogFooter>
             <Button type="submit" disabled={pending}>
               {t('save')}
@@ -656,4 +666,16 @@ function EditModelDialog({ teamId, reload, model, onClose }: { teamId: string; r
       </DialogContent>
     </Dialog>
   );
+}
+
+function ModelFields({ value, change, disabled }: { value: Partial<ModelConfig['data']>; change: (value: Partial<ModelConfig['data']>) => void; disabled: boolean }) {
+  const t = useTranslations('team.models');
+  const tm = useTranslations('modelMetadata');
+  const fieldId = useId();
+  return <div className="grid gap-3 sm:grid-cols-2">
+    {(['contextWindow', 'maxTokens'] as const).map((key) => <Field key={key} id={`${fieldId}-${key}`} label={t(key === 'contextWindow' ? 'context' : 'maxOutput')} hint={key === 'maxTokens' ? t('limitsHint') : undefined}>
+      <Input id={`${fieldId}-${key}`} type="number" min={1} max={10000000} disabled={disabled} value={value[key] ?? ''} onChange={(e) => change({ ...value, [key]: e.target.value ? Number(e.target.value) : undefined })} />
+    </Field>)}
+    <Select label={tm('vision')} value={value.vision === undefined ? '' : String(value.vision)} disabled={disabled} options={[{ value: '', label: tm('unknown') }, { value: 'true', label: tm('yes') }, { value: 'false', label: tm('no') }]} change={(v) => change({ ...value, vision: v === '' ? undefined : v === 'true' })} />
+  </div>;
 }
