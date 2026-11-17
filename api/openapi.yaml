@@ -822,7 +822,7 @@ paths:
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
     delete:
-      summary: "Delete the account, with every team it is alone in; refused while it administers a team with others"
+      summary: "Delete the account, from a session or the app's token, with every team it is alone in; refused while it administers a team with others"
       requestBody:
         required: true
         content:

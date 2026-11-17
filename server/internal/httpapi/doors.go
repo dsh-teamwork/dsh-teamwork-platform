@@ -71,7 +71,6 @@ func (s *Server) verifyCode(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	if created {
-		s.Analytics.Capture(user.ID, "user_signed_up", map[string]any{"via": "email", "client": "web"})
 	}
 	if err := s.startSession(w, user, "email"); err != nil {
 		return err
@@ -149,7 +148,6 @@ func (s *Server) googleCallback(w http.ResponseWriter, r *http.Request) error {
 	// A browser is on this page: a failure goes back to the form, worded there.
 	user, created, err := auth.Account(r.Context(), s.Auth.DB, proof)
 	if err == nil && created {
-		s.Analytics.Capture(user.ID, "user_signed_up", map[string]any{"via": "google", "client": "web"})
 	}
 	if err == nil {
 		err = s.startSession(w, user, "google")

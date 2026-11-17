@@ -21,7 +21,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/analytics"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
@@ -191,12 +190,11 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	teams.ProtectedAccount = func(email string) bool { return manage.IsAdmin(email, env("ADMIN_EMAILS")) }
 	meter := &usage.Service{DB: client, AppURL: cfg.AppURL}
 	srv := &httpapi.Server{
-		Config:    cfg,
-		Auth:      authn,
-		Team:      teams,
-		Gateway:   &gateway.Gateway{Team: teams, Client: network.Client(), Usage: meter},
-		Usage:     meter,
-		Analytics: &analytics.Client{Key: cfg.PostHogKey, Host: cfg.PostHogHost},
+		Config:  cfg,
+		Auth:    authn,
+		Team:    teams,
+		Gateway: &gateway.Gateway{Team: teams, Client: network.Client(), Usage: meter},
+		Usage:   meter,
 	}
 	srv.Web = web.Handler(web.Options{AppURL: cfg.AppURL, PostHogKey: cfg.PostHogKey, PostHogHost: cfg.PostHogHost, Viewer: srv.Viewer})
 	if !cfg.Passwords() {

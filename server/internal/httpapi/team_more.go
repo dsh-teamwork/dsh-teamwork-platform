@@ -295,27 +295,8 @@ func (s *Server) updateProfile(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	var fields []string
-	if in.Name.Set {
-		fields = append(fields, "name")
-	}
-	if in.Locale.Set {
-		fields = append(fields, "locale")
-	}
-	if len(fields) > 0 {
-		s.Analytics.Capture(u.ID, "profile_updated", map[string]any{"fields": fields, "client": client(r)})
-	}
 	writeJSON(w, http.StatusOK, Profile{ID: u.ID, Email: u.Email, Name: u.Name, Image: u.Image, Locale: u.Locale})
 	return nil
-}
-
-// client is which client a request came from, for analytics: a Bearer token
-// is the DSH plugin, a cookie the browser.
-func client(r *http.Request) string {
-	if r.Header.Get("Authorization") != "" {
-		return "plugin"
-	}
-	return "web"
 }
 
 func (s *Server) handOverAdmin(w http.ResponseWriter, r *http.Request) error {
@@ -329,15 +310,14 @@ func (s *Server) handOverAdmin(w http.ResponseWriter, r *http.Request) error {
 	return noContent(w)
 }
 
-// deleteAccount closes the caller's account and ends this browser's session.
-// A plugin token still held elsewhere opens nothing once the row is gone.
+// deleteAccount closes the caller's account, from the browser or from the
+// phone app with its own token (ADR 0040), and ends this browser's session.
+// Any other session or token opens nothing once the row is gone; a computer
+// token never reaches this route.
 func (s *Server) deleteAccount(w http.ResponseWriter, r *http.Request) error {
 	c, err := s.requireUser(r)
 	if err != nil {
 		return err
-	}
-	if c.bearer {
-		return wire.E(http.StatusForbidden, "browser_only")
 	}
 	var in wire.DeleteAccount
 	if err := decode(r, &in); err != nil {

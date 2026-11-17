@@ -43,7 +43,7 @@ type Config struct {
 
 	GoogleID, GoogleSecret string // both set: the Google door
 
-	PostHogKey, PostHogHost string // POSTHOG_KEY set: server analytics
+	PostHogKey, PostHogHost string // POSTHOG_KEY set: anonymous page counts in the browser
 }
 
 // Google is whether the Google door is configured.

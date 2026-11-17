@@ -437,23 +437,13 @@ rule from `@dsh-teamwork/shared`. A signed-in choice is written to the profile
 
 ### Analytics
 
-One PostHog project per product, fed from two sides
-([`docs/ops/analytics.md`](docs/ops/analytics.md)), both off without
-`POSTHOG_KEY`:
-
-- **The browser counts anonymously.** `apps/console/src/lib/analytics.ts`
-  runs in cookieless mode with no identity: pageviews only, no autocapture, no
-  recording, and no consent banner. The key reaches it from the server at run
-  time, in the page.
-- **The server reports what happened to an account.**
-  `server/internal/analytics` sends under the account's id, where the server
-  sees the event: a sign-up when an account is created, a profile change in its
-  route.
-- **One table of events.** Every name and its properties is `Events` in that
-  package, and its test holds `docs/ops/analytics.md` to it. No property
-  carries anything a person typed.
-- **The database is the authority for outcomes**; PostHog is for funnels and
-  traffic.
+Anonymous page counts, and nothing else
+([`docs/ops/analytics.md`](docs/ops/analytics.md)), off without
+`POSTHOG_KEY`. `apps/console/src/lib/analytics.ts` runs PostHog in cookieless
+mode with no identity: pageviews only, no page leaves, no autocapture, no
+recording, and no consent banner. The key reaches it from the server at run
+time, in the page. **Nothing tracks what a person or an account does**: the
+server sends no event, and an account count comes from the database.
 
 ### Search and sharing
 
