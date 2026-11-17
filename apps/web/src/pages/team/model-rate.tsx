@@ -55,9 +55,7 @@ function RateForm({ value, path, admin, reload, close, teamId, provider, model }
       <span>{t('weightHint')}</span>
     </label>
     {/* Suggestions are supplier costs, so they are offered only while the basis is cost: applying them never switches a weight basis unseen. */}
-    {admin && form.basis === 'cost' && <ModelMetadataLookup teamId={teamId} provider={provider} model={model} pricing current={{ input: form.input, output: form.output, cacheRead: form.cacheRead, cacheWrite: form.cacheWrite }} disabled={pending} apply={(rates) => {
-      if (!('id' in rates)) setForm((current) => ({ ...current, ...rates }));
-    }} />}
+    {admin && form.basis === 'cost' && <ModelMetadataLookup teamId={teamId} provider={provider} model={model} pricing current={{ input: form.input, output: form.output, cacheRead: form.cacheRead, cacheWrite: form.cacheWrite }} disabled={pending} apply={(rates) => setForm((current) => ({ ...current, ...rates }))} />}
     <DialogFooter><Button type="button" variant="outline" onClick={close}>{t('close')}</Button>{admin && <Button type="submit" disabled={pending}>{t('save')}</Button>}</DialogFooter>
   </form>;
 }

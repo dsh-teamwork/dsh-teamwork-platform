@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — Model information and reference prices fill in one click
+
+- **What:** **Fill from public catalog** (model forms) and **Fill reference prices** (the rate form, estimated-cost basis) fill at once from the one catalog entry whose id is the model's own, and a note says where the values came from, what changed and, for prices, the exchange rate and its date, with an undo. No match, or the same id at several providers, changes nothing and offers a picker. The price multiplier is gone. `POST /api/teams/{teamId}/model-metadata/lookup` no longer requires `provider`; for Models.dev, one the catalog does not name searches every provider by exact id.
+- **Why:** Choosing a source, a provider and a candidate before anything filled was slow for the common case, and a team's rates are its own budget shares, not resale prices that need a multiplier.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/model-metadata.tsx`, `server/internal/httpapi/model_metadata.go`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-17 — The team console is work first
 
 - **What:** A team's sidebar has two groups: Work for everyone (Home, Team resources, My submissions, an edition's work pages) and Team management for its admin alone (models, presets, plugins, Review, history, members, usage, budgets); a member opening a management page is sent home. Team resources lists the models (with their rates), presets and plugins, and is where a member proposes a preset or a change to one. A member leaves from the team switcher. An edition's team page (`mountWeb`) names its `audience`, `work` or `admin`, and may give `visible(team)`, answered by the edition's own API, for a page only some teams have. `GET /api/teams/{teamId}/submissions` takes `mine=true`.

@@ -524,9 +524,7 @@ function ConnectDialog({
         {connected && activeModel && <div className="flex flex-col gap-3">
           {!manual && chosen.size > 1 && <Select label={t('modelId')} value={activeModel} options={[...chosen].map((id) => ({ value: id, label: id }))} change={setFocus} />}
           <ModelFields value={activeDetails} disabled={pending} change={(value) => setDetails((all) => ({ ...all, [activeModel]: value }))} />
-          <ModelMetadataLookup key={activeModel} teamId={teamId} provider={referenceProvider} model={activeModel} current={{ contextWindow: activeDetails.contextWindow, maxTokens: activeDetails.maxTokens, vision: activeDetails.vision }} disabled={pending} apply={(value) => {
-            if ('id' in value) setDetails((all) => ({ ...all, [activeModel]: { ...activeDetails, ...(value.contextWindow === undefined ? {} : { contextWindow: value.contextWindow }), ...(value.maxTokens === undefined ? {} : { maxTokens: value.maxTokens }), ...(value.vision === undefined ? {} : { vision: value.vision }) } }));
-          }} />
+          <ModelMetadataLookup key={activeModel} teamId={teamId} provider={referenceProvider} model={activeModel} current={{ contextWindow: activeDetails.contextWindow, maxTokens: activeDetails.maxTokens, vision: activeDetails.vision }} disabled={pending} apply={(values) => setDetails((all) => ({ ...all, [activeModel]: { ...all[activeModel], ...values } }))} />
         </div>}
 
         <DialogFooter>
@@ -647,9 +645,7 @@ function EditModelDialog({ teamId, reload, model, referenceProvider, onClose }: 
             <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
           </Field>
           <ModelFields value={details} change={setDetails} disabled={pending} />
-          <ModelMetadataLookup teamId={teamId} provider={referenceProvider} model={model.data.model} current={{ contextWindow: details.contextWindow, maxTokens: details.maxTokens, vision: details.vision }} disabled={pending} apply={(value) => {
-            if ('id' in value) setDetails((current) => ({ ...current, ...(value.contextWindow === undefined ? {} : { contextWindow: value.contextWindow }), ...(value.maxTokens === undefined ? {} : { maxTokens: value.maxTokens }), ...(value.vision === undefined ? {} : { vision: value.vision }) }));
-          }} />
+          <ModelMetadataLookup teamId={teamId} provider={referenceProvider} model={model.data.model} current={{ contextWindow: details.contextWindow, maxTokens: details.maxTokens, vision: details.vision }} disabled={pending} apply={(values) => setDetails((current) => ({ ...current, ...values }))} />
           <DialogFooter>
             <Button type="submit" disabled={pending}>
               {t('save')}
@@ -669,6 +665,8 @@ function ModelFields({ value, change, disabled }: { value: Partial<ModelConfig['
     {(['contextWindow', 'maxTokens'] as const).map((key) => <Field key={key} id={`${fieldId}-${key}`} label={t(key === 'contextWindow' ? 'context' : 'maxOutput')} hint={key === 'maxTokens' ? t('limitsHint') : undefined}>
       <Input id={`${fieldId}-${key}`} type="number" min={1} max={10000000} disabled={disabled} value={value[key] ?? ''} onChange={(e) => change({ ...value, [key]: e.target.value ? Number(e.target.value) : undefined })} />
     </Field>)}
-    <Select label={tm('vision')} value={value.vision === undefined ? '' : String(value.vision)} disabled={disabled} options={[{ value: '', label: tm('unknown') }, { value: 'true', label: tm('yes') }, { value: 'false', label: tm('no') }]} change={(v) => change({ ...value, vision: v === '' ? undefined : v === 'true' })} />
+    <Field id={`${fieldId}-vision`} label={tm('vision')}>
+      <Select id={`${fieldId}-vision`} label={tm('vision')} value={value.vision === undefined ? '' : String(value.vision)} disabled={disabled} options={[{ value: '', label: tm('unknown') }, { value: 'true', label: tm('yes') }, { value: 'false', label: tm('no') }]} change={(v) => change({ ...value, vision: v === '' ? undefined : v === 'true' })} />
+    </Field>
   </div>;
 }
