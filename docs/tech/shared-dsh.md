@@ -1,6 +1,6 @@
 # Shared DSH
 
-> **Status:** Plan — steps 0 to 3 done · **Updated:** 2026-11-17
+> **Status:** Plan — steps 0 to 3 and 5 done, step 4 but the desktop panel · **Updated:** 2026-11-17
 
 How a team shares one DSH that it runs itself: members reach it from the app
 or the web through the relay, end to end encrypted, and the server can route
@@ -179,21 +179,27 @@ A personal computer's bridge is unchanged: its one member owns everything.
 
 ## The PIN
 
-- **Four digits, one per member, set by the member** on their first device
-  during the join, and changed from any of their devices with the old PIN
-  (`shared/pin`). The DSH stores it as scrypt with its parameters.
+Built in step 5 (the plugin's `src/pin-lock.ts`; the app's `components/pin-gate.tsx`).
+
+- **Four digits, one per member, set by the member** from their own device the
+  first time a channel to this DSH is authorized, and changed from any of their
+  devices with the old PIN (`setPin`). The DSH stores it as scrypt with its
+  parameters and salt.
 - **Sent only inside the channel**; nothing is derived from it. It is a second
   lock on a device that already proved its key.
-- **Asked when the app or page opens the DSH and after fifteen minutes idle**
-  (`shared/unlock`). Until then the DSH answers only `shared/unlock`; the
+- **Asked whenever a channel is authorized and after fifteen minutes with
+  nothing sent on it**: the DSH says `pinRequired` (with `set` when the member
+  has none yet), and until `unlock` or `setPin` succeeds it answers every call
+  with `teamwork/locked` and ends every stream, so nothing reaches DSH. An
   unlock lasts as long as the channel and its idle timer.
-- **Five wrong PINs lock that member** on every device until the admin clears
-  the lock at the DSH (`/teamwork share unlock <email>`); a forgotten PIN is
-  cleared the same way and set again at the next connection. The counter is
-  kept in the roster file, so a restart does not reset it.
-- **The personal relay gains the same lock**: the phone sets a PIN when it
-  pairs, the member's own desktop stores and checks it, and the desktop clears
-  a lock. Existing pairings are asked for a PIN at their next connection.
+- **Five wrong PINs lock that member** on every device until whoever runs the
+  DSH clears it there (`/teamwork share unlock <email>`); a forgotten PIN is
+  cleared the same way and set again at the next connection. The count is kept
+  in the PIN file, so a restart does not reset it.
+- **The personal relay has the same lock**: its one member is `owner`, the
+  phone sets the PIN at its first connection after pairing, the desktop checks
+  it, and `/teamwork pin reset` clears it. Signing out, and entering or leaving
+  shared mode, clears every PIN.
 
 ## The audit archive
 
@@ -345,8 +351,9 @@ Each step is a vertical slice, lands green, and brings its ADR.
    DSH's key and hands the invite over; a joined shared DSH is one of the
    member's computers. Left for this step: the desktop panel's view of shared
    mode, members and invites, which `/teamwork share` covers meanwhile.
-5. **The PIN lock** (about 4 days), on the shared DSH and the personal relay
-   together, in the plugin and the app.
+5. **The PIN lock — done 2026-11-17**, on the shared DSH and the personal
+   relay together, in the plugin and the app (see "The PIN"). `server/e2e`
+   has a joining member refused until they set their PIN.
 6. **The audit archive** (about 6 days; an ADR on its format). Key commands,
    sealing, upload, storage, admin download, `audit read`. The hosted privacy
    policy states the archive before this ships there.

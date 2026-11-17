@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — A PIN locks every phone's channel to a DSH
+
+- **What:** The plugin keeps a four-digit PIN per member (on a personal computer, its one owner) and refuses every call and stream from a phone's channel until the member sets or gives it, and again after fifteen idle minutes; five wrong PINs lock the member until `/teamwork share unlock <email>` or `/teamwork pin reset` clears it. The server sees none of it: the PIN goes inside the encrypted channel. `/docs` lists the two commands, and `server/e2e` has a joining member refused until they set a PIN.
+- **Why:** A second lock on a phone that already proved its key (`docs/tech/shared-dsh.md`, "The PIN").
+- **Breaking:** A phone app without the PIN screen can no longer use a computer whose plugin has it; both update together.
+- **Upgrade:** Update the plugin and the app together.
+- **Refs:** `docs/tech/shared-dsh.md`, the plugin's `src/pin-lock.ts`.
+
 ## 2026-11-17 — The relay admits members to a shared DSH
 
 - **What:** A shared DSH's plugin connects to the relay with its host token and is sent who may reach it (`members`) at hello and at every ping; it cannot ask for a pairing code. Members list the shared DSHs they may reach (`GET /relay/shared`) and start a pending pairing with one (`POST /relay/shared/{hostId}/join`), which the DSH confirms once it has checked their invite. A team admin sets who may reach each one, the whole team or listed members (`PUT /api/teams/{teamId}/shared-hosts/{id}/members`, the console's **Access**); anyone taken off the list, or out of the team, loses their pairings with it. Deleting a shared DSH closes its socket.

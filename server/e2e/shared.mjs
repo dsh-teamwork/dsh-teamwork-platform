@@ -14,6 +14,7 @@ const { deviceIdentity, base64, SecureChannel, newChannelId } = await lib('secur
 const { RelayLink } = await lib('relay.js');
 const { PhoneKeys, PhoneSecurity } = await lib('phone-security.js');
 const { SharedRoster } = await lib('shared-roster.js');
+const { PinStore } = await lib('pin-lock.js');
 const { importAesKey } = await lib('aes-gcm.js');
 const { randomBytes } = await import('node:crypto');
 
@@ -46,6 +47,7 @@ const security = new PhoneSecurity({
   keys, scope: async () => 'shared', send: (f) => link.send(f), forward: (f) => forwarded.push(f),
   confirm: async (id) => { await link.request({ t: 'decide', pairingId: id, accept: true }); }, changed() {}, error() {},
   joining: (id) => joining.get(id),
+  pins: new PinStore(join(dir, 'pins.json')), pinMember: (id) => roster.memberOf(id),
   admit: async (i) => members.some((m) => m.userId === i.userId) && roster.accept({ inviteId: i.inviteId, secret: i.secret, userId: i.userId, pairingId: i.pairingId, deviceName: i.name }),
 });
 const readPairings = async () => { for (const p of await link.request({ t: 'pairings' })) if (p.status === 'pending') joining.set(p.id, p.userId); };
@@ -86,8 +88,15 @@ async function handset(token, invite) {
 const bob = await handset(BOB_TOKEN, bobInvite);
 await until('bob admitted', () => bob.messages.some((m) => m.t === 'pairAccepted'));
 bob.channel.verified();
+// Nothing reaches the DSH's sessions until Bob sets his PIN.
+await until('bob asked for a PIN', () => bob.messages.some((m) => m.t === 'pinRequired' && m.set === true));
+bob.channel.send({ t: 'call', pairingId: bob.pairing.id, id: '0', method: 'session/list', body: {} });
+await until('the locked call refused', () => bob.messages.some((m) => m.t === 'result' && m.id === '0' && m.body.result.error.code === 'teamwork/locked'));
+bob.channel.send({ t: 'setPin', pin: '2468' });
+await until('bob unlocked', () => bob.messages.some((m) => m.t === 'unlocked'));
 bob.channel.send({ t: 'call', pairingId: bob.pairing.id, id: '1', method: 'session/list', body: {} });
 await until('bob\'s call reaching the bridge', () => forwarded.some((f) => f.t === 'call' && f.pairingId === bob.pairing.id));
+assert.ok(!forwarded.some((f) => f.id === '0'));
 assert.equal(await roster.memberOf(bob.pairing.id), BOB);
 
 // Eve is listed but has no invite of her own: Bob's, already spent, admits nobody.
