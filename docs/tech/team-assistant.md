@@ -118,6 +118,8 @@ public npm package can still be shared by exact package name/version.
 Community deployments default to `<data>/artifacts`; all member processes in
 an S3 deployment use the same private bucket. Relative keys are
 `teams/{teamId}/plugins/{artifactId}.tgz`, independent of team names or filenames.
+An edition keeps its own objects in the same store under `teams/{teamId}/{kind}/{id}`
+(`edition.Host.Objects`, ADR 0042), never under `plugins`.
 Both IDs are validated; the team comes from authorized database metadata.
 No bucket URL or credential reaches
 the client. Management-only processes do not initialize artifact storage.

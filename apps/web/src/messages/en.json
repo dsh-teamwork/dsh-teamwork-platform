@@ -478,7 +478,8 @@
     "leave": {
       "submit": "Leave team",
       "confirm": "Leave this team? Its configuration disappears from your DSH at the next sync.",
-      "done": "You left the team."
+      "done": "You left the team.",
+      "failed": "Could not leave the team. Try again in a moment."
     },
     "members": {
       "remove": "Remove",
@@ -497,7 +498,6 @@
       "you": "you",
       "descriptionInvites": "An invitation link works once, for 24 hours.",
       "descriptionPasswords": "This instance sends no email: create the account here. The first password is shown once and must be changed at first sign-in.",
-      "descriptionMember": "Who is in the team. If you leave, its models and presets leave your DSH at the next sync.",
       "makeAdmin": "Make admin",
       "makeAdminConfirm": "Make {email} the team's admin? You become a member, and only they can make you admin again.",
       "madeAdmin": "Admin handed over."
@@ -514,23 +514,24 @@
     },
     "nav": {
       "label": "Team console",
-      "overview": "Overview",
+      "overview": "Home",
       "members": "Members",
       "models": "Models",
       "usage": "Usage",
       "budgets": "Budgets",
       "presets": "Presets",
       "plugins": "Plugins",
-      "sharing": "Sharing and review",
+      "sharing": "Review",
       "history": "Versions and backups",
       "groups": {
-        "assets": "Team assets",
-        "collaboration": "Collaboration",
-        "governance": "Governance"
+        "work": "Work",
+        "manage": "Team management"
       },
       "open": "Open navigation",
       "close": "Close navigation",
-      "waiting": "Waiting for your review"
+      "waiting": "Waiting for your review",
+      "resources": "Team resources",
+      "submissions": "My submissions"
     },
     "switcher": {
       "label": "Switch team",
@@ -549,13 +550,11 @@
     },
     "models": {
       "title": "Models",
-      "descriptionAdmin": "Connect a provider, then pick from its models the ones your team should use. Members see team models only, never an address or a key.",
-      "descriptionMember": "The models your team publishes. Pick one in DSH with /teamwork use; calls go through your team’s server, so your computer needs no key.",
+      "description": "Connect a provider, then pick from its models the ones your team should use. Members see team models only, never an address or a key.",
       "addProvider": "Add provider",
       "teamModels": "Team models",
       "count": "{count, plural, one {# model} other {# models}}",
-      "emptyAdmin": "No team models yet. Start by adding a provider.",
-      "emptyMember": "Your team has not published a model yet.",
+      "empty": "No team models yet. Start by adding a provider.",
       "name": "Name",
       "route": "Provider / model id",
       "context": "Context",
@@ -652,11 +651,9 @@
     },
     "presets": {
       "title": "Presets",
-      "descriptionAdmin": "A preset is a role the team shares: the model it calls, the tools it needs, the persona it works by. Members pick one in DSH.",
-      "descriptionMember": "The presets your team shares. Start a session with one in DSH with /teamwork new.",
+      "description": "One-line description",
       "blank": "Blank preset",
-      "emptyAdmin": "No presets yet. Start from a template below, or from a blank preset.",
-      "emptyMember": "Your team has not published a preset yet.",
+      "empty": "No presets yet. Start from a template below, or from a blank preset.",
       "templatesTitle": "Start from a template",
       "templatesHint": "Once added it is your team's preset to change as you like; later changes to the template never overwrite it.",
       "useTemplate": "Use template",
@@ -684,7 +681,6 @@
         "persona": "Persona and method"
       },
       "name": "Name",
-      "description": "One-line description",
       "descriptionHint": "Members see this line in DSH’s preset list.",
       "model": "Model",
       "chooseModel": "Choose a team model",
@@ -712,7 +708,8 @@
       "pinStaleShort": "save again",
       "inheritModel": "Use the session / local model",
       "submitted": "Submitted for administrator review",
-      "submitForReview": "Submit for review"
+      "submitForReview": "Submit for review",
+      "intro": "A preset is a role the team shares: the model it calls, the tools it needs, the persona it works by. Members pick one in DSH."
     },
     "plugins": {
       "title": "Plugins",
@@ -871,6 +868,20 @@
       },
       "yes": "Yes",
       "no": "No"
+    },
+    "resources": {
+      "description": "The models, presets and plugins your team provides. They sync to your DSH; changing one is your team's admin's, and you can propose a preset, or a change to one, for their review.",
+      "models": "Models",
+      "modelsHint": "They appear among DSH's models as team models, called through the team's server; no key leaves it.",
+      "noModels": "The team has not published a model yet.",
+      "presets": "Presets",
+      "presetsHint": "Pick one when you start a session in DSH: it brings the role and model the team set up.",
+      "noPresets": "The team has no presets yet.",
+      "plugins": "Plugins",
+      "pluginsHint": "Pinned at a version by the team; DSH asks you before it installs one.",
+      "noPlugins": "The team has not pinned a plugin yet.",
+      "propose": "Propose a preset",
+      "proposeChange": "Propose a change"
     }
   },
   "usage": {
@@ -889,8 +900,7 @@
     "resolved": "Usage review recorded",
     "confirmResolve": "Record review",
     "title": "Usage",
-    "descriptionAdmin": "The team's model calls, in tokens and points. Points are the team's own measure of cost: CNY 1 = 1,000 points at the reference rates, and budgets count them. With your own provider key, the provider still bills you directly.",
-    "descriptionMember": "Your model calls in this team, in tokens and points. Points are how the team's budgets count usage.",
+    "description": "The team's model calls, in tokens and points. Points are the team's own measure of cost: CNY 1 = 1,000 points at the reference rates, and budgets count them. With your own provider key, the provider still bills you directly.",
     "rate": "Point rates",
     "rateTitle": "Reference rates · {name}",
     "rateHint": "CNY per million tokens. CNY 1 = 1,000 reference points. These rates do not charge a hosted balance.",
@@ -946,14 +956,12 @@
     "memberUsage": "Current member usage",
     "memberUsageHint": "Members with activity in this calendar period. Available points subtract active reservations; a dash means reconciliation is needed. Team and provider caps also apply.",
     "title": "Budgets",
-    "descriptionAdmin": "Set team and member spending ceilings. Everyone shares the applicable team limits.",
-    "descriptionMember": "Your applicable team and personal limits, including active reservations.",
+    "description": "Set team and member spending ceilings. Everyone shares the applicable team limits.",
     "add": "Add budget",
     "edit": "Edit budget",
     "refresh": "Refresh",
     "loading": "Loading budgets…",
-    "emptyAdmin": "No budgets configured. Add a team cap or a default member allowance.",
-    "emptyMember": "Your team has not configured budgets yet.",
+    "empty": "No budgets configured. Add a team cap or a default member allowance.",
     "scopes": {
       "team": "Team",
       "default_member": "Default per member",

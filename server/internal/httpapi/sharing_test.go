@@ -98,6 +98,14 @@ func TestReviewVisibilityWithdrawalAndRejection(t *testing.T) {
 		if len(jsonArray(t, admin.get("/api/teams/"+teamID+"/configs"))) != 1 {
 			t.Fatal("rejection or withdrawal published")
 		}
+		// The review queue is the team's; an admin's own list is theirs alone.
+		must(t, admin.post(base, map[string]any{"config": map[string]any{"kind": "preset", "name": "Admin draft", "data": map[string]any{"inheritModel": true}}, "baseVersion": 0, "note": ""}), 200)
+		if all, mine := jsonArray(t, admin.get(base)), jsonArray(t, admin.get(base+"?mine=true")); len(all) != 3 || len(mine) != 1 {
+			t.Fatalf("the admin's lists: %d in the team, %d of their own", len(all), len(mine))
+		}
+		if len(jsonArray(t, a.get(base+"?mine=true"))) != 2 {
+			t.Fatal("a member's own list changed")
+		}
 	})
 }
 

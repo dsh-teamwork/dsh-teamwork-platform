@@ -2145,6 +2145,8 @@ export interface paths {
                     offset?: number;
                     /** @description Keep only submissions in this state */
                     state?: "draft" | "pending" | "published" | "rejected" | "withdrawn";
+                    /** @description Only the caller's own submissions, for an administrator too */
+                    mine?: "true";
                 };
                 header?: never;
                 path: {
