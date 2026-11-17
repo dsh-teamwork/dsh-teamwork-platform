@@ -44,8 +44,11 @@ const (
 
 // pairingView is a pairing as the plugin and the app read it.
 type pairingView struct {
-	ID         string  `json:"id"`
-	HostID     string  `json:"hostId"`
+	ID     string `json:"id"`
+	HostID string `json:"hostId"`
+	// UserID is the member whose handset it is: a shared DSH checks a joining
+	// member's invite against it.
+	UserID     string  `json:"userId"`
 	HostName   string  `json:"hostName"`
 	DeviceName string  `json:"deviceName"`
 	Status     string  `json:"status"` // pending or confirmed
@@ -61,7 +64,7 @@ type pairingView struct {
 func iso(t time.Time) string { return t.UTC().Format("2006-01-02T15:04:05.000Z") }
 
 func view(p *ent.RelayPairing, hostName string) pairingView {
-	v := pairingView{ID: p.ID, HostID: p.HostID, HostName: hostName, DeviceName: p.DeviceName, Status: "pending", CreatedAt: iso(p.CreatedAt)}
+	v := pairingView{ID: p.ID, HostID: p.HostID, UserID: p.UserID, HostName: hostName, DeviceName: p.DeviceName, Status: "pending", CreatedAt: iso(p.CreatedAt)}
 	if p.ConfirmedAt != nil {
 		v.Status = "confirmed"
 	}

@@ -13,6 +13,8 @@ Type these in DSH's command input, not in your shell. Ids come from
 | `/teamwork share enable <key>` | Make this DSH its team's shared DSH, with a key from **Shared DSHs**. |
 | `/teamwork share disable` | End shared mode and delete the key. |
 | `/teamwork share status` | Show the shared DSH's name, team and token. |
+| `/teamwork share invite <email>` | A single-use link that pairs one listed member's device with this shared DSH. |
+| `/teamwork share members` | Who may reach this shared DSH, and their devices. |
 | `/teamwork status` | Show sign-in, sync state and recent errors. |
 | `/teamwork sync` | Refresh the team's resources now. |
 | `/teamwork list` | List the team's resources and their ids. |

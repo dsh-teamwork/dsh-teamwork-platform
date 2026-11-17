@@ -86,4 +86,7 @@ the command shown once: `/teamwork share enable <key>`. Run it in that DSH. It
 then signs in as the team, never as a person, syncs this team alone, and its
 team-model calls are the team's. The first machine to use a key keeps it;
 **Rotate key** issues a new one for the same machine, and **Delete** cuts it
-off. Members reaching a shared DSH by invite comes in a later release.
+off. Under **Access**, choose who may reach it: the whole team or listed
+members. For each of them, run `/teamwork share invite <email>` in that DSH and
+hand the link over yourself; each member then reaches only the sessions they
+started. Phone and web clients that open the link come in a later release.

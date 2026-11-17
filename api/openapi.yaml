@@ -1446,10 +1446,11 @@ components:
         key: { type: string, description: 'The team host key, shown this once' }
     RelayPairing:
       type: object
-      required: [id, hostId, hostName, deviceName, status, createdAt, lastUsedAt]
+      required: [id, hostId, userId, hostName, deviceName, status, createdAt, lastUsedAt]
       properties:
         id: { type: string }
         hostId: { type: string }
+        userId: { type: string, description: The member whose handset it is }
         hostName: { type: string }
         deviceName: { type: string }
         status: { type: string, enum: [pending, confirmed] }

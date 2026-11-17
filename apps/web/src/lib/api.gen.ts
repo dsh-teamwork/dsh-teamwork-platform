@@ -3378,6 +3378,8 @@ export interface components {
         RelayPairing: {
             id: string;
             hostId: string;
+            /** @description The member whose handset it is */
+            userId: string;
             hostName: string;
             deviceName: string;
             /** @enum {string} */

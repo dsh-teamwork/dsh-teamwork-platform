@@ -144,12 +144,12 @@ frames stay as they are.
    device. The device runs Noise XX through it, **pinning the DSH key from
    the invite**, so a relay that answers with another key fails the
    handshake.
-4. **Inside the channel** the device sends `shared/join`: the invite id,
-   `HMAC(secret, handshake hash)`, its display name and a new PIN, or nothing
-   if the member already has one. The DSH checks the invite is unspent, for
+4. **Inside the channel** the device sends `shareJoin`: the invite id, the
+   secret and its display name (a PIN joins it in step 5). The DSH checks the invite is unspent, for
    that member (the pairing's member, as the relay states it, must match the
-   invite's), and the proof; it adds the device under the member, stores the
-   PIN, spends the invite and confirms the pairing with the relay.
+   invite's), and the secret against the hash it kept; it adds the device
+   under the member, spends the invite and confirms the pairing with the
+   relay, or answers `joinRefused`.
 5. **Before step 4 the device shows the disclosure**: this DSH is the team's,
    others on its access list can reach the same machine, and the team's admin
    can read every session on it. The member confirms or stops.
@@ -333,7 +333,15 @@ Each step is a vertical slice, lands green, and brings its ADR.
    `members` list it is sent at hello and at every ping, `GET /relay/shared`,
    `POST /relay/shared/{hostId}/join`, the list's route and the console's
    access editor; a member off the list loses their pairings at once, and
-   deleting the host closes its socket.
+   deleting the host closes its socket. **The plugin's part is done too**: the
+   roster (`src/shared-roster.ts`), `/teamwork share invite` and `members`, the
+   invite handshake in `PhoneSecurity`, and the owner filter
+   (`src/shared-owner.ts`) in the bridge; `server/e2e` drives a member's
+   handset joining by invite through the relay, and another member refused.
+   The invite carries the secret itself rather than a proof of it: the device
+   hands it over inside the channel after pinning this DSH's key, so only the
+   DSH reads it, and the roster keeps its hash. Left for this step: the app's
+   join flow and disclosure, and the desktop panel.
 5. **The PIN lock** (about 4 days), on the shared DSH and the personal relay
    together, in the plugin and the app.
 6. **The audit archive** (about 6 days; an ADR on its format). Key commands,

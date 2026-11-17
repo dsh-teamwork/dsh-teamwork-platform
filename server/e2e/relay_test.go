@@ -45,7 +45,9 @@ func TestPluginRelay(t *testing.T) {
 }
 
 // A team admin's key signs the plugin's shared mode in for the team alone
-// (docs/tech/shared-dsh.md), bound to the first identity that uses it.
+// (docs/tech/shared-dsh.md), bound to the first identity that uses it; a
+// member's handset then joins it by invite through the relay, and a member
+// without one is refused.
 func TestPluginSharedMode(t *testing.T) {
 	plugin := os.Getenv("DSH_TEAMWORK_PLUGIN")
 	if plugin == "" {
@@ -59,6 +61,9 @@ func TestPluginSharedMode(t *testing.T) {
 		ada := in.Account("ada@example.test")
 		team := in.Team(ada)
 		in.Team(ada) // a second team of the admin's, which the shared DSH must not see
+		bob, eve := in.Account("bob@example.test"), in.Account("eve@example.test")
+		in.Member(team, bob)
+		in.Member(team, eve)
 		req, _ := http.NewRequest("POST", in.URL+"/api/teams/"+team+"/shared-hosts", bytes.NewReader([]byte(`{"name":"Build box"}`)))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Origin", in.URL)
@@ -76,7 +81,8 @@ func TestPluginSharedMode(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 		cmd := exec.CommandContext(ctx, "node", filepath.Join(here(), "shared.mjs"))
-		cmd.Env = append(os.Environ(), "BASE="+in.URL, "KEY="+created.Key, "TEAM="+team, "PLUGIN="+plugin)
+		cmd.Env = append(os.Environ(), "BASE="+in.URL, "KEY="+created.Key, "TEAM="+team, "PLUGIN="+plugin,
+			"BOB="+bob, "BOB_TOKEN="+in.Bearer(bob), "EVE_TOKEN="+in.Bearer(eve))
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("%v\n%s", err, out)

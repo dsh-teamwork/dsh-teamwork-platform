@@ -11,7 +11,7 @@ are in `CLAUDE.md`, "The changelog".
 - **Why:** Members reach a team's shared DSH through the server's list as well as the DSH's own roster (ADR 0044, `docs/tech/shared-dsh.md`).
 - **Breaking:** None.
 - **Upgrade:** One migration per dialect adds `shared_hosts.access` and `shared_host_members`; the binary applies it at start.
-- **Refs:** `server/relay/access.go`, `docs/tech/relay.md`, `docs/tech/shared-dsh.md`.
+- **Refs:** `server/relay/access.go`, `docs/tech/relay.md`, `docs/tech/shared-dsh.md`. The plugin's roster, invites (`/teamwork share invite`, `members`) and session-owner filter land with it; `server/e2e` drives a member joining by invite. A pairing as the relay lists it now carries `userId`.
 
 ## 2026-11-17 — The relay is open: phone pairing and shared DSHs on every server
 
