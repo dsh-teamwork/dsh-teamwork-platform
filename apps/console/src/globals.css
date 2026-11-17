@@ -178,6 +178,24 @@
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
+.prose-document pre {
+  margin: 1rem 0;
+  /* The code scrolls inside its own box, clear of the copy button on the right. */
+  padding: 0.9rem 4.5rem 0.9rem 1rem;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.prose-document pre code {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
 .prose-document hr {
   margin: 2.5rem 0;
   border-top: 1px solid var(--border);

@@ -72,92 +72,149 @@
     "submit": "Create account"
   },
   "home": {
-    "title": "One team setup for every DSH.",
-    "tagline": "Publish models, presets and plugin pins once; every member's DeepSeek Harness picks them up.",
+    "title": "From super individual to super team.",
+    "tagline": "From super individual to super team: DSH Teamwork turns DeepSeek Harness into your team's agent workspace.",
     "eyebrow": "The team edition of DeepSeek Harness",
-    "lede": "Publish models, presets and plugin pins once, and every member's DeepSeek Harness picks them up. Team-model calls go through the platform's gateway, so provider keys never leave the server.",
-    "hint": "Already on DSH? Type <code>/teamwork login</code> in your terminal.",
-    "nav": {
-      "how": "How it works",
-      "security": "Security",
-      "setup": "Team setup",
-      "faq": "Questions",
-      "selfhost": "Self-host"
+    "lede": "DSH makes one person as productive as a small team. DSH Teamwork puts the whole team on it: shared presets, plugins and a team assistant, one budget everyone works within, and every day's work settling into skills the team keeps.",
+    "createTeam": "Create a team",
+    "selfHostCta": "Run it yourself",
+    "openConsole": "Open team console",
+    "install": {
+      "desktop": "Install in DSH Desktop: Plugins → Add plugin →",
+      "copy": "Copy",
+      "more": "CLI install, sign-in and self-hosted servers"
     },
-    "surface": {
+    "nav": {
+      "label": "Sections",
+      "menu": "Menu",
+      "everywhere": "Everywhere",
+      "collaborate": "Collaborate",
+      "govern": "Govern",
+      "assets": "Team assets",
+      "selfhost": "Self-host",
+      "docs": "Docs"
+    },
+    "shift": {
       "depth": "0 m",
-      "label": "Surface · where you already work",
-      "title": "Keep your tools. Sync once, and the team's setup is there.",
-      "lede": "Members keep their own DSH. The team's models and presets appear next to their own configuration, and nothing of theirs is overwritten.",
-      "step1Title": "An admin publishes once",
-      "step1Body": "Add team models, presets and plugin pins in the team console, and invite members with single-use links.",
-      "step2Title": "Members sign in to the team",
-      "step2Body": "Run <code>/teamwork login</code> in DSH and confirm on the website. DSH finishes signing in by itself.",
-      "step3Title": "Sync and use",
-      "step3Body": "Run <code>/teamwork sync</code>, or let it run itself: once after sign-in, then every minute. The team's models and presets are then in DSH, and calls to team models go through the gateway.",
+      "label": "Surface · one person's work",
+      "title": "One person with agents goes far. A team with them goes further.",
+      "lede": "Every member already has an agent that writes, reviews and ships. What they lack is each other's best setup, a shared budget, and a place where good work stays.",
+      "alone": "On your own",
+      "together": "As a team",
+      "from1": "Everyone tunes their own prompts and tools.",
+      "to1": "The best setup is published once, and everyone runs the same one.",
+      "from2": "API keys pasted into a chat and rotated when someone leaves.",
+      "to2": "Keys stay on the server; removing someone takes effect on their next request.",
+      "from3": "Nobody knows what the agents cost until the bill arrives.",
+      "to3": "Team and member budgets, with every call counted.",
+      "from4": "A great workflow lives and dies on one laptop.",
+      "to4": "It becomes the team's: versioned, reviewed and kept."
+    },
+    "everywhere": {
+      "depth": "−10 m",
+      "label": "Everywhere · where the work happens",
+      "title": "The same team, in every place you work.",
+      "lede": "Teamwork does not replace DSH; it follows it. The team's setup reaches the terminal, the browser and the phone, and next, agents that run in the cloud.",
+      "status": {
+        "available": "Available",
+        "hosted": "Hosted service",
+        "coming": "Coming"
+      },
+      "terminalTitle": "DSH in the terminal",
+      "terminalBody": "Install the Teamwork plugin and sign in once. Team models, presets and plugins sync by themselves, next to your own setup.",
+      "consoleTitle": "Team console on the web",
+      "consoleBody": "Admins connect models, publish presets and plugins, review what members share, and set budgets.",
+      "mobileTitle": "Mobile app",
+      "mobileBody": "Drive the DSH on your own computer from your phone: start a session with a team preset, follow it, answer its approvals. End-to-end encrypted.",
+      "cloudTitle": "DSH in the cloud",
+      "cloudBody": "Cloud sessions and team bots on the team's own cloud computers, started from the web, the app or your DSH."
+    },
+    "collaborate": {
+      "depth": "−50 m",
+      "label": "Collaborate · what the team shares",
+      "title": "One person's best setup becomes everyone's.",
+      "lede": "Presets, plugins and the team assistant are published once. Every member's next sync carries them, and nothing of their own is overwritten.",
+      "presetsTitle": "Presets",
+      "presetsBody": "A role the team shares: the model it calls, the tools it needs and the way it works. Start from a template, then make it the team's.",
+      "pluginsTitle": "Plugins",
+      "pluginsBody": "npm packages pinned at exact versions, or the team's private packages checked file by file, so everyone runs the same build.",
+      "assistantTitle": "Team assistant",
+      "assistantBody": "Every new team gets one. Ask it in DSH about the team's resources, usage, budgets and members, or what is waiting for review.",
+      "reviewTitle": "Share and review",
+      "reviewBody": "Any member can submit a preset or plugin from their own DSH. An admin approves the exact contents before the team gets it.",
       "terminalCaption": "In DSH · example",
       "termConfirm": "Confirm in the browser…",
       "termSigned": "Signed in to acme-infra",
-      "termSynced": "Synced: 2 team models, 1 preset, 1 plugin pin",
-      "termGateway": "via gateway",
+      "termSynced": "Synced: 2 team models, 3 presets, 1 plugin",
+      "termSession": "New session with the team's pr-review preset",
       "termNoKey": "No provider key stored on this machine"
     },
-    "boundary": {
-      "depth": "−40 m",
-      "label": "Boundary · safe to hand over",
-      "title": "The keys stay on the server. Membership is checked on every request.",
-      "lede": "No API keys pasted into a chat, and no rotating them when someone leaves. The team gets a path the platform guards.",
-      "keysTitle": "Keys never reach a laptop",
-      "keysBody": "Provider keys live only in the server's environment. A member's DSH holds a team token, which cannot call a provider by itself.",
-      "checkTitle": "Checked on every request",
-      "checkBody": "Every request re-reads the caller's membership. Remove someone, and their next request is refused.",
-      "gatewayTitle": "Only what inference needs",
-      "gatewayBody": "The gateway forwards an allow-list of inference fields, and none of the provider's headers come back.",
+    "govern": {
+      "depth": "−200 m",
+      "label": "Govern · safe to hand over",
+      "title": "Give everyone agents, and keep the controls.",
+      "lede": "An admin decides which models the team calls, how much it may spend and who is in. The server enforces it on every call.",
+      "budgetsTitle": "Budgets",
+      "budgetsBody": "Daily and monthly caps for the team, for each member and for each provider. A call reserves its cost before it runs, so a cap is not overrun.",
+      "usageTitle": "Usage",
+      "usageBody": "Every model call by member and model, priced in reference points at the rates you set, and exported as CSV. No prompt or reply is stored.",
+      "keysTitle": "Keys stay on the server",
+      "keysBody": "Provider keys are stored encrypted, cannot be read back, and never reach a member's computer. Team-model calls go through the gateway.",
+      "membersTitle": "Checked on every request",
+      "membersBody": "Every request re-reads the caller's membership. Remove someone, and their next request is refused.",
       "promise": "Nothing a caller sends can name a URL, a header or a key.",
       "promiseNote": "The model is resolved within your team; the provider and its key are the server's to choose."
     },
-    "deep": {
-      "depth": "−200 m",
-      "label": "Deep · what the team shares",
-      "title": "Publish once. Everyone runs the same thing.",
-      "lede": "A team setup is three kinds of thing. Presets sit on top: each uses a team model and pins the plugins it needs. Change one once, and every member's next sync carries it.",
-      "presetsTitle": "Presets",
-      "presetsBody": "The team's prompt, tool requirements and plugin pins, on a team model or a model of its own.",
-      "pluginsTitle": "Plugin pins",
-      "pluginsBody": "npm packages at exact versions, so everyone runs the same build. Installing one stays each member's choice.",
-      "modelsTitle": "Team models",
-      "modelsBody": "A provider and a model the platform calls for the team, with the key on the server."
+    "assets": {
+      "depth": "−1000 m",
+      "label": "Deep · what the team keeps",
+      "title": "Daily work settles into the team's assets.",
+      "lede": "A preset someone wrote on Tuesday is how the whole team works by Friday. Each publication is kept as a layer: who wrote it, who approved it, and exactly what it was.",
+      "caption": "An example of a team's published resources, newest on top.",
+      "versionsTitle": "Every version kept",
+      "versionsBody": "Each approved preset and plugin is a version with its author and reviewer. Compare any version with what is live today.",
+      "restoreTitle": "Restore through review",
+      "restoreBody": "An older version comes back as a draft and goes through the same review, even after the resource was deleted.",
+      "exportTitle": "Export a backup",
+      "exportBody": "Export a resource with what it depends on, to keep a copy outside the server.",
+      "nextTitle": "Sessions, workspaces and memory",
+      "nextBody": "Next, what members do with their agents stays with the team too: sessions, workspaces and a memory the team can search."
     },
     "community": {
-      "depth": "−500 m",
-      "label": "Community edition · run it yourself",
-      "title": "Or run it on your own server.",
-      "lede": "What one team needs is open source under Apache-2.0: teams, models, presets, plugin pins and the gateway. It runs as one program, from npx, a download or compose.yaml, on SQLite, Postgres or MySQL, and provider keys stay on your own server.",
+      "depth": "−2000 m",
+      "label": "Open core · run it your way",
+      "title": "Use the hosted service, or run it on your own server.",
+      "lede": "What one team needs is open source. What a company needs to run agents across many teams comes with the hosted service.",
+      "hostedTitle": "Hosted service",
+      "hostedBody": "Nothing to install: sign in, create a team and invite people. It adds hosted models paid in advance, the mobile app and, next, DSH in the cloud.",
+      "openTitle": "Community edition",
+      "openBody": "Apache-2.0: teams, models, presets, plugins, the assistant, review and history, usage and budgets, and the gateway. Docker Compose or a source build, on SQLite, Postgres or MySQL.",
       "repo": "Source on GitHub",
       "guide": "Self-hosting guide"
     },
     "faq": {
-      "depth": "−1000 m",
+      "depth": "−3000 m",
       "label": "Questions",
       "title": "Before you start",
       "q1": "Where do the provider keys live?",
-      "a1": "Only in the DSH Teamwork server's environment. A member's DSH holds a team token that lasts 30 days; team-model calls are forwarded by the server, and the token cannot reach a provider directly.",
+      "a1": "On the DSH Teamwork server, encrypted. An admin enters a key once in the team console; it cannot be read back and never reaches a member's computer. A member's DSH holds a team token that lasts 30 days and cannot call a provider by itself.",
       "q2": "Do we have to change DSH?",
-      "a2": "No. Install the @dsh-teamwork/dsh-teamwork plugin, run /teamwork login, and /teamwork sync pulls the team's setup (it also syncs on its own every minute). The team's setup sits next to each member's own and overwrites nothing.",
+      "a2": "No. Install the @dsh-teamwork/dsh-teamwork plugin and run /teamwork login. The team's setup syncs by itself, next to each member's own, and overwrites nothing.",
       "q3": "Are our conversations uploaded?",
-      "a3": "No. Conversations stay in each member's DSH. The platform forwards team-model calls to the provider and does not store them.",
+      "a3": "No. Conversations stay in each member's DSH. The server forwards team-model calls to the provider and records their token counts, never the prompt or the reply.",
       "q4": "What happens when we remove a member?",
       "a4": "Their next request is refused. Membership is checked on every request, so there is no waiting for a token to expire.",
       "q5": "Can one person be in several teams?",
-      "a5": "Not yet: one person belongs to one team."
+      "a5": "Yes. Each team checks membership on its own, and the plugin syncs every team the person is in.",
+      "q6": "What happens when a budget runs out?",
+      "a6": "A call reserves its largest possible cost before it runs, and one that would go over the cap is refused. Hard limits cover DeepSeek models called directly today; calls to other providers are counted and reported against the budget."
     },
     "final": {
       "depth": "Seabed",
       "label": "Start",
-      "title": "Set up your team and publish its first model.",
-      "lede": "Sign in, create a team, publish a team model. Once members sync, their first call goes through the gateway."
-    },
-    "openConsole": "Open team console"
+      "title": "Turn a team of super individuals into a super team.",
+      "lede": "Create a team, publish its first preset and invite the people you work with. Their next sync brings them in."
+    }
   },
   "account": {
     "title": "Account",
@@ -277,7 +334,15 @@
       "presets": "Presets",
       "plugins": "Plugins",
       "sharing": "Sharing and review",
-      "history": "Versions and backups"
+      "history": "Versions and backups",
+      "groups": {
+        "assets": "Team assets",
+        "collaboration": "Collaboration",
+        "governance": "Governance"
+      },
+      "open": "Open navigation",
+      "close": "Close navigation",
+      "account": "Account menu"
     },
     "switcher": {
       "label": "Switch team",
@@ -532,7 +597,7 @@
       "hint": "Inspect approved history, export resources, or prepare a reviewed restore. Published versions are retained.",
       "timezone": "Times shown in {zone}. The end time is exclusive.",
       "kind": "Resource kind",
-      "allKinds": "All resources",
+      "allKinds": "All kinds",
       "presets": "Presets",
       "plugins": "Plugins",
       "resourceId": "Resource",
@@ -776,5 +841,23 @@
     "artifact_mismatch": "Plugin archive integrity check failed.",
     "artifact_not_found": "Plugin artifact is unavailable.",
     "revision_not_found": "Historical version not found."
+  },
+  "docs": {
+    "title": "Docs",
+    "label": "Documentation",
+    "menu": "Pages",
+    "console": "Team console",
+    "home": "Home",
+    "issues": "Report a problem",
+    "copy": "Copy",
+    "onThisPage": "On this page",
+    "pager": "More pages",
+    "previous": "Previous",
+    "next": "Next",
+    "sections": {
+      "start": "Get started",
+      "teams": "Teams",
+      "run": "Run it yourself"
+    }
   }
 }

@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-16
+> **Status:** Current · **Updated:** 2026-11-17
 
 The DSH Teamwork visual system — the whale mark, the black-and-white palette with its two accents, type, spacing and icons — and the file in code that owns each part.
 
@@ -181,12 +181,28 @@ icon set.
   `--foreground` wave line that runs the full width; below the line the page's
   own ground covers the stalk. It is not the logo, has no plate, and is not
   exported.
-- **The landing page is black on white.** The faint fluke and its wave line,
-  then sections divided by hairlines, each labelled with its depth in mono, and
-  the closing call on one `--brand` band, the page's only large area of
-  colour. It states only what ships; a planned capability is not on it.
+- **The landing page is black on white, and it goes down.** The faint fluke
+  and its wave line, then sections divided by hairlines, each labelled with its
+  depth in mono, and the closing call on one `--brand` band, the page's only
+  large area of colour. The depths tell the brand's story in order: the
+  surface is one person's work and the places it happens (every platform),
+  then what the team shares (collaboration) and controls (governance), and
+  the deep floor is what the team keeps as its assets.
 - **The web app's `/` is the landing page on every instance**, self-hosted
-  ones included (ADR 0007), so it states only what holds for any instance.
+  ones included (ADR 0007), so every claim holds for any instance. A
+  capability only the hosted service offers, or one that is planned, appears
+  only with its status beside it (*Hosted service*, *Coming*), never as
+  something the reader already has.
+- **The documentation at `/docs` reads like the console.** A sidebar of
+  grouped pages with the selected one marked as in the console, the page in
+  `.prose-document` (the legal pages' type), and "On this page" on wide
+  screens; a code block carries its own copy button
+  (`apps/console/src/public/docs.tsx`).
+- **The console's sidebar is grouped by what a team does**: the overview, then
+  *Team assets* (models, presets, plugins), *Collaboration* (review, versions)
+  and *Governance* (members, usage, budgets, and an edition's own team pages).
+  The account is one menu at its foot; below `md` the sidebar is a sheet
+  behind a menu button (`apps/console/src/components/team/console-shell.tsx`).
 - **Outcomes in the console** use `--success` / `--warning` / `--info` /
   `--destructive`, and every mutation reports through a `sonner` toast.
 - **Console chrome comes from `premium/apps/manage/src/components/console.tsx`**

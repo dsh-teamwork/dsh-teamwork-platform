@@ -29,3 +29,18 @@ picker?.addEventListener('change', async () => {
   picker.value = Array.from(picker.options).find((o) => o.defaultSelected)?.value ?? picker.value;
   picker.disabled = false;
 });
+
+// The home page's copy buttons: the command beside each stays selectable when the clipboard is refused.
+for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-copy]')) {
+  const label = button.textContent;
+  button.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy ?? '');
+      button.textContent = '✓';
+      setTimeout(() => (button.textContent = label), 1500);
+    } catch {
+      const code = button.previousElementSibling;
+      if (code) window.getSelection()?.selectAllChildren(code);
+    }
+  });
+}

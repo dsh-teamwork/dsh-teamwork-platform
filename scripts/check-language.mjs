@@ -37,6 +37,10 @@ const ALLOWED = [
     why: 'The requested Simplified Chinese getting-started guide is user-facing product documentation; developer documentation remains English.',
   },
   {
+    match: (f) => /^apps\/console\/content\/docs\/zh-CN\/[^/]+\.md$/.test(f),
+    why: 'The published /docs site in Simplified Chinese: product content a user reads in the language they chose, beside its English pages.',
+  },
+  {
     // This file necessarily contains CJK — the range endpoints of the regex
     // above — so it cannot pass its own check.
     match: (f) => f === 'scripts/check-language.mjs',
