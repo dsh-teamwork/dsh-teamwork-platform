@@ -9,8 +9,10 @@ import (
 	"entgo.io/ent/schema/mixin"
 )
 
-// The relay's tables (docs/tech/relay.md, docs/tech/shared-dsh.md). They name
-// accounts and teams by id alone: the relay removes its rows when an account
+// The relay's tables (docs/tech/relay.md, docs/tech/shared-dsh.md). Their
+// indexes are named so as not to collide with those the hosted edition's own
+// relay tables had, which an upgraded database holds until that edition drops
+// them (ADR 0044). They name accounts and teams by id alone: the relay removes its rows when an account
 // or a team goes (server/relay, teamChanged), in the deletion's own
 // transaction.
 
@@ -48,7 +50,7 @@ func (RelayHost) Fields() []ent.Field {
 	}
 }
 func (RelayHost) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("user_id", "client_id").Unique()}
+	return []ent.Index{index.Fields("user_id", "client_id").Unique().StorageKey("relay_hosts_user_client")}
 }
 
 // RelayPairingOffer is a single-use pairing code a host asked for, shown in
@@ -65,7 +67,9 @@ func (RelayPairingOffer) Fields() []ent.Field {
 		relayAt("used_at"),
 	}
 }
-func (RelayPairingOffer) Indexes() []ent.Index { return []ent.Index{index.Fields("host_id")} }
+func (RelayPairingOffer) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("host_id").StorageKey("relay_pairing_offers_host")}
+}
 
 // RelayPairing is a phone joined to one of its owner's hosts. It routes opaque
 // records only from its owner's handset credential, including before
@@ -90,7 +94,7 @@ func (RelayPairing) Fields() []ent.Field {
 	}
 }
 func (RelayPairing) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("user_id"), index.Fields("host_id")}
+	return []ent.Index{index.Fields("user_id").StorageKey("relay_pairings_user"), index.Fields("host_id").StorageKey("relay_pairings_host")}
 }
 
 // SharedHost is a DSH a team shares with its members (docs/tech/shared-dsh.md,
@@ -112,4 +116,6 @@ func (SharedHost) Fields() []ent.Field {
 		relayAt("last_seen_at"),
 	}
 }
-func (SharedHost) Indexes() []ent.Index { return []ent.Index{index.Fields("team_id")} }
+func (SharedHost) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("team_id").StorageKey("shared_hosts_team")}
+}

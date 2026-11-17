@@ -410,7 +410,7 @@ var (
 		PrimaryKey: []*schema.Column{RelayHostsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "relayhost_user_id_client_id",
+				Name:    "relay_hosts_user_client",
 				Unique:  true,
 				Columns: []*schema.Column{RelayHostsColumns[2], RelayHostsColumns[3]},
 			},
@@ -437,12 +437,12 @@ var (
 		PrimaryKey: []*schema.Column{RelayPairingsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "relaypairing_user_id",
+				Name:    "relay_pairings_user",
 				Unique:  false,
 				Columns: []*schema.Column{RelayPairingsColumns[2]},
 			},
 			{
-				Name:    "relaypairing_host_id",
+				Name:    "relay_pairings_host",
 				Unique:  false,
 				Columns: []*schema.Column{RelayPairingsColumns[3]},
 			},
@@ -463,7 +463,7 @@ var (
 		PrimaryKey: []*schema.Column{RelayPairingOffersColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "relaypairingoffer_host_id",
+				Name:    "relay_pairing_offers_host",
 				Unique:  false,
 				Columns: []*schema.Column{RelayPairingOffersColumns[2]},
 			},
@@ -554,7 +554,7 @@ var (
 		PrimaryKey: []*schema.Column{SharedHostsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "sharedhost_team_id",
+				Name:    "shared_hosts_team",
 				Unique:  false,
 				Columns: []*schema.Column{SharedHostsColumns[2]},
 			},
