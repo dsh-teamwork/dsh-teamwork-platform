@@ -229,3 +229,36 @@ func TestEditionMetersReachTheTeamsUsage(t *testing.T) {
 		}
 	})
 }
+
+func TestEditionMintsComputerTokensOnlyForMembers(t *testing.T) {
+	var host edition.Host
+	editiontest.Each(t, []edition.Extension{probe(&host)}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
+		ctx := context.Background()
+		ada, bob := in.Account("ada@example.test"), in.Account("bob@example.test")
+		team := in.Team(ada)
+		if _, _, err := host.MintComputerToken(ctx, bob, team, "session-1", time.Hour); err == nil {
+			t.Fatal("minted a computer token for someone outside the team")
+		}
+		if _, _, err := host.MintComputerToken(ctx, ada, team, "session-1", 2*time.Hour); err == nil {
+			t.Fatal("minted a computer token longer than an hour")
+		}
+		token, expires, err := host.MintComputerToken(ctx, ada, team, "session-1", 10*time.Minute)
+		if err != nil || time.Until(expires) > 11*time.Minute {
+			t.Fatalf("mint: %v, expires %v", err, expires)
+		}
+		req, _ := http.NewRequest("GET", in.URL+"/api/configs", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res.Body.Close()
+		if res.StatusCode != 200 {
+			t.Fatalf("a minted computer token was refused: %d", res.StatusCode)
+		}
+		// It is not a plugin token: an edition's own Bearer check does not open it.
+		if who, err := host.Bearer(ctx, token); err != nil || who != nil {
+			t.Fatalf("Bearer opened a computer token: %+v %v", who, err)
+		}
+	})
+}

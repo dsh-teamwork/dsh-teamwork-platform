@@ -408,7 +408,10 @@ account is not its email**: the `identities` table records each door that
 reached it, `(provider, subject)` unique, and an account is joined by email
 only on an email the door verified. Sessions are a cookie and plugin tokens a
 Bearer, both JWE under keys derived from `AUTH_SECRET`, each kind under its
-own, so one never opens as the other.
+own, so one never opens as the other. A **computer token** (ADR 0038) is a
+third kind, minted only by an edition for a cloud computer's plugin: one
+member, one team, an hour, accepted by `GET /api/configs` and the gateway
+alone (`requirePlugin` in `internal/httpapi/identity.go`).
 
 **The DSH plugin signs in through the website** (`docs/adr/0001-plugin-sign-in.md`).
 `/teamwork login` in DSH listens on `http://127.0.0.1:<port>` and prints

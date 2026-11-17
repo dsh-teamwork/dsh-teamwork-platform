@@ -12,6 +12,13 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None for a single-process install. A split install claims its first account on the user process.
 - **Upgrade:** Nothing. A link already printed by a management process stops working there once it is updated.
 - **Refs:** `server/app/app.go`, `server/internal/httpapi/server.go`, `docs/tech/system-management.md`.
+## 2026-11-17 — Computer tokens for a cloud computer's plugin
+
+- **What:** A new kind of sealed Bearer, the computer token: one member, one team, at most an hour, minted only through `edition.Host.MintComputerToken` for a member of that team. `GET /api/configs` returns that team alone for it, the model gateway refuses any other team's model, and every other route treats it as nobody. Membership is re-read on every request.
+- **Why:** An agent in a cloud computer can read the plugin's token; a member's 30-day plugin token would let it act as the member everywhere.
+- **Breaking:** None. `Gateway.Completions` takes the caller's team scope.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0038.
 
 ## 2026-11-17 — A redesigned /teams, a wider landing page, a theme switch and one select
 
@@ -28,6 +35,7 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None.
 - **Upgrade:** Nothing.
 - **Refs:** `server/internal/usage/summary.go`, `apps/console/src/pages/team/overview.tsx`, `docs/tech/usage-budgets.md` ("API and console").
+
 ## 2026-11-17 — Editions can register meters with the budget engine
 
 - **What:** An edition registers its own kinds of usage (`edition.Host.RegisterMeters`): it holds points for a member before metered work starts and settles the measured quantity and its points afterwards, in the same windows, reservations and transaction as model calls, with its funding participant. Team and member point budgets bound them; provider budgets and token limits do not. `usage_requests` gains `meter` and `quantity`; the usage API's entries gain `meter`, the CSV export gains `meter`, `quantity` and `unit`, and the console's Usage page names a metered row by its labels. An unsettled hold is marked lost and stays held; an administrator cannot resolve a metered row.
