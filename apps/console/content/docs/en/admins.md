@@ -53,8 +53,11 @@ beside them; you become a member.
 Under **Models**, set a reference rate for each model. Then, under **Budgets**,
 add daily or monthly caps for the whole team, a default for each member, or a
 provider. A call reserves its largest possible cost before it runs, and one that
-would pass a cap is refused. **Usage** lists every call by member and model and
-exports it as CSV.
+would pass a cap is refused. Budgets count **points**, the team's own measure of
+cost: CNY 1 is 1,000 points at the reference rates. With your own provider key,
+the provider still bills you directly. Where the server sends email, a budget
+can also warn admins or the member as it nears its cap. **Usage** lists every
+call by member and model and exports it as CSV.
 
 ## 6. Review what members share
 

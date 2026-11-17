@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { api, type Provider, type Schemas } from '@/lib/api';
+import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
@@ -127,7 +128,9 @@ function BudgetDialog({ current, policies, providers, reload, close }: {
   const [period, setPeriod] = useState<PolicyInput['period']>(current?.period ?? 'month');
   const [timezone, setTimezone] = useState(() => current?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [enabled, setEnabled] = useState(current?.enabled ?? true);
-  const [notify, setNotify] = useState<PolicyInput['notify']>(current?.notify ?? 'admins');
+  // An instance that sends no email has no one to notify: a new policy notifies nobody, and the choice is not offered.
+  const mails = useSession().session.doors.emailCode;
+  const [notify, setNotify] = useState<PolicyInput['notify']>(current?.notify ?? (mails ? 'admins' : 'none'));
   const [memberMode, setMemberMode] = useState(current?.inheritsDefault ? 'inherit' : current && !current.enabled ? 'unlimited' : 'limited');
   const [points, setPoints] = useState(current?.points ?? '');
   const [input, setInput] = useState(current?.input?.toString() ?? '');
@@ -143,7 +146,7 @@ function BudgetDialog({ current, policies, providers, reload, close }: {
       base.input = base.output = base.total = null;
     }
   }
-  const save = (value: PolicyInput) => run(() => api(`teams/${team.id}/budgets`, { method: 'PUT', body: value }), t('saved')).then((ok) => { if (ok) close(); });
+  const save = (value: PolicyInput) => run(() => api(`teams/${team.id}/budgets`, { method: 'PUT', body: value }), t(current ? 'saved' : 'created')).then((ok) => { if (ok) close(); });
   return <Dialog open onOpenChange={(open) => { if (!open && !pending) close(); }}><DialogContent>
     <DialogHeader><DialogTitle>{t(current ? 'edit' : 'add')}</DialogTitle><DialogDescription>{t('formHint')}</DialogDescription></DialogHeader>
     <form className="flex flex-col gap-4" onSubmit={(event) => { event.preventDefault(); void save(base); }}>
@@ -161,7 +164,7 @@ function BudgetDialog({ current, policies, providers, reload, close }: {
       </div></details>
       </>}
       <Field id="budget-timezone" label={t('timezone')} hint={t('timezoneHint')}><Input id="budget-timezone" required maxLength={100} disabled={pending} value={timezone} onChange={(e) => setTimezone(e.target.value)} /></Field>
-      <Field id="budget-notify" label={t('notify')}><Select id="budget-notify" label={t('notify')} disabled={pending || !base.enabled} value={notify} options={(['admins', 'both', 'owner', 'none'] as const).filter((value) => scope === 'member' || scope === 'default_member' || value === 'admins' || value === 'none').map((value) => ({ value, label: t(`notifyChoices.${value}`) }))} change={(value) => setNotify(value as PolicyInput['notify'])} /></Field>
+      {mails && <Field id="budget-notify" label={t('notify')}><Select id="budget-notify" label={t('notify')} disabled={pending || !base.enabled} value={notify} options={(['admins', 'both', 'owner', 'none'] as const).filter((value) => scope === 'member' || scope === 'default_member' || value === 'admins' || value === 'none').map((value) => ({ value, label: t(`notifyChoices.${value}`) }))} change={(value) => setNotify(value as PolicyInput['notify'])} /></Field>}
       {scope !== 'member' && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} disabled={pending} onChange={(e) => setEnabled(e.target.checked)} />{t('enabled')}</label>}
       {previous && !current && <p className="text-xs text-muted-foreground">{t('exists')}</p>}
       <DialogFooter>
