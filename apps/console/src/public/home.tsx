@@ -107,6 +107,54 @@ function Status({ status, label }: { status: 'available' | 'hosted' | 'coming'; 
   );
 }
 
+/** The plugin's npm name: what DSH installs to join a team (the plugin's own README, "Install"). */
+const PLUGIN = '@dsh-teamwork/dsh-teamwork';
+const CLI_INSTALL = `dsh plugin --profile web add ${PLUGIN}`;
+
+/** A command or name to copy; client.ts makes the button copy its `data-copy`. */
+function Copyable({ text, label }: { text: string; label: string }) {
+  return (
+    <span className="flex min-w-0 items-center gap-1 rounded-md bg-muted py-1 pr-1 pl-2.5 font-mono text-[13px]">
+      <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{text}</code>
+      <button type="button" data-copy={text} data-copied={label} className="shrink-0 rounded px-2 py-0.5 font-sans text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+        {label}
+      </button>
+    </span>
+  );
+}
+
+/**
+ * How a member's DSH joins: install the plugin (the desktop app's plugin
+ * manager, or the CLI into the profile they run), then sign in from its panel.
+ * The server named is this instance's own (`%APP_URL%`, written by the server).
+ */
+function Install({ locale }: { locale: Locale }) {
+  const t = createTranslator({ locale, messages: locale === 'zh-CN' ? zhCN : en, namespace: 'home' });
+  return (
+    <div className="max-w-2xl overflow-hidden rounded-xl ring-1 ring-border">
+      <p className="border-b px-4 py-2.5 text-sm font-semibold">{t('install.title')}</p>
+      <dl className="flex flex-col">
+        <div className="grid gap-2 px-4 py-3 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:items-center">
+          <dt className="text-sm text-muted-foreground">{t('install.desktop')}</dt>
+          <dd className="flex min-w-0 flex-col gap-1.5">
+            <span className="text-sm">{t('install.desktopSteps')}</span>
+            <Copyable text={PLUGIN} label={t('install.copy')} />
+          </dd>
+        </div>
+        <div className="grid gap-2 border-t px-4 py-3 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:items-center">
+          <dt className="text-sm text-muted-foreground">{t('install.cli')}</dt>
+          <dd className="min-w-0">
+            <Copyable text={CLI_INSTALL} label={t('install.copy')} />
+          </dd>
+        </div>
+      </dl>
+      <p className="border-t bg-muted/50 px-4 py-2.5 text-sm text-muted-foreground">
+        {t.rich('install.then', { server: SITE_ORIGIN, code: (c) => <code className="font-mono text-foreground">{c}</code> })}
+      </p>
+    </div>
+  );
+}
+
 export interface HomeProps {
   locale: Locale;
   signedIn: boolean;
@@ -200,9 +248,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
               <a href="#self-host">{t('selfHostCta')}</a>
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {t.rich('hint', { code: (c) => <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">{c}</code> })}
-          </p>
+          <Install locale={locale} />
         </section>
 
         <Sea />

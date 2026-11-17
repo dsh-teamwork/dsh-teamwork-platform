@@ -76,10 +76,17 @@
     "tagline": "从超级个体到超级团队：DSH Teamwork 把 DeepSeek Harness 变成团队的 Agent 协作空间。",
     "eyebrow": "DeepSeek Harness 团队版",
     "lede": "DSH 让一个人顶得上一支小队。DSH Teamwork 让整个团队一起用起来：共享的预设、插件和团队助理，一份大家共同遵守的预算，每天的工作沉淀为团队自己的能力。",
-    "hint": "已经在用 DSH？在终端里输入 <code>/teamwork login</code>",
     "createTeam": "创建团队",
     "selfHostCta": "自己部署",
     "openConsole": "打开团队控制台",
+    "install": {
+      "title": "安装 DSH 插件",
+      "desktop": "DSH 桌面版",
+      "desktopSteps": "插件 → 添加插件，然后输入：",
+      "cli": "DSH CLI / Web",
+      "copy": "复制",
+      "then": "然后打开 DSH 侧边栏里的 Teamwork 并登录。如果登录界面显示的是别的服务器，把它改成 <code>{server}</code>。"
+    },
     "nav": {
       "label": "页面章节",
       "menu": "菜单",
@@ -117,7 +124,7 @@
         "coming": "即将推出"
       },
       "terminalTitle": "终端里的 DSH",
-      "terminalBody": "用 <code>/teamwork login</code> 登录一次。团队的模型、预设和插件自动同步，与你自己的配置并存。",
+      "terminalBody": "安装 Teamwork 插件并登录一次。团队的模型、预设和插件自动同步，与你自己的配置并存。",
       "consoleTitle": "网页团队控制台",
       "consoleBody": "管理员接入模型、发布预设和插件、审核成员分享的内容、设置预算。",
       "mobileTitle": "移动端 App",

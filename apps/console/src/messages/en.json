@@ -76,10 +76,17 @@
     "tagline": "From super individual to super team: DSH Teamwork turns DeepSeek Harness into your team's agent workspace.",
     "eyebrow": "The team edition of DeepSeek Harness",
     "lede": "DSH makes one person as productive as a small team. DSH Teamwork puts the whole team on it: shared presets, plugins and a team assistant, one budget everyone works within, and every day's work settling into skills the team keeps.",
-    "hint": "Already on DSH? Type <code>/teamwork login</code> in your terminal.",
     "createTeam": "Create a team",
     "selfHostCta": "Run it yourself",
     "openConsole": "Open team console",
+    "install": {
+      "title": "Install the DSH plugin",
+      "desktop": "DSH Desktop",
+      "desktopSteps": "Plugins → Add plugin, then enter:",
+      "cli": "DSH CLI / Web",
+      "copy": "Copy",
+      "then": "Then open Teamwork in the DSH sidebar and sign in. If its sign-in screen names another server, change it to <code>{server}</code>."
+    },
     "nav": {
       "label": "Sections",
       "menu": "Menu",
@@ -117,7 +124,7 @@
         "coming": "Coming"
       },
       "terminalTitle": "DSH in the terminal",
-      "terminalBody": "Sign in once with <code>/teamwork login</code>. Team models, presets and plugins sync by themselves, next to your own setup.",
+      "terminalBody": "Install the Teamwork plugin and sign in once. Team models, presets and plugins sync by themselves, next to your own setup.",
       "consoleTitle": "Team console on the web",
       "consoleBody": "Admins connect models, publish presets and plugins, review what members share, and set budgets.",
       "mobileTitle": "Mobile app",
