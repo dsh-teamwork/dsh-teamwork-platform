@@ -102,7 +102,7 @@ func (in *Instance) Account(email string) string {
 // Team creates a team with the account as its admin, and returns its id.
 func (in *Instance) Team(userID string) string {
 	in.t.Helper()
-	created, err := in.srv.Team.CreateTeam(context.Background(), userID, wire.CreateTeam{Name: "Team"})
+	created, err := in.srv.Team.CreateTeam(context.Background(), userID, wire.CreateTeam{Name: "Team"}, "en")
 	if err != nil {
 		in.t.Fatal(err)
 	}

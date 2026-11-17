@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"strings"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -20,17 +21,28 @@ func builtinName(v *string) string {
 }
 
 // provisionAssistant belongs to the team creation transaction, not a sync hook.
-func provisionAssistant(ctx context.Context, client *ent.Client, teamID, teamName string) error {
-	var text struct{ Suffix, Description, SystemPrompt string }
+// Its name and description are written once, in the creator's language
+// (wire.Locales; anything else reads English), and stay as written: they are
+// the team's preset from then on. The prompt is English and asks the model to
+// answer in the user's language.
+func provisionAssistant(ctx context.Context, client *ent.Client, teamID, teamName, locale string) error {
+	var text struct {
+		Name, Description map[string]string
+		SystemPrompt      string
+	}
 	if err := json.Unmarshal(assistantCopy, &text); err != nil {
 		return err
 	}
-	data := wire.PresetData{InheritModel: true, Description: text.Description, SystemPrompt: text.SystemPrompt, RequiredTools: []string{}, OptionalTools: []string{}, PluginDependencies: []wire.PluginDependency{}}
+	if !wire.IsLocale(locale) {
+		locale = "en"
+	}
+	name := strings.Replace(text.Name[locale], "{team}", teamName, 1)
+	data := wire.PresetData{InheritModel: true, Description: text.Description[locale], SystemPrompt: text.SystemPrompt, RequiredTools: []string{}, OptionalTools: []string{}, PluginDependencies: []wire.PluginDependency{}}
 	encoded, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	created, err := client.TeamConfig.Create().SetTeamID(teamID).SetKind("preset").SetName(teamName + text.Suffix).SetBuiltin("team-assistant").SetData(encoded).Save(ctx)
+	created, err := client.TeamConfig.Create().SetTeamID(teamID).SetKind("preset").SetName(name).SetBuiltin("team-assistant").SetData(encoded).Save(ctx)
 	if err != nil {
 		return err
 	}

@@ -101,7 +101,7 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if s.opts.Viewer != nil {
 			locale, signedIn = s.opts.Viewer(r)
 		}
-		name := "home." + viewerLocale(r, locale)
+		name := "home." + ViewerLocale(r, locale)
 		if signedIn {
 			name += ".signed-in"
 		}
@@ -164,7 +164,7 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.opts.Viewer != nil {
 		profile, _ = s.opts.Viewer(r)
 	}
-	locale := viewerLocale(r, profile)
+	locale := ViewerLocale(r, profile)
 	w.Header().Set("Vary", vary)
 	s.html(w, bytes.Replace(s.index, []byte(`<html lang="en">`), []byte(`<html lang="`+locale+`" data-locale="`+locale+`">`), 1))
 }
@@ -177,7 +177,7 @@ func (s *site) doc(w http.ResponseWriter, r *http.Request, slug string) {
 	if s.opts.Viewer != nil {
 		profile, _ = s.opts.Viewer(r)
 	}
-	b, ok := s.pages["docs."+slug+"."+viewerLocale(r, profile)+".html"]
+	b, ok := s.pages["docs."+slug+"."+ViewerLocale(r, profile)+".html"]
 	if !ok {
 		http.NotFound(w, r)
 		return

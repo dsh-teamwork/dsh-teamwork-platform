@@ -18,8 +18,12 @@ these features through their merged community server.
 Team creation writes the team, founding membership, built-in assistant and its
 initial history in one transaction. The immutable `builtin=team-assistant`
 marker is unique per team and independent of the display name. The initial
-name retains the full creation-time team name and the team-assistant suffix;
-config names accept 120 characters. Renaming a team does not rename its
+name retains the full creation-time team name and is written in the creator's
+language, chosen as the console's pages choose theirs (profile, then cookie,
+then `Accept-Language`): `<team> assistant` or the Chinese form, with a
+description in the same language (`server/internal/team/assistant.json`). The
+prompt stays English and asks for answers in the user's language. Config names
+accept 120 characters. Renaming a team does not rename its
 assistant. Sync never creates duplicates or recreates deleted presets.
 Existing teams are not automatically changed.
 
