@@ -12,6 +12,13 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None.
 - **Upgrade:** Nothing.
 - **Refs:** `apps/console/src/pages/team/sharing.tsx`, `apps/console/src/pages/team/history.tsx`, `apps/console/src/lib/config-diff.ts`, `docs/tech/team-assistant.md`.
+## 2026-11-17 — A management process no longer prints or accepts the first-account link
+
+- **What:** With `SERVICE_ROLE=manage`, the server no longer prints `/setup?token=…` at start and no longer serves `POST /api/auth/setup`. The combined and user processes keep both, so a single-process install's first run is unchanged.
+- **Why:** A management service with no email door fell back to passwords and wrote a live first-account link into its log on every start, where a hosting provider's log viewer shows it, although its accounts are claimed on the shared database where members sign in.
+- **Breaking:** None for a single-process install. A split install claims its first account on the user process.
+- **Upgrade:** Nothing. A link already printed by a management process stops working there once it is updated.
+- **Refs:** `server/app/app.go`, `server/internal/httpapi/server.go`, `docs/tech/system-management.md`.
 
 ## 2026-11-17 — Computer tokens for a cloud computer's plugin
 

@@ -303,7 +303,7 @@ func TestRolesAndTeamDirectory(t *testing.T) {
 						t.Fatalf("user route %s: %d", path, s)
 					}
 				}
-				for _, path := range []string{"/api/llm/chat/completions", "/api/auth/plugin/code", "/api/auth/plugin/token"} {
+				for _, path := range []string{"/api/llm/chat/completions", "/api/auth/plugin/code", "/api/auth/plugin/token", "/api/auth/setup"} {
 					if role == "manage" {
 						s, _ := w.do(request{method: "POST", path: path, body: "{}", cookie: cookie, header: map[string]string{"Content-Type": "application/json", "Origin": w.in.URL}})
 						if s != 404 {
