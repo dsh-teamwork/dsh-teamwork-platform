@@ -192,6 +192,23 @@ icon set.
   surface is one person's work and the places it happens (every platform),
   then what the team shares (collaboration) and controls (governance), and
   the deep floor is what the team keeps as its assets.
+- **The landing page's first screen is what the product is and how to start.**
+  On the left: the title, one sentence, the three pillars in a row each
+  (collaborate, govern, everywhere), *Create a team* and the plugin's package
+  to copy, then a line to the install guide. On the right: one diagram, read
+  left to right (`apps/console/src/public/topology.tsx`): the team's people,
+  each with an icon for where they work (DSH Desktop, a terminal, the phone,
+  the admin's web console), curved arrows into DSH Teamwork in the middle, and
+  on the right the upstream model providers (the console's own catalogue) and
+  cloud DSH, coming. It is drawn from tokens, so it follows the theme, and its
+  words are the page's language.
+- **Real screens live in the sections below, never in the first screen.**
+  *Everywhere* gives each way in a row (who it is for, what it does, its
+  screen, alternating sides); *Collaborate* shows the review comparison and
+  *Govern* the usage page. Each screen sits in a plain window or phone frame
+  drawn from tokens. They are captures of the real interfaces with a demo team,
+  in `apps/console/public/home/`, one per language, captured again when those
+  screens change, never drawn.
 - **The web app's `/` is the landing page on every instance**, self-hosted
   ones included (ADR 0007), so every claim holds for any instance. A
   capability only the hosted service offers, or one that is planned, appears
