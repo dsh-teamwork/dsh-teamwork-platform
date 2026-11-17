@@ -4,7 +4,7 @@
 //
 //   node scripts/pack.mjs <version>
 //
-// The console must be built first (`pnpm --filter @dsh-teamwork/console --filter @dsh-teamwork/manage-core build`),
+// The console must be built first (`pnpm --filter @dsh-teamwork/web --filter @dsh-teamwork/manage build`),
 // since every binary embeds it. Packing happens here, beside the build, because
 // a binary carried between jobs as a workflow artifact loses its executable
 // bit; the modes in each tarball are checked before anything is published.

@@ -52,7 +52,7 @@ pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
 token never reaches the browser. Publishing and members also have pages in the web
 console, one page per task under `/teams/{teamId}`: the overview, `models`
-(providers from `apps/console/src/lib/provider-catalog.ts`, and team models), `presets` (from
+(providers from `apps/web/src/lib/provider-catalog.ts`, and team models), `presets` (from
 `lib/preset-templates.ts` or blank), `plugins`, `members`, `sharing` and `history`. The panel links
 there for management; separate host-approved agent tools call the same authorized server operations. Its components
 come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
@@ -71,7 +71,7 @@ Instance administration is shared by all editions: [system management](system-ma
 | Sign-in | Google, emailed codes, passwords, identities, sessions and plugin tokens | `server/internal/auth` |
 | Wire | Request shapes, their validation and the error codes | `server/internal/wire`, `api/openapi.yaml` |
 | Schema | Every table and the migrations of three dialects | `server/internal/db` |
-| Console | The team pages, sign-in, `/plugin` and the public pages, prerendered and embedded | `apps/console` |
+| Web | The team pages, sign-in, `/plugin` and the public pages, prerendered and embedded | `apps/web` |
 | Extension point | What a closed package registers: routes, tables, migrations | `server/edition` |
 
 ## Data model
@@ -135,9 +135,23 @@ the team keeps its records under a former member.
 | `GET`, `POST /api/teams/:teamId/configs`; `PATCH`, `DELETE …/configs/:id` | member reads, admin writes | List; publish, edit (with `version`), delete |
 | `GET`, `POST /api/teams/:teamId/providers`; `PUT`, `DELETE …/providers/:id` | admin | Providers, never a key |
 | `GET /api/teams/:teamId/model-catalog?provider=` | admin | One provider's models, read from its `/models` |
+| `POST /api/teams/:teamId/model-metadata/lookup` | admin | Live form suggestions from Models.dev or OpenRouter; nothing stored |
 | `POST /api/llm/chat/completions` | member | The model gateway |
 | `GET`, `PATCH /api/profile`; `POST /api/locale` | anyone signed in | The account's name and locale |
 | `POST /api/auth/plugin/token` | the plugin | `{ code, verifier }` → `{ token, expiresAt }` |
+
+## Live model form suggestions
+
+`POST /api/teams/{teamId}/model-metadata/lookup` is an admin-only transient
+lookup against fixed Models.dev or OpenRouter URLs, with a request deadline
+and bounded responses. Pricing lookups also obtain live USD/CNY FX from
+Frankfurter. There is no local catalog, cache, scheduled sync or saved mapping.
+The console selects a reference candidate, previews changes and explicitly
+applies known fields to the form. Existing configuration and rate APIs save
+only final values; the actual provider/model ID is never replaced. Model
+configuration includes an optional `vision` boolean, propagated through the
+plugin snapshot to image input support. Output modalities are displayed as
+reference information; the gateway remains a chat-completions route.
 
 ## Signing in on the web
 

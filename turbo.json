@@ -3,7 +3,8 @@
   "tasks": {
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "passThroughEnv": ["*"]
     },
     "build": {
       "dependsOn": ["^build"],
@@ -29,7 +30,7 @@
     // from it (ADR 0007). The legal documents live outside the package, so
     // they join the cache key too; the glob covers any tree's docs/legal/
     // without naming one.
-    "@dsh-teamwork/console#build": {
+    "@dsh-teamwork/web#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
       "env": ["LEGAL_DIR"],

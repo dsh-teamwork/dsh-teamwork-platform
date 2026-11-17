@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
@@ -30,8 +29,7 @@ type Server struct {
 	Web        http.Handler
 	// Mux, when set, is the router Handler adds its routes to: one a closed
 	// edition has already added its own to (server/edition).
-	Mux       *http.ServeMux
-	TeamPages []edition.TeamPage
+	Mux *http.ServeMux
 }
 
 // handler is a route that answers with an error instead of writing one.
@@ -103,6 +101,7 @@ func (s *Server) Handler() http.Handler {
 		write("PUT", "/api/teams/{teamId}/providers/{id}", s.updateProvider)
 		write("DELETE", "/api/teams/{teamId}/providers/{id}", s.deleteProvider)
 		get("/api/teams/{teamId}/model-catalog", s.modelCatalog)
+		post("/api/teams/{teamId}/model-metadata/lookup", s.lookupModelMetadata)
 		post("/api/teams/{teamId}/providers/check", s.checkProvider)
 		get("/api/teams/{teamId}/model-rates/{configId}", s.getModelRate)
 		write("PUT", "/api/teams/{teamId}/model-rates/{configId}", s.setModelRate)

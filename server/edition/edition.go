@@ -69,6 +69,11 @@ type AdminRoute struct {
 }
 
 // AdminConsole replaces the community assets while retaining its API and guard.
+//
+// SetWebConsole is its counterpart for everything else a browser loads: the
+// edition's web app build (premium/apps/web), laid out as apps/web's is, which
+// composes the open app and adds or replaces pages; the server still decides
+// which page answers which path (server/internal/web).
 type AdminConsole struct {
 	Files      fs.FS
 	Base       string
@@ -79,6 +84,7 @@ type Host struct {
 	ServiceRole     string
 	AddAdminRoutes  func([]AdminRoute)
 	SetAdminConsole func(AdminConsole)
+	SetWebConsole   func(fs.FS)
 
 	// DB is the server's connection, and Dialect its kind: "sqlite3",
 	// "postgres" or "mysql". The extension's own tables are there.
@@ -125,24 +131,6 @@ type Host struct {
 	// network I/O, and return errors to roll back the change and theirs.
 	// Mount-only.
 	SubscribeTeams func(TeamChangeHandler) error
-	// AddTeamPage adds an edition-owned, same-origin team navigation entry.
-	// Path is a fixed absolute prefix ending in /; the console appends team id.
-	AddTeamPage func(TeamPage) error
-}
-
-// TeamPage is an edition's entry in a team's console (ADR 0042): a fixed
-// absolute path prefix, to which the console appends the team id, its label
-// in each locale, which of the console's two groups it joins, and which teams
-// see it. It is navigation, never a permission: the edition's own API decides.
-type TeamPage struct {
-	Path   string            `json:"path"`
-	Labels map[string]string `json:"labels"`
-	// Audience is "work", shown to every member of the team, or "admin",
-	// shown under team management to the team's admin alone.
-	Audience string `json:"audience"`
-	// Visible decides, for one team and one person, whether the entry shows;
-	// nil shows it in every team. It runs on each read of the team.
-	Visible func(ctx context.Context, teamID, userID string) (bool, error) `json:"-"`
 }
 
 // TeamChange identifies a real committed transition, never a browser claim.
@@ -170,7 +158,7 @@ type TeamChangeHandler func(context.Context, SQLExecutor, TeamChange) error
 // extension owns (lower-case, not "plugins") and an id of at most 32
 // characters from [A-Za-z0-9_-]. The server keeps no record of them: the
 // extension's own tables say what exists, and the extension deletes what it
-// stored.
+// stored (ADR 0042).
 type Objects interface {
 	// Put writes size bytes of body, replacing any object of that name.
 	Put(ctx context.Context, teamID, kind, id string, body io.ReadSeeker, size int64) error

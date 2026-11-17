@@ -9,7 +9,7 @@ import { cn } from '../../lib/utils';
  * console's own: a trigger in the outline button's dress and a menu on the
  * card surface, keyboard-accessible (Radix). Options are addressed by their position, so an empty value (such as
  * "All members") is an ordinary choice rather than Radix's reserved "nothing".
- * An edition's pages import it from `@dsh-teamwork/manage-core` rather than
+ * An edition's pages import it from `@dsh-teamwork/manage` rather than
  * drawing a native select.
  */
 export function Select({ label, value, options, change, id, disabled, className }: {

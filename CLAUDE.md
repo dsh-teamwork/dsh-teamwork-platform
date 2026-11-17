@@ -200,7 +200,7 @@ if the table and the script disagree, the script is right.
 | --- | --- |
 | `apps/*/src/messages/*.json`, `premium/apps/*/src/messages/*.json`, and an Expo app's `apps/mobile/lib/i18n/locales/*.json` (seed's layout), under `premium/` too | The product ships in `en` and `zh-CN` (`LOCALES` in `@dsh-teamwork/shared`). |
 | `packages/shared/src/locales.ts` | Endonyms: a language picker names each language in itself. |
-| `apps/console/content/docs/zh-CN/*.md` | The published `/docs` site's Chinese pages, beside the English ones in `content/docs/en/`. |
+| `apps/web/content/docs/zh-CN/*.md` | The published `/docs` site's Chinese pages, beside the English ones in `content/docs/en/`. |
 | Root `README.zh-CN.md`, and the language-switch link in `README.md` | User-facing Chinese getting-started documentation explicitly requested for the public product. Other documentation remains English. |
 
 Exemption covers the **data**, never the file: keys, comments and test names are
@@ -228,7 +228,8 @@ for English, switches the reply for as long as that holds.
 
 ```bash
 cd server && go run ./cmd/dsh-teamwork   # the server on :3800, SQLite in ~/.dsh-teamwork
-pnpm dev              # the console's Vite server on :3801, /api sent to :3800
+pnpm dev              # everything on :3800: the edition's Go server, which takes pages
+                      #   from the web Vite (:3810) and the /manage Vite (:3811)
 pnpm dev:setup        # Postgres 16 and MySQL 8.4 for the Go suites (dev/)
 pnpm dev:stop | dev:clean    # stop them; clean also drops their volumes
 
@@ -248,15 +249,20 @@ pnpm assets:icons     # every icon and logo, raster and vector, from docs/brand/
 
 **The server is `server/`, one Go module and a workspace package**, so
 `pnpm lint` (gofmt and go vet), `test`, `build` and `db:drift` reach it as they
-reach the console; they need Go (the version in `server/go.mod`). Run from
+reach the web app; they need Go (the version in `server/go.mod`). Run from
 `server/`, with nothing configured it keeps its SQLite file and generated
 secrets in `~/.dsh-teamwork` (`--data` moves it), listens on
 `127.0.0.1:3800`, and prints a link that claims the first account. With no
-`SMTP_URL`, sign-in is an email and a password. To work on the console, start
-the server with `APP_URL=http://localhost:3801` and run `pnpm dev`: a write
-must come from APP_URL's origin. The server embeds the console its build last
-copied in (`server/scripts/embed.mjs`), so `pnpm build` before `go run` shows
-console changes on :3800.
+`SMTP_URL`, sign-in is an email and a password. To work on the web app or
+the management console, run `pnpm dev` and open `http://localhost:3800`:
+the edition's outermost Go server runs with `DEV_VITE=1` and takes the
+console's index, its modules and the public pages from the web Vite on :3810
+and `/manage` from the management Vite on :3811, so the API, the session and
+`APP_URL` are one origin as in production (ADR 0041). Go sources, SQL
+migrations and embedded JSON files restart the server; the Vite servers update
+the page themselves. Without `DEV_VITE` the server embeds the web app its
+build last copied in (`server/scripts/embed.mjs`), so `pnpm build` before
+`go run` shows web changes on :3800.
 
 **Database suites run on every dialect they can reach.** Every case runs on
 SQLite, and on Postgres and MySQL when `TEST_POSTGRES_URL` and
@@ -278,7 +284,7 @@ editions run the complete build gate without repeating those community
 distribution checks. A tag `v<version>` runs `.github/workflows/release.yaml`:
 npm, release binaries and the image on ghcr.io (it needs an `NPM_TOKEN`
 secret); `node server/scripts/pack.mjs <version>` is its packing step, run by
-hand after `pnpm --filter @dsh-teamwork/console --filter @dsh-teamwork/manage-core build`. `.husky/pre-push` runs
+hand after `pnpm --filter @dsh-teamwork/web --filter @dsh-teamwork/manage build`. `.husky/pre-push` runs
 the gate before a branch leaves your machine. `git push --no-verify` is for a
 work-in-progress branch nobody will merge yet, not for landing a red `main`.
 The `@claude` workflow (`.github/workflows/claude.yml`) needs a
@@ -323,7 +329,7 @@ and the server refuses to start when one was.
 `/manage` when `ADMIN_EMAILS` is configured. Read `docs/tech/system-management.md`
 before changing operator access or mounting an edition console. `SERVICE_ROLE`
 is `combined` (default), `user`, or `manage`; isolated management processes serve
-no user business routes. `@dsh-teamwork/manage-core` exports the shared console.
+no user business routes. `@dsh-teamwork/manage` exports the shared console.
 
 ```
 server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
@@ -333,8 +339,9 @@ server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
                      analytics, httpapi (every route), web (the embedded
                      console and public pages), wire (request shapes and
                      error codes)
-apps/console         Vite and React: the console and the public pages,
-                     prerendered at its build and embedded in the binary
+apps/web             Vite and React: the console and the public pages,
+                     prerendered at its build and embedded in the binary;
+                     an edition's web app composes it (mountWeb, ADR 0041)
 api/openapi.yaml     the wire contract
 packages/shared      the languages and the rule that picks one, shared by the
                      console and the closed mobile app
@@ -351,7 +358,7 @@ premium/CLAUDE.md.
 reached only from `server/`, where the ownership checks live. Every route's
 request and response is in `api/openapi.yaml`: the Go tests validate each
 response they see against it, and the console's types are generated from it
-(`pnpm --filter @dsh-teamwork/console api:types` writes
+(`pnpm --filter @dsh-teamwork/web api:types` writes
 `src/lib/api.gen.ts`, and a test fails when it is stale). The plugin
 repository restates the snapshot shape in `../dsh-teamwork/src/client.ts`; a
 change to `GET /api/configs` changes it in the same working session.
@@ -440,7 +447,7 @@ rule from `@dsh-teamwork/shared`. A signed-in choice is written to the profile
 
 Anonymous page counts, and nothing else
 ([`docs/ops/analytics.md`](docs/ops/analytics.md)), off without
-`POSTHOG_KEY`. `apps/console/src/lib/analytics.ts` runs PostHog in cookieless
+`POSTHOG_KEY`. `apps/web/src/lib/analytics.ts` runs PostHog in cookieless
 mode with no identity: pageviews only, no page leaves, no autocapture, no
 recording, and no consent banner. The key reaches it from the server at run
 time, in the page. **Nothing tracks what a person or an account does**: the
@@ -687,7 +694,7 @@ mark is drawn edge to edge on its plate, so here the logos keep the plate
 
 **Published mailboxes: `privacy@` and `support@` on the product's root domain, and no others.** `privacy@` takes data requests and account deletion, `support@` everything else; no `hello@`, `legal@` or per-purpose address, and no `mail.` or `send.` subdomain in anything a person reads. The sending service may use a subdomain internally; nobody is told to write to one. A product started from seed writes its own domain in place of `[Product domain]`.
 
-`apps/console/content/docs/` is the product's published `/docs` site, written
+`apps/web/content/docs/` is the product's published `/docs` site, written
 for its users in both languages (`src/public/docs.tsx` lists its pages); it is
 product content, not part of `docs/`, and follows neither the header nor the
 index rule above. A change a user would notice in the plugin, the console or

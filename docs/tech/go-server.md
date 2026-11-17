@@ -44,7 +44,7 @@ CI run, and went with it.
 - `server/`: one Go module. `cmd/dsh-teamwork` is the binary; the rest is
   `internal/` packages by concern (schema and migrations, auth, team rules,
   gateway, HTTP API, embedded console).
-- `apps/console/`: the console as a Vite and React app, built into
+- `apps/web/`: the web frontend as a Vite and React app, built into
   `server/` with `go:embed`.
 - `api/openapi.yaml`: the wire contract. Go server types and the console's
   client are generated from it.
@@ -52,7 +52,7 @@ CI run, and went with it.
   only, which is the open server with the closed packages registered
   through `server/edition`.
 
-`apps/console` restated four small rules from `packages/shared` while that
+The former Next.js `apps/web` restated four small rules from `packages/shared` while that
 package depended on Prisma: `returnPath`, the PKCE challenge's form, the
 sign-in error codes and `matchLocale`. Phase 6 left `packages/shared` with
 the languages and `matchLocale` only, which the console and the closed mobile
@@ -326,8 +326,8 @@ closed binary (the developer's choice on 2026-11-14).
   as a second instance of the image on a domain of its own, with its own
   `APP_URL` and `AUTH_SECRET`, so the console never shares the member site's
   origin or sessions (the developer's choice on 2026-11-14).
-- `premium/apps/relay`, `premium/apps/manage` and `apps/web`'s `(premium)`
-  route go in the commits that replace them.
+- `premium/apps/relay`, `premium/apps/manage` and the former Next.js `apps/web`'s
+  `(premium)` route go in the commits that replace them.
 - The closed image and the edition boundary check; the hosted service's
   runbook rewritten for one Railway service running the closed image.
 - The move itself, data wiped as decided, waits for the developer's go-ahead.
@@ -383,7 +383,7 @@ same day, on an empty database. What the gate found:
 
 ### Phase 6: delete the Node server
 
-- `apps/web`, `packages/db`, the server half of `packages/shared`, Prisma,
+- The former Next.js `apps/web`, `packages/db`, the server half of `packages/shared`, Prisma,
   Auth.js and Next.js, and the parity run, which has nothing left to compare.
 - `CLAUDE.md`, `docs/tech/architecture.md`, `docs/tech/community-edition.md`,
   the README and the changelog rewritten for the Go server.
@@ -457,7 +457,7 @@ configuration, the membership, the provider and its sealed key, the
 allow-list, and the stream copied with none of the upstream headers. Its
 address check was a stand-in that admits loopback literals; the real rule,
 checked inside the connection's own lookup, is ported with the gateway. The
-Node gateway was `next start` of today's `apps/web`, on its own Postgres
+Node gateway was `next start` of the former `apps/web`, on its own Postgres
 database with the same rows. A stub provider answered both: JSON after
 50 ms, or a stream of 100 chunks 10 ms apart. Both gateways, the stub and the
 load generator shared one 4-core machine.

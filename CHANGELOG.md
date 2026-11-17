@@ -7,11 +7,11 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-17 — The team console is work first
 
-- **What:** A team's sidebar has two groups: Work for everyone (Home, Team resources, My submissions, an edition's work pages) and Team management for its admin alone (models, presets, plugins, Review, history, members, usage, budgets); a member opening a management page is sent home. Team resources lists the models (with their rates), presets and plugins, and is where a member proposes a preset or a change to one. A member leaves from the team switcher. `edition.TeamPage` gains `Audience` (`work` or `admin`) and `Visible`; `GET /api/teams/{teamId}` returns `pages`, the entries that reader sees in that team; the session's `teamPages` is replaced by `editionPaths`. `GET /api/teams/{teamId}/submissions` takes `mine=true`.
+- **What:** A team's sidebar has two groups: Work for everyone (Home, Team resources, My submissions, an edition's work pages) and Team management for its admin alone (models, presets, plugins, Review, history, members, usage, budgets); a member opening a management page is sent home. Team resources lists the models (with their rates), presets and plugins, and is where a member proposes a preset or a change to one. A member leaves from the team switcher. An edition's team page (`mountWeb`) names its `audience`, `work` or `admin`, and may give `visible(team)`, answered by the edition's own API, for a page only some teams have. `GET /api/teams/{teamId}/submissions` takes `mine=true`.
 - **Why:** Most people who open a team work in it; cloud sessions, for every member of a team the operator admits, are the first edition work page.
-- **Breaking:** `Session.teamPages` is gone (the console reads `Team.pages`); an edition calling `AddTeamPage` must name an audience. Members no longer see usage, budgets, history, or the models, presets and plugins management pages.
+- **Breaking:** An edition's `mountWeb` team page must name its `audience` (`work` or `admin`), and may give `visible(team)` for a page only some teams have. Members no longer see usage, budgets, history, or the models, presets and plugins management pages.
 - **Upgrade:** Nothing.
-- **Refs:** ADR 0042 (supersedes 0028), `server/edition/edition.go`, `apps/console/src/components/team/console-shell.tsx`, `apps/console/src/pages/team/resources.tsx`.
+- **Refs:** ADR 0043, `apps/web/src/lib/edition.ts`, `apps/web/src/components/team/console-shell.tsx`, `apps/web/src/pages/team/resources.tsx`.
 
 ## 2026-11-17 — Editions can store objects in the server's store
 
@@ -19,7 +19,47 @@ are in `CLAUDE.md`, "The changelog".
 - **Why:** The hosted edition keeps each cloud session's record after its VM ends, in the store that already holds plugin archives rather than in a bucket of its own.
 - **Breaking:** None.
 - **Upgrade:** Nothing.
-- **Refs:** ADR 0041, `server/internal/artifactstore`, `server/edition/edition.go`.
+- **Refs:** ADR 0042, `server/internal/artifactstore`, `server/edition/edition.go`.
+
+## 2026-11-17 — `apps/web`, one development address, and editions compose the web app
+
+- **What:** The user frontend is `apps/web` (`@dsh-teamwork/web`) and the shared management app `@dsh-teamwork/manage`. `pnpm dev` runs the edition's outermost Go server on :3800 with `DEV_VITE=1`, which takes the console, its modules and the public pages from the web Vite on :3810 and `/manage` from the management Vite on :3811; Go sources, migrations and embedded JSON restart the server. An edition's web app composes the open one through `mountWeb` (`@dsh-teamwork/web/app`): it adds routes and team pages, replacing an open one at the same path, and adds or replaces public pages by file name, which the server now serves generically (`/{name}` from `{name}.{locale}.html` or `{name}.html`, also in the sitemap). `Host.SetWebConsole` hands the server an edition's web build. `Host.AddTeamPage` and the session's `teamPages` are removed.
+- **Why:** One origin in development, as in production, so the web app and the management console run together and the public pages' routing exists once, in Go; and closed member pages become routes in the open console's shell rather than separate apps (ADR 0041).
+- **Breaking:** `apps/console`, `@dsh-teamwork/console` and `@dsh-teamwork/manage-core` are gone; use the new paths and names. `GET /api/auth/session` no longer has `teamPages`, and editions lose `Host.AddTeamPage` (the closed billing page moves into the closed web app in the same change). Without legal pages, `/privacy` and `/terms` are the console's like any unknown path, rather than 404.
+- **Upgrade:** Run `pnpm dev` and open `http://localhost:3800`; nothing else listens for the browser. Production builds and deployment are unchanged.
+- **Refs:** ADR 0041 (supersedes 0028), `scripts/dev.mjs`, `server/scripts/dev.mjs`, `server/internal/web/web.go`, `apps/web/src/app.tsx`, `apps/web/scripts/vite-pages.mjs`, `apps/web/scripts/prerender.mjs`.
+
+## 2026-11-17 — Live model metadata and price form suggestions
+
+- **What:** Team model publication/editing can query Models.dev or OpenRouter, select a reference model and apply context/output limits and image support. Known domestic providers default to their Models.dev China-specific namespaces. Rate forms automatically convert supplier USD prices using live Frankfurter USD/CNY FX, apply a multiplier and round suggestions up to readable values. The plugin respects the saved optional `vision` flag.
+- **Why:** Administrators can fill model specifications and reference prices without copying them manually or entering exchange rates.
+- **Breaking:** None. Existing configurations keep their values and unknown capabilities remain unspecified.
+- **Upgrade:** Nothing. No migrations, scheduled jobs, local catalog, persistent cache or upstream associations.
+- **Refs:** `server/internal/httpapi/model_metadata.go`, `apps/web/src/components/team/model-metadata.tsx`, `docs/tech/architecture.md`, `docs/tech/usage-budgets.md`.
+
+## 2026-11-17 — Presets are listed as rows, and a plugin pin needs only its package
+
+- **What:** The console's presets are one list of rows instead of two columns of cards, as `docs/design.md` asks of lists; the templates below stay cards. Pinning a plugin asks for the npm package and version first, and its name defaults to the package.
+- **Why:** Uneven card heights, and a name field that was easy to fill with the wrong thing.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/pages/team/presets.tsx`, `apps/console/src/pages/team/plugins.tsx`.
+
+## 2026-11-17 — The landing page's first screen: three pillars, a diagram, and real screens below
+
+- **What:** The hero drops its two buttons and its install card. On the left: one sentence, the three pillars (collaborate, govern, everywhere), *Create a team* with the plugin's package to copy, and a line to the install guide. On the right: a left-to-right diagram of how a team uses DSH Teamwork (`apps/console/src/public/topology.tsx`). Real captures of DSH Desktop's Teamwork panel, the web console, the phone app, the review comparison and the usage page, one set per language in `apps/console/public/home/`, now illustrate the *Everywhere*, *Collaborate* and *Govern* sections, replacing their text-only cells and the terminal transcript.
+- **Why:** The first screen repeated the top bar's actions, buried installing, and showed no product; screens crowded into it were too small to read.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/public/home.tsx`, `apps/console/src/public/topology.tsx`, `docs/design.md`.
+
+## 2026-11-17 — The console names its terms and offers only what the instance can do
+
+- **What:** The Chinese console translates Provider and Key with the terms `/docs` already uses, instead of leaving them in English. Usage explains points (the team's own measure of cost, CNY 1 = 1,000 points at the reference rates, counted by budgets) and that a provider still bills its own key directly, in place of "BYOK". A budget form on an instance that sends no email offers no notification choice and creates the policy notifying nobody. A new budget reports "Budget created", not "updated". English budget labels write "token" in lower case, and the Chinese home page's eyebrow is no longer forced to capitals.
+- **Why:** Terms a reader did not know, a mixed-language Chinese screen, and an email option that could never send.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/messages/`, `apps/console/src/pages/team/budgets.tsx`, `apps/console/content/docs/*/admins.md`.
 
 ## 2026-11-17 — A provider key is checked before it is saved; a new member is not asked for the password just used
 

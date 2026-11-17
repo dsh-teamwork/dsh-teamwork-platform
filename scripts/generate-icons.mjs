@@ -53,12 +53,14 @@ const PIXEL_TOLERANCE = 1
 
 /**
  * Every app in the repository gets the same exports, found rather than
- * listed: every Vite app (`vite.config.ts`). The open repository has only `apps/*`, and a list naming the closed
+ * listed: every Vite app (`vite.config.ts`) with a `public/` of its own; one
+ * that serves another app's (premium/apps/web serves apps/web's) gets none.
+ * The open repository has only `apps/*`, and a list naming the closed
  * edition's apps would fail this script's own check there
  * (docs/tech/community-edition.md).
  */
 const APP_ROOTS = ['apps', 'premium/apps']
-const isVite = (root, name) => existsSync(resolve(repoRoot, root, name, 'vite.config.ts'))
+const isVite = (root, name) => existsSync(resolve(repoRoot, root, name, 'vite.config.ts')) && existsSync(resolve(repoRoot, root, name, 'public'))
 const APPS = APP_ROOTS.flatMap((root) =>
   existsSync(resolve(repoRoot, root))
     ? readdirSync(resolve(repoRoot, root), { withFileTypes: true })

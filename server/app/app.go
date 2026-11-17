@@ -9,17 +9,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"syscall"
 	"time"
-	"unicode/utf8"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
@@ -197,7 +196,6 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client(), Usage: meter},
 		Usage:   meter,
 	}
-	srv.Web = web.Handler(web.Options{AppURL: cfg.AppURL, PostHogKey: cfg.PostHogKey, PostHogHost: cfg.PostHogHost, Viewer: srv.Viewer})
 	if !cfg.Passwords() {
 		mail := auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
 		srv.Mailer = mail
@@ -226,37 +224,19 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		return nil
 	}
 	console := edition.AdminConsole{Base: "/manage"}
+	var webFiles fs.FS
 	var adminRoutes []edition.AdminRoute
 	host := edition.Host{
 		ServiceRole:     cfg.ServiceRole,
 		AddAdminRoutes:  func(routes []edition.AdminRoute) { adminRoutes = append(adminRoutes, routes...) },
 		SetAdminConsole: func(c edition.AdminConsole) { console = c },
+		SetWebConsole:   func(files fs.FS) { webFiles = files },
 		DB:              conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		MintComputerToken: srv.MintComputerToken,
 		Objects:           objects(teams.Artifacts),
 		Users:             NewUsers(client), Env: env,
-		WithTeamTx: meter.WithTeamTx,
-		AddTeamPage: func(page edition.TeamPage) error {
-			if !regexp.MustCompile(`^/[a-z][a-z0-9/-]*/$`).MatchString(page.Path) || len(page.Path) > 100 || len(page.Labels) != 2 ||
-				(page.Audience != "work" && page.Audience != "admin") {
-				return errors.New("invalid edition team page")
-			}
-			labels := map[string]string{}
-			for _, locale := range []string{"en", "zh-CN"} {
-				if n := utf8.RuneCountInString(page.Labels[locale]); n < 1 || n > 60 {
-					return errors.New("invalid edition team page label")
-				}
-				labels[locale] = page.Labels[locale]
-			}
-			for _, old := range srv.TeamPages {
-				if old.Path == page.Path {
-					return errors.New("duplicate edition team page")
-				}
-			}
-			srv.TeamPages = append(srv.TeamPages, edition.TeamPage{Path: page.Path, Labels: labels, Audience: page.Audience, Visible: page.Visible})
-			return nil
-		},
+		WithTeamTx:          meter.WithTeamTx,
 		ResolveFundingUsage: meter.ResolveFunding,
 		TeamExists: func(ctx context.Context, id string) (bool, error) {
 			_, err := client.Team.Get(ctx, id)
@@ -308,7 +288,14 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			stops = append(stops, s)
 		}
 	}
-	manage.Mount(host, client, console, adminRoutes)
+	webOptions := web.Options{AppURL: cfg.AppURL, PostHogKey: cfg.PostHogKey, PostHogHost: cfg.PostHogHost, Viewer: srv.Viewer}
+	devManage := ""
+	if cfg.DevVite {
+		srv.Web, devManage = web.Dev(config.DevWebOrigin, webOptions), config.DevManageOrigin
+	} else {
+		srv.Web = web.Handler(webFiles, webOptions)
+	}
+	manage.Mount(host, client, console, adminRoutes, devManage)
 	srv.ManageRoot = cfg.ServiceRole == "manage" && console.Base == "" && env("ADMIN_EMAILS") != ""
 	return srv, srv.Handler(), stop, nil
 }

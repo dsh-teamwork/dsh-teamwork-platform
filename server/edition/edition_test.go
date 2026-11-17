@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
@@ -135,85 +134,36 @@ func TestExtension(t *testing.T) {
 	})
 }
 
-func TestEditionTeamNavigationIsSameOriginCopiedAndPerTeam(t *testing.T) {
-	// The work entry shows only in the teams the edition names.
-	shown := map[string]bool{}
-	ext := edition.Extension{Name: "navigation", Mount: func(h edition.Host) (func(), error) {
-		labels := map[string]string{"en": "Team tools", "zh-CN": "Team tools"}
-		for _, path := range []string{"https://outside.test/", "//outside.test/", "/tools/../", "/tools/?next=", "/tools\\outside/"} {
-			if err := h.AddTeamPage(edition.TeamPage{Path: path, Labels: labels, Audience: "work"}); err == nil {
-				t.Fatalf("accepted unsafe edition path %q", path)
-			}
-		}
-		if err := h.AddTeamPage(edition.TeamPage{Path: "/tools/teams/", Labels: labels, Audience: "everyone"}); err == nil {
-			t.Fatal("accepted an unknown audience")
-		}
-		visible := func(_ context.Context, teamID, _ string) (bool, error) { return shown[teamID], nil }
-		if err := h.AddTeamPage(edition.TeamPage{Path: "/tools/teams/", Labels: labels, Audience: "work", Visible: visible}); err != nil {
-			return nil, err
-		}
-		labels["en"] = "Mutated after registration"
-		if err := h.AddTeamPage(edition.TeamPage{Path: "/tools/teams/", Labels: labels, Audience: "work"}); err == nil {
-			t.Fatal("duplicate navigation registered")
-		}
-		if err := h.AddTeamPage(edition.TeamPage{Path: "/ledger/teams/", Labels: map[string]string{"en": "Ledger", "zh-CN": "Ledger"}, Audience: "admin"}); err != nil {
-			return nil, err
-		}
+// An edition's web build replaces the embedded one whole: its own pages are
+// served by the open rules, and the open build is not consulted.
+func TestEditionWebConsoleReplacesTheBuild(t *testing.T) {
+	page := func(id string) *fstest.MapFile {
+		return &fstest.MapFile{Data: []byte(`<html lang="en"><head></head><body>` + id + `</body></html>`)}
+	}
+	files := fstest.MapFS{
+		"index.html":                page("edition console"),
+		"public/home.en.html":       page("edition home"),
+		"public/pricing.en.html":    page("edition pricing"),
+		"public/pricing.zh-CN.html": page("edition pricing zh"),
+		"assets/edition.js":         {Data: []byte("edition")},
+	}
+	ext := edition.Extension{Name: "web", Mount: func(h edition.Host) (func(), error) {
+		h.SetWebConsole(files)
 		return nil, nil
 	}}
 	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
-		get := func(path string, cookie *http.Cookie, into any) {
-			t.Helper()
+		for path, want := range map[string]string{"/": "edition home", "/pricing": "edition pricing", "/teams": "edition console", "/assets/edition.js": "edition"} {
 			req, _ := http.NewRequest("GET", in.URL+path, nil)
-			if cookie != nil {
-				req.AddCookie(cookie)
-			}
+			req.Header.Set("Accept-Language", "en")
 			res, err := http.DefaultClient.Do(req)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer res.Body.Close()
-			if res.StatusCode != 200 {
-				t.Fatalf("%s: %d", path, res.StatusCode)
+			b, _ := io.ReadAll(res.Body)
+			res.Body.Close()
+			if res.StatusCode != 200 || !strings.Contains(string(b), want) {
+				t.Fatalf("%s: %d %s", path, res.StatusCode, b)
 			}
-			if err := json.NewDecoder(res.Body).Decode(into); err != nil {
-				t.Fatal(err)
-			}
-		}
-		// Every prefix is in the session, so a sign-in return reaches its page.
-		var session struct {
-			EditionPaths []string `json:"editionPaths"`
-		}
-		get("/api/auth/session", nil, &session)
-		if len(session.EditionPaths) != 2 || session.EditionPaths[0] != "/tools/teams/" {
-			t.Fatalf("edition paths: %v", session.EditionPaths)
-		}
-		ada, bob := in.Account("ada@example.test"), in.Account("bob@example.test")
-		team, other := in.Team(ada), in.Team(ada)
-		in.Member(team, bob)
-		shown[team] = true
-		pages := func(user, teamID string) []string {
-			t.Helper()
-			var body struct {
-				Pages []edition.TeamPage `json:"pages"`
-			}
-			get("/api/teams/"+teamID, in.Session(user, "password"), &body)
-			var out []string
-			for _, p := range body.Pages {
-				out = append(out, p.Audience+" "+p.Path+" "+p.Labels["en"])
-			}
-			return out
-		}
-		if got := fmt.Sprint(pages(ada, team)); got != "[work /tools/teams/ Team tools admin /ledger/teams/ Ledger]" {
-			t.Fatalf("the admin's entries: %s", got)
-		}
-		// A member sees the work entry and never the admin's.
-		if got := fmt.Sprint(pages(bob, team)); got != "[work /tools/teams/ Team tools]" {
-			t.Fatalf("the member's entries: %s", got)
-		}
-		// A team the edition does not name has no work entry.
-		if got := fmt.Sprint(pages(ada, other)); got != "[admin /ledger/teams/ Ledger]" {
-			t.Fatalf("another team's entries: %s", got)
 		}
 	})
 }
@@ -314,7 +264,6 @@ func TestEditionMintsComputerTokensOnlyForMembers(t *testing.T) {
 		}
 	})
 }
-
 func TestEditionStoresObjectsInTheServersStore(t *testing.T) {
 	var host edition.Host
 	dir := t.TempDir()

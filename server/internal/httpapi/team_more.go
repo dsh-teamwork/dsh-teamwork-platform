@@ -1,11 +1,7 @@
 package httpapi
 
 import (
-	"context"
 	"net/http"
-
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -40,38 +36,8 @@ func (s *Server) getTeam(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	pages, err := s.teamPages(r.Context(), v, c.user.ID)
-	if err != nil {
-		return err
-	}
-	writeJSON(w, http.StatusOK, struct {
-		team.View
-		Pages []edition.TeamPage `json:"pages"`
-	}{v, pages})
+	writeJSON(w, http.StatusOK, v)
 	return nil
-}
-
-// teamPages are the edition entries this person sees in this team: the work
-// ones for every member and the admin ones for its admin, each where its
-// edition says it shows (ADR 0042).
-func (s *Server) teamPages(ctx context.Context, v team.View, userID string) ([]edition.TeamPage, error) {
-	pages := []edition.TeamPage{}
-	for _, page := range s.TeamPages {
-		if page.Audience == "admin" && v.Role != "admin" {
-			continue
-		}
-		if page.Visible != nil {
-			ok, err := page.Visible(ctx, v.ID, userID)
-			if err != nil {
-				return nil, err
-			}
-			if !ok {
-				continue
-			}
-		}
-		pages = append(pages, page)
-	}
-	return pages, nil
 }
 
 func (s *Server) leaveTeam(w http.ResponseWriter, r *http.Request) error {

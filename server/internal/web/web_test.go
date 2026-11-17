@@ -138,8 +138,9 @@ func TestPrerenderedPagesAreNotServedAsFiles(t *testing.T) {
 func TestLegalPagesOnlyWhenBuilt(t *testing.T) {
 	without := handler(build(false), nil)
 	for _, p := range []string{"/privacy", "/terms"} {
-		if res := serve(t, without, p, nil); res.StatusCode != http.StatusNotFound {
-			t.Fatalf("%s without LEGAL_DIR: %d", p, res.StatusCode)
+		// No legal page: the path is the console's, as any unknown one is.
+		if got := body(t, serve(t, without, p, nil)); !strings.Contains(got, "<body>spa</body>") {
+			t.Fatalf("%s without LEGAL_DIR: %s", p, got)
 		}
 	}
 	with := handler(build(true), nil)
@@ -334,5 +335,80 @@ func TestAcceptLanguageReadsQLikeNode(t *testing.T) {
 		if got := MatchLocale(AcceptLanguage(header)); got != want {
 			t.Errorf("%q: %s, want %s", header, got, want)
 		}
+	}
+}
+
+// An edition's build adds a page by its file name, in each locale or in one,
+// and replaces a console path the same way; the sitemap lists what it added.
+func TestEditionPagesByFileName(t *testing.T) {
+	b := build(false)
+	page := func(id string) *fstest.MapFile {
+		return &fstest.MapFile{Data: []byte("<html><head></head><body>" + id + "</body></html>")}
+	}
+	b["public/pricing.en.html"] = page("pricing.en")
+	b["public/pricing.zh-CN.html"] = page("pricing.zh-CN")
+	b["public/plugin.html"] = page("plugin replaced")
+	h := handler(b, nil)
+	for _, c := range []struct{ path, lang, want string }{
+		{"/pricing", "en", "pricing.en"},
+		{"/pricing", "zh-CN", "pricing.zh-CN"},
+		{"/pricing/", "zh-CN", "pricing.zh-CN"},
+		{"/plugin", "en", "plugin replaced"},
+		{"/teams", "en", "spa"},
+		{"/home", "en", "spa"},
+	} {
+		res := serve(t, h, c.path, map[string]string{"Accept-Language": c.lang})
+		if got := body(t, res); !strings.Contains(got, "<body>"+c.want+"</body>") {
+			t.Fatalf("%s in %s: %s", c.path, c.lang, got)
+		}
+	}
+	if res := serve(t, h, "/pricing", nil); res.Header.Get("Vary") != vary {
+		t.Fatalf("a page per locale must vary: %q", res.Header.Get("Vary"))
+	}
+	sitemap := body(t, serve(t, h, "/sitemap.xml", nil))
+	if !strings.Contains(sitemap, "<loc>https://example.com/pricing</loc>") || !strings.Contains(sitemap, "<loc>https://example.com/plugin</loc>") || strings.Count(sitemap, "/pricing<") != 1 {
+		t.Fatalf("sitemap: %s", sitemap)
+	}
+}
+
+// Under DEV_VITE the same decisions are made over pages Vite renders: Go picks
+// the page, fills the address in, and passes modules through untouched.
+func TestDevPagesFromVite(t *testing.T) {
+	vite := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/__pages":
+			w.Write([]byte(`["home.en.html","home.zh-CN.html","pricing.en.html","docs.index.en.html"]`))
+		case "/__pages/home.zh-CN.html", "/__pages/pricing.en.html", "/__pages/docs.index.en.html":
+			w.Write([]byte(`<html><head><link rel="canonical" href="%APP_URL%/"/></head><body>` + strings.TrimPrefix(r.URL.Path, "/__pages/") + `</body></html>`))
+		case "/index.html":
+			w.Write([]byte(`<html lang="en"><head></head><body>vite spa</body></html>`))
+		case "/src/main.tsx":
+			w.Header().Set("Content-Type", "text/javascript")
+			w.Write([]byte("module"))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer vite.Close()
+	h := Dev(vite.URL, Options{AppURL: "http://localhost:3800"})
+	html := map[string]string{"Accept": "text/html", "Accept-Language": "zh-CN"}
+	if got := body(t, serve(t, h, "/", html)); !strings.Contains(got, "home.zh-CN.html") || !strings.Contains(got, `href="http://localhost:3800/"`) {
+		t.Fatalf("home: %s", got)
+	}
+	if got := body(t, serve(t, h, "/pricing", map[string]string{"Accept-Language": "en"})); !strings.Contains(got, "pricing.en.html") {
+		t.Fatalf("pricing: %s", got)
+	}
+	if got := body(t, serve(t, h, "/teams/x", html)); !strings.Contains(got, `<html lang="zh-CN" data-locale="zh-CN">`) || !strings.Contains(got, "vite spa") {
+		t.Fatalf("console: %s", got)
+	}
+	if got := body(t, serve(t, h, "/src/main.tsx", map[string]string{"Accept": "*/*"})); got != "module" {
+		t.Fatalf("module: %s", got)
+	}
+	if got := body(t, serve(t, h, "/sitemap.xml", nil)); !strings.Contains(got, "/pricing</loc>") {
+		t.Fatalf("sitemap: %s", got)
+	}
+	vite.Close()
+	if res := serve(t, h, "/teams", html); res.StatusCode != http.StatusNotFound || !strings.Contains(body(t, res), "pnpm dev") {
+		t.Fatal("a stopped Vite must say how to start it")
 	}
 }

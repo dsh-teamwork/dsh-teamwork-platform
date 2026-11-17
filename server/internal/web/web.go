@@ -1,32 +1,41 @@
 // Package web serves what a browser loads that is not the API: the public
-// pages (home, privacy, terms) and the files a crawler reads, and the console
-// (apps/console) for every other path. Both are built into dist and embedded
-// in the binary.
+// pages and the files a crawler reads, and the console (apps/web, or the
+// edition's web app that composes it) for every other path. Both are built
+// into dist and embedded in the binary; under DEV_VITE they come from the web
+// Vite server instead, and every decision below stays the same.
 //
-// The public pages are prerendered when the console is built
-// (apps/console/scripts/prerender.mjs) into dist/public: home once per locale
-// and sign-in state, privacy and terms only when that build had LEGAL_DIR.
-// Each names the site's own address as %APP_URL%, written over with APP_URL
-// here, since the binary is built once and deployed anywhere.
+// The public pages are prerendered when the web app is built
+// (apps/web/scripts/prerender.mjs) into dist/public, one file per page:
+// home.{locale}[.signed-in].html for /, docs.{slug}.{locale}.html for /docs,
+// and {name}.{locale}.html or {name}.html for /{name}, which is how an
+// edition adds a page (or replaces one) without the server knowing it. Each
+// names the site's own address as %APP_URL%, written over with APP_URL here,
+// since the binary is built once and deployed anywhere.
 package web
 
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"html"
+	"io"
 	"io/fs"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"path"
+	"regexp"
 	"slices"
 	"strings"
+	"time"
 )
 
 //go:embed all:dist
 var dist embed.FS
 
 // appURLPlaceholder is what a prerendered page names the site's address by
-// (apps/console/src/public/site.ts).
+// (apps/web/src/public/site.ts).
 const appURLPlaceholder = "%APP_URL%"
 
 // Options is what the pages depend on beyond the built files.
@@ -34,7 +43,7 @@ type Options struct {
 	AppURL string // the public origin, without a trailing slash
 
 	// PostHogKey, when set, turns on browser analytics: every page carries it,
-	// and PostHogHost, as meta tags apps/console/src/lib/analytics.ts reads.
+	// and PostHogHost, as meta tags apps/web/src/lib/analytics.ts reads.
 	PostHogKey, PostHogHost string
 
 	// Viewer is who is asking: the signed-in profile's locale ("" for none)
@@ -42,22 +51,64 @@ type Options struct {
 	Viewer func(r *http.Request) (locale string, signedIn bool)
 }
 
-// legalPages are the legal pages a build may hold, by path.
-var legalPages = []string{"/privacy", "/terms"}
-
 // robotsDisallow are the paths no crawler is asked to read: the API and every
 // signed-in or sign-in screen. The sitemap lists none of them.
 var robotsDisallow = []string{"/api/", "/account", "/auth/", "/teams", "/plugin"}
 
-// Handler serves the embedded build.
-func Handler(o Options) http.Handler {
-	root, _ := fs.Sub(dist, "dist")
-	return New(root, o)
+// pageName is a public page's own address, /{name}: one path segment.
+var pageName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
+
+// Handler serves the embedded build, or files when an edition replaced it.
+func Handler(files fs.FS, o Options) http.Handler {
+	if files == nil {
+		files, _ = fs.Sub(dist, "dist")
+	}
+	return New(files, o)
 }
 
 // New serves the build in root.
 func New(root fs.FS, o Options) http.Handler {
-	s := &site{root: root, files: http.FileServerFS(root), opts: o, pages: map[string][]byte{}}
+	s := newSite(o)
+	b := &built{root: root, files: http.FileServerFS(root), pages: map[string][]byte{}}
+	if names, err := fs.Glob(root, "public/*.html"); err == nil {
+		for _, name := range names {
+			if raw, err := fs.ReadFile(root, name); err == nil {
+				b.pages[path.Base(name)] = s.fill(raw)
+			}
+		}
+	}
+	if raw, err := fs.ReadFile(root, "index.html"); err == nil {
+		b.console = s.fill(raw)
+	}
+	s.src = b
+	s.robots, s.sitemap = s.crawlerFiles()
+	return s
+}
+
+// Dev serves the pages from the web Vite server at origin (DEV_VITE): its
+// public pages endpoint (apps/web/scripts/vite-pages.mjs), its index.html,
+// and every module and file it serves.
+func Dev(origin string, o Options) http.Handler {
+	u, err := url.Parse(origin)
+	if err != nil {
+		panic(err)
+	}
+	s := newSite(o)
+	s.src = &vite{origin: origin, client: &http.Client{Timeout: 30 * time.Second}, proxy: DevProxy(u, "the web Vite server"), site: s}
+	return s
+}
+
+// DevProxy sends every request to a Vite server at u, and says which one to
+// start when it is not running.
+func DevProxy(u *url.URL, name string) http.Handler {
+	p := httputil.NewSingleHostReverseProxy(u)
+	p.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		http.Error(w, fmt.Sprintf("DEV_VITE: %s on %s is not answering; start it with `pnpm dev`. (%v)", name, u.Host, err), http.StatusBadGateway)
+	}
+	return p
+}
+
+func newSite(o Options) *site {
 	meta := ""
 	if o.PostHogKey != "" {
 		meta = fmt.Sprintf(`<meta name="posthog-key" content="%s"/>`, html.EscapeString(o.PostHogKey))
@@ -65,47 +116,55 @@ func New(root fs.FS, o Options) http.Handler {
 			meta += fmt.Sprintf(`<meta name="posthog-host" content="%s"/>`, html.EscapeString(o.PostHogHost))
 		}
 	}
-	page := func(b []byte) []byte {
-		b = bytes.ReplaceAll(b, []byte(appURLPlaceholder), []byte(o.AppURL))
-		return bytes.Replace(b, []byte("</head>"), []byte(meta+"</head>"), 1)
-	}
-	if names, err := fs.Glob(root, "public/*.html"); err == nil {
-		for _, name := range names {
-			if b, err := fs.ReadFile(root, name); err == nil {
-				s.pages[path.Base(name)] = page(b)
-			}
-		}
-	}
-	if b, err := fs.ReadFile(root, "index.html"); err == nil {
-		s.index = page(b)
-	}
-	s.robots, s.sitemap = s.crawlerFiles()
-	return s
+	return &site{opts: o, meta: []byte(meta + "</head>")}
+}
+
+// source is where the build's pages and files come from.
+type source interface {
+	// page is a public page by file name, ready to send.
+	page(name string) ([]byte, bool)
+	// names is every public page's file name.
+	names() []string
+	// index is the console's index.html, ready to send.
+	index() ([]byte, bool)
+	// file serves r from the build's own files, and reports whether it did.
+	file(w http.ResponseWriter, r *http.Request) bool
+	// missing is what a request for the console gets when there is no index.
+	missing() string
 }
 
 type site struct {
-	root  fs.FS
-	files http.Handler
-	opts  Options
-	pages map[string][]byte // dist/public's pages by file name, ready to send
-	index []byte            // the console's index.html, ready to send
+	src  source
+	opts Options
+	meta []byte
 
-	robots, sitemap []byte
+	robots, sitemap []byte // nil: written per request, from a source that changes
+}
+
+// fill names the site's address and the analytics settings in a page.
+func (s *site) fill(b []byte) []byte {
+	b = bytes.ReplaceAll(b, []byte(appURLPlaceholder), []byte(s.opts.AppURL))
+	return bytes.Replace(b, []byte("</head>"), s.meta, 1)
+}
+
+func (s *site) viewer(r *http.Request) (locale string, signedIn bool) {
+	profile := ""
+	if s.opts.Viewer != nil {
+		profile, signedIn = s.opts.Viewer(r)
+	}
+	return ViewerLocale(r, profile), signedIn
 }
 
 func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	clean := path.Clean("/" + r.URL.Path)
 	switch clean {
 	case "/":
-		locale, signedIn := "", false
-		if s.opts.Viewer != nil {
-			locale, signedIn = s.opts.Viewer(r)
-		}
-		name := "home." + ViewerLocale(r, locale)
+		locale, signedIn := s.viewer(r)
+		name := "home." + locale
 		if signedIn {
 			name += ".signed-in"
 		}
-		if b, ok := s.pages[name+".html"]; ok {
+		if b, ok := s.src.page(name + ".html"); ok {
 			// One address, four pages: a cache must key on what chose this one.
 			w.Header().Set("Vary", vary)
 			s.html(w, b)
@@ -114,70 +173,59 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/docs":
 		s.doc(w, r, "index")
 		return
-	case "/privacy", "/terms":
-		if b, ok := s.pages[clean[1:]+".html"]; ok {
-			s.html(w, b)
+	case "/robots.txt", "/sitemap.xml":
+		robots, sitemap := s.robots, s.sitemap
+		if robots == nil {
+			robots, sitemap = s.crawlerFiles()
+		}
+		if clean == "/robots.txt" {
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Write(robots)
 		} else {
-			http.NotFound(w, r)
+			w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+			w.Write(sitemap)
 		}
 		return
-	case "/robots.txt":
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write(s.robots)
-		return
-	case "/sitemap.xml":
-		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-		w.Write(s.sitemap)
-		return
-	case "/opengraph-image.png":
-		if _, err := fs.Stat(s.root, "public/opengraph-image.png"); err == nil {
-			w.Header().Set("Cache-Control", "public, max-age=3600")
-			r2 := r.Clone(r.Context())
-			r2.URL.Path = "/public/opengraph-image.png"
-			s.files.ServeHTTP(w, r2)
-			return
-		}
 	}
 	if slug, ok := strings.CutPrefix(clean, "/docs/"); ok {
 		s.doc(w, r, slug)
 		return
 	}
-	// A file of the build is served as it is, but never a prerendered page
-	// directly: those still hold the placeholder.
-	name := strings.TrimPrefix(clean, "/")
-	if name != "" && !strings.HasPrefix(name, "public/") {
-		if info, err := fs.Stat(s.root, name); err == nil && !info.IsDir() && name != "index.html" {
-			if strings.HasPrefix(name, "assets/") {
-				w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-			}
-			s.files.ServeHTTP(w, r)
+	// /{name}: a page in the viewer's language, else one in a single language
+	// (the legal pages). Without one, the console routes the path itself.
+	if name := clean[1:]; pageName.MatchString(name) && name != "home" && name != "docs" {
+		locale, _ := s.viewer(r)
+		if b, ok := s.src.page(name + "." + locale + ".html"); ok {
+			w.Header().Set("Vary", vary)
+			s.html(w, b)
+			return
+		}
+		if b, ok := s.src.page(name + ".html"); ok {
+			s.html(w, b)
 			return
 		}
 	}
-	if s.index == nil {
-		http.Error(w, "The console is not built into this binary (pnpm --filter console build).", http.StatusNotFound)
+	if s.src.file(w, r) {
+		return
+	}
+	index, ok := s.src.index()
+	if !ok {
+		http.Error(w, s.src.missing(), http.StatusNotFound)
 		return
 	}
 	// The console renders in the viewer's language, the profile's first, as
 	// the home page does; it reads it from the root element.
-	profile := ""
-	if s.opts.Viewer != nil {
-		profile, _ = s.opts.Viewer(r)
-	}
-	locale := ViewerLocale(r, profile)
+	locale, _ := s.viewer(r)
 	w.Header().Set("Vary", vary)
-	s.html(w, bytes.Replace(s.index, []byte(`<html lang="en">`), []byte(`<html lang="`+locale+`" data-locale="`+locale+`">`), 1))
+	s.html(w, bytes.Replace(index, []byte(`<html lang="en">`), []byte(`<html lang="`+locale+`" data-locale="`+locale+`">`), 1))
 }
 
 // doc answers /docs and /docs/{slug} with the page in the viewer's language
-// (docs.{slug}.{locale}.html, apps/console/src/public/docs.tsx), as the home
+// (docs.{slug}.{locale}.html, apps/web/src/public/docs.tsx), as the home
 // page picks its own; a page this build does not hold is not found.
 func (s *site) doc(w http.ResponseWriter, r *http.Request, slug string) {
-	profile := ""
-	if s.opts.Viewer != nil {
-		profile, _ = s.opts.Viewer(r)
-	}
-	b, ok := s.pages["docs."+slug+"."+ViewerLocale(r, profile)+".html"]
+	locale, _ := s.viewer(r)
+	b, ok := s.src.page("docs." + slug + "." + locale + ".html")
 	if !ok {
 		http.NotFound(w, r)
 		return
@@ -197,6 +245,108 @@ func (s *site) html(w http.ResponseWriter, b []byte) {
 	w.Write(b)
 }
 
+// built is the embedded build.
+type built struct {
+	root    fs.FS
+	files   http.Handler
+	pages   map[string][]byte // dist/public's pages by file name, ready to send
+	console []byte            // index.html, ready to send
+}
+
+func (b *built) page(name string) ([]byte, bool) { p, ok := b.pages[name]; return p, ok }
+
+func (b *built) names() []string {
+	names := make([]string, 0, len(b.pages))
+	for name := range b.pages {
+		names = append(names, name)
+	}
+	return names
+}
+
+func (b *built) index() ([]byte, bool) { return b.console, b.console != nil }
+
+func (b *built) missing() string {
+	return "The web app is not built into this binary (pnpm --filter @dsh-teamwork/web build)."
+}
+
+// file serves a file of the build as it is, but never a prerendered page
+// directly: those still hold the placeholder.
+func (b *built) file(w http.ResponseWriter, r *http.Request) bool {
+	name := strings.TrimPrefix(path.Clean("/"+r.URL.Path), "/")
+	if name == "opengraph-image.png" {
+		if _, err := fs.Stat(b.root, "public/"+name); err != nil {
+			return false
+		}
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/public/" + name
+		b.files.ServeHTTP(w, r2)
+		return true
+	}
+	if name == "" || name == "index.html" || strings.HasPrefix(name, "public/") {
+		return false
+	}
+	if info, err := fs.Stat(b.root, name); err != nil || info.IsDir() {
+		return false
+	}
+	if strings.HasPrefix(name, "assets/") {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	}
+	b.files.ServeHTTP(w, r)
+	return true
+}
+
+// vite is the web Vite server in development: pages rendered fresh from
+// source, and its modules and files passed through.
+type vite struct {
+	origin string
+	client *http.Client
+	proxy  http.Handler
+	site   *site
+}
+
+func (v *vite) get(p string) ([]byte, bool) {
+	res, err := v.client.Get(v.origin + p)
+	if err != nil {
+		return nil, false
+	}
+	defer res.Body.Close()
+	b, err := io.ReadAll(res.Body)
+	return b, err == nil && res.StatusCode == http.StatusOK
+}
+
+func (v *vite) page(name string) ([]byte, bool) {
+	b, ok := v.get("/__pages/" + url.PathEscape(name))
+	if !ok {
+		return nil, false
+	}
+	return v.site.fill(b), true
+}
+
+func (v *vite) names() []string {
+	var names []string
+	if b, ok := v.get("/__pages"); ok {
+		_ = json.Unmarshal(b, &names)
+	}
+	return names
+}
+
+func (v *vite) index() ([]byte, bool) { return v.get("/index.html") }
+
+func (v *vite) missing() string {
+	return "DEV_VITE: the web Vite server on " + v.origin + " is not answering; start it with `pnpm dev`."
+}
+
+// file passes everything but a page load to Vite: a page load (HTML wanted,
+// and no file extension) gets the console's index, as a built binary's would.
+func (v *vite) file(w http.ResponseWriter, r *http.Request) bool {
+	if (r.Method == http.MethodGet || r.Method == http.MethodHead) && strings.Contains(r.Header.Get("Accept"), "text/html") && path.Ext(r.URL.Path) == "" {
+		return false
+	}
+	v.proxy.ServeHTTP(w, r)
+	return true
+}
+
 // robotsGroups are robots.txt's groups: everybody first, kept off the
 // signed-in screens, then the AI training crawlers, kept off everything.
 func robotsGroups() []RobotsGroup {
@@ -208,7 +358,7 @@ func robotsGroups() []RobotsGroup {
 
 // crawlerFiles are robots.txt and sitemap.xml, from APP_URL and never the
 // Host header, which a stranger can set. The sitemap lists the home page, the
-// documentation, and the legal pages where this build published them.
+// documentation, and every other public page this build holds.
 func (s *site) crawlerFiles() (robots, sitemap []byte) {
 	var b strings.Builder
 	for _, g := range robotsGroups() {
@@ -226,14 +376,23 @@ func (s *site) crawlerFiles() (robots, sitemap []byte) {
 	fmt.Fprintf(&b, "Sitemap: %s/sitemap.xml\n", s.opts.AppURL)
 	robots = []byte(b.String())
 
+	// The home page, each documentation page and every other public page
+	// once, by its English (or only) file: the locale is never in the URL.
 	urls := []string{s.opts.AppURL}
-	// Each documentation page once, by its English file: the locale is never in the URL.
-	var docs []string
-	for name := range s.pages {
+	var docs, pages []string
+	for _, name := range s.src.names() {
 		if slug, ok := strings.CutPrefix(name, "docs."); ok {
 			if slug, ok := strings.CutSuffix(slug, ".en.html"); ok {
 				docs = append(docs, slug)
 			}
+			continue
+		}
+		page, ok := strings.CutSuffix(name, ".en.html")
+		if !ok {
+			page, ok = strings.CutSuffix(name, ".html")
+		}
+		if ok && pageName.MatchString(page) && page != "home" {
+			pages = append(pages, page)
 		}
 	}
 	slices.Sort(docs)
@@ -244,10 +403,9 @@ func (s *site) crawlerFiles() (robots, sitemap []byte) {
 			urls = append(urls, s.opts.AppURL+"/docs/"+slug)
 		}
 	}
-	for _, p := range legalPages {
-		if _, ok := s.pages[p[1:]+".html"]; ok {
-			urls = append(urls, s.opts.AppURL+p)
-		}
+	slices.Sort(pages)
+	for _, page := range slices.Compact(pages) {
+		urls = append(urls, s.opts.AppURL+"/"+page)
 	}
 	b.Reset()
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n" + `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")

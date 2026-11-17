@@ -21,9 +21,9 @@ stylesheet is right and this file is stale.
 | --- | --- |
 | Brand mark | `docs/brand/icon.svg` — the one hand-edited copy; every icon and logo is exported from it |
 | Exports | `scripts/generate-icons.mjs` (`pnpm assets:icons`) |
-| Web colour, radius, faces | `apps/console/src/globals.css` |
+| Web colour, radius, faces | `apps/web/src/globals.css` |
 | Console colour, radius, faces | `apps/manage/src/globals.css` |
-| Share card | `apps/console/scripts/prerender.mjs` — the exported `public/logo.svg` beside the name (Onest Bold) and tagline (Onest Regular), in ink on white |
+| Share card | `apps/web/scripts/prerender.mjs` — the exported `public/logo.svg` beside the name (Onest Bold) and tagline (Onest Regular), in ink on white |
 
 ## The mark
 
@@ -74,7 +74,7 @@ colour from it and rounds that element for the logos.
 Every colour is a variable, and `.dark` on `<html>` swaps the whole scale. There
 are two themes, light and dark. Until a person chooses, they get their system's
 setting and follow it; a choice is kept in the browser under one key (`theme`)
-by `apps/console/src/lib/theme.ts` and the instance console's own
+by `apps/web/src/lib/theme.ts` and the instance console's own
 `apps/manage/src/lib/theme.ts`, so it holds on every page of a site. An inline
 script sets it before the first paint. Grounds
 and text are a neutral grey (hue 286, chroma under 0.02): white grounds and
@@ -142,7 +142,7 @@ borrows it. Each token is exposed to Tailwind as `--color-*` in the file's
 | Surface | Faces | Scale |
 | --- | --- | --- |
 | Web, console | `--font-sans`: `system-ui, -apple-system, 'Segoe UI', sans-serif`; `--font-mono`: `ui-monospace, 'SF Mono', monospace` | Tailwind's defaults. The console adds `tabular` (tabular numerals) for columns of numbers |
-| Share card | Onest 700 and 400 (`apps/console/assets/fonts`: latin `.woff`, OFL licence beside them) | The name at 84px bold, the tagline at 36px regular; no CJK glyphs, so the card is English |
+| Share card | Onest 700 and 400 (`apps/web/assets/fonts`: latin `.woff`, OFL licence beside them) | The name at 84px bold, the tagline at 36px regular; no CJK glyphs, so the card is English |
 
 ## Spacing and radius
 
@@ -180,7 +180,7 @@ icon set.
   card's border and fill are kept for the one block that has to stand apart.
 - **The logo is an image, not a drawing.** Show `public/logo.svg` at its square
   size; never redraw the mark inline or recolour it. The one inline whale is the
-  landing page's hero illustration (`apps/console/src/public/sea.tsx`): the
+  landing page's hero illustration (`apps/web/src/public/sea.tsx`): the
   mark's fluke path at hero scale, in `--foreground` at 7 % opacity, behind one
   `--foreground` wave line that runs the full width; below the line the page's
   own ground covers the stalk. It is not the logo, has no plate, and is not
@@ -192,6 +192,23 @@ icon set.
   surface is one person's work and the places it happens (every platform),
   then what the team shares (collaboration) and controls (governance), and
   the deep floor is what the team keeps as its assets.
+- **The landing page's first screen is what the product is and how to start.**
+  On the left: the title, one sentence, the three pillars in a row each
+  (collaborate, govern, everywhere), *Create a team* and the plugin's package
+  to copy, then a line to the install guide. On the right: one diagram, read
+  left to right (`apps/web/src/public/topology.tsx`): the team's people,
+  each with an icon for where they work (DSH Desktop, a terminal, the phone,
+  the admin's web console), curved arrows into DSH Teamwork in the middle, and
+  on the right the upstream model providers (the console's own catalogue) and
+  cloud DSH, coming. It is drawn from tokens, so it follows the theme, and its
+  words are the page's language.
+- **Real screens live in the sections below, never in the first screen.**
+  *Everywhere* gives each way in a row (who it is for, what it does, its
+  screen, alternating sides); *Collaborate* shows the review comparison and
+  *Govern* the usage page. Each screen sits in a plain window or phone frame
+  drawn from tokens. They are captures of the real interfaces with a demo team,
+  in `apps/web/public/home/`, one per language, captured again when those
+  screens change, never drawn.
 - **The web app's `/` is the landing page on every instance**, self-hosted
   ones included (ADR 0007), so every claim holds for any instance. A
   capability only the hosted service offers, or one that is planned, appears
@@ -201,30 +218,30 @@ icon set.
   grouped pages with the selected one marked as in the console, the page in
   `.prose-document` (the legal pages' type), and "On this page" on wide
   screens; a code block carries its own copy button
-  (`apps/console/src/public/docs.tsx`).
+  (`apps/web/src/public/docs.tsx`).
 - **The console's sidebar is grouped by what a team does**: the overview, then
   *Team assets* (models, presets, plugins), *Collaboration* (review, versions)
   and *Governance* (members, usage, budgets, and an edition's own team pages).
   The account is one menu at its foot; below `md` the sidebar is a sheet
-  behind a menu button (`apps/console/src/components/team/console-shell.tsx`).
-- **Choosing from a list is one component.** `apps/console/src/components/ui/select.tsx`:
+  behind a menu button (`apps/web/src/components/team/console-shell.tsx`).
+- **Choosing from a list is one component.** `apps/web/src/components/ui/select.tsx`:
   an outline trigger and a menu on the card surface, never a native `<select>`.
   The language picker is one too; the public pages, which run no React, draw
-  the same look in `apps/console/src/public/controls.tsx`. The operator
+  the same look in `apps/web/src/public/controls.tsx`. The operator
   console has its copy in `apps/manage/src/components/ui/select.tsx`, which an
-  edition's pages import from `@dsh-teamwork/manage-core`.
+  edition's pages import from `@dsh-teamwork/manage`.
 - **The theme is one icon button** showing the theme in force (sun or moon)
   and switching to the other: in the top bar and the footer of the public
   pages and of `/teams`, and beside the account at the foot of a team's sidebar
-  (`apps/console/src/components/theme-toggle.tsx`).
+  (`apps/web/src/components/theme-toggle.tsx`).
 - **A person is their avatar, and it leads to their account.** A top bar shows
   the initial in a circle; a team's sidebar ends, as Router9 Studio's rail does,
   in a row of the avatar, the person's name and their role in the team, with
   the theme button beside it. Either goes straight to the account settings
-  (`/account`, `apps/console/src/pages/account.tsx`): the name, edited in
+  (`/account`, `apps/web/src/pages/account.tsx`): the name, edited in
   place, and the email, then preferences (language, theme), the password,
   your teams and signing out, in sections divided by hairlines. The email is
-  printed there and nowhere else in the chrome (`apps/console/src/components/account.tsx`). The operator
+  printed there and nowhere else in the chrome (`apps/web/src/components/account.tsx`). The operator
   console's rail ends the same way: the operator's initial (the address only
   on hover), the theme and signing out (`apps/manage/src/components/layout/sidebar.tsx`).
 - **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as

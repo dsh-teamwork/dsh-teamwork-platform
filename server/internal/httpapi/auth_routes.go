@@ -20,9 +20,6 @@ type SessionView struct {
 	} `json:"doors"`
 	SetupOpen            bool   `json:"setupOpen"`
 	MobileRedirectPrefix string `json:"mobileRedirectPrefix"`
-	// EditionPaths are the prefixes an edition's own pages answer under, so the
-	// console hands a sign-in return there to the server (ADR 0042).
-	EditionPaths []string `json:"editionPaths"`
 }
 
 // SessionUser is the signed-in person.
@@ -42,10 +39,6 @@ func (s *Server) session(w http.ResponseWriter, r *http.Request) error {
 	v.Doors.EmailCode = !s.Config.Passwords()
 	v.Doors.Google = s.Google != nil
 	v.MobileRedirectPrefix = s.Config.MobileRedirectURI
-	v.EditionPaths = []string{}
-	for _, page := range s.TeamPages {
-		v.EditionPaths = append(v.EditionPaths, page.Path)
-	}
 	c, err := s.identify(r)
 	if err != nil {
 		return err

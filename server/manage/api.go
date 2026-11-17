@@ -19,7 +19,10 @@ import (
 )
 
 // Mount serves the shared instance API and the selected edition console.
-func Mount(h edition.Host, db *ent.Client, console edition.AdminConsole, extra []edition.AdminRoute) {
+// Mount adds the management API and console. devOrigin, set under DEV_VITE,
+// is the management Vite server the console's pages come from instead of the
+// embedded build.
+func Mount(h edition.Host, db *ent.Client, console edition.AdminConsole, extra []edition.AdminRoute, devOrigin string) {
 	if h.ServiceRole == "user" || strings.TrimSpace(h.Env("ADMIN_EMAILS")) == "" {
 		h.Mux.HandleFunc("/manage", http.NotFound)
 		h.Mux.HandleFunc("/manage/", http.NotFound)
@@ -38,7 +41,7 @@ func Mount(h edition.Host, db *ent.Client, console edition.AdminConsole, extra [
 		}
 		h.Mux.HandleFunc(r.Method+" "+r.Path, a.guard(r))
 	}
-	mountConsole(h.Mux, console)
+	mountConsole(h.Mux, console, devOrigin)
 }
 
 type api struct {

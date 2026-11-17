@@ -9,7 +9,7 @@ else. No account, no person and no behaviour is tracked.
 
 | Side | Sends | Identity | Why |
 | --- | --- | --- | --- |
-| The browser (`apps/console/src/lib/analytics.ts`) | `$pageview` only, every URL cut to its path and no page title | None. Cookieless: unique visitors are a daily-salted hash PostHog computes | Nothing is stored in the visitor's browser, so there is no consent banner |
+| The browser (`apps/web/src/lib/analytics.ts`) | `$pageview` only, every URL cut to its path and no page title | None. Cookieless: unique visitors are a daily-salted hash PostHog computes | Nothing is stored in the visitor's browser, so there is no consent banner |
 | The server | Nothing | — | What an account does is not tracked |
 
 There are no page leaves, no autocapture, no session recording, no surveys and

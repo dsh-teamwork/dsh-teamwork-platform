@@ -1,0 +1,220 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+/* These sources, also when an edition's stylesheet imports this one (premium/apps/web). */
+@source './';
+
+/* `.dark` on <html> (next-themes, attribute="class") swaps the whole scale. */
+@custom-variant dark (&:is(.dark, .dark *));
+
+/*
+ * Every colour is a variable, so light and dark are kept in step in one place
+ * and a page never names a Tailwind palette step (`text-gray-600`).
+ *
+ * The palette is neutral black and white (docs/design.md, "Colour"), the
+ * same frame as DeepSeek Harness, with two accents that mean one thing each:
+ * `--brand` (navy) marks what belongs to the team, and `--signal` (amber) marks
+ * what needs attention, only as a dot or a thin line. Neither is `--accent`,
+ * the subtle hover surface every shadcn-shaped primitive uses, and neither is a
+ * button: `--primary` is black in light and white in dark.
+ */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0.002 286);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0.002 286);
+  --muted: oklch(0.976 0.001 286);
+  --muted-foreground: oklch(0.478 0.016 286);
+  --primary: oklch(0.145 0.002 286);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.953 0.003 286);
+  --secondary-foreground: oklch(0.145 0.002 286);
+  --accent: oklch(0.953 0.003 286);
+  --accent-foreground: oklch(0.145 0.002 286);
+  --destructive: oklch(0.529 0.193 29);
+  --destructive-foreground: oklch(1 0 0);
+  --brand: oklch(0.33 0.11 268);
+  --brand-foreground: oklch(1 0 0);
+  --signal: oklch(0.765 0.14 73);
+  --border: oklch(0.932 0.003 286);
+  --input: oklch(0.887 0.007 286);
+  --ring: oklch(0.452 0.124 270);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: oklch(0.15 0.002 286);
+  --foreground: oklch(0.967 0.001 286);
+  --card: oklch(0.192 0.004 286);
+  --card-foreground: oklch(0.967 0.001 286);
+  --muted: oklch(0.232 0.006 286);
+  --muted-foreground: oklch(0.712 0.013 286);
+  --primary: oklch(0.967 0.001 286);
+  --primary-foreground: oklch(0.15 0.002 286);
+  --secondary: oklch(0.274 0.006 286);
+  --secondary-foreground: oklch(0.967 0.001 286);
+  --accent: oklch(0.274 0.006 286);
+  --accent-foreground: oklch(0.967 0.001 286);
+  --destructive: oklch(0.711 0.166 22);
+  --destructive-foreground: oklch(0.15 0.002 286);
+  --brand: oklch(0.452 0.124 270);
+  --brand-foreground: oklch(1 0 0);
+  --signal: oklch(0.807 0.137 78);
+  --border: oklch(0.287 0.007 286);
+  --input: oklch(0.351 0.01 286);
+  --ring: oklch(0.766 0.095 271);
+}
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-signal: var(--signal);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* The hero's wave line drifts left by one wave period (160 of the SVG's units) and loops. */
+.sea-drift {
+  animation: sea-drift 14s linear infinite;
+}
+@keyframes sea-drift {
+  to {
+    transform: translateX(-160px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sea-drift {
+    animation: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/*
+ * A document rendered from markdown (components/legal-document.tsx). There is
+ * no typography plugin, so the elements markdown produces are styled here, on
+ * the same tokens as everything else.
+ */
+.prose-document {
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+.prose-document h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+.prose-document h2 {
+  margin: 2.5rem 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-document h3 {
+  margin: 1.75rem 0 0.5rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-document p,
+.prose-document ul,
+.prose-document ol {
+  margin: 0.85rem 0;
+}
+.prose-document ul,
+.prose-document ol {
+  padding-inline-start: 1.4rem;
+}
+.prose-document ul {
+  list-style: disc;
+}
+.prose-document ol {
+  list-style: decimal;
+}
+.prose-document li {
+  margin: 0.35rem 0;
+}
+.prose-document strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-document a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-document code {
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.prose-document pre {
+  margin: 1rem 0;
+  /* The code scrolls inside its own box, clear of the copy button on the right. */
+  padding: 0.9rem 4.5rem 0.9rem 1rem;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.prose-document pre code {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+.prose-document hr {
+  margin: 2.5rem 0;
+  border-top: 1px solid var(--border);
+}
+.prose-document table {
+  width: 100%;
+  margin: 1.25rem 0;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+.prose-document th,
+.prose-document td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  text-align: start;
+}
+.prose-document th {
+  color: var(--foreground);
+  font-weight: 600;
+}
