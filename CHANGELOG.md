@@ -5,13 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
-## 2026-11-17 — The landing page's first screen: an install card and real screens
+## 2026-11-17 — The landing page's first screen: three pillars, a diagram, and real screens below
 
-- **What:** The hero drops its two buttons (creating a team and self-hosting stay in the top bar) for one card beside the title: DSH Desktop's `Plugins → Add plugin` with the package to copy, the command-line install, and the guide; the title and that card sit on the left. On the right, real captures of DSH Desktop's Teamwork panel, the web console and the phone app (labelled hosted), one set per language, in `apps/console/public/home/`.
-- **Why:** The first screen repeated the top bar's actions, gave installing a single grey line, and showed no product.
+- **What:** The hero drops its two buttons and its install card. On the left: one sentence, the three pillars (collaborate, govern, everywhere), *Create a team* with the plugin's package to copy, and a line to the install guide. On the right: a left-to-right diagram of how a team uses DSH Teamwork (`apps/console/src/public/topology.tsx`). Real captures of DSH Desktop's Teamwork panel, the web console, the phone app, the review comparison and the usage page, one set per language in `apps/console/public/home/`, now illustrate the *Everywhere*, *Collaborate* and *Govern* sections, replacing their text-only cells and the terminal transcript.
+- **Why:** The first screen repeated the top bar's actions, buried installing, and showed no product; screens crowded into it were too small to read.
 - **Breaking:** None.
 - **Upgrade:** Nothing.
-- **Refs:** `apps/console/src/public/home.tsx`, `docs/design.md`.
+- **Refs:** `apps/console/src/public/home.tsx`, `apps/console/src/public/topology.tsx`, `docs/design.md`.
 
 ## 2026-11-17 — Analytics count pages only; the app's token can delete the account
 
