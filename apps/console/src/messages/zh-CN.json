@@ -66,8 +66,7 @@
     "current": "当前密码",
     "next": "新密码",
     "hint": "至少 10 个字符。几个不相关的词组合起来，既好记又难猜。",
-    "submit": "修改密码",
-    "change": "修改密码"
+    "submit": "修改密码"
   },
   "setup": {
     "title": "创建第一个账号",
@@ -221,10 +220,29 @@
     }
   },
   "account": {
-    "title": "账户",
-    "email": "邮箱",
+    "title": "账号设置",
     "name": "名字",
-    "noName": "未设置"
+    "noName": "添加你的名字",
+    "namePlaceholder": "你的名字",
+    "editName": "点击修改名字",
+    "nameSaved": "名字已保存。",
+    "nameFailed": "名字保存失败，请重试。",
+    "preferences": "偏好",
+    "language": "语言",
+    "theme": "主题",
+    "themes": {
+      "light": "浅色",
+      "dark": "深色"
+    },
+    "password": "密码",
+    "passwordHint": "用于登录这台服务器。",
+    "passwordSubmit": "修改密码",
+    "passwordChanged": "密码已修改。",
+    "teams": "我的团队",
+    "allTeams": "全部团队",
+    "noTeams": "你还没有加入任何团队。",
+    "session": "会话",
+    "sessionHint": "在这个浏览器上退出登录。你的 DSH 会保持登录，直到令牌过期。"
   },
   "team": {
     "list": {
@@ -399,7 +417,6 @@
       },
       "open": "打开导航",
       "close": "关闭导航",
-      "account": "账户菜单",
       "waiting": "等待你审核"
     },
     "switcher": {

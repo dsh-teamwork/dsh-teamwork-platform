@@ -1,22 +1,20 @@
 /**
  * `/teams`: every team the person is in, and where they create one or join
- * one by invitation. A top bar with the site and the account, then the teams
+ * one by invitation. In the site's frame (components/site-frame.tsx), the teams
  * as cards in two groups (the ones they manage, the ones they joined), each
  * with its main pages one click away; a first visit gets a welcome instead.
  * Creating and joining open dialogs, and an `?invite=` link opens the join
  * dialog filled in.
  */
 
-import { ArrowRight, BookOpen, Cpu, LayoutDashboard, LogIn, Plus, Users } from 'lucide-react';
+import { ArrowRight, Cpu, LayoutDashboard, LogIn, Plus, Users } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { LocalePicker } from '@/components/locale-picker';
 import { Failure, useTitle } from '@/components/page';
-import { AccountMenu } from '@/components/team/console-shell';
+import { SiteFrame } from '@/components/site-frame';
 import { useMutation, useTeamError } from '@/components/team/use-mutation';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -42,53 +40,13 @@ export function TeamsPage() {
   const teams = useApi<TeamSummary[]>('teams');
   useTitle(useTranslations('team.list')('title'));
   return (
-    <Frame email={session.user?.email ?? ''} passwords={session.doors.password}>
+    <SiteFrame>
       {teams.data ? (
         <TeamsHome teams={teams.data} invite={params.get('invite') ?? ''} passwords={session.doors.password} reload={teams.reload} />
       ) : (
         teams.error ? <Failure message={word(teams.error)} /> : null
       )}
-    </Frame>
-  );
-}
-
-/** The page's own chrome: a top bar with the site and the account, and a footer with language and theme. */
-function Frame({ email, passwords, children }: { email: string; passwords: boolean; children: ReactNode }) {
-  const tc = useTranslations('common');
-  const td = useTranslations('docs');
-  return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-6">
-          {/* The public home and docs are served by the server, not by this app's router. */}
-          <a href="/" className="flex shrink-0 items-center gap-2.5 text-lg font-bold tracking-tight">
-            <img src="/logo.svg" alt="" width={30} height={30} />
-            {tc('appName')}
-          </a>
-          <a href="/docs" className="ml-auto hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground sm:flex">
-            <BookOpen className="size-4" aria-hidden />
-            {td('title')}
-          </a>
-          <ThemeToggle className="ml-auto sm:ml-0" />
-          <AccountMenu email={email} passwords={passwords} side="bottom" />
-        </div>
-      </header>
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-6 py-10 sm:py-14">{children}</main>
-      <footer className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-6 text-sm text-muted-foreground">
-          <a href="/" className="hover:text-foreground">
-            {td('home')}
-          </a>
-          <a href="/docs" className="hover:text-foreground">
-            {td('title')}
-          </a>
-          <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle />
-            <LocalePicker className="h-9" />
-          </div>
-        </div>
-      </footer>
-    </div>
+    </SiteFrame>
   );
 }
 

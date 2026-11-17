@@ -215,10 +215,15 @@ icon set.
   and switching to the other: in the top bar and the footer of the public
   pages and of `/teams`, and beside the account at the foot of a team's sidebar
   (`apps/console/src/components/theme-toggle.tsx`).
-- **A person is their avatar.** The account menu opens from the initial in a
-  circle; the email is the menu's first line, never printed in a top bar or a
-  sidebar.
-- **`/teams` is the console's front page**: the site's top bar, the teams as
+- **A person is their avatar, and it leads to their account.** A top bar shows
+  the initial in a circle; a team's sidebar ends, as Router9 Studio's rail does,
+  in a row of the avatar, the person's name and their role in the team, with
+  the theme button beside it. Either goes straight to the account settings
+  (`/account`, `apps/console/src/pages/account.tsx`): the name, edited in
+  place, and the email, then preferences (language, theme), the password,
+  your teams and signing out, in sections divided by hairlines. The email is
+  printed there and nowhere else in the chrome (`apps/console/src/components/account.tsx`).
+- **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as
   cards (each with the team's initials on navy, and its overview, models and
   members a click away) grouped by role, a welcome with the first steps when
   there are none, and creating or joining a team in a dialog.

@@ -82,8 +82,6 @@ export function TeamLayout() {
       <ConsoleShell
         team={team.data}
         teams={teams.data}
-        email={session.user.email ?? ''}
-        passwords={session.doors.password}
         reviewsWaiting={team.data.role === 'admin' && (summary.data?.pendingReviews ?? 0) > 0}
       >
         <Outlet />

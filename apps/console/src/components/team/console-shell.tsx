@@ -16,15 +16,11 @@ import {
   Gauge,
   GitPullRequestArrow,
   History,
-  KeyRound,
-  Languages,
   Layers,
   LayoutDashboard,
   LayoutGrid,
-  LogOut,
   Menu,
   Puzzle,
-  UserRound,
   Users,
   X,
   type LucideIcon,
@@ -34,10 +30,9 @@ import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useLocale, useTranslations } from 'use-intl';
 
-import { useChooseLocale } from '@/components/locale-picker';
+import { AccountRow } from '@/components/account';
 import { ThemeToggle } from '@/components/theme-toggle';
 import type { Team, TeamSummary } from '@/lib/api';
-import { LOCALES } from '@/lib/locale';
 import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
@@ -88,16 +83,11 @@ const menuItem = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 
 export function ConsoleShell({
   team,
   teams,
-  email,
-  passwords,
   reviewsWaiting,
   children,
 }: {
   team: Team;
   teams: TeamSummary[];
-  email: string;
-  /** The instance holds passwords, so the account offers changing one's own. */
-  passwords: boolean;
   /** Submissions wait for this admin's review: the amber dot beside the review page. */
   reviewsWaiting: boolean;
   children: ReactNode;
@@ -112,8 +102,8 @@ export function ConsoleShell({
       <aside className="hidden flex-col gap-4 border-r bg-muted px-3 py-4 md:sticky md:top-0 md:flex md:h-dvh">
         <TeamSwitcher team={team} teams={teams} section={section} />
         <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} />
-        <div className="mt-auto flex items-center justify-between border-t pt-3">
-          <AccountMenu email={email} passwords={passwords} />
+        <div className="mt-auto flex items-center gap-1 border-t pt-3">
+          <AccountRow detail={t(`role.${team.role}`)} />
           <ThemeToggle />
         </div>
       </aside>
@@ -138,8 +128,8 @@ export function ConsoleShell({
               </Dialog.Close>
             </div>
             <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} onNavigate={close} />
-            <div className="mt-auto flex items-center justify-between border-t pt-3">
-              <AccountMenu email={email} passwords={passwords} />
+            <div className="mt-auto flex items-center gap-1 border-t pt-3">
+              <AccountRow detail={t(`role.${team.role}`)} onNavigate={close} />
               <ThemeToggle />
             </div>
           </Dialog.Content>
@@ -179,76 +169,6 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
         </div>
       ))}
     </nav>
-  );
-}
-
-/** The signed-in person: their account, password, language and signing out, behind one button. `side` is where the menu opens: up from a sidebar's foot, down from a top bar. */
-export function AccountMenu({ email, passwords, side = 'top' }: { email: string; passwords: boolean; side?: 'top' | 'bottom' }) {
-  const tc = useTranslations('common');
-  const tp = useTranslations('password');
-  const t = useTranslations('team.nav');
-  const { signOut } = useSession();
-  const locale = useLocale();
-  const { pending, choose } = useChooseLocale();
-  return (
-    <DropdownMenu.Root>
-      {/* The person is their avatar: the email is in the menu, not on the page (it is read over shoulders and in screenshots). */}
-      <DropdownMenu.Trigger
-        className="grid size-9 shrink-0 place-items-center rounded-full hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        aria-label={t('account')}
-        title={t('account')}
-      >
-        <span aria-hidden className="grid size-7 place-items-center rounded-full bg-secondary text-xs font-semibold uppercase ring-1 ring-border">
-          {email.slice(0, 1) || '?'}
-        </span>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content side={side} align={side === 'top' ? 'start' : 'end'} sideOffset={6} className="z-50 min-w-56 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
-          <DropdownMenu.Label className="truncate px-2 py-1.5 text-xs text-muted-foreground" title={email}>
-            {email}
-          </DropdownMenu.Label>
-          <DropdownMenu.Separator className="my-1 h-px bg-border" />
-          <DropdownMenu.Item asChild>
-            <Link to="/account" className={menuItem}>
-              <UserRound className="size-4" aria-hidden />
-              {tc('account')}
-            </Link>
-          </DropdownMenu.Item>
-          {passwords && (
-            <DropdownMenu.Item asChild>
-              <Link to="/password" className={menuItem}>
-                <KeyRound className="size-4" aria-hidden />
-                {tp('change')}
-              </Link>
-            </DropdownMenu.Item>
-          )}
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className={menuItem} disabled={pending}>
-              <Languages className="size-4" aria-hidden />
-              <span className="flex-1">{tc('language')}</span>
-              <span className="text-xs text-muted-foreground">{tc(`localeNames.${locale === 'zh-CN' ? 'zh-CN' : 'en'}`)}</span>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent sideOffset={4} className="z-50 min-w-40 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
-                <DropdownMenu.RadioGroup value={locale} onValueChange={(next) => next !== locale && void choose(next)}>
-                  {LOCALES.map((l) => (
-                    <DropdownMenu.RadioItem key={l} value={l} className={menuItem}>
-                      <Check className={cn('size-4', l !== locale && 'invisible')} aria-hidden />
-                      {tc(`localeNames.${l}`)}
-                    </DropdownMenu.RadioItem>
-                  ))}
-                </DropdownMenu.RadioGroup>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.Separator className="my-1 h-px bg-border" />
-          <DropdownMenu.Item className={menuItem} onSelect={() => void signOut()}>
-            <LogOut className="size-4" aria-hidden />
-            {tc('signOut')}
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
   );
 }
 

@@ -66,8 +66,7 @@
     "current": "Current password",
     "next": "New password",
     "hint": "At least 10 characters. A few unrelated words are easy to remember and hard to guess.",
-    "submit": "Change password",
-    "change": "Change password"
+    "submit": "Change password"
   },
   "setup": {
     "title": "Create the first account",
@@ -221,10 +220,29 @@
     }
   },
   "account": {
-    "title": "Account",
-    "email": "Email",
+    "title": "Account settings",
     "name": "Name",
-    "noName": "Not set"
+    "noName": "Add your name",
+    "namePlaceholder": "Your name",
+    "editName": "Click to change your name",
+    "nameSaved": "Name saved.",
+    "nameFailed": "Could not save your name. Try again.",
+    "preferences": "Preferences",
+    "language": "Language",
+    "theme": "Theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "password": "Password",
+    "passwordHint": "Used to sign in on this server.",
+    "passwordSubmit": "Change password",
+    "passwordChanged": "Password changed.",
+    "teams": "Your teams",
+    "allTeams": "All teams",
+    "noTeams": "You are not in a team yet.",
+    "session": "Session",
+    "sessionHint": "Sign out of this browser. Your DSH stays signed in until its token expires."
   },
   "team": {
     "list": {
@@ -399,7 +417,6 @@
       },
       "open": "Open navigation",
       "close": "Close navigation",
-      "account": "Account menu",
       "waiting": "Waiting for your review"
     },
     "switcher": {
