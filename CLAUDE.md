@@ -228,8 +228,8 @@ for English, switches the reply for as long as that holds.
 
 ```bash
 cd server && go run ./cmd/dsh-teamwork   # the server on :3800, SQLite in ~/.dsh-teamwork
-pnpm dev              # web Vite on :3800 and the outermost Go server on :3801
-pnpm --filter @dsh-teamwork/manage dev  # management Vite on :3802; backend separate
+pnpm dev              # everything on :3800: the edition's Go server, which takes pages
+                      #   from the web Vite (:3810) and the /manage Vite (:3811)
 pnpm dev:setup        # Postgres 16 and MySQL 8.4 for the Go suites (dev/)
 pnpm dev:stop | dev:clean    # stop them; clean also drops their volumes
 
@@ -253,12 +253,16 @@ reach the web app; they need Go (the version in `server/go.mod`). Run from
 `server/`, with nothing configured it keeps its SQLite file and generated
 secrets in `~/.dsh-teamwork` (`--data` moves it), listens on
 `127.0.0.1:3800`, and prints a link that claims the first account. With no
-`SMTP_URL`, sign-in is an email and a password. To work on the web app, run
-`pnpm dev`: it starts one Vite and the outermost Go server, defaulting
-`APP_URL=http://localhost:3800`; a write must come from APP_URL's origin. Go
-sources, SQL migrations and embedded JSON files restart the backend automatically.
-The server embeds the web app its build last copied in (`server/scripts/embed.mjs`),
-so `pnpm build` before `go run` shows web changes on :3800.
+`SMTP_URL`, sign-in is an email and a password. To work on the web app or
+the management console, run `pnpm dev` and open `http://localhost:3800`:
+the edition's outermost Go server runs with `DEV_VITE=1` and takes the
+console's index, its modules and the public pages from the web Vite on :3810
+and `/manage` from the management Vite on :3811, so the API, the session and
+`APP_URL` are one origin as in production (ADR 0041). Go sources, SQL
+migrations and embedded JSON files restart the server; the Vite servers update
+the page themselves. Without `DEV_VITE` the server embeds the web app its
+build last copied in (`server/scripts/embed.mjs`), so `pnpm build` before
+`go run` shows web changes on :3800.
 
 **Database suites run on every dialect they can reach.** Every case runs on
 SQLite, and on Postgres and MySQL when `TEST_POSTGRES_URL` and
@@ -335,8 +339,9 @@ server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
                      analytics, httpapi (every route), web (the embedded
                      console and public pages), wire (request shapes and
                      error codes)
-apps/web         Vite and React: the console and the public pages,
-                     prerendered at its build and embedded in the binary
+apps/web             Vite and React: the console and the public pages,
+                     prerendered at its build and embedded in the binary;
+                     an edition's web app composes it (mountWeb, ADR 0041)
 api/openapi.yaml     the wire contract
 packages/shared      the languages and the rule that picks one, shared by the
                      console and the closed mobile app

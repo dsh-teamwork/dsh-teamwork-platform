@@ -5,11 +5,14 @@ package manage
 
 import (
 	"embed"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
+
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 )
 
 //go:embed all:dist
@@ -19,7 +22,20 @@ var dist embed.FS
 // instance serves, a script from anywhere else must not run here.
 const csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 
-func mountConsole(mux *http.ServeMux, console edition.AdminConsole) {
+func mountConsole(mux *http.ServeMux, console edition.AdminConsole, devOrigin string) {
+	if devOrigin != "" {
+		// The Vite server's base is the console's (apps/manage/vite.config.ts),
+		// so its modules and pages are all under it.
+		u, err := url.Parse(devOrigin)
+		if err != nil {
+			panic(err)
+		}
+		mux.Handle(console.Base+"/", web.DevProxy(u, "the management Vite server"))
+		if console.Base != "" {
+			mux.Handle("GET "+console.Base, http.RedirectHandler(console.Base+"/", http.StatusMovedPermanently))
+		}
+		return
+	}
 	root := console.Files
 	var err error
 	if root == nil {

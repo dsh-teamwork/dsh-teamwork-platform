@@ -1,3 +1,7 @@
+// `pnpm dev`'s Go server: the edition's binary run with `go run`, restarted
+// when a Go source, SQL migration or embedded JSON file changes in this module
+// or a module its go.mod replaces with a local path. It runs from the module's
+// own directory (server/ or premium/server/).
 import { spawn } from 'node:child_process';
 import { readFileSync, watch } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
@@ -51,11 +55,9 @@ function start() {
   const current = spawn('go', ['run', './cmd/dsh-teamwork'], {
     stdio: 'inherit',
     detached: process.platform !== 'win32',
-    env: {
-      ...process.env,
-      PORT: process.env.PORT || '3801',
-      APP_URL: process.env.APP_URL || 'http://localhost:3800',
-    },
+    // The pages come from the Vite servers (DEV_VITE): the browser opens
+    // this server alone, on :3800 as in production.
+    env: { ...process.env, DEV_VITE: '1' },
   });
   child = current;
   current.on('error', (error) => {

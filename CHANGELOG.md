@@ -5,29 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
-## 2026-11-17 — Development puts the web on 3800 and the API on 3801
+## 2026-11-17 — `apps/web`, one development address, and editions compose the web app
 
-- **What:** Root `pnpm dev` now serves the web Vite at :3800 and the watched Go backend at :3801, with `APP_URL=http://localhost:3800`; all Vite API proxies follow. Production and a standalone `go run` retain the Go default :3800.
-- **Why:** Development now uses the requested frontend/backend port assignment consistently in both editions.
-- **Breaking:** Existing development bookmarks and origin-scoped browser storage/cookies belong to the old web port; local OAuth callback configuration must use the new web origin when applicable.
-- **Upgrade:** Restart `pnpm dev` and open `http://localhost:3800`. No production deployment change is needed.
-- **Refs:** `scripts/dev.mjs`, `server/scripts/dev.mjs`, `apps/web/package.json`, `apps/web/vite.config.ts`.
-
-## 2026-11-17 — Vite serves the public pages in development
-
-- **What:** The web Vite server renders `/`, `/docs` and the legal pages through the same `renderPages` used by production, with the viewer's language and home sign-in state. `/` no longer falls into the console SPA's redirect to `/teams` and then sign-in; public source edits need no embedded rebuild.
-- **Why:** Development at :3801 skipped the Go server's public-page interception, while :3800 showed the embedded landing page, making the two development surfaces disagree.
-- **Breaking:** None.
-- **Upgrade:** Nothing. `LEGAL_DIR` keeps its build-time meaning for legal pages in development.
-- **Refs:** `apps/web/vite.config.ts`, `apps/web/src/__tests__/docs.test.ts`, `apps/web/src/public/render.tsx`.
-
-## 2026-11-17 — One web development server and one backend
-
-- **What:** The user frontend is now `apps/web` and `@dsh-teamwork/web`; the shared management app is `@dsh-teamwork/manage`. Root `pnpm dev` starts only that web Vite and the edition's outermost Go server, with `APP_URL=http://localhost:3800` as the default. Go sources, SQL migrations and embedded JSON files restart the backend automatically, including local `replace` modules. The management Vite no longer joins the default run.
-- **Why:** Package names now match the two runtime surfaces, and developing one surface no longer starts every workspace app.
-- **Breaking:** Developers and automation using `apps/console`, `@dsh-teamwork/console` or `@dsh-teamwork/manage-core` must use the new paths and package names. Management development is now explicit: `pnpm --filter @dsh-teamwork/manage dev`, with its backend started separately.
-- **Upgrade:** Update package filters and imports; production build and deployment topology are unchanged.
-- **Refs:** `apps/web/`, `apps/manage/`, `scripts/dev.mjs`, `CLAUDE.md` ("Commands").
+- **What:** The user frontend is `apps/web` (`@dsh-teamwork/web`) and the shared management app `@dsh-teamwork/manage`. `pnpm dev` runs the edition's outermost Go server on :3800 with `DEV_VITE=1`, which takes the console, its modules and the public pages from the web Vite on :3810 and `/manage` from the management Vite on :3811; Go sources, migrations and embedded JSON restart the server. An edition's web app composes the open one through `mountWeb` (`@dsh-teamwork/web/app`): it adds routes and team pages, replacing an open one at the same path, and adds or replaces public pages by file name, which the server now serves generically (`/{name}` from `{name}.{locale}.html` or `{name}.html`, also in the sitemap). `Host.SetWebConsole` hands the server an edition's web build. `Host.AddTeamPage` and the session's `teamPages` are removed.
+- **Why:** One origin in development, as in production, so the web app and the management console run together and the public pages' routing exists once, in Go; and closed member pages become routes in the open console's shell rather than separate apps (ADR 0041).
+- **Breaking:** `apps/console`, `@dsh-teamwork/console` and `@dsh-teamwork/manage-core` are gone; use the new paths and names. `GET /api/auth/session` no longer has `teamPages`, and editions lose `Host.AddTeamPage` (the closed billing page moves into the closed web app in the same change). Without legal pages, `/privacy` and `/terms` are the console's like any unknown path, rather than 404.
+- **Upgrade:** Run `pnpm dev` and open `http://localhost:3800`; nothing else listens for the browser. Production builds and deployment are unchanged.
+- **Refs:** ADR 0041 (supersedes 0028), `scripts/dev.mjs`, `server/scripts/dev.mjs`, `server/internal/web/web.go`, `apps/web/src/app.tsx`, `apps/web/scripts/vite-pages.mjs`, `apps/web/scripts/prerender.mjs`.
 
 ## 2026-11-17 — Live model metadata and price form suggestions
 

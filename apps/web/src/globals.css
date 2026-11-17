@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+/* These sources, also when an edition's stylesheet imports this one (premium/apps/web). */
+@source './';
 
 /* `.dark` on <html> (next-themes, attribute="class") swaps the whole scale. */
 @custom-variant dark (&:is(.dark, .dark *));

@@ -3,6 +3,7 @@ package edition_test
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -131,37 +132,36 @@ func TestExtension(t *testing.T) {
 	})
 }
 
-func TestEditionTeamNavigationIsSameOriginAndCopied(t *testing.T) {
-	ext := edition.Extension{Name: "navigation", Mount: func(h edition.Host) (func(), error) {
-		labels := map[string]string{"en": "Team tools", "zh-CN": "Team tools"}
-		for _, path := range []string{"https://outside.test/", "//outside.test/", "/tools/../", "/tools/?next=", "/tools\\outside/"} {
-			if err := h.AddTeamPage(edition.TeamPage{Path: path, Labels: labels}); err == nil {
-				t.Fatalf("accepted unsafe edition path %q", path)
-			}
-		}
-		if err := h.AddTeamPage(edition.TeamPage{Path: "/tools/teams/", Labels: labels}); err != nil {
-			return nil, err
-		}
-		labels["en"] = "Mutated after registration"
-		if err := h.AddTeamPage(edition.TeamPage{Path: "/tools/teams/", Labels: labels}); err == nil {
-			t.Fatal("duplicate navigation registered")
-		}
+// An edition's web build replaces the embedded one whole: its own pages are
+// served by the open rules, and the open build is not consulted.
+func TestEditionWebConsoleReplacesTheBuild(t *testing.T) {
+	page := func(id string) *fstest.MapFile {
+		return &fstest.MapFile{Data: []byte(`<html lang="en"><head></head><body>` + id + `</body></html>`)}
+	}
+	files := fstest.MapFS{
+		"index.html":                page("edition console"),
+		"public/home.en.html":       page("edition home"),
+		"public/pricing.en.html":    page("edition pricing"),
+		"public/pricing.zh-CN.html": page("edition pricing zh"),
+		"assets/edition.js":         {Data: []byte("edition")},
+	}
+	ext := edition.Extension{Name: "web", Mount: func(h edition.Host) (func(), error) {
+		h.SetWebConsole(files)
 		return nil, nil
 	}}
 	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
-		res, err := http.Get(in.URL + "/api/auth/session")
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer res.Body.Close()
-		var body struct {
-			TeamPages []edition.TeamPage `json:"teamPages"`
-		}
-		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
-			t.Fatal(err)
-		}
-		if res.StatusCode != 200 || len(body.TeamPages) != 1 || body.TeamPages[0].Labels["en"] != "Team tools" {
-			t.Fatalf("navigation: %d %+v", res.StatusCode, body)
+		for path, want := range map[string]string{"/": "edition home", "/pricing": "edition pricing", "/teams": "edition console", "/assets/edition.js": "edition"} {
+			req, _ := http.NewRequest("GET", in.URL+path, nil)
+			req.Header.Set("Accept-Language", "en")
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			b, _ := io.ReadAll(res.Body)
+			res.Body.Close()
+			if res.StatusCode != 200 || !strings.Contains(string(b), want) {
+				t.Fatalf("%s: %d %s", path, res.StatusCode, b)
+			}
 		}
 	})
 }

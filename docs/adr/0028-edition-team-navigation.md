@@ -1,6 +1,6 @@
 # 0028. Same-origin edition team navigation
 
-> **Status:** Accepted · **Date:** 2026-11-15
+> **Status:** Superseded by 0041 · **Date:** 2026-11-15
 
 ## Context
 
