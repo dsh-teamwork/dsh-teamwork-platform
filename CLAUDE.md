@@ -396,8 +396,9 @@ Three doors, all in `server/internal/auth` (ADR 0014):
 - **Without it, a password**, stored as scrypt with its parameters. Ten wrong
   guesses per account per fifteen minutes, each spent before the comparison. A
   team admin creates a member's account with a first password, shown once,
-  which its owner must change before `/teams` or `/plugin` open; the admin
-  resets it the same way. The first account is claimed at `/setup?token=…`, a
+  which its owner must change before `/teams` or `/plugin` open (the session
+  that signed in with it need not type it again; one from before a reset
+  must); the admin resets it the same way. The first account is claimed at `/setup?token=…`, a
   link the server prints at start, derived from `AUTH_SECRET` and dead once any
   password exists. A management process (`SERVICE_ROLE=manage`) neither prints
   nor accepts it: the database is shared, so the first account is claimed where

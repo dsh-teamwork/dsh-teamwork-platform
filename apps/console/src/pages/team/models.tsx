@@ -303,6 +303,9 @@ function ConnectDialog({
   const [manual, setManual] = useState(false);
   // Why the list could not be read (a wrong key, an unreachable provider), as a `teamErrors` code.
   const [listError, setListError] = useState<string | null>(null);
+  // A refusal of what was typed, as a `teamErrors` code beside the field it is about; the form stays open.
+  const [refusal, setRefusal] = useState<{ field: 'key' | 'url'; code: string } | null>(null);
+  const [checking, setChecking] = useState(false);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [typed, setTyped] = useState({ id: '', name: '' });
   const taken = new Set(providers.map((p) => p.name));
@@ -313,14 +316,21 @@ function ConnectDialog({
     setListError(null);
     try {
       const catalog = await api<{ models: CatalogModel[] }>(`teams/${teamId}/model-catalog?provider=${encodeURIComponent(provider)}`);
-      const fresh = catalog.models.filter((m) => !published.some((p) => p.data.provider === provider && p.data.model === m.id));
-      setListed(fresh);
-      setManual(catalog.models.length === 0);
+      showModels(provider, catalog.models);
     } catch (error) {
-      setListError(error instanceof ApiError ? error.code : 'internal_error');
-      setListed([]);
-      setManual(true);
+      unlisted(error instanceof ApiError ? error.code : 'internal_error');
     }
+  }
+
+  function showModels(provider: string, models: CatalogModel[]) {
+    setListed(models.filter((m) => !published.some((p) => p.data.provider === provider && p.data.model === m.id)));
+    setManual(models.length === 0);
+  }
+
+  function unlisted(code: string) {
+    setListError(code);
+    setListed([]);
+    setManual(true);
   }
 
   // Opened for a connected provider: go straight to its list, once.
@@ -331,11 +341,30 @@ function ConnectDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingName]);
 
+  // The typed key is read with first, and only saved once the provider has not refused it: a wrong key or a refused
+  // address stays on this form, beside its field. A provider that lists nothing is saved, and its models typed by hand.
   async function connect() {
+    setRefusal(null);
+    setChecking(true);
+    let models: CatalogModel[] | null = null;
+    let unread = 'internal_error';
+    try {
+      models = (await api<{ models: CatalogModel[] }>(`teams/${teamId}/providers/check`, { body: { baseUrl, apiKey } })).models;
+    } catch (error) {
+      const code = error instanceof ApiError ? error.code : 'internal_error';
+      if (code === 'provider_key_rejected' || code.startsWith('provider_address_')) {
+        setRefusal({ field: code === 'provider_key_rejected' ? 'key' : 'url', code });
+        return;
+      }
+      unread = code;
+    } finally {
+      setChecking(false);
+    }
     const saved = await run(() => api(`teams/${teamId}/providers`, { body: { name, baseUrl, apiKey } }), t('providerAdded'));
     if (!saved) return;
     setConnected(name);
-    await readModels(name);
+    if (models) showModels(name, models);
+    else unlisted(unread);
   }
 
   async function publish() {
@@ -420,23 +449,23 @@ function ConnectDialog({
                 <Field id="provider-name" label={t('providerName')} hint={t('providerNameHint')}>
                   <Input id="provider-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required placeholder="company-gateway" />
                 </Field>
-                <Field id="provider-url" label={t('baseUrl')}>
+                <Field id="provider-url" label={t('baseUrl')} error={refusal?.field === 'url' ? te(refusal.code) : null}>
                   <Input id="provider-url" type="url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} required placeholder="https://llm.example.com/v1" />
                 </Field>
               </>
             )}
-            <Field id="provider-key" label={t('apiKey')} hint={t('apiKeyHint')}>
+            <Field id="provider-key" label={t('apiKey')} hint={t('apiKeyHint')} error={refusal?.field === 'key' ? te(refusal.code) : null}>
               <Input id="provider-key" type="password" autoComplete="off" value={apiKey} onChange={(e) => setApiKey(e.target.value)} required autoFocus />
             </Field>
             {!custom && (
               // Open for a second account, whose name is not the provider's id.
-              <details open={taken.has(pick)} className="rounded-md border px-3 py-2 text-sm">
+              <details open={taken.has(pick) || refusal?.field === 'url'} className="rounded-md border px-3 py-2 text-sm">
                 <summary className="cursor-pointer text-muted-foreground">{t('advanced')}</summary>
                 <div className="mt-3 flex flex-col gap-4">
                   <Field id="provider-name" label={t('providerName')} hint={t('secondAccountHint')}>
                     <Input id="provider-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
                   </Field>
-                  <Field id="provider-url" label={t('baseUrl')}>
+                  <Field id="provider-url" label={t('baseUrl')} error={refusal?.field === 'url' ? te(refusal.code) : null}>
                     <Input id="provider-url" type="url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} required />
                   </Field>
                 </div>
@@ -498,8 +527,8 @@ function ConnectDialog({
             </Button>
           )}
           {pick && !connected && (
-            <Button type="submit" form="connect-provider" disabled={pending}>
-              {t('connectSubmit')}
+            <Button type="submit" form="connect-provider" disabled={pending || checking}>
+              {checking ? t('checking') : t('connectSubmit')}
             </Button>
           )}
           {connected && listed !== null && (manual || listed.length > 0) && (
@@ -518,8 +547,31 @@ function ConnectDialog({
 function RekeyDialog({ teamId, reload, provider, onClose }: { teamId: string; reload: Reload; provider: Provider; onClose: () => void }) {
   const t = useTranslations('team.models');
   const { pending, run } = useMutation(reload);
+  const te = useTranslations('teamErrors');
   const [baseUrl, setBaseUrl] = useState(provider.baseUrl);
   const [apiKey, setApiKey] = useState('');
+  const [refusal, setRefusal] = useState<{ field: 'key' | 'url'; code: string } | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  // A new key is read with before it replaces the old one, as on connecting; the stored key cannot be, so an
+  // address change alone is checked only by the address rule when it is saved.
+  async function refused(): Promise<boolean> {
+    if (!apiKey) return false;
+    setChecking(true);
+    try {
+      await api(`teams/${teamId}/providers/check`, { body: { baseUrl, apiKey } });
+    } catch (error) {
+      const code = error instanceof ApiError ? error.code : '';
+      if (code === 'provider_key_rejected' || code.startsWith('provider_address_')) {
+        setRefusal({ field: code === 'provider_key_rejected' ? 'key' : 'url', code });
+        return true;
+      }
+    } finally {
+      setChecking(false);
+    }
+    return false;
+  }
+
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
@@ -531,19 +583,21 @@ function RekeyDialog({ teamId, reload, provider, onClose }: { teamId: string; re
           className="flex flex-col gap-4"
           onSubmit={async (e) => {
             e.preventDefault();
+            setRefusal(null);
+            if (await refused()) return;
             const body = { baseUrl, ...(apiKey ? { apiKey } : {}) };
             if (await run(() => api(`teams/${teamId}/providers/${provider.id}`, { method: 'PUT', body }), t('providerSaved'))) onClose();
           }}
         >
-          <Field id="rekey-url" label={t('baseUrl')}>
+          <Field id="rekey-url" label={t('baseUrl')} error={refusal?.field === 'url' ? te(refusal.code) : null}>
             <Input id="rekey-url" type="url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} required />
           </Field>
-          <Field id="rekey-key" label={t('apiKey')} hint={t('keepKeyHint')}>
+          <Field id="rekey-key" label={t('apiKey')} hint={t('keepKeyHint')} error={refusal?.field === 'key' ? te(refusal.code) : null}>
             <Input id="rekey-key" type="password" autoComplete="off" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
           </Field>
           <DialogFooter>
-            <Button type="submit" disabled={pending}>
-              {t('save')}
+            <Button type="submit" disabled={pending || checking}>
+              {checking ? t('checking') : t('save')}
             </Button>
           </DialogFooter>
         </form>

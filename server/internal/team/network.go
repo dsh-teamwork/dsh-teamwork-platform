@@ -77,10 +77,19 @@ func (n *Network) Allowed(a netip.Addr, scheme string) bool {
 	return false
 }
 
-func refused() error { return wire.E(http.StatusBadRequest, wire.ProviderAddressRefused) }
+func refused(code string) error { return wire.E(http.StatusBadRequest, code) }
 
-// Check is provider_address_refused unless every address the host resolves
-// to may be called.
+// refusal says why a may not be called over scheme, for the admin to act on:
+// a private address this instance does not allow, or plain http to a public one.
+func (n *Network) refusal(a netip.Addr) error {
+	if IsPrivate(a) && !n.AllowPrivate {
+		return refused(wire.ProviderAddressPrivate)
+	}
+	return refused(wire.ProviderAddressPlainHTTP)
+}
+
+// Check refuses, with its reason, unless every address the host resolves to
+// may be called.
 func (n *Network) Check(ctx context.Context, u *url.URL) error {
 	host := strings.Trim(u.Hostname(), "[]")
 	var addrs []netip.Addr
@@ -94,15 +103,15 @@ func (n *Network) Check(ctx context.Context, u *url.URL) error {
 			}
 		}
 		if addrs, err = lookup(ctx, host); err != nil {
-			return refused()
+			return refused(wire.ProviderAddressUnresolved)
 		}
 	}
 	if len(addrs) == 0 {
-		return refused()
+		return refused(wire.ProviderAddressUnresolved)
 	}
 	for _, a := range addrs {
 		if !n.Allowed(a, u.Scheme) {
-			return refused()
+			return n.refusal(a)
 		}
 	}
 	return nil

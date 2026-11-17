@@ -65,7 +65,7 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
   /auth/password/change:
     post:
-      summary: Replace one's own password, checking the current one
+      summary: Replace one's own password, checking the current one unless the session proved it
       security: [{ session: [] }]
       requestBody:
         required: true
@@ -561,28 +561,44 @@ paths:
           description: The models, with only the limits the provider states
           content:
             application/json:
-              schema:
-                type: object
-                required: [provider, models]
-                properties:
-                  provider: { type: string }
-                  models:
-                    type: array
-                    items:
-                      type: object
-                      required: [id, name]
-                      additionalProperties: false
-                      properties:
-                        id: { type: string }
-                        name: { type: string }
-                        contextWindow: { type: integer }
-                        maxTokens: { type: integer }
+              schema: { $ref: '#/components/schemas/ModelCatalog' }
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
         '502': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/providers/check:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: An admin reads a model list with an address and key before saving either
+      description: >
+        Nothing is stored. The address rule holds as it does for saving. A key
+        the provider answers 401 or 403 to is provider_key_rejected; any other
+        failure to read the list is upstream_unavailable, since a provider may
+        simply not list its models.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baseUrl, apiKey]
+              properties:
+                baseUrl: { type: string }
+                apiKey: { type: string, minLength: 1, maxLength: 4096 }
+      responses:
+        '200':
+          description: The models the key can read; provider is empty, since nothing is saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelCatalog' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
   /teams/{teamId}/budgets:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -1199,12 +1215,15 @@ components:
         user:
           type: object
           nullable: true
-          required: [id, email, name, mustChangePassword]
+          required: [id, email, name, mustChangePassword, changeWithoutCurrent]
           properties:
             id: { type: string }
             email: { type: string, nullable: true }
             name: { type: string, nullable: true }
             mustChangePassword: { type: boolean }
+            changeWithoutCurrent:
+              type: boolean
+              description: This session signed in with the admin-set password, so it replaces it without the current one
         doors:
           type: object
           required: [password, emailCode, google]
@@ -1242,9 +1261,9 @@ components:
         password: { type: string, minLength: 10, maxLength: 256 }
     ChangePassword:
       type: object
-      required: [current, next]
+      required: [next]
       properties:
-        current: { type: string }
+        current: { type: string, description: "Required unless the session's changeWithoutCurrent is true" }
         next: { type: string, minLength: 10, maxLength: 256 }
     PluginCodeRequest:
       type: object
@@ -1264,6 +1283,22 @@ components:
           properties:
             url: { type: string }
             to: { type: string, enum: [dsh, app] }
+    ModelCatalog:
+      type: object
+      required: [provider, models]
+      properties:
+        provider: { type: string }
+        models:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            additionalProperties: false
+            properties:
+              id: { type: string }
+              name: { type: string }
+              contextWindow: { type: integer }
+              maxTokens: { type: integer }
     Provider:
       type: object
       required: [id, name, baseUrl, updatedAt]

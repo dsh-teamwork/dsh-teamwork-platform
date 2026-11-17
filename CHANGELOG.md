@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — A provider key is checked before it is saved; a new member is not asked for the password just used
+
+- **What:** `POST /api/teams/{teamId}/providers/check` reads a model list with a typed address and key without saving either. The console calls it before connecting or re-keying a provider, so a key the provider answers 401 or 403 to (`provider_key_rejected`, also from `model-catalog`) or a refused address stays on the form beside its field. `provider_address_refused` is replaced by its reason: `provider_address_private`, `provider_address_plain_http`, `provider_address_unresolved`. A session that signed in with an admin-set password changes it without the current one (`ChangePassword.current` is optional; the session's user gains `changeWithoutCurrent`); a session issued before an admin reset still needs it. After that change a member in one team lands in it. The first password and the plugin's code have copy buttons; the plugin's authorization page names the account and how many teams it reaches, and offers Cancel. A wrong `/setup` token is `setup_link_invalid`, no longer `setup_closed`.
+- **Why:** A wrong key was announced as connected; a refused address did not say why; a new member retyped a twenty-character password they had just used; the authorization page did not say who was being authorized.
+- **Breaking:** `provider_address_refused` is gone; a client matching it matches the three reasons.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/team/network.go`, `server/internal/team/providers.go`, `server/internal/auth/auth.go` (`FirstPasswordProven`), `apps/console/src/pages/team/models.tsx`, `apps/console/src/pages/plugin.tsx`, `docs/tech/architecture.md`.
+
 ## 2026-11-17 — A new team's assistant is named in its creator's language
 
 - **What:** Creating a team names its built-in assistant, and writes its description, in the creator's language by the pages' rule (profile, cookie, `Accept-Language`): `Acme assistant` in English, the Chinese form in Chinese. It was always the Chinese suffix. `web.ViewerLocale` is exported for the route, and `team.Service.CreateTeam` takes the locale.

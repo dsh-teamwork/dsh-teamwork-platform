@@ -17,7 +17,10 @@
     "theme": {
       "switchTo": "切换到{theme, select, dark {深色} other {浅色}}主题",
       "toggle": "切换浅色 / 深色主题"
-    }
+    },
+    "copy": "复制",
+    "copied": "已复制",
+    "copyFailed": "复制失败，请选中文字自行复制。"
   },
   "signIn": {
     "title": "登录",
@@ -46,7 +49,8 @@
     "unavailable": "登录服务暂时不可用。",
     "invalid_credentials": "邮箱或密码不正确。",
     "weak_password": "密码至少需要 10 个字符。",
-    "setup_closed": "此实例已经有第一个账号了，请直接登录。"
+    "setup_closed": "此实例已经有第一个账号了，请直接登录。",
+    "setup_link_invalid": "这不是服务器打印的那条链接，请从服务器输出中重新复制。"
   },
   "plugin": {
     "title": "授权 DSH 插件",
@@ -58,7 +62,11 @@
     "confirm": "确认授权",
     "copy": "将以下内容粘贴到 DSH：",
     "expiry": "授权码两分钟内有效，且只对发起请求的 DSH 有效。",
-    "failed": "授权失败。请重新登录，或在 DSH 中重新运行 /teamwork login。"
+    "failed": "授权失败。请重新登录，或在 DSH 中重新运行 /teamwork login。",
+    "account": "当前登录：{email}。",
+    "scope": "这台 DSH 将通过你的账号访问{count, plural, =0 {你的团队} one {你的团队} other {你所在的全部 # 个团队}}，有效期 30 天。",
+    "cancel": "取消",
+    "notYou": "不是你？退出登录"
   },
   "password": {
     "title": "修改密码",
@@ -304,9 +312,6 @@
       },
       "connectAdmin": "发给新成员",
       "connectMember": "在 DSH 里接入",
-      "copy": "复制",
-      "copied": "已复制",
-      "copyFailed": "复制失败，请选中命令自行复制。",
       "recent": "最近变更",
       "recentEmpty": "还没有配置。",
       "kind": {
@@ -508,7 +513,8 @@
       "save": "保存",
       "editTitle": "编辑团队模型",
       "limitsHint": "厂商没说明的限制可以留空。",
-      "modelSaved": "已保存，成员下次同步后生效。"
+      "modelSaved": "已保存，成员下次同步后生效。",
+      "checking": "正在验证密钥…"
     },
     "templates": {
       "writer": {
@@ -966,7 +972,6 @@
     "member_in_other_team": "对方也在其他团队中，只能由本人修改密码。",
     "provider_exists": "你的团队已经有同名的提供方。",
     "provider_in_use": "仍有团队模型或预设在使用这个提供方。",
-    "provider_address_refused": "本服务器不允许调用这个地址。",
     "provider_keys_unavailable": "本服务器无法读取或保存提供方密钥：PROVIDER_KEYS_SECRET 未设置或已更改。",
     "model_in_use": "还有预设在用这个模型。先让这些预设改用别的模型，再删除。",
     "plugin_in_use": "还有预设依赖这个插件。先从这些预设里去掉它，再删除。",
@@ -987,7 +992,11 @@
     "member_not_found": "此人不是这个团队的成员。",
     "confirmation_mismatch": "请按页面显示的样子输入你的邮箱。",
     "admin_of_shared_team": "你管理的团队里还有其他成员。请先把管理员转给其中一人。",
-    "wallet_has_balance": "要删除的团队里还有已购买的额度。请先用完，或写信给客服申请退款。"
+    "wallet_has_balance": "要删除的团队里还有已购买的额度。请先用完，或写信给客服申请退款。",
+    "provider_address_private": "本服务器只调用公网地址。如需在自建服务器上使用本地或内网地址，请设置 ALLOW_PRIVATE_PROVIDERS=true。",
+    "provider_address_plain_http": "请使用 https。只有在允许内网地址的服务器上，本地或内网地址才能用 http。",
+    "provider_address_unresolved": "找不到这个主机，请检查地址。",
+    "provider_key_rejected": "提供商拒绝了这个 API 密钥，请检查它是否完整、是否仍然有效。"
   },
   "docs": {
     "title": "文档",
