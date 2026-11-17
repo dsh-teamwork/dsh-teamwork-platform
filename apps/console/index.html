@@ -8,8 +8,17 @@
     <link rel="apple-touch-icon" href="/apple-icon.png" />
     <title>DSH Teamwork</title>
     <script>
-      // The theme before the first paint: the system's, until the console has a picker.
-      if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+      // The theme before the first paint: the person's choice, else the system's (src/lib/theme.ts, THEME_SCRIPT).
+      (function () {
+        var t = 'system';
+        try {
+          var s = localStorage.getItem('theme');
+          if (s === 'light' || s === 'dark') t = s;
+        } catch (e) {}
+        var r = document.documentElement;
+        r.dataset.themeChoice = t;
+        if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)) r.classList.add('dark');
+      })();
     </script>
   </head>
   <body class="bg-background text-foreground antialiased">

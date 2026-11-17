@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import { PageHeader } from '@/components/team/console-shell';
-import { Choice as Filter } from '@/components/team/choice';
+import { Select } from '@/components/ui/select';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -49,8 +49,8 @@ export function TeamUsagePage() {
       void download(`teams/${team.id}/usage/export?${filters}`, 'teamwork-usage.csv').catch((error: unknown) => toast.error(word(error))).finally(() => setExporting(false));
     }}><Download />{t('export')}</Button><Button variant="outline" onClick={() => void usage.reload()}><RefreshCw />{t('refresh')}</Button></div>} />
     <div className="flex flex-wrap gap-2">
-      <Filter label={t('period')} value={period} options={(['day', 'week', 'month'] as const).map((value) => ({ value, label: t(`periods.${value}`) }))} change={(v) => update('period', v)} />
-      {team.role === 'admin' && <Filter label={t('member')} value={member} options={[{ value: '', label: t('allMembers') }, ...team.members.map((m) => ({ value: m.userId, label: m.email || m.userId }))]} change={(v) => update('userId', v)} />}
+      <Select label={t('period')} value={period} options={(['day', 'week', 'month'] as const).map((value) => ({ value, label: t(`periods.${value}`) }))} change={(v) => update('period', v)} />
+      {team.role === 'admin' && <Select label={t('member')} value={member} options={[{ value: '', label: t('allMembers') }, ...team.members.map((m) => ({ value: m.userId, label: m.email || m.userId }))]} change={(v) => update('userId', v)} />}
     </div>
     {!!usage.error && <p role="alert" className="text-sm text-destructive">{word(usage.error)}</p>}
     <Card className="overflow-hidden">

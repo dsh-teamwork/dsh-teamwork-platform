@@ -13,7 +13,14 @@
     "privacy": "隐私政策",
     "terms": "服务条款",
     "close": "关闭",
-    "retry": "重试"
+    "retry": "重试",
+    "theme": {
+      "label": "主题：{current}，切换为{next}",
+      "light": "浅色",
+      "dark": "深色",
+      "system": "跟随系统",
+      "toggle": "切换主题：浅色、深色或跟随系统"
+    }
   },
   "signIn": {
     "title": "登录",
@@ -225,12 +232,26 @@
   "team": {
     "list": {
       "title": "我的团队",
-      "empty": "你还不在任何团队里。创建一个，或用邀请链接加入。",
       "members": "{count} 人",
-      "admin": "我管理的",
-      "member": "我加入的"
+      "admin": "我管理的团队",
+      "member": "我加入的团队",
+      "subtitle": "进入团队管理它的模型、预设和成员，或者再创建一个团队。",
+      "subtitleEmpty": "团队是共享 DSH 配置的地方：模型、预设、插件和预算都在这里。",
+      "createAction": "创建团队",
+      "joinAction": "用邀请加入",
+      "cancel": "取消",
+      "connectHint": "成员在自己的 DSH 里安装 Teamwork 插件即可接入。",
+      "connectLink": "安装指南",
+      "welcomeTitle": "创建你的第一个团队",
+      "welcomeBody": "创建团队后你就是它的管理员。要加入别人的团队？使用对方发给你的邀请链接。",
+      "welcomeBodyPasswords": "创建团队后你就是它的管理员。要加入别人的团队？请对方管理员为你添加账号，你会收到初始密码。",
+      "step1Title": "接入模型提供商",
+      "step1Body": "粘贴一次密钥，它只留在服务器上。",
+      "step2Title": "发布预设和插件",
+      "step2Body": "从模板开始，改成团队自己的。",
+      "step3Title": "邀请成员加入",
+      "step3Body": "大家的 DSH 下次同步时就会拿到团队配置。"
     },
-    "title": "团队控制台",
     "overview": {
       "descriptionAdmin": "团队的模型、预设和插件，一处发布，每位成员的 DSH 自动保持一致。",
       "descriptionMember": "团队发布的模型和预设会自动同步到你的 DSH。",

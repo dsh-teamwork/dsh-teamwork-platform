@@ -2,7 +2,7 @@ import { Plus, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useFormatter, useTranslations } from 'use-intl';
 
-import { Choice } from '@/components/team/choice';
+import { Select } from '@/components/ui/select';
 import { PageHeader } from '@/components/team/console-shell';
 import { Field } from '@/components/team/field';
 import { useMutation, useTeamError } from '@/components/team/use-mutation';
@@ -148,12 +148,12 @@ function BudgetDialog({ current, policies, providers, reload, close }: {
     <DialogHeader><DialogTitle>{t(current ? 'edit' : 'add')}</DialogTitle><DialogDescription>{t('formHint')}</DialogDescription></DialogHeader>
     <form className="flex flex-col gap-4" onSubmit={(event) => { event.preventDefault(); void save(base); }}>
       <div className="grid grid-cols-2 gap-4">
-        <Field id="budget-scope" label={t('scope')}><Choice id="budget-scope" label={t('scope')} disabled={pending || !!current} value={scope} options={(['team', 'default_member', 'member', 'provider'] as const).map((value) => ({ value, label: t(`scopes.${value}`) }))} change={(value) => { setScope(value as PolicyInput['scope']); setSubject(''); setNotify(value === 'member' || value === 'default_member' ? 'both' : 'admins'); }} /></Field>
-        <Field id="budget-period" label={t('period')}><Choice id="budget-period" label={t('period')} disabled={pending || !!current} value={period} options={(['day', 'month'] as const).map((value) => ({ value, label: t(`periods.${value}`) }))} change={(value) => setPeriod(value as PolicyInput['period'])} /></Field>
+        <Field id="budget-scope" label={t('scope')}><Select id="budget-scope" label={t('scope')} disabled={pending || !!current} value={scope} options={(['team', 'default_member', 'member', 'provider'] as const).map((value) => ({ value, label: t(`scopes.${value}`) }))} change={(value) => { setScope(value as PolicyInput['scope']); setSubject(''); setNotify(value === 'member' || value === 'default_member' ? 'both' : 'admins'); }} /></Field>
+        <Field id="budget-period" label={t('period')}><Select id="budget-period" label={t('period')} disabled={pending || !!current} value={period} options={(['day', 'month'] as const).map((value) => ({ value, label: t(`periods.${value}`) }))} change={(value) => setPeriod(value as PolicyInput['period'])} /></Field>
       </div>
-      {scope === 'member' && <Field id="budget-member" label={t('member')}><Choice id="budget-member" label={t('member')} disabled={pending || !!current} value={subjectId} options={team.members.map((m) => ({ value: m.userId, label: m.email || m.userId }))} change={setSubject} /></Field>}
-      {scope === 'provider' && <Field id="budget-provider" label={t('provider')}><Choice id="budget-provider" label={t('provider')} disabled={pending || !!current} value={subjectId} options={providers.map((p) => ({ value: p.name, label: p.name }))} change={setSubject} /></Field>}
-      {scope === 'member' && <Field id="budget-member-mode" label={t('memberMode')}><Choice id="budget-member-mode" label={t('memberMode')} disabled={pending} value={memberMode} options={['limited', 'unlimited', 'inherit'].map((value) => ({ value, label: t(`memberModes.${value}`) }))} change={setMemberMode} /></Field>}
+      {scope === 'member' && <Field id="budget-member" label={t('member')}><Select id="budget-member" label={t('member')} disabled={pending || !!current} value={subjectId} options={team.members.map((m) => ({ value: m.userId, label: m.email || m.userId }))} change={setSubject} /></Field>}
+      {scope === 'provider' && <Field id="budget-provider" label={t('provider')}><Select id="budget-provider" label={t('provider')} disabled={pending || !!current} value={subjectId} options={providers.map((p) => ({ value: p.name, label: p.name }))} change={setSubject} /></Field>}
+      {scope === 'member' && <Field id="budget-member-mode" label={t('memberMode')}><Select id="budget-member-mode" label={t('memberMode')} disabled={pending} value={memberMode} options={['limited', 'unlimited', 'inherit'].map((value) => ({ value, label: t(`memberModes.${value}`) }))} change={setMemberMode} /></Field>}
       {(scope !== 'member' || memberMode === 'limited') && <>
       <Field id="budget-points" label={t('pointLimit')} hint={t('blankUnlimited')}><Input id="budget-points" inputMode="decimal" maxLength={24} disabled={pending} value={points} onChange={(e) => setPoints(e.target.value)} /></Field>
       <details className="rounded-md border p-3 text-sm"><summary className="cursor-pointer">{t('tokenLimits')}</summary><div className="mt-3 grid grid-cols-3 gap-3">
@@ -161,7 +161,7 @@ function BudgetDialog({ current, policies, providers, reload, close }: {
       </div></details>
       </>}
       <Field id="budget-timezone" label={t('timezone')} hint={t('timezoneHint')}><Input id="budget-timezone" required maxLength={100} disabled={pending} value={timezone} onChange={(e) => setTimezone(e.target.value)} /></Field>
-      <Field id="budget-notify" label={t('notify')}><Choice id="budget-notify" label={t('notify')} disabled={pending || !base.enabled} value={notify} options={(['admins', 'both', 'owner', 'none'] as const).filter((value) => scope === 'member' || scope === 'default_member' || value === 'admins' || value === 'none').map((value) => ({ value, label: t(`notifyChoices.${value}`) }))} change={(value) => setNotify(value as PolicyInput['notify'])} /></Field>
+      <Field id="budget-notify" label={t('notify')}><Select id="budget-notify" label={t('notify')} disabled={pending || !base.enabled} value={notify} options={(['admins', 'both', 'owner', 'none'] as const).filter((value) => scope === 'member' || scope === 'default_member' || value === 'admins' || value === 'none').map((value) => ({ value, label: t(`notifyChoices.${value}`) }))} change={(value) => setNotify(value as PolicyInput['notify'])} /></Field>
       {scope !== 'member' && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} disabled={pending} onChange={(e) => setEnabled(e.target.checked)} />{t('enabled')}</label>}
       {previous && !current && <p className="text-xs text-muted-foreground">{t('exists')}</p>}
       <DialogFooter>

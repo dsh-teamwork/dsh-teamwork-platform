@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/team/console-shell';
 import { useMutation, useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { NativeSelect } from '@/components/ui/native-select';
+import { Select } from '@/components/ui/select';
 import { api, download, type Schemas, type Team, type TeamConfig } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import { useTeam } from './layout';
@@ -77,53 +77,45 @@ function History({
         {t('timezone', { zone: Intl.DateTimeFormat().resolvedOptions().timeZone })}
       </p>
       <div className="grid gap-3 rounded-lg border p-4 md:grid-cols-3">
-        <NativeSelect
-          aria-label={t('kind')}
+        <Select
+          label={t('kind')}
           value={kind}
-          onChange={(e) => {
-            setKind(e.target.value);
+          options={[
+            { value: '', label: t('allKinds') },
+            { value: 'preset', label: t('presets') },
+            { value: 'plugin', label: t('plugins') },
+          ]}
+          change={(value) => {
+            setKind(value);
             setOffset(0);
           }}
-        >
-          <option value="">{t('allKinds')}</option>
-          <option value="preset">{t('presets')}</option>
-          <option value="plugin">{t('plugins')}</option>
-        </NativeSelect>
-        <NativeSelect
-          aria-label={t('resourceId')}
+        />
+        <Select
+          label={t('resourceId')}
           value={configId}
-          onChange={(e) => {
-            setConfigId(e.target.value);
+          options={[
+            { value: '', label: t('allResources') },
+            ...[
+              ...new Map([
+                ...configs.data.map((c) => [c.id, c.name] as const),
+                ...rows.data.map((r) => [r.configId, r.name] as const),
+              ]).entries(),
+            ].map(([id, name]) => ({ value: id, label: name })),
+          ]}
+          change={(value) => {
+            setConfigId(value);
             setOffset(0);
           }}
-        >
-          <option value="">{t('allResources')}</option>
-          {[
-            ...new Map([
-              ...configs.data.map((c) => [c.id, c.name] as const),
-              ...rows.data.map((r) => [r.configId, r.name] as const),
-            ]).entries(),
-          ].map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          aria-label={t('author')}
+        />
+        <Select
+          label={t('author')}
           value={author}
-          onChange={(e) => {
-            setAuthor(e.target.value);
+          options={[{ value: '', label: t('allAuthors') }, ...members.map((m) => ({ value: m.userId, label: m.email ?? t('formerMember') }))]}
+          change={(value) => {
+            setAuthor(value);
             setOffset(0);
           }}
-        >
-          <option value="">{t('allAuthors')}</option>
-          {members.map((m) => (
-            <option key={m.userId} value={m.userId}>
-              {m.email ?? t('formerMember')}
-            </option>
-          ))}
-        </NativeSelect>
+        />
         <label className="text-xs">
           {t('from')}
           <Input

@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — A redesigned /teams, a wider landing page, a theme switch and one select
+
+- **What:** `/teams` gets the site's top bar and footer, team cards (initials on navy, with overview, models and members one click away) grouped by role, a welcome with the first steps for a person with no team, and create/join in dialogs; an `?invite=` link opens the join dialog filled in. The landing page widens from `max-w-5xl` to `max-w-6xl`. A theme button (light → dark → system, kept in `localStorage` under `theme`, the instance console's key) sits in the top bar and footer of the landing page, the docs and `/teams`, and beside the account in a team's sidebar; the first paint follows the choice. Every native `<select>` is replaced by one custom select (`components/ui/select.tsx`), the language picker included; the public pages draw the same look without React. The old picker's menu was transparent (`bg-popover` is not a token); it now uses the card surface.
+- **Why:** The teams page was a narrow column with forms always open, the theme could not be chosen, and native selects broke the visual system.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/pages/teams.tsx`, `apps/console/src/lib/theme.ts`, `apps/console/src/components/ui/select.tsx`, `apps/console/src/public/controls.tsx`, `docs/design.md` ("Colour", "Component rules").
+
 ## 2026-11-17 — The team overview opens with what waits on you
 
 - **What:** `GET /api/teams/{teamId}/summary` returns, scoped to the caller, the last 30 days' calls and points, calls left unpriced, calls an admin must resolve, budget mail that failed, budget windows past a notice threshold (80, 95, 100 %), the caller's quota summary and submissions awaiting review. The console's overview opens with that list (each row links to the page that deals with it) and a strip of figures, keeps the getting-started checklist only until it is done, and explains joining in three steps with a copyable message for new members. An admin's sidebar marks "Sharing and review" with an amber dot while submissions wait.

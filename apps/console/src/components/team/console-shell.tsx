@@ -35,6 +35,7 @@ import { Link, useLocation } from 'react-router';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { useChooseLocale } from '@/components/locale-picker';
+import { ThemeToggle } from '@/components/theme-toggle';
 import type { Team, TeamSummary } from '@/lib/api';
 import { LOCALES } from '@/lib/locale';
 import { useSession } from '@/lib/session';
@@ -111,8 +112,9 @@ export function ConsoleShell({
       <aside className="hidden flex-col gap-4 border-r bg-muted px-3 py-4 md:sticky md:top-0 md:flex md:h-dvh">
         <TeamSwitcher team={team} teams={teams} section={section} />
         <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} />
-        <div className="mt-auto border-t pt-3">
+        <div className="mt-auto flex items-center gap-1 border-t pt-3">
           <AccountMenu email={email} passwords={passwords} />
+          <ThemeToggle />
         </div>
       </aside>
 
@@ -136,8 +138,9 @@ export function ConsoleShell({
               </Dialog.Close>
             </div>
             <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} onNavigate={close} />
-            <div className="mt-auto border-t pt-3">
+            <div className="mt-auto flex items-center gap-1 border-t pt-3">
               <AccountMenu email={email} passwords={passwords} />
+              <ThemeToggle />
             </div>
           </Dialog.Content>
         </Dialog.Portal>
@@ -179,8 +182,8 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
   );
 }
 
-/** The signed-in person: their account, password, language and signing out, behind one button. */
-function AccountMenu({ email, passwords }: { email: string; passwords: boolean }) {
+/** The signed-in person: their account, password, language and signing out, behind one button. `side` is where the menu opens: up from a sidebar's foot, down from a top bar. */
+export function AccountMenu({ email, passwords, side = 'top' }: { email: string; passwords: boolean; side?: 'top' | 'bottom' }) {
   const tc = useTranslations('common');
   const tp = useTranslations('password');
   const t = useTranslations('team.nav');
@@ -189,7 +192,7 @@ function AccountMenu({ email, passwords }: { email: string; passwords: boolean }
   const { pending, choose } = useChooseLocale();
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger className="flex w-full items-center gap-2.5 rounded-md p-1.5 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label={t('account')}>
+      <DropdownMenu.Trigger className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1.5 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label={t('account')}>
         <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold uppercase">
           {email.slice(0, 1) || '?'}
         </span>
@@ -199,7 +202,7 @@ function AccountMenu({ email, passwords }: { email: string; passwords: boolean }
         <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side="top" align="start" sideOffset={6} className="z-50 min-w-56 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+        <DropdownMenu.Content side={side} align={side === 'top' ? 'start' : 'end'} sideOffset={6} className="z-50 min-w-56 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
           <DropdownMenu.Item asChild>
             <Link to="/account" className={menuItem}>
               <UserRound className="size-4" aria-hidden />

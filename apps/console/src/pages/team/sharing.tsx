@@ -11,7 +11,7 @@ import { useApi } from '@/lib/use-api';
 import { useSession } from '@/lib/session';
 import { inspectPluginArchive, type PluginPreview } from '@/lib/plugin-archive';
 import { Input } from '@/components/ui/input';
-import { NativeSelect } from '@/components/ui/native-select';
+import { Select } from '@/components/ui/select';
 import { useTeam } from './layout';
 
 type Submission = Schemas['ResourceSubmission'];
@@ -244,20 +244,15 @@ function Sharing({
                 {plugin.preview.files.join('\n')}
               </pre>
             </details>
-            <NativeSelect
-              aria-label={t('target')}
+            <Select
+              label={t('target')}
               value={pluginTarget}
-              onChange={(e) => setPluginTarget(e.target.value)}
-            >
-              <option value="">{t('newPlugin')}</option>
-              {configs.data
-                .filter((c) => c.kind === 'plugin')
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} · v{c.version}
-                  </option>
-                ))}
-            </NativeSelect>
+              options={[
+                { value: '', label: t('newPlugin') },
+                ...configs.data.filter((c) => c.kind === 'plugin').map((c) => ({ value: c.id, label: `${c.name} · v${c.version}` })),
+              ]}
+              change={setPluginTarget}
+            />
             <Textarea
               aria-label={t('note')}
               placeholder={t('note')}
