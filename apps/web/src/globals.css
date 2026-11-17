@@ -110,6 +110,63 @@
   }
 }
 
+/*
+ * The home page's diagram (public/topology.tsx). One 7 s loop tells the story:
+ * the admin publishes (0–1 s), the hub syncs every member (1.2–2.2 s) and
+ * their cards tick, then a member's call goes out (3–4 s) and on to a model
+ * (4–5 s). A pulse is a 14-unit dash on a path measured as 100 units, moved
+ * from one end to the other and hidden for the rest of the loop. Amber, as
+ * docs/design.md allows it: a line that says "look here".
+ */
+.topology-pulse {
+  stroke-dasharray: 14 114;
+  stroke-dashoffset: 14;
+  opacity: 0;
+  animation: 7s linear infinite;
+}
+.topology-publish { animation-name: topology-forward; }
+.topology-sync { animation-name: topology-back; animation-delay: 1.2s; }
+.topology-call { animation-name: topology-forward; animation-delay: 3s; }
+.topology-model { animation-name: topology-forward; animation-delay: 4s; }
+@keyframes topology-forward {
+  0% { stroke-dashoffset: 14; opacity: 1; }
+  14% { stroke-dashoffset: -100; opacity: 1; }
+  15%, 100% { stroke-dashoffset: -100; opacity: 0; }
+}
+@keyframes topology-back {
+  0% { stroke-dashoffset: -100; opacity: 1; }
+  14% { stroke-dashoffset: 14; opacity: 1; }
+  15%, 100% { stroke-dashoffset: 14; opacity: 0; }
+}
+.topology-synced {
+  opacity: 0;
+  animation: topology-synced 7s ease-out infinite;
+}
+@keyframes topology-synced {
+  0%, 31% { opacity: 0; }
+  35%, 80% { opacity: 1; }
+  86%, 100% { opacity: 0; }
+}
+/* Hovering a hub feature dims every part it does not involve; the rows keep the plain pointer. */
+.topology [data-row] { cursor: default; user-select: none; }
+.topology [data-f] { transition: opacity 0.2s; }
+.topology-icon :is(rect, g) { transition: fill 0.2s, stroke 0.2s; }
+/* "Everywhere" lights each device's icon in the brand's colour. */
+.topology:has([data-row='everywhere']:hover) [data-f~='everywhere'] .topology-icon > rect { fill: var(--color-brand); stroke: var(--color-brand); }
+.topology:has([data-row='everywhere']:hover) [data-f~='everywhere'] .topology-icon > g { stroke: var(--color-brand-foreground); }
+.topology-row { opacity: 0; transition: opacity 0.2s; }
+[data-row]:hover .topology-row { opacity: 0.12; }
+.topology:has([data-row]:hover) [data-f] { opacity: 0.18; }
+.topology:has([data-row]:hover) :is(.topology-pulse, .topology-synced) { visibility: hidden; }
+.topology:has([data-row='collaborate']:hover) [data-f~='collaborate'],
+.topology:has([data-row='govern']:hover) [data-f~='govern'],
+.topology:has([data-row='everywhere']:hover) [data-f~='everywhere'],
+.topology:has([data-row='assets']:hover) [data-f~='assets'] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .topology-pulse, .topology-synced { animation: none; }
+  .topology-synced { opacity: 1; }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

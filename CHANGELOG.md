@@ -5,6 +5,22 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The home page's first screen, redrawn around what a team gains
+
+- **What:** The first screen fills the window with the hero centred above the wave line, and every section widens to `max-w-7xl`. Its left side is the title, one sentence and the plugin to copy (*Create a team* stays in the header; the three pillars are gone). The diagram keeps its layout with a compact hub listing the four features, each with one line of value; the lines carry no words. An amber pulse loops the story (the admin publishes, every member's card ticks, a call goes out to a model), and hovering a feature dims what it does not involve. The upstream column is one list of mainstream providers by their logos (Anthropic, OpenAI, DeepSeek, GLM, Kimi, and your own), copied from LobeHub's icons into `provider-logos.ts`; the phone shows the app's logo, and the Chinese page names its people in Chinese.
+- **Why:** The old first screen read as an architecture diagram with crowded copy; a first-time visitor should see in one look that a team configures once and everyone gets it, under control.
+- **Breaking:** None
+- **Upgrade:** Nothing
+- **Refs:** `apps/web/src/public/home.tsx`, `topology.tsx`, `provider-logos.ts`, `sea.tsx`, `apps/web/src/globals.css`, `docs/design.md` ("The landing page's first screen").
+
+## 2026-11-17 — A language switch in the home page's header
+
+- **What:** The home page's header carries the language menu beside the theme button, opening downwards; the footer keeps its own.
+- **Why:** A visitor who lands in the wrong language can switch without scrolling to the foot of the page.
+- **Breaking:** None
+- **Upgrade:** Nothing
+- **Refs:** `apps/web/src/public/controls.tsx`, `apps/web/src/public/home.tsx`.
+
 ## 2026-11-17 — `apps/web`, one development address, and editions compose the web app
 
 - **What:** The user frontend is `apps/web` (`@dsh-teamwork/web`) and the shared management app `@dsh-teamwork/manage`. `pnpm dev` runs the edition's outermost Go server on :3800 with `DEV_VITE=1`, which takes the console, its modules and the public pages from the web Vite on :3810 and `/manage` from the management Vite on :3811; Go sources, migrations and embedded JSON restart the server. An edition's web app composes the open one through `mountWeb` (`@dsh-teamwork/web/app`): it adds routes and team pages, replacing an open one at the same path, and adds or replaces public pages by file name, which the server now serves generically (`/{name}` from `{name}.{locale}.html` or `{name}.html`, also in the sitemap). `Host.SetWebConsole` hands the server an edition's web build. `Host.AddTeamPage` and the session's `teamPages` are removed.

@@ -86,14 +86,14 @@
     "title": "From super individual to super team.",
     "tagline": "From super individual to super team: DSH Teamwork turns DeepSeek Harness into your team's agent workspace.",
     "eyebrow": "The team edition of DeepSeek Harness",
-    "lede": "DSH makes one person as productive as a small team. DSH Teamwork puts the whole team on it.",
+    "lede": "One place for your team’s models, presets and budget, synced to every member’s DSH.",
     "createTeam": "Create a team",
     "openConsole": "Open team console",
     "install": {
       "plugin": "Plugin",
       "copy": "Copy",
-      "hint": "In DSH Desktop, open Plugins → Add plugin and paste it. Command line and self-hosting:",
-      "more": "install guide"
+      "hint": "Paste it in DSH Desktop under Plugins → Add plugin.",
+      "more": "Install guide"
     },
     "nav": {
       "label": "Sections",
@@ -245,22 +245,8 @@
       "title": "Turn a team of super individuals into a super team.",
       "lede": "Create a team, publish its first preset and invite the people you work with. Their next sync brings them in."
     },
-    "pillars": {
-      "collaborate": {
-        "name": "Collaborate",
-        "body": "Shared presets, models and plugins, one click away; a submission is published once reviewed."
-      },
-      "govern": {
-        "name": "Govern",
-        "body": "One team budget, and every call seen by member and model."
-      },
-      "everywhere": {
-        "name": "Everywhere",
-        "body": "Work in DSH, manage on the web, approve from your phone."
-      }
-    },
     "topology": {
-      "label": "Left to right: members in DSH Desktop, a terminal and the phone, and the admin in the web console, all connect to DSH Teamwork; it syncs the team's setup and forwards model calls to DeepSeek, OpenAI, Qwen and other providers, keeping the keys on the server. Cloud DSH is coming.",
+      "label": "Left to right: members in DSH Desktop, a terminal and on a phone, and the admin in the web console, connect to DSH Teamwork. The admin publishes once and every member syncs; budgets and usage are seen, keys stay on the server, and the team's presets are kept with versions. Through it the team reaches Anthropic, OpenAI, DeepSeek, GLM, Kimi or any other provider. Cloud DSH is coming.",
       "columns": {
         "people": "THE TEAM · WHERE EACH WORKS",
         "hub": "THE TEAM HUB",
@@ -277,47 +263,32 @@
         },
         "phone": {
           "who": "Priya · member",
-          "where": "On her phone"
+          "where": "DSH from a phone"
         },
         "admin": {
           "who": "Sam · admin",
           "where": "Web console"
         }
       },
-      "edges": {
-        "sync": "Sync · call models",
-        "approve": "Approve · follow",
-        "govern": "Publish · review",
-        "forward": "Forwards calls",
-        "keys": "Keys stay here"
-      },
-      "hub": {
-        "tagline": "Govern once, sync all",
-        "models": "Team models",
-        "presets": "Presets · plugins",
-        "review": "Review · versions",
-        "budgets": "Budgets · usage",
-        "members": "Members · roles",
-        "hosted": "Hosted service",
-        "selfHosted": "or your own server"
-      },
       "providers": {
         "title": "Upstream models",
         "body": "Several per team",
-        "deepseek": "DeepSeek",
+        "anthropic": "Anthropic",
         "openai": "OpenAI",
-        "qwen": "Qwen",
-        "moonshot": "Kimi",
+        "deepseek": "DeepSeek",
         "zhipu": "GLM",
-        "doubao": "Doubao",
-        "minimax": "MiniMax",
-        "siliconflow": "SiliconFlow",
-        "openrouter": "OpenRouter",
+        "kimi": "Kimi",
         "custom": "Your own"
       },
       "cloud": {
         "who": "Cloud DSH",
         "where": "Coming"
+      },
+      "features": {
+        "collaborate": "Best setups, for everyone",
+        "govern": "Clear costs, safe keys",
+        "everywhere": "Work goes where you go",
+        "assets": "Know-how stays put"
       }
     }
   },

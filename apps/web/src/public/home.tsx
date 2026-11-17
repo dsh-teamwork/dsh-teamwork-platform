@@ -13,10 +13,10 @@ import { Sea } from './sea';
 
 /*
  * The home page every instance has: what DSH Teamwork is, as an open-source
- * project and as a service, and the one way in: the title, the three pillars
- * and installing the plugin on the left, how a team uses it as one diagram on
- * the right (./topology.tsx), and the product's real screens in the sections
- * below (docs/design.md, "The landing page's first screen"). The story is the brand's
+ * project and as a service, and the one way in: the title, one sentence and
+ * the plugin to copy on the left (the header carries *Create a team*), how a
+ * team uses it as one diagram on the right (./topology.tsx), and the
+ * product's real screens in the sections below (docs/design.md, "The landing page's first screen"). The story is the brand's
  * (docs/design.md, "The mark"): one person's work surfaces, and what the team
  * does settles underneath as its own assets. So the page goes down: from the
  * surface where people work (every platform), through collaboration and
@@ -47,8 +47,8 @@ function Depth({ depth, label }: { depth: string; label: string }) {
 
 function Zone({ id, children }: { id?: string; children: ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-4 border-t">
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">{children}</div>
+    <section id={id} className="scroll-mt-4 border-t first:border-t-0">
+      <div className="mx-auto max-w-7xl px-6 py-20 sm:py-28">{children}</div>
     </section>
   );
 }
@@ -89,10 +89,10 @@ const PLUGIN = '@dsh-teamwork/dsh-teamwork';
 /** The package to copy, with its button (wired by client.ts, since this page runs no React). */
 function Copyable({ text, prefix, label }: { text: string; prefix: string; label: string }) {
   return (
-    <span className="flex h-10 min-w-0 max-w-full items-center gap-2 rounded-md border bg-muted pr-1 pl-3 font-mono text-[13px]">
+    <span className="flex h-12 min-w-0 max-w-full items-center gap-2 rounded-lg border bg-muted pr-1.5 pl-3 font-mono text-[13px] sm:gap-3 sm:pl-4 sm:text-sm">
       <span className="shrink-0 font-sans text-xs text-muted-foreground">{prefix}</span>
       <code className="min-w-0 overflow-x-auto whitespace-nowrap">{text}</code>
-      <button type="button" data-copy={text} className="shrink-0 rounded px-2 py-1 font-sans text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+      <button type="button" data-copy={text} className="h-9 min-w-14 shrink-0 rounded-md bg-primary px-3 font-sans text-sm font-medium text-primary-foreground hover:bg-primary/90">
         {label}
       </button>
     </span>
@@ -194,7 +194,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
-      <header className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
+      <header className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-6">
         <a href="/" className="flex shrink-0 items-center gap-2.5 text-lg font-bold tracking-tight">
           <img src="/logo.svg" alt="" width={30} height={30} />
           {tc('appName')}
@@ -207,6 +207,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <LocaleMenu locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} placement="header" />
           <ThemeButton label={tc('theme.toggle')} />
           <Button asChild className="hidden sm:inline-flex">
             <a href={start.href}>{start.label}</a>
@@ -235,37 +236,30 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
       </header>
 
       <main>
-        <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-12 px-6 pt-14 sm:pt-20 lg:grid-cols-[minmax(0,0.66fr)_minmax(0,1.34fr)] lg:items-center lg:gap-10">
-          <div className="flex flex-col gap-6">
-            {/* Capitals suit the English label; a Chinese one keeps its Latin product name as written. */}
-            <p className={`font-mono text-xs font-semibold tracking-widest text-muted-foreground ${locale === 'en' ? 'uppercase' : ''}`}>{t('eyebrow')}</p>
-            <h1 className="text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-5xl sm:leading-[1.08]">{t('title')}</h1>
-            <p className="text-lg text-muted-foreground">{t('lede')}</p>
-            <ul className="flex flex-col gap-2.5">
-              {(['collaborate', 'govern', 'everywhere'] as const).map((pillar) => (
-                <li key={pillar} className="flex items-baseline gap-3 text-[15px]">
-                  <span className="shrink-0 rounded-full border px-2 py-0.5 font-mono text-[11px] font-semibold">{t(`pillars.${pillar}.name`)}</span>
-                  <span>{t(`pillars.${pillar}.body`)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="lg">
-                <a href={start.href}>{start.label}</a>
-              </Button>
-              <Copyable text={PLUGIN} prefix={t('install.plugin')} label={t('install.copy')} />
+        {/* The first screen: the hero centred above the sea, whose line sits at the screen's foot. */}
+        <div className="flex flex-col lg:min-h-[calc(100svh-4rem)]">
+          <section className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-[minmax(0,1fr)] gap-12 px-6 pt-12 sm:pt-14 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:content-center lg:items-center lg:gap-14 lg:pt-6">
+            <div className="flex flex-col gap-6">
+              {/* Mono capitals suit the English label; a Chinese one is set in the page's own face. */}
+              <p className={`text-xs font-semibold text-muted-foreground ${locale === 'en' ? 'font-mono uppercase tracking-widest' : 'tracking-wider'}`}>{t('eyebrow')}</p>
+              <h1 className="text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-5xl sm:leading-[1.08]">{t('title')}</h1>
+              {/* A language whose sentence needs a chosen break writes it in the message (\n). */}
+              <p className="whitespace-pre-line text-lg text-muted-foreground">{t('lede')}</p>
+              <div className="mt-2 flex flex-col items-start gap-2.5">
+                <Copyable text={PLUGIN} prefix={t('install.plugin')} label={t('install.copy')} />
+                <p className="text-sm text-muted-foreground">
+                  {t('install.hint')}{' '}
+                  <a href="/docs/install" className="font-medium text-foreground underline-offset-4 hover:underline">
+                    {t('install.more')} →
+                  </a>
+                </p>
+              </div>
             </div>
-            <p className="-mt-2 text-sm text-muted-foreground">
-              {t('install.hint')}{' '}
-              <a href="/docs/install" className="font-medium text-foreground underline-offset-4 hover:underline">
-                {t('install.more')} →
-              </a>
-            </p>
-          </div>
-          <Topology locale={locale} />
-        </section>
+            <Topology locale={locale} />
+          </section>
 
-        <Sea />
+          <Sea />
+        </div>
 
         <div>
           <Zone id="shift">
@@ -431,7 +425,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
           </Zone>
 
           <section className="bg-brand text-brand-foreground">
-            <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+            <div className="mx-auto max-w-7xl px-6 py-20 sm:py-28">
               <p className="mb-6 flex items-center gap-3 font-mono text-xs font-semibold tracking-wider">
                 <span aria-hidden="true" className="size-1.5 rounded-full bg-signal" />
                 {t('final.depth')}
@@ -446,7 +440,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
           </section>
 
           <footer className="border-t border-border">
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-8 text-sm text-muted-foreground">
+            <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-8 text-sm text-muted-foreground">
               <span className="flex items-center gap-2 font-bold text-foreground">
                 <img src="/logo.svg" alt="" width={22} height={22} />
                 {tc('appName')}

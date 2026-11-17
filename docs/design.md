@@ -193,15 +193,23 @@ icon set.
   then what the team shares (collaboration) and controls (governance), and
   the deep floor is what the team keeps as its assets.
 - **The landing page's first screen is what the product is and how to start.**
-  On the left: the title, one sentence, the three pillars in a row each
-  (collaborate, govern, everywhere), *Create a team* and the plugin's package
-  to copy, then a line to the install guide. On the right: one diagram, read
+  On the left: the title, one sentence, the plugin's package to copy and one
+  line to the install guide; *Create a team* is the header's, not repeated
+  here. The hero is centred in the first screen with the faint fluke and its
+  wave line at its foot, below the hero rather than behind it. On the right: one diagram, read
   left to right (`apps/web/src/public/topology.tsx`): the team's people,
   each with an icon for where they work (DSH Desktop, a terminal, the phone,
   the admin's web console), curved arrows into DSH Teamwork in the middle, and
-  on the right the upstream model providers (the console's own catalogue) and
-  cloud DSH, coming. It is drawn from tokens, so it follows the theme, and its
-  words are the page's language.
+  on the right the mainstream upstream providers, each by its own logo
+  (`provider-logos.ts`, from LobeHub's icons; the console keeps letter tiles),
+  and cloud DSH, coming. The phone's icon carries `public/logo.svg` on its
+  screen, since the app is ours. The hub lists the page's sections, each with
+  one line of what it gives a team, said as value rather than as a feature. The lines carry no words: an amber pulse plays the story
+  on a loop (the admin publishes, every member's card ticks, a call goes out
+  to a model), and hovering a feature dims what it does not involve (and
+  lights each device's icon for *Everywhere*), keeping the plain pointer; motion
+  stops under reduced motion. It is drawn from tokens, so it follows the
+  theme, and its words are the page's language.
 - **Real screens live in the sections below, never in the first screen.**
   *Everywhere* gives each way in a row (who it is for, what it does, its
   screen, alternating sides); *Collaborate* shows the review comparison and

@@ -20,9 +20,9 @@ export function Sea() {
       viewBox="0 0 1600 360"
       preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
-      className="block h-[clamp(172px,23.5vw,344px)] w-full"
+      className="block h-[clamp(160px,min(23.5vw,34svh),344px)] w-full shrink-0"
     >
-      <path className="fill-foreground opacity-[0.07]" d={FLUKE} transform="translate(960 310) rotate(-15) scale(8.6) translate(-32 -44)" />
+      <path className="fill-foreground opacity-[0.07]" d={FLUKE} transform="translate(960 310) rotate(-15) scale(7.4) translate(-32 -44)" />
       <g className="sea-drift">
         <path className="fill-background" d={`${SURFACE}V360H-160Z`} />
         <path className="fill-none stroke-foreground" strokeWidth={1.5} vectorEffect="non-scaling-stroke" d={SURFACE} />

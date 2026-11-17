@@ -4,15 +4,27 @@ import type { Locale } from '@/lib/locale';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
 
+import { PROVIDER_LOGOS } from './provider-logos';
+
 /*
  * The home page's first-screen diagram (docs/design.md, "The landing page's
  * first screen"): how a team uses DSH Teamwork, left to right. On the left,
  * the people and where each one works (DSH Desktop, a terminal, the phone, the
- * admin's web console); in the middle, the one place that governs and syncs;
- * on the right, the upstream model providers it forwards calls to (the
- * console's own catalogue, lib/provider-catalog.ts) and the cloud DSH that is
- * coming. Inline SVG drawn from the theme's tokens, so it follows light and
- * dark; the icons are lucide's, at their 24-unit size.
+ * admin's web console); in the middle, the one place that governs and syncs,
+ * its name over the page's sections ticked off as what it does;
+ * on the right, the mainstream providers it forwards calls to, each by its
+ * logo (./provider-logos.ts), and the cloud DSH that is coming.
+ *
+ * The value is shown rather than labelled. A pulse plays the story on a loop
+ * (globals.css, "topology"): the admin publishes, the hub syncs it to every
+ * member, whose cards tick, then a member's call goes through the hub to a
+ * model. Hovering one of the hub's features dims everything it does not
+ * involve (`data-f` names the features each part belongs to). Both are CSS,
+ * since this page runs no React, and motion stops under reduced motion. Anthropic is
+ * reached through OpenRouter or a custom address, as the console's catalogue
+ * says (lib/provider-catalog.ts). Inline SVG drawn from the theme's tokens, so
+ * it follows light and dark; the other icons are lucide's, at their 24-unit
+ * size.
  */
 
 const ICONS = {
@@ -23,10 +35,12 @@ const ICONS = {
       <line x1="12" x2="20" y1="19" y2="19" />
     </>
   ),
+  // The phone carries the app's own logo on its screen: the app is ours (docs/design.md, the logo is an image).
   phone: (
     <>
-      <rect width="14" height="20" x="5" y="2" rx="2" />
-      <path d="M12 18h.01" />
+      {/* Larger than lucide's 24-unit box, into the tile's padding, so the logo on its screen reads. */}
+      <rect width="19" height="28" x="2.5" y="-2" rx="3.5" className="fill-background" />
+      <image href="/logo.svg" x="4.5" y="4.5" width="15" height="15" />
     </>
   ),
   console: (
@@ -36,20 +50,10 @@ const ICONS = {
     </>
   ),
   cloud: <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />,
-  cpu: (
-    <>
-      <rect width="16" height="16" x="4" y="4" rx="2" />
-      <rect width="6" height="6" x="9" y="9" rx="1" />
-      <path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2" />
-    </>
-  ),
 };
 
-/** The providers the console offers to connect (lib/provider-catalog.ts), as their marks. */
-const PROVIDERS = ['deepseek', 'openai', 'qwen', 'moonshot', 'zhipu', 'doubao', 'minimax', 'siliconflow', 'openrouter', 'custom'] as const;
-const MARKS: Record<(typeof PROVIDERS)[number], string> = {
-  deepseek: 'DS', openai: 'OA', qwen: 'QW', moonshot: 'KM', zhipu: 'GL', doubao: 'DB', minimax: 'MM', siliconflow: 'SF', openrouter: 'OR', custom: '+',
-};
+/** The mainstream providers, by logo, then any other address the admin adds. */
+const PROVIDERS = ['anthropic', 'openai', 'deepseek', 'zhipu', 'kimi'] as const;
 
 /** A curve leaving one side horizontally and arriving at the other horizontally. */
 const curve = (x1: number, y1: number, x2: number, y2: number) => {
@@ -57,50 +61,76 @@ const curve = (x1: number, y1: number, x2: number, y2: number) => {
   return `M${x1} ${y1}C${m} ${y1} ${m} ${y2} ${x2} ${y2}`;
 };
 
-const LEFT = 16;
-const HUB = [350, 498] as const;
-const RIGHT = 596;
+// Three columns: the people, the hub, and one narrow column of providers over cloud DSH.
+const WIDTH = 760;
+const LEFT = 4;
+const HUB = { x: 296, y: 82, width: 200, height: 268 } as const;
+const RIGHT = 600;
+const RIGHT_WIDTH = 156;
+/** The providers' box, centred with cloud DSH beside the hub. */
+const UPSTREAM = { y: 60, height: 232 } as const;
+const ROW = 28;
 
 function Icon({ name, x, y }: { name: keyof typeof ICONS; x: number; y: number }) {
   return (
-    <>
+    <g className="topology-icon">
       <rect x={x} y={y} width={38} height={38} rx={10} className="fill-muted stroke-border" />
       <g transform={`translate(${x + 8} ${y + 8}) scale(0.92)`} className="fill-none stroke-foreground" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
         {ICONS[name]}
       </g>
-    </>
+    </g>
   );
 }
 
-function Node({ x, y, width = 192, icon, who, where, admin, waiting, coming }: {
-  x: number; y: number; width?: number; icon: keyof typeof ICONS; who: string; where: string; admin?: boolean; waiting?: boolean; coming?: boolean;
+function Node({ x, y, width = 192, icon, who, where, admin, coming, synced, f }: {
+  x: number; y: number; width?: number; icon: keyof typeof ICONS; who: string; where: string; admin?: boolean; coming?: boolean;
+  /** Ticks when the pulse's sync reaches this card. */
+  synced?: boolean;
+  /** The hub features this node belongs to, for the hover highlight. */
+  f: string;
 }) {
   return (
-    <g opacity={coming ? 0.6 : 1}>
+    <g opacity={coming ? 0.6 : 1} data-f={f}>
       <rect
         x={x} y={y} width={width} height={64} rx={14}
         className={admin ? 'fill-background stroke-brand' : coming ? 'fill-none stroke-input' : 'fill-background stroke-border'}
         strokeWidth={admin ? 1.6 : 1.2} strokeDasharray={coming ? '5 5' : undefined}
       />
       <Icon name={icon} x={x + 13} y={y + 13} />
-      {waiting && <circle cx={x + 48} cy={y + 16} r={4.5} className="fill-signal" />}
       <text x={x + 62} y={y + 28} className="fill-foreground text-[13px] font-semibold">{who}</text>
       <text x={x + 62} y={y + 47} className="fill-muted-foreground text-[12px]">{where}</text>
+      {synced && (
+        <g className="topology-synced" transform={`translate(${x + width - 24} ${y + 9})`}>
+          <circle cx={7} cy={7} r={7} className="fill-brand" />
+          <path d="M4 7.2l2.1 2.1L10.2 5" className="fill-none stroke-brand-foreground" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+      )}
     </g>
   );
 }
 
+/** Which hub features each person's line and card belong to. */
+const MEMBER = 'collaborate everywhere';
+const ADMIN = 'collaborate govern assets';
+
 export function Topology({ locale }: { locale: Locale }) {
-  const t = createTranslator({ locale, messages: locale === 'zh-CN' ? zhCN : en, namespace: 'home.topology' });
+  const messages = locale === 'zh-CN' ? zhCN : en;
+  const t = createTranslator({ locale, messages, namespace: 'home.topology' });
+  // The hub's features are the page's own sections, named as the header names them.
+  const nav = createTranslator({ locale, messages, namespace: 'home.nav' });
   const people = [
-    { y: 52, to: 160, icon: 'laptop', key: 'desktop', label: 'sync', below: false },
-    { y: 140, to: 205, icon: 'terminal', key: 'terminal', label: 'sync', below: false },
-    { y: 228, to: 250, icon: 'phone', key: 'phone', label: 'approve', below: true, waiting: true },
-    { y: 316, to: 300, icon: 'console', key: 'admin', label: 'govern', below: true, admin: true },
+    { y: 52, to: 156, icon: 'laptop', key: 'desktop' },
+    { y: 140, to: 200, icon: 'terminal', key: 'terminal', calls: true },
+    { y: 228, to: 244, icon: 'phone', key: 'phone' },
+    { y: 316, to: 288, icon: 'console', key: 'admin', admin: true },
   ] as const;
-  const chips = ['models', 'presets', 'review', 'budgets', 'members'] as const;
+  const features = ['collaborate', 'govern', 'everywhere', 'assets'] as const;
+  const hubRight = HUB.x + HUB.width;
+  const hubCentre = HUB.x + HUB.width / 2;
+  const edge = (p: (typeof people)[number]) => curve(LEFT + 194, p.y + 32, HUB.x - 2, p.to);
+  const toModels = curve(hubRight + 2, 200, RIGHT - 2, 170);
   return (
-    <svg viewBox="0 0 820 420" role="img" aria-label={t('label')} className="block h-auto w-full max-w-full text-foreground">
+    <svg viewBox={`0 0 ${WIDTH} 420`} role="img" aria-label={t('label')} className="topology block h-auto w-full max-w-full text-foreground">
       <defs>
         <marker id="topology-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" className="fill-foreground" />
@@ -109,8 +139,8 @@ export function Topology({ locale }: { locale: Locale }) {
 
       <g className="fill-muted-foreground font-mono text-[11px] tracking-wider">
         <text x={LEFT} y={30}>{t('columns.people')}</text>
-        <text x={(HUB[0] + HUB[1]) / 2} y={30} textAnchor="middle">{t('columns.hub')}</text>
-        <text x={RIGHT + 208} y={30} textAnchor="end">{t('columns.upstream')}</text>
+        <text x={hubCentre} y={30} textAnchor="middle">{t('columns.hub')}</text>
+        <text x={RIGHT + RIGHT_WIDTH} y={30} textAnchor="end">{t('columns.upstream')}</text>
       </g>
 
       {/* People to the hub: both ways for members (config down, calls up), into it for the admin. */}
@@ -118,56 +148,79 @@ export function Topology({ locale }: { locale: Locale }) {
         {people.map((p) => (
           <path
             key={p.key}
-            d={curve(LEFT + 194, p.y + 32, HUB[0] - 2, p.to)}
+            data-f={'admin' in p ? ADMIN : MEMBER}
+            d={edge(p)}
             markerEnd="url(#topology-arrow)"
             markerStart={'admin' in p ? undefined : 'url(#topology-arrow)'}
           />
         ))}
       </g>
-      <g className="fill-muted-foreground text-[11px]">
-        {people.map((p) => (
-          <text key={p.key} x={LEFT + 200} y={p.below ? p.y + 51 : p.y + 23}>{t(`edges.${p.label}`)}</text>
-        ))}
-      </g>
 
-      <rect x={HUB[0]} y={48} width={HUB[1] - HUB[0]} height={352} rx={18} className="fill-brand" />
-      <text x={424} y={84} textAnchor="middle" className="fill-brand-foreground text-[17px] font-bold">DSH Teamwork</text>
-      <text x={424} y={103} textAnchor="middle" className="fill-brand-foreground/75 text-[11.5px]">{t('hub.tagline')}</text>
-      {chips.map((chip, i) => (
-        <g key={chip}>
-          <rect x={368} y={128 + i * 34} width={112} height={26} rx={13} className="fill-none stroke-brand-foreground/45" />
-          <text x={424} y={145 + i * 34} textAnchor="middle" className="fill-brand-foreground text-[11.5px]">{t(`hub.${chip}`)}</text>
+      <rect x={HUB.x} y={HUB.y} width={HUB.width} height={HUB.height} rx={18} className="fill-brand" />
+      <text x={hubCentre} y={HUB.y + 36} textAnchor="middle" className="fill-brand-foreground text-[15.5px] font-bold">DSH Teamwork</text>
+      <line x1={HUB.x + 24} x2={hubRight - 24} y1={HUB.y + 54} y2={HUB.y + 54} className="stroke-brand-foreground/25" />
+      {features.map((feature, i) => (
+        <g key={feature} data-row={feature} transform={`translate(${HUB.x + 10} ${HUB.y + 66 + i * 48})`}>
+          <rect width={HUB.width - 20} height={44} rx={9} className="topology-row fill-brand-foreground" />
+          <g transform="translate(10 7)">
+            <circle cx={9} cy={9} r={9} className="fill-brand-foreground/15" />
+            <path d="M5 9.2l2.8 2.8L13 6.6" className="fill-none stroke-brand-foreground" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+          <text x={36} y={19} className="fill-brand-foreground text-[13px] font-semibold">{nav(feature)}</text>
+          <text x={36} y={35} className="fill-brand-foreground/70 text-[10.5px]">{t(`features.${feature}`)}</text>
         </g>
       ))}
-      <text x={424} y={352} textAnchor="middle" className="fill-brand-foreground/75 text-[11.5px]">{t('hub.hosted')}</text>
-      <text x={424} y={370} textAnchor="middle" className="fill-brand-foreground/75 text-[11.5px]">{t('hub.selfHosted')}</text>
 
-      {/* The hub to the providers: calls go out, keys stay. */}
-      <path d={curve(HUB[1] + 2, 190, RIGHT - 2, 150)} className="fill-none stroke-foreground" strokeWidth={1.6} markerEnd="url(#topology-arrow)" />
-      <text x={506} y={214} className="fill-foreground text-[11px] font-semibold">{t('edges.forward')}</text>
-      <text x={506} y={229} className="fill-foreground text-[11px] font-semibold">{t('edges.keys')}</text>
-      <path d={curve(HUB[1] + 2, 330, RIGHT - 2, 354)} className="fill-none stroke-foreground" strokeWidth={1.4} strokeDasharray="5 5" opacity={0.5} markerStart="url(#topology-arrow)" markerEnd="url(#topology-arrow)" />
-      <text x={506} y={322} className="fill-muted-foreground text-[11px]" opacity={0.7}>{t('edges.sync')}</text>
+      {/* The hub to the providers. */}
+      <path data-f="govern" d={toModels} className="fill-none stroke-foreground" strokeWidth={1.6} markerEnd="url(#topology-arrow)" />
+      <path data-f="everywhere" d={curve(hubRight + 2, 300, RIGHT - 2, 340)} className="fill-none stroke-foreground" strokeWidth={1.4} strokeDasharray="5 5" opacity={0.5} markerStart="url(#topology-arrow)" markerEnd="url(#topology-arrow)" />
 
-      <rect x={RIGHT} y={48} width={208} height={252} rx={14} className="fill-muted stroke-border" strokeWidth={1.2} />
-      <Icon name="cpu" x={RIGHT + 13} y={61} />
-      <text x={RIGHT + 62} y={76} className="fill-foreground text-[13px] font-semibold">{t('providers.title')}</text>
-      <text x={RIGHT + 62} y={94} className="fill-muted-foreground text-[12px]">{t('providers.body')}</text>
-      {PROVIDERS.map((id, i) => {
-        const x = RIGHT + 14 + (i % 2) * 96;
-        const y = 118 + Math.floor(i / 2) * 34;
-        return (
-          <g key={id}>
-            <rect x={x} y={y} width={24} height={24} rx={6} className="fill-background stroke-border" />
-            <text x={x + 12} y={y + 16} textAnchor="middle" className="fill-foreground font-mono text-[9.5px] font-semibold">{MARKS[id]}</text>
-            <text x={x + 30} y={y + 16} className="fill-foreground text-[11px]">{t(`providers.${id}`)}</text>
-          </g>
-        );
-      })}
-      <Node x={RIGHT} y={322} width={208} icon="cloud" who={t('cloud.who')} where={t('cloud.where')} coming />
+      {/* The story's pulses, in amber over the lines: publish, sync to every member, a member's call out to a model. */}
+      <g className="fill-none stroke-signal" strokeWidth={3.5} strokeLinecap="round" aria-hidden="true">
+        {people.map((p) =>
+          'admin' in p ? (
+            <path key={p.key} d={edge(p)} pathLength={100} className="topology-pulse topology-publish" />
+          ) : (
+            <path key={p.key} d={edge(p)} pathLength={100} className="topology-pulse topology-sync" />
+          ),
+        )}
+        {people.map((p) => 'calls' in p && <path key={p.key} d={edge(p)} pathLength={100} className="topology-pulse topology-call" />)}
+        <path d={toModels} pathLength={100} className="topology-pulse topology-model" />
+      </g>
+
+      <g data-f="govern">
+        <rect x={RIGHT} y={UPSTREAM.y} width={RIGHT_WIDTH} height={UPSTREAM.height} rx={14} className="fill-muted stroke-border" strokeWidth={1.2} />
+        <text x={RIGHT + 14} y={UPSTREAM.y + 26} className="fill-foreground text-[13px] font-semibold">{t('providers.title')}</text>
+        <text x={RIGHT + 14} y={UPSTREAM.y + 43} className="fill-muted-foreground text-[11px]">{t('providers.body')}</text>
+        {[...PROVIDERS, 'custom' as const].map((id, i) => {
+          const x = RIGHT + 14;
+          const y = UPSTREAM.y + 60 + i * ROW;
+          return (
+            <g key={id}>
+              {id === 'custom' ? (
+                <>
+                  <rect x={x + 0.5} y={y + 0.5} width={17} height={17} rx={5} className="fill-none stroke-muted-foreground" strokeDasharray="3 2" />
+                  <path d={`M${x + 9} ${y + 5}v8M${x + 5} ${y + 9}h8`} className="fill-none stroke-foreground" strokeWidth={1.5} strokeLinecap="round" />
+                </>
+              ) : (
+                <svg x={x} y={y} width={18} height={18} viewBox="0 0 24 24" className="fill-foreground">
+                  {PROVIDER_LOGOS[id].map((d) => (
+                    <path key={d} d={d} fillRule="evenodd" />
+                  ))}
+                </svg>
+              )}
+              <text x={x + 28} y={y + 13.5} className="fill-foreground text-[12px]">{t(`providers.${id}`)}</text>
+            </g>
+          );
+        })}
+      </g>
+      <Node x={RIGHT} y={UPSTREAM.y + UPSTREAM.height + 16} width={RIGHT_WIDTH} icon="cloud" who={t('cloud.who')} where={t('cloud.where')} coming f="everywhere" />
 
       {people.map((p) => (
-        <Node key={p.key} x={LEFT} y={p.y} icon={p.icon} who={t(`people.${p.key}.who`)} where={t(`people.${p.key}.where`)} admin={'admin' in p} waiting={'waiting' in p} />
+        <Node
+          key={p.key} x={LEFT} y={p.y} icon={p.icon} who={t(`people.${p.key}.who`)} where={t(`people.${p.key}.where`)}
+          admin={'admin' in p} synced={!('admin' in p)} f={'admin' in p ? ADMIN : MEMBER}
+        />
       ))}
     </svg>
   );
