@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The landing page's first screen: an install card and real screens
+
+- **What:** The hero drops its two buttons (creating a team and self-hosting stay in the top bar) for one card beside the title: DSH Desktop's `Plugins → Add plugin` with the package to copy, the command-line install, and the guide. Below it, real captures of DSH Desktop's Teamwork panel, the web console and the phone app (labelled hosted), in `apps/console/public/home/`.
+- **Why:** The first screen repeated the top bar's actions, gave installing a single grey line, and showed no product.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/public/home.tsx`, `docs/design.md`.
+
 ## 2026-11-17 — Analytics count pages only; the app's token can delete the account
 
 - **What:** The server sends nothing to PostHog any more: the `user_signed_up` and `profile_updated` events and `server/internal/analytics` are gone. The browser stays cookieless and anonymous and now sends `$pageview` only, with page leaves off. `DELETE /api/profile` also takes a Bearer token with the email typed back, so the phone app can delete the account in place; the `browser_only` refusal is gone.

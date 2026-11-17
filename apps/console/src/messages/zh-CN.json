@@ -80,12 +80,15 @@
     "eyebrow": "DeepSeek Harness 团队版",
     "lede": "DSH 让一个人顶得上一支小队。DSH Teamwork 让整个团队一起用起来：共享的预设、插件和团队助理，一份大家共同遵守的预算，每天的工作沉淀为团队自己的能力。",
     "createTeam": "创建团队",
-    "selfHostCta": "自己部署",
     "openConsole": "打开团队控制台",
     "install": {
-      "desktop": "在 DSH 桌面版安装：Plugins → Add plugin →",
+      "title": "安装插件，加入团队",
+      "desktop": "DSH 桌面版",
+      "desktopSteps": "打开 <b>Plugins → Add plugin</b>，输入：",
+      "cli": "命令行",
       "copy": "复制",
-      "more": "CLI 安装、登录与自托管服务器"
+      "then": "装好后在 Teamwork 面板里登录。",
+      "more": "安装与登录指南"
     },
     "nav": {
       "label": "页面章节",
@@ -217,6 +220,15 @@
       "label": "开始",
       "title": "让一群超级个体，成为一支超级团队。",
       "lede": "创建团队，发布第一个预设，邀请一起工作的人。他们下次同步，就加入进来了。"
+    },
+    "screens": {
+      "caption": "DSH Teamwork 在桌面、浏览器和手机上",
+      "desktop": "DSH 桌面版",
+      "desktopAlt": "DSH 桌面版里的 Teamwork 面板，列出团队的预设",
+      "console": "网页控制台",
+      "consoleAlt": "团队控制台概览：一条待审核的提交，调用次数、积分和预算",
+      "phone": "手机 · 托管版",
+      "phoneAlt": "手机 App 列出一台电脑上的会话，其中一个在等你批准"
     }
   },
   "account": {

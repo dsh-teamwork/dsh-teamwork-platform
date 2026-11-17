@@ -1,4 +1,4 @@
-import { Cloud, Smartphone, SquareTerminal, PanelsTopLeft, type LucideIcon } from 'lucide-react';
+import { Cloud, Puzzle, Smartphone, SquareTerminal, PanelsTopLeft, type LucideIcon } from 'lucide-react';
 import { createTranslator } from 'use-intl';
 import type { ReactNode } from 'react';
 
@@ -13,7 +13,9 @@ import { Sea } from './sea';
 
 /*
  * The home page every instance has: what DSH Teamwork is, as an open-source
- * project and as a service, and the one way in. The story is the brand's
+ * project and as a service, and the one way in: installing the plugin, beside
+ * the title, then the product as real screens (docs/design.md, "The landing
+ * page's first screen"). The story is the brand's
  * (docs/design.md, "The mark"): one person's work surfaces, and what the team
  * does settles underneath as its own assets. So the page goes down: from the
  * surface where people work (every platform), through collaboration and
@@ -94,29 +96,102 @@ function Status({ status, label }: { status: 'available' | 'hosted' | 'coming'; 
 
 /** The plugin's npm name: what DSH installs to join a team (the plugin's own README, "Install"). */
 const PLUGIN = '@dsh-teamwork/dsh-teamwork';
+/** The same for a DSH run from the command line, with its web profile. */
+const CLI = `dsh plugin --profile web add ${PLUGIN}`;
+
+/** Something to copy, with its button (wired by client.ts, since this page runs no React). */
+function Copyable({ text, label }: { text: string; label: string }) {
+  return (
+    <span className="flex min-w-0 items-center gap-1 rounded-md border bg-background py-1 pr-1 pl-3 font-mono text-[13px]">
+      <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{text}</code>
+      <button type="button" data-copy={text} className="shrink-0 rounded px-2 py-1 font-sans text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+        {label}
+      </button>
+    </span>
+  );
+}
 
 /**
- * How a member's DSH joins, in one line: DSH Desktop's plugin manager and the
- * package to enter, with a copy button (wired by client.ts), then a link to
- * every way to install and sign in (`/docs/install`).
+ * How a member's DSH joins, as the hero's one call to action (creating a team
+ * and running a server are in the top bar): DSH Desktop's plugin manager and
+ * the package to enter, the command for a terminal profile, and every other
+ * way to install and sign in (`/docs/install`).
  */
 function Install({ locale }: { locale: Locale }) {
-  const t = createTranslator({ locale, messages: locale === 'zh-CN' ? zhCN : en, namespace: 'home' });
+  const t = createTranslator({ locale, messages: locale === 'zh-CN' ? zhCN : en, namespace: 'home.install' });
   return (
-    <div className="flex flex-col gap-2">
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-muted-foreground">
-        {t('install.desktop')}
-        <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted py-0.5 pr-0.5 pl-2 font-mono text-[13px] text-foreground">
-          <code className="min-w-0 overflow-x-auto whitespace-nowrap">{PLUGIN}</code>
-          <button type="button" data-copy={PLUGIN} className="shrink-0 rounded px-1.5 py-0.5 font-sans text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
-            {t('install.copy')}
-          </button>
-        </span>
+    <div className="flex flex-col gap-4 rounded-xl border bg-muted/40 p-5 sm:p-6">
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <Puzzle className="size-4" aria-hidden="true" />
+        {t('title')}
       </p>
-      <a href="/docs/install" className="w-fit text-sm font-medium underline-offset-4 hover:underline">
-        {t('install.more')} →
-      </a>
+      <ol className="flex flex-col gap-4 text-sm">
+        <li className="flex flex-col gap-1.5">
+          <span>
+            <span className="font-semibold">{t('desktop')}</span>
+            <span className="text-muted-foreground"> · {t.rich('desktopSteps', { b: (chunks) => <b className="font-semibold text-foreground">{chunks}</b> })}</span>
+          </span>
+          <Copyable text={PLUGIN} label={t('copy')} />
+        </li>
+        <li className="flex flex-col gap-1.5">
+          <span className="font-semibold">{t('cli')}</span>
+          <Copyable text={CLI} label={t('copy')} />
+        </li>
+      </ol>
+      <p className="text-sm text-muted-foreground">
+        {t('then')}{' '}
+        <a href="/docs/install" className="font-medium text-foreground underline-offset-4 hover:underline">
+          {t('more')} →
+        </a>
+      </p>
     </div>
+  );
+}
+
+/**
+ * The product where people use it, as real screens: the web console in front,
+ * a member's DSH Desktop with the Teamwork panel behind it, and the phone app
+ * (hosted service) beside them. Captured from the real interfaces with a demo
+ * team; the console and the phone follow the page's language.
+ */
+function Screens({ locale }: { locale: Locale }) {
+  const t = createTranslator({ locale, messages: locale === 'zh-CN' ? zhCN : en, namespace: 'home.screens' });
+  const tag = locale === 'zh-CN' ? 'zh' : 'en';
+  const label = 'absolute -top-3 left-3 z-10 whitespace-nowrap rounded-full border bg-background px-2 py-0.5 font-mono text-[10px] font-semibold shadow-sm sm:px-2.5 sm:text-[11px]';
+  return (
+    <figure className="relative mx-auto mt-14 w-full max-w-6xl px-6 pb-[16%] sm:mt-16">
+      <figcaption className="sr-only">{t('caption')}</figcaption>
+      {/* The member's desktop: DSH with the Teamwork panel, behind on the left. */}
+      <div className="relative w-[60%] overflow-hidden rounded-xl border bg-card shadow-xl">
+        <div aria-hidden="true" className="flex h-6 items-center gap-1.5 border-b bg-muted px-3">
+          <span className="size-2 rounded-full bg-border" />
+          <span className="size-2 rounded-full bg-border" />
+          <span className="size-2 rounded-full bg-border" />
+        </div>
+        <img src="/home/desktop.webp" alt={t('desktopAlt')} width={1200} height={535} loading="eager" className="block w-full" />
+      </div>
+      <p className={`${label} left-9`}>{t('desktop')}</p>
+      {/* The admin's console, in front and to the right. */}
+      <div className="absolute top-[18%] right-6 w-[62%]">
+        <p className={label}>{t('console')}</p>
+        <div className="overflow-hidden rounded-xl border bg-card shadow-2xl">
+          <div aria-hidden="true" className="flex h-6 items-center gap-2 border-b bg-muted px-3">
+            <span className="size-2 rounded-full bg-border" />
+            <span className="size-2 rounded-full bg-border" />
+            <span className="size-2 rounded-full bg-border" />
+            <span className="ml-2 h-3.5 w-1/3 rounded bg-background" />
+          </div>
+          <img src={`/home/console-${tag}.webp`} alt={t('consoleAlt')} width={1600} height={700} loading="eager" className="block w-full" />
+        </div>
+      </div>
+      {/* The member's phone, in front of both. */}
+      <div className="absolute right-[3%] bottom-0 w-[22%] sm:w-[17%]">
+        <p className={`${label} right-0 left-auto`}>{t('phone')}</p>
+        <div className="overflow-hidden rounded-[1rem] border-[3px] border-foreground bg-card shadow-2xl sm:rounded-[1.6rem] sm:border-[5px]">
+          <img src={`/home/phone-${tag}.webp`} alt={t('phoneAlt')} width={600} height={1022} loading="eager" className="block w-full" />
+        </div>
+      </div>
+    </figure>
   );
 }
 
@@ -203,20 +278,16 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
       </header>
 
       <main>
-        <section className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pt-14 sm:pt-24">
-          <p className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('eyebrow')}</p>
-          <h1 className="max-w-4xl text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-6xl sm:leading-[1.08]">{t('title')}</h1>
-          <p className="max-w-2xl text-lg text-muted-foreground">{t('lede')}</p>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button asChild size="lg">
-              <a href={start.href}>{start.label}</a>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <a href="#self-host">{t('selfHostCta')}</a>
-            </Button>
+        <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-6 pt-14 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-end lg:gap-14">
+          <div className="flex flex-col gap-6">
+            <p className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('eyebrow')}</p>
+            <h1 className="text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-6xl sm:leading-[1.08]">{t('title')}</h1>
+            <p className="max-w-2xl text-lg text-muted-foreground">{t('lede')}</p>
           </div>
           <Install locale={locale} />
         </section>
+
+        <Screens locale={locale} />
 
         <Sea />
 

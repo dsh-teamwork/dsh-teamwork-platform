@@ -80,12 +80,15 @@
     "eyebrow": "The team edition of DeepSeek Harness",
     "lede": "DSH makes one person as productive as a small team. DSH Teamwork puts the whole team on it: shared presets, plugins and a team assistant, one budget everyone works within, and every day's work settling into skills the team keeps.",
     "createTeam": "Create a team",
-    "selfHostCta": "Run it yourself",
     "openConsole": "Open team console",
     "install": {
-      "desktop": "Install in DSH Desktop: Plugins → Add plugin →",
+      "title": "Install the plugin to join a team",
+      "desktop": "DSH Desktop",
+      "desktopSteps": "open <b>Plugins → Add plugin</b> and enter:",
+      "cli": "Command line",
       "copy": "Copy",
-      "more": "CLI install, sign-in and self-hosted servers"
+      "then": "Then sign in from the Teamwork panel.",
+      "more": "Install and sign-in guide"
     },
     "nav": {
       "label": "Sections",
@@ -217,6 +220,15 @@
       "label": "Start",
       "title": "Turn a team of super individuals into a super team.",
       "lede": "Create a team, publish its first preset and invite the people you work with. Their next sync brings them in."
+    },
+    "screens": {
+      "caption": "DSH Teamwork on the desktop, in the browser and on the phone",
+      "desktop": "DSH Desktop",
+      "desktopAlt": "DSH Desktop with the Teamwork panel listing the team's presets",
+      "console": "Web console",
+      "consoleAlt": "The team console's overview: a submission waiting for review, calls, points and budget",
+      "phone": "Phone · hosted",
+      "phoneAlt": "The phone app listing a computer's sessions, one waiting for an approval"
     }
   },
   "account": {
