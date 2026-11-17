@@ -10,14 +10,12 @@
     <script>
       // The theme before the first paint: the person's choice, else the system's (src/lib/theme.ts, THEME_SCRIPT).
       (function () {
-        var t = 'system';
+        var t = null;
         try {
-          var s = localStorage.getItem('theme');
-          if (s === 'light' || s === 'dark') t = s;
+          t = localStorage.getItem('theme');
         } catch (e) {}
-        var r = document.documentElement;
-        r.dataset.themeChoice = t;
-        if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)) r.classList.add('dark');
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        if (t === 'dark') document.documentElement.classList.add('dark');
       })();
     </script>
   </head>

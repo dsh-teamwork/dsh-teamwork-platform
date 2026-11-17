@@ -70,9 +70,7 @@ function Frame({ email, passwords, children }: { email: string; passwords: boole
             {td('title')}
           </a>
           <ThemeToggle className="ml-auto sm:ml-0" />
-          <div className="flex w-auto max-w-56 min-w-0">
-            <AccountMenu email={email} passwords={passwords} side="bottom" />
-          </div>
+          <AccountMenu email={email} passwords={passwords} side="bottom" />
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-6 py-10 sm:py-14">{children}</main>

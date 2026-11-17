@@ -71,10 +71,11 @@ colour from it and rounds that element for the logos.
 
 ## Colour
 
-Every colour is a variable, and `.dark` on `<html>` swaps the whole scale. The
-choice is light, dark or the system's, kept in the browser under one key
-(`theme`) by `apps/console/src/lib/theme.ts` and the instance console's own
-`apps/manage/src/lib/theme.ts`, so it holds on every page of a site; an inline
+Every colour is a variable, and `.dark` on `<html>` swaps the whole scale. There
+are two themes, light and dark. Until a person chooses, they get their system's
+setting and follow it; a choice is kept in the browser under one key (`theme`)
+by `apps/console/src/lib/theme.ts` and the instance console's own
+`apps/manage/src/lib/theme.ts`, so it holds on every page of a site. An inline
 script sets it before the first paint. Grounds
 and text are a neutral grey (hue 286, chroma under 0.02): white grounds and
 near-black text in light, near-black grounds and white text in dark. Colour
@@ -210,10 +211,13 @@ icon set.
   an outline trigger and a menu on the card surface, never a native `<select>`.
   The language picker is one too; the public pages, which run no React, draw
   the same look in `apps/console/src/public/controls.tsx`.
-- **The theme is one icon button** stepping light → dark → system, showing the
-  choice in force: in the top bar and the footer of the public pages and of
-  `/teams`, and beside the account at the foot of a team's sidebar
+- **The theme is one icon button** showing the theme in force (sun or moon)
+  and switching to the other: in the top bar and the footer of the public
+  pages and of `/teams`, and beside the account at the foot of a team's sidebar
   (`apps/console/src/components/theme-toggle.tsx`).
+- **A person is their avatar.** The account menu opens from the initial in a
+  circle; the email is the menu's first line, never printed in a top bar or a
+  sidebar.
 - **`/teams` is the console's front page**: the site's top bar, the teams as
   cards (each with the team's initials on navy, and its overview, models and
   members a click away) grouped by role, a welcome with the first steps when

@@ -1,40 +1,40 @@
 /**
- * Light, dark or the system's, kept in this browser under the same key the
- * instance console (apps/manage/src/lib/theme.ts) uses, so one choice holds on
- * every page of the site. `.dark` on <html> swaps the whole scale
- * (globals.css), and `data-theme-choice` says which of the three is chosen.
- * It imports no React, so the public pages' script can use it. The first
- * paint is set before any of this loads, by `THEME_SCRIPT` in the
+ * Light or dark. A person who has not chosen gets their system's setting, and
+ * keeps following it until they choose; a choice is kept in this browser under
+ * the key the instance console (apps/manage/src/lib/theme.ts) uses, so it holds
+ * on every page of the site. `.dark` on <html> swaps the whole scale
+ * (globals.css). It imports no React, so the public pages' script can use it.
+ * The first paint is set before any of this loads, by `THEME_SCRIPT` in the
  * public pages and the same lines in index.html.
  */
-export type Theme = 'light' | 'dark' | 'system';
 
-/** Light, dark, then the system's, then light again: the order the toggle steps through. */
-export const THEMES: Theme[] = ['light', 'dark', 'system'];
+export type Theme = 'light' | 'dark';
 
 const KEY = 'theme';
 const listeners = new Set<() => void>();
+const system = (): Theme => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
-export function readTheme(): Theme {
+function saved(): Theme | null {
   try {
-    const saved = localStorage.getItem(KEY);
-    return saved === 'light' || saved === 'dark' ? saved : 'system';
+    const value = localStorage.getItem(KEY);
+    return value === 'light' || value === 'dark' ? value : null;
   } catch {
-    return 'system';
+    return null;
   }
 }
 
+/** The theme in force: the person's choice, else the system's. */
+export function readTheme(): Theme {
+  return saved() ?? system();
+}
+
 export function applyTheme() {
-  const theme = readTheme();
-  const root = document.documentElement;
-  root.classList.toggle('dark', theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches));
-  root.dataset.themeChoice = theme;
+  document.documentElement.classList.toggle('dark', readTheme() === 'dark');
 }
 
 export function setTheme(theme: Theme) {
   try {
-    if (theme === 'system') localStorage.removeItem(KEY);
-    else localStorage.setItem(KEY, theme);
+    localStorage.setItem(KEY, theme);
   } catch {
     // Storage refused: the choice lasts for this page only.
   }
@@ -42,14 +42,17 @@ export function setTheme(theme: Theme) {
   for (const listener of listeners) listener();
 }
 
-export const nextTheme = (theme: Theme) => THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+export const otherTheme = (theme: Theme): Theme => (theme === 'dark' ? 'light' : 'dark');
 
-/** Follows the system while "system" is chosen. Call once per page. */
+/** Follows the system while the person has not chosen. Call once per page. */
 export function watchSystemTheme() {
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    applyTheme();
+    for (const listener of listeners) listener();
+  });
 }
 
-/** Tells `listener` when the choice changes; returns how to stop. */
+/** Tells `listener` when the theme in force changes; returns how to stop. */
 export function subscribeTheme(listener: () => void) {
   listeners.add(listener);
   return () => {
@@ -57,6 +60,6 @@ export function subscribeTheme(listener: () => void) {
   };
 }
 
-/** The same choice, before the first paint, as an inline script for a prerendered page. */
+/** The same rule, before the first paint, as an inline script for a prerendered page. */
 export const THEME_SCRIPT =
-  "(function(){var t='system';try{var s=localStorage.getItem('theme');if(s==='light'||s==='dark')t=s}catch(e){}var r=document.documentElement;r.dataset.themeChoice=t;if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))r.classList.add('dark')})()";
+  "(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark')})()";

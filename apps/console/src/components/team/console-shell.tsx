@@ -112,7 +112,7 @@ export function ConsoleShell({
       <aside className="hidden flex-col gap-4 border-r bg-muted px-3 py-4 md:sticky md:top-0 md:flex md:h-dvh">
         <TeamSwitcher team={team} teams={teams} section={section} />
         <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} />
-        <div className="mt-auto flex items-center gap-1 border-t pt-3">
+        <div className="mt-auto flex items-center justify-between border-t pt-3">
           <AccountMenu email={email} passwords={passwords} />
           <ThemeToggle />
         </div>
@@ -138,7 +138,7 @@ export function ConsoleShell({
               </Dialog.Close>
             </div>
             <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} onNavigate={close} />
-            <div className="mt-auto flex items-center gap-1 border-t pt-3">
+            <div className="mt-auto flex items-center justify-between border-t pt-3">
               <AccountMenu email={email} passwords={passwords} />
               <ThemeToggle />
             </div>
@@ -192,17 +192,22 @@ export function AccountMenu({ email, passwords, side = 'top' }: { email: string;
   const { pending, choose } = useChooseLocale();
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1.5 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label={t('account')}>
-        <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold uppercase">
+      {/* The person is their avatar: the email is in the menu, not on the page (it is read over shoulders and in screenshots). */}
+      <DropdownMenu.Trigger
+        className="grid size-9 shrink-0 place-items-center rounded-full hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        aria-label={t('account')}
+        title={t('account')}
+      >
+        <span aria-hidden className="grid size-7 place-items-center rounded-full bg-secondary text-xs font-semibold uppercase ring-1 ring-border">
           {email.slice(0, 1) || '?'}
         </span>
-        <span className="min-w-0 flex-1 truncate" title={email}>
-          {email}
-        </span>
-        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content side={side} align={side === 'top' ? 'start' : 'end'} sideOffset={6} className="z-50 min-w-56 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+          <DropdownMenu.Label className="truncate px-2 py-1.5 text-xs text-muted-foreground" title={email}>
+            {email}
+          </DropdownMenu.Label>
+          <DropdownMenu.Separator className="my-1 h-px bg-border" />
           <DropdownMenu.Item asChild>
             <Link to="/account" className={menuItem}>
               <UserRound className="size-4" aria-hidden />

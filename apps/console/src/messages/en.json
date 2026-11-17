@@ -15,11 +15,8 @@
     "close": "Close",
     "retry": "Try again",
     "theme": {
-      "label": "Theme: {current}. Switch to {next}",
-      "light": "light",
-      "dark": "dark",
-      "system": "system",
-      "toggle": "Switch theme: light, dark or the system's"
+      "switchTo": "Switch to {theme, select, dark {dark} other {light}} theme",
+      "toggle": "Switch between light and dark"
     }
   },
   "signIn": {

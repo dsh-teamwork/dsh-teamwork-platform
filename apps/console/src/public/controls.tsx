@@ -2,12 +2,11 @@
  * The public pages' two controls, drawn to look like the console's own
  * (components/theme-toggle.tsx, components/ui/select.tsx) but without React in
  * the browser: the markup is prerendered and src/public/client.ts wires it.
- * The theme button shows the icon of the choice in force through
- * `data-theme-choice` on <html>, which the first-paint script sets; the
- * language menu is a <details> whose items post the choice and reload.
+ * The theme button shows the theme in force through `.dark` on <html>, which
+ * the first-paint script sets; the language menu is a <details> whose items post the choice and reload.
  */
 
-import { Check, ChevronDown, Monitor, Moon, Sun } from 'lucide-react';
+import { Check, ChevronDown, Moon, Sun } from 'lucide-react';
 
 import { LOCALES, type Locale } from '@/lib/locale';
 import { cn } from '@/lib/utils';
@@ -21,9 +20,8 @@ export function ThemeButton({ label, className }: { label: string; className?: s
       title={label}
       className={cn('grid size-9 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none', className)}
     >
-      <Sun className="hidden size-4 in-data-[theme-choice=light]:block" aria-hidden />
-      <Moon className="hidden size-4 in-data-[theme-choice=dark]:block" aria-hidden />
-      <Monitor className="hidden size-4 in-data-[theme-choice=system]:block" aria-hidden />
+      <Sun className="size-4 dark:hidden" aria-hidden />
+      <Moon className="hidden size-4 dark:block" aria-hidden />
     </button>
   );
 }

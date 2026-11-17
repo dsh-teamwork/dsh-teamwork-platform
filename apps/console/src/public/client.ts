@@ -5,7 +5,7 @@
  */
 
 import { startAnalytics } from '@/lib/analytics';
-import { nextTheme, readTheme, setTheme, watchSystemTheme } from '@/lib/theme';
+import { otherTheme, readTheme, setTheme, watchSystemTheme } from '@/lib/theme';
 
 void startAnalytics();
 
@@ -38,9 +38,9 @@ for (const item of document.querySelectorAll<HTMLButtonElement>('button[data-loc
   });
 }
 
-// The theme button steps light → dark → system; the icon follows `data-theme-choice`.
+// The theme button switches between light and dark; its icon follows `.dark`.
 for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-theme-toggle]')) {
-  button.addEventListener('click', () => setTheme(nextTheme(readTheme())));
+  button.addEventListener('click', () => setTheme(otherTheme(readTheme())));
 }
 
 // An open menu (<details data-menu>) closes on a click outside it, or on Escape.
