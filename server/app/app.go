@@ -127,7 +127,10 @@ func run(version string) error {
 		}
 		slog.Info("artifact storage verified", "provider", "s3")
 	}
-	if cfg.Passwords() {
+	// A management process never offers the first account: the database is
+	// shared, so it is claimed where members sign in, and a management
+	// service's log is no place for a live link.
+	if cfg.Passwords() && cfg.ServiceRole != "manage" {
 		if open, err := srv.Auth.SetupOpen(ctx); err != nil {
 			slog.Error("could not check for a first account", "error", err)
 		} else if open {

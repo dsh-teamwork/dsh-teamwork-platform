@@ -69,10 +69,10 @@ func (s *Server) Handler() http.Handler {
 
 	get("/api/auth/session", s.session)
 	post("/api/auth/password/sign-in", s.passwordSignIn)
-	post("/api/auth/setup", s.setup)
 	post("/api/auth/password/change", s.changePassword)
 	post("/api/auth/sign-out", s.signOut)
 	if s.Config.ServiceRole != "manage" {
+		post("/api/auth/setup", s.setup)
 		post("/api/auth/plugin/code", s.pluginCode)
 	}
 	post("/api/auth/email/send", s.sendCode)

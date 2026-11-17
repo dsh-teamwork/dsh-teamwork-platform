@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-15
+> **Status:** Current · **Updated:** 2026-11-17
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -151,7 +151,8 @@ under a key derived from `AUTH_SECRET`.
 - **Password**, where it is not (ADR 0006).
   `POST /api/auth/password/sign-in` checks a scrypt hash, after spending one
   of ten guesses per account per 15 minutes. `/setup?token=…`, printed by the
-  server at start, claims the first account while no password exists.
+  server at start, claims the first account while no password exists; a
+  management process neither prints nor accepts it.
   `POST /api/teams/:teamId/members` and
   `POST /api/teams/:teamId/members/:userId/password` give an admin's member a
   first password, shown once; `/teams` and `/plugin` send its owner to

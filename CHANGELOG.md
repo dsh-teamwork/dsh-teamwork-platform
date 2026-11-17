@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — A management process no longer prints or accepts the first-account link
+
+- **What:** With `SERVICE_ROLE=manage`, the server no longer prints `/setup?token=…` at start and no longer serves `POST /api/auth/setup`. The combined and user processes keep both, so a single-process install's first run is unchanged.
+- **Why:** A management service with no email door fell back to passwords and wrote a live first-account link into its log on every start, where a hosting provider's log viewer shows it, although its accounts are claimed on the shared database where members sign in.
+- **Breaking:** None for a single-process install. A split install claims its first account on the user process.
+- **Upgrade:** Nothing. A link already printed by a management process stops working there once it is updated.
+- **Refs:** `server/app/app.go`, `server/internal/httpapi/server.go`, `docs/tech/system-management.md`.
+
 ## 2026-11-17 — A redesigned /teams, a wider landing page, a theme switch and one select
 
 - **What:** `/teams` gets the site's top bar and footer, team cards (initials on navy, with overview, models and members one click away) grouped by role, a welcome with the first steps for a person with no team, and create/join in dialogs; an `?invite=` link opens the join dialog filled in. The landing page widens from `max-w-5xl` to `max-w-6xl`. A theme button switches between light and dark (the system's setting until a person chooses; the choice is kept in `localStorage` under `theme`, the instance console's key, whose own picker drops its "system" option) and sits in the top bar and footer of the landing page, the docs and `/teams`, and beside the account in a team's sidebar; the first paint follows it. The person is shown by their avatar: a team's sidebar ends in a row of avatar, name and role (after Router9 Studio's rail) and top bars show the avatar alone, both leading straight to a new account settings page (`/account`: name edited in place, email, language, light or dark, password where the instance holds passwords, your teams, sign out). The account dropdown is gone, and the email is printed only on that page. Every native `<select>` is replaced by one custom select (`components/ui/select.tsx`), the language picker included; the public pages draw the same look without React. The old picker's menu was transparent (`bg-popover` is not a token); it now uses the card surface.
