@@ -28,6 +28,13 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** Developers and automation using `apps/console`, `@dsh-teamwork/console` or `@dsh-teamwork/manage-core` must use the new paths and package names. Management development is now explicit: `pnpm --filter @dsh-teamwork/manage dev`, with its backend started separately.
 - **Upgrade:** Update package filters and imports; production build and deployment topology are unchanged.
 - **Refs:** `apps/web/`, `apps/manage/`, `scripts/dev.mjs`, `CLAUDE.md` ("Commands").
+## 2026-11-17 — Presets are listed as rows, and a plugin pin needs only its package
+
+- **What:** The console's presets are one list of rows instead of two columns of cards, as `docs/design.md` asks of lists; the templates below stay cards. Pinning a plugin asks for the npm package and version first, and its name defaults to the package.
+- **Why:** Uneven card heights, and a name field that was easy to fill with the wrong thing.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/pages/team/presets.tsx`, `apps/console/src/pages/team/plugins.tsx`.
 
 ## 2026-11-17 — The landing page's first screen: three pillars, a diagram, and real screens below
 
