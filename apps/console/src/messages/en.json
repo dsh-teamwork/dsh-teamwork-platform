@@ -1111,5 +1111,38 @@
       "teams": "Teams",
       "run": "Run it yourself"
     }
+  },
+  "modelMetadata": {
+    "title": "Get model information",
+    "pricingTitle": "Get suggested prices",
+    "hint": "Queries the public source now. Choose a reference model; the actual call ID stays unchanged. Nothing is saved until you save the form.",
+    "source": "Data source",
+    "provider": "Reference provider ID",
+    "providerHint": "Use the provider ID in Models.dev, not your custom account name. For a proxy, choose the underlying provider as a reference.",
+    "query": "Reference model ID or name",
+    "loading": "Querying…",
+    "lookup": "Query upstream",
+    "failed": "Could not query the source. Retry or continue configuring manually.",
+    "empty": "No match. Try another provider or model name, or configure manually.",
+    "candidate": "Choose a reference model",
+    "narrow": "Showing up to 50 candidates. Narrow the query if needed.",
+    "priceHint": "Reference CNY / million text tokens, rounded up for readability. 1 CNY = 1,000 reference points. Supplier tiers, long context and non-text charges may differ.",
+    "multiplier": "Price multiplier",
+    "conversionHint": "Enter a positive price multiplier.",
+    "applyHint": "Apply replaces only the fields shown above; unknown values leave your entries unchanged. Review and save separately.",
+    "apply": "Apply to form",
+    "unknown": "Unknown",
+    "yes": "Supported",
+    "no": "Not supported",
+    "contextWindow": "Context window",
+    "maxTokens": "Maximum output tokens",
+    "vision": "Image understanding",
+    "input": "Input",
+    "cacheRead": "Cache read",
+    "cacheWrite": "Cache write",
+    "outputTypes": "Output types (reference only)",
+    "output": "Output",
+    "fxAutomatic": "Converted automatically using the Frankfurter reference rate dated {date}.",
+    "fxFailed": "The exchange rate is unavailable. Retry the lookup or enter prices manually; no guessed rate is applied."
   }
 }

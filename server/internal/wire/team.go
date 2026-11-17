@@ -126,6 +126,7 @@ type ModelData struct {
 	Model         string `json:"model"`
 	ContextWindow *int64 `json:"contextWindow,omitempty"`
 	MaxTokens     *int64 `json:"maxTokens,omitempty"`
+	Vision        *bool  `json:"vision,omitempty"`
 }
 
 func (m *ModelData) validate(is *Issues) {

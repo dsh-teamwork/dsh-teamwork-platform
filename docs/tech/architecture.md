@@ -139,6 +139,19 @@ the team keeps its records under a former member.
 | `GET`, `PATCH /api/profile`; `POST /api/locale` | anyone signed in | The account's name and locale |
 | `POST /api/auth/plugin/token` | the plugin | `{ code, verifier }` → `{ token, expiresAt }` |
 
+## Live model form suggestions
+
+`POST /api/teams/{teamId}/model-metadata/lookup` is an admin-only transient
+lookup against fixed Models.dev or OpenRouter URLs, with a request deadline
+and bounded responses. Pricing lookups also obtain live USD/CNY FX from
+Frankfurter. There is no local catalog, cache, scheduled sync or saved mapping.
+The console selects a reference candidate, previews changes and explicitly
+applies known fields to the form. Existing configuration and rate APIs save
+only final values; the actual provider/model ID is never replaced. Model
+configuration includes an optional `vision` boolean, propagated through the
+plugin snapshot to image input support. Output modalities are displayed as
+reference information; the gateway remains a chat-completions route.
+
 ## Signing in on the web
 
 Every door is a route under `/api/auth/` and ends in a session cookie, a JWE

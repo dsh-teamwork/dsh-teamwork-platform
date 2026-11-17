@@ -24,6 +24,19 @@ should use and publish them.
 
 Members see team models only: never the address or the key.
 
+When publishing or editing a model, **Get model information** queries Models.dev
+or OpenRouter immediately. Choose the reference provider/model, review the
+changes and apply context limits and image understanding to the form. A custom
+call ID stays unchanged. Unknown fields retain your entries, and failed lookups
+do not stop manual configuration. Save separately to publish the values.
+
+In a model's reference-rate dialog, **Get suggested prices** converts public
+prices to CNY automatically using the latest available reference exchange rate.
+Suggestions are rounded for readability; no exchange rate entry is needed.
+Review the supplier's actual pricing and save separately. These are form
+suggestions only: there is no periodic synchronization or saved catalog link.
+
+
 ## 3. Add presets and plugins
 
 - **Presets** are roles the team shares: the model a preset calls, the tools it

@@ -1111,5 +1111,38 @@
       "teams": "团队",
       "run": "自行部署"
     }
+  },
+  "modelMetadata": {
+    "title": "获取模型信息",
+    "pricingTitle": "获取建议价格",
+    "hint": "即时查询公共数据源。选择参考模型不会改变实际调用 ID，填写结果在保存表单后才生效。",
+    "source": "数据源",
+    "provider": "参考 Provider ID",
+    "providerHint": "填写 Models.dev 中的 Provider ID，不是自定义账户名称。代理渠道可选择底层厂商作为参考。",
+    "query": "参考模型 ID 或名称",
+    "loading": "查询中…",
+    "lookup": "查询上游",
+    "failed": "无法查询数据源，请重试或继续手动配置。",
+    "empty": "未找到匹配项，请更换 Provider 或模型名称，或手动配置。",
+    "candidate": "选择参考模型",
+    "narrow": "最多显示 50 个候选，请缩小查询范围。",
+    "outputTypes": "输出类型（仅供参考）",
+    "priceHint": "参考价为人民币 / 百万文本 token，已向上取整为易读数值。1 元 = 1,000 参考积分。供应商阶梯、长上下文和非文本费用可能不同。",
+    "multiplier": "价格倍率",
+    "conversionHint": "请填写正数价格倍率。",
+    "applyHint": "应用将替换上面列出的字段；未知值保留已有填写。请核对后单独保存。",
+    "apply": "应用到表单",
+    "unknown": "未知",
+    "yes": "支持",
+    "no": "不支持",
+    "contextWindow": "上下文窗口",
+    "maxTokens": "最大输出 token",
+    "vision": "视觉理解",
+    "input": "输入",
+    "output": "输出",
+    "cacheRead": "缓存读取",
+    "cacheWrite": "缓存写入",
+    "fxAutomatic": "已按 Frankfurter {date} 的参考汇率自动换算。",
+    "fxFailed": "暂时无法获取汇率，请重新查询或手动填写价格；系统不会使用猜测的汇率。"
   }
 }
