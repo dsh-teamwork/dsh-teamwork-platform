@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The landing page tells the team story; the console's sidebar is grouped
+
+- **What:** The home page is rewritten around "from super individual to super team": what changes when a team shares its agents, every platform the team works on (terminal and web console available, the mobile app on the hosted service, DSH in the cloud marked as coming), collaboration (presets, plugins, the team assistant, share and review), governance (budgets, usage, keys, membership) and, on the deep floor, the team's assets (versions, restore, export). Its primary call is "Create a team", with "Run it yourself" beside it, and narrow screens get a section menu. The FAQ no longer says a person can be in one team only, and states where provider keys really live. The team console's sidebar groups its pages into Team assets, Collaboration and Governance, gives each page its own icon, moves the account, password, language and sign-out into one menu, and becomes a sheet on narrow screens.
+- **Why:** The page described only configuration sync, while usage, budgets, reviewed sharing, history and the assistant had shipped; and the flat nine-item sidebar mixed what a team publishes with what it governs.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/public/home.tsx`, `apps/console/src/components/team/console-shell.tsx`, `docs/design.md` ("Component rules").
+
 ## 2026-11-16 — Neutral black-and-white palette with navy and amber accents
 
 - **What:** The web app and the console drop the warm paper and indigo-tinted scale for neutral greys: black primary buttons in light, white in dark, the same frame as DeepSeek Harness. `--brand` stays navy and marks team identity only; a new `--signal` (amber) marks what needs attention. The landing page drops its navy ocean for a black wave line with the fluke faint behind it and one navy closing band; the console's selected section is a grey fill with a navy bar, and pending reviews carry an amber dot. The share card is drawn on white.

@@ -1,41 +1,88 @@
 /**
  * The frame of a team's console (`/teams/{teamId}/…`): a sidebar with the team
- * switcher, one link per page and the account, and the page beside it. On a
- * narrow screen the sidebar becomes a bar above the page. Which pages exist is
- * `SECTIONS`.
+ * switcher, the pages in groups and the account menu, and the page beside it.
+ * The groups follow how a team uses the product: the team's assets (what it
+ * publishes), collaboration (how members share and what was kept), and
+ * governance (who is in and what they spend); an edition's own team pages
+ * join governance. On a narrow screen the sidebar becomes a top bar whose menu
+ * opens the same navigation in a sheet. Which pages exist is `GROUPS`.
  */
 
-import { ChartNoAxesCombined, Check, ChevronsUpDown, Cpu, Gauge, Layers, LayoutGrid, LayoutDashboard, LogOut, Puzzle, Users, type LucideIcon } from 'lucide-react';
-import { DropdownMenu } from 'radix-ui';
-import type { ReactNode } from 'react';
+import {
+  ChartNoAxesCombined,
+  Check,
+  ChevronsUpDown,
+  Cpu,
+  Gauge,
+  GitPullRequestArrow,
+  History,
+  KeyRound,
+  Languages,
+  Layers,
+  LayoutDashboard,
+  LayoutGrid,
+  LogOut,
+  Menu,
+  Puzzle,
+  UserRound,
+  Users,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
+import { Dialog, DropdownMenu } from 'radix-ui';
+import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useLocale, useTranslations } from 'use-intl';
 
-import { LocalePicker } from '@/components/locale-picker';
+import { useChooseLocale } from '@/components/locale-picker';
 import type { Team, TeamSummary } from '@/lib/api';
+import { LOCALES } from '@/lib/locale';
 import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
-/** Each page of a team's console: its path below `/teams/{teamId}` and its icon. */
-const SECTIONS: { path: string; key: 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets' | 'sharing' | 'history'; icon: LucideIcon }[] = [
-  { path: '', key: 'overview', icon: LayoutDashboard },
-  { path: 'models', key: 'models', icon: Cpu },
-  { path: 'usage', key: 'usage', icon: ChartNoAxesCombined },
-  { path: 'budgets', key: 'budgets', icon: Gauge },
-  { path: 'presets', key: 'presets', icon: Layers },
-  { path: 'plugins', key: 'plugins', icon: Puzzle },
-  { path: 'sharing', key: 'sharing', icon: Layers },
-  { path: 'history', key: 'history', icon: Layers },
-  { path: 'members', key: 'members', icon: Users },
+type SectionKey = 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets' | 'sharing' | 'history';
+type GroupKey = 'assets' | 'collaboration' | 'governance';
+
+/** The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon. */
+const GROUPS: { key: GroupKey | null; sections: { path: string; key: SectionKey; icon: LucideIcon }[] }[] = [
+  { key: null, sections: [{ path: '', key: 'overview', icon: LayoutDashboard }] },
+  {
+    key: 'assets',
+    sections: [
+      { path: 'models', key: 'models', icon: Cpu },
+      { path: 'presets', key: 'presets', icon: Layers },
+      { path: 'plugins', key: 'plugins', icon: Puzzle },
+    ],
+  },
+  {
+    key: 'collaboration',
+    sections: [
+      { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
+      { path: 'history', key: 'history', icon: History },
+    ],
+  },
+  {
+    key: 'governance',
+    sections: [
+      { path: 'members', key: 'members', icon: Users },
+      { path: 'usage', key: 'usage', icon: ChartNoAxesCombined },
+      { path: 'budgets', key: 'budgets', icon: Gauge },
+    ],
+  },
 ];
+const PATHS = GROUPS.flatMap((g) => g.sections.map((s) => s.path));
 
 /** The section the path is in, so switching team keeps the person on the same kind of page. */
 function sectionOf(pathname: string, teamId: string): string {
   const rest = pathname.slice(`/teams/${teamId}`.length).replace(/^\//, '').split('/')[0] ?? '';
-  return SECTIONS.some((s) => s.path === rest) ? rest : '';
+  return PATHS.includes(rest) ? rest : '';
 }
 
 const href = (teamId: string, path: string) => (path ? `/teams/${teamId}/${path}` : `/teams/${teamId}`);
+const item = 'relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
+// The selected section: a grey fill and, beside it, the navy bar that says this is the team's (docs/design.md, "Component rules").
+const selected = 'bg-secondary font-medium before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-brand';
+const menuItem = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent';
 
 export function ConsoleShell({
   team,
@@ -52,57 +99,143 @@ export function ConsoleShell({
   children: ReactNode;
 }) {
   const t = useTranslations('team');
-  const tc = useTranslations('common');
-  const tp = useTranslations('password');
-  const { signOut, session } = useSession();
-  const locale = useLocale();
   const section = sectionOf(useLocation().pathname, team.id);
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
-      <aside className="flex flex-col gap-4 border-b bg-muted px-3 py-3 md:sticky md:top-0 md:h-dvh md:border-r md:border-b-0 md:py-4">
+      <aside className="hidden flex-col gap-4 border-r bg-muted px-3 py-4 md:sticky md:top-0 md:flex md:h-dvh">
         <TeamSwitcher team={team} teams={teams} section={section} />
-        <nav aria-label={t('nav.label')} className="-mx-1 flex gap-1 overflow-x-auto px-1 md:mx-0 md:flex-col md:overflow-visible md:px-0">
-          {SECTIONS.map(({ path, key, icon: Icon }) => (
-            <Link
-              key={key}
-              to={href(team.id, path)}
-              aria-current={section === path ? 'page' : undefined}
-              className={cn(
-                'relative flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm hover:bg-accent',
-                // The selected section: a grey fill and, beside it, the navy bar that says this is the team's (docs/design.md, "Component rules").
-                section === path && 'bg-secondary font-medium before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-brand',
-              )}
-            >
+        <Navigation team={team} section={section} />
+        <div className="mt-auto border-t pt-3">
+          <AccountMenu email={email} passwords={passwords} />
+        </div>
+      </aside>
+
+      {/* Narrow screens: the team and a menu button; the menu opens the same navigation in a sheet. */}
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <div className="sticky top-0 z-30 flex items-center gap-2 border-b bg-muted px-3 py-2 md:hidden">
+          <div className="min-w-0 flex-1">
+            <TeamSwitcher team={team} teams={teams} section={section} />
+          </div>
+          <Dialog.Trigger className="grid size-9 shrink-0 place-items-center rounded-md hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label={t('nav.open')}>
+            <Menu className="size-5" aria-hidden />
+          </Dialog.Trigger>
+        </div>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-foreground/30 md:hidden" />
+          <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-r bg-muted px-3 py-4 md:hidden" aria-describedby={undefined}>
+            <div className="flex items-center justify-between gap-2 px-1">
+              <Dialog.Title className="text-sm font-semibold">{team.name}</Dialog.Title>
+              <Dialog.Close className="grid size-8 place-items-center rounded-md hover:bg-accent" aria-label={t('nav.close')}>
+                <X className="size-4" aria-hidden />
+              </Dialog.Close>
+            </div>
+            <Navigation team={team} section={section} onNavigate={close} />
+            <div className="mt-auto border-t pt-3">
+              <AccountMenu email={email} passwords={passwords} />
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <main className="mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">{children}</main>
+    </div>
+  );
+}
+
+/** The console's pages in their groups, then an edition's own team pages under governance. */
+function Navigation({ team, section, onNavigate }: { team: Team; section: string; onNavigate?: () => void }) {
+  const t = useTranslations('team');
+  const { session } = useSession();
+  const locale = useLocale();
+  return (
+    <nav aria-label={t('nav.label')} className="flex flex-col gap-4">
+      {GROUPS.map((group) => (
+        <div key={group.key ?? 'top'} className="flex flex-col gap-0.5">
+          {group.key && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${group.key}`)}</p>}
+          {group.sections.map(({ path, key, icon: Icon }) => (
+            <Link key={key} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
               <Icon className="size-4" aria-hidden />
               {t(`nav.${key}`)}
             </Link>
           ))}
-          {session.teamPages.map((page) => (
-            <a key={page.path} href={`${page.path}${encodeURIComponent(team.id)}`} className="flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm hover:bg-accent">
-              <LayoutGrid className="size-4" aria-hidden />
-              {page.labels[locale === 'zh-CN' ? 'zh-CN' : 'en']}
-            </a>
-          ))}
-        </nav>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-sm text-muted-foreground md:mt-auto md:flex-col md:flex-nowrap md:items-stretch">
-          <span className="truncate" title={email}>
-            {email}
-          </span>
-          {passwords && (
-            <Link to="/password" className="underline-offset-4 hover:underline">
-              {tp('change')}
+          {group.key === 'governance' &&
+            session.teamPages.map((page) => (
+              <a key={page.path} href={`${page.path}${encodeURIComponent(team.id)}`} className={item}>
+                <LayoutGrid className="size-4" aria-hidden />
+                {page.labels[locale === 'zh-CN' ? 'zh-CN' : 'en']}
+              </a>
+            ))}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+/** The signed-in person: their account, password, language and signing out, behind one button. */
+function AccountMenu({ email, passwords }: { email: string; passwords: boolean }) {
+  const tc = useTranslations('common');
+  const tp = useTranslations('password');
+  const t = useTranslations('team.nav');
+  const { signOut } = useSession();
+  const locale = useLocale();
+  const { pending, choose } = useChooseLocale();
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger className="flex w-full items-center gap-2.5 rounded-md p-1.5 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label={t('account')}>
+        <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold uppercase">
+          {email.slice(0, 1) || '?'}
+        </span>
+        <span className="min-w-0 flex-1 truncate" title={email}>
+          {email}
+        </span>
+        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content side="top" align="start" sideOffset={6} className="z-50 min-w-56 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+          <DropdownMenu.Item asChild>
+            <Link to="/account" className={menuItem}>
+              <UserRound className="size-4" aria-hidden />
+              {tc('account')}
             </Link>
+          </DropdownMenu.Item>
+          {passwords && (
+            <DropdownMenu.Item asChild>
+              <Link to="/password" className={menuItem}>
+                <KeyRound className="size-4" aria-hidden />
+                {tp('change')}
+              </Link>
+            </DropdownMenu.Item>
           )}
-          <LocalePicker />
-          <button type="button" onClick={() => void signOut()} className="flex items-center gap-2 hover:text-foreground">
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className={menuItem} disabled={pending}>
+              <Languages className="size-4" aria-hidden />
+              <span className="flex-1">{tc('language')}</span>
+              <span className="text-xs text-muted-foreground">{tc(`localeNames.${locale === 'zh-CN' ? 'zh-CN' : 'en'}`)}</span>
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent sideOffset={4} className="z-50 min-w-40 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+                <DropdownMenu.RadioGroup value={locale} onValueChange={(next) => next !== locale && void choose(next)}>
+                  {LOCALES.map((l) => (
+                    <DropdownMenu.RadioItem key={l} value={l} className={menuItem}>
+                      <Check className={cn('size-4', l !== locale && 'invisible')} aria-hidden />
+                      {tc(`localeNames.${l}`)}
+                    </DropdownMenu.RadioItem>
+                  ))}
+                </DropdownMenu.RadioGroup>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
+          <DropdownMenu.Separator className="my-1 h-px bg-border" />
+          <DropdownMenu.Item className={menuItem} onSelect={() => void signOut()}>
             <LogOut className="size-4" aria-hidden />
             {tc('signOut')}
-          </button>
-        </div>
-      </aside>
-      <main className="mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">{children}</main>
-    </div>
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 
@@ -131,10 +264,7 @@ function TeamSwitcher({ team, teams, section }: { team: Team; teams: TeamSummary
           <DropdownMenu.Label className="px-2 py-1.5 text-xs text-muted-foreground">{t('switcher.label')}</DropdownMenu.Label>
           {teams.map((other) => (
             <DropdownMenu.Item key={other.id} asChild>
-              <Link
-                to={href(other.id, section)}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
-              >
+              <Link to={href(other.id, section)} className={menuItem}>
                 <span className="min-w-0 flex-1 truncate">{other.name}</span>
                 <span className="text-xs text-muted-foreground">{t(`role.${other.role}`)}</span>
                 <Check className={cn('size-4', other.id !== team.id && 'invisible')} aria-hidden />
@@ -143,7 +273,7 @@ function TeamSwitcher({ team, teams, section }: { team: Team; teams: TeamSummary
           ))}
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
           <DropdownMenu.Item asChild>
-            <Link to="/teams" className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent">
+            <Link to="/teams" className={menuItem}>
               <LayoutGrid className="size-4" aria-hidden />
               {t('switcher.all')}
             </Link>
