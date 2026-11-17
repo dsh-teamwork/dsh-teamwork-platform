@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-17 — The landing page's first screen: an install card and real screens
 
-- **What:** The hero drops its two buttons (creating a team and self-hosting stay in the top bar) for one card beside the title: DSH Desktop's `Plugins → Add plugin` with the package to copy, the command-line install, and the guide. Below it, real captures of DSH Desktop's Teamwork panel, the web console and the phone app (labelled hosted), in `apps/console/public/home/`.
+- **What:** The hero drops its two buttons (creating a team and self-hosting stay in the top bar) for one card beside the title: DSH Desktop's `Plugins → Add plugin` with the package to copy, the command-line install, and the guide; the title and that card sit on the left. On the right, real captures of DSH Desktop's Teamwork panel, the web console and the phone app (labelled hosted), one set per language, in `apps/console/public/home/`.
 - **Why:** The first screen repeated the top bar's actions, gave installing a single grey line, and showed no product.
 - **Breaking:** None.
 - **Upgrade:** Nothing.

@@ -13,9 +13,9 @@ import { Sea } from './sea';
 
 /*
  * The home page every instance has: what DSH Teamwork is, as an open-source
- * project and as a service, and the one way in: installing the plugin, beside
- * the title, then the product as real screens (docs/design.md, "The landing
- * page's first screen"). The story is the brand's
+ * project and as a service, and the one way in: the title and installing the
+ * plugin on the left, the product as real screens on the right (docs/design.md,
+ * "The landing page's first screen"). The story is the brand's
  * (docs/design.md, "The mark"): one person's work surfaces, and what the team
  * does settles underneath as its own assets. So the page goes down: from the
  * surface where people work (every platform), through collaboration and
@@ -149,45 +149,46 @@ function Install({ locale }: { locale: Locale }) {
 }
 
 /**
- * The product where people use it, as real screens: the web console in front,
- * a member's DSH Desktop with the Teamwork panel behind it, and the phone app
- * (hosted service) beside them. Captured from the real interfaces with a demo
- * team; the console and the phone follow the page's language.
+ * The product where people use it, as real screens, on the hero's right: a
+ * member's DSH Desktop with the Teamwork panel, the admin's web console, and
+ * the phone app (hosted service). Captured from the real interfaces with a demo
+ * team, one set per language (docs/design.md, "The landing page's first
+ * screen").
  */
 function Screens({ locale }: { locale: Locale }) {
   const t = createTranslator({ locale, messages: locale === 'zh-CN' ? zhCN : en, namespace: 'home.screens' });
   const tag = locale === 'zh-CN' ? 'zh' : 'en';
   const label = 'absolute -top-3 left-3 z-10 whitespace-nowrap rounded-full border bg-background px-2 py-0.5 font-mono text-[10px] font-semibold shadow-sm sm:px-2.5 sm:text-[11px]';
+  const bar = (
+    <div aria-hidden="true" className="flex h-5 items-center gap-1.5 border-b bg-muted px-2.5">
+      <span className="size-1.5 rounded-full bg-border" />
+      <span className="size-1.5 rounded-full bg-border" />
+      <span className="size-1.5 rounded-full bg-border" />
+    </div>
+  );
   return (
-    <figure className="relative mx-auto mt-14 w-full max-w-6xl px-6 pb-[16%] sm:mt-16">
+    <figure className="relative aspect-[10/9] w-full">
       <figcaption className="sr-only">{t('caption')}</figcaption>
-      {/* The member's desktop: DSH with the Teamwork panel, behind on the left. */}
-      <div className="relative w-[60%] overflow-hidden rounded-xl border bg-card shadow-xl">
-        <div aria-hidden="true" className="flex h-6 items-center gap-1.5 border-b bg-muted px-3">
-          <span className="size-2 rounded-full bg-border" />
-          <span className="size-2 rounded-full bg-border" />
-          <span className="size-2 rounded-full bg-border" />
+      {/* The member's desktop: DSH with the Teamwork panel, at the back. */}
+      <div className="absolute top-3 left-0 w-[80%]">
+        <p className={label}>{t('desktop')}</p>
+        <div className="overflow-hidden rounded-lg border bg-card shadow-lg">
+          {bar}
+          <img src={`/home/desktop-${tag}.webp`} alt={t('desktopAlt')} width={1200} height={696} loading="eager" className="block w-full" />
         </div>
-        <img src="/home/desktop.webp" alt={t('desktopAlt')} width={1200} height={535} loading="eager" className="block w-full" />
       </div>
-      <p className={`${label} left-9`}>{t('desktop')}</p>
-      {/* The admin's console, in front and to the right. */}
-      <div className="absolute top-[18%] right-6 w-[62%]">
+      {/* The admin's console, in front on the right. */}
+      <div className="absolute top-[40%] right-0 w-[76%]">
         <p className={label}>{t('console')}</p>
-        <div className="overflow-hidden rounded-xl border bg-card shadow-2xl">
-          <div aria-hidden="true" className="flex h-6 items-center gap-2 border-b bg-muted px-3">
-            <span className="size-2 rounded-full bg-border" />
-            <span className="size-2 rounded-full bg-border" />
-            <span className="size-2 rounded-full bg-border" />
-            <span className="ml-2 h-3.5 w-1/3 rounded bg-background" />
-          </div>
+        <div className="overflow-hidden rounded-lg border bg-card shadow-2xl">
+          {bar}
           <img src={`/home/console-${tag}.webp`} alt={t('consoleAlt')} width={1600} height={700} loading="eager" className="block w-full" />
         </div>
       </div>
-      {/* The member's phone, in front of both. */}
-      <div className="absolute right-[3%] bottom-0 w-[22%] sm:w-[17%]">
-        <p className={`${label} right-0 left-auto`}>{t('phone')}</p>
-        <div className="overflow-hidden rounded-[1rem] border-[3px] border-foreground bg-card shadow-2xl sm:rounded-[1.6rem] sm:border-[5px]">
+      {/* The member's phone, in front of both on the left. */}
+      <div className="absolute bottom-0 left-[4%] w-[25%]">
+        <p className={label}>{t('phone')}</p>
+        <div className="overflow-hidden rounded-[1rem] border-[3px] border-foreground bg-card shadow-2xl sm:rounded-[1.4rem] sm:border-4">
           <img src={`/home/phone-${tag}.webp`} alt={t('phoneAlt')} width={600} height={1022} loading="eager" className="block w-full" />
         </div>
       </div>
@@ -278,16 +279,15 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
       </header>
 
       <main>
-        <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-6 pt-14 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-end lg:gap-14">
+        <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-12 px-6 pt-14 sm:pt-20 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:gap-12">
           <div className="flex flex-col gap-6">
             <p className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('eyebrow')}</p>
-            <h1 className="text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-6xl sm:leading-[1.08]">{t('title')}</h1>
-            <p className="max-w-2xl text-lg text-muted-foreground">{t('lede')}</p>
+            <h1 className="text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-5xl sm:leading-[1.08]">{t('title')}</h1>
+            <p className="text-lg text-muted-foreground">{t('lede')}</p>
+            <Install locale={locale} />
           </div>
-          <Install locale={locale} />
+          <Screens locale={locale} />
         </section>
-
-        <Screens locale={locale} />
 
         <Sea />
 
