@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The review and history pages show changes field by field
+
+- **What:** `GET /api/teams/{teamId}/submissions` takes a `state` filter. Sharing and review opens on the review queue for an admin (on a member's own submissions otherwise), with the other view one tab away; submitting a preset or a plugin is a dialog with a drop zone (a plugin archive is still inspected in the browser and checked by digest); each submission is a row that opens to show its change field by field against the live version, and approve, reject (reason required) and withdraw confirm in a dialog. Versions and backups is a timeline with one row of filters (kind, resource, author, any / 7 / 30 days / a custom range of whole days); the live version is marked, any other shows what restoring it would change, and restoring confirms in a dialog that links to review.
+- **Why:** Both pages were native file inputs, raw JSON side by side and inline confirmations.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/pages/team/sharing.tsx`, `apps/console/src/pages/team/history.tsx`, `apps/console/src/lib/config-diff.ts`, `docs/tech/team-assistant.md`.
+
 ## 2026-11-17 — A redesigned /teams, a wider landing page, a theme switch and one select
 
 - **What:** `/teams` gets the site's top bar and footer, team cards (initials on navy, with overview, models and members one click away) grouped by role, a welcome with the first steps for a person with no team, and create/join in dialogs; an `?invite=` link opens the join dialog filled in. The landing page widens from `max-w-5xl` to `max-w-6xl`. A theme button switches between light and dark (the system's setting until a person chooses; the choice is kept in `localStorage` under `theme`, the instance console's key, whose own picker drops its "system" option) and sits in the top bar and footer of the landing page, the docs and `/teams`, and beside the account in a team's sidebar; the first paint follows it. The person is shown by their avatar: a team's sidebar ends in a row of avatar, name and role (after Router9 Studio's rail) and top bars show the avatar alone, both leading straight to a new account settings page (`/account`: name edited in place, email, language, light or dark, password where the instance holds passwords, your teams, sign out). The account dropdown is gone, and the email is printed only on that page. Every native `<select>` is replaced by one custom select (`components/ui/select.tsx`), the language picker included; the public pages draw the same look without React. The old picker's menu was transparent (`bg-popover` is not a token); it now uses the card surface.

@@ -31,6 +31,14 @@ func TestReviewedPresetPublicationAndUpdate(t *testing.T) {
 		}
 		refused(t, "outsider listing", outsider.get(base+"/submissions"), 404, "team_not_found")
 		pending := must(t, member.post(path+"/submit", map[string]any{"revision": draft["revision"]}), 200)
+		// The review queue is a server filter: what waits, and nothing else.
+		if rows := jsonArray(t, admin.get(base+"/submissions?state=pending")); len(rows) != 1 || rows[0].(map[string]any)["id"] != id {
+			t.Fatalf("pending queue: %v", rows)
+		}
+		if rows := jsonArray(t, admin.get(base+"/submissions?state=published")); len(rows) != 0 {
+			t.Fatalf("published before approval: %v", rows)
+		}
+		refused(t, "unknown state", admin.get(base+"/submissions?state=lost"), 400, "invalid_request")
 		refused(t, "member approving", member.post(path+"/approve", map[string]any{"revision": pending["revision"]}), 403, "admin_required")
 		refused(t, "editing pending", member.send("PUT", path, map[string]any{"config": config, "baseVersion": 0, "note": "changed", "revision": pending["revision"]}), 409, "submission_conflict")
 		approved := must(t, admin.post(path+"/approve", map[string]any{"revision": pending["revision"]}), 200)

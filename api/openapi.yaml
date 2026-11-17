@@ -814,6 +814,9 @@ paths:
       - { name: teamId, in: path, required: true, schema: { type: string } }
     get:
       summary: Own submissions; administrators see the team
+      parameters:
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: state, in: query, description: Keep only submissions in this state, schema: { type: string, enum: [draft, pending, published, rejected, withdrawn] } }
       responses:
         '200':
           description: Success

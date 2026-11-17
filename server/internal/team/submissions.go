@@ -62,7 +62,10 @@ func (s *Service) Submission(ctx context.Context, userID, teamID, id string) (*e
 	}
 	return r, err
 }
-func (s *Service) ListSubmissions(ctx context.Context, userID, teamID string, offset int) ([]SubmissionView, error) {
+
+// ListSubmissions pages the submissions the caller may see, newest first: the
+// team's for an admin, their own for a member; `state`, when given, keeps one.
+func (s *Service) ListSubmissions(ctx context.Context, userID, teamID string, offset int, state string) ([]SubmissionView, error) {
 	m, err := s.RequireMembership(ctx, userID, teamID, false)
 	if err != nil {
 		return nil, err
@@ -70,6 +73,12 @@ func (s *Service) ListSubmissions(ctx context.Context, userID, teamID string, of
 	q := s.DB.ResourceSubmission.Query().Where(resourcesubmission.TeamID(teamID))
 	if m.Role != membership.RoleAdmin {
 		q.Where(resourcesubmission.AuthorID(userID))
+	}
+	if state != "" {
+		if resourcesubmission.StateValidator(resourcesubmission.State(state)) != nil {
+			return nil, wire.E(http.StatusBadRequest, "invalid_request")
+		}
+		q.Where(resourcesubmission.StateEQ(resourcesubmission.State(state)))
 	}
 	rows, err := q.Order(ent.Desc(resourcesubmission.FieldCreatedAt), ent.Desc(resourcesubmission.FieldID)).Offset(offset).Limit(50).All(ctx)
 	if err != nil {
