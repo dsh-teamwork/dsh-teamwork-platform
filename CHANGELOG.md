@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The console names its terms and offers only what the instance can do
+
+- **What:** The Chinese console translates Provider and Key with the terms `/docs` already uses, instead of leaving them in English. Usage explains points (the team's own measure of cost, CNY 1 = 1,000 points at the reference rates, counted by budgets) and that a provider still bills its own key directly, in place of "BYOK". A budget form on an instance that sends no email offers no notification choice and creates the policy notifying nobody. A new budget reports "Budget created", not "updated". English budget labels write "token" in lower case, and the Chinese home page's eyebrow is no longer forced to capitals.
+- **Why:** Terms a reader did not know, a mixed-language Chinese screen, and an email option that could never send.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/console/src/messages/`, `apps/console/src/pages/team/budgets.tsx`, `apps/console/content/docs/*/admins.md`.
+
 ## 2026-11-17 — A provider key is checked before it is saved; a new member is not asked for the password just used
 
 - **What:** `POST /api/teams/{teamId}/providers/check` reads a model list with a typed address and key without saving either. The console calls it before connecting or re-keying a provider, so a key the provider answers 401 or 403 to (`provider_key_rejected`, also from `model-catalog`) or a refused address stays on the form beside its field. `provider_address_refused` is replaced by its reason: `provider_address_private`, `provider_address_plain_http`, `provider_address_unresolved`. A session that signed in with an admin-set password changes it without the current one (`ChangePassword.current` is optional; the session's user gains `changeWithoutCurrent`); a session issued before an admin reset still needs it. After that change a member in one team lands in it. The first password and the plugin's code have copy buttons; the plugin's authorization page names the account and how many teams it reaches, and offers Cancel. A wrong `/setup` token is `setup_link_invalid`, no longer `setup_closed`.

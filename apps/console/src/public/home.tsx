@@ -204,7 +204,8 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
 
       <main>
         <section className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pt-14 sm:pt-24">
-          <p className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('eyebrow')}</p>
+          {/* Capitals suit the English label; a Chinese one keeps its Latin product name as written. */}
+          <p className={`font-mono text-xs font-semibold tracking-widest text-muted-foreground ${locale === 'en' ? 'uppercase' : ''}`}>{t('eyebrow')}</p>
           <h1 className="max-w-4xl text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-6xl sm:leading-[1.08]">{t('title')}</h1>
           <p className="max-w-2xl text-lg text-muted-foreground">{t('lede')}</p>
           <div className="flex flex-wrap items-center gap-3">
