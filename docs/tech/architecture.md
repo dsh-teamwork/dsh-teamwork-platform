@@ -146,6 +146,10 @@ the team keeps its records under a former member.
 lookup against fixed Models.dev or OpenRouter URLs, with a request deadline
 and bounded responses. Pricing lookups also obtain live USD/CNY FX from
 Frankfurter. There is no local catalog, cache, scheduled sync or saved mapping.
+A provider the console lists (`apps/web/src/lib/provider-catalog.ts`) is named
+by its Models.dev provider id and sits at the address Models.dev states for it,
+except where an entry says why not, so a team's provider is read there under
+its own name; a renamed second account is matched to its entry by address.
 For Models.dev, a provider the catalog does not name (a team's own proxy)
 searches every provider for the exact model id instead of a substring. The
 console fills known fields into the form in one click, only from the one

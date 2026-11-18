@@ -21,7 +21,9 @@ become its admin. Every new team gets a **team assistant** preset.
 ## 2. Connect a provider and publish models
 
 Open **Models → Add provider**. Pick a provider from the list and paste its API
-key, or enter any OpenAI-compatible address under **Custom**. The key is checked
+key (each listed provider is named as [Models.dev](https://models.dev) names it,
+such as `alibaba-cn` or `moonshotai-cn`, which is where its models' limits and
+prices are read), or enter any OpenAI-compatible address under **Custom**. The key is checked
 with the provider before it is saved: a key the provider refuses, or an address
 this server may not call, is shown on the form with what to change. The key is
 stored encrypted and can never be read back. Then tick the models the team

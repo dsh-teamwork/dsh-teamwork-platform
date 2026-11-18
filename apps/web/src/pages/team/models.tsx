@@ -96,7 +96,7 @@ function Models({ team, configs, providers, reload }: Props) {
   const editionSection = editionModels();
   const models = configs.filter((c): c is ModelConfig => c.kind === 'model');
   const providerOf = (m: ModelConfig) => providers.find((p) => p.name === m.data.provider);
-  const referenceOf = (m: ModelConfig) => catalogEntry(providerOf(m)?.baseUrl ?? '')?.modelsDevId ?? m.data.provider;
+  const referenceOf = (m: ModelConfig) => catalogEntry(providerOf(m)?.baseUrl ?? '')?.id ?? m.data.provider;
   const usedBy = (id: string) => configs.filter((c) => c.kind === 'preset' && c.data.modelConfigId === id);
   // Which provider the dialog connects or adds models to: `true` for a new one.
   const [adding, setAdding] = useState<Provider | true | null>(null);
@@ -368,7 +368,7 @@ function ConnectDialog({
   const [typedDetails, setTypedDetails] = useState<Partial<ModelConfig['data']>>({});
   // Each ticked model's public reference: undefined while it is read, null when there is none.
   const [references, setReferences] = useState<Record<string, Reference | null | undefined>>({});
-  const referenceProvider = catalogEntry(baseUrl)?.modelsDevId ?? connected ?? '';
+  const referenceProvider = catalogEntry(baseUrl)?.id ?? connected ?? '';
   const taken = new Set(providers.map((p) => p.name));
   const custom = pick === 'custom';
 

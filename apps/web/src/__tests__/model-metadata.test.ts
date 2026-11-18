@@ -1,6 +1,7 @@
+import { providerMark } from '@dsh-teamwork/shared';
 import { expect, it } from 'vitest';
 
-import { catalogEntry } from '@/lib/provider-catalog';
+import { catalogEntry, PROVIDER_CATALOG } from '@/lib/provider-catalog';
 import { agreedValues, changedValues, completeRates, exactMatches, referenceFrom, suggestedRates, type ModelMetadata } from '@/lib/model-metadata';
 
 it('converts automatically supplied FX to simple rates without floating point drift', () => {
@@ -16,14 +17,13 @@ it('retains unknown buckets and never rounds a positive supplier cost to free', 
   expect(suggestedRates({ input: '1000000000' }, '7')).toBeNull();
 });
 
-it('uses domestic provider namespaces without changing the call address', () => {
-  expect(catalogEntry('https://dashscope.aliyuncs.com/compatible-mode/v1')?.modelsDevId).toBe('alibaba-cn');
-  expect(catalogEntry('https://api.moonshot.cn/v1')?.modelsDevId).toBe('moonshotai-cn');
-  expect(catalogEntry('https://open.bigmodel.cn/api/paas/v4')?.modelsDevId).toBe('zhipuai');
-  expect(catalogEntry('https://ark.cn-beijing.volces.com/api/v3')?.modelsDevId).toBe('volcengine');
-  expect(catalogEntry('https://api.siliconflow.cn/v1')?.modelsDevId).toBe('siliconflow-cn');
-  expect(catalogEntry('https://api.minimaxi.com/v1')?.modelsDevId).toBe('minimax-cn');
+it('names each listed provider as Models.dev does, and finds it by address', () => {
+  expect(PROVIDER_CATALOG.map((p) => p.id)).toEqual(['deepseek', 'openai', 'alibaba-cn', 'moonshotai-cn', 'zhipuai', 'volcengine', 'minimax-cn', 'siliconflow-cn', 'openrouter']);
+  expect(catalogEntry('https://dashscope.aliyuncs.com/compatible-mode/v1/')?.id).toBe('alibaba-cn');
+  expect(catalogEntry('https://api.minimaxi.com/v1')?.id).toBe('minimax-cn');
   expect(catalogEntry('https://custom.example/v1')).toBeUndefined();
+  // Every listed provider is drawn by its maker's mark, from its Models.dev id alone.
+  expect(PROVIDER_CATALOG.map((p) => providerMark(p.id))).toEqual(['deepseek', 'openai', 'qwen', 'kimi', 'zhipu', 'doubao', 'minimax', 'siliconflow', 'openrouter']);
 });
 
 it('fills only from exact ids, and from several only when they agree', () => {

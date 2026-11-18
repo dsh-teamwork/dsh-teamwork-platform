@@ -523,12 +523,12 @@
     "catalog": {
       "deepseek": "DeepSeek",
       "openai": "OpenAI",
-      "qwen": "Qwen (Alibaba Cloud Model Studio)",
-      "moonshot": "Kimi (Moonshot AI)",
-      "zhipu": "Zhipu GLM",
-      "doubao": "Doubao (Volcano Engine Ark)",
-      "minimax": "MiniMax",
-      "siliconflow": "SiliconFlow",
+      "alibaba-cn": "Qwen (Alibaba Cloud Model Studio)",
+      "moonshotai-cn": "Kimi (Moonshot AI)",
+      "zhipuai": "Zhipu GLM",
+      "volcengine": "Doubao (Volcano Engine Ark)",
+      "minimax-cn": "MiniMax",
+      "siliconflow-cn": "SiliconFlow",
       "openrouter": "OpenRouter"
     },
     "models": {

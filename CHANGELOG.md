@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — The listed providers are named as Models.dev names them
+
+- **What:** The console's provider list (`PROVIDER_CATALOG`) uses Models.dev's provider ids as each provider's id and default name in the team (`deepseek`, `openai`, `alibaba-cn`, `moonshotai-cn`, `zhipuai`, `volcengine`, `minimax-cn`, `siliconflow-cn`, `openrouter`), at the address Models.dev states (DeepSeek moves to `https://api.deepseek.com`); OpenAI, which Models.dev gives no address, and MiniMax, whose address there is its Anthropic API, keep their OpenAI-compatible ones. `modelsDevId` is gone: a provider's name is the namespace its models' limits and prices are read under, and a renamed second account is matched by address. The display names' message keys follow the ids.
+- **Why:** One id for a provider in the team and in its public reference, so a model maps straight to its metadata and price.
+- **Breaking:** A provider connected earlier under `qwen`, `moonshot`, `zhipu`, `doubao`, `minimax` or `siliconflow` keeps its name and still reads Models.dev through its address; one renamed from DeepSeek at `…/v1` now searches every Models.dev provider for its exact model ids. Reconnect it to take the new name.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/lib/provider-catalog.ts`, `docs/tech/architecture.md`, the `/docs` admins page.
+
 ## 2026-11-18 — Providers and models by their logos; publishing a model sets its rate
 
 - **What:** `@dsh-teamwork/shared` holds the marks of the mainstream model makers and providers (OpenAI, Anthropic, Gemini, DeepSeek, Qwen, Kimi, GLM, Doubao, MiniMax, Llama, Mistral, Grok, Ernie, Hunyuan, Step, Baichuan, SiliconFlow, OpenRouter, Ollama; LobeHub's icons, MIT) and `providerMark`, which picks one from a model's id, name, provider or address. The console shows them wherever it names a provider or a model (models, team resources, presets, usage, My usage, a DSH session's model menu, whose `Select` options take an icon), as does the home page's diagram, whose `provider-logos.ts` is gone. Publishing from a provider's list looks each ticked model up as it is ticked and publishes it with the limits and reference rate its agreeing public reference states (a missing cache rate charged as uncached input), so it can be called at once; the per-model form in that dialog is gone, kept for a model ID typed by hand. The models page lists models with no rate and fills them all from reference prices in one click, and a rate dialog for an unpriced model opens filled. `mountWeb` takes `models`, a section an edition shows first on the models page for the models it supplies.

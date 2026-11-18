@@ -523,12 +523,12 @@
     "catalog": {
       "deepseek": "DeepSeek",
       "openai": "OpenAI",
-      "qwen": "通义千问（阿里云百炼）",
-      "moonshot": "Kimi（月之暗面）",
-      "zhipu": "智谱 GLM",
-      "doubao": "豆包（火山方舟）",
-      "minimax": "MiniMax",
-      "siliconflow": "硅基流动",
+      "alibaba-cn": "通义千问（阿里云百炼）",
+      "moonshotai-cn": "Kimi（月之暗面）",
+      "zhipuai": "智谱 GLM",
+      "volcengine": "豆包（火山方舟）",
+      "minimax-cn": "MiniMax",
+      "siliconflow-cn": "硅基流动",
       "openrouter": "OpenRouter"
     },
     "models": {
