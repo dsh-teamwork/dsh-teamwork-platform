@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current — My DSH in the web console is planned below · **Updated:** 2026-11-18
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -447,6 +447,81 @@ module registration is shimmed; its AES implementation is not mocked.
 - DSH's experimental Remote API and approval behavior must be revalidated when
   its pinned version changes. No relay-side content audit or content search
   can operate on encrypted payloads.
+
+## My DSH in the web console (plan)
+
+**Status of this section: Plan.** A member uses their own computers from the
+browser, as the phone app does, and sees and revokes every device paired with
+them. It is the web console's third way to reach a DSH, beside Team DSH
+([shared-dsh.md](shared-dsh.md)) and, in the hosted edition, Cloud DSH.
+
+### What the member gets
+
+- **Workspace → My DSH**, `/teams/{teamId}/my-dsh[/{computerId}[/{sessionId}]]`,
+  in the same three columns as Team DSH. It is listed while the account has at
+  least one recorded host, in every team alike: the computers are the
+  person's, not a team's.
+- **The second column lists the account's computers**: name, online or when
+  last seen, and the DSH version each reported. The open one shows its
+  sessions beneath it, with the amber dot on one that waits, once this browser
+  is paired and unlocked.
+- **The third column** is, by state:
+  - not paired from this browser: the six-letter code from the Teamwork panel
+    ("Phone"), then the eight-digit safety code to compare, then approval on
+    the desktop ("Pairing" above, unchanged);
+  - paired and locked: the computer's PIN, `owner`'s, as the phone gives it;
+  - unlocked: a session, or a new one started by its first message.
+- **Devices**, on each computer: every pairing of the account to it, the
+  phone app's and every browser's, with its name, status, last use and
+  whether it pushes, this browser marked. Any of them can be revoked.
+
+### What changes on the server
+
+- **`GET /relay/hosts`**, to the web console's session cookie only: the
+  account's hosts, each with whether its socket is open, `last_seen_at`,
+  `dsh_version`, and every pairing of the account to it (`id`, `device_name`,
+  `status`, `last_used_at`, push on or off, `current` when its
+  `device_key_hash` is this browser's).
+- **`DELETE /relay/pairings/{id}` from that session revokes any of the
+  account's pairings**, not only this browser's. This loosens the hosted
+  edition's ADR 0020 for the console alone and gets an ADR of its own in the
+  commit that does it: an app token stays handset-scoped, and the console still
+  cannot attach as, read for or act as another device. The price is that
+  whoever holds the member's web session can see their devices' names and cut
+  them off. Another device's pairing is revoked through the relay alone, as
+  for an offline desktop (step 6 above): the desktop drops that device's trust
+  the next time it lists its pairings.
+- No table changes: `relay_hosts` and `relay_pairings` already hold all of it.
+
+### Not in this version
+
+- A team admin seeing a member's computers; that is governance, not Workspace.
+- Removing a computer's record; it comes back the next time its plugin
+  connects. Revoking its devices is what cuts access.
+- Telling a member their DSH or plugin is older than the team pins.
+- Push to a browser.
+
+### Order of work
+
+1. **Spike, thrown away after: a browser pairs with a real desktop.** In
+   `server/e2e`, the relay client with a WebCrypto identity, as the console
+   holds it, redeems a code from the real plugin, completes the safety-code
+   ceremony, sets and gives `owner`'s PIN, and lists sessions. If the plugin
+   refuses a browser handset, everything below waits on that.
+2. **The two server changes with their ADR**, with tests on the boundary:
+   another account can neither list nor revoke; an app token still sees and
+   revokes only its own handset's pairings.
+3. **The page**, built from Team DSH's columns and conversation.
+4. **`/docs`** (members, "Work on your own DSH"), the changelog, and this
+   section rewritten as current.
+
+### How done is verified
+
+- The e2e test keeps step 1's path: a browser-shaped client pairs, unlocks,
+  starts a session and answers an approval on a real plugin.
+- Go tests pin the revocation scope in step 2.
+- By hand: pair from the console, drive a session, revoke the phone from the
+  console and see the app lose the computer at once.
 
 ## Open questions
 
