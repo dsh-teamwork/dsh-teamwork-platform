@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-18 — Presets have avatars
 
-- **What:** A preset carries `avatar`, the id of one of sixteen vector avatars in `@dsh-teamwork/shared` (`avatars.ts`), which the web console and the phone app both draw: a paper glyph on the navy plate. The preset editor chooses one (a blank preset starts with a random one, a template with its own, a new team assistant with `spark`); the presets page, Team resources, review diffs and the DSH session bar show it. A preset with none, or one a client does not know, shows one picked from its name. The server checks only the id's shape (`^[a-z][a-z0-9-]{0,39}$`); the plugin passes it to the relay's session configuration.
+- **What:** A preset carries `avatar`, the id of one of 29 vector avatars in `@dsh-teamwork/shared` (`avatars.ts`): office roles first (finance, administration, HR, marketing, sales, engineering, product, legal, design, support, operations, project management, training), then what a preset does, which the web console and the phone app both draw: a paper glyph on the navy plate. The preset editor chooses one (a blank preset starts with a random one, a template with its own, a new team assistant with `spark`); the presets page, Team resources, review diffs and the DSH session bar show it. A preset with none, or one a client does not know, shows one picked from its name. The server checks only the id's shape (`^[a-z][a-z0-9-]{0,39}$`); the plugin passes it to the relay's session configuration.
 - **Why:** Presets were text-only, hard to tell apart in a list or on a phone.
 - **Breaking:** None; the field is optional and readers ignore it.
 - **Upgrade:** Nothing. Release the plugin for the avatar to reach the phone and My DSH.
