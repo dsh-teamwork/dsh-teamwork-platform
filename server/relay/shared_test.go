@@ -446,7 +446,7 @@ func TestTheGateKeepsATeamFromRunningATeamDSH(t *testing.T) {
 		if s, out := w.exchange(key, machine(t)); s != 403 || out["error"] != "team_dsh_unavailable" {
 			t.Fatalf("token while not admitted: %d %v", s, out)
 		}
-		if s, out := w.do("GET", "/relay/shared", w.member, "", nil); s != 200 || len(out["hosts"].([]any)) != 0 {
+		if s, out := w.do("GET", "/relay/shared", w.member, "", nil); s != 200 || len(out["hosts"].([]any)) != 0 || len(out["unavailableTeamIds"].([]any)) != 1 || out["unavailableTeamIds"].([]any)[0] != w.teamID {
 			t.Fatalf("a member reached a Team DSH of a team not admitted: %d %v", s, out)
 		}
 
@@ -457,7 +457,7 @@ func TestTheGateKeepsATeamFromRunningATeamDSH(t *testing.T) {
 		if s, out := w.exchange(key, machine(t)); s != 200 {
 			t.Fatalf("token once admitted: %d %v", s, out)
 		}
-		if s, out := w.do("GET", "/relay/shared", w.member, "", nil); s != 200 || len(out["hosts"].([]any)) != 1 {
+		if s, out := w.do("GET", "/relay/shared", w.member, "", nil); s != 200 || len(out["hosts"].([]any)) != 1 || len(out["unavailableTeamIds"].([]any)) != 0 {
 			t.Fatalf("a member of an admitted team: %d %v", s, out)
 		}
 	})

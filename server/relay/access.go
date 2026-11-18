@@ -156,6 +156,8 @@ type reachableView struct {
 	Online   bool   `json:"online"`
 }
 
+// reachableShared lists the shared DSHs the caller may reach, and which of
+// their teams may not run one at all.
 func (r *relay) reachableShared(w http.ResponseWriter, req *http.Request) {
 	userID := r.caller(w, req)
 	if userID == "" {
@@ -178,6 +180,16 @@ func (r *relay) reachableShared(w http.ResponseWriter, req *http.Request) {
 		rejectedJSON(w, err)
 		return
 	}
+	// The caller's teams an edition keeps from running a Team DSH, so a member's console can say why there is none.
+	unavailable := []string{}
+	for _, id := range teamIDs {
+		if ok, err := r.teamDSHAllowed(ctx, id); err != nil {
+			rejectedJSON(w, err)
+			return
+		} else if !ok {
+			unavailable = append(unavailable, id)
+		}
+	}
 	out := []reachableView{}
 	for _, h := range hosts {
 		if _, ok, err := r.canReach(ctx, userID, h.ID); err != nil {
@@ -191,7 +203,7 @@ func (r *relay) reachableShared(w http.ResponseWriter, req *http.Request) {
 		r.mu.Unlock()
 		out = append(out, reachableView{ID: h.ID, Name: h.Name, TeamID: h.TeamID, TeamName: names[h.TeamID], Online: online})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"hosts": out})
+	writeJSON(w, http.StatusOK, map[string]any{"hosts": out, "unavailableTeamIds": unavailable})
 }
 
 // joinShared starts a handset's pairing with a shared DSH. It is pending until

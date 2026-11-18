@@ -160,8 +160,11 @@ export interface RelayClient {
   reset(): void;
   /** The member's paired computers: confirmed pairings only. */
   listComputers(): Promise<Computer[]>;
-  /** The teams' shared DSHs this member may reach, joined or not. */
-  sharedHosts(): Promise<SharedHost[]>;
+  /**
+   * The teams' shared DSHs this member may reach, joined or not, and the member's teams the server has not enabled
+   * Team DSH for, which reach none.
+   */
+  sharedHosts(): Promise<{ hosts: SharedHost[]; unavailableTeamIds: string[] }>;
   /**
    * Redeems the code a computer's Teamwork panel shows; the pairing then waits
    * for the member to confirm it on that computer. Rejects

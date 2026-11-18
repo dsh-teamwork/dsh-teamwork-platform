@@ -94,7 +94,10 @@ asks about the team on every request that needs it:
   page reads to say the team is not enabled and offer no key;
 - the key exchange gives the DSH no host token, and binds no machine, so a
   running DSH drops off within the hour its last token lasts;
-- `canReach` is false, so members list, join and connect to none at once.
+- `canReach` is false, so members list, join and connect to none at once,
+  and `GET /relay/shared` names the team in `unavailableTeamIds`, which the
+  member's Team DSH page reads to say what a Team DSH offers and that the
+  platform operator enables it.
 
 Keys, access lists and archives stay as they were, to rename, delete or
 export, and work again once the gate admits the team. The hosted service's
@@ -309,7 +312,7 @@ Routes:
 | `GET /api/teams/{teamId}/shared-archive/{hostId}` | Team admin | One host's segments in order, one per line |
 | `POST /relay/shared/challenge`, `POST /relay/shared/token` | Plugin with the key | Nonce; host token |
 | `/relay/plugin` hello with a host token | Plugin | Shared host socket; access list pushed as `members` |
-| `GET /relay/shared` | Member app, or the console by its session | Shared DSHs this member may reach |
+| `GET /relay/shared` | Member app, or the console by its session | Shared DSHs this member may reach; their teams that may not run one |
 | `POST /relay/shared/{hostId}/join` | Member, with handset credential | Pending pairing for the invite handshake |
 | `POST /relay/shared/archive` | Host token | Append one segment, in sequence |
 
@@ -336,8 +339,8 @@ HPKE comes from `@hpke/core` at an exact version; no other new dependency.
 
 - **The open web app** (`apps/web`), two pages apart. Using one is
   Workspace's `/teams/:teamId/team-dsh[/:computerId[/:sessionId]]`
-  (`pages/team/team-dsh.tsx`), listed only while the relay says the member
-  may reach one of the team's shared DSHs, in three columns beside the sidebar: the shared
+  (`pages/team/team-dsh.tsx`), listed in every team (where the team may not
+  run one, it says what a Team DSH offers and who enables it), in three columns beside the sidebar: the shared
   DSHs the member may reach, with their sessions on the open one beneath it,
   and the session beside; with none open, joining one by pasting its invite.
   It asks for the PIN, follows the conversation, answers and sends, and a

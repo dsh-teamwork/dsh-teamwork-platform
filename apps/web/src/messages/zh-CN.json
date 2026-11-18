@@ -963,7 +963,21 @@
       "inviteInvalid": "这不是邀请链接。请粘贴管理员给你的完整 dshteamwork://join 链接。",
       "inviteOtherServer": "这个邀请属于另一台服务器。",
       "browserUnsupported": "这个浏览器无法保存团队 DSH 需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。",
-      "lockedHint": "PIN 错误次数过多。请让管理员在团队 DSH 上为你解锁。"
+      "lockedHint": "PIN 错误次数过多。请让管理员在团队 DSH 上为你解锁。",
+      "pitch": "在团队自己的机器上运行 DSH，成员通过浏览器或手机 App 在上面工作。",
+      "featureMachineTitle": "自己的电脑上什么都不用装",
+      "featureMachineBody": "代码、工具和依赖都在团队的机器上，打开控制台就能发起会话。",
+      "featureModelsTitle": "使用团队的模型和预算",
+      "featureModelsBody": "它以团队身份登录，调用团队的模型、计入团队预算，提供商密钥不离开服务器。",
+      "featurePrivateTitle": "端到端加密，各看各的",
+      "featurePrivateBody": "浏览器或手机与机器之间端到端加密，并有 PIN 保护；每人只能看到自己发起的会话。",
+      "featureAuditTitle": "只有团队能读的审计归档",
+      "featureAuditBody": "每个会话都加密到团队的审计密钥，服务器保存归档却无法打开。",
+      "notEnabledAdmin": "团队 DSH 目前分批开通，这个团队还没有开通。需要由平台运营方为团队开通，请联系客服申请。",
+      "notEnabledMember": "团队 DSH 目前分批开通，这个团队还没有开通。需要由平台运营方为团队开通，请让团队管理员申请。",
+      "contactSupport": "联系客服",
+      "learnMore": "了解工作方式",
+      "setUp": "还没有团队 DSH？在团队资产中<link>配置一台</link>。"
     },
     "myDsh": {
       "title": "我的 DSH",
