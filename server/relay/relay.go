@@ -47,13 +47,16 @@ import (
 
 // Every binary mounts the relay (ADR 0044): its main imports this package,
 // which registers it with notifications through Expo and a ping every thirty
-// seconds.
-func init() { edition.Register(Extension(throughExpo, 30*time.Second)) }
+// seconds. Team DSH is offline for now (docs/tech/shared-dsh.md): the binary
+// mounts none of its routes, so no shared DSH gets a host token and no
+// member reaches one; its code stays, and its tests mount it.
+func init() { edition.Register(Extension(throughExpo, 30*time.Second, false)) }
 
 // Extension is the relay with its push sender and ping interval; tests pass
-// their own. It mounts through edition.Host like a closed extension does, and
-// its tables are the open schema's, migrated with the rest.
-func Extension(push SendPush, pingEvery time.Duration) edition.Extension {
+// their own, and teamDSH mounts shared DSHs (shared.go, access.go,
+// archive.go). It mounts through edition.Host like a closed extension does,
+// and its tables are the open schema's, migrated with the rest.
+func Extension(push SendPush, pingEvery time.Duration, teamDSH bool) edition.Extension {
 	return edition.Extension{
 		// Not "relay": the hosted edition's own migrations are recorded under
 		// that name, from when its relay carried them (ADR 0044).
@@ -62,14 +65,16 @@ func Extension(push SendPush, pingEvery time.Duration) edition.Extension {
 			if h.ServiceRole == "manage" {
 				return nil, nil
 			}
-			r := newRelay(h, push, pingEvery)
+			r := newRelay(h, push, pingEvery, teamDSH)
 			if err := h.SubscribeTeams(r.teamChanged); err != nil {
 				return nil, err
 			}
 			r.routes(h.Mux)
-			r.sharedRoutes(h.Mux)
-			r.accessRoutes(h.Mux)
-			r.archiveRoutes(h.Mux)
+			if teamDSH {
+				r.sharedRoutes(h.Mux)
+				r.accessRoutes(h.Mux)
+				r.archiveRoutes(h.Mux)
+			}
 			return r.close, nil
 		},
 	}
@@ -81,6 +86,7 @@ type relay struct {
 	push      *notifier
 	host      edition.Host
 	pingEvery time.Duration
+	teamDSH   bool            // shared DSHs are mounted; without it a host token opens nothing
 	ctx       context.Context // ends when the server shuts down
 	cancel    context.CancelFunc
 
@@ -106,13 +112,13 @@ type attachment struct {
 	sent        int
 }
 
-func newRelay(h edition.Host, push SendPush, pingEvery time.Duration) *relay {
+func newRelay(h edition.Host, push SendPush, pingEvery time.Duration, teamDSH bool) *relay {
 	client := clientOf(h)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &relay{
 		db: client, pairings: &pairings{db: client, secret: h.AuthSecret},
 		push: &notifier{db: client, send: push, last: map[string]time.Time{}},
-		host: h, pingEvery: pingEvery, ctx: ctx, cancel: cancel,
+		host: h, pingEvery: pingEvery, teamDSH: teamDSH, ctx: ctx, cancel: cancel,
 		hosts: map[string]*socket{}, attached: map[string]*attachment{}, revoked: map[string]bool{}, sockets: map[*socket]struct{}{},
 	}
 }

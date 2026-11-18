@@ -305,7 +305,13 @@ use, so DSH sees each phone as a separate client.
 
 `teamwork/configuration` takes `{ args: { request: { sessionId? } } }` and returns
 the native preset roster enriched with team id/name/version, tool and plugin
-dependency states, plus the loaded session's actual directory, preset and model.
+dependency states, plus the loaded session's actual directory, preset and model,
+the folders a session may start in (`directories`), and each synced team's
+default workspace (`teamDirectories`, team id to one of `directories`). The
+member sets that default in the plugin's panel, under My teams
+(`src/team-workspaces.ts`); until then it is the folder DSH was started in. A
+client starting a session for a team and naming no folder starts it there
+(`defaultDirectory` in `packages/relay-client`).
 `teamwork/selectModel` takes `{ args: { request: { sessionId, provider, model,
 reasoningEffort? } } }` and returns `{ selected }`. The session must pass native
 admission and be idle; the desktop default is never saved. Native

@@ -132,14 +132,14 @@
       "console": {
         "title": "Web console",
         "alt": "The team console's overview: a submission waiting for review, calls, points and budget",
-        "description": "Manage the team or use an invitation to start or resume your own session on a Team DSH in the browser."
+        "description": "Manage the team in the browser: models, presets, members and usage."
       },
       "phone": {
         "title": "Mobile app",
         "platformsLabel": "Supported platforms",
         "storeSearch": "Search your app store for <strong>{appName}</strong>",
         "alt": "The phone app's session list, one session waiting for an approval",
-        "description": "Connect to your computer or an invited Team DSH to check progress, send messages, and handle approvals."
+        "description": "Connect to your computer to check progress, send messages, and handle approvals."
       }
     },
     "collaborate": {
@@ -152,9 +152,6 @@
       "reviewBody": "Compare the two versions and publish after checking the new research guidelines.",
       "syncTitle": "The whole team syncs the update",
       "syncBody": "The updated research guidelines appear in each teammate's DSH at the next sync.",
-      "sharedTitle": "Team DSH",
-      "sharedEdition": "Community Edition",
-      "sharedBody": "An admin can share a team DSH with everyone or selected members. Invited members can connect from a browser or phone and run their own sessions on the same machine.",
       "alt": "The Sharing and review screen compares the market research preset at v1 with a proposed update that adds source citations and separates facts from assumptions."
     },
     "govern": {

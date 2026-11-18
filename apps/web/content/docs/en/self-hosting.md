@@ -5,7 +5,7 @@ description: Start the open-source community edition, point members' DSH at it, 
 
 The community edition is open source under Apache-2.0: teams, models, presets,
 plugins, the assistant, review and history, usage and budgets, the gateway,
-and the relay with Team DSHs. The hosted service's prepaid models are not
+and the relay. The hosted service's prepaid models are not
 part of it. The DSH Teamwork phone app connects to your own server as
 installed: on its sign-in screen, choose **Use another server** and enter the
 `APP_URL` your members open, which must be HTTPS; the server needs no setting
