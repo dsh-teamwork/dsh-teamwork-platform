@@ -633,6 +633,24 @@
       "ask_user_question": "向用户提问",
       "skill": "调用技能"
     },
+    "avatars": {
+      "spark": "火花",
+      "code": "代码",
+      "terminal": "终端",
+      "search": "搜索",
+      "pen": "钢笔",
+      "shield": "盾牌",
+      "chart": "图表",
+      "bug": "虫子",
+      "book": "书本",
+      "bulb": "灯泡",
+      "compass": "指南针",
+      "layers": "图层",
+      "chat": "对话",
+      "flask": "烧瓶",
+      "globe": "地球",
+      "database": "数据库"
+    },
     "presets": {
       "title": "预设",
       "description": "一句话说明",
@@ -664,6 +682,7 @@
         "tools": "工具与插件",
         "persona": "人设与方法"
       },
+      "avatar": "头像",
       "name": "名称",
       "descriptionHint": "成员在 DSH 的预设列表里看到这句话。",
       "model": "使用的模型",
@@ -833,6 +852,7 @@
       "raw": "查看原始 JSON",
       "fields": {
         "name": "名称",
+        "avatar": "头像",
         "description": "描述",
         "inheritModel": "使用会话模型",
         "modelConfigId": "团队模型",

@@ -16,6 +16,8 @@ export interface SessionOptions {
 const PresetSchema = z.object({
   id: z.string(),
   name: z.string(),
+  /** The team preset's avatar id (`@dsh-teamwork/shared`, avatars.ts); a DSH's own preset, or an older plugin, sends none. */
+  avatar: z.string().optional(),
   description: z.string(),
   isDefault: z.boolean(),
   teamId: z.string().optional(),

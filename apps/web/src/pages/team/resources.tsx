@@ -14,6 +14,7 @@ import { Link } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { Failure } from '@/components/page';
+import { PresetAvatar } from '@/components/preset-avatar';
 import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
@@ -86,7 +87,7 @@ export function TeamResourcesPage() {
       </Group>
       <Group title={t('presets')} hint={t('presetsHint')} empty={t('noPresets')}>
         {of('preset').map((p) => (
-          <Row key={p.id} name={p.name} detail={p.data.description}>
+          <Row key={p.id} name={p.name} detail={p.data.description} leading={<PresetAvatar avatar={p.data.avatar} name={p.name} />}>
             {member && (
               <Button size="sm" variant="ghost" onClick={() => setProposing({ draft: presetDraft(p), preset: p })}>
                 {t('proposeChange')}
@@ -135,9 +136,10 @@ function Group({ title, hint, empty, children }: { title: string; hint: string; 
 }
 
 /** Lists are rows, not cards (docs/design.md, "Component rules"). */
-function Row({ name, detail, mono = false, children }: { name: string; detail?: string; mono?: boolean; children?: ReactNode }) {
+function Row({ name, detail, mono = false, leading, children }: { name: string; detail?: string; mono?: boolean; leading?: ReactNode; children?: ReactNode }) {
   return (
     <li className="flex items-center gap-3 border-t px-4 py-2.5 text-sm first:border-t-0">
+      {leading}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="font-medium">{name}</span>
         {detail && <span className={mono ? 'font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]' : 'text-xs text-muted-foreground'}>{detail}</span>}

@@ -79,8 +79,8 @@ by `apps/web/src/lib/theme.ts` and the instance console's own
 script sets it before the first paint. Grounds
 and text are a neutral grey (hue 286, chroma under 0.02): white grounds and
 near-black text in light, near-black grounds and white text in dark. Colour
-appears in three places only: the mark, the two accents, and the outcome
-colours.
+appears in three places only: the mark (and the preset avatars, drawn in its
+colours), the two accents, and the outcome colours.
 
 ### Brand colours
 
@@ -157,12 +157,26 @@ Lucide (`lucide-react`) on web and console, sized and coloured through
 `className` from tokens (e.g. `text-muted-foreground`). There is no product
 icon set.
 
+### Preset avatars
+
+A preset's face is one of a fixed library of avatars,
+`packages/shared/src/avatars.ts`, which the web console and the phone app both
+draw (`apps/web/src/components/preset-avatar.tsx` and the app's own), so a
+preset looks the same everywhere. Each is a glyph in **Paper** on a **Navy**
+plate with the logo's corner (22 %): a preset is the team's, and navy says so.
+Glyphs are 2-unit round-capped strokes on a 32-unit square, kept inside its
+middle half, so they read at 20 px. Every avatar shares the plate; they differ
+by glyph alone, and the plate is never recoloured per avatar. These two hexes,
+in that file, are an exception to "never a literal colour": like the
+share card, the avatar is drawn outside the stylesheet and the same in both
+themes, as the logo is.
+
 ## Component rules
 
 - **Never a literal colour.** No Tailwind palette step (`text-gray-600`,
   `text-green-600`) in a page and no hex in a component; a colour is a token.
-  The share card, which renders outside the stylesheet, is the one exception
-  and uses the brand hexes above.
+  The share card and the preset avatars, which render outside the stylesheet,
+  are the exceptions and use the brand hexes above.
 - **`--brand` is not `--accent`.** `accent` is the subtle hover surface every
   shadcn-shaped primitive uses, so a brand colour there tints every hover. Brand
   chrome opts in with `bg-brand` / `text-brand`.

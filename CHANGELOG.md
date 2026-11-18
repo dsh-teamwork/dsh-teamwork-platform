@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Presets have avatars
+
+- **What:** A preset carries `avatar`, the id of one of sixteen vector avatars in `@dsh-teamwork/shared` (`avatars.ts`), which the web console and the phone app both draw: a paper glyph on the navy plate. The preset editor chooses one (a blank preset starts with a random one, a template with its own, a new team assistant with `spark`); the presets page, Team resources, review diffs and the DSH session bar show it. A preset with none, or one a client does not know, shows one picked from its name. The server checks only the id's shape (`^[a-z][a-z0-9-]{0,39}$`); the plugin passes it to the relay's session configuration.
+- **Why:** Presets were text-only, hard to tell apart in a list or on a phone.
+- **Breaking:** None; the field is optional and readers ignore it.
+- **Upgrade:** Nothing. Release the plugin for the avatar to reach the phone and My DSH.
+- **Refs:** `packages/shared/src/avatars.ts`, `apps/web/src/components/preset-avatar.tsx`, `docs/design.md` ("Preset avatars").
+
 ## 2026-11-18 — An open console survives a deploy
 
 - **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.

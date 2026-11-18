@@ -633,6 +633,24 @@
       "ask_user_question": "Ask the user",
       "skill": "Use a skill"
     },
+    "avatars": {
+      "spark": "Spark",
+      "code": "Code",
+      "terminal": "Terminal",
+      "search": "Search",
+      "pen": "Pen",
+      "shield": "Shield",
+      "chart": "Chart",
+      "bug": "Bug",
+      "book": "Book",
+      "bulb": "Light bulb",
+      "compass": "Compass",
+      "layers": "Layers",
+      "chat": "Chat",
+      "flask": "Flask",
+      "globe": "Globe",
+      "database": "Database"
+    },
     "presets": {
       "title": "Presets",
       "description": "One-line description",
@@ -664,6 +682,7 @@
         "tools": "Tools and plugins",
         "persona": "Persona and method"
       },
+      "avatar": "Avatar",
       "name": "Name",
       "descriptionHint": "Members see this line in DSH’s preset list.",
       "model": "Model",
@@ -833,6 +852,7 @@
       "raw": "Show raw JSON",
       "fields": {
         "name": "Name",
+        "avatar": "Avatar",
         "description": "Description",
         "inheritModel": "Uses the session's model",
         "modelConfigId": "Team model",

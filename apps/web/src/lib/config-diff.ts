@@ -22,6 +22,7 @@ export interface FieldChange {
 /** The order the fields are read in: who the resource is, what it calls, then how it behaves. */
 const ORDER = [
   'name',
+  'avatar',
   'description',
   'inheritModel',
   'modelConfigId',

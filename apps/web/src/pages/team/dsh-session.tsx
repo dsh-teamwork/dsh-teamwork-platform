@@ -35,6 +35,7 @@ import {
   type SessionState,
   type SessionSummary,
 } from '@dsh-teamwork/relay-client';
+import { PresetAvatar } from '@/components/preset-avatar';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -316,6 +317,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
     const preset = data.presets.find((item) => item.id === current.agentPreset);
     return (
       <>
+        {preset && <PresetAvatar avatar={preset.avatar} name={preset.name} className="size-6" />}
         <span className="truncate text-xs text-muted-foreground" title={current.cwd}>
           {[directoryName(current.cwd) || current.cwd, preset?.name ?? current.agentPreset ?? t('noPreset')].join(' · ')}
         </span>
@@ -340,6 +342,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
     })),
   ];
   const cwd = value.cwd ?? data.directories[0]?.path ?? '';
+  const chosenPreset = data.presets.find((item) => (value.agentPreset ? item.id === value.agentPreset : item.isDefault));
   return (
     <>
       {data.directories.length > 0 && (
@@ -347,6 +350,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
           options={data.directories.map((item) => ({ value: item.path, label: item.name }))}
           change={(path) => onChange?.({ ...value, cwd: path })} />
       )}
+      {chosenPreset && <PresetAvatar avatar={chosenPreset.avatar} name={chosenPreset.name} className="size-6" />}
       <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className="h-8 max-w-48 text-xs"
         change={(id) => onChange?.({ ...value, agentPreset: id || undefined, model: undefined })} />
       <Select label={t('model')} value={modelKey(chosenModel)} options={models} disabled={disabled} className="h-8 max-w-56 text-xs"

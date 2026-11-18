@@ -55,7 +55,8 @@ synchronized later and no catalog link is saved.
 ## 3. Add presets and plugins
 
 - **Presets** are roles the team shares: the model a preset calls, the tools it
-  needs and the way it works. Start from a template or a blank preset.
+  needs and the way it works. Start from a template or a blank preset, and give
+  it an avatar, which members see beside it in the console and the phone app.
 - **Plugins** pin npm packages at exact versions, so everyone runs the same
   build. Members still confirm each installation in their own DSH.
 
