@@ -133,7 +133,7 @@ export function ConsoleShell({
   const close = () => setOpen(false);
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
+    <div className="flex min-h-dvh flex-col md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
       {/* Its dividers run edge to edge, so the sidebar's parts pad themselves rather than the sidebar padding them. */}
       <aside className="hidden flex-col border-r bg-muted py-4 md:sticky md:top-0 md:flex md:h-dvh">
         <div className="px-3 pb-4">
@@ -174,7 +174,7 @@ export function ConsoleShell({
         </Dialog.Portal>
       </Dialog.Root>
 
-      <main className={fill ? 'flex min-w-0 flex-col md:min-h-dvh' : 'mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-6 px-4 py-6 md:px-8 md:py-8'}>{children}</main>
+      <main className={fill ? 'flex min-w-0 flex-1 flex-col md:min-h-dvh' : 'mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-6 px-4 py-6 md:px-8 md:py-8'}>{children}</main>
     </div>
   );
 }

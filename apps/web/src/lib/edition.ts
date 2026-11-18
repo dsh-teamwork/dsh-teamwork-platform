@@ -38,10 +38,11 @@ export interface TeamPage {
    */
   visible?: (team: Team) => Promise<boolean>;
   /**
-   * Whether the page fills the whole area beside the sidebar, edge to edge
-   * and without the console's padding, to lay out columns of its own (a list
-   * beside what is open in it); omitted, it sits in the console's centred
-   * column like every open page.
+   * Whether the page fills the whole area beside the sidebar (below the top
+   * bar on a phone), edge to edge, full height and without the console's
+   * padding, to lay out columns of its own (a list beside what is open in
+   * it); omitted, it sits in the console's centred column like every open
+   * page.
    */
   fill?: boolean;
 }
