@@ -5,6 +5,30 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The home page follows the whale from the surface to the seabed
+
+- **What:** The home page pairs the logo’s indigo fluke with a white sky, two cloud banks and a blue engraved sea. The upper chapters use pale grounds before the dive into navy. Two traveling swells bend the engraved water around the whale fluke. The lower-right dive link scrolls smoothly to the opening chapter, *one person's work*. The opening fluke is engraved diagonally down to the right. A horizontally hatched humpback crosses behind the middle chapters, with a slow stroke that builds from its back to its tail. A viewport of open water separates the solitary whale from the other scenes during fast scrolls. Three solid whale silhouettes gather above a quiet, flat seabed, with a subdued blue-gray upper whale, a slightly darker second whale and an ink-blue calf. Tighter spacing above the closing invitation and two shallow sediment layers lead into a compact footer with the whale logo and name on the left and navigation on the right. Its rightmost link is underlined, points up and scrolls back to the surface. The layout follows the same dive on phones, with still artwork for reduced motion.
+- **Why:** The brand's dive connects a member's work with the assets the team keeps, while each product section stays readable.
+- **Breaking:** None
+- **Upgrade:** Nothing
+- **Refs:** `apps/web/src/public/sea.tsx`, `docs/design.md`.
+
+## 2026-11-17 — The home page's first screen, redrawn around what a team gains
+
+- **What:** The first screen fills the window with the hero centred above the wave line, and every section widens to `max-w-7xl`. Its left side is the title, one sentence and the plugin to copy (*Create a team* stays in the header; the three pillars are gone). The diagram keeps its layout with a compact hub listing the four features, each with one line of value; the lines carry no words. An amber pulse loops the story (the admin publishes, every member's card ticks, a call goes out to a model), and hovering a feature dims what it does not involve. The upstream column is one list of mainstream providers by their logos (Anthropic, OpenAI, DeepSeek, GLM, Kimi, and your own), copied from LobeHub's icons into `provider-logos.ts`; the phone shows the app's logo, and the Chinese page names its people in Chinese.
+- **Why:** The old first screen read as an architecture diagram with crowded copy; a first-time visitor should see in one look that a team configures once and everyone gets it, under control.
+- **Breaking:** None
+- **Upgrade:** Nothing
+- **Refs:** `apps/web/src/public/home.tsx`, `topology.tsx`, `provider-logos.ts`, `sea.tsx`, `apps/web/src/globals.css`, `docs/design.md` ("The landing page's first screen").
+
+## 2026-11-17 — A language switch in the home page's header
+
+- **What:** The home page's header carries the language menu beside the theme button, opening downwards; the footer keeps its own.
+- **Why:** A visitor who lands in the wrong language can switch without scrolling to the foot of the page.
+- **Breaking:** None
+- **Upgrade:** Nothing
+- **Refs:** `apps/web/src/public/controls.tsx`, `apps/web/src/public/home.tsx`.
+
 ## 2026-11-17 — Model information and reference prices fill in one click
 
 - **What:** **Fill from public catalog** (model forms) and **Fill reference prices** (the rate form, estimated-cost basis) fill at once from the one catalog entry whose id is the model's own, and a note says where the values came from, what changed and, for prices, the exchange rate and its date, with an undo. No match, or the same id at several providers, changes nothing and offers a picker. The price multiplier is gone. `POST /api/teams/{teamId}/model-metadata/lookup` no longer requires `provider`; for Models.dev, one the catalog does not name searches every provider by exact id.

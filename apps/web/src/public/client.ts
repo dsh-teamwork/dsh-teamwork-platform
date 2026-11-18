@@ -1,11 +1,13 @@
 /**
  * The one script the prerendered public pages load (src/public/render.tsx):
  * browser analytics, and the controls src/public/controls.tsx draws: the
- * language menu, the theme button, and the copy buttons.
+ * language menu, the theme button, the copy buttons, and the home page's tide print.
  */
 
 import { startAnalytics } from '@/lib/analytics';
 import { otherTheme, readTheme, setTheme, watchSystemTheme } from '@/lib/theme';
+
+import { followTide } from './tide';
 
 void startAnalytics();
 
@@ -68,3 +70,8 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-c
     }
   });
 }
+
+// Native scroll carries the content through the water column. Only the ink
+// layers need an offset. Measure the document again when its content reflows.
+const story = document.querySelector<HTMLElement>('.tide-story');
+if (story) followTide(story);

@@ -7,8 +7,8 @@ The DSH Teamwork visual system — the whale mark, the black-and-white palette w
 The brand is one picture: a whale sounding, its paper fluke rising from a sea
 that settles in layers under an indigo sky. What surfaces is this one piece of
 work; what goes under, layer on layer, is what the team keeps: *work done with
-AI comes back to the team*. The mark is the only picture in colour. Every
-surface around it is neutral black and white, the same frame as DeepSeek
+AI comes back to the team*. The landing page interprets the mark as a navy woodcut with white clouds above a blue sea.
+The product interface uses neutral black and white, the same frame as DeepSeek
 Harness itself, so the plugin sits inside DSH without a seam; two accents set
 the team edition apart, **navy** for what belongs to the team and **amber** for
 what needs attention. **The stylesheets are the
@@ -178,33 +178,48 @@ icon set.
   `--warning`.
 - **Lists are rows, not cards.** Rows are divided by `--border` hairlines; a
   card's border and fill are kept for the one block that has to stand apart.
-- **The logo is an image, not a drawing.** Show `public/logo.svg` at its square
-  size; never redraw the mark inline or recolour it. The one inline whale is the
-  landing page's hero illustration (`apps/web/src/public/sea.tsx`): the
-  mark's fluke path at hero scale, in `--foreground` at 7 % opacity, behind one
-  `--foreground` wave line that runs the full width; below the line the page's
-  own ground covers the stalk. It is not the logo, has no plate, and is not
-  exported.
-- **The landing page is black on white, and it goes down.** The faint fluke
-  and its wave line, then sections divided by hairlines, each labelled with its
-  depth in mono, and the closing call on one `--brand` band, the page's only
-  large area of colour. The depths tell the brand's story in order: the
-  surface is one person's work and the places it happens (every platform),
-  then what the team shares (collaboration) and controls (governance), and
-  the deep floor is what the team keeps as its assets.
+- **The logo keeps its plate.** Use `public/logo.svg` at its square size. The
+  landing illustration in `apps/web/src/public/sea.tsx` uses the fluke shape
+  as a woodcut, with hatching on the tail and engraved lines in the water.
+- **The landing page follows the dive.** A full-width woodcut forms the
+  horizon beneath the opening copy. The fluke takes its indigo from the logo plate.
+  White paper behind the text opens into a pale sky with two low cloud banks.
+  The engraving uses several sea-blue ink values, with near-white upper chapters
+  and a navy seabed. Dark mode carries the same shapes into a dusk sky.
+  Two overlapping swells travel along
+  the engraved water, bending the waterline and its ink strokes every frame. Both fluke tips stay inside the artwork
+  and the stalk ends below the water throughout the cycle. Native scroll carries the tail
+  under the water. A large humpback passes behind the middle chapters. Its
+  length scales with the opening fluke, and its low contrast keeps the text
+  legible. Diagonal cuts follow the opening fluke down to the right. Horizontal cuts follow
+  the solitary swimmer’s body. A slow bend travels down the lone
+  whale’s back and grows into a broader tail stroke. A viewport of open water separates the lone whale from both
+  the surface and the closing pod, even during fast scrolls and anchor jumps.
+  At Assets the text turns light. The closing pod uses three solid silhouettes,
+  from muted slate blue at the top to ink blue nearest the seabed. Two shallow, low-contrast sediment layers
+  sit beneath the pod. A compact footer continues the lower sediment
+  color, with the whale mark and name on the left and navigation on the right. The return link pairs an underline and an upward arrow with the opening dive link’s downward arrow. The composition also fits narrow
+  screens, and reduced motion keeps the artwork still.
 - **The landing page's first screen is what the product is and how to start.**
-  On the left: the title, one sentence, the three pillars in a row each
-  (collaborate, govern, everywhere), *Create a team* and the plugin's package
-  to copy, then a line to the install guide. On the right: one diagram, read
+  The title, one sentence, the plugin to copy and the install guide sit
+  above the waterline. The header carries *Create a team*. The dive link at the lower right scrolls to the opening chapter, *one person's work*.
+  In the first chapter, the team diagram reads
   left to right (`apps/web/src/public/topology.tsx`): the team's people,
   each with an icon for where they work (DSH Desktop, a terminal, the phone,
   the admin's web console), curved arrows into DSH Teamwork in the middle, and
-  on the right the upstream model providers (the console's own catalogue) and
-  cloud DSH, coming. It is drawn from tokens, so it follows the theme, and its
-  words are the page's language.
+  on the right the mainstream upstream providers, each by its own logo
+  (`provider-logos.ts`, from LobeHub's icons; the console keeps letter tiles),
+  and cloud DSH, coming. The phone's icon carries `public/logo.svg` on its
+  screen, since the app is ours. The hub lists the page's sections, each with
+  one line of what it gives a team, said as value rather than as a feature. The lines carry no words: an amber pulse plays the story
+  on a loop (the admin publishes, every member's card ticks, a call goes out
+  to a model), and hovering a feature dims what it does not involve (and
+  lights each device's icon for *Everywhere*), keeping the plain pointer; motion
+  stops under reduced motion. It is drawn from tokens, so it follows the
+  theme, and its words are the page's language.
 - **Real screens live in the sections below, never in the first screen.**
   *Everywhere* gives each way in a row (who it is for, what it does, its
-  screen, alternating sides); *Collaborate* shows the review comparison and
+  screen); *Collaborate* shows the review comparison and
   *Govern* the usage page. Each screen sits in a plain window or phone frame
   drawn from tokens. They are captures of the real interfaces with a demo team,
   in `apps/web/public/home/`, one per language, captured again when those
@@ -231,8 +246,8 @@ icon set.
   console has its copy in `apps/manage/src/components/ui/select.tsx`, which an
   edition's pages import from `@dsh-teamwork/manage`.
 - **The theme is one icon button** showing the theme in force (sun or moon)
-  and switching to the other: in the top bar and the footer of the public
-  pages and of `/teams`, and beside the account at the foot of a team's sidebar
+  and switching to the other: in the home header, in the top bar and footer of
+  the docs and `/teams`, and beside the account at the foot of a team's sidebar
   (`apps/web/src/components/theme-toggle.tsx`).
 - **A person is their avatar, and it leads to their account.** A top bar shows
   the initial in a circle; a team's sidebar ends, as Router9 Studio's rail does,
