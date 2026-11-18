@@ -1,5 +1,5 @@
 import { createTranslator } from 'use-intl';
-import { BatteryFull, Check, Github, Signal, Users, Wifi } from 'lucide-react';
+import { BatteryFull, Check, Github, Signal, Wifi } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -319,25 +319,15 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
             </div>
             <Shot src={`/home/review-${tag}.webp`} alt={t('collaborate.alt')} width={959} height={locale === 'zh-CN' ? 287 : 303} />
           </div>
-          <div className={`mt-10 grid gap-x-10 gap-y-6 border-t border-border pt-5 ${workspace ? 'md:grid-cols-2' : ''}`}>
-            <div>
-              <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-bold">
-                <Users aria-hidden="true" className="size-5 shrink-0" />
-                <span>{t('collaborate.sharedTitle')}</span>
-                <span className="text-xs font-medium text-muted-foreground">{t('collaborate.sharedEdition')}</span>
+          {workspace && (
+            <div className="mt-10 border-t border-border pt-5">
+              <h3 className="flex items-center gap-2 text-base font-bold">
+                {workspace.icon}
+                <span>{workspace.title}</span>
               </h3>
-              <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{t('collaborate.sharedBody')}</p>
+              <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{workspace.description}</p>
             </div>
-            {workspace && (
-              <div>
-                <h3 className="flex items-center gap-2 text-base font-bold">
-                  {workspace.icon}
-                  <span>{workspace.title}</span>
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">{workspace.description}</p>
-              </div>
-            )}
-          </div>
+          )}
         </Zone>
 
         <Zone id="govern">

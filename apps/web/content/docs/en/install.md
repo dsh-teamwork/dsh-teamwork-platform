@@ -35,8 +35,8 @@ restart instructions.
 
 ## A Linux server
 
-A Team DSH usually runs on a server with no desktop. On Ubuntu or
-Debian, as the user DSH will run as:
+A DSH can run on a server with no desktop. On Ubuntu or Debian, as
+the user DSH will run as:
 
 1. Install Node.js 24 or later:
 
@@ -68,8 +68,7 @@ Debian, as the user DSH will run as:
 
 4. Install the plugin, then start DSH in a `tmux` session, so it keeps running
    after you log out. Start it in the project folder sessions should work in:
-   a Team DSH's members start their sessions there, or in a workspace DSH
-   already has.
+   sessions start there, or in a workspace DSH already has.
 
    ```sh
    dsh plugin --profile web add @dsh-teamwork/dsh-teamwork
@@ -88,10 +87,8 @@ Debian, as the user DSH will run as:
    npm install -g @dsh-teamwork/dsh-teamwork
    ```
 
-6. Then run `dsh-teamwork login` for your own DSH, or
-   `dsh-teamwork share enable <key>` for a Team DSH. See
-   [Commands](/docs/commands#on-a-server-dsh-teamwork), and
-   [Team DSH](/docs/team-dsh) for the rest of a Team DSH's setup. No browser is needed on
+6. Then run `dsh-teamwork login`. See
+   [Commands](/docs/commands#on-a-server-dsh-teamwork). No browser is needed on
    the server.
 
 The plugin keeps its files in `~/.dsh/dsh-teamwork/` (or `$DSH_HOME/dsh-teamwork/`),
