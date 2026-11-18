@@ -54,6 +54,11 @@ export interface LiveRelayOptions {
   session: () => Promise<{ server: string; token?: string } | null>;
   /** The language a question or approval reason is shown in. */
   locale: () => string;
+  /**
+   * What this device is, said to a computer when it pairs or joins so the computer's list of devices can name it
+   * (the plugin's src/phone-security.ts): the phone app on iOS or Android, or a web browser.
+   */
+  device: 'ios' | 'android' | 'web';
   request?: typeof fetch;
   WebSocket?: typeof globalThis.WebSocket;
   /** The AES-256-GCM backend records are sealed with: WebCrypto unless the platform has a native one. */
@@ -166,8 +171,8 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
           const draft = pairingDrafts.get(id);
           if (draft) draft.safetyCode = code;
           // A shared DSH's invite stands in for the safety code: its key is pinned, so only that DSH reads the secret.
-          if (pairing?.join) channel.send({ t: 'shareJoin', invite: pairing.join.invite, secret: pairing.join.secret, name: pairing.name });
-          else if (pairing) channel.send({ t: 'pairHello', name: pairing.name });
+          if (pairing?.join) channel.send({ t: 'shareJoin', invite: pairing.join.invite, secret: pairing.join.secret, name: pairing.name, kind: options.device });
+          else if (pairing) channel.send({ t: 'pairHello', name: pairing.name, kind: options.device });
         },
         message: async value => {
           const body = value as Record<string, unknown> | null;

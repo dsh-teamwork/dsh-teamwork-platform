@@ -56,6 +56,7 @@ test.skipIf(!BASE)('a browser pairs with a personal computer and the pairing con
     random: (n) => crypto.getRandomValues(new Uint8Array(n)),
     session: async () => ({ server: BASE!, token: TOKEN }),
     locale: () => 'en',
+    device: 'web',
   });
 
   const offer = await link.request({ t: 'offer' });
@@ -70,5 +71,7 @@ test.skipIf(!BASE)('a browser pairs with a personal computer and the pairing con
 
   await until('the browser to see the pairing confirmed', async () => (await relay.getPairing(pairing.id))?.status === 'confirmed');
   expect((await relay.listComputers()).map((c) => [c.id, c.hostId])).toEqual([[pairing.id, link.host]]);
+  // The browser said what it is, and the desktop keeps it beside its name.
+  expect(await security.details(pairing.id)).toMatchObject({ deviceName: 'Web browser', deviceKind: 'web' });
   link.stop();
 }, 30_000);
