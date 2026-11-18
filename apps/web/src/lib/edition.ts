@@ -1,11 +1,11 @@
 /**
  * What an edition's web app adds to this one through `mountWeb` (src/app.tsx):
- * the team pages its console navigation lists beside the open ones. Set once,
- * before the first render.
+ * the team pages its console navigation lists beside the open ones, and the
+ * models it supplies itself. Set once, before the first render.
  */
 
 import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { RouteObject } from 'react-router';
 
 import type { Team } from '@/lib/api';
@@ -66,4 +66,20 @@ export function replacing(routes: RouteObject[], added: RouteObject[]): RouteObj
   const keep = (list: RouteObject[]): RouteObject[] =>
     list.filter((r) => !r.path || !taken.has(r.path)).map((r) => (r.children ? ({ ...r, children: keep(r.children) } as RouteObject) : r));
   return [...keep(routes), ...added];
+}
+
+/**
+ * Models an edition supplies and funds itself, which a team admin turns on
+ * without a provider or a key: a section shown first on the team's models
+ * page, for the admin. `reload` refreshes the page once the section has
+ * published one. The open edition has none.
+ */
+export type EditionModels = ComponentType<{ teamId: string; reload: () => Promise<unknown> }>;
+
+let models: EditionModels | undefined;
+
+export const editionModels = () => models;
+
+export function setEditionModels(section: EditionModels | undefined) {
+  models = section;
 }

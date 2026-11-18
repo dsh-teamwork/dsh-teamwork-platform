@@ -1,4 +1,5 @@
 import { Check, ChevronDown } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Select as Primitive } from 'radix-ui';
 
 import { Button } from '@/components/ui/button';
@@ -16,8 +17,8 @@ export function Select({ label, value, options, change, id, disabled, className 
   /** Names the control for assistive technology, and shows while nothing is chosen. */
   label: string;
   value: string;
-  /** An option `disabled` shows and cannot be chosen; its label says why. */
-  options: { value: string; label: string; disabled?: boolean }[];
+  /** An option `disabled` shows and cannot be chosen; its label says why. `icon` leads its label, in the menu and once chosen. */
+  options: { value: string; label: string; disabled?: boolean; icon?: ReactNode }[];
   change: (value: string) => void;
   id?: string;
   disabled?: boolean;
@@ -40,7 +41,7 @@ export function Select({ label, value, options, change, id, disabled, className 
           <Primitive.Viewport className="max-h-72 overflow-y-auto">
             {options.map((option, index) => (
               <Primitive.Item key={`${index}:${option.value}`} value={String(index)} disabled={option.disabled} className="relative rounded-md py-1.5 pr-8 pl-2.5 text-sm outline-none data-[disabled]:text-muted-foreground data-[highlighted]:bg-accent">
-                <Primitive.ItemText>{option.label}</Primitive.ItemText>
+                <Primitive.ItemText>{option.icon ? <span className="flex min-w-0 items-center gap-2">{option.icon}<span className="truncate">{option.label}</span></span> : option.label}</Primitive.ItemText>
                 <Primitive.ItemIndicator className="absolute top-1/2 right-2 -translate-y-1/2"><Check className="size-4" /></Primitive.ItemIndicator>
               </Primitive.Item>
             ))}
