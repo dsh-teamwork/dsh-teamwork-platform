@@ -71,14 +71,6 @@ async function hasOwnComputer() {
   return hosts.length > 0;
 }
 
-/** Whether this person may reach one of this team's shared DSHs (docs/tech/shared-dsh.md): the relay's list, read with the session cookie. */
-async function reachesTeamDsh(team: Team) {
-  const response = await fetch('/relay/shared', { credentials: 'same-origin' });
-  if (!response.ok) return false;
-  const { hosts } = (await response.json()) as { hosts: { teamId: string }[] };
-  return hosts.some((host) => host.teamId === team.id);
-}
-
 /**
  * The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon.
  * Workspace is everyone's; the admin's pages split by what they look after: what the
@@ -94,8 +86,9 @@ const GROUPS: { key: TeamGroup; sections: Section[] }[] = [
       { path: 'submissions', key: 'submissions', icon: Send },
       // Listed only once one of this person's computers connected; the same computers in every team.
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true },
-      // Listed only where the team runs one this person may reach; the admin's own page is under Team assets.
-      { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true, visible: reachesTeamDsh, hint: true },
+      // Listed in every team, to show what it offers where the team does not have it yet; the admin's own page is
+      // under Team assets.
+      { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true, hint: true },
     ],
   },
   {

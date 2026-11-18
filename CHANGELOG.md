@@ -21,6 +21,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Release the plugin with this change; the oversized-snapshot fix lives there.
 - **Refs:** `docs/tech/relay.md`, `packages/relay-client/src/live.ts`, the plugin's `src/bridge.ts` (`fitFrame`).
 
+## 2026-11-18 — Team DSH is in every team's Workspace
+
+- **What:** Workspace lists **Team DSH** in every team, not only once a member may reach one. Where the server has not enabled Team DSH for the team, the page says what it offers and that the platform operator enables it, sending an admin to support and a member to their admin; an admin of an enabled team with none is pointed to Team assets. `GET /relay/shared` adds `unavailableTeamIds`, and `@dsh-teamwork/relay-client`'s `sharedHosts()` answers `{ hosts, unavailableTeamIds }`.
+- **Why:** The feature was invisible to the teams it was meant to reach first.
+- **Breaking:** `sharedHosts()` answers an object instead of an array; its callers in this repository and the closed mobile app are updated.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/team-dsh.tsx`, `server/relay/access.go`, `docs/tech/shared-dsh.md`.
+
 ## 2026-11-18 — A Team DSH guide, and the console's key card says what comes next
 
 - **What:** A new `/docs/team-dsh` page, in English and Chinese, takes an admin from installing DSH on a server to a member's first session, in shell commands (`dsh-teamwork share …`), with day-to-day tasks and troubleshooting; the admins page's Team DSH section now points to it. The console's Team DSH page links to it, and the key card shows the command in both forms (DSH's command input and a shell) and the steps that follow.
@@ -28,6 +36,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None.
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/content/docs/{en,zh-CN}/team-dsh.md`, `apps/web/src/pages/team/team-dsh-hosts.tsx`.
+
+## 2026-11-18 — A pasted pairing code keeps its last letter
+
+- **What:** My DSH's pairing code field drops spaces before it holds the code to six characters, so a code pasted as the panel shows it ("PQP WGG") arrives whole.
+- **Why:** The field's length limit cut the seventh character, the code's last letter, before the space was removed.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`.
 
 ## 2026-11-18 — My DSH opens the computer a pairing code came from
 

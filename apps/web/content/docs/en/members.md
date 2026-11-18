@@ -67,12 +67,12 @@ computer.
 ## Work on a Team DSH
 
 If your team runs a Team DSH, its admin hands you an invite link
-(`dshteamwork://join?…`). **Team DSH** appears under Workspace in the team console once
-its admin lets you reach one; open it,
+(`dshteamwork://join?…`). Open **Team DSH** under Workspace in the team console,
 choose **Join with an invite**, paste it and choose **Join**, then set a four-digit PIN; the
 machine asks for it again when you come back. Each browser joins once, and
 keeps its key in the browser's own storage: clearing the site's data means
-asking for a new invite. You see only the sessions you start there, and your
+asking for a new invite. Where your team does not have Team DSH yet, the page
+says what it offers and who enables it. You see only the sessions you start there, and your
 team's admin can read every session from the machine's encrypted archive. The
 phone app opens the same link, or scans its QR code under **Pair a computer**;
 the Team DSH then sits in the computer list under your team's name. Your admin's

@@ -972,7 +972,21 @@
       "inviteInvalid": "That is not an invite link. Paste the whole dshteamwork://join link your admin gave you.",
       "inviteOtherServer": "That invite is for another server.",
       "browserUnsupported": "This browser cannot keep the key a Team DSH needs. Use a current Chrome, Edge, Firefox or Safari, outside private browsing.",
-      "lockedHint": "Too many wrong PINs. Ask your admin to unlock you on the Team DSH."
+      "lockedHint": "Too many wrong PINs. Ask your admin to unlock you on the Team DSH.",
+      "pitch": "Run DSH on a machine your team owns, and work on it from the browser or the phone app.",
+      "featureMachineTitle": "Nothing to set up on your own computer",
+      "featureMachineBody": "The code, tools and dependencies live on the team's machine; open the console and start a session.",
+      "featureModelsTitle": "The team's models and budget",
+      "featureModelsBody": "It signs in as the team, so its calls use the team's models and budgets, and provider keys never leave the server.",
+      "featurePrivateTitle": "End-to-end encrypted, each to their own",
+      "featurePrivateBody": "Your browser or phone talks to the machine end to end encrypted, behind a PIN, and you see only the sessions you start.",
+      "featureAuditTitle": "An archive only the team can read",
+      "featureAuditBody": "Every session is sealed to the team's audit key; the server keeps the archive without being able to open it.",
+      "notEnabledAdmin": "Team DSH is enabled for some teams at a time, and this team does not have it yet. The platform operator enables it for a team: write to support to ask for it.",
+      "notEnabledMember": "Team DSH is enabled for some teams at a time, and this team does not have it yet. The platform operator enables it for a team: ask your team's admin to request it.",
+      "contactSupport": "Write to support",
+      "learnMore": "How it works",
+      "setUp": "No Team DSH yet? <link>Set one up</link> under Team assets."
     },
     "myDsh": {
       "title": "My DSH",
