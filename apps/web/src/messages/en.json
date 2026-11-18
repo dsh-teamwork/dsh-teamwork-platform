@@ -1003,7 +1003,7 @@
       "lastSeen": "Last seen {time}",
       "version": "DSH {version}",
       "pairTitle": "Pair this browser with {name}",
-      "pairHelp": "On that computer, open the Teamwork panel in DSH and choose Phone, then make a pairing code and type it here.",
+      "pairHelp": "On that computer, open the Teamwork panel in DSH and choose Devices, then make a pairing code and type it here.",
       "code": "Pairing code",
       "pair": "Pair",
       "pairing": "Pairing…",
