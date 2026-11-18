@@ -201,8 +201,20 @@ func (p *pairings) decide(ctx context.Context, hostID, pairingID string, accept 
 	return err
 }
 
-// Scope has two real callers: a specific handset, or one authenticated desktop host.
+// Scope has three real callers: a specific handset, one authenticated desktop
+// host, or the web console acting for a member over their own computers.
 type scope interface{ where() predicate.RelayPairing }
+
+// account is every pairing of one member to the computers they own: the web
+// console's reach (ADR 0048), never another member's devices or a shared DSH.
+type account struct {
+	userID  string
+	hostIDs []string
+}
+
+func (a account) where() predicate.RelayPairing {
+	return relaypairing.And(relaypairing.UserID(a.userID), relaypairing.HostIDIn(a.hostIDs...))
+}
 
 type host string
 

@@ -1,6 +1,8 @@
 // The DSH plugin's own relay client, unchanged, against the server's
 // relay, with this script standing in for the phone the way the app talks to
 // it: discover, pair, confirm on the computer, pass a call through, revoke.
+// With COOKIE set it stands in for the web console instead (My DSH,
+// docs/tech/relay.md): the session cookie and this site's Origin, no token.
 // Run by relay_test.go, which starts the server.
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -8,7 +10,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const { BASE, TOKEN, PLUGIN } = process.env;
+const { BASE, TOKEN, PLUGIN, COOKIE } = process.env;
+// The handset's own account proof: the app's Bearer, or the browser's cookie from this site.
+const admission = COOKIE ? { cookie: COOKIE, origin: BASE } : { authorization: `Bearer ${TOKEN}` };
 const { RelayLink } = await import(pathToFileURL(join(PLUGIN, 'lib/relay.js')).href);
 
 const until = async (what, check) => {
@@ -64,7 +68,7 @@ const origin = url.replace(/^ws/, 'http').replace(/\/plugin$/, '');
 const deviceKey = randomBytes(32).toString('base64url');
 const otherDeviceKey = randomBytes(32).toString('base64url');
 const phone = (path, init = {}) =>
-  fetch(origin + path, { ...init, headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json', 'x-device-key': deviceKey } });
+  fetch(origin + path, { ...init, headers: { ...admission, 'content-type': 'application/json', 'x-device-key': deviceKey } });
 
 const offer = await link.request({ t: 'offer' });
 const redeemed = await phone('/pair', { method: 'POST', body: JSON.stringify({ code: offer.code, deviceName: 'e2e phone' }) });
@@ -76,12 +80,12 @@ const pending = await (await phone('/pairings')).json();
 assert.equal(pending.pairings[0].status, 'pending');
 
 // Noise key bootstrap and native AES-GCM business traffic pass as opaque records, including for pending pairings.
-const socket = new WebSocket(origin.replace(/^http/,'ws')+'/phone');
+const socket = new WebSocket(origin.replace(/^http/,'ws')+'/phone', COOKIE ? { headers: admission } : undefined);
 const frames=[],replies=[];
 let phoneChannel;
 socket.onmessage=m=>{const f=JSON.parse(m.data);if(f.t==='sealed'){wire.push(f);phoneChannel.receive(f);}else frames.push(f);};
 await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject;});
-socket.send(JSON.stringify({t:'hello',token:TOKEN,deviceKey}));
+socket.send(JSON.stringify(COOKIE ? {t:'hello',deviceKey} : {t:'hello',token:TOKEN,deviceKey}));
 await until('welcome',()=>frames.find(f=>f.t==='welcome'));
 phoneChannel=new SecureChannel({pairingId:pairing.id,channelId:newChannelId(n=>randomBytes(n)),identity:phoneIdentity,initiator:true,importAesKey:mobileAes,
  expectedKey:hostIdentity.publicKey,random:n=>randomBytes(n),send:f=>{wire.push(f);socket.send(JSON.stringify(f));},

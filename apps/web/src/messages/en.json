@@ -480,8 +480,10 @@
       "resources": "Team resources",
       "submissions": "My submissions",
       "teamDsh": "Team DSH",
+      "myDsh": "My DSH",
       "teamDshHosts": "Team DSH",
       "hints": {
+        "myDsh": "DSH on the computers you signed in to Teamwork, yours alone. Pair this browser once with each, then work in its sessions from here, end-to-end encrypted. Its model calls are yours, and the phones and browsers that reach it are listed here, where you can remove any of them.",
         "teamDsh": "DSH on a machine your team runs, connected by your team's admin, who also decides who may reach it. It signs in as the team, and its model calls are the team's. You use it from the browser or the phone app, end-to-end encrypted, and see only the sessions you start; the admin can read every session from its encrypted archive."
       }
     },
@@ -877,24 +879,10 @@
       "archiveDownload": "Download",
       "archiveRead": "Open a download on your own machine, with the key dsh-teamwork-audit keygen wrote. It says if any segment is missing or altered."
     },
-    "teamDsh": {
-      "title": "Team DSH",
+    "dsh": {
       "sessions": "My sessions",
-      "introTitle": "Work on your team's DSH",
-      "disclosure": "A Team DSH is your team's machine, shared with others on its list. You see only the sessions you start; your team's admin can read every session from its encrypted archive.",
-      "none": "None of this team's DSHs is open to you yet.",
       "online": "Online",
       "offline": "Offline",
-      "needsInvite": "Ask your admin for an invite",
-      "joinWithInvite": "Join with an invite",
-      "joinHelp": "Paste the invite link your admin gave you. This browser joins once, then sets a PIN of its own.",
-      "invite": "Invite link",
-      "join": "Join",
-      "joining": "Joining…",
-      "deviceName": "Web browser",
-      "inviteInvalid": "That is not an invite link. Paste the whole dshteamwork://join link your admin gave you.",
-      "inviteOtherServer": "That invite is for another server.",
-      "browserUnsupported": "This browser cannot keep the key a Team DSH needs. Use a current Chrome, Edge, Firefox or Safari, outside private browsing.",
       "newSession": "New session",
       "noSessions": "No sessions yet.",
       "locked": "Enter your PIN to see your sessions.",
@@ -927,14 +915,66 @@
           "hint": "The four digits you set for this machine."
         },
         "locked": {
-          "title": "Locked",
-          "hint": "Too many wrong PINs. Ask your admin to unlock you on the Team DSH."
+          "title": "Locked"
         },
         "wrong": "Wrong PIN. {count, plural, one {# try} other {# tries}} left.",
         "mismatch": "The two PINs differ. Start again.",
         "unavailable": "The machine did not answer. Try again.",
         "submit": "Continue"
       }
+    },
+    "teamDsh": {
+      "title": "Team DSH",
+      "introTitle": "Work on your team's DSH",
+      "disclosure": "A Team DSH is your team's machine, shared with others on its list. You see only the sessions you start; your team's admin can read every session from its encrypted archive.",
+      "none": "None of this team's DSHs is open to you yet.",
+      "needsInvite": "Ask your admin for an invite",
+      "joinWithInvite": "Join with an invite",
+      "joinHelp": "Paste the invite link your admin gave you. This browser joins once, then sets a PIN of its own.",
+      "invite": "Invite link",
+      "join": "Join",
+      "joining": "Joining…",
+      "deviceName": "Web browser",
+      "inviteInvalid": "That is not an invite link. Paste the whole dshteamwork://join link your admin gave you.",
+      "inviteOtherServer": "That invite is for another server.",
+      "browserUnsupported": "This browser cannot keep the key a Team DSH needs. Use a current Chrome, Edge, Firefox or Safari, outside private browsing.",
+      "lockedHint": "Too many wrong PINs. Ask your admin to unlock you on the Team DSH."
+    },
+    "myDsh": {
+      "title": "My DSH",
+      "none": "None of your computers has connected yet. Sign in to Teamwork in DSH on a computer, and it appears here.",
+      "introTitle": "Use your own computers from the browser",
+      "intro": "The DSH on each computer you signed in to Teamwork. Open one to pair this browser with it, then work in its sessions, end-to-end encrypted between this browser and that computer.",
+      "lastSeen": "Last seen {time}",
+      "version": "DSH {version}",
+      "pairTitle": "Pair this browser with {name}",
+      "pairHelp": "On that computer, open the Teamwork panel in DSH and choose Phone, then make a pairing code and type it here.",
+      "code": "Pairing code",
+      "pair": "Pair",
+      "pairing": "Pairing…",
+      "invalidCode": "That code is wrong, spent or expired. Make a new one on the computer.",
+      "otherComputer": "That code was made on another computer.",
+      "safetyTitle": "Compare the safety code",
+      "safetyHelp": "The computer shows a code too. Continue only when both are the same.",
+      "matches": "They match",
+      "waitingApproval": "Now approve this browser on the computer.",
+      "refused": "The computer did not accept this browser. Make a new code and try again.",
+      "deviceName": "Web browser",
+      "lockedHint": "Too many wrong PINs. On that computer, run /teamwork pin reset in DSH, then set a new PIN here.",
+      "devices": "Devices",
+      "devicesHelp": "Phones and browsers paired with {name}. Removing one cuts it off at once.",
+      "noDevices": "No phone or browser is paired with it.",
+      "thisBrowser": "This browser",
+      "pending": "Waiting for approval",
+      "push": "Notifications on",
+      "lastUsed": "Used {time}",
+      "neverUsed": "Not used yet",
+      "revoke": "Remove",
+      "revokeConfirm": "Remove {device}? It can no longer reach {name} until it is paired again.",
+      "revoked": "Removed.",
+      "loadFailed": "Your computers could not be read. Try again.",
+      "revokeFailed": "The device was not removed. Try again.",
+      "browserUnsupported": "This browser cannot keep the key pairing needs. Use a current Chrome, Edge, Firefox or Safari, outside private browsing."
     }
   },
   "usage": {

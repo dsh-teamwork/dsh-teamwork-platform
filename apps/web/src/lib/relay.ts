@@ -15,6 +15,7 @@ import {
   type RelayClient,
 } from '@dsh-teamwork/relay-client';
 
+import type { Schemas } from './api';
 import { currentLocale } from './locale';
 
 const DB = 'dsh-teamwork-relay';
@@ -97,4 +98,32 @@ export async function browserCanJoin(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export type MyComputer = Schemas['RelayHost'];
+
+/**
+ * The member's own computers, most recently seen first, each with every device paired to it (`GET /relay/hosts`, ADR
+ * 0048). This browser's handset credential goes along so its own pairings come back marked `current`.
+ */
+export async function myComputers(account: string): Promise<MyComputer[]> {
+  let key: string | undefined;
+  try {
+    key = await new BrowserKeys(account).relayKey();
+  } catch {
+    // A browser that cannot keep keys has no pairing of its own to mark.
+  }
+  const response = await fetch('/relay/hosts', { credentials: 'same-origin', headers: key ? { 'x-device-key': key } : {} });
+  if (!response.ok) throw new Error(`relay hosts: ${response.status}`);
+  return ((await response.json()) as { hosts: MyComputer[] }).hosts;
+}
+
+/**
+ * Cuts another device off one of the member's own computers (ADR 0048): through the relay alone, as for an offline
+ * desktop, which drops that device's trust the next time it lists its pairings. This browser's own pairing goes
+ * through `RelayClient.revokeComputer` instead, which tells the desktop first.
+ */
+export async function removeDevice(pairingId: string): Promise<void> {
+  const response = await fetch(`/relay/pairings/${encodeURIComponent(pairingId)}`, { method: 'DELETE', credentials: 'same-origin' });
+  if (!response.ok && response.status !== 404) throw new Error(`remove device: ${response.status}`);
 }
