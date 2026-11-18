@@ -28,6 +28,7 @@ import { configurationOf, ModelSelectionSchema, startableDirectories } from './s
 import {
   approvalResult,
   eventsOf,
+  historyOf,
   directoryName,
   latestDirectoryOf,
   newStreams,
@@ -59,6 +60,15 @@ export interface LiveRelayOptions {
   importAesKey?: (bytes: Uint8Array) => Promise<AesKey>;
 }
 
+/** How long a follow that lost its computer waits before it tries again, doubling to the last. */
+export const RETRY_MS = [1_000, 2_000, 4_000, 8_000, 15_000, 30_000];
+
+/** Why a follow may end and come back: the socket, the channel or the computer went away for now. */
+const RETRIED: ReadonlySet<RelayErrorCode> = new Set(['unavailable', 'offline']);
+
+/** How many messages one read of older history asks for, as many as DSH's own opening window. */
+const HISTORY_PAGE = 50;
+
 /** How long a call may wait for its result before the screen is told it failed. */
 export const CALL_TIMEOUT_MS = 20_000;
 
@@ -70,6 +80,7 @@ const PHONE_ERRORS: Record<string, RelayErrorCode> = { not_paired: 'not_found', 
 interface Follow {
   pairingId: string;
   sessionId: string;
+  /** Its stream on the computer, or empty while it is (re)opening or waits to retry. */
   streamId: string;
   state: SessionState;
   streams: Streams;
@@ -266,7 +277,30 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     return connection;
   }
 
-  /** The socket closed: every call fails, every stream ends, and the next use reconnects. */
+  /**
+   * Follows that lost their computer for now try again, all together, after a wait that doubles while they keep
+   * failing. Each says it is closed meanwhile; its fresh snapshot, once it opens again, clears that.
+   */
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  let retries = 0;
+  function retryLater() {
+    if (retryTimer || ![...follows].some((follow) => !follow.streamId)) return;
+    retryTimer = setTimeout(() => {
+      retryTimer = undefined;
+      retries++;
+      for (const follow of follows) if (!follow.streamId) void open(follow);
+    }, RETRY_MS[Math.min(retries, RETRY_MS.length - 1)]);
+  }
+  /** A follow's stream ended: for good unless `reason` is one that passes. */
+  function interrupted(follow: Follow, reason: RelayErrorCode) {
+    if (follow.streamId) streams.delete(follow.streamId);
+    follow.streamId = '';
+    follow.emit({ type: 'closed', reason });
+    if (RETRIED.has(reason)) return retryLater();
+    follows.delete(follow);
+  }
+
+  /** The socket closed: every call fails, every stream ends, and the next use reconnects; follows retry. */
   function lost() {
     connection = null;
     for (const link of channels.values()) link.channel.close();
@@ -278,8 +312,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     }
     streams.clear();
     events.clear();
-    for (const follow of follows) follow.emit({ type: 'closed', reason: 'unavailable' });
-    follows.clear();
+    for (const follow of [...follows]) interrupted(follow, 'unavailable');
   }
 
   function receive(frame: Record<string, unknown> | null) {
@@ -365,11 +398,52 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     const ended = events.get(pairingId);
     if (ended) streams.delete(ended.streamId);
     events.delete(pairingId);
-    for (const follow of [...follows]) {
-      if (follow.pairingId !== pairingId) continue;
-      streams.delete(follow.streamId);
-      follows.delete(follow);
-      follow.emit({ type: 'closed', reason });
+    for (const follow of [...follows]) if (follow.pairingId === pairingId && follow.streamId) interrupted(follow, reason);
+  }
+
+  /** Opens a follow's stream: its snapshot, then every change. A failure ends it, or retries it (`interrupted`). */
+  async function open(follow: Follow) {
+    const { pairingId: computerId, sessionId } = follow;
+    follow.streamId = 'opening';
+    try {
+      await watchEvents(computerId);
+      if (!follows.has(follow)) return;
+      const streamId = await openStream(computerId, 'session/follow', { request: { address: { kind: 'session', sessionId }, activate: true, assistantStream: true } }, (body) => {
+        // Frames can come before `openStream` returns, while the follow still says it is opening.
+        if (follow.streamId !== streamId && follow.streamId !== 'opening') return;
+        if (body.type === 'error') {
+          const code = (body.error as { code?: unknown } | undefined)?.code;
+          // DSH or its web server went away, and may come back; anything else is this session's own end.
+          return interrupted(follow, code === 'dsh_closed' || code === 'dsh_unreachable' || code === 'no_web_server' ? 'unavailable' : 'not_found');
+        }
+        if (body.type !== 'item') return;
+        const value = body.value as Record<string, unknown> | undefined;
+        if (value?.type === 'snapshot') {
+          retries = 0;
+          follow.state = { ...snapshotOf(value), pending: pendingFor(computerId, sessionId) };
+          return follow.emit({ type: 'snapshot', state: follow.state });
+        }
+        const changes =
+          value?.type === 'event'
+            ? eventsOf(value.event, follow.state)
+            : value?.type === 'assistant-stream'
+              ? streamEventsOf(value.frame, follow.streams, follow.state)
+              : [];
+        for (const change of changes) {
+          follow.state = applySessionEvent(follow.state, change);
+          follow.emit(change);
+        }
+      });
+      if (follows.has(follow) && follow.streamId === 'opening') follow.streamId = streamId;
+      else {
+        // Stopped, or interrupted, while it opened.
+        streams.delete(streamId);
+        void sendSecure(computerId, { t: 'mux', pairingId: computerId, body: { type: 'cancel', streamId } }).catch(() => {});
+      }
+    } catch (error) {
+      if (!follows.has(follow) || follow.streamId !== 'opening') return;
+      follow.streamId = '';
+      interrupted(follow, error instanceof RelayError ? error.code : 'unavailable');
     }
   }
 
@@ -416,7 +490,8 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     let isReady = () => {};
     const watched: Events = { streamId: '', ready: new Promise((resolve) => (isReady = resolve)), waiting: new Map(), answered: new Map() };
     events.set(pairingId, watched);
-    watched.streamId = await openStream(pairingId, '$events', {}, (body) => {
+    // A stream that never opened is not kept: the next follow or list opens one again.
+    const opened = openStream(pairingId, '$events', {}, (body) => {
       if (body.type !== 'item') return;
       const value = body.value as Record<string, unknown> | undefined;
       if (!value) return;
@@ -442,6 +517,12 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
         sessionsChanged(pairingId);
       }
     });
+    try {
+      watched.streamId = await opened;
+    } catch (error) {
+      if (events.get(pairingId) === watched) events.delete(pairingId);
+      throw error;
+    }
   }
 
   return {
@@ -449,6 +530,11 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       generation++;
       const socket = activeSocket;
       activeSocket = null;
+      // Signed out: nothing comes back.
+      clearTimeout(retryTimer);
+      retryTimer = undefined;
+      retries = 0;
+      for (const follow of [...follows]) interrupted(follow, 'not_found');
       lost();
       listWatchers.clear();
       socket?.close();
@@ -581,47 +667,29 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
         pairingId: computerId,
         sessionId,
         streamId: '',
-        state: { status: 'idle', items: [], pending: null, closed: null },
+        state: { status: 'idle', items: [], pending: null, closed: null, earlier: null },
         streams: newStreams(),
         emit: onEvent,
       };
       follows.add(follow);
-      void (async () => {
-        await watchEvents(computerId);
-        follow.streamId = await openStream(computerId, 'session/follow', { request: { address: { kind: 'session', sessionId }, activate: true, assistantStream: true } }, (body) => {
-          if (body.type === 'error') {
-            follows.delete(follow);
-            return follow.emit({ type: 'closed', reason: 'unavailable' });
-          }
-          if (body.type !== 'item') return;
-          const value = body.value as Record<string, unknown> | undefined;
-          if (value?.type === 'snapshot') {
-            follow.state = { ...snapshotOf(value), pending: pendingFor(computerId, sessionId) };
-            return follow.emit({ type: 'snapshot', state: follow.state });
-          }
-          const changes =
-            value?.type === 'event'
-              ? eventsOf(value.event, follow.state)
-              : value?.type === 'assistant-stream'
-                ? streamEventsOf(value.frame, follow.streams, follow.state)
-                : [];
-          for (const change of changes) {
-            follow.state = applySessionEvent(follow.state, change);
-            follow.emit(change);
-          }
-        });
-        if (!follows.has(follow)) stop();
-      })().catch(() => {
-        if (!follows.delete(follow)) return;
-        onEvent({ type: 'closed', reason: 'unavailable' });
-      });
-      function stop() {
+      void open(follow);
+      return () => {
         follows.delete(follow);
-        if (!follow.streamId) return;
-        streams.delete(follow.streamId);
-        void sendSecure(computerId, { t: 'mux', pairingId: computerId, body: { type: 'cancel', streamId: follow.streamId } }).catch(() => {});
-      }
-      return stop;
+        const streamId = follow.streamId;
+        if (!streamId || streamId === 'opening') return;
+        streams.delete(streamId);
+        void sendSecure(computerId, { t: 'mux', pairingId: computerId, body: { type: 'cancel', streamId } }).catch(() => {});
+      };
+    },
+
+    async older(computerId, sessionId) {
+      const followed = [...follows].find((f) => f.pairingId === computerId && f.sessionId === sessionId);
+      const before = followed?.state.earlier;
+      if (before == null) return;
+      const page = historyOf(await call(computerId, 'session/page', { request: { address: { kind: 'session', sessionId }, beforeSeq: before, maxMessages: HISTORY_PAGE } }));
+      // Another read got there first: the items it read stay as they are.
+      if (followed!.state.earlier !== before) return;
+      tellFollowers(computerId, sessionId, { type: 'older', items: page.items, earlier: page.earlier });
     },
 
     async createSession(computerId, options = {}) {
