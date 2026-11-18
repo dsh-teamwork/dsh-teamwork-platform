@@ -46,7 +46,7 @@ Anything it would change still asks for your approval.
 **My DSH** appears under Workspace once a computer of yours, with DSH signed in
 to Teamwork, has connected. It lists those computers, the same in every team.
 Open one and pair this browser with it once: in DSH on that computer, open the
-Teamwork panel, choose **Phone** and make a code, type the code here, check
+Teamwork panel, choose **Devices** and make a code, type the code here, check
 that both screens show the same safety code, and approve on the computer. Then
 set a four-digit PIN, which the computer asks for again when you come back.
 After that you start, follow and answer sessions on it from the browser, end to

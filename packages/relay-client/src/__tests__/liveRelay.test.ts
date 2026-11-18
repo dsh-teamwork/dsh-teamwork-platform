@@ -101,6 +101,7 @@ function setup() {
     random: n => new Uint8Array(n).fill(1),
     session: async () => ({ server: 'https://teamwork.example.test', token }),
     locale: () => 'en',
+    device: 'ios',
     request,
     WebSocket: FakeSocket as unknown as typeof WebSocket,
   });
@@ -448,7 +449,7 @@ describe('joining a shared DSH', () => {
     }) as typeof fetch;
     const relay = createLiveRelay({
       keys: { relayKey: async () => 'phone-key', identity: async () => ({} as any), peer: async () => undefined, trust: async (id: string) => { trusted.push(id); }, forget: async () => {} },
-      random: (n) => new Uint8Array(n).fill(1), session: async () => ({ server: 'https://teamwork.example.test', token: 't' }), locale: () => 'en', request,
+      random: (n) => new Uint8Array(n).fill(1), session: async () => ({ server: 'https://teamwork.example.test', token: 't' }), locale: () => 'en', device: 'android', request,
       WebSocket: FakeSocket as unknown as typeof WebSocket,
     });
     // The DSH answers the invite once it arrives inside the channel.
@@ -467,7 +468,7 @@ describe('joining a shared DSH', () => {
     const { relay, trusted, sent } = joining('pairAccepted');
     const pairing = await relay.join(invite, 'phone');
     expect(pairing).toMatchObject({ id: 'j1', hostName: 'build box', status: 'confirmed' });
-    expect(sent().find((f) => f.t === 'shareJoin')).toEqual({ t: 'shareJoin', invite: 'inv1', secret: 's3cr3t', name: 'phone' });
+    expect(sent().find((f) => f.t === 'shareJoin')).toEqual({ t: 'shareJoin', invite: 'inv1', secret: 's3cr3t', name: 'phone', kind: 'android' });
     expect(sent().some((f) => f.t === 'pairHello')).toBe(false);
     expect(trusted).toEqual(['j1']);
   });
