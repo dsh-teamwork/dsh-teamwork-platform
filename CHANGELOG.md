@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Browser analytics send page views and nothing else, whatever the project enables
+
+- **What:** The browser's PostHog client turns off heatmaps, dead clicks and web vitals in its own config, and its filter (`scrubEvent`) drops every event but `$pageview`. Before, a PostHog project with those switched on in its settings made the client send `$web_vitals` and heatmap events.
+- **Why:** `docs/ops/analytics.md` and the hosted privacy policy promise page views only; the project's remote settings could break that promise without a code change.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/lib/analytics.ts`, `docs/ops/analytics.md`.
+
 ## 2026-11-18 — An open console survives a deploy
 
 - **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.

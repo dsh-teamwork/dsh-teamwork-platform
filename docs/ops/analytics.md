@@ -14,8 +14,10 @@ No account, no person and no behaviour is tracked.
 | The closed edition's phone app (its `lib/analytics.ts`, where `premium/` exists) | `$screen` only, named by its route pattern (`/[computerId]/[sessionId]`), never a value in it | None. The client keeps its state in memory, so its anonymous id is new at every launch | Nothing is stored on the phone, matching the browser |
 | The server | Nothing | — | What an account does is not tracked |
 
-There are no page leaves, no autocapture, no session recording, no surveys and
-no identified events. The server sends nothing to PostHog: it only hands the
+There are no page leaves, no autocapture, no heatmaps, no dead clicks, no web
+vitals, no session recording, no surveys and no identified events. Each is off
+in the client's own config and its filter drops any other event, so turning one
+on in the PostHog project's settings changes nothing. The server sends nothing to PostHog: it only hands the
 key to the pages it serves.
 
 The database is the authority for every outcome. Sign-ups, active teams and
