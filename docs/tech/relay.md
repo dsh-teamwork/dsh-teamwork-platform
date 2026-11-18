@@ -485,7 +485,9 @@ the hosted edition, Cloud DSH.
   browser.
 - **Verified by** `server/e2e`'s relay test, which pairs and passes encrypted
   calls once as the app and once as the console (a cookie from this site, no
-  token), and `server/relay/console_test.go`, which pins the console's reach:
+  token); its personal pairing test, where `packages/relay-client`, as the
+  console runs it, pairs with the plugin's own pairing code through the code,
+  the safety code and the desktop's approval; and `server/relay/console_test.go`, which pins the console's reach:
   its own computers' pairings only, from this site only, and none of an app
   token's.
 

@@ -195,10 +195,12 @@ function Pair({ host, paired }: { host: MyComputer; paired: () => void }) {
       try {
         const next = await relay.getPairing(pending);
         if (!live) return;
-        if (!next) {
+        if (!next || next.verificationError) {
+          // Refused, or the encrypted channel to the computer failed before it accepted: start again with a new code.
           setPairing(null);
           setMatched(false);
-          setFailed(t('refused'));
+          setCode('');
+          setFailed(t(next ? 'pairFailed' : 'refused'));
         } else {
           setPairing(next);
           if (next.status === 'confirmed') paired();

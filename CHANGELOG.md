@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — My DSH says when pairing broke instead of waiting
+
+- **What:** Pairing a browser on My DSH no longer waits forever when the encrypted channel to the computer fails before it accepts: it says so and starts again with a new code. A new e2e test pairs `packages/relay-client`, as the console runs it, with the plugin's own pairing code.
+- **Why:** A member saw "approve this browser on the computer" stay on screen after approving it there.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`, `server/e2e/personal_pairing_test.go`.
+
 ## 2026-11-18 — An edition can choose which teams run a Team DSH
 
 - **What:** `edition.Host` gains `GateTeamDSH` and `TeamDSHAllowed`. Where an edition sets a gate, a team it does not admit cannot create or rotate a Team DSH key (`403 team_dsh_unavailable`), its DSH gets no host token, and its members reach none; `GET /api/teams/{teamId}/shared-hosts` adds `available`, and the console's Team DSH page says the team is not enabled and offers no key. A self-hosted server sets no gate, so nothing changes there.
