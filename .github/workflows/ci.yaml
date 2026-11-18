@@ -3,7 +3,9 @@ name: CI
 # CI runs on a merge into main, on every pull request and on demand. Every step
 # of `build` is the same gate `.husky/pre-push` runs before a branch leaves the
 # machine; a pull request runs it too, because a contributor's machine is not
-# ours to trust. A push to a feature branch alone runs nothing.
+# ours to trust. A push to a feature branch alone runs nothing. A private
+# edition (this file is shared with it) skips pull requests: its minutes are
+# billed, so it runs on a merge into main and on demand only.
 on:
   push:
     branches: ["main"]
@@ -17,6 +19,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || !github.event.repository.private
     runs-on: ubuntu-latest
 
     # A mocked database cannot see what a database decides, so the suites that
