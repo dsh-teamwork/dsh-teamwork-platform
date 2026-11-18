@@ -1201,6 +1201,41 @@ paths:
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/shared-archive:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Every shared DSH's audit archive, deleted hosts included (team admins)
+      security: [{ session: [] }]
+      responses:
+        '200':
+          description: One summary per shared DSH that uploaded a segment
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hosts]
+                properties:
+                  hosts: { type: array, items: { $ref: '#/components/schemas/SharedArchiveHost' } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/shared-archive/{hostId}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: hostId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: "One shared DSH's archive: its segments in order, one per line, exactly as uploaded (team admins)"
+      security: [{ session: [] }]
+      responses:
+        '200':
+          description: 'Sealed segments, read with dsh-teamwork-audit read and the admin''s own key'
+          content:
+            application/x-ndjson:
+              schema: { type: string }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
   /relay/shared:
     servers: [{ url: / }]
     get:
@@ -1253,6 +1288,40 @@ paths:
         '401': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
         '429': { $ref: '#/components/responses/Error' }
+  /relay/shared/archive:
+    servers: [{ url: / }]
+    post:
+      summary: A shared DSH uploads the next segment of its sealed audit archive
+      security: [{ bearer: [] }]
+      description: 'The DSH''s host token. The segment must be signed by the identity key the host bound and be the next in its chain; a retried upload of the last segment answers 200.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SharedArchiveSegment' }
+      responses:
+        '201':
+          description: The segment is kept
+          content:
+            application/json:
+              schema: { type: object, required: [seq, digest], properties: { seq: { type: integer }, digest: { type: string } } }
+        '200':
+          description: The segment was already kept
+          content:
+            application/json:
+              schema: { type: object, required: [seq, digest], properties: { seq: { type: integer }, digest: { type: string } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409':
+          description: Not the next segment in the chain
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties: { error: { type: string }, next: { type: integer }, prev: { type: string } }
+        '413': { $ref: '#/components/responses/Error' }
   /relay/plugin:
     servers: [{ url: / }]
     get:
@@ -1433,6 +1502,31 @@ components:
         createdAt: { type: string, format: date-time }
         access: { type: string, enum: [team, listed], description: 'Every team member reaches it, or only those listed' }
         memberIds: { type: array, items: { type: string } }
+    SharedArchiveHost:
+      type: object
+      required: [hostId, name, deleted, segments, firstAt, lastAt, lastSeq, lastDigest]
+      properties:
+        hostId: { type: string }
+        name: { type: string, description: The shared DSH's name; empty once it was deleted }
+        deleted: { type: boolean }
+        segments: { type: integer }
+        firstAt: { type: string, format: date-time }
+        lastAt: { type: string, format: date-time }
+        lastSeq: { type: integer }
+        lastDigest: { type: string, description: SHA-256 of the last segment's bytes }
+    SharedArchiveSegment:
+      type: object
+      required: [v, host, seq, prev, key, enc, ct, sig]
+      additionalProperties: false
+      properties:
+        v: { type: integer, enum: [1] }
+        host: { type: string }
+        seq: { type: integer, minimum: 1 }
+        prev: { type: string, description: 'SHA-256 of the previous segment''s bytes, empty for the first' }
+        key: { type: string, description: SHA-256 of the audit public key }
+        enc: { type: string, description: HPKE encapsulated key (base64) }
+        ct: { type: string, description: HPKE ciphertext (base64) }
+        sig: { type: string, description: Ed25519 signature by the DSH's identity key (base64) }
     SharedHostName:
       type: object
       required: [name]

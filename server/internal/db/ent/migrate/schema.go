@@ -535,6 +535,35 @@ var (
 			},
 		},
 	}
+	// SharedArchiveSegmentsColumns holds the columns for the "shared_archive_segments" table.
+	SharedArchiveSegmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "host_id", Type: field.TypeString, Size: 32},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "seq", Type: field.TypeInt64},
+		{Name: "prev_digest", Type: field.TypeString, Size: 64},
+		{Name: "digest", Type: field.TypeString, Size: 64},
+		{Name: "data", Type: field.TypeBytes, Size: 2097152, SchemaType: map[string]string{"mysql": "mediumblob"}},
+	}
+	// SharedArchiveSegmentsTable holds the schema information for the "shared_archive_segments" table.
+	SharedArchiveSegmentsTable = &schema.Table{
+		Name:       "shared_archive_segments",
+		Columns:    SharedArchiveSegmentsColumns,
+		PrimaryKey: []*schema.Column{SharedArchiveSegmentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "shared_archive_host_seq",
+				Unique:  true,
+				Columns: []*schema.Column{SharedArchiveSegmentsColumns[2], SharedArchiveSegmentsColumns[4]},
+			},
+			{
+				Name:    "shared_archive_team",
+				Unique:  false,
+				Columns: []*schema.Column{SharedArchiveSegmentsColumns[3]},
+			},
+		},
+	}
 	// SharedHostsColumns holds the columns for the "shared_hosts" table.
 	SharedHostsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -784,6 +813,7 @@ var (
 		RelayPairingOffersTable,
 		ResourceArtifactsTable,
 		ResourceSubmissionsTable,
+		SharedArchiveSegmentsTable,
 		SharedHostsTable,
 		SharedHostMembersTable,
 		TeamsTable,
@@ -870,6 +900,10 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	ResourceSubmissionsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	SharedArchiveSegmentsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

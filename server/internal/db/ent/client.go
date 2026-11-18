@@ -33,6 +33,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedarchivesegment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
@@ -86,6 +87,8 @@ type Client struct {
 	ResourceArtifact *ResourceArtifactClient
 	// ResourceSubmission is the client for interacting with the ResourceSubmission builders.
 	ResourceSubmission *ResourceSubmissionClient
+	// SharedArchiveSegment is the client for interacting with the SharedArchiveSegment builders.
+	SharedArchiveSegment *SharedArchiveSegmentClient
 	// SharedHost is the client for interacting with the SharedHost builders.
 	SharedHost *SharedHostClient
 	// SharedHostMember is the client for interacting with the SharedHostMember builders.
@@ -131,6 +134,7 @@ func (c *Client) init() {
 	c.RelayPairingOffer = NewRelayPairingOfferClient(c.config)
 	c.ResourceArtifact = NewResourceArtifactClient(c.config)
 	c.ResourceSubmission = NewResourceSubmissionClient(c.config)
+	c.SharedArchiveSegment = NewSharedArchiveSegmentClient(c.config)
 	c.SharedHost = NewSharedHostClient(c.config)
 	c.SharedHostMember = NewSharedHostMemberClient(c.config)
 	c.Team = NewTeamClient(c.config)
@@ -229,34 +233,35 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		BudgetEvent:        NewBudgetEventClient(cfg),
-		BudgetGate:         NewBudgetGateClient(cfg),
-		BudgetNotice:       NewBudgetNoticeClient(cfg),
-		BudgetPolicy:       NewBudgetPolicyClient(cfg),
-		BudgetReservation:  NewBudgetReservationClient(cfg),
-		BudgetWindow:       NewBudgetWindowClient(cfg),
-		ConfigRevision:     NewConfigRevisionClient(cfg),
-		Identity:           NewIdentityClient(cfg),
-		Invite:             NewInviteClient(cfg),
-		Membership:         NewMembershipClient(cfg),
-		ModelRate:          NewModelRateClient(cfg),
-		Password:           NewPasswordClient(cfg),
-		RateWindow:         NewRateWindowClient(cfg),
-		RelayHost:          NewRelayHostClient(cfg),
-		RelayPairing:       NewRelayPairingClient(cfg),
-		RelayPairingOffer:  NewRelayPairingOfferClient(cfg),
-		ResourceArtifact:   NewResourceArtifactClient(cfg),
-		ResourceSubmission: NewResourceSubmissionClient(cfg),
-		SharedHost:         NewSharedHostClient(cfg),
-		SharedHostMember:   NewSharedHostMemberClient(cfg),
-		Team:               NewTeamClient(cfg),
-		TeamConfig:         NewTeamConfigClient(cfg),
-		TeamProvider:       NewTeamProviderClient(cfg),
-		UsageRequest:       NewUsageRequestClient(cfg),
-		User:               NewUserClient(cfg),
-		VerificationCode:   NewVerificationCodeClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		BudgetEvent:          NewBudgetEventClient(cfg),
+		BudgetGate:           NewBudgetGateClient(cfg),
+		BudgetNotice:         NewBudgetNoticeClient(cfg),
+		BudgetPolicy:         NewBudgetPolicyClient(cfg),
+		BudgetReservation:    NewBudgetReservationClient(cfg),
+		BudgetWindow:         NewBudgetWindowClient(cfg),
+		ConfigRevision:       NewConfigRevisionClient(cfg),
+		Identity:             NewIdentityClient(cfg),
+		Invite:               NewInviteClient(cfg),
+		Membership:           NewMembershipClient(cfg),
+		ModelRate:            NewModelRateClient(cfg),
+		Password:             NewPasswordClient(cfg),
+		RateWindow:           NewRateWindowClient(cfg),
+		RelayHost:            NewRelayHostClient(cfg),
+		RelayPairing:         NewRelayPairingClient(cfg),
+		RelayPairingOffer:    NewRelayPairingOfferClient(cfg),
+		ResourceArtifact:     NewResourceArtifactClient(cfg),
+		ResourceSubmission:   NewResourceSubmissionClient(cfg),
+		SharedArchiveSegment: NewSharedArchiveSegmentClient(cfg),
+		SharedHost:           NewSharedHostClient(cfg),
+		SharedHostMember:     NewSharedHostMemberClient(cfg),
+		Team:                 NewTeamClient(cfg),
+		TeamConfig:           NewTeamConfigClient(cfg),
+		TeamProvider:         NewTeamProviderClient(cfg),
+		UsageRequest:         NewUsageRequestClient(cfg),
+		User:                 NewUserClient(cfg),
+		VerificationCode:     NewVerificationCodeClient(cfg),
 	}, nil
 }
 
@@ -274,34 +279,35 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		BudgetEvent:        NewBudgetEventClient(cfg),
-		BudgetGate:         NewBudgetGateClient(cfg),
-		BudgetNotice:       NewBudgetNoticeClient(cfg),
-		BudgetPolicy:       NewBudgetPolicyClient(cfg),
-		BudgetReservation:  NewBudgetReservationClient(cfg),
-		BudgetWindow:       NewBudgetWindowClient(cfg),
-		ConfigRevision:     NewConfigRevisionClient(cfg),
-		Identity:           NewIdentityClient(cfg),
-		Invite:             NewInviteClient(cfg),
-		Membership:         NewMembershipClient(cfg),
-		ModelRate:          NewModelRateClient(cfg),
-		Password:           NewPasswordClient(cfg),
-		RateWindow:         NewRateWindowClient(cfg),
-		RelayHost:          NewRelayHostClient(cfg),
-		RelayPairing:       NewRelayPairingClient(cfg),
-		RelayPairingOffer:  NewRelayPairingOfferClient(cfg),
-		ResourceArtifact:   NewResourceArtifactClient(cfg),
-		ResourceSubmission: NewResourceSubmissionClient(cfg),
-		SharedHost:         NewSharedHostClient(cfg),
-		SharedHostMember:   NewSharedHostMemberClient(cfg),
-		Team:               NewTeamClient(cfg),
-		TeamConfig:         NewTeamConfigClient(cfg),
-		TeamProvider:       NewTeamProviderClient(cfg),
-		UsageRequest:       NewUsageRequestClient(cfg),
-		User:               NewUserClient(cfg),
-		VerificationCode:   NewVerificationCodeClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		BudgetEvent:          NewBudgetEventClient(cfg),
+		BudgetGate:           NewBudgetGateClient(cfg),
+		BudgetNotice:         NewBudgetNoticeClient(cfg),
+		BudgetPolicy:         NewBudgetPolicyClient(cfg),
+		BudgetReservation:    NewBudgetReservationClient(cfg),
+		BudgetWindow:         NewBudgetWindowClient(cfg),
+		ConfigRevision:       NewConfigRevisionClient(cfg),
+		Identity:             NewIdentityClient(cfg),
+		Invite:               NewInviteClient(cfg),
+		Membership:           NewMembershipClient(cfg),
+		ModelRate:            NewModelRateClient(cfg),
+		Password:             NewPasswordClient(cfg),
+		RateWindow:           NewRateWindowClient(cfg),
+		RelayHost:            NewRelayHostClient(cfg),
+		RelayPairing:         NewRelayPairingClient(cfg),
+		RelayPairingOffer:    NewRelayPairingOfferClient(cfg),
+		ResourceArtifact:     NewResourceArtifactClient(cfg),
+		ResourceSubmission:   NewResourceSubmissionClient(cfg),
+		SharedArchiveSegment: NewSharedArchiveSegmentClient(cfg),
+		SharedHost:           NewSharedHostClient(cfg),
+		SharedHostMember:     NewSharedHostMemberClient(cfg),
+		Team:                 NewTeamClient(cfg),
+		TeamConfig:           NewTeamConfigClient(cfg),
+		TeamProvider:         NewTeamProviderClient(cfg),
+		UsageRequest:         NewUsageRequestClient(cfg),
+		User:                 NewUserClient(cfg),
+		VerificationCode:     NewVerificationCodeClient(cfg),
 	}, nil
 }
 
@@ -335,8 +341,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
 		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.RelayHost,
 		c.RelayPairing, c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
-		c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig, c.TeamProvider,
-		c.UsageRequest, c.User, c.VerificationCode,
+		c.SharedArchiveSegment, c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -350,8 +356,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
 		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.RelayHost,
 		c.RelayPairing, c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
-		c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig, c.TeamProvider,
-		c.UsageRequest, c.User, c.VerificationCode,
+		c.SharedArchiveSegment, c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -396,6 +402,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ResourceArtifact.mutate(ctx, m)
 	case *ResourceSubmissionMutation:
 		return c.ResourceSubmission.mutate(ctx, m)
+	case *SharedArchiveSegmentMutation:
+		return c.SharedArchiveSegment.mutate(ctx, m)
 	case *SharedHostMutation:
 		return c.SharedHost.mutate(ctx, m)
 	case *SharedHostMemberMutation:
@@ -2891,6 +2899,139 @@ func (c *ResourceSubmissionClient) mutate(ctx context.Context, m *ResourceSubmis
 	}
 }
 
+// SharedArchiveSegmentClient is a client for the SharedArchiveSegment schema.
+type SharedArchiveSegmentClient struct {
+	config
+}
+
+// NewSharedArchiveSegmentClient returns a client for the SharedArchiveSegment from the given config.
+func NewSharedArchiveSegmentClient(c config) *SharedArchiveSegmentClient {
+	return &SharedArchiveSegmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sharedarchivesegment.Hooks(f(g(h())))`.
+func (c *SharedArchiveSegmentClient) Use(hooks ...Hook) {
+	c.hooks.SharedArchiveSegment = append(c.hooks.SharedArchiveSegment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sharedarchivesegment.Intercept(f(g(h())))`.
+func (c *SharedArchiveSegmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SharedArchiveSegment = append(c.inters.SharedArchiveSegment, interceptors...)
+}
+
+// Create returns a builder for creating a SharedArchiveSegment entity.
+func (c *SharedArchiveSegmentClient) Create() *SharedArchiveSegmentCreate {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpCreate)
+	return &SharedArchiveSegmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SharedArchiveSegment entities.
+func (c *SharedArchiveSegmentClient) CreateBulk(builders ...*SharedArchiveSegmentCreate) *SharedArchiveSegmentCreateBulk {
+	return &SharedArchiveSegmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SharedArchiveSegmentClient) MapCreateBulk(slice any, setFunc func(*SharedArchiveSegmentCreate, int)) *SharedArchiveSegmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SharedArchiveSegmentCreateBulk{err: fmt.Errorf("calling to SharedArchiveSegmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SharedArchiveSegmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SharedArchiveSegmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SharedArchiveSegment.
+func (c *SharedArchiveSegmentClient) Update() *SharedArchiveSegmentUpdate {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpUpdate)
+	return &SharedArchiveSegmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SharedArchiveSegmentClient) UpdateOne(_m *SharedArchiveSegment) *SharedArchiveSegmentUpdateOne {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpUpdateOne, withSharedArchiveSegment(_m))
+	return &SharedArchiveSegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SharedArchiveSegmentClient) UpdateOneID(id string) *SharedArchiveSegmentUpdateOne {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpUpdateOne, withSharedArchiveSegmentID(id))
+	return &SharedArchiveSegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SharedArchiveSegment.
+func (c *SharedArchiveSegmentClient) Delete() *SharedArchiveSegmentDelete {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpDelete)
+	return &SharedArchiveSegmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SharedArchiveSegmentClient) DeleteOne(_m *SharedArchiveSegment) *SharedArchiveSegmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SharedArchiveSegmentClient) DeleteOneID(id string) *SharedArchiveSegmentDeleteOne {
+	builder := c.Delete().Where(sharedarchivesegment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SharedArchiveSegmentDeleteOne{builder}
+}
+
+// Query returns a query builder for SharedArchiveSegment.
+func (c *SharedArchiveSegmentClient) Query() *SharedArchiveSegmentQuery {
+	return &SharedArchiveSegmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSharedArchiveSegment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SharedArchiveSegment entity by its id.
+func (c *SharedArchiveSegmentClient) Get(ctx context.Context, id string) (*SharedArchiveSegment, error) {
+	return c.Query().Where(sharedarchivesegment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SharedArchiveSegmentClient) GetX(ctx context.Context, id string) *SharedArchiveSegment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SharedArchiveSegmentClient) Hooks() []Hook {
+	return c.hooks.SharedArchiveSegment
+}
+
+// Interceptors returns the client interceptors.
+func (c *SharedArchiveSegmentClient) Interceptors() []Interceptor {
+	return c.inters.SharedArchiveSegment
+}
+
+func (c *SharedArchiveSegmentClient) mutate(ctx context.Context, m *SharedArchiveSegmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SharedArchiveSegmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SharedArchiveSegmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SharedArchiveSegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SharedArchiveSegmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SharedArchiveSegment mutation op: %q", m.Op())
+	}
+}
+
 // SharedHostClient is a client for the SharedHost schema.
 type SharedHostClient struct {
 	config
@@ -4105,15 +4246,16 @@ type (
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
 		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
 		Password, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
-		ResourceArtifact, ResourceSubmission, SharedHost, SharedHostMember, Team,
-		TeamConfig, TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
+		ResourceArtifact, ResourceSubmission, SharedArchiveSegment, SharedHost,
+		SharedHostMember, Team, TeamConfig, TeamProvider, UsageRequest, User,
+		VerificationCode []ent.Hook
 	}
 	inters struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
 		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
 		Password, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
-		ResourceArtifact, ResourceSubmission, SharedHost, SharedHostMember, Team,
-		TeamConfig, TeamProvider, UsageRequest, User,
+		ResourceArtifact, ResourceSubmission, SharedArchiveSegment, SharedHost,
+		SharedHostMember, Team, TeamConfig, TeamProvider, UsageRequest, User,
 		VerificationCode []ent.Interceptor
 	}
 )

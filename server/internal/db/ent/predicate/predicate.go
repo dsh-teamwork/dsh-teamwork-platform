@@ -60,6 +60,9 @@ type ResourceArtifact func(*sql.Selector)
 // ResourceSubmission is the predicate function for resourcesubmission builders.
 type ResourceSubmission func(*sql.Selector)
 
+// SharedArchiveSegment is the predicate function for sharedarchivesegment builders.
+type SharedArchiveSegment func(*sql.Selector)
+
 // SharedHost is the predicate function for sharedhost builders.
 type SharedHost func(*sql.Selector)
 

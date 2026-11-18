@@ -82,7 +82,7 @@ func TestPluginSharedMode(t *testing.T) {
 		defer cancel()
 		cmd := exec.CommandContext(ctx, "node", filepath.Join(here(), "shared.mjs"))
 		cmd.Env = append(os.Environ(), "BASE="+in.URL, "KEY="+created.Key, "TEAM="+team, "PLUGIN="+plugin,
-			"BOB="+bob, "BOB_TOKEN="+in.Bearer(bob), "EVE_TOKEN="+in.Bearer(eve))
+			"BOB="+bob, "BOB_TOKEN="+in.Bearer(bob), "EVE_TOKEN="+in.Bearer(eve), "ADMIN_COOKIE="+in.Session(ada, "password").String())
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("%v\n%s", err, out)

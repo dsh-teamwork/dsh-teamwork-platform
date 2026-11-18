@@ -135,3 +135,30 @@ func (SharedHostMember) Fields() []ent.Field {
 func (SharedHostMember) Indexes() []ent.Index {
 	return []ent.Index{index.Fields("host_id", "user_id").Unique().StorageKey("shared_host_members_host_user")}
 }
+
+// SharedArchiveSegment is one segment of a shared DSH's audit archive
+// (docs/tech/shared-dsh.md, "The audit archive"): the DSH's records, sealed to
+// a key only the team's admin holds, exactly as the DSH uploaded them. The
+// server reads only the clear header, which it checks for order and signature;
+// it cannot open the rest. A segment outlives its shared host and goes with the
+// team. A segment is at most 1 MiB of records, so 2 MiB of column holds it.
+type SharedArchiveSegment struct{ ent.Schema }
+
+func (SharedArchiveSegment) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
+func (SharedArchiveSegment) Fields() []ent.Field {
+	return []ent.Field{
+		relayRef("host_id"),
+		relayRef("team_id"),
+		field.Int64("seq").Positive(),
+		// The SHA-256 of the previous segment's bytes, hex; empty for the first.
+		field.String("prev_digest").MaxLen(64),
+		field.String("digest").NotEmpty().MaxLen(64),
+		field.Bytes("data").MaxLen(2 << 20).SchemaType(map[string]string{"mysql": "mediumblob"}),
+	}
+}
+func (SharedArchiveSegment) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("host_id", "seq").Unique().StorageKey("shared_archive_host_seq"),
+		index.Fields("team_id").StorageKey("shared_archive_team"),
+	}
+}

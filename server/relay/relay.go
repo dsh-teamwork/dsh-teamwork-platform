@@ -67,6 +67,7 @@ func Extension(push SendPush, pingEvery time.Duration) edition.Extension {
 			r.routes(h.Mux)
 			r.sharedRoutes(h.Mux)
 			r.accessRoutes(h.Mux)
+			r.archiveRoutes(h.Mux)
 			return r.close, nil
 		},
 	}

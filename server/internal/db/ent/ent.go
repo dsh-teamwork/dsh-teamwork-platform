@@ -30,6 +30,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedarchivesegment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
@@ -98,32 +99,33 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			budgetevent.Table:        budgetevent.ValidColumn,
-			budgetgate.Table:         budgetgate.ValidColumn,
-			budgetnotice.Table:       budgetnotice.ValidColumn,
-			budgetpolicy.Table:       budgetpolicy.ValidColumn,
-			budgetreservation.Table:  budgetreservation.ValidColumn,
-			budgetwindow.Table:       budgetwindow.ValidColumn,
-			configrevision.Table:     configrevision.ValidColumn,
-			identity.Table:           identity.ValidColumn,
-			invite.Table:             invite.ValidColumn,
-			membership.Table:         membership.ValidColumn,
-			modelrate.Table:          modelrate.ValidColumn,
-			password.Table:           password.ValidColumn,
-			ratewindow.Table:         ratewindow.ValidColumn,
-			relayhost.Table:          relayhost.ValidColumn,
-			relaypairing.Table:       relaypairing.ValidColumn,
-			relaypairingoffer.Table:  relaypairingoffer.ValidColumn,
-			resourceartifact.Table:   resourceartifact.ValidColumn,
-			resourcesubmission.Table: resourcesubmission.ValidColumn,
-			sharedhost.Table:         sharedhost.ValidColumn,
-			sharedhostmember.Table:   sharedhostmember.ValidColumn,
-			team.Table:               team.ValidColumn,
-			teamconfig.Table:         teamconfig.ValidColumn,
-			teamprovider.Table:       teamprovider.ValidColumn,
-			usagerequest.Table:       usagerequest.ValidColumn,
-			user.Table:               user.ValidColumn,
-			verificationcode.Table:   verificationcode.ValidColumn,
+			budgetevent.Table:          budgetevent.ValidColumn,
+			budgetgate.Table:           budgetgate.ValidColumn,
+			budgetnotice.Table:         budgetnotice.ValidColumn,
+			budgetpolicy.Table:         budgetpolicy.ValidColumn,
+			budgetreservation.Table:    budgetreservation.ValidColumn,
+			budgetwindow.Table:         budgetwindow.ValidColumn,
+			configrevision.Table:       configrevision.ValidColumn,
+			identity.Table:             identity.ValidColumn,
+			invite.Table:               invite.ValidColumn,
+			membership.Table:           membership.ValidColumn,
+			modelrate.Table:            modelrate.ValidColumn,
+			password.Table:             password.ValidColumn,
+			ratewindow.Table:           ratewindow.ValidColumn,
+			relayhost.Table:            relayhost.ValidColumn,
+			relaypairing.Table:         relaypairing.ValidColumn,
+			relaypairingoffer.Table:    relaypairingoffer.ValidColumn,
+			resourceartifact.Table:     resourceartifact.ValidColumn,
+			resourcesubmission.Table:   resourcesubmission.ValidColumn,
+			sharedarchivesegment.Table: sharedarchivesegment.ValidColumn,
+			sharedhost.Table:           sharedhost.ValidColumn,
+			sharedhostmember.Table:     sharedhostmember.ValidColumn,
+			team.Table:                 team.ValidColumn,
+			teamconfig.Table:           teamconfig.ValidColumn,
+			teamprovider.Table:         teamprovider.ValidColumn,
+			usagerequest.Table:         usagerequest.ValidColumn,
+			user.Table:                 user.ValidColumn,
+			verificationcode.Table:     verificationcode.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

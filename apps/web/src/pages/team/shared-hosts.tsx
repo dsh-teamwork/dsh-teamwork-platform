@@ -2,7 +2,10 @@
  * A team's shared DSHs (`/teams/{teamId}/shared-hosts`, docs/tech/shared-dsh.md):
  * the team host keys an admin creates, rotates and deletes. A key is shown once,
  * when it is created or rotated, as the command to run in that DSH; the server
- * keeps only its HMAC. A member sees that only an admin manages them.
+ * keeps only its HMAC. Below them, each shared DSH's audit archive, sealed to
+ * the admin's own key: the page only lists and downloads it, and
+ * `dsh-teamwork-audit read` opens it on the admin's machine. A member sees that
+ * only an admin manages them.
  */
 
 import { useState } from 'react';
@@ -22,6 +25,7 @@ import { useTeam } from './layout';
 
 type SharedHost = Schemas['SharedHost'];
 type Issued = Schemas['SharedHostKey'];
+type Archived = Schemas['SharedArchiveHost'];
 
 export function TeamSharedHostsPage() {
   const { team } = useTeam();
@@ -30,6 +34,7 @@ export function TeamSharedHostsPage() {
   const admin = team.role === 'admin';
   const root = `teams/${team.id}/shared-hosts`;
   const hosts = useApi<{ hosts: SharedHost[] }>(admin ? root : null);
+  const archive = useApi<{ hosts: Archived[] }>(admin ? `teams/${team.id}/shared-archive` : null);
   const { pending, run } = useMutation(hosts.reload);
   const format = useFormatter();
   const [name, setName] = useState('');
@@ -176,6 +181,31 @@ export function TeamSharedHostsPage() {
           </CardContent>
         </Card>
       )}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('archiveTitle')}</CardTitle>
+          <CardDescription>{t('archiveHelp')}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 text-sm">
+          {archive.error ? <Failure message={word(archive.error)} /> : null}
+          {archive.data?.hosts.length === 0 && <p className="text-muted-foreground">{t('archiveEmpty')}</p>}
+          {archive.data?.hosts.map((entry) => (
+            <div key={entry.hostId} className="flex flex-wrap items-center justify-between gap-3 border-b pb-3 last:border-b-0 last:pb-0">
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="font-medium">{entry.deleted ? t('archiveDeleted', { id: entry.hostId }) : entry.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {t('archiveRange', { segments: entry.segments, first: when(entry.firstAt), last: when(entry.lastAt) })}
+                </span>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <a href={`/api/teams/${team.id}/shared-archive/${entry.hostId}`} download>{t('archiveDownload')}</a>
+              </Button>
+            </div>
+          ))}
+          <p className="text-xs text-muted-foreground">{t('archiveRead')}</p>
+          <code className="rounded-md bg-muted px-3 py-2 text-xs break-all">dsh-teamwork-audit read shared-archive-….ndjson --key audit-key.json</code>
+        </CardContent>
+      </Card>
     </>
   );
 }

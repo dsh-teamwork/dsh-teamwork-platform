@@ -225,6 +225,18 @@ func (f ResourceSubmissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ResourceSubmissionMutation", m)
 }
 
+// The SharedArchiveSegmentFunc type is an adapter to allow the use of ordinary
+// function as SharedArchiveSegment mutator.
+type SharedArchiveSegmentFunc func(context.Context, *ent.SharedArchiveSegmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SharedArchiveSegmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SharedArchiveSegmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SharedArchiveSegmentMutation", m)
+}
+
 // The SharedHostFunc type is an adapter to allow the use of ordinary
 // function as SharedHost mutator.
 type SharedHostFunc func(context.Context, *ent.SharedHostMutation) (ent.Value, error)

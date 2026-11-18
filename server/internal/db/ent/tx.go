@@ -50,6 +50,8 @@ type Tx struct {
 	ResourceArtifact *ResourceArtifactClient
 	// ResourceSubmission is the client for interacting with the ResourceSubmission builders.
 	ResourceSubmission *ResourceSubmissionClient
+	// SharedArchiveSegment is the client for interacting with the SharedArchiveSegment builders.
+	SharedArchiveSegment *SharedArchiveSegmentClient
 	// SharedHost is the client for interacting with the SharedHost builders.
 	SharedHost *SharedHostClient
 	// SharedHostMember is the client for interacting with the SharedHostMember builders.
@@ -215,6 +217,7 @@ func (tx *Tx) init() {
 	tx.RelayPairingOffer = NewRelayPairingOfferClient(tx.config)
 	tx.ResourceArtifact = NewResourceArtifactClient(tx.config)
 	tx.ResourceSubmission = NewResourceSubmissionClient(tx.config)
+	tx.SharedArchiveSegment = NewSharedArchiveSegmentClient(tx.config)
 	tx.SharedHost = NewSharedHostClient(tx.config)
 	tx.SharedHostMember = NewSharedHostMemberClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)

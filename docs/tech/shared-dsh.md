@@ -1,6 +1,6 @@
 # Shared DSH
 
-> **Status:** Plan — steps 0 to 3 and 5 done, step 4 but the desktop panel · **Updated:** 2026-11-17
+> **Status:** Plan — steps 0 to 3, 5 and 6 done, step 4 but the desktop panel · **Updated:** 2026-11-18
 
 How a team shares one DSH that it runs itself: members reach it from the app
 or the web through the relay, end to end encrypted, and the server can route
@@ -203,31 +203,38 @@ Built in step 5 (the plugin's `src/pin-lock.ts`; the app's `components/pin-gate.
 
 ## The audit archive
 
-**Format** (an ADR when step 5 lands):
+**Built in step 6; the format is [ADR 0045](../adr/0045-the-shared-archive.md).**
 
-- The admin runs `dsh-teamwork audit keygen` on their own machine. It writes
-  the X25519 private key to a file they keep and prints the public key, which
-  they give the DSH (`/teamwork share audit-key <public key>`). The DSH holds
-  only the public key; shared mode does not admit members until it has one.
-- Every event the bridge passes for a member (a call and its result, each
-  mux item, with member id, device id and time) becomes a record. Records are
-  batched into segments of at most 1 MiB or one minute. Each segment is
-  HPKE-sealed (RFC 9180: DHKEM X25519, HKDF-SHA256, AES-256-GCM) to the audit
-  public key, then carries a header in the clear: host id, segment sequence
-  number, the previous segment's SHA-256, the audit key's fingerprint, and an
-  Ed25519 signature by the DSH over all of it.
-- The plugin queues segments on disk and uploads them in order
-  (`POST /relay/shared/archive`); a failed upload is retried and never
-  dropped.
-- **The server keeps segments until the team is deleted**, under the team, in
-  its byte store (local directory or S3,
-  [ADR 0033](../adr/0033-private-artifact-storage-providers.md)), with a row per
-  segment.
-- The admin downloads them (`GET /api/teams/{teamId}/shared-hosts/{id}/archive`)
-  and runs `dsh-teamwork audit read <dir> --key <file>`, which verifies
-  signatures and the chain, reports gaps and alterations, and prints or exports
-  the sessions. **A lost private key cannot be recovered.** A new key pair
-  seals new segments only; the header says which key each needs.
+- The admin runs `dsh-teamwork-audit keygen` on their own machine (a command
+  the plugin's package installs). It writes the X25519 key pair to a file they
+  keep (mode 0600) and prints the public key, which they give the DSH
+  (`/teamwork share audit-key <public key>`). The DSH holds only the public
+  key; **shared mode admits no member until it has one**.
+- Every frame between a member's device and the DSH, both ways, becomes a
+  record: member, device, direction, time and the frame. A string over 64 KiB
+  (a file's bytes) is kept as its length and SHA-256. Records are batched into
+  segments of at most 1 MiB or one minute. Each segment is HPKE-sealed
+  (RFC 9180: DHKEM X25519, HKDF-SHA256, AES-256-GCM) to the audit public key,
+  under a clear header the AEAD binds: host id, sequence number, the previous
+  segment's SHA-256, and the audit key's fingerprint. The DSH signs the header
+  and a digest of the ciphertext with its bound identity key.
+- The plugin writes each segment to a queue on disk before uploading it, and
+  uploads in order (`POST /relay/shared/archive`); a failed upload stays queued
+  and is retried with the next segment, never dropped. Leaving shared mode
+  flushes what has collected and forgets the key.
+- **The server keeps segments until the team is deleted**, as rows of
+  `shared_archive_segments`, the bytes exactly as uploaded. It accepts a
+  segment only when the host token's host signed it and it is the next in the
+  chain, so it can refuse a forgery or a gap without opening anything.
+  Deleting a shared DSH keeps its archive.
+- The admin sees each shared DSH's archive on the console's shared DSH page
+  and downloads it (`GET /api/teams/{teamId}/shared-archive/{hostId}`, one
+  segment per line), then runs
+  `dsh-teamwork-audit read <file> --key <key file>`, which checks the chain and
+  each segment's key, prints every record as one JSON line, and names any
+  segment missing, altered or sealed to another key. **A lost private key
+  cannot be recovered.** A new key pair seals new segments only; the header
+  says which key each needs.
 
 ## What each part gains
 
@@ -238,7 +245,7 @@ Built in step 5 (the plugin's `src/pin-lock.ts`; the app's `components/pin-gate.
 | Done (step 1): `auth.HostBearer`, `requirePlugin`, configs and the gateway for a host caller | `server/internal/auth/tokens.go`, `server/internal/httpapi/identity.go`, `server/internal/gateway/gateway.go` |
 | Done (step 1): `usage_requests.host_id`, held to team and provider budgets only; `hostId` on usage entries and `FundingAdmission`; "Shared DSH" in the usage list | `server/internal/usage`, a migration per dialect, `api/openapi.yaml`, `apps/web` |
 | Done (step 3): the relay, moved from the hosted edition: sockets, pairing, handset credential, forwarding, push; shared hosts and their key exchange | `server/relay`, its tables in `server/internal/db/schema/relay.go`, routes in `api/openapi.yaml` |
-| Steps 4 to 6: access list, invites, archive storage | the same package |
+| Done (steps 4 and 6): access list, invites, archive storage | the same package |
 
 A budget per shared DSH is not built: a team caps its shared DSH by capping
 the team. It would be a new budget scope if a team asks for one.
@@ -251,13 +258,13 @@ ADR 0044):
   empty for a shared host; a pairing stays (member, host, handset).
 - `shared_hosts`: `id`, `team_id`, `name`, `key_hash`, `identity_key`
   (nullable until bound), `created_by`, `bound_at`, `last_seen_at`,
-  `created_at`; step 4 adds `access` (`team` | `listed`) and step 6
-  `audit_key_fingerprint`.
+  `created_at`; step 4 adds `access` (`team` | `listed`).
 - `shared_host_members` (step 4): `host_id`, `user_id`, `added_by`,
   `created_at`; unique pair.
 - `shared_archive_segments` (step 6): `id`, `host_id`, `team_id`, `seq`,
-  `prev_digest`, `digest`, `size`, `object_key`, `created_at`; unique
-  `(host_id, seq)`.
+  `prev_digest`, `digest`, `data` (the segment's bytes), `created_at`; unique
+  `(host_id, seq)`. No foreign key to `shared_hosts`: the archive outlives a
+  deleted host.
 
 Routes:
 
@@ -267,7 +274,8 @@ Routes:
 | `PATCH/DELETE /api/teams/{teamId}/shared-hosts/{id}` | Team admin | Rename, set access; revoke |
 | `POST /api/teams/{teamId}/shared-hosts/{id}/rotate` | Team admin | New key, same binding |
 | `PUT /api/teams/{teamId}/shared-hosts/{id}/members` | Team admin | The listed members |
-| `GET /api/teams/{teamId}/shared-hosts/{id}/archive[/{seq}]` | Team admin | Segment list; one segment's bytes |
+| `GET /api/teams/{teamId}/shared-archive` | Team admin | Each shared DSH's archive, deleted hosts included |
+| `GET /api/teams/{teamId}/shared-archive/{hostId}` | Team admin | One host's segments in order, one per line |
 | `POST /relay/shared/challenge`, `POST /relay/shared/token` | Plugin with the key | Nonce; host token |
 | `/relay/plugin` hello with a host token | Plugin | Shared host socket; access list pushed as `members` |
 | `GET /relay/shared` | Member app or browser | Shared DSHs this member may reach |
@@ -284,7 +292,7 @@ routing. Every team route re-reads the caller's admin role.
 | --- | --- |
 | Done (step 2): `src/shared-mode.ts` | The key file, the exchange, renewal, refusing sign-in, entering and leaving shared mode |
 | `src/shared-roster.ts` (new) | Members, devices, invites, PIN hashes, counters and locks, session owners; atomic 0600 file |
-| `src/audit-archive.ts` (new) | Records, segments, HPKE sealing, the chain, the upload queue; `audit keygen` and `audit read` in `src/cli.ts` |
+| Done (step 6): `src/audit-archive.ts`, `src/audit-cli.ts` | Records, segments, HPKE sealing, the chain, the upload queue; `dsh-teamwork-audit keygen` and `read` |
 | `src/phone-security.ts` | The invite handshake beside the safety-code one; the PIN gate for personal pairings |
 | `src/bridge.ts` | `shared/join`, `shared/unlock`, `shared/pin`; the owner check; feeding the archive |
 | `src/relay.ts` | The host token on the socket |
@@ -354,9 +362,10 @@ Each step is a vertical slice, lands green, and brings its ADR.
 5. **The PIN lock — done 2026-11-17**, on the shared DSH and the personal
    relay together, in the plugin and the app (see "The PIN"). `server/e2e`
    has a joining member refused until they set their PIN.
-6. **The audit archive** (about 6 days; an ADR on its format). Key commands,
-   sealing, upload, storage, admin download, `audit read`. The hosted privacy
-   policy states the archive before this ships there.
+6. **The audit archive — done 2026-11-18** (ADR 0045). Key commands,
+   sealing, upload, storage, the console's list and download,
+   `dsh-teamwork-audit read`; `server/e2e` reads back a member's call from
+   the archive with the admin's key. The hosted privacy policy states it.
 7. **The web client** (about 8 days). The open package, then the page.
 8. **The app reaches any server** (about 2 days): a server address in release
    builds and the default redirect.
@@ -416,7 +425,7 @@ included.
 1. **What the archive costs** the hosted service, and whether it counts
    against a team's storage there, since it is kept forever.
 2. **What a deleted account's records in a team's archive become.** They are
-   the team's record; the privacy policy says so before step 5 ships.
+   the team's record: they stay sealed in the archive until the team is deleted, and the hosted privacy policy says so.
 3. **How many shared DSHs a team may have**, and whether that is a plan limit.
 
 ## How done is verified

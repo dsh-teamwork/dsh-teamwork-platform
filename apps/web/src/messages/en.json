@@ -906,7 +906,14 @@
       "accessHelp": "Each member also needs an invite from the DSH itself. Taking someone off this list ends their pairings at once.",
       "accessSaved": "Access saved.",
       "save": "Save",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "archiveTitle": "Audit archive",
+      "archiveHelp": "Every shared DSH seals each member's sessions to your team's audit key and keeps them here. The server cannot open them; only whoever holds the private key can.",
+      "archiveEmpty": "Nothing archived yet. A shared DSH admits no member until its audit key is set with /teamwork share audit-key.",
+      "archiveDeleted": "Deleted shared DSH ({id})",
+      "archiveRange": "{segments, plural, one {# segment} other {# segments}} · {first} – {last}",
+      "archiveDownload": "Download",
+      "archiveRead": "Open a download on your own machine, with the key dsh-teamwork-audit keygen wrote. It says if any segment is missing or altered."
     }
   },
   "usage": {

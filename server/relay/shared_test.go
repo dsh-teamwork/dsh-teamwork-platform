@@ -5,10 +5,13 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -40,6 +43,7 @@ func eachShared(t *testing.T, f func(t *testing.T, w *sharedWorld)) {
 			w.r.routes(h.Mux)
 			w.r.sharedRoutes(h.Mux)
 			w.r.accessRoutes(h.Mux)
+			w.r.archiveRoutes(h.Mux)
 			return w.r.close, nil
 		},
 	}
@@ -263,6 +267,92 @@ func TestMembersReachASharedDSHByTheServersList(t *testing.T) {
 		case <-dsh.closed:
 		case <-time.After(5 * time.Second):
 			t.Fatal("the deleted host's socket stayed open")
+		}
+	})
+}
+
+// raw sends a body as is, with a Bearer token.
+func (w *sharedWorld) raw(path, bearer string, body []byte) (int, obj) {
+	w.t.Helper()
+	req, _ := http.NewRequest("POST", w.in.URL+path, bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+bearer)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		w.t.Fatal(err)
+	}
+	defer res.Body.Close()
+	var out obj
+	json.NewDecoder(res.Body).Decode(&out)
+	return res.StatusCode, out
+}
+
+// A shared DSH's archive takes only the next segment of its chain, signed by
+// the DSH's bound key, keeps it byte for byte, and gives it to the team's
+// admin alone.
+func TestTheArchiveKeepsOneSignedChainPerSharedDSH(t *testing.T) {
+	eachShared(t, func(t *testing.T, w *sharedWorld) {
+		base := "/api/teams/" + w.teamID + "/shared-hosts"
+		_, created := w.do("POST", base, w.admin, "", obj{"name": "Build box"})
+		hostID, key := created["host"].(obj)["id"].(string), created["key"].(string)
+		dsh := machine(t)
+		_, token := w.exchange(key, dsh)
+		host := token["token"].(string)
+		audit := strings.Repeat("ab", 32)
+		segmentOf := func(seq int64, prev string, signer ed25519.PrivateKey) []byte {
+			s := segment{V: 1, Host: hostID, Seq: seq, Prev: prev, Key: audit, Enc: "ZW5j", CT: base64.StdEncoding.EncodeToString([]byte("sealed records"))}
+			s.Sig = base64.StdEncoding.EncodeToString(ed25519.Sign(signer, segmentSigned(s)))
+			b, _ := json.Marshal(s)
+			return b
+		}
+		first := segmentOf(1, "", dsh)
+		digest := func(b []byte) string { d := sha256.Sum256(b); return hex.EncodeToString(d[:]) }
+
+		if s, out := w.raw("/relay/shared/archive", host, segmentOf(1, "", machine(t))); s != 403 {
+			t.Fatalf("a segment another key signed: %d %v", s, out)
+		}
+		if s, out := w.raw("/relay/shared/archive", host, segmentOf(2, "", dsh)); s != 409 || out["next"] != float64(1) {
+			t.Fatalf("a segment out of order: %d %v", s, out)
+		}
+		if s, out := w.raw("/relay/shared/archive", host, first); s != 201 || out["digest"] != digest(first) {
+			t.Fatalf("the first segment: %d %v", s, out)
+		}
+		if s, _ := w.raw("/relay/shared/archive", host, first); s != 200 {
+			t.Fatalf("a retried upload: %d", s)
+		}
+		if s, _ := w.raw("/relay/shared/archive", host, segmentOf(2, strings.Repeat("0", 64), dsh)); s != 409 {
+			t.Fatalf("a segment naming another previous one: %d", s)
+		}
+		second := segmentOf(2, digest(first), dsh)
+		if s, _ := w.raw("/relay/shared/archive", host, second); s != 201 {
+			t.Fatalf("the second segment: %d", s)
+		}
+		if s, _ := w.raw("/relay/shared/archive", "not-a-token", second); s != 401 {
+			t.Fatalf("an upload without a host token: %d", s)
+		}
+
+		// The admin lists it and gets the segments back byte for byte; a member does not.
+		if s, out := w.do("GET", "/api/teams/"+w.teamID+"/shared-archive", w.admin, "", nil); s != 200 || out["hosts"].([]any)[0].(obj)["segments"] != float64(2) {
+			t.Fatalf("list: %d %v", s, out)
+		}
+		if s, _ := w.do("GET", "/api/teams/"+w.teamID+"/shared-archive", w.member, "", nil); s != 403 {
+			t.Fatalf("a member read the archive: %d", s)
+		}
+		req, _ := http.NewRequest("GET", w.in.URL+"/api/teams/"+w.teamID+"/shared-archive/"+hostID, nil)
+		req.AddCookie(w.admin)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		exported, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		if string(exported) != string(first)+"\n"+string(second)+"\n" {
+			t.Fatalf("export: %q", exported)
+		}
+
+		// Deleting the shared DSH keeps its archive.
+		w.do("DELETE", base+"/"+hostID, w.admin, "", nil)
+		if _, out := w.do("GET", "/api/teams/"+w.teamID+"/shared-archive", w.admin, "", nil); out["hosts"].([]any)[0].(obj)["deleted"] != true {
+			t.Fatalf("after deleting the host: %v", out)
 		}
 	})
 }

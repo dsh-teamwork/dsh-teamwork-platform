@@ -1,12 +1,12 @@
 // The plugin's shared mode, unchanged, against the real server: the team host key becomes a host token bound to this
 // identity, the client syncs the team with it as no person, and the same key on another identity is refused.
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const { BASE, KEY, TEAM, PLUGIN, BOB, BOB_TOKEN, EVE_TOKEN } = process.env;
+const { BASE, KEY, TEAM, PLUGIN, BOB, BOB_TOKEN, EVE_TOKEN, ADMIN_COOKIE } = process.env;
 const lib = (name) => import(pathToFileURL(join(PLUGIN, 'lib', name)).href);
 const { SharedMode, sharedKeyPath } = await lib('shared-mode.js');
 const { TeamworkClient } = await lib('client.js');
@@ -15,6 +15,8 @@ const { RelayLink } = await lib('relay.js');
 const { PhoneKeys, PhoneSecurity } = await lib('phone-security.js');
 const { SharedRoster } = await lib('shared-roster.js');
 const { PinStore } = await lib('pin-lock.js');
+const { AuditArchive } = await lib('audit-archive.js');
+const { keygen, read } = await lib('audit-cli.js');
 const { importAesKey } = await lib('aes-gcm.js');
 const { randomBytes } = await import('node:crypto');
 
@@ -42,9 +44,18 @@ const joining = new Map();
 let members = [];
 const forwarded = [];
 const keys = new PhoneKeys(join(dir, 'phone-keys.json'));
+// The admin's audit key, made on their own machine; the DSH gets only its public half.
+const auditKeyFile = join(dir, 'audit-key.json');
+const { publicKey: auditPublic } = await keygen(auditKeyFile);
+const archive = new AuditArchive({
+  path: join(dir, 'audit.json'), hostId: () => mode.status().hostId, identity: () => deviceIdentity(seed(3)),
+  upload: async (body) => ({ status: (await fetch(`${BASE}/relay/shared/archive`, { method: 'POST', headers: { authorization: `Bearer ${client.platformCredential()}` }, body })).status }),
+});
+await archive.setKey(auditPublic);
 let link;
 const security = new PhoneSecurity({
-  keys, scope: async () => 'shared', send: (f) => link.send(f), forward: (f) => forwarded.push(f),
+  keys, scope: async () => 'shared', send: (f) => link.send(f),
+  forward: (f) => { forwarded.push(f); void roster.memberOf(f.pairingId).then((m) => m && archive.record({ member: m, device: f.pairingId, dir: 'in', frame: f })); },
   confirm: async (id) => { await link.request({ t: 'decide', pairingId: id, accept: true }); }, changed() {}, error() {},
   joining: (id) => joining.get(id),
   pins: new PinStore(join(dir, 'pins.json')), pinMember: (id) => roster.memberOf(id),
@@ -97,6 +108,17 @@ await until('bob unlocked', () => bob.messages.some((m) => m.t === 'unlocked'));
 bob.channel.send({ t: 'call', pairingId: bob.pairing.id, id: '1', method: 'session/list', body: {} });
 await until('bob\'s call reaching the bridge', () => forwarded.some((f) => f.t === 'call' && f.pairingId === bob.pairing.id));
 assert.ok(!forwarded.some((f) => f.id === '0'));
+
+// The call is archived: sealed here, kept by the server unopened, and read back with the admin's key alone.
+await new Promise((r) => setTimeout(r, 20));
+await archive.flush();
+const exported = await fetch(`${BASE}/api/teams/${TEAM}/shared-archive/${mode.status().hostId}`, { headers: { cookie: ADMIN_COOKIE } });
+assert.equal(exported.status, 200);
+const text = await exported.text();
+assert.ok(!text.includes('session/list'));
+const { records, problems } = await read(text, JSON.parse(await readFile(auditKeyFile, 'utf8')));
+assert.deepEqual(problems, []);
+assert.deepEqual(records.map((r) => [r.member, r.frame.method]), [[BOB, 'session/list']]);
 assert.equal(await roster.memberOf(bob.pairing.id), BOB);
 
 // Eve is listed but has no invite of her own: Bob's, already spent, admits nobody.

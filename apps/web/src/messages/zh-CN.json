@@ -906,7 +906,14 @@
       "accessHelp": "每个成员还需要这台 DSH 自己发出的邀请。把某人移出名单会立即断开他的配对。",
       "accessSaved": "访问设置已保存。",
       "save": "保存",
-      "cancel": "取消"
+      "cancel": "取消",
+      "archiveTitle": "审计归档",
+      "archiveHelp": "每台共享 DSH 都把成员的会话加密到团队的审计密钥后保存在这里。服务器无法打开，只有持有私钥的人可以。",
+      "archiveEmpty": "还没有归档。共享 DSH 在用 /teamwork share audit-key 设置审计密钥之前不会接纳任何成员。",
+      "archiveDeleted": "已删除的共享 DSH（{id}）",
+      "archiveRange": "{segments} 个分段 · {first} – {last}",
+      "archiveDownload": "下载",
+      "archiveRead": "在你自己的电脑上，用 dsh-teamwork-audit keygen 生成的密钥打开下载的文件。缺失或被改动的分段会被指出。"
     }
   },
   "usage": {

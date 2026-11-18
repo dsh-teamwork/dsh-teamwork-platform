@@ -2891,6 +2891,96 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/shared-archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Every shared DSH's audit archive, deleted hosts included (team admins) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description One summary per shared DSH that uploaded a segment */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            hosts: components["schemas"]["SharedArchiveHost"][];
+                        };
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/shared-archive/{hostId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                hostId: string;
+            };
+            cookie?: never;
+        };
+        /** One shared DSH's archive: its segments in order, one per line, exactly as uploaded (team admins) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    hostId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Sealed segments, read with dsh-teamwork-audit read and the admin's own key */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/x-ndjson": string;
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/relay/shared": {
         parameters: {
             query?: never;
@@ -2980,6 +3070,81 @@ export interface paths {
                 401: components["responses"]["Error"];
                 404: components["responses"]["Error"];
                 429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/shared/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A shared DSH uploads the next segment of its sealed audit archive
+         * @description The DSH's host token. The segment must be signed by the identity key the host bound and be the next in its chain; a retried upload of the last segment answers 200.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SharedArchiveSegment"];
+                };
+            };
+            responses: {
+                /** @description The segment was already kept */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            seq: number;
+                            digest: string;
+                        };
+                    };
+                };
+                /** @description The segment is kept */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            seq: number;
+                            digest: string;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                /** @description Not the next segment in the chain */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                            next?: number;
+                            prev?: string;
+                        };
+                    };
+                };
+                413: components["responses"]["Error"];
             };
         };
         delete?: never;
@@ -3366,6 +3531,36 @@ export interface components {
              */
             access: "team" | "listed";
             memberIds: string[];
+        };
+        SharedArchiveHost: {
+            hostId: string;
+            /** @description The shared DSH's name; empty once it was deleted */
+            name: string;
+            deleted: boolean;
+            segments: number;
+            /** Format: date-time */
+            firstAt: string;
+            /** Format: date-time */
+            lastAt: string;
+            lastSeq: number;
+            /** @description SHA-256 of the last segment's bytes */
+            lastDigest: string;
+        };
+        SharedArchiveSegment: {
+            /** @enum {integer} */
+            v: 1;
+            host: string;
+            seq: number;
+            /** @description SHA-256 of the previous segment's bytes, empty for the first */
+            prev: string;
+            /** @description SHA-256 of the audit public key */
+            key: string;
+            /** @description HPKE encapsulated key (base64) */
+            enc: string;
+            /** @description HPKE ciphertext (base64) */
+            ct: string;
+            /** @description Ed25519 signature by the DSH's identity key (base64) */
+            sig: string;
         };
         SharedHostName: {
             name: string;

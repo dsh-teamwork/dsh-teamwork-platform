@@ -1,0 +1,2 @@
+-- Create "shared_archive_segments" table
+CREATE TABLE `shared_archive_segments` (`id` varchar(32) NOT NULL, `created_at` datetime(6) NOT NULL, `host_id` varchar(32) NOT NULL, `team_id` varchar(32) NOT NULL, `seq` bigint NOT NULL, `prev_digest` varchar(64) NOT NULL, `digest` varchar(64) NOT NULL, `data` mediumblob NOT NULL, PRIMARY KEY (`id`), UNIQUE INDEX `shared_archive_host_seq` (`host_id`, `seq`), INDEX `shared_archive_team` (`team_id`)) CHARSET utf8mb4 COLLATE utf8mb4_bin;

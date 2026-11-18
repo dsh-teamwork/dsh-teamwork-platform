@@ -32,6 +32,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedarchivesegment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 )
@@ -440,6 +441,10 @@ func (r *relay) sharedTeamDeleted(ctx context.Context, tx edition.SQLExecutor, c
 		return err
 	}
 	if _, err := c.SharedHost.Delete().Where(sharedhost.IDIn(ids...)).Exec(ctx); err != nil {
+		return err
+	}
+	// A shared DSH's archive outlives the host, and goes with the team.
+	if _, err := c.SharedArchiveSegment.Delete().Where(sharedarchivesegment.TeamID(change.TeamID)).Exec(ctx); err != nil {
 		return err
 	}
 	return deleteSharedRows(ctx, c, ids)

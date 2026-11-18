@@ -23,6 +23,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedarchivesegment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
@@ -1053,6 +1054,101 @@ func init() {
 	// resourcesubmission.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	resourcesubmission.IDValidator = func() func(string) error {
 		validators := resourcesubmissionDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	sharedarchivesegmentMixin := schema.SharedArchiveSegment{}.Mixin()
+	sharedarchivesegmentMixinFields0 := sharedarchivesegmentMixin[0].Fields()
+	_ = sharedarchivesegmentMixinFields0
+	sharedarchivesegmentFields := schema.SharedArchiveSegment{}.Fields()
+	_ = sharedarchivesegmentFields
+	// sharedarchivesegmentDescCreatedAt is the schema descriptor for created_at field.
+	sharedarchivesegmentDescCreatedAt := sharedarchivesegmentMixinFields0[1].Descriptor()
+	// sharedarchivesegment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sharedarchivesegment.DefaultCreatedAt = sharedarchivesegmentDescCreatedAt.Default.(func() time.Time)
+	// sharedarchivesegmentDescHostID is the schema descriptor for host_id field.
+	sharedarchivesegmentDescHostID := sharedarchivesegmentFields[0].Descriptor()
+	// sharedarchivesegment.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
+	sharedarchivesegment.HostIDValidator = func() func(string) error {
+		validators := sharedarchivesegmentDescHostID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(host_id string) error {
+			for _, fn := range fns {
+				if err := fn(host_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedarchivesegmentDescTeamID is the schema descriptor for team_id field.
+	sharedarchivesegmentDescTeamID := sharedarchivesegmentFields[1].Descriptor()
+	// sharedarchivesegment.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	sharedarchivesegment.TeamIDValidator = func() func(string) error {
+		validators := sharedarchivesegmentDescTeamID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(team_id string) error {
+			for _, fn := range fns {
+				if err := fn(team_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedarchivesegmentDescSeq is the schema descriptor for seq field.
+	sharedarchivesegmentDescSeq := sharedarchivesegmentFields[2].Descriptor()
+	// sharedarchivesegment.SeqValidator is a validator for the "seq" field. It is called by the builders before save.
+	sharedarchivesegment.SeqValidator = sharedarchivesegmentDescSeq.Validators[0].(func(int64) error)
+	// sharedarchivesegmentDescPrevDigest is the schema descriptor for prev_digest field.
+	sharedarchivesegmentDescPrevDigest := sharedarchivesegmentFields[3].Descriptor()
+	// sharedarchivesegment.PrevDigestValidator is a validator for the "prev_digest" field. It is called by the builders before save.
+	sharedarchivesegment.PrevDigestValidator = sharedarchivesegmentDescPrevDigest.Validators[0].(func(string) error)
+	// sharedarchivesegmentDescDigest is the schema descriptor for digest field.
+	sharedarchivesegmentDescDigest := sharedarchivesegmentFields[4].Descriptor()
+	// sharedarchivesegment.DigestValidator is a validator for the "digest" field. It is called by the builders before save.
+	sharedarchivesegment.DigestValidator = func() func(string) error {
+		validators := sharedarchivesegmentDescDigest.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(digest string) error {
+			for _, fn := range fns {
+				if err := fn(digest); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sharedarchivesegmentDescData is the schema descriptor for data field.
+	sharedarchivesegmentDescData := sharedarchivesegmentFields[5].Descriptor()
+	// sharedarchivesegment.DataValidator is a validator for the "data" field. It is called by the builders before save.
+	sharedarchivesegment.DataValidator = sharedarchivesegmentDescData.Validators[0].(func([]byte) error)
+	// sharedarchivesegmentDescID is the schema descriptor for id field.
+	sharedarchivesegmentDescID := sharedarchivesegmentMixinFields0[0].Descriptor()
+	// sharedarchivesegment.DefaultID holds the default value on creation for the id field.
+	sharedarchivesegment.DefaultID = sharedarchivesegmentDescID.Default.(func() string)
+	// sharedarchivesegment.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	sharedarchivesegment.IDValidator = func() func(string) error {
+		validators := sharedarchivesegmentDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),

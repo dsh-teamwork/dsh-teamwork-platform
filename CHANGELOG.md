@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A shared DSH keeps an archive only the team's admin can read
+
+- **What:** A shared DSH seals every frame its members exchange with it to the admin's audit key (HPKE, one-minute or 1 MiB segments in a signed hash chain) and uploads the segments to `POST /relay/shared/archive`; the server keeps them in `shared_archive_segments` until the team is deleted and cannot open them. The console's **Shared DSHs** page lists each archive and downloads it (`GET /api/teams/{teamId}/shared-archive[/{hostId}]`); `dsh-teamwork-audit keygen` and `read`, in the plugin's package, make the key and open a download. A shared DSH admits no member until `/teamwork share audit-key` is set. `/docs` describes it.
+- **Why:** The team keeps a record of what members do on its machine without the server reading it (ADR 0045, `docs/tech/shared-dsh.md`).
+- **Breaking:** A shared DSH already admitting members admits nobody new until its admin sets an audit key.
+- **Upgrade:** One migration per dialect creates `shared_archive_segments`; the binary applies it at start. Update the plugin, then run `dsh-teamwork-audit keygen` and `/teamwork share audit-key` in each shared DSH.
+- **Refs:** ADR 0045, `server/relay/archive.go`, the plugin's `src/audit-archive.ts` and `src/audit-cli.ts`.
+
 ## 2026-11-17 — A PIN locks every phone's channel to a DSH
 
 - **What:** The plugin keeps a four-digit PIN per member (on a personal computer, its one owner) and refuses every call and stream from a phone's channel until the member sets or gives it, and again after fifteen idle minutes; five wrong PINs lock the member until `/teamwork share unlock <email>` or `/teamwork pin reset` clears it. The server sees none of it: the PIN goes inside the encrypted channel. `/docs` lists the two commands, and `server/e2e` has a joining member refused until they set a PIN.
