@@ -23,14 +23,13 @@ import { webAesKey } from './aes-gcm';
 import { SecureChannel, securePacket, newChannelId, type AesKey, type RandomBytes } from './secure-channel';
 import { z } from 'zod';
 import { UploadLimitsSchema } from './uploads';
-import { configurationOf, ModelSelectionSchema, startableDirectories } from './session-config';
+import { configurationOf, defaultDirectory, ModelSelectionSchema, startableDirectories } from './session-config';
 
 import {
   approvalResult,
   eventsOf,
   historyOf,
   directoryName,
-  latestDirectoryOf,
   newStreams,
   pendingOf,
   questionsResult,
@@ -699,9 +698,10 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
 
     async createSession(computerId, options = {}) {
       const sessions = await call(computerId, 'session/list', { _request: {} });
-      const offered = ((await call(computerId, 'teamwork/configuration', { request: {} }).catch(() => null)) as { directories?: unknown } | null)?.directories;
-      const directories = startableDirectories(sessions, Array.isArray(offered) ? offered.filter((path): path is string => typeof path === 'string') : []);
-      const cwd = options.cwd ?? latestDirectoryOf(sessions) ?? directories[0]?.path;
+      const offered = (await call(computerId, 'teamwork/configuration', { request: {} }).catch(() => null)) as { directories?: unknown; teamDirectories?: unknown } | null;
+      const directories = startableDirectories(sessions, Array.isArray(offered?.directories) ? offered.directories.filter((path): path is string => typeof path === 'string') : []);
+      const teams = z.record(z.string(), z.string()).catch({}).parse(offered?.teamDirectories ?? {});
+      const cwd = options.cwd ?? defaultDirectory(directories, teams, options.teamId);
       if (!cwd) throw new RelayError('no_directory');
       if (!directories.some(directory => directory.path === cwd)) throw new RelayError('invalid_directory');
       const created = (await call(computerId, 'session/create', { request: { cwd, ...(options.agentPreset ? { agentPreset: options.agentPreset } : {}) } })) as { sessionId?: unknown } | null;

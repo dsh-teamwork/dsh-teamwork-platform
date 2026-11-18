@@ -201,13 +201,14 @@ export interface RelayClient {
   /** A computer's sessions, newest change first. Rejects `offline` when its DSH is not connected. */
   listSessions(computerId: string): Promise<SessionSummary[]>;
   /**
-   * Creates with an exact known directory and native preset; omitted choices
-   * use the latest directory and desktop default preset. Model changes are a
-   * separate acknowledged session-only operation.
+   * Creates with an exact known directory and native preset; an omitted folder
+   * is the team's default workspace on the computer (`defaultDirectory`), and an
+   * omitted preset the desktop default. Model changes are a separate
+   * acknowledged session-only operation.
    */
   createSession(
     computerId: string,
-    options?: Pick<import('./session-config').SessionOptions, 'cwd' | 'agentPreset'>,
+    options?: Pick<import('./session-config').SessionOptions, 'cwd' | 'agentPreset' | 'teamId'>,
   ): Promise<{ id: string; directory: string }>;
   configuration(computerId: string, sessionId?: string): Promise<import('./session-config').SessionConfiguration>;
   selectModel(
