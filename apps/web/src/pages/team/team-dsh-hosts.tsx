@@ -62,6 +62,9 @@ export function TeamDshHostsPage() {
               <CopyButton text={command} />
             </div>
             <p className="text-xs text-muted-foreground">{t('keyHelp')}</p>
+            <p className="text-xs text-muted-foreground">
+              {t.rich('keyInstall', { link: (chunks) => <a href="/docs/install" className="text-foreground underline underline-offset-4">{chunks}</a> })}
+            </p>
           </CardContent>
         </Card>
       )}

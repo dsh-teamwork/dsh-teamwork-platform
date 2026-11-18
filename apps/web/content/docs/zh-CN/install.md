@@ -29,6 +29,37 @@ dsh web
 
 如果 web 进程已经在运行，按宿主的提示重新加载或重启。
 
+## Linux 服务器
+
+团队 DSH 通常运行在没有桌面的服务器上。在 Ubuntu 或 Debian 上，以将要运行 DSH 的用户执行：
+
+1. 安装 Node.js 24 或更高版本：
+
+   ```sh
+   curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   ```
+
+2. 安装 DSH。它目前只发布了预发布版本，需要写明 [npm 上](https://www.npmjs.com/package/@deepseek-ai/dsh?activeTab=versions) `latest` 对应的确切版本，不写版本号时 npm 会找不到：
+
+   ```sh
+   npm install -g @deepseek-ai/dsh@0.2.2-rc.1
+   ```
+
+3. 安装插件，并在 `tmux` 会话中启动 DSH，退出登录后它会继续运行：
+
+   ```sh
+   dsh plugin --profile web add @dsh-teamwork/dsh-teamwork
+   tmux new -s dsh
+   dsh web --no-open
+   ```
+
+   按 `Ctrl+B` 再按 `D` 离开会话，`tmux attach -t dsh` 回到会话。
+
+4. 在同一台机器的另一个终端里，用随插件安装的 `dsh-teamwork` 继续：个人 DSH 运行 `dsh-teamwork login`，团队 DSH 运行 `dsh-teamwork share enable <key>`，见[命令](/docs/commands#在服务器上-dsh-teamwork)。服务器上不需要浏览器。
+
+插件把文件保存在 `~/.dsh/dsh-teamwork/`（或 `$DSH_HOME/dsh-teamwork/`）中，与从哪个目录启动 DSH 无关。
+
 ## 登录
 
 1. 打开 DSH 侧边栏里的 **Teamwork**，选择浏览器登录。也可以在命令输入框运行 `/teamwork login`。

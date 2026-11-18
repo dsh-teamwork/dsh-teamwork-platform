@@ -101,6 +101,11 @@ hand the link over yourself; each member then reaches only the sessions they
 started. A member opens the link in the phone app, or pastes it under
 **Workspace → Team DSH** in the console.
 
+On a server with no desktop, run each of these from a shell on that machine
+instead, as `dsh-teamwork share enable <key>`, `dsh-teamwork share invite <email>`
+and so on ([Install](/docs/install#a-linux-server),
+[Commands](/docs/commands#on-a-server-dsh-teamwork)).
+
 Before it admits anyone, a Team DSH needs your team's **audit key**. On your
 own computer, with the plugin's package installed, run
 `dsh-teamwork-audit keygen`: it writes `audit-key.json`, which only you keep,

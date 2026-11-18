@@ -55,4 +55,6 @@ OpenRouter 服务商查 OpenRouter，其他服务商查 Models.dev（Models.dev 
 
 在**团队资产 → 团队 DSH**中为团队要给成员使用的 DSH 起个名字，复制只显示一次的命令 `/teamwork share enable <key>`，在那台 DSH 里运行。之后它以团队身份登录而不是个人，只同步这个团队，团队模型的调用计入团队。第一台使用 key 的机器会绑定它；**更换 key** 为同一台机器签发新 key，**删除**则立即切断。在**访问**中选择谁可以访问它：整个团队或指定成员。对其中每个人，在那台 DSH 里运行 `/teamwork share invite <email>`，并亲自把链接交给对方；每个成员只能访问自己发起的会话。成员在手机 App 中打开链接，或在控制台的**工作区 → 团队 DSH**中粘贴。
 
+在没有桌面的服务器上，改为在那台机器的终端里运行对应的 `dsh-teamwork share enable <key>`、`dsh-teamwork share invite <email>` 等命令（见[安装](/docs/install#linux-服务器)和[命令](/docs/commands#在服务器上-dsh-teamwork)）。
+
 团队 DSH 在接纳任何人之前，需要团队的**审计密钥**。在你自己的电脑上安装插件包后运行 `dsh-teamwork-audit keygen`：它会写出只由你保管的 `audit-key.json`，并打印出要在团队 DSH 里运行的 `/teamwork share audit-key <public key>`。此后团队 DSH 会把成员在上面做的一切加密到这把密钥并上传，服务器保存它却无法读取。在同一页的**审计归档**中下载某台团队 DSH 的归档，用 `dsh-teamwork-audit read <file> --key audit-key.json` 打开，它还会指出缺失或被改动的部分。**丢失的密钥无法找回**，持有它的人可以读取所有成员的会话。
