@@ -44,7 +44,8 @@ Anything it would change still asks for your approval.
 ## Work on a Team DSH
 
 If your team runs a Team DSH, its admin hands you an invite link
-(`dshteamwork://join?…`). Open **Team DSH** under Workspace in the team console,
+(`dshteamwork://join?…`). **Team DSH** appears under Workspace in the team console once
+its admin lets you reach one; open it,
 choose **Join with an invite**, paste it and choose **Join**, then set a four-digit PIN; the
 machine asks for it again when you come back. Each browser joins once, and
 keeps its key in the browser's own storage: clearing the site's data means

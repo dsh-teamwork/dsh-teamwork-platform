@@ -312,7 +312,8 @@ HPKE comes from `@hpke/core` at an exact version; no other new dependency.
 
 - **The open web app** (`apps/web`), two pages apart. Using one is
   Workspace's `/teams/:teamId/team-dsh[/:computerId[/:sessionId]]`
-  (`pages/team/team-dsh.tsx`), in three columns beside the sidebar: the shared
+  (`pages/team/team-dsh.tsx`), listed only while the relay says the member
+  may reach one of the team's shared DSHs, in three columns beside the sidebar: the shared
   DSHs the member may reach, with their sessions on the open one beneath it,
   and the session beside; with none open, joining one by pasting its invite.
   It asks for the PIN, follows the conversation, answers and sends, and a
