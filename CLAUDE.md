@@ -346,6 +346,10 @@ apps/web             Vite and React: the console and the public pages,
 api/openapi.yaml     the wire contract
 packages/shared      the languages and the rule that picks one, shared by the
                      console and the closed mobile app
+packages/relay-client  the relay's client: the encrypted channel (the
+                     plugin's, byte for byte), the frames and DSH's Remote API
+                     read into a client's shapes; the web console and the
+                     closed mobile app import it
 premium/server       the closed Go module: the open server with the closed
                      packages (billing, the operator console) registered
                      through server/edition

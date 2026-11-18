@@ -3,7 +3,7 @@
 // it: discover, pair, confirm on the computer, pass a call through, revoke.
 // Run by relay_test.go, which starts the server.
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -23,8 +23,9 @@ const until = async (what, check) => {
 // One canonical wire implementation, executed by both endpoints.
 const { SecureChannel, deviceIdentity, base64, newChannelId } = await import(pathToFileURL(join(PLUGIN,'lib/secure-channel.js')).href);
 const { randomBytes } = await import('node:crypto');
-// The phone side runs the plugin's own channel and AES-GCM records; the closed
-// app's copy is checked against this one where that app exists.
+// The phone side runs the plugin's own channel and AES-GCM records. The
+// clients' copy (packages/relay-client) must be this one, byte for byte.
+assert.equal(readFileSync(new URL('../../packages/relay-client/src/secure-channel.ts', import.meta.url), 'utf8'), readFileSync(join(PLUGIN, 'src/secure-channel.ts'), 'utf8'));
 const { importAesKey: desktopAes } = await import(pathToFileURL(join(PLUGIN, 'lib/aes-gcm.js')).href);
 const mobileAes = desktopAes;
 const zeroKey = await mobileAes(new Uint8Array(32));

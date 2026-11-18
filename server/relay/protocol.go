@@ -2,9 +2,9 @@ package relay
 
 // What the relay says to the teamwork plugin on /relay/plugin and to the app
 // on /relay/phone (docs/tech/relay.md, "Frames"). The plugin's
-// repository restates it in `src/relay.ts` and `src/bridge.ts`, and the app
-// in `premium/apps/mobile/lib/relay/`; a change here changes them in the same
-// working session.
+// repository restates it in `src/relay.ts` and `src/bridge.ts`, and the
+// clients in `packages/relay-client/src/protocol.ts`; a change here changes
+// them in the same working session.
 
 import (
 	"bytes"
