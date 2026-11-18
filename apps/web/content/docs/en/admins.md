@@ -25,15 +25,24 @@ key, or enter any OpenAI-compatible address under **Custom**. The key is checked
 with the provider before it is saved: a key the provider refuses, or an address
 this server may not call, is shown on the form with what to change. The key is
 stored encrypted and can never be read back. Then tick the models the team
-should use and publish them, and give each one a reference rate (its **Set
-rates** button): a model without one cannot be called, and the team overview
-lists it until it has one. A rate of zero is allowed. A rate belongs to the
-upstream model it was set for, so pointing a model at another one needs a new
-rate.
+should use. As you tick one, its public reference is looked up and shown beside
+it; publishing gives each model the context window the provider or that
+reference states, and its reference rate, converted from the public prices as
+**Fill reference prices** does below. A model priced this way can be called at
+once. A model with no exact, agreeing reference is published without a rate
+and cannot be called until you give it one (its **Set rates** button, which
+opens filled from the reference when there is one); the models page and the
+team overview list it until it has one, and **Fill from reference prices** on
+the models page retries every such model at once. A rate of zero is allowed.
+A rate belongs to the upstream model it was set for, so pointing a model at
+another one needs a new rate.
+
+Each provider and model is shown with its maker's logo, here and wherever the
+console or the phone app names a model.
 
 Members see team models only: never the address or the key.
 
-When publishing or editing a model, **Fill from public catalog** fills the
+When typing a model ID by hand, or editing a model, **Fill from public catalog** fills the
 context window, maximum output and image understanding at once from the entry
 whose ID is exactly the model's: OpenRouter for OpenRouter, Models.dev for
 every other provider (for a provider Models.dev does not know, such as your own

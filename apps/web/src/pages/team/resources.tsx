@@ -13,6 +13,7 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useTranslations } from 'use-intl';
 
+import { ProviderMark } from '@/components/provider-mark';
 import { Failure } from '@/components/page';
 import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
@@ -79,7 +80,7 @@ export function TeamResourcesPage() {
       </Link>
       <Group title={t('models')} hint={t('modelsHint')} empty={t('noModels')}>
         {of('model').map((m) => (
-          <Row key={m.id} name={m.name} detail={m.data.model}>
+          <Row key={m.id} name={m.name} detail={m.data.model} icon={<ProviderMark hints={[m.data.model, m.name, m.data.provider]} name={m.name} size="md" />}>
             <ModelRateButton teamId={team.id} configId={m.id} name={m.name} admin={false} provider={m.data.provider} model={m.data.model} />
           </Row>
         ))}
@@ -135,9 +136,10 @@ function Group({ title, hint, empty, children }: { title: string; hint: string; 
 }
 
 /** Lists are rows, not cards (docs/design.md, "Component rules"). */
-function Row({ name, detail, mono = false, children }: { name: string; detail?: string; mono?: boolean; children?: ReactNode }) {
+function Row({ name, detail, mono = false, icon, children }: { name: string; detail?: string; mono?: boolean; icon?: ReactNode; children?: ReactNode }) {
   return (
     <li className="flex items-center gap-3 border-t px-4 py-2.5 text-sm first:border-t-0">
+      {icon}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="font-medium">{name}</span>
         {detail && <span className={mono ? 'font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]' : 'text-xs text-muted-foreground'}>{detail}</span>}

@@ -574,14 +574,13 @@
       "providerAdded": "Provider connected.",
       "reading": "Reading the model list…",
       "chooseModels": "Choose models to publish",
-      "chooseModelsHint": "The models you tick are published to the whole team. Context sizes come from the provider; add any it does not report later.",
+      "chooseModelsHint": "The models you tick are published to the whole team, each with the context size and reference rate its public reference states. Change either later.",
       "allPublished": "Every model this provider lists is already published.",
       "noList": "This provider returned no model list. Type the model id instead.",
       "listFailed": "The model list could not be read: {reason} Check the key, or type the model id instead.",
       "modelId": "Model id",
       "displayName": "Display name",
       "publish": "{count, plural, one {Publish # model} other {Publish # models}}",
-      "published": "{count, plural, one {Published # model.} other {Published # models.}}",
       "done": "Done",
       "rekeyTitle": "Replace the key or address of “{name}”",
       "rekeyHint": "The name stays, so team models keep pointing at it.",
@@ -591,7 +590,15 @@
       "editTitle": "Edit team model",
       "limitsHint": "Leave a limit empty when the provider does not state it.",
       "modelSaved": "Saved. Members get it at their next sync.",
-      "checking": "Checking the key…"
+      "checking": "Checking the key…",
+      "publishedPriced": "{count, plural, one {Published # model} other {Published # models}}, {priced} priced from public reference prices.",
+      "referenceReading": "Looking up its reference rate…",
+      "referenceNoRate": "No public reference rate: set one after publishing.",
+      "referenceRate": "CNY {input} in / {output} out per million tokens, from {from}",
+      "unpricedNotice": "{count, plural, one {# model has} other {# models have}} no rate yet, so members cannot call {count, plural, one {it} other {them}}.",
+      "fillRates": "Fill from reference prices",
+      "fillingRates": "Filling…",
+      "ratesFilled": "{priced} priced from public reference prices; {left} without a reference need a rate set by hand."
     },
     "templates": {
       "writer": {

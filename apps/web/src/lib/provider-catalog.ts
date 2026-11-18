@@ -10,7 +10,8 @@
  * are partial. A team reaches them through OpenRouter or a custom address.
  *
  * Each entry's display name is `team.catalog.<id>` in the messages, since some
- * are written differently in Chinese.
+ * are written differently in Chinese; its tile is its mark (`providerMark` of
+ * its id, in @dsh-teamwork/shared).
  */
 
 export interface CatalogProvider {
@@ -19,20 +20,18 @@ export interface CatalogProvider {
   baseUrl: string;
   /** Public metadata namespace; a transient form default, never a saved association. */
   modelsDevId: string;
-  /** Two letters for its tile; no provider's logo is drawn. */
-  mark: string;
 }
 
 export const PROVIDER_CATALOG: readonly CatalogProvider[] = [
-  { id: 'deepseek', modelsDevId: 'deepseek', baseUrl: 'https://api.deepseek.com/v1', mark: 'DS' },
-  { id: 'openai', modelsDevId: 'openai', baseUrl: 'https://api.openai.com/v1', mark: 'OA' },
-  { id: 'qwen', modelsDevId: 'alibaba-cn', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', mark: 'QW' },
-  { id: 'moonshot', modelsDevId: 'moonshotai-cn', baseUrl: 'https://api.moonshot.cn/v1', mark: 'KM' },
-  { id: 'zhipu', modelsDevId: 'zhipuai', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', mark: 'GL' },
-  { id: 'doubao', modelsDevId: 'volcengine', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', mark: 'DB' },
-  { id: 'minimax', modelsDevId: 'minimax-cn', baseUrl: 'https://api.minimaxi.com/v1', mark: 'MM' },
-  { id: 'siliconflow', modelsDevId: 'siliconflow-cn', baseUrl: 'https://api.siliconflow.cn/v1', mark: 'SF' },
-  { id: 'openrouter', modelsDevId: 'openrouter', baseUrl: 'https://openrouter.ai/api/v1', mark: 'OR' },
+  { id: 'deepseek', modelsDevId: 'deepseek', baseUrl: 'https://api.deepseek.com/v1' },
+  { id: 'openai', modelsDevId: 'openai', baseUrl: 'https://api.openai.com/v1' },
+  { id: 'qwen', modelsDevId: 'alibaba-cn', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+  { id: 'moonshot', modelsDevId: 'moonshotai-cn', baseUrl: 'https://api.moonshot.cn/v1' },
+  { id: 'zhipu', modelsDevId: 'zhipuai', baseUrl: 'https://open.bigmodel.cn/api/paas/v4' },
+  { id: 'doubao', modelsDevId: 'volcengine', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3' },
+  { id: 'minimax', modelsDevId: 'minimax-cn', baseUrl: 'https://api.minimaxi.com/v1' },
+  { id: 'siliconflow', modelsDevId: 'siliconflow-cn', baseUrl: 'https://api.siliconflow.cn/v1' },
+  { id: 'openrouter', modelsDevId: 'openrouter', baseUrl: 'https://openrouter.ai/api/v1' },
 ];
 
 /** The catalog entry a stored provider came from, matched by address: a renamed second account still shows its maker. */

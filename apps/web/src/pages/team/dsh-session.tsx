@@ -35,6 +35,7 @@ import {
   type SessionState,
   type SessionSummary,
 } from '@dsh-teamwork/relay-client';
+import { ProviderMark } from '@/components/provider-mark';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -285,7 +286,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
   const current = sessionId ? data.current : null;
   const models = [
     ...(sessionId ? [] : [{ value: '', label: t('followPreset') }]),
-    ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}` })),
+    ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}`, icon: <ProviderMark hints={[model.id, model.name, model.providerName, model.provider]} name={model.name} /> })),
   ];
   const chosenModel = sessionId ? current?.model : value.model;
   // How hard the chosen model reasons, where it says it can be told: its own default, or one of its efforts.

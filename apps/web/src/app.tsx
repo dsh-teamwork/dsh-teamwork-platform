@@ -17,7 +17,7 @@ import { IntlProvider, useTranslations } from 'use-intl';
 import { CardPage, Loading } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { startAnalytics } from '@/lib/analytics';
-import { replacing, setEditionTeamPages, type TeamPage } from '@/lib/edition';
+import { replacing, setEditionModels, setEditionTeamPages, type EditionModels, type TeamPage } from '@/lib/edition';
 import { currentLocale } from '@/lib/locale';
 import { RequireUser, SessionProvider } from '@/lib/session';
 import { watchSystemTheme } from '@/lib/theme';
@@ -100,14 +100,17 @@ export interface WebExtension {
   routes?: RouteObject[];
   /** Pages inside a team's console, listed in its navigation. */
   teamPages?: TeamPage[];
+  /** Models the edition supplies, offered first on a team's models page (`EditionModels`). */
+  models?: EditionModels;
 }
 
-export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
+export function mountWeb({ routes = [], teamPages = [], models }: WebExtension = {}) {
   const locale = currentLocale();
   document.documentElement.lang = locale;
   void startAnalytics();
   watchSystemTheme();
   setEditionTeamPages(teamPages);
+  setEditionModels(models);
   window.addEventListener('vite:preloadError', reloadOnStaleChunk);
 
   // Workspace, for everyone in the team; Team management, for its admin, who alone

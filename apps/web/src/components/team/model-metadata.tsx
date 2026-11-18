@@ -1,5 +1,5 @@
 import { RefreshCw } from 'lucide-react';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
 import { Field } from '@/components/team/field';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api } from '@/lib/api';
-import { agreedValues, changedValues, exactMatches, suggestedRates, type ModelMetadata } from '@/lib/model-metadata';
+import { agreedValues, changedValues, exactMatches, referenceSource, suggestedRates, type ModelMetadata } from '@/lib/model-metadata';
 
 type Values = Record<string, string | number | boolean | undefined>;
 type Lookup = { models: ModelMetadata[]; usdToCny?: string; exchangeDate?: string };
@@ -24,16 +24,17 @@ type Outcome<T> =
  * leaves unknown values alone.
  * Models.dev is read under the provider the catalog knows the address by, or
  * across every provider for one it does not (the server's rule); OpenRouter for
- * OpenRouter.
+ * OpenRouter. With `auto`, it fills once as it opens, as if clicked: a model
+ * with no rate yet starts from its reference instead of an empty form.
  */
-export function ModelMetadataLookup<T extends Values>({ teamId, provider, model, current, apply, pricing = false, disabled = false }: {
+export function ModelMetadataLookup<T extends Values>({ teamId, provider, model, current, apply, pricing = false, auto = false, disabled = false }: {
   teamId: string; provider: string; model: string;
   current: T; apply: (values: Partial<T>) => void;
-  pricing?: boolean; disabled?: boolean;
+  pricing?: boolean; auto?: boolean; disabled?: boolean;
 }) {
   const t = useTranslations('modelMetadata');
   const id = useId();
-  const source = provider === 'openrouter' ? 'openrouter' : 'models_dev';
+  const source = referenceSource(provider);
   const sourceName = source === 'openrouter' ? 'OpenRouter' : 'Models.dev';
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome<T> | null>(null);
@@ -93,6 +94,15 @@ export function ModelMetadataLookup<T extends Values>({ teamId, provider, model,
     const found = await lookup(query);
     if (found) setCandidates(found);
   }
+
+  // Once per opened form; refresh is recreated each render.
+  const filled = useRef(false);
+  useEffect(() => {
+    if (!auto || filled.current || !model.trim()) return;
+    filled.current = true;
+    void refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, model]);
 
   const display = (value: unknown) => value === undefined || value === '' ? t('unknown') : typeof value === 'boolean' ? t(value ? 'yes' : 'no') : String(value);
   // Undo is offered only while the fields still hold what was filled: it never overwrites a later hand edit.

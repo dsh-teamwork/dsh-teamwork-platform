@@ -574,14 +574,13 @@
       "providerAdded": "提供商已接入。",
       "reading": "正在读取模型列表…",
       "chooseModels": "选择要发布的模型",
-      "chooseModelsHint": "勾选的模型会发布给整个团队。上下文长度来自厂商，厂商不报的可以之后补。",
+      "chooseModelsHint": "勾选的模型会发布给整个团队，并按公开参考自动带上上下文长度和积分单价，之后都可以修改。",
       "allPublished": "这个提供商列出的模型都已发布。",
       "noList": "这个提供商没有返回模型列表，请手动填写模型 ID。",
       "listFailed": "无法读取模型列表：{reason}请检查 API 密钥，或手动填写模型 ID。",
       "modelId": "模型 ID",
       "displayName": "显示名称",
       "publish": "发布 {count} 个模型",
-      "published": "已发布 {count} 个模型。",
       "done": "完成",
       "rekeyTitle": "更换「{name}」的密钥或地址",
       "rekeyHint": "名称不变，团队模型继续指向它。",
@@ -591,7 +590,15 @@
       "editTitle": "编辑团队模型",
       "limitsHint": "厂商没说明的限制可以留空。",
       "modelSaved": "已保存，成员下次同步后生效。",
-      "checking": "正在验证密钥…"
+      "checking": "正在验证密钥…",
+      "publishedPriced": "已发布 {count} 个模型，其中 {priced} 个已按公开参考价设好单价。",
+      "referenceReading": "正在查询参考单价…",
+      "referenceNoRate": "没有公开参考价，发布后需手动设置单价。",
+      "referenceRate": "输入 {input} 元 / 输出 {output} 元每百万 Token，参考 {from}",
+      "unpricedNotice": "{count} 个模型还没有单价，成员暂时无法调用。",
+      "fillRates": "按参考价填写",
+      "fillingRates": "填写中…",
+      "ratesFilled": "已按公开参考价设好 {priced} 个；{left} 个没有参考价，需要手动设置。"
     },
     "templates": {
       "writer": {

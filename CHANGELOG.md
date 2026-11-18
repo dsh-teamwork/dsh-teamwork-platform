@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Providers and models by their logos; publishing a model sets its rate
+
+- **What:** `@dsh-teamwork/shared` holds the marks of the mainstream model makers and providers (OpenAI, Anthropic, Gemini, DeepSeek, Qwen, Kimi, GLM, Doubao, MiniMax, Llama, Mistral, Grok, Ernie, Hunyuan, Step, Baichuan, SiliconFlow, OpenRouter, Ollama; LobeHub's icons, MIT) and `providerMark`, which picks one from a model's id, name, provider or address. The console shows them wherever it names a provider or a model (models, team resources, presets, usage, My usage, a DSH session's model menu, whose `Select` options take an icon), as does the home page's diagram, whose `provider-logos.ts` is gone. Publishing from a provider's list looks each ticked model up as it is ticked and publishes it with the limits and reference rate its agreeing public reference states (a missing cache rate charged as uncached input), so it can be called at once; the per-model form in that dialog is gone, kept for a model ID typed by hand. The models page lists models with no rate and fills them all from reference prices in one click, and a rate dialog for an unpriced model opens filled. `mountWeb` takes `models`, a section an edition shows first on the models page for the models it supplies.
+- **Why:** A team admin published a model and then had to open a second form per model to price it before anyone could call it; and a model was a name with no sign of whose it is.
+- **Breaking:** `CatalogProvider` loses `mark`.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/shared/src/providers.ts`, `apps/web/src/components/provider-mark.tsx`, `apps/web/src/pages/team/models.tsx`, `apps/web/src/lib/model-metadata.ts`, `docs/design.md` ("Icons"), `docs/tech/architecture.md`, the `/docs` admins page.
+
 ## 2026-11-18 — An open console survives a deploy
 
 - **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.

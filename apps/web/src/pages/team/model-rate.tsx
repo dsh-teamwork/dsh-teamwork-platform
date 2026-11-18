@@ -8,12 +8,30 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { api, type Schemas } from '@/lib/api';
+import type { Reference } from '@/lib/model-metadata';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
 
 type Rate = Schemas['ModelRate'];
 type RateInput = Schemas['ModelRateInput'];
+
+/**
+ * Sets a model's rate from its public reference (`lookupReference`), on the cost
+ * basis, at the revision it has now. False when the model is not the team's to
+ * price (an edition's own) or the write is refused; the admin then sets it by hand.
+ */
+export async function saveReferenceRates(teamId: string, configId: string, rates: NonNullable<Reference['rates']>): Promise<boolean> {
+  const path = `teams/${teamId}/model-rates/${configId}`;
+  try {
+    const current = await api<Rate>(path);
+    if (current.readOnly) return false;
+    await api(path, { method: 'PUT', body: { revision: current.revision, basis: 'cost', ...rates } satisfies RateInput });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /** A model's rate. `missing` says no call reaches the model until one is set (ADR 0050), and makes setting it the row's lead action. */
 export function ModelRateButton({ teamId, configId, name, admin, provider, model, missing = false }: { teamId: string; configId: string; name: string; admin: boolean; provider: string; model: string; missing?: boolean }) {
@@ -60,7 +78,7 @@ function RateForm({ value, path, admin, reload, close, teamId, provider, model }
       <span>{t('weightHint')}</span>
     </label>
     {/* Suggestions are supplier costs, so they are offered only while the basis is cost: applying them never switches a weight basis unseen. */}
-    {admin && form.basis === 'cost' && <ModelMetadataLookup teamId={teamId} provider={provider} model={model} pricing current={{ input: form.input, output: form.output, cacheRead: form.cacheRead, cacheWrite: form.cacheWrite }} disabled={pending} apply={(rates) => setForm((current) => ({ ...current, ...rates }))} />}
+    {admin && form.basis === 'cost' && <ModelMetadataLookup teamId={teamId} provider={provider} model={model} pricing auto={!value.configured} current={{ input: form.input, output: form.output, cacheRead: form.cacheRead, cacheWrite: form.cacheWrite }} disabled={pending} apply={(rates) => setForm((current) => ({ ...current, ...rates }))} />}
     <DialogFooter><Button type="button" variant="outline" onClick={close}>{t('close')}</Button>{admin && <Button type="submit" disabled={pending}>{t('save')}</Button>}</DialogFooter>
   </form>;
 }
