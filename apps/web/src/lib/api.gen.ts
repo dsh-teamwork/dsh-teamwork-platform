@@ -1848,10 +1848,13 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Read what waits on the caller and the last 30 days' usage, for the team's overview */
+        /** Read what waits on the caller and the last 30 days' usage, the caller's own or, for an admin, the team's */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description me (the default): the caller's own calls, submissions and the limits that apply to them, for the workspace's home, an admin's included. team: the team's, for its admin's team overview */
+                    scope?: "me" | "team";
+                };
                 header?: never;
                 path: {
                     teamId: string;
@@ -1860,7 +1863,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description An admin's team-wide summary, or a member's own calls and the limits that apply to them */
+                /** @description The summary in the scope asked for */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1869,6 +1872,7 @@ export interface paths {
                         "application/json": components["schemas"]["TeamSummary"];
                     };
                 };
+                400: components["responses"]["Error"];
                 401: components["responses"]["Error"];
                 403: components["responses"]["Error"];
                 404: components["responses"]["Error"];
@@ -3709,17 +3713,17 @@ export interface components {
              * @description Start of the counted period, 30 days back
              */
             since: string;
-            /** @description Model calls in the period; the team's for an admin, the caller's own for a member */
+            /** @description Model calls in the period, in the scope asked for */
             calls: number;
             /** @description Reference points spent in the period: priced model calls and edition meters */
             points: string;
             /** @description Calls in the period without a price yet, which points leaves out */
             unpriced: number;
-            /** @description Model calls an admin must resolve, from any time; 0 for a member. Metered rows are settled by their edition */
+            /** @description Model calls an admin must resolve, from any time; 0 outside scope=team. Metered rows are settled by their edition */
             unresolved: number;
-            /** @description Budget mail that could not be delivered; 0 for a member */
+            /** @description Budget mail that could not be delivered; 0 outside scope=team */
             failedNotices: number;
-            /** @description Open budget windows at or past a notice threshold */
+            /** @description Open budget windows at or past a notice threshold; outside scope=team, the team's, the providers' and the caller's own */
             nearLimit: {
                 /** @enum {string} */
                 scope: "team" | "member" | "provider";
@@ -3730,7 +3734,7 @@ export interface components {
                 threshold: 80 | 95 | 100;
             }[];
             budget: components["schemas"]["QuotaSummary"];
-            /** @description Submissions awaiting review; the team's for an admin, the caller's own for a member */
+            /** @description Submissions awaiting review, in the scope asked for */
             pendingReviews: number;
         };
         QuotaSummary: {

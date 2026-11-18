@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-17
+> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-18
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -150,7 +150,7 @@ running time ([ADR 0036](../adr/0036-edition-meters.md)), through
 | `GET/PUT /budgets` | Applicable policies/current windows; admin revision-checked writes |
 | `GET /budgets/notices` | Latest notification delivery states, own recipient records for members |
 | `POST /budgets/notices/{noticeId}/retry` | Admin retries a failed notice after cooldown |
-| `GET /summary` | The overview's counts: last 30 days' calls and points, unresolved calls, failed notices, windows past a notice threshold, the caller's quota summary and pending reviews |
+| `GET /summary` | The home's and the team overview's counts: last 30 days' calls and points, unresolved calls, failed notices, windows past a notice threshold, the caller's quota summary and pending reviews; `scope=team` for an admin |
 
 Members see their own calls, per-person policies/windows and notification rows;
 shared team/provider limits remain visible. Admins inspect the whole team.
@@ -166,10 +166,11 @@ not a guarantee that all exhausted limits reopen then. Reads create no windows.
 Companion clients load this independently of configuration sync, clear it on
 team/account/server changes and never use it as an admission authorization.
 The team summary (`GET /summary`, `usage.Service.Summary`) is what the console's
-overview opens with. It is scoped like the rest: an admin counts the team's
-calls, unresolved calls (from any time), failed notices and every window past a
-notice threshold; a member counts their own calls and sees the windows that
-apply to them, with zero for what only an admin resolves. Its thresholds are the
+home and team overview open with (ADR 0049). By default it is the caller's own,
+an admin's included: their own calls and the windows that apply to them, with
+zero for what only an admin resolves. With `scope=team`, which needs an admin,
+it counts the team's calls, unresolved calls (from any time), failed notices and
+every window past a notice threshold. Its thresholds are the
 notices' (80, 95 and 100 % of a point cap), so the overview and the mail agree.
 Points sum what the period spent, edition meters included; calls, `unpriced`
 and `unresolved` count model calls only, since a metered row is settled by its

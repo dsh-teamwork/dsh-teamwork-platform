@@ -11,9 +11,9 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
 
-// The overview's summary counts what waits on the caller: an admin sees the
-// team's calls, reviews, unresolved usage and budgets; a member sees only their
-// own calls and submissions, and the limits that apply to them.
+// The summary is the caller's own by default, an admin's included: their own
+// calls and submissions, and the limits that apply to them. scope=team is the
+// team's calls, reviews, unresolved usage and budgets, for its admin alone.
 func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		ctx := context.Background()
@@ -25,7 +25,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 		member, memberID := e.person("member@summary.test")
 		must(t, admin.post(path+"/members", map[string]string{"email": "member@summary.test"}), 201)
 
-		empty := must(t, admin.get(path+"/summary"), 200)
+		empty := must(t, admin.get(path+"/summary?scope=team"), 200)
 		if empty["calls"] != float64(0) || empty["points"] != "0" || empty["pendingReviews"] != float64(0) || len(empty["nearLimit"].([]any)) != 0 {
 			t.Fatalf("a new team's summary: %+v", empty)
 		}
@@ -54,7 +54,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 		d.Client.BudgetWindow.Create().SetTeamID(teamID).SetScope(budgetwindow.ScopeTeam).SetPeriod(budgetwindow.PeriodMonth).
 			SetStartsAt(start).SetEndsAt(start.AddDate(0, 1, 0)).SetSpentUnits(90_000_000_000).ExecX(ctx)
 
-		got := must(t, admin.get(path+"/summary"), 200)
+		got := must(t, admin.get(path+"/summary?scope=team"), 200)
 		if got["calls"] != float64(2) || got["points"] != "25.4" || got["unpriced"] != float64(1) || got["unresolved"] != float64(1) ||
 			got["pendingReviews"] != float64(1) || got["failedNotices"] != float64(0) {
 			t.Fatalf("admin summary: %+v", got)
@@ -75,6 +75,18 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 		if b := mine["budget"].(map[string]any); b["state"] != "known" {
 			t.Fatalf("member budget: %+v", b)
 		}
+
+		// The workspace's home shows an admin their own: one priced call, nothing of theirs to review or resolve.
+		own := must(t, admin.get(path+"/summary"), 200)
+		if own["calls"] != float64(1) || own["points"] != "10.2" || own["unresolved"] != float64(0) || own["pendingReviews"] != float64(0) ||
+			own["failedNotices"] != float64(0) || len(own["nearLimit"].([]any)) != 1 {
+			t.Fatalf("admin's own summary: %+v", own)
+		}
+		if same := must(t, admin.get(path+"/summary?scope=me"), 200); same["calls"] != own["calls"] {
+			t.Fatalf("scope=me is the default: %+v", same)
+		}
+		refused(t, "a member asking for the team's", member.get(path+"/summary?scope=team"), 403, "admin_required")
+		refused(t, "an unknown scope", admin.get(path+"/summary?scope=all"), 400, "invalid_request")
 
 		outsider, _ := e.person("outsider@summary.test")
 		refused(t, "outside team", outsider.get(path+"/summary"), 404, "team_not_found")

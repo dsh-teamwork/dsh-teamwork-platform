@@ -259,10 +259,12 @@ icon set.
   `.prose-document` (the legal pages' type), and "On this page" on wide
   screens; a code block carries its own copy button
   (`apps/web/src/public/docs.tsx`).
-- **The console's sidebar is grouped by what a team does**: the overview, then
-  *Team assets* (models, presets, plugins), *Collaboration* (review, versions)
-  and *Governance* (members, usage, budgets, and an edition's own team pages).
-  The account is one menu at its foot; below `md` the sidebar is a sheet
+- **The console's sidebar is work first** (ADR 0043, 0049): *Workspace* at
+  the top, the reader's own (home, team resources, submissions, an edition's
+  work pages); for the admin, *Team management* at the foot, opening on the
+  team overview, then *Team assets* (models, presets, plugins, Team DSH,
+  review, versions) and *Members and spend* (members, usage, budgets). The
+  account is one menu at its foot; below `md` the sidebar is a sheet
   behind a menu button (`apps/web/src/components/team/console-shell.tsx`).
 - **Choosing from a list is one component.** `apps/web/src/components/ui/select.tsx`:
   an outline trigger and a menu on the card surface, never a native `<select>`.
@@ -285,8 +287,8 @@ icon set.
   console's rail ends the same way: the operator's initial (the address only
   on hover), the theme and signing out (`apps/manage/src/components/layout/sidebar.tsx`).
 - **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as
-  cards (each with the team's initials on navy, and its overview, models and
-  members a click away) grouped by role, a welcome with the first steps when
+  cards (each with the team's initials on navy, and a member's home, resources
+  and submissions, or an admin's overview, models and members, a click away) grouped by role, a welcome with the first steps when
   there are none, and creating or joining a team in a dialog.
 - **Outcomes in the console** use `--success` / `--warning` / `--info` /
   `--destructive`, and every mutation reports through a `sonner` toast.

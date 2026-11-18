@@ -1,10 +1,10 @@
 /**
  * The frame of a team's console (`/teams/{teamId}/…`): a sidebar with the team
  * switcher, the pages in groups and the account menu, and the page beside it.
- * The console is work first (ADR 0043): everyone sees Workspace — the home
- * page, what the team provides, their own submissions and an edition's work
- * pages — and the team's admin alone sees Team management, folded at the
- * sidebar's foot. On a narrow screen the sidebar becomes a top bar whose menu opens the same navigation in a
+ * The console is work first (ADR 0043): everyone sees Workspace — their own
+ * home page, what the team provides, their own submissions and an edition's
+ * work pages — and the team's admin alone sees Team management at the
+ * sidebar's foot, opening on the team overview, where an admin lands (ADR 0049). On a narrow screen the sidebar becomes a top bar whose menu opens the same navigation in a
  * sheet. Which pages exist is `GROUPS`; the router sends a member who opens a
  * management page home (`AdminOnly` in pages/team/layout.tsx).
  */
@@ -24,6 +24,7 @@ import {
   KeyRound,
   Laptop,
   Layers,
+  LayoutDashboard,
   LayoutGrid,
   LogOut,
   Menu,
@@ -47,7 +48,13 @@ import { api, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'teamDsh' | 'teamDshHosts';
+type SectionKey = 'home' | 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'teamDsh' | 'teamDshHosts';
+
+/** Where the sidebar shows an amber dot: something waits on the admin there. */
+export interface Waiting {
+  overview: boolean;
+  sharing: boolean;
+}
 
 /**
  * A page in the navigation: its path and icon; whether it fills the area beside the sidebar, as `TeamPage.fill`
@@ -85,11 +92,11 @@ async function reachesTeamDsh(team: Team) {
  * team publishes to its members' DSHs, and who is in it and what they spend. A page that
  * lays out columns of its own fills the area beside the sidebar, as `TeamPage.fill` does.
  */
-const GROUPS: { key: TeamGroup; sections: Section[] }[] = [
+const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
   {
     key: 'work',
     sections: [
-      { path: '', key: 'overview', icon: House },
+      { path: 'home', key: 'home', icon: House },
       { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'submissions', key: 'submissions', icon: Send },
       // Listed only once one of this person's computers connected; the same computers in every team.
@@ -97,6 +104,11 @@ const GROUPS: { key: TeamGroup; sections: Section[] }[] = [
       // Listed only where the team runs one this person may reach; the admin's own page is under Team assets.
       { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true, visible: reachesTeamDsh, hint: true },
     ],
+  },
+  // The team overview heads Team management on its own; the toggle below it names the group.
+  {
+    key: 'manage',
+    sections: [{ path: 'overview', key: 'overview', icon: LayoutDashboard }],
   },
   {
     key: 'assets',
@@ -160,13 +172,13 @@ const menuItem = 'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline
 export function ConsoleShell({
   team,
   teams,
-  reviewsWaiting,
+  waiting,
   children,
 }: {
   team: Team;
   teams: TeamSummary[];
-  /** Submissions wait for this admin's review: the amber dot beside the review page. */
-  reviewsWaiting: boolean;
+  /** Something waits on this admin: the amber dots beside the team overview and, for a submission, the review page. */
+  waiting: Waiting;
   children: ReactNode;
 }) {
   const t = useTranslations('team');
@@ -182,7 +194,7 @@ export function ConsoleShell({
         <div className="px-3 pb-4">
           <TeamSwitcher team={team} teams={teams} section={section} />
         </div>
-        <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} />
+        <Navigation team={team} section={section} waiting={waiting} />
         <div className="flex items-center gap-1 border-t px-3 pt-3">
           <AccountRow detail={t(`role.${team.role}`)} />
           <ThemeToggle />
@@ -208,7 +220,7 @@ export function ConsoleShell({
                 <X className="size-4" aria-hidden />
               </Dialog.Close>
             </div>
-            <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} onNavigate={close} />
+            <Navigation team={team} section={section} waiting={waiting} onNavigate={close} />
             <div className="flex items-center gap-1 border-t px-3 pt-3">
               <AccountRow detail={t(`role.${team.role}`)} onNavigate={close} />
               <ThemeToggle />
@@ -229,7 +241,7 @@ export function ConsoleShell({
  * It opens by itself on one of its pages, and a waiting review shows on the
  * toggle while it is folded. An edition's entries join the group they name.
  */
-function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team; section: string; reviewsWaiting: boolean; onNavigate?: () => void }) {
+function Navigation({ team, section, waiting, onNavigate }: { team: Team; section: string; waiting: Waiting; onNavigate?: () => void }) {
   const t = useTranslations('team');
   const locale = useLocale();
   const lang = locale === 'zh-CN' ? 'zh-CN' : 'en';
@@ -255,8 +267,8 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
   );
   const group = ({ key, sections }: (typeof GROUPS)[number]) => (
     <div key={key} className="flex flex-col gap-0.5">
-      <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>
-      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, s.key === 'sharing' && reviewsWaiting, s.hint ? t(`nav.hints.${s.key}`) : undefined))}
+      {key !== 'manage' && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>}
+      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined))}
       {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, page.hints?.[lang]))}
     </div>
   );
@@ -272,7 +284,7 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
             <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'font-medium')}>
               <ShieldCheck className="size-4" aria-hidden />
               <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
-              {!open && reviewsWaiting && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
+              {!open && waiting.overview && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
               <ChevronUp className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
             </button>
           </div>

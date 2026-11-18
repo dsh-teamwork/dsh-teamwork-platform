@@ -4,7 +4,8 @@ description: Use team presets and models in DSH, share your own, and ask the tea
 ---
 
 Once you are signed in, the team's models, presets and plugins appear in DSH
-next to your own setup. In the console, your team opens on **Home**; **Team
+next to your own setup. In the console, your team opens on **Home**, with your own calls and budget
+for the last 30 days and what the team changed lately; **Team
 resources** lists what the team provides, and **My submissions** what you have
 sent for review.
 

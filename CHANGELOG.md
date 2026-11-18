@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Admins land on a team overview; the home is everyone's own
+
+- **What:** A team's console now opens an admin on **Team overview** (`/teams/{teamId}/overview`, heading Team management): what waits on the team, its last 30 days, getting started, its resources and the instructions for a new member. The workspace's **Home** moves to `/teams/{teamId}/home` and is the reader's own for everyone, admins included: their submissions under review, the limits that apply to them (said, not linked to a page a member cannot open), their own figures, the team's recent updates, and the DSH steps folded once their DSH has called. `/teams/{teamId}` redirects by role. `GET /api/teams/{teamId}/summary` returns the caller's own by default; `scope=team` returns the team's and needs an admin.
+- **Why:** The home mixed an admin's team view with a member's own, so an admin could not see their own use and a member's budget alarm linked to a page that sent them home.
+- **Breaking:** `GET …/summary` without `scope` now answers an admin with their own figures; the console asks for `scope=team`.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0049, `apps/web/src/pages/team/overview.tsx`, `server/internal/httpapi/usage.go`.
+
 ## 2026-11-18 — A Team DSH guide, and the console's key card says what comes next
 
 - **What:** A new `/docs/team-dsh` page, in English and Chinese, takes an admin from installing DSH on a server to a member's first session, in shell commands (`dsh-teamwork share …`), with day-to-day tasks and troubleshooting; the admins page's Team DSH section now points to it. The console's Team DSH page links to it, and the key card shows the command in both forms (DSH's command input and a shell) and the steps that follow.

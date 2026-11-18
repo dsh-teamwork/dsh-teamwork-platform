@@ -38,6 +38,8 @@ or the hosted service, kept with the closed edition rather than here.
 - [0047 — Host tokens](0047-host-tokens.md) — a shared DSH's token reaches one team's configuration and models as no person.
 - [0048 — The console manages every device](0048-the-console-manages-every-device.md) — the web console lists and revokes every device paired with a member's own computers.
 
+- [0049 — The admin lands on the team overview](0049-the-admin-lands-on-the-team-overview.md) — Workspace is everyone's own; Team management opens on the team's overview.
+
 The template:
 
 ```markdown

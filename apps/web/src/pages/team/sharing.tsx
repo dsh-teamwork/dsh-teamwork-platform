@@ -54,14 +54,14 @@ function Sharing({ team, review }: { team: Team; review: boolean }) {
   const t = useTranslations('team.sharing');
   const tn = useTranslations('team.nav');
   const word = useTeamError();
-  const { reloadSummary } = useTeam();
+  const { reloadTeamSummary } = useTeam();
   // The review queue opens on what waits; one's own submissions on everything sent.
   const [tab, setTab] = useState<'pending' | 'all'>(review ? 'pending' : 'all');
   const [offset, setOffset] = useState(0);
   const rows = useApi<Submission[]>(`teams/${team.id}/submissions?offset=${offset}${tab === 'pending' ? '&state=pending' : ''}${review ? '' : '&mine=true'}`);
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
   // A decision or a submission changes what waits for review, so the sidebar's dot reads again too.
-  const reload = () => Promise.all([rows.reload(), configs.reload(), reloadSummary()]);
+  const reload = () => Promise.all([rows.reload(), configs.reload(), reloadTeamSummary()]);
   const [dialog, setDialog] = useState<{ kind: 'preset'; proposal?: Proposal; note?: string; target?: Target } | { kind: 'plugin' } | null>(null);
 
   const failed = (!rows.data && rows.error) || (!configs.data && configs.error);

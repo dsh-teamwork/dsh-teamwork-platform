@@ -4,13 +4,14 @@ description: Create a team, connect a provider, publish models and presets, brin
 ---
 
 A team is ready when it has a model members can call, a preset to start from,
-and its members. The team's **Home** in the console tracks these steps, and
-once the team is running it opens with what waits on you: submissions to
-review, budgets near their limit, calls to resolve and budget mail that failed.
-The pages below sit under **Team management** at the foot of the sidebar, which
-only the team's admin sees: open it for **Team assets** (models, presets,
+and its members. As the team's admin you land on its **Team overview**, which
+tracks these steps, and once the team is running opens with what waits on you:
+submissions to review, budgets near their limit, calls to resolve and budget
+mail that failed. It heads **Team management** at the foot of the sidebar,
+which only the team's admin sees, with **Team assets** (models, presets,
 plugins, review and history) and **Members and spend** (members, usage and
-budgets). Members see only the **Workspace** pages at the top.
+budgets) below it. The **Workspace** pages at the top are the same for you as
+for every member: your own **Home** shows your own calls and budget.
 
 ## 1. Create the team
 

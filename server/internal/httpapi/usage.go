@@ -138,26 +138,34 @@ func (s *Server) usageFilter(r *http.Request) (usage.Filter, error) {
 	return f, nil
 }
 
-// teamSummary is a team's overview: what waits on the caller, and recent usage
-// against the budgets that apply to them (usage.Summary).
+// teamSummary is what waits on the caller and recent usage against the budgets
+// that apply to them (usage.Summary). It is the caller's own by default, which
+// is what the workspace's home shows everyone, an admin included; scope=team is
+// the team's, for the admin's team overview (ADR 0049).
 func (s *Server) teamSummary(w http.ResponseWriter, r *http.Request) error {
 	c, err := s.requireUser(r)
 	if err != nil {
 		return err
 	}
-	m, err := s.Team.RequireMembership(r.Context(), c.user.ID, r.PathValue("teamId"), false)
+	scope := r.URL.Query().Get("scope")
+	if scope != "" && scope != "me" && scope != "team" {
+		var issues wire.Issues
+		issues.Add("me or team", "scope")
+		return issues.Err()
+	}
+	team := scope == "team"
+	m, err := s.Team.RequireMembership(r.Context(), c.user.ID, r.PathValue("teamId"), team)
 	if err != nil {
 		return err
 	}
-	admin := m.Role == membership.RoleAdmin
 	v := struct {
 		usage.Summary
 		PendingReviews int `json:"pendingReviews"`
 	}{}
-	if v.Summary, err = s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, admin); err != nil {
+	if v.Summary, err = s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, team); err != nil {
 		return err
 	}
-	if v.PendingReviews, err = s.Team.PendingSubmissions(r.Context(), m.TeamID, c.user.ID, admin); err != nil {
+	if v.PendingReviews, err = s.Team.PendingSubmissions(r.Context(), m.TeamID, c.user.ID, team); err != nil {
 		return err
 	}
 	noStore(w)

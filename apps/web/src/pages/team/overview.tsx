@@ -1,13 +1,16 @@
 /**
- * A team's overview (`/teams/{teamId}`): what waits on the reader first, then
- * the last 30 days at a glance, then getting started (an admin, until it is
- * done) or the team's presets (a member), what changed lately, and how DSH
- * joins. What waits and the figures come from `GET …/summary`, scoped by the
- * server to the reader: an admin sees the team, a member their own.
+ * The two summaries of a team (ADR 0049). The workspace's home
+ * (`/teams/{teamId}/home`) is everyone's own, an admin's included: what waits
+ * on the reader, their last 30 days, what the team changed lately and how DSH
+ * joins. The team overview (`/teams/{teamId}/overview`, Team management) is
+ * the admin's, where an admin lands: what waits on the team, its last 30
+ * days, getting started until it is done, its resources and the instructions
+ * to send a new member. Both read `GET …/summary`, the home in its default
+ * scope, the caller's own, and the overview with `scope=team`.
  */
 
 import { ArrowRight, Check, CircleCheck, Gauge, GitPullRequestArrow, MailWarning, ReceiptText } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useFormatter, useNow, useTranslations } from 'use-intl';
 
@@ -17,7 +20,7 @@ import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { ConfigOf, Provider, Schemas, Team, TeamConfig } from '@/lib/api';
+import type { Provider, Schemas, Team, TeamConfig } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 
@@ -25,104 +28,133 @@ import { useTeam } from './layout';
 
 const LOGIN = '/teamwork login';
 
-type Preset = ConfigOf<'preset'>;
 type Summary = Schemas['TeamSummary'];
+/** Whose summary a page shows: the reader's own, or the team's for its admin. */
+type Scope = 'me' | 'team';
 
-export function TeamOverviewPage() {
-  const { team, passwords, summary } = useTeam();
-  const admin = team.role === 'admin';
-  const word = useTeamError();
-  const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
-  const providers = useApi<Provider[]>(admin ? `teams/${team.id}/providers` : null);
-  const failed = (!configs.data && configs.error) || (admin && !providers.data && providers.error);
-  if (failed) return <Failure message={word(failed)} />;
-  if (!configs.data || (admin && !providers.data)) return null;
-  // This instance's address: the plugin signs in to whichever server it is set to.
-  return <Overview configs={configs.data} providerCount={providers.data?.length ?? 0} server={window.location.origin} passwords={passwords} summary={summary} />;
-}
-
-function Overview({
-  configs,
-  providerCount,
-  server,
-  passwords,
-  summary,
-}: {
-  configs: TeamConfig[];
-  providerCount: number;
-  server: string;
-  /** Members get a first password from the admin instead of an invitation. */
-  passwords: boolean;
-  summary?: Summary;
-}) {
+/** The workspace's home: the reader's own, whatever their role. */
+export function TeamHomePage() {
   const { team } = useTeam();
   const t = useTranslations('team.overview');
-  const admin = team.role === 'admin';
-  const count = (kind: TeamConfig['kind']) => configs.filter((c) => c.kind === kind).length;
+  const word = useTeamError();
+  const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
+  const summary = useApi<Summary>(`teams/${team.id}/summary`);
   const base = `/teams/${team.id}`;
-  // In the order a new team gets ready: each step needs the one before it.
-  const steps = [
-    { key: 'provider', hint: 'hint', done: providerCount > 0, href: `${base}/models` },
-    { key: 'model', hint: 'hint', done: count('model') > 0, href: `${base}/models` },
-    { key: 'preset', hint: 'hint', done: count('preset') > 0, href: `${base}/presets` },
-    { key: 'members', hint: passwords ? 'hintPasswords' : 'hint', done: team.members.length > 1, href: `${base}/members` },
-  ] as const;
-  const setupDone = steps.every((s) => s.done);
+  if (!configs.data) return configs.error ? <Failure message={word(configs.error)} /> : null;
+  const count = (kind: TeamConfig['kind']) => configs.data!.filter((c) => c.kind === kind).length;
 
   return (
     <>
-      <PageHeader title={team.name} description={admin ? t('descriptionAdmin') : t('descriptionMember')} />
-
-      <Waiting summary={summary} base={base} />
-      <Figures summary={summary} />
-
+      <PageHeader title={team.name} description={t('description')} />
+      <Waiting scope="me" summary={summary.data} base={base} />
+      <Figures
+        scope="me"
+        summary={summary.data}
+        last={{
+          label: t('figures.resources'),
+          value: configs.data.length,
+          note: t('figures.resourcesNote', { models: count('model'), presets: count('preset'), plugins: count('plugin') }),
+          href: `${base}/resources`,
+        }}
+      />
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <div className="flex min-w-0 flex-col gap-6">
-          {admin && !setupDone && <Setup steps={steps} />}
-          {admin ? <Recent configs={configs} /> : <PresetList configs={configs} base={base} />}
-        </div>
-        <Connect admin={admin} server={server} team={team} />
+        <Recent
+          configs={configs.data}
+          title={t('updates')}
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link to={`${base}/resources`}>{t('allResources')}</Link>
+            </Button>
+          }
+        />
+        {/* Calls in the last 30 days say this person's DSH is connected: the steps fold away until they are wanted again. */}
+        <Connect team={team} invite={false} connected={(summary.data?.calls ?? 0) > 0} />
       </div>
     </>
   );
 }
 
-/** One thing that waits on the reader: what it is, and where it is dealt with. */
+/** The admin's team overview, where an admin lands; a member never reaches it (`AdminOnly`). */
+export function TeamOverviewPage() {
+  const { team, passwords, teamSummary } = useTeam();
+  const t = useTranslations('team');
+  const word = useTeamError();
+  const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
+  const providers = useApi<Provider[]>(`teams/${team.id}/providers`);
+  const failed = (!configs.data && configs.error) || (!providers.data && providers.error);
+  if (failed) return <Failure message={word(failed)} />;
+  if (!configs.data || !providers.data) return null;
+  const count = (kind: TeamConfig['kind']) => configs.data!.filter((c) => c.kind === kind).length;
+  const base = `/teams/${team.id}`;
+  // In the order a new team gets ready: each step needs the one before it.
+  const steps = [
+    { key: 'provider', hint: 'hint', done: providers.data.length > 0, href: `${base}/models` },
+    { key: 'model', hint: 'hint', done: count('model') > 0, href: `${base}/models` },
+    { key: 'preset', hint: 'hint', done: count('preset') > 0, href: `${base}/presets` },
+    { key: 'members', hint: passwords ? 'hintPasswords' : 'hint', done: team.members.length > 1, href: `${base}/members` },
+  ] as const;
+
+  return (
+    <>
+      <PageHeader title={t('nav.overview')} description={t('overview.descriptionTeam')} />
+      <Waiting scope="team" summary={teamSummary} base={base} />
+      <Figures
+        scope="team"
+        summary={teamSummary}
+        last={{ label: t('overview.figures.members'), value: team.members.length, note: t('overview.figures.membersNote'), href: `${base}/members` }}
+      />
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {!steps.every((s) => s.done) && <Setup steps={steps} />}
+          <Resources configs={configs.data} base={base} />
+        </div>
+        {/* This server's address: the plugin signs in to whichever server it is set to. */}
+        <Connect team={team} invite connected={false} />
+      </div>
+    </>
+  );
+}
+
+/** One thing that waits on the reader: what it is, and the page that deals with it where the reader may open one. */
 interface Item {
   key: string;
   icon: ReactNode;
   text: string;
-  href: string;
+  href?: string;
 }
 
-/** What waits on the reader, each with the page that deals with it; one line saying so when nothing does. */
-function Waiting({ summary, base }: { summary?: Summary; base: string }) {
+/**
+ * What waits, each with the page that deals with it; one line saying so when nothing does. The team's is the
+ * admin's to act on; the reader's own is their submissions under review and the limits that apply to them. A
+ * member cannot open the budgets page, so a limit is said, with whom to ask, rather than linked.
+ */
+function Waiting({ scope, summary, base }: { scope: Scope; summary?: Summary; base: string }) {
   const { team, me } = useTeam();
   const t = useTranslations('team.overview.waiting');
   const admin = team.role === 'admin';
   if (!summary) return <section aria-busy="true" className="h-14 rounded-lg border" />;
 
-  const who = (scope: string, subjectId: string) => {
-    if (scope === 'team') return t('scope.team');
-    if (scope === 'provider') return t('scope.provider', { name: subjectId });
-    if (subjectId === me) return t('scope.you');
-    return t('scope.member', { email: team.members.find((m) => m.userId === subjectId)?.email ?? subjectId });
+  const who = (limit: Summary['nearLimit'][number]) => {
+    if (limit.scope === 'team') return t('scope.team');
+    if (limit.scope === 'provider') return t('scope.provider', { name: limit.subjectId });
+    if (limit.subjectId === me) return t('scope.you');
+    return t('scope.member', { email: team.members.find((m) => m.userId === limit.subjectId)?.email ?? limit.subjectId });
   };
   const items: Item[] = [];
   if (summary.pendingReviews > 0) {
     items.push({
       key: 'reviews',
       icon: <GitPullRequestArrow className="size-4" aria-hidden />,
-      text: t(admin ? 'reviews' : 'reviewsMine', { count: summary.pendingReviews }),
-      href: admin ? `${base}/sharing` : `${base}/submissions`,
+      text: t(scope === 'team' ? 'reviews' : 'reviewsMine', { count: summary.pendingReviews }),
+      href: scope === 'team' ? `${base}/sharing` : `${base}/submissions`,
     });
   }
-  for (const w of summary.nearLimit) {
+  for (const limit of summary.nearLimit) {
     items.push({
-      key: `limit-${w.scope}-${w.subjectId}-${w.period}`,
+      key: `limit-${limit.scope}-${limit.subjectId}-${limit.period}`,
       icon: <Gauge className="size-4" aria-hidden />,
-      text: t(w.threshold >= 100 ? 'limitReached' : 'limitNear', { who: who(w.scope, w.subjectId), threshold: w.threshold, period: w.period }),
-      href: `${base}/budgets`,
+      text: t(limit.threshold >= 100 ? 'limitReached' : 'limitNear', { who: who(limit), threshold: limit.threshold, period: limit.period }),
+      href: admin ? `${base}/budgets` : undefined,
     });
   }
   if (summary.unresolved > 0) {
@@ -140,45 +172,60 @@ function Waiting({ summary, base }: { summary?: Summary; base: string }) {
       </p>
     );
   }
+  const row = 'flex items-center gap-3 px-4 py-3 text-sm';
   return (
     <section aria-labelledby="waiting" className="overflow-hidden rounded-lg border">
       <h2 id="waiting" className="flex items-center gap-2 border-b bg-muted px-4 py-2.5 text-sm font-semibold">
-        {/* The overview's one amber mark: something here waits on the reader (docs/design.md). */}
+        {/* The page's one amber mark: something here waits on the reader (docs/design.md). */}
         <span aria-hidden className="size-1.5 rounded-full bg-signal" />
-        {/* A member's submissions wait on an admin, not on them. */}
-        {t(admin ? 'title' : 'titleMember')}
+        {/* One's own submissions wait on an admin, not on oneself. */}
+        {t(scope === 'team' ? 'title' : 'titleMember')}
         <span className="font-normal text-muted-foreground tabular-nums">{items.length}</span>
       </h2>
       <ul>
         {items.map((item) => (
           <li key={item.key} className="border-t first:border-t-0">
-            <Link to={item.href} className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-accent">
-              <span className="text-muted-foreground">{item.icon}</span>
-              <span className="min-w-0 flex-1">{item.text}</span>
-              <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            </Link>
+            {item.href ? (
+              <Link to={item.href} className={cn(row, 'hover:bg-accent')}>
+                <span className="text-muted-foreground">{item.icon}</span>
+                <span className="min-w-0 flex-1">{item.text}</span>
+                <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              </Link>
+            ) : (
+              <div className={row}>
+                <span className="text-muted-foreground">{item.icon}</span>
+                <span className="min-w-0 flex-1">{item.text}</span>
+              </div>
+            )}
           </li>
         ))}
       </ul>
+      {!admin && summary.nearLimit.length > 0 && <p className="border-t px-4 py-2.5 text-xs text-muted-foreground">{t('askAdmin')}</p>}
     </section>
   );
 }
 
-/** The last 30 days at a glance: calls, points, the budget left to the reader, and the team's size. */
-function Figures({ summary }: { summary?: Summary }) {
-  const { team } = useTeam();
+/** One figure at the end of the row, which each page chooses, and the page that shows more of it. */
+interface Figure {
+  label: string;
+  value: number;
+  note: string;
+  href: string;
+}
+
+/** The last 30 days at a glance: calls, points and the budget left to the reader, in the page's scope, then the page's own figure. */
+function Figures({ scope, summary, last }: { scope: Scope; summary?: Summary; last: Figure }) {
   const t = useTranslations('team.overview.figures');
   const format = useFormatter();
-  const admin = team.role === 'admin';
   const budget = summary?.budget;
-  const cells = [
+  const cells: { label: string; value: ReactNode; note: string; href?: string }[] = [
     {
-      label: t(admin ? 'calls' : 'myCalls'),
+      label: t(scope === 'team' ? 'calls' : 'myCalls'),
       value: summary ? format.number(summary.calls) : '—',
       note: t('period'),
     },
     {
-      label: t(admin ? 'points' : 'myPoints'),
+      label: t(scope === 'team' ? 'points' : 'myPoints'),
       value: summary ? summary.points : '—',
       note: summary && summary.unpriced > 0 ? t('unpriced', { count: summary.unpriced }) : t('period'),
     },
@@ -187,17 +234,29 @@ function Figures({ summary }: { summary?: Summary }) {
       value: !budget ? '—' : budget.state === 'known' ? (budget.remaining ?? '—') : t(`budgetState.${budget.state}`),
       note: budget?.resetAt ? t('resets', { at: format.dateTime(new Date(budget.resetAt), { dateStyle: 'medium' }) }) : t('budgetHint'),
     },
-    { label: t('members'), value: format.number(team.members.length), note: t(admin ? 'membersAdmin' : 'membersMember') },
+    { ...last, value: format.number(last.value) },
   ];
   return (
     <dl className="grid grid-cols-2 overflow-hidden rounded-lg border lg:grid-cols-4">
-      {cells.map((c, i) => (
-        <div key={c.label} className={cn('flex flex-col gap-0.5 p-4', i % 2 === 1 && 'border-l', i >= 2 && 'border-t lg:border-t-0', i === 2 && 'lg:border-l')}>
-          <dt className="text-sm text-muted-foreground">{c.label}</dt>
-          <dd className="text-2xl font-semibold tabular-nums">{c.value}</dd>
-          <dd className="text-xs text-muted-foreground">{c.note}</dd>
-        </div>
-      ))}
+      {cells.map((c, i) => {
+        const body = (
+          <>
+            <dt className="text-sm text-muted-foreground">{c.label}</dt>
+            <dd className="text-2xl font-semibold tabular-nums">{c.value}</dd>
+            <dd className="text-xs text-muted-foreground">{c.note}</dd>
+          </>
+        );
+        const frame = cn('flex flex-col gap-0.5 p-4', i % 2 === 1 && 'border-l', i >= 2 && 'border-t lg:border-t-0', i === 2 && 'lg:border-l');
+        return c.href ? (
+          <Link key={c.label} to={c.href} className={cn(frame, 'hover:bg-accent')}>
+            {body}
+          </Link>
+        ) : (
+          <div key={c.label} className={frame}>
+            {body}
+          </div>
+        );
+      })}
     </dl>
   );
 }
@@ -245,17 +304,39 @@ function Setup({ steps }: { steps: readonly { key: 'provider' | 'model' | 'prese
 }
 
 /**
- * How DSH joins, in three steps: install the plugin, point it at this server,
- * sign in. An admin can copy the whole of it to send to a new member.
+ * How DSH joins, in three steps: install the plugin, point it at this server, sign in. On the team overview the
+ * admin can copy the whole of it to send to a new member; on the home, once the reader's DSH is connected, it folds
+ * to one line that opens it again.
  */
-function Connect({ admin, server, team }: { admin: boolean; server: string; team: Team }) {
+function Connect({ team, invite, connected }: { team: Team; invite: boolean; connected: boolean }) {
   const t = useTranslations('team.overview');
+  const [open, setOpen] = useState(false);
+  // This instance's address: the plugin signs in to whichever server it is set to.
+  const server = window.location.origin;
   const code = (chunks: ReactNode) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] text-foreground">{chunks}</code>;
+  if (connected && !open) {
+    return (
+      <Card>
+        <CardHeader className="flex-row items-center justify-between gap-3">
+          <span className="flex min-w-0 flex-col gap-1">
+            <CardTitle className="flex items-center gap-2">
+              <CircleCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              {t('connected')}
+            </CardTitle>
+            <span className="text-xs text-muted-foreground">{t('connectedHint')}</span>
+          </span>
+          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+            {t('showSteps')}
+          </Button>
+        </CardHeader>
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-3">
-        <CardTitle>{admin ? t('connectAdmin') : t('connectMember')}</CardTitle>
-        {admin && <CopyButton text={t('connectMessage', { team: team.name, server })} label={t('copyMessage')} />}
+        <CardTitle>{invite ? t('connectAdmin') : t('connectMember')}</CardTitle>
+        {invite && <CopyButton text={t('connectMessage', { team: team.name, server })} label={t('copyMessage')} />}
       </CardHeader>
       <CardContent>
         <ol className="flex flex-col gap-3 text-sm">
@@ -293,8 +374,34 @@ function Step({ n }: { n: number }) {
   );
 }
 
+/** The team's resources for its admin: how many of each, each opening its page, and what changed last. */
+function Resources({ configs, base }: { configs: TeamConfig[]; base: string }) {
+  const t = useTranslations('team');
+  const kinds = [
+    { kind: 'model', path: 'models' },
+    { kind: 'preset', path: 'presets' },
+    { kind: 'plugin', path: 'plugins' },
+  ] as const;
+  return (
+    <Recent
+      configs={configs}
+      title={t('overview.resources')}
+      lead={
+        <div className="grid grid-cols-3 border-t">
+          {kinds.map(({ kind, path }, i) => (
+            <Link key={kind} to={`${base}/${path}`} className={cn('flex flex-col gap-0.5 px-6 py-3 hover:bg-accent', i > 0 && 'border-l')}>
+              <span className="text-xs text-muted-foreground">{t(`nav.${path}`)}</span>
+              <span className="text-lg font-semibold tabular-nums">{configs.filter((c) => c.kind === kind).length}</span>
+            </Link>
+          ))}
+        </div>
+      }
+    />
+  );
+}
+
 /** The configuration edited last, newest first. Read from the rows that exist, so a removal does not show. */
-function Recent({ configs }: { configs: TeamConfig[] }) {
+function Recent({ configs, title, action, lead }: { configs: TeamConfig[]; title: string; action?: ReactNode; lead?: ReactNode }) {
   const t = useTranslations('team.overview');
   const tk = useTranslations('team.overview.kind');
   const format = useFormatter();
@@ -302,16 +409,19 @@ function Recent({ configs }: { configs: TeamConfig[] }) {
   const recent = [...configs].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('recent')}</CardTitle>
+      <CardHeader className="flex-row items-center justify-between gap-3">
+        <CardTitle>{title}</CardTitle>
+        {action}
       </CardHeader>
       <CardContent className="px-0 pb-2">
+        {lead}
+        {lead && <p className="border-t px-6 pt-3 pb-1 text-xs font-medium text-muted-foreground">{t('recent')}</p>}
         {recent.length === 0 ? (
           <p className="px-6 pb-4 text-sm text-muted-foreground">{t('recentEmpty')}</p>
         ) : (
           <ul>
             {recent.map((c) => (
-              <li key={c.id} className="flex items-baseline justify-between gap-3 border-t px-6 py-2.5 text-sm">
+              <li key={c.id} className={cn('flex items-baseline justify-between gap-3 px-6 py-2.5 text-sm', !lead && 'border-t')}>
                 <span className="min-w-0 truncate">
                   <span className="text-muted-foreground">{tk(c.kind)}</span> {c.name}{' '}
                   <span className="text-xs text-muted-foreground tabular-nums">v{c.version}</span>
@@ -319,36 +429,6 @@ function Recent({ configs }: { configs: TeamConfig[] }) {
                 <time dateTime={c.updatedAt} className="shrink-0 text-xs text-muted-foreground">
                   {format.relativeTime(new Date(c.updatedAt), now)}
                 </time>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-/** For a member: what the team shares, with a way to see more. */
-function PresetList({ configs, base }: { configs: TeamConfig[]; base: string }) {
-  const t = useTranslations('team.overview');
-  const presets = configs.filter((c): c is Preset => c.kind === 'preset');
-  return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-3">
-        <CardTitle>{t('presets')}</CardTitle>
-        <Button asChild size="sm" variant="outline">
-          <Link to={`${base}/resources`}>{t('all')}</Link>
-        </Button>
-      </CardHeader>
-      <CardContent className="px-0 pb-2">
-        {presets.length === 0 ? (
-          <p className="px-6 pb-4 text-sm text-muted-foreground">{t('noPresets')}</p>
-        ) : (
-          <ul>
-            {presets.map((p) => (
-              <li key={p.id} className="flex flex-col border-t px-6 py-2.5 text-sm">
-                <span className="font-medium">{p.name}</span>
-                {p.data.description && <span className="text-xs text-muted-foreground">{p.data.description}</span>}
               </li>
             ))}
           </ul>

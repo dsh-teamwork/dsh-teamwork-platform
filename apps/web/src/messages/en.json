@@ -341,8 +341,8 @@
       "step3Body": "Everyone's DSH picks the team's setup up at the next sync."
     },
     "overview": {
-      "descriptionAdmin": "Your team’s models, presets and plugins, published once and kept the same in every member’s DSH.",
-      "descriptionMember": "The models and presets your team publishes sync to your DSH by themselves.",
+      "descriptionTeam": "What waits on the team, how it used its models lately, and what it publishes to every member’s DSH.",
+      "description": "Your own use of the team, and what it changed lately. What it publishes syncs to your DSH by itself.",
       "setup": "Getting started",
       "go": "Go",
       "steps": {
@@ -366,16 +366,19 @@
       },
       "connectAdmin": "Send this to new members",
       "connectMember": "Connect your DSH",
+      "connected": "Your DSH is connected",
+      "connectedHint": "It called a team model in the last 30 days.",
+      "showSteps": "Show the steps",
       "recent": "Recent changes",
       "recentEmpty": "No configuration yet.",
+      "resources": "Team resources",
+      "updates": "Recent team updates",
+      "allResources": "All resources",
       "kind": {
         "model": "Model",
         "preset": "Preset",
         "plugin": "Plugin"
       },
-      "presets": "Team presets",
-      "all": "See all",
-      "noPresets": "Your team has not published a preset yet.",
       "waiting": {
         "title": "Waiting on you",
         "none": "Nothing waits on you.",
@@ -391,7 +394,8 @@
           "member": "{email}'s budget",
           "provider": "The {name} provider budget"
         },
-        "titleMember": "Worth knowing"
+        "titleMember": "Worth knowing",
+        "askAdmin": "Need more? Ask your team’s admin to raise the limit."
       },
       "figures": {
         "calls": "Team calls",
@@ -408,8 +412,9 @@
         "resets": "Resets {at}",
         "budgetHint": "Points left under your limits",
         "members": "Members",
-        "membersAdmin": "In this team",
-        "membersMember": "In this team"
+        "membersNote": "In this team",
+        "resources": "Team resources",
+        "resourcesNote": "{models} models · {presets} presets · {plugins} plugins"
       },
       "connectInstall": "Install the DSH Teamwork plugin. <link>How to install</link>",
       "connectServer": "On Teamwork's sign-in screen, the server should be <code>{server}</code>.",
@@ -474,7 +479,8 @@
     },
     "nav": {
       "label": "Team console",
-      "overview": "Home",
+      "home": "Home",
+      "overview": "Team overview",
       "members": "Members",
       "models": "Models",
       "usage": "Usage",
@@ -491,7 +497,7 @@
       },
       "open": "Open navigation",
       "close": "Close navigation",
-      "waiting": "Waiting for your review",
+      "waiting": "Something waits on you",
       "resources": "Team resources",
       "submissions": "My submissions",
       "teamDsh": "Team DSH",
