@@ -1,15 +1,17 @@
 # Analytics
 
-> **Status:** Current · **Updated:** 2026-11-17
+> **Status:** Current · **Updated:** 2026-11-18
 
-What reaches PostHog: anonymous page counts from the browser, and nothing
-else. No account, no person and no behaviour is tracked.
+What reaches PostHog: anonymous page counts from the browser (and, in the
+closed edition, anonymous screen counts from its phone app), and nothing else.
+No account, no person and no behaviour is tracked.
 
-## 1. One side, anonymous
+## 1. Anonymous, from the client only
 
 | Side | Sends | Identity | Why |
 | --- | --- | --- | --- |
 | The browser (`apps/web/src/lib/analytics.ts`) | `$pageview` only, every URL cut to its path and no page title | None. Cookieless: unique visitors are a daily-salted hash PostHog computes | Nothing is stored in the visitor's browser, so there is no consent banner |
+| The closed edition's phone app (its `lib/analytics.ts`, where `premium/` exists) | `$screen` only, named by its route pattern (`/[computerId]/[sessionId]`), never a value in it | None. The client keeps its state in memory, so its anonymous id is new at every launch | Nothing is stored on the phone, matching the browser |
 | The server | Nothing | — | What an account does is not tracked |
 
 There are no page leaves, no autocapture, no session recording, no surveys and
@@ -20,7 +22,7 @@ The database is the authority for every outcome. Sign-ups, active teams and
 other account counts come from the admin API (`premium/docs/ops/manage-api.md`)
 or the instance's own management pages, never from PostHog.
 
-The closed edition's operator console and mobile app send nothing.
+The closed edition's operator console sends nothing.
 
 ## 2. Setting up a project
 
@@ -31,6 +33,9 @@ The closed edition's operator console and mobile app send nothing.
    `POSTHOG_KEY` (and `POSTHOG_HOST` for another region than the default). The
    server reads it at run time and writes it into the pages it serves, so the
    browser side needs no build. Leave it unset in development to send nothing.
+   The closed edition's phone app takes the same key at its build, from the
+   EAS project's `production` environment as `EXPO_PUBLIC_POSTHOG_KEY`; a
+   development build never sends.
 4. An agent that reads PostHog does so through PostHog's MCP server or
    connector, which whoever runs the agent installs and signs in to with
    access to this project. No PostHog key goes in `docs/ops/`.
