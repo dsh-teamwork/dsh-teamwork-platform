@@ -8,9 +8,11 @@
  * browser, so there is no consent banner to show, and PostHog counts unique
  * visitors from a daily-salted hash on its side — which the project must have
  * switched on (docs/ops/analytics.md §2). A browser is never identified, and
- * no behaviour is recorded: no page leaves, no autocapture, no session
- * recording and no surveys, since each would follow what a person does or read
- * what is on the page.
+ * no behaviour is recorded: no page leaves, no autocapture, no heatmaps, no
+ * dead clicks, no web vitals, no session recording and no surveys, since each
+ * would follow what a person does or read what is on the page. Each is off in
+ * the config, so the project's remote settings cannot turn it on, and
+ * `scrubEvent` drops any event but `$pageview` all the same.
  *
  * **Every URL leaves without its query and fragment, and no page title leaves
  * at all.** Both can carry what somebody typed — a search, a sentence handed
@@ -40,7 +42,7 @@ export function withoutQuery(value: unknown): string | undefined {
 }
 
 export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
-  if (!event) return event;
+  if (event?.event !== '$pageview') return null;
   for (const name of DROPPED_PROPERTIES) delete event.properties[name];
   for (const name of URL_PROPERTIES) {
     if (!(name in event.properties)) continue;
@@ -66,6 +68,9 @@ export async function startAnalytics(): Promise<void> {
     capture_pageview: 'history_change',
     capture_pageleave: false,
     autocapture: false,
+    capture_heatmaps: false,
+    capture_dead_clicks: false,
+    capture_performance: false,
     disable_session_recording: true,
     disable_surveys: true,
     before_send: scrubEvent,
