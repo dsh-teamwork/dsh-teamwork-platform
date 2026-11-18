@@ -35,14 +35,24 @@ Type these in DSH's command input, not in your shell. Ids come from
 
 ## On a server: dsh-teamwork
 
-On a shared DSH's own machine, `dsh-teamwork` (installed with the plugin) runs
-the `share` commands from a shell, with no browser. DSH must be running there as
-the same user; it finds that DSH through the plugin's directory in `~/.dsh`, or
-`$DSH_HOME`. Linux and macOS.
+On the machine a DSH runs on, `dsh-teamwork` (installed with the plugin) does
+what the Teamwork panel does, from a shell, with no browser: for a DSH on a
+server, a shared one above all. DSH must be running there as the same user; the
+command finds it through the plugin's directory in `~/.dsh`, or `$DSH_HOME`.
+Linux and macOS.
 
 | Command | What it does |
 | --- | --- |
-| `dsh-teamwork server [url]` | Show the Teamwork server, or set it: a self-hosted team does this before `enable`. |
+| `dsh-teamwork server [url]` | Show the Teamwork server, or set it: a self-hosted team does this first. |
+| `dsh-teamwork login` | Print a sign-in link to open in any browser. |
+| `dsh-teamwork authorize <code>` | Finish sign-in with the code the page shows. |
+| `dsh-teamwork status` | Sign-in, teams, sync, the relay and paired phones. |
+| `dsh-teamwork sync` | Sync the team's configuration now. |
+| `dsh-teamwork logout` | Sign out and drop the team's resources. |
+| `dsh-teamwork phone pair` | Draw the phone app's pairing QR code in the terminal. |
+| `dsh-teamwork phone list` | Paired and waiting phones, with a waiting phone's safety code. |
+| `dsh-teamwork phone accept <id>` | Accept a waiting phone once it shows the same safety code; `reject <id>` refuses it. |
+| `dsh-teamwork phone revoke <id>` | Remove a paired phone. |
 | `dsh-teamwork share enable <key>` | Make this DSH its team's shared DSH, with a key from **Shared DSHs**. |
 | `dsh-teamwork share audit-key <key>` | Seal its archive to the key `dsh-teamwork-audit keygen` printed. |
 | `dsh-teamwork share status` | Its name, team, audit key and any error. |

@@ -64,9 +64,11 @@ Debian, as the user DSH will run as:
 
    Detach with `Ctrl+B` then `D`; `tmux attach -t dsh` returns to it.
 
-4. From another shell on the same machine, make it the team's shared DSH with
-   `dsh-teamwork`, which comes with the plugin: see
-   [Commands](/docs/commands#on-a-server-dsh-teamwork). No browser is needed.
+4. From another shell on the same machine, use `dsh-teamwork`, which comes
+   with the plugin: `dsh-teamwork login` for your own DSH, or
+   `dsh-teamwork share enable <key>` for the team's shared DSH. See
+   [Commands](/docs/commands#on-a-server-dsh-teamwork). No browser is needed on
+   the server.
 
 The plugin keeps its files in `~/.dsh/dsh-teamwork/` (or `$DSH_HOME/dsh-teamwork/`),
 whichever directory DSH is started from.
