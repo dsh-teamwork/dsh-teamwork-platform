@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Every server sends the phone app its sign-in code
+
+- **What:** `/plugin` accepts the official app's `redirect_uri`, exactly `dshteamwork://sign-in`, on every server with no setting, and nothing else beside the plugin's loopback address; `MOBILE_REDIRECT_URI` is removed, and the session's `mobileRedirectPrefix` is now `appRedirect`, that exact address. `/docs` tells self-hosters the app connects to their server.
+- **Why:** The official app reaches self-hosted servers (ADR 0044, ADR 0046), which should need no variable whose only value is the app's own scheme.
+- **Breaking:** A `redirect_uri` that merely started with the old prefix is refused. A deployment's `MOBILE_REDIRECT_URI` is ignored.
+- **Upgrade:** Remove `MOBILE_REDIRECT_URI` where it is set.
+- **Refs:** ADR 0046 (supersedes ADR 0010), `server/internal/wire/auth.go`.
+
 ## 2026-11-18 — Members reach a shared DSH from the web console
 
 - **What:** **Shared DSHs** in the team console now shows every member the shared DSHs they may reach; pasting an invite joins this browser, and `/teams/{teamId}/shared-hosts/{computerId}` is the member's own sessions there, with the PIN, the conversation, answers and sending, end-to-end encrypted through the relay with a non-extractable WebCrypto key kept in IndexedDB. The relay admits the console by its session cookie: HTTP routes when no Bearer is sent (writes only from this site), and `/relay/phone` without a token only when the upgrade's `Origin` is `APP_URL`. `edition.Host.Session` no longer opens a session whose account still has an admin-set first password. The relay client gains `sharedHosts()` and each computer's `hostId`. `/docs` describes it.

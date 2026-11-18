@@ -129,24 +129,19 @@ func TestVerifyCodeInput(t *testing.T) {
 	}
 }
 
-// Where a code may be sent instead of shown (ADR 0010, ADR 0012).
+// Where a code may be sent instead of shown (ADR 0010, ADR 0012, ADR 0046).
 func TestReturnAddress(t *testing.T) {
-	if _, ok := wire.ReturnAddress("dshteamwork://sign-in", ""); ok {
-		t.Error("sent a code somewhere with no mobile prefix configured")
+	if got, ok := wire.ReturnAddress(wire.AppReturn); !ok || got != (wire.ReturnTo{URL: wire.AppReturn, To: "app"}) {
+		t.Errorf("the app's address: %+v %v", got, ok)
 	}
-
-	const prefix = "dshteamwork://sign-in"
-	if got, ok := wire.ReturnAddress(prefix, prefix); !ok || got != (wire.ReturnTo{URL: prefix, To: "app"}) {
-		t.Errorf("prefix itself: %+v %v", got, ok)
-	}
-	for _, uri := range []string{"https://evil.example/sign-in", "dshteamwork://other", "evil://dshteamwork://sign-in", ""} {
-		if got, ok := wire.ReturnAddress(uri, prefix); ok {
+	for _, uri := range []string{"https://evil.example/sign-in", "dshteamwork://other", "dshteamwork://sign-in.evil", "dshteamwork://sign-in/x", "evil://dshteamwork://sign-in", ""} {
+		if got, ok := wire.ReturnAddress(uri); ok {
 			t.Errorf("accepted %q as %+v", uri, got)
 		}
 	}
 
 	const loopback = "http://127.0.0.1:53124/callback"
-	if got, ok := wire.ReturnAddress(loopback, ""); !ok || got != (wire.ReturnTo{URL: loopback, To: "dsh"}) {
+	if got, ok := wire.ReturnAddress(loopback); !ok || got != (wire.ReturnTo{URL: loopback, To: "dsh"}) {
 		t.Errorf("loopback: %+v %v", got, ok)
 	}
 	for _, uri := range []string{
@@ -159,7 +154,7 @@ func TestReturnAddress(t *testing.T) {
 		"http://127.0.0.1.evil.example:53124/callback",
 		"http://127.0.0.2:53124/callback",
 	} {
-		if got, ok := wire.ReturnAddress(uri, prefix); ok {
+		if got, ok := wire.ReturnAddress(uri); ok {
 			t.Errorf("accepted look-alike %q as %+v", uri, got)
 		}
 	}

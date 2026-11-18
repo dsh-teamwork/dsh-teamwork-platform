@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-17
+> **Status:** Current · **Updated:** 2026-11-18
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -203,9 +203,9 @@ person presses Authorize. Why it is shaped this way:
 
 The code goes back through `&redirect_uri=…` in two cases. The plugin's own
 loopback listener, `http://127.0.0.1:<port>/…`, is accepted on every deployment
-([ADR 0012](../adr/0012-the-plugin-gets-its-code-back-on-loopback.md)). A
-phone app's address is accepted when it starts with `MOBILE_REDIRECT_URI`
-([ADR 0010](../adr/0010-the-app-gets-its-code-back.md)). For either, pressing
+([ADR 0012](../adr/0012-the-plugin-gets-its-code-back-on-loopback.md)). The
+official phone app's address, exactly `dshteamwork://sign-in`, is accepted on
+every deployment too ([ADR 0046](../adr/0046-every-server-sends-the-app-its-code.md)). For either, pressing
 Authorize sends the browser to `redirect_uri?code=…` and keeps the code on
 screen in case it does not arrive. Any other address makes the link invalid.
 Without a `redirect_uri`, the code is shown for pasting.

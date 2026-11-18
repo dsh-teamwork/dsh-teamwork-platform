@@ -39,7 +39,6 @@ type Config struct {
 	AllowPrivateProviders bool
 	SMTPURL               string // set: emailed codes; unset: passwords
 	EmailFrom             string // AUTH_EMAIL_FROM
-	MobileRedirectURI     string
 
 	GoogleID, GoogleSecret string // both set: the Google door
 
@@ -85,7 +84,6 @@ func Load(args []string, env func(string) string) (Config, error) {
 		DatabaseURL:           strings.TrimSpace(env("DATABASE_URL")),
 		AllowPrivateProviders: strings.TrimSpace(env("ALLOW_PRIVATE_PROVIDERS")) == "true",
 		SMTPURL:               strings.TrimSpace(env("SMTP_URL")),
-		MobileRedirectURI:     strings.TrimSpace(env("MOBILE_REDIRECT_URI")),
 		EmailFrom:             strings.TrimSpace(env("AUTH_EMAIL_FROM")),
 		GoogleID:              strings.TrimSpace(env("AUTH_GOOGLE_ID")),
 		GoogleSecret:          strings.TrimSpace(env("AUTH_GOOGLE_SECRET")),

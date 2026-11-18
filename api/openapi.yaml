@@ -1726,7 +1726,7 @@ components:
               message: { type: string }
     Session:
       type: object
-      required: [user, doors, setupOpen, mobileRedirectPrefix]
+      required: [user, doors, setupOpen, appRedirect]
       properties:
         user:
           type: object
@@ -1748,7 +1748,7 @@ components:
             emailCode: { type: boolean }
             google: { type: boolean }
         setupOpen: { type: boolean }
-        mobileRedirectPrefix: { type: string }
+        appRedirect: { type: string, description: "The phone app's sign-in address, where /plugin sends its code (ADR 0046)" }
     PasswordSignIn:
       type: object
       required: [email, password]

@@ -1,6 +1,6 @@
 # Shared DSH
 
-> **Status:** Plan — steps 0 to 3 and 5 to 7 done, step 4 but the desktop panel · **Updated:** 2026-11-18
+> **Status:** Plan — steps 0 to 3 and 5 to 8 done, step 4 but the desktop panel · **Updated:** 2026-11-18
 
 How a team shares one DSH that it runs itself: members reach it from the app
 or the web through the relay, end to end encrypted, and the server can route
@@ -321,7 +321,8 @@ HPKE comes from `@hpke/core` at an exact version; no other new dependency.
   `dshteamwork://join` links and QR; the disclosure; the PIN; shared DSHs in
   the computer switcher under their team's name; and a server address in
   release builds, so it reaches a self-hosted server. The open server admits
-  the app's sign-in redirect, `dshteamwork://sign-in`, by default.
+  the app's sign-in redirect, `dshteamwork://sign-in`, with no setting
+  ([ADR 0046](../adr/0046-every-server-sends-the-app-its-code.md)).
 - Copy in every client's messages, both languages; `/docs` pages for shared
   mode, invites and the archive.
 
@@ -378,8 +379,10 @@ Each step is a vertical slice, lands green, and brings its ADR.
    `server/e2e` drives the package against the real plugin, and the page was
    driven in Chromium against a real server and shared DSH, from the invite
    to the PIN to the member's own session.
-8. **The app reaches any server** (about 2 days): a server address in release
-   builds and the default redirect.
+8. **The app reaches any server — done 2026-11-18** (ADR 0046): every server
+   accepts the app's sign-in address with no setting (`MOBILE_REDIRECT_URI`
+   is gone), and the app's release builds offer "Use another server" on
+   sign-in.
 
 ### Step 0 results (2026-11-17)
 

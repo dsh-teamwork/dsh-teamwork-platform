@@ -33,6 +33,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0042 — Host tokens](0042-host-tokens.md) — a shared DSH's token reaches one team's configuration and models as no person.
 - [0044 — The relay and shared DSHs are open](0044-the-relay-and-shared-dshs-are-open.md) — the relay, shared DSHs and their archive join the community edition.
 - [0045 — The shared archive](0045-the-shared-archive.md) — sealed segments in a signed chain, kept in the database, opened only by the admin.
+- [0046 — Every server sends the app its code](0046-every-server-sends-the-app-its-code.md) — the app's sign-in address needs no setting; release builds choose a server.
 
 The template:
 

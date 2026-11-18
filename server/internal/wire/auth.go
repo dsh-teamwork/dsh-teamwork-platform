@@ -87,21 +87,24 @@ type PluginToken struct {
 	Verifier string `json:"verifier"`
 }
 
+// AppReturn is the official phone app's sign-in address, the scheme it owns:
+// every server sends the app its code there (ADR 0010, ADR 0046).
+const AppReturn = "dshteamwork://sign-in"
+
 // ReturnTo is where a plugin code may be sent instead of shown: the DSH
-// plugin's loopback listener (ADR 0012), or a phone app's address under
-// MOBILE_REDIRECT_URI (ADR 0010). Empty To means nowhere.
+// plugin's loopback listener (ADR 0012), or the phone app's AppReturn.
 type ReturnTo struct {
 	URL string `json:"url"`
 	To  string `json:"to"` // "dsh" or "app"
 }
 
 // ReturnAddress decides a redirect_uri: RFC 8252 §7.3 plain http to the IPv4
-// loopback literal on an explicit port, or an address under mobilePrefix.
-func ReturnAddress(uri, mobilePrefix string) (ReturnTo, bool) {
+// loopback literal on an explicit port, or exactly AppReturn.
+func ReturnAddress(uri string) (ReturnTo, bool) {
 	if u, err := url.Parse(uri); err == nil && u.Scheme == "http" && u.Hostname() == "127.0.0.1" && u.Port() != "" && u.User == nil {
 		return ReturnTo{URL: uri, To: "dsh"}, true
 	}
-	if mobilePrefix != "" && strings.HasPrefix(uri, mobilePrefix) {
+	if uri == AppReturn {
 		return ReturnTo{URL: uri, To: "app"}, true
 	}
 	return ReturnTo{}, false
