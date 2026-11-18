@@ -1392,14 +1392,32 @@ paths:
                 properties: { pairings: { type: array, items: { $ref: '#/components/schemas/RelayPairing' } } }
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
+  /relay/hosts:
+    servers: [{ url: / }]
+    get:
+      summary: The member's own computers, each with every device of theirs paired to it (the web console only, ADR 0048)
+      security: [{ session: [] }]
+      parameters:
+        - { name: X-Device-Key, in: header, required: false, schema: { type: string }, description: "This browser's handset credential, to mark its own pairings" }
+      responses:
+        '200':
+          description: The computers, most recently seen first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hosts]
+                properties: { hosts: { type: array, items: { $ref: '#/components/schemas/RelayHost' } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
   /relay/pairings/{id}:
     servers: [{ url: / }]
     delete:
-      summary: Revoke one of this handset's pairings
+      summary: Revoke a pairing; an app's own handset's, or from the web console any of the member's own computers' (ADR 0048)
       security: [{ bearer: [] }, { session: [] }]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string } }
-        - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
+        - { name: X-Device-Key, in: header, required: false, schema: { type: string }, description: "The app's handset credential; the web console need not send it" }
       responses:
         '204': { description: Revoked }
         '400': { $ref: '#/components/responses/Error' }
@@ -1546,6 +1564,28 @@ components:
       properties:
         host: { $ref: '#/components/schemas/SharedHost' }
         key: { type: string, description: 'The team host key, shown this once' }
+    RelayHost:
+      type: object
+      required: [id, name, dshVersion, online, lastSeenAt, pairings]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        dshVersion: { type: string }
+        online: { type: boolean }
+        lastSeenAt: { type: string, format: date-time }
+        pairings:
+          type: array
+          items:
+            type: object
+            required: [id, deviceName, status, createdAt, lastUsedAt, push, current]
+            properties:
+              id: { type: string }
+              deviceName: { type: string }
+              status: { type: string, enum: [pending, confirmed] }
+              createdAt: { type: string, format: date-time }
+              lastUsedAt: { type: string, format: date-time, nullable: true }
+              push: { type: boolean }
+              current: { type: boolean, description: The pairing of the browser asking }
     RelayPairing:
       type: object
       required: [id, hostId, userId, hostName, deviceName, status, createdAt, lastUsedAt]

@@ -21,6 +21,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Update the plugin to 0.11.1 on each Team DSH, and restart DSH in the project folder.
 - **Refs:** the plugin's `src/shared-owner.ts`; `packages/relay-client/src/session-config.ts`, `src/live.ts`; `docs/tech/shared-dsh.md`; `apps/web/content/docs/{en,zh-CN}/install.md`.
 
+## 2026-11-18 — My DSH: a member's own computers in the web console
+
+- **What:** Workspace → My DSH (`/teams/{teamId}/my-dsh`) lists the member's own computers, listed once one has connected. The browser pairs with one as the phone app does (code, safety code, approval on the desktop), unlocks it with the PIN, and drives its sessions end to end encrypted; each computer's devices, every phone and browser paired with it, are listed and removable. The relay adds `GET /relay/hosts` for the console's session, and `DELETE /relay/pairings/{id}` from that session revokes any pairing of the member's to their own computers (ADR 0048); an app token stays handset-scoped. Team DSH and My DSH now share their columns, conversation and PIN gate (`apps/web/src/pages/team/dsh-session.tsx`), and their shared messages moved to `team.dsh`. `/docs` (members) describes it.
+- **Why:** A member could reach their own computers only from the phone app, and could remove a lost phone only at the desktop.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `docs/adr/0048-the-console-manages-every-device.md`, `docs/tech/relay.md` ("My DSH in the web console").
+
 ## 2026-11-18 — Everything clickable shows the hand
 
 - **What:** Buttons, menu items, options, disclosure summaries and the labels of checkboxes and file inputs show the pointer cursor from the base styles of the web app and of `/manage`; disabled ones keep the arrow. The per-component `cursor-pointer` classes are gone.

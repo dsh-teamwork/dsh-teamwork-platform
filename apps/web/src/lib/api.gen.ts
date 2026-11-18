@@ -3320,6 +3320,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/relay/hosts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The member's own computers, each with every device of theirs paired to it (the web console only, ADR 0048) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: {
+                    /** @description This browser's handset credential, to mark its own pairings */
+                    "X-Device-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The computers, most recently seen first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            hosts: components["schemas"]["RelayHost"][];
+                        };
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/relay/pairings/{id}": {
         parameters: {
             query?: never;
@@ -3330,12 +3373,13 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Revoke one of this handset's pairings */
+        /** Revoke a pairing; an app's own handset's, or from the web console any of the member's own computers' (ADR 0048) */
         delete: {
             parameters: {
                 query?: never;
-                header: {
-                    "X-Device-Key": string;
+                header?: {
+                    /** @description The app's handset credential; the web console need not send it */
+                    "X-Device-Key"?: string;
                 };
                 path: {
                     id: string;
@@ -3575,6 +3619,27 @@ export interface components {
             host: components["schemas"]["SharedHost"];
             /** @description The team host key, shown this once */
             key: string;
+        };
+        RelayHost: {
+            id: string;
+            name: string;
+            dshVersion: string;
+            online: boolean;
+            /** Format: date-time */
+            lastSeenAt: string;
+            pairings: {
+                id: string;
+                deviceName: string;
+                /** @enum {string} */
+                status: "pending" | "confirmed";
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                lastUsedAt: string | null;
+                push: boolean;
+                /** @description The pairing of the browser asking */
+                current: boolean;
+            }[];
         };
         RelayPairing: {
             id: string;

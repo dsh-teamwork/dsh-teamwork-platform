@@ -22,6 +22,7 @@ import {
   History,
   House,
   KeyRound,
+  Laptop,
   Layers,
   LayoutGrid,
   LogOut,
@@ -46,7 +47,7 @@ import { api, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'teamDsh' | 'teamDshHosts';
+type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'teamDsh' | 'teamDshHosts';
 
 /**
  * A page in the navigation: its path and icon; whether it fills the area beside the sidebar, as `TeamPage.fill`
@@ -60,6 +61,14 @@ interface Section {
   visible?: (team: Team) => Promise<boolean>;
   /** Whether its entry carries a hint, `nav.hints.{key}`, saying what the page is for. */
   hint?: boolean;
+}
+
+/** Whether this person has a computer of their own that connected to the relay (docs/tech/relay.md, "My DSH in the web console"). */
+async function hasOwnComputer() {
+  const response = await fetch('/relay/hosts', { credentials: 'same-origin' });
+  if (!response.ok) return false;
+  const { hosts } = (await response.json()) as { hosts: unknown[] };
+  return hosts.length > 0;
 }
 
 /** Whether this person may reach one of this team's shared DSHs (docs/tech/shared-dsh.md): the relay's list, read with the session cookie. */
@@ -83,6 +92,8 @@ const GROUPS: { key: TeamGroup; sections: Section[] }[] = [
       { path: '', key: 'overview', icon: House },
       { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'submissions', key: 'submissions', icon: Send },
+      // Listed only once one of this person's computers connected; the same computers in every team.
+      { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true },
       // Listed only where the team runs one this person may reach; the admin's own page is under Team assets.
       { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true, visible: reachesTeamDsh, hint: true },
     ],

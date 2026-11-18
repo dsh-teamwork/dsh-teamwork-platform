@@ -33,13 +33,16 @@ func TestPluginRelay(t *testing.T) {
 	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
 		ada := in.Account("ada@example.test")
 		in.Team(ada)
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
-		cmd := exec.CommandContext(ctx, "node", filepath.Join(here(), "relay.mjs"))
-		cmd.Env = append(os.Environ(), "BASE="+in.URL, "TOKEN="+in.Bearer(ada), "PLUGIN="+plugin)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("%v\n%s", err, out)
+		// The phone app's handset, then the web console's: the same pairing, admitted by a cookie from this site.
+		for _, browser := range []string{"", in.Session(ada, "password").String()} {
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			cmd := exec.CommandContext(ctx, "node", filepath.Join(here(), "relay.mjs"))
+			cmd.Env = append(os.Environ(), "BASE="+in.URL, "TOKEN="+in.Bearer(ada), "PLUGIN="+plugin, "COOKIE="+browser)
+			out, err := cmd.CombinedOutput()
+			cancel()
+			if err != nil {
+				t.Fatalf("browser %t: %v\n%s", browser != "", err, out)
+			}
 		}
 	})
 }
