@@ -34,6 +34,10 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 		must(t, call(e.pluginFor(admin), modelID, false), 200)
 		must(t, call(e.pluginFor(member), modelID, false), 200)
 		d.Client.UsageRequest.Update().Where(usagerequest.UserID(memberID)).SetState(usagerequest.StatePending).ExecX(ctx)
+		// And a settled call that measured past its admitted bound: an overrun, kept apart from the calls to resolve.
+		d.Client.UsageRequest.Create().SetTeamID(teamID).SetUserID(memberID).SetSubmittedConfigID(modelID).SetConfigID(modelID).
+			SetProvider("stub").SetModel("other-model").SetStream(false).SetState(usagerequest.StatePending).
+			SetErrorCode("usage_amount_overflow").SetCreatedAt(time.Now().AddDate(0, -2, 0)).ExecX(ctx)
 
 		// An edition's metered hold that is still open (ADR 0036): its points count, but it is no model call
 		// and only its edition settles it, so it is neither a call nor something for an admin to resolve.
@@ -54,7 +58,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 			SetStartsAt(start).SetEndsAt(start.AddDate(0, 1, 0)).SetSpentUnits(90_000_000_000).ExecX(ctx)
 
 		got := must(t, admin.get(path+"/summary?scope=team"), 200)
-		if got["calls"] != float64(2) || got["points"] != "25.4" || got["unpriced"] != float64(1) || got["unresolved"] != float64(1) ||
+		if got["calls"] != float64(2) || got["points"] != "25.4" || got["unpriced"] != float64(1) || got["unresolved"] != float64(1) || got["overruns"] != float64(1) ||
 			got["pendingReviews"] != float64(1) || got["failedNotices"] != float64(0) {
 			t.Fatalf("admin summary: %+v", got)
 		}
@@ -67,7 +71,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 		}
 
 		mine := must(t, member.get(path+"/summary"), 200)
-		if mine["calls"] != float64(1) || mine["points"] != "15.2" || mine["unresolved"] != float64(0) || mine["pendingReviews"] != float64(1) ||
+		if mine["calls"] != float64(1) || mine["points"] != "15.2" || mine["unresolved"] != float64(0) || mine["overruns"] != float64(0) || mine["pendingReviews"] != float64(1) ||
 			len(mine["nearLimit"].([]any)) != 1 {
 			t.Fatalf("member summary: %+v", mine)
 		}

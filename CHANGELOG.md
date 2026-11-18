@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — My usage replaces My submissions in the workspace; overruns apart from calls to resolve
+
+- **What:** The workspace's sidebar lists **My usage** (`/teams/{teamId}/my-usage`) where **My submissions** was: the limits that apply to the reader, a period's (7, 30 or 90 days) calls, points and tokens, points by day and by model, and the latest calls with a CSV, for everyone, an admin's own included. My submissions stays at `/submissions`, a link on **Team resources** (its Chinese label now matches the English), which now holds every way to submit: upload a plugin, import a preset file, write a preset. A new `GET /api/teams/{teamId}/usage/stats` serves the page, scoped as the usage list is. The team summary adds `overruns` (calls past their hold, which suspend budgeted calls on their route) and no longer counts them in `unresolved`; the team overview lists them second, after unpriced models.
+- **Why:** Submissions are sent rarely and followed from where they are sent; a member's own spend and limits had no page at all.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-usage.tsx`, `server/internal/usage/stats.go`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-18 — Every model call needs a reference rate
 
 - **What:** The gateway refuses a call on a team model that has no reference rate for the provider and upstream model it calls now, whether or not a budget applies: `403 model_unpriced`, before any hold or upstream request. It replaces `budget_model_unpriced`. `GET /api/teams/{teamId}/summary?scope=team` adds `unpricedModels`; the team overview lists them first among what waits, getting started counts a model ready only once it is priced, and the models page marks each and leads with **Set rates**. Edition-funded models are unaffected.

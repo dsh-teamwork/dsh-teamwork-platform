@@ -260,8 +260,8 @@ icon set.
   screens; a code block carries its own copy button
   (`apps/web/src/public/docs.tsx`).
 - **The console's sidebar is work first** (ADR 0043, 0049): *Workspace* at
-  the top, the reader's own (home, team resources, submissions, an edition's
-  work pages); for the admin, *Team management* at the foot, opening on the
+  the top, the reader's own (home, team resources with their submissions inside,
+  my usage, an edition's work pages); for the admin, *Team management* at the foot, opening on the
   team overview, then *Team assets* (models, presets, plugins, Team DSH,
   review, versions) and *Members and spend* (members, usage, budgets). The
   account is one menu at its foot; below `md` the sidebar is a sheet

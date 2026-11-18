@@ -149,6 +149,7 @@ running time ([ADR 0036](../adr/0036-edition-meters.md)), through
 | --- | --- |
 | `GET/PUT /model-rates/{configId}` | Read/edit revisioned reference rates; admins write |
 | `GET /usage` | Paginated user/config/time-filtered request history |
+| `GET /usage/stats` | Same authorization; a period of at most 92 days (30 by default): totals, every day in the caller's IANA zone, and each model's and meter's points, for My usage |
 | `GET /usage/export` | Same authorization/filtering, formula-safe CSV, maximum 10,000 rows; excess fails without partial output |
 | `POST /usage/{requestId}/resolve` | Admin's reasoned estimate or bound-violation review |
 | `GET/PUT /budgets` | Applicable policies/current windows; admin revision-checked writes |
@@ -173,7 +174,8 @@ The team summary (`GET /summary`, `usage.Service.Summary`) is what the console's
 home and team overview open with (ADR 0049). By default it is the caller's own,
 an admin's included: their own calls and the windows that apply to them, with
 zero for what only an admin resolves. With `scope=team`, which needs an admin,
-it counts the team's calls, unresolved calls (from any time), failed notices and
+it counts the team's calls, unresolved calls and overruns (from any time, kept
+apart: an overrun suspends budgeted calls on its route), failed notices and
 every window past a notice threshold. Its thresholds are the
 notices' (80, 95 and 100 % of a point cap), so the overview and the mail agree.
 Points sum what the period spent, edition meters included; calls, `unpriced`

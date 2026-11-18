@@ -2,8 +2,8 @@
  * The frame of a team's console (`/teams/{teamId}/…`): a sidebar with the team
  * switcher, the pages in groups and the account menu, and the page beside it.
  * The console is work first (ADR 0043): everyone sees Workspace — their own
- * home page, what the team provides, their own submissions and an edition's
- * work pages — and the team's admin alone sees Team management at the
+ * home page, what the team provides (their own submissions one link inside),
+ * their own usage and an edition's work pages — and the team's admin alone sees Team management at the
  * sidebar's foot, opening on the team overview, where an admin lands (ADR 0049). On a narrow screen the sidebar becomes a top bar whose menu opens the same navigation in a
  * sheet. Which pages exist is `GROUPS`; the router sends a member who opens a
  * management page home (`AdminOnly` in pages/team/layout.tsx).
@@ -11,6 +11,7 @@
 
 import {
   BookOpen,
+  ChartColumn,
   ChartNoAxesCombined,
   Check,
   ChevronUp,
@@ -29,7 +30,6 @@ import {
   LogOut,
   Menu,
   Puzzle,
-  Send,
   Server,
   ShieldCheck,
   Users,
@@ -48,7 +48,7 @@ import { api, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'home' | 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'teamDsh' | 'teamDshHosts';
+type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'teamDsh' | 'teamDshHosts';
 
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
@@ -68,6 +68,8 @@ interface Section {
   visible?: (team: Team) => Promise<boolean>;
   /** Whether its entry carries a hint, `nav.hints.{key}`, saying what the page is for. */
   hint?: boolean;
+  /** Pages reached from inside this one, which keep its entry selected. */
+  within?: string[];
 }
 
 /** Whether this person has a computer of their own that connected to the relay (docs/tech/relay.md, "My DSH in the web console"). */
@@ -97,8 +99,8 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
     key: 'work',
     sections: [
       { path: 'home', key: 'home', icon: House },
-      { path: 'resources', key: 'resources', icon: BookOpen },
-      { path: 'submissions', key: 'submissions', icon: Send },
+      { path: 'resources', key: 'resources', icon: BookOpen, within: ['submissions'] },
+      { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
       // Listed only once one of this person's computers connected; the same computers in every team.
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true },
       // Listed only where the team runs one this person may reach; the admin's own page is under Team assets.
@@ -131,7 +133,7 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
   },
 ];
 
-const PATHS = GROUPS.flatMap((g) => g.sections.map((s) => s.path));
+const PATHS = GROUPS.flatMap((g) => g.sections.flatMap((s) => [s.path, ...(s.within ?? [])]));
 
 /** An edition's team pages that are not open ones it replaced, each listed in the group it names. */
 const extraPages = () => editionTeamPages().filter((page) => !PATHS.includes(navPath(page)));
@@ -257,8 +259,8 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
     if (managing) setOpen(true);
   }
 
-  const link = (path: string, label: ReactNode, Icon: LucideIcon, dot = false, hint?: string) => (
-    <NavLink key={path} to={href(team.id, path)} onClick={onNavigate} current={section === path} hint={hint}>
+  const link = (path: string, label: ReactNode, Icon: LucideIcon, inside: boolean, dot = false, hint?: string) => (
+    <NavLink key={path} to={href(team.id, path)} onClick={onNavigate} current={section === path || inside} hint={hint}>
       <Icon className="size-4" aria-hidden />
       <span className="flex-1">{label}</span>
       {/* Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules"). */}
@@ -268,8 +270,8 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   const group = ({ key, sections }: (typeof GROUPS)[number]) => (
     <div key={key} className="flex flex-col gap-0.5">
       {key !== 'manage' && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>}
-      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined))}
-      {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, page.hints?.[lang]))}
+      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, s.within?.includes(section) ?? false, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined))}
+      {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, false, page.hints?.[lang]))}
     </div>
   );
 

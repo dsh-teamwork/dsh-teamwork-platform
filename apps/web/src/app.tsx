@@ -33,6 +33,7 @@ const SignInPage = lazy(() => import('@/pages/sign-in').then((m) => ({ default: 
 const TeamLayout = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.TeamLayout })));
 const TeamMembersPage = lazy(() => import('@/pages/team/members').then((m) => ({ default: m.TeamMembersPage })));
 const TeamModelsPage = lazy(() => import('@/pages/team/models').then((m) => ({ default: m.TeamModelsPage })));
+const TeamMyUsagePage = lazy(() => import('@/pages/team/my-usage').then((m) => ({ default: m.TeamMyUsagePage })));
 const TeamHomePage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamHomePage })));
 const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamOverviewPage })));
 const TeamPluginsPage = lazy(() => import('@/pages/team/plugins').then((m) => ({ default: m.TeamPluginsPage })));
@@ -88,6 +89,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { path: 'home', element: <TeamHomePage /> },
       { path: 'resources', element: <TeamResourcesPage /> },
       { path: 'submissions', element: <TeamSharingPage view="mine" /> },
+      { path: 'my-usage', element: <TeamMyUsagePage /> },
       { path: 'my-dsh/:hostId?/:sessionId?', element: <MyDshPage /> },
       { path: 'team-dsh/:computerId?/:sessionId?', element: <TeamDshPage /> },
     ],

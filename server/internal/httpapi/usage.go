@@ -173,6 +173,44 @@ func (s *Server) teamSummary(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// usageStats is a period's totals, days and models (usage.Stats), scoped as
+// listUsage is: a member reads their own, an admin the team's or one member's.
+// Without since and until it is the last 30 days; timezone (IANA, UTC by
+// default) draws the days.
+func (s *Server) usageStats(w http.ResponseWriter, r *http.Request) error {
+	f, err := s.usageFilter(r)
+	if err != nil {
+		return err
+	}
+	if f.Until.IsZero() {
+		f.Until = time.Now().UTC()
+	}
+	if f.Since.IsZero() {
+		f.Since = f.Until.Add(-usage.SummaryPeriod)
+	}
+	var issues wire.Issues
+	if f.Until.Sub(f.Since) > usage.MaxStatsSpan {
+		issues.Add("At most 92 days", "since")
+	}
+	loc := time.UTC
+	if name := r.URL.Query().Get("timezone"); name != "" {
+		if loc, err = time.LoadLocation(name); err != nil || name == "Local" {
+			loc = time.UTC
+			issues.Add("An IANA time zone", "timezone")
+		}
+	}
+	if err := issues.Err(); err != nil {
+		return err
+	}
+	stats, err := s.Usage.Stats(r.Context(), f, loc)
+	if err != nil {
+		return err
+	}
+	noStore(w)
+	writeJSON(w, http.StatusOK, stats)
+	return nil
+}
+
 func (s *Server) listUsage(w http.ResponseWriter, r *http.Request) error {
 	f, err := s.usageFilter(r)
 	if err != nil {

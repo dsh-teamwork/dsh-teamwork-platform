@@ -1942,6 +1942,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/usage/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** A period's usage totals, days and models; a member reads their own, an admin the team's or one member's */
+        get: {
+            parameters: {
+                query?: {
+                    userId?: string;
+                    configId?: string;
+                    /** @description Defaults to 30 days before until; at most 92 days before it */
+                    since?: string;
+                    /** @description Defaults to now */
+                    until?: string;
+                    /** @description The IANA zone days are drawn in; UTC by default */
+                    timezone?: string;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The scoped period at a glance */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageStats"];
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teams/{teamId}/usage/export": {
         parameters: {
             query?: never;
@@ -3719,8 +3772,10 @@ export interface components {
             points: string;
             /** @description Calls in the period without a price yet, which points leaves out */
             unpriced: number;
-            /** @description Model calls an admin must resolve, from any time; 0 outside scope=team. Metered rows are settled by their edition */
+            /** @description Model calls whose usage is not known yet, from any time, that an admin may resolve; overruns excluded; 0 outside scope=team. Metered rows are settled by their edition */
             unresolved: number;
+            /** @description Model calls past their admitted bound, from any time, which stop budgeted calls on their provider and model until an admin reviews them; 0 outside scope=team */
+            overruns: number;
             /** @description Budget mail that could not be delivered; 0 outside scope=team */
             failedNotices: number;
             /** @description Open budget windows at or past a notice threshold; outside scope=team, the team's, the providers' and the caller's own */
@@ -3738,6 +3793,52 @@ export interface components {
             budget: components["schemas"]["QuotaSummary"];
             /** @description Submissions awaiting review, in the scope asked for */
             pendingReviews: number;
+        };
+        UsageStats: {
+            /** Format: date-time */
+            since: string;
+            /** Format: date-time */
+            until: string;
+            timezone: string;
+            totals: {
+                /** @description Model calls; edition meters are no calls */
+                calls: number;
+                /** @description Points spent: priced model calls and edition meters */
+                points: string;
+                /** @description Calls whose points are not known yet, which points leaves out */
+                unpriced: number;
+                /** @description Input tokens, cache reads and writes included */
+                input: number;
+                cacheRead: number;
+                cacheWrite: number;
+                /** @description Output tokens, reasoning included */
+                output: number;
+                reasoning: number;
+            };
+            /** @description Every calendar day of the period in timezone, oldest first, spent on or not */
+            days: {
+                /** Format: date */
+                day: string;
+                calls: number;
+                points: string;
+            }[];
+            /** @description What each team model and edition meter spent, most points first */
+            sources: {
+                /** @enum {string} */
+                kind: "model" | "meter";
+                /** @description A model's configuration id, or a meter's name */
+                key: string;
+                /** @description The model's current name (its upstream model once removed), or the meter's name */
+                name: string;
+                /** @description A meter's name in each language its edition registered; empty for a model */
+                labels: {
+                    [key: string]: string;
+                };
+                calls: number;
+                points: string;
+                input: number;
+                output: number;
+            }[];
         };
         QuotaSummary: {
             /** @description Smallest current team/member points allowance after holds; advisory, not a wallet balance */

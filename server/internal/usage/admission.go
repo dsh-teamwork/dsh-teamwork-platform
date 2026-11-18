@@ -72,6 +72,10 @@ func fits(limit *int64, spent, reserved, requested int64) bool {
 	return spent <= available && reserved <= available-spent
 }
 
+// overrunCodes mark a call whose measured use passed what was admitted, or could not be priced: until an admin
+// reviews it, budgeted calls on its provider and model are refused (budget_route_suspended).
+var overrunCodes = []string{"usage_bound_exceeded", "usage_amount_overflow"}
+
 func limitError(code string, p *ent.BudgetPolicy, w *ent.BudgetWindow) error {
 	e := wire.E(http.StatusForbidden, code)
 	e.Scope = string(p.Scope)
@@ -134,7 +138,7 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 		needBound = needBound || p.Enabled
 	}
 	if needBound {
-		suspended, e := db.UsageRequest.Query().Where(usagerequest.TeamID(call.TeamID), usagerequest.Provider(call.Provider), usagerequest.Model(call.Model), usagerequest.ErrorCodeIn("usage_bound_exceeded", "usage_amount_overflow")).Exist(ctx)
+		suspended, e := db.UsageRequest.Query().Where(usagerequest.TeamID(call.TeamID), usagerequest.Provider(call.Provider), usagerequest.Model(call.Model), usagerequest.ErrorCodeIn(overrunCodes...)).Exist(ctx)
 		if e != nil {
 			return nil, e
 		}
