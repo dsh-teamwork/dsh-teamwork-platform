@@ -10,7 +10,7 @@ import {
 } from '../attachments';
 import { RelayError, type RelayClient } from '../types';
 import type { UploadLimits } from '../uploads';
-import { describe, expect, it, vi } from 'vitest';
+import { expect, it, vi } from 'vitest';
 const limits: UploadLimits = {
   maxFiles: 5,
   maxFileBytes: 20 * 1024 * 1024,
