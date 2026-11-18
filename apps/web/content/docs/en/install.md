@@ -33,6 +33,44 @@ dsh web
 For a web process that is already running, follow the host's reload or
 restart instructions.
 
+## A Linux server
+
+A team's shared DSH usually runs on a server with no desktop. On Ubuntu or
+Debian, as the user DSH will run as:
+
+1. Install Node.js 24 or later:
+
+   ```sh
+   curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   ```
+
+2. Install DSH. It is published as prereleases for now, so name the exact
+   version [npm lists](https://www.npmjs.com/package/@deepseek-ai/dsh?activeTab=versions)
+   as `latest`; without one, npm finds no version:
+
+   ```sh
+   npm install -g @deepseek-ai/dsh@0.2.2-rc.1
+   ```
+
+3. Install the plugin and start DSH in a `tmux` session, so it keeps running
+   after you log out:
+
+   ```sh
+   dsh plugin --profile web add @dsh-teamwork/dsh-teamwork
+   tmux new -s dsh
+   dsh web --no-open
+   ```
+
+   Detach with `Ctrl+B` then `D`; `tmux attach -t dsh` returns to it.
+
+4. From another shell on the same machine, make it the team's shared DSH with
+   `dsh-teamwork`, which comes with the plugin: see
+   [Commands](/docs/commands#on-a-server-dsh-teamwork). No browser is needed.
+
+The plugin keeps its files in `~/.dsh/dsh-teamwork/` (or `$DSH_HOME/dsh-teamwork/`),
+whichever directory DSH is started from.
+
 ## Sign in
 
 1. Open **Teamwork** in the DSH sidebar and choose the browser sign-in action.

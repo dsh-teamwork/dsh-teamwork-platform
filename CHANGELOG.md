@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A shared DSH can be run and managed from a Linux shell
+
+- **What:** `/docs` describes installing DSH and the plugin on a Linux server (DSH needs its exact prerelease version) and the plugin's new `dsh-teamwork` command, which runs `server` and the `share` actions (enable, audit-key, status, members, invite, unlock, disable) against the DSH running on that machine, with no browser. The plugin now keeps its files in `$DSH_HOME/dsh-teamwork/` (else `~/.dsh/dsh-teamwork/`) instead of the directory DSH was started from.
+- **Why:** A shared DSH usually runs on a server with no desktop, where the only way in was an SSH tunnel to DSH's web UI; and a shared DSH started from another directory lost its key, roster and PIN locks.
+- **Breaking:** With the plugin release carrying this change, a signed-in DSH signs in again, and a shared DSH needs a new key (**Rotate key**) and fresh invites: files left in the old start directory are not moved.
+- **Upgrade:** Update the plugin.
+- **Refs:** the plugin's `src/share-cli.ts` and `src/control-socket.ts`; `apps/web/content/docs/{en,zh-CN}/{install,commands,admins}.md`.
+
 ## 2026-11-18 — Team resources has a new Chinese name
 
 - **What:** The Workspace page listing what the team provides has a new zh-CN name, "team shared" rather than "team resources" (`team.nav.resources` in `zh-CN.json`); English stays "Team resources". `/docs` (zh-CN) follows.

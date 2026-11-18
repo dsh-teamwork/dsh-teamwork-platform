@@ -31,3 +31,19 @@ description: 所有 /teamwork 命令，在 DSH 的命令输入框中使用。
 | `/teamwork cancel` | 请求停止当前会话。 |
 | `/teamwork retry` | 预览恢复操作；`retry confirm` 执行。 |
 | `/teamwork logout` | 退出登录，并从 DSH 中移除团队资源。 |
+
+## 在服务器上：dsh-teamwork
+
+在共享 DSH 所在的机器上，随插件安装的 `dsh-teamwork` 可以在终端里执行 `share` 系列命令，不需要浏览器。DSH 必须以同一个用户在这台机器上运行；它通过 `~/.dsh`（或 `$DSH_HOME`）中的插件目录找到这台 DSH。支持 Linux 和 macOS。
+
+| 命令 | 作用 |
+| --- | --- |
+| `dsh-teamwork server [url]` | 查看或设置 Teamwork 服务器；自托管团队在 `enable` 之前设置。 |
+| `dsh-teamwork share enable <key>` | 用**共享 DSH**里的 key 把这台 DSH 设为团队的共享 DSH。 |
+| `dsh-teamwork share audit-key <key>` | 把归档加密到 `dsh-teamwork-audit keygen` 打印的密钥。 |
+| `dsh-teamwork share status` | 查看名称、团队、审计密钥和错误。 |
+| `dsh-teamwork share members` | 查看可访问的成员、他们的设备和锁定状态。 |
+| `dsh-teamwork share invite <email>` | 生成一次性链接，让名单中一位成员配对设备。 |
+| `dsh-teamwork share unlock <email>` | 清除某个成员的 PIN 和锁定。 |
+| `dsh-teamwork share disable` | 关闭共享模式并删除 key。 |
+

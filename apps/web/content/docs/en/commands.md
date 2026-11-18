@@ -32,3 +32,22 @@ Type these in DSH's command input, not in your shell. Ids come from
 | `/teamwork cancel` | Ask the session to stop. |
 | `/teamwork retry` | Preview a recovery; `retry confirm` sends it. |
 | `/teamwork logout` | Sign out and drop the team's resources from DSH. |
+
+## On a server: dsh-teamwork
+
+On a shared DSH's own machine, `dsh-teamwork` (installed with the plugin) runs
+the `share` commands from a shell, with no browser. DSH must be running there as
+the same user; it finds that DSH through the plugin's directory in `~/.dsh`, or
+`$DSH_HOME`. Linux and macOS.
+
+| Command | What it does |
+| --- | --- |
+| `dsh-teamwork server [url]` | Show the Teamwork server, or set it: a self-hosted team does this before `enable`. |
+| `dsh-teamwork share enable <key>` | Make this DSH its team's shared DSH, with a key from **Shared DSHs**. |
+| `dsh-teamwork share audit-key <key>` | Seal its archive to the key `dsh-teamwork-audit keygen` printed. |
+| `dsh-teamwork share status` | Its name, team, audit key and any error. |
+| `dsh-teamwork share members` | Who may reach it, their devices, and who is locked. |
+| `dsh-teamwork share invite <email>` | A single-use link that pairs one listed member's device. |
+| `dsh-teamwork share unlock <email>` | Clear a member's PIN and lock. |
+| `dsh-teamwork share disable` | End shared mode and delete the key. |
+

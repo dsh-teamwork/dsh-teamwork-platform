@@ -852,6 +852,7 @@
       "keyTitle": "Team host key for {name}",
       "keyOnce": "Shown only now. Copy it to the DSH that will be shared; the server keeps no readable copy.",
       "keyHelp": "Run this in that DSH. The first machine to use the key keeps it; on another machine it is refused. Anyone who can reach this DSH can use the team's models through it.",
+      "keyInstall": "No DSH there yet? <link>Install DSH and the plugin</link>, on a desktop or a Linux server. On a server, run it from a shell with dsh-teamwork in place of /teamwork.",
       "rotateConfirm": "Issue a new key for this DSH? The old key stops working; the same machine keeps the new one.",
       "deleteConfirm": "Delete this shared DSH? Its key stops working at once, and the DSH loses team access within an hour.",
       "access": "Who may reach it",

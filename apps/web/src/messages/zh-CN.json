@@ -852,6 +852,7 @@
       "keyTitle": "{name} 的团队授权 key",
       "keyOnce": "只显示这一次。请复制到要共享的那台 DSH；服务器不保留可读副本。",
       "keyHelp": "在那台 DSH 里运行这条命令。第一台使用它的机器会绑定这个 key，换到其他机器上会被拒绝。能访问这台 DSH 的人都能通过它使用团队模型。",
+      "keyInstall": "那台机器还没装 DSH？<link>安装 DSH 和插件</link>，桌面电脑和 Linux 服务器都有说明。在服务器上，在终端里把命令开头的 /teamwork 换成 dsh-teamwork 运行。",
       "rotateConfirm": "为这台 DSH 签发新 key？旧 key 立即失效，同一台机器继续使用新 key。",
       "deleteConfirm": "删除这台共享 DSH？它的 key 立即失效，DSH 最多一小时内失去团队访问。",
       "access": "可访问的人",
