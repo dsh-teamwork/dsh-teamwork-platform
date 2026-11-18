@@ -12,7 +12,8 @@ server, and never holds a provider key.
 
 - **Everyone:** [Install the plugin](/docs/install) in your DSH, then sign in.
 - **Team admins:** [Set up a team](/docs/admins): connect a provider, publish
-  models and presets, bring people in and set budgets.
+  models and presets, bring people in and set budgets. To run a DSH on a server
+  for the whole team, see [Team DSH](/docs/team-dsh).
 - **Members:** [Work with your team](/docs/members): pick a preset, share what
   works, ask the team assistant.
 - **Operators:** [Run your own server](/docs/self-hosting) with the open-source

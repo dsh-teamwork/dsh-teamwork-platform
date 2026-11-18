@@ -72,7 +72,7 @@ dsh web
    npm install -g @dsh-teamwork/dsh-teamwork
    ```
 
-6. 然后个人 DSH 运行 `dsh-teamwork login`，团队 DSH 运行 `dsh-teamwork share enable <key>`，见[命令](/docs/commands#在服务器上-dsh-teamwork)。服务器上不需要浏览器。
+6. 然后个人 DSH 运行 `dsh-teamwork login`，团队 DSH 运行 `dsh-teamwork share enable <key>`，见[命令](/docs/commands#在服务器上-dsh-teamwork)；团队 DSH 后续的配置见[团队 DSH](/docs/team-dsh)。服务器上不需要浏览器。
 
 插件把文件保存在 `~/.dsh/dsh-teamwork/`（或 `$DSH_HOME/dsh-teamwork/`）中，与从哪个目录启动 DSH 无关。
 
