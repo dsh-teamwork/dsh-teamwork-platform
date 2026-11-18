@@ -18,8 +18,8 @@ type SessionView struct {
 		EmailCode bool `json:"emailCode"`
 		Google    bool `json:"google"`
 	} `json:"doors"`
-	SetupOpen            bool   `json:"setupOpen"`
-	MobileRedirectPrefix string `json:"mobileRedirectPrefix"`
+	SetupOpen   bool   `json:"setupOpen"`
+	AppRedirect string `json:"appRedirect"`
 }
 
 // SessionUser is the signed-in person.
@@ -38,7 +38,7 @@ func (s *Server) session(w http.ResponseWriter, r *http.Request) error {
 	v.Doors.Password = s.Config.Passwords()
 	v.Doors.EmailCode = !s.Config.Passwords()
 	v.Doors.Google = s.Google != nil
-	v.MobileRedirectPrefix = s.Config.MobileRedirectURI
+	v.AppRedirect = wire.AppReturn
 	c, err := s.identify(r)
 	if err != nil {
 		return err
@@ -161,7 +161,7 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 	}
 	var back *wire.ReturnTo
 	if in.RedirectURI != "" {
-		to, ok := wire.ReturnAddress(in.RedirectURI, s.Config.MobileRedirectURI)
+		to, ok := wire.ReturnAddress(in.RedirectURI)
 		if !ok {
 			return wire.E(http.StatusBadRequest, "invalid_redirect")
 		}

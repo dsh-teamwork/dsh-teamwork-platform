@@ -107,6 +107,12 @@ type Host struct {
 	// GET /api/configs and the model gateway. host names the computer or
 	// session it is for. The member must be in the team.
 	MintComputerToken func(ctx context.Context, userID, teamID, host string, ttl time.Duration) (string, time.Time, error)
+	// MintHostToken seals a token for a shared DSH (ADR 0047): one shared
+	// host of one team, no person, for at most an hour, accepted only by
+	// GET /api/configs and the model gateway, where its calls are the team's
+	// and no member's. The edition checks the host is the team's and not
+	// revoked before it mints; the team must exist.
+	MintHostToken func(ctx context.Context, hostID, teamID string, ttl time.Duration) (string, time.Time, error)
 	// Objects keeps an extension's bytes under a team, in the server's own
 	// store; nil on a management process, which has none.
 	Objects Objects

@@ -5,6 +5,86 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Shared DSHs are finished: the panel, and the last decisions
+
+- **What:** The plugin's Teamwork panel manages shared mode as `/teamwork share` does: turn it on with a team host key, set the audit key, see the members who may reach the DSH with their devices and locks, make an invite (link and QR code), unlock a member, turn it off. `docs/tech/shared-dsh.md` now describes what was built, with three decisions: the archive costs a team nothing on the hosted service with no limit, a deleted account's records stay in the team's archive, and a team may have any number of shared DSHs.
+- **Why:** The last part of the shared DSH work, and the open questions it left.
+- **Breaking:** None.
+- **Upgrade:** Update the plugin for the panel.
+- **Refs:** `docs/tech/shared-dsh.md`, the plugin's `src/web/TeamworkPanel.tsx` and `src/panel.ts`.
+
+## 2026-11-18 — Every server sends the phone app its sign-in code
+
+- **What:** `/plugin` accepts the official app's `redirect_uri`, exactly `dshteamwork://sign-in`, on every server with no setting, and nothing else beside the plugin's loopback address; `MOBILE_REDIRECT_URI` is removed, and the session's `mobileRedirectPrefix` is now `appRedirect`, that exact address. `/docs` tells self-hosters the app connects to their server.
+- **Why:** The official app reaches self-hosted servers (ADR 0044, ADR 0046), which should need no variable whose only value is the app's own scheme.
+- **Breaking:** A `redirect_uri` that merely started with the old prefix is refused. A deployment's `MOBILE_REDIRECT_URI` is ignored.
+- **Upgrade:** Remove `MOBILE_REDIRECT_URI` where it is set.
+- **Refs:** ADR 0046 (supersedes ADR 0010), `server/internal/wire/auth.go`.
+
+## 2026-11-18 — Members reach a shared DSH from the web console
+
+- **What:** **Shared DSHs** in the team console now shows every member the shared DSHs they may reach; pasting an invite joins this browser, and `/teams/{teamId}/shared-hosts/{computerId}` is the member's own sessions there, with the PIN, the conversation, answers and sending, end-to-end encrypted through the relay with a non-extractable WebCrypto key kept in IndexedDB. The relay admits the console by its session cookie: HTTP routes when no Bearer is sent (writes only from this site), and `/relay/phone` without a token only when the upgrade's `Origin` is `APP_URL`. `edition.Host.Session` no longer opens a session whose account still has an admin-set first password. The relay client gains `sharedHosts()` and each computer's `hostId`. `/docs` describes it.
+- **Why:** Step 7 of `docs/tech/shared-dsh.md`: a member needs no phone to use the team's shared DSH.
+- **Breaking:** An extension's session check refuses an account with an unchanged first password, as every core route already did.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/shared-dsh.tsx`, `apps/web/src/lib/relay.ts`, `packages/relay-client/src/web-identity.ts`, `server/relay/relay.go`, `docs/tech/relay.md`.
+
+## 2026-11-18 — The relay's client is an open package
+
+- **What:** `packages/relay-client` (`@dsh-teamwork/relay-client`) holds the client side of the relay, moved from the closed phone app: the encrypted channel (the plugin's `secure-channel.ts`, byte for byte), the relay's frames, the live client with a WebCrypto AES-GCM default, DSH's Remote API read into session shapes, and the pure rules a session screen draws by. `server/e2e` now joins a shared DSH, is refused while locked and sets a PIN through this client, and checks its channel against the plugin's.
+- **Why:** The web console becomes a relay client too (`docs/tech/shared-dsh.md`, step 7), and one copy serves both clients.
+- **Breaking:** None.
+- **Upgrade:** `pnpm install`.
+- **Refs:** `packages/relay-client`, `docs/tech/relay.md`.
+
+## 2026-11-18 — A shared DSH keeps an archive only the team's admin can read
+
+- **What:** A shared DSH seals every frame its members exchange with it to the admin's audit key (HPKE, one-minute or 1 MiB segments in a signed hash chain) and uploads the segments to `POST /relay/shared/archive`; the server keeps them in `shared_archive_segments` until the team is deleted and cannot open them. The console's **Shared DSHs** page lists each archive and downloads it (`GET /api/teams/{teamId}/shared-archive[/{hostId}]`); `dsh-teamwork-audit keygen` and `read`, in the plugin's package, make the key and open a download. A shared DSH admits no member until `/teamwork share audit-key` is set. `/docs` describes it.
+- **Why:** The team keeps a record of what members do on its machine without the server reading it (ADR 0045, `docs/tech/shared-dsh.md`).
+- **Breaking:** A shared DSH already admitting members admits nobody new until its admin sets an audit key.
+- **Upgrade:** One migration per dialect creates `shared_archive_segments`; the binary applies it at start. Update the plugin, then run `dsh-teamwork-audit keygen` and `/teamwork share audit-key` in each shared DSH.
+- **Refs:** ADR 0045, `server/relay/archive.go`, the plugin's `src/audit-archive.ts` and `src/audit-cli.ts`.
+
+## 2026-11-17 — A PIN locks every phone's channel to a DSH
+
+- **What:** The plugin keeps a four-digit PIN per member (on a personal computer, its one owner) and refuses every call and stream from a phone's channel until the member sets or gives it, and again after fifteen idle minutes; five wrong PINs lock the member until `/teamwork share unlock <email>` or `/teamwork pin reset` clears it. The server sees none of it: the PIN goes inside the encrypted channel. `/docs` lists the two commands, and `server/e2e` has a joining member refused until they set a PIN.
+- **Why:** A second lock on a phone that already proved its key (`docs/tech/shared-dsh.md`, "The PIN").
+- **Breaking:** A phone app without the PIN screen can no longer use a computer whose plugin has it; both update together.
+- **Upgrade:** Update the plugin and the app together.
+- **Refs:** `docs/tech/shared-dsh.md`, the plugin's `src/pin-lock.ts`.
+
+## 2026-11-17 — The relay admits members to a shared DSH
+
+- **What:** A shared DSH's plugin connects to the relay with its host token and is sent who may reach it (`members`) at hello and at every ping; it cannot ask for a pairing code. Members list the shared DSHs they may reach (`GET /relay/shared`) and start a pending pairing with one (`POST /relay/shared/{hostId}/join`), which the DSH confirms once it has checked their invite. A team admin sets who may reach each one, the whole team or listed members (`PUT /api/teams/{teamId}/shared-hosts/{id}/members`, the console's **Access**); anyone taken off the list, or out of the team, loses their pairings with it. Deleting a shared DSH closes its socket.
+- **Why:** Members reach a team's shared DSH through the server's list as well as the DSH's own roster (ADR 0044, `docs/tech/shared-dsh.md`).
+- **Breaking:** None.
+- **Upgrade:** One migration per dialect adds `shared_hosts.access` and `shared_host_members`; the binary applies it at start.
+- **Refs:** `server/relay/access.go`, `docs/tech/relay.md`, `docs/tech/shared-dsh.md`. The plugin's roster, invites (`/teamwork share invite`, `members`) and session-owner filter land with it; `server/e2e` drives a member joining by invite. A pairing as the relay lists it now carries `userId`.
+
+## 2026-11-17 — The relay is open: phone pairing and shared DSHs on every server
+
+- **What:** The relay moved from the hosted edition into `server/relay`, an extension every binary's main imports: `GET /api/relay`, the `/relay/plugin` and `/relay/phone` sockets, phone pairing (`/relay/pair`, `/relay/pairings`), push through Expo, and shared DSHs (`/api/teams/{teamId}/shared-hosts`, `/relay/shared/challenge`, `/relay/shared/token`). Its tables (`relay_hosts`, `relay_pairing_offers`, `relay_pairings`, `shared_hosts`) join the open schema. The console gains **Shared DSHs** under collaboration, and `/docs` describes it.
+- **Why:** A team's shared DSH must work on a self-hosted community server (ADR 0044).
+- **Breaking:** None on a community server. The hosted service's pairings and shared hosts are not carried over (its own entry).
+- **Upgrade:** One migration per dialect creates the relay's tables; the binary applies it at start. The plugin needs its shared-mode version for `/teamwork share`.
+- **Refs:** ADR 0044, `server/relay`, `docs/tech/relay.md`, `docs/tech/shared-dsh.md`, `apps/web/src/pages/team/shared-hosts.tsx`.
+
+## 2026-11-17 — The relay and shared DSHs join the community edition
+
+- **What:** A decision, and the plan for it: the relay (phone pairing and end-to-end encrypted forwarding), shared DSHs and their audit archive move from the hosted edition into the open server and web app, and the closed phone app reaches any server. Nothing has moved yet; `docs/tech/shared-dsh.md` orders the work.
+- **Why:** A team's shared DSH must work on a self-hosted community server (ADR 0044).
+- **Breaking:** None yet. When the relay moves, the hosted service's pairings and shared hosts are not carried over.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0044, `docs/tech/shared-dsh.md`, `docs/tech/community-edition.md`.
+
+## 2026-11-17 — Host tokens for a shared DSH
+
+- **What:** A fourth sealed token kind, `auth.HostBearer`, minted only by an edition through `Host.MintHostToken` for a shared DSH: one team, no person, at most an hour. `GET /api/configs` returns that team alone (role `member`) and the gateway calls its models; no other route opens it. Its calls are recorded with `usage_requests.host_id` and an empty `user_id`, held to the team's and providers' budgets and to no member's; usage entries carry `hostId`, and the console's usage list names such a row "Shared DSH". `edition.FundingAdmission` gains `HostID`, so an edition funding hosted models sees which calls are a shared DSH's.
+- **Why:** A team's shared DSH must sync its team and call its models without belonging to any member (ADR 0047).
+- **Breaking:** `gateway.Completions` takes a `gateway.Caller` instead of a user id and team.
+- **Upgrade:** One migration per dialect adds `usage_requests.host_id`; the binary applies it at start.
+- **Refs:** ADR 0047, `server/internal/httpapi/identity.go`, `server/internal/gateway/gateway.go`, `server/internal/usage/admission.go`.
+
 ## 2026-11-17 — The home page follows the whale from the surface to the seabed
 
 - **What:** The home page pairs the logo’s indigo fluke with a white sky, two cloud banks and a blue engraved sea. The upper chapters use pale grounds before the dive into navy. Two traveling swells bend the engraved water around the whale fluke. The lower-right dive link scrolls smoothly to the opening chapter, *one person's work*. The opening fluke is engraved diagonally down to the right. A horizontally hatched humpback crosses behind the middle chapters, with a slow stroke that builds from its back to its tail. A viewport of open water separates the solitary whale from the other scenes during fast scrolls. Three solid whale silhouettes gather above a quiet, flat seabed, with a subdued blue-gray upper whale, a slightly darker second whale and an ink-blue calf. Tighter spacing above the closing invitation and two shallow sediment layers lead into a compact footer with the whale logo and name on the left and navigation on the right. Its rightmost link is underlined, points up and scrolls back to the surface. The layout follows the same dive on phones, with still artwork for reduced motion.

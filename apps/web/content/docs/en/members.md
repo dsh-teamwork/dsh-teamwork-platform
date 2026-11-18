@@ -41,6 +41,17 @@ Every team has an assistant preset. Start a session with it and ask about the
 team's resources, your usage, budgets, members, or what is waiting for review.
 Anything it would change still asks for your approval.
 
+## Reach a shared DSH
+
+If your team runs a shared DSH, its admin hands you an invite link
+(`dshteamwork://join?…`). Open **Shared DSHs** in the team console, paste it
+under **Invite link** and choose **Join**, then set a four-digit PIN; the
+machine asks for it again when you come back. Each browser joins once, and
+keeps its key in the browser's own storage: clearing the site's data means
+asking for a new invite. You see only the sessions you start there, and your
+team's admin can read every session from the machine's encrypted archive. The
+phone app opens the same link.
+
 ## More than one team
 
 You can be in several teams. The plugin syncs all of them; the team selector in

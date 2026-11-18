@@ -506,7 +506,8 @@
       "close": "Close navigation",
       "waiting": "Waiting for your review",
       "resources": "Team resources",
-      "submissions": "My submissions"
+      "submissions": "My submissions",
+      "sharedHosts": "Shared DSHs"
     },
     "switcher": {
       "label": "Switch team",
@@ -857,6 +858,103 @@
       "noPlugins": "The team has not pinned a plugin yet.",
       "propose": "Propose a preset",
       "proposeChange": "Propose a change"
+    },
+    "sharedHosts": {
+      "title": "Shared DSHs",
+      "description": "A DSH your team runs for its members. It signs in with a team host key, never as a person, and its model calls are the team's.",
+      "name": "Name",
+      "namePlaceholder": "For example: Build box",
+      "create": "Create key",
+      "created": "Shared DSH created.",
+      "machine": "Machine",
+      "lastSeen": "Last token",
+      "actions": "Actions",
+      "bound": "Bound {at}",
+      "unbound": "Waiting for its first use",
+      "never": "Never",
+      "rotate": "Rotate key",
+      "rotated": "New key issued.",
+      "delete": "Delete",
+      "deleted": "Deleted.",
+      "empty": "No shared DSH yet. Name one to create its key.",
+      "keyTitle": "Team host key for {name}",
+      "keyOnce": "Shown only now. Copy it to the DSH that will be shared; the server keeps no readable copy.",
+      "keyHelp": "Run this in that DSH. The first machine to use the key keeps it; on another machine it is refused. Anyone who can reach this DSH can use the team's models through it.",
+      "rotateConfirm": "Issue a new key for this DSH? The old key stops working; the same machine keeps the new one.",
+      "deleteConfirm": "Delete this shared DSH? Its key stops working at once, and the DSH loses team access within an hour.",
+      "access": "Who may reach it",
+      "accessTeam": "Everyone in the team",
+      "accessListed": "{count, plural, one {# member} other {# members}}",
+      "accessListedOption": "Only these members",
+      "editAccess": "Access",
+      "accessTitle": "Who may reach {name}",
+      "accessHelp": "Each member also needs an invite from the DSH itself. Taking someone off this list ends their pairings at once.",
+      "accessSaved": "Access saved.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "archiveTitle": "Audit archive",
+      "archiveHelp": "Every shared DSH seals each member's sessions to your team's audit key and keeps them here. The server cannot open them; only whoever holds the private key can.",
+      "archiveEmpty": "Nothing archived yet. A shared DSH admits no member until its audit key is set with /teamwork share audit-key.",
+      "archiveDeleted": "Deleted shared DSH ({id})",
+      "archiveRange": "{segments, plural, one {# segment} other {# segments}} · {first} – {last}",
+      "archiveDownload": "Download",
+      "archiveRead": "Open a download on your own machine, with the key dsh-teamwork-audit keygen wrote. It says if any segment is missing or altered."
+    },
+    "sharedDsh": {
+      "title": "Shared DSH",
+      "reachTitle": "Shared DSHs you can reach",
+      "disclosure": "A shared DSH is your team's machine, shared with others on its list. You see only the sessions you start; your team's admin can read every session from its encrypted archive.",
+      "none": "None of this team's shared DSHs is open to you yet.",
+      "online": "Online",
+      "offline": "Offline",
+      "open": "Open",
+      "needsInvite": "Ask your admin for an invite",
+      "invite": "Invite link",
+      "join": "Join",
+      "joining": "Joining…",
+      "deviceName": "Web browser",
+      "inviteInvalid": "That is not an invite link. Paste the whole dshteamwork://join link your admin gave you.",
+      "inviteOtherServer": "That invite is for another server.",
+      "browserUnsupported": "This browser cannot keep the key a shared DSH needs. Use a current Chrome, Edge, Firefox or Safari, outside private browsing.",
+      "back": "All shared DSHs",
+      "sessionsHelp": "Your sessions on this shared DSH, end-to-end encrypted between this browser and the machine.",
+      "newSession": "New session",
+      "noSessions": "No sessions yet.",
+      "waiting": "Waiting on you",
+      "untitled": "Untitled session",
+      "running": "Running",
+      "pick": "Pick a session, or start a new one.",
+      "steps": "{count, plural, one {# step} other {# steps}}",
+      "failed": "failed",
+      "denied": "denied",
+      "thinking": "Thinking…",
+      "allow": "Allow",
+      "deny": "Deny",
+      "promptPlaceholder": "Message the agent",
+      "send": "Send",
+      "stop": "Stop",
+      "pin": {
+        "set": {
+          "title": "Set your PIN",
+          "hint": "Choose four digits. This machine asks for them each time you come back."
+        },
+        "confirm": {
+          "title": "Type it again",
+          "hint": "The same four digits."
+        },
+        "enter": {
+          "title": "Enter your PIN",
+          "hint": "The four digits you set for this machine."
+        },
+        "locked": {
+          "title": "Locked",
+          "hint": "Too many wrong PINs. Ask your admin to unlock you on the shared DSH."
+        },
+        "wrong": "Wrong PIN. {count, plural, one {# try} other {# tries}} left.",
+        "mismatch": "The two PINs differ. Start again.",
+        "unavailable": "The machine did not answer. Try again.",
+        "submit": "Continue"
+      }
     }
   },
   "usage": {
@@ -921,7 +1019,8 @@
     "accountingHint": "Cached tokens are included in input; reasoning is included in output. A dash means unpriced or unconfirmed, not zero consumption.",
     "count": "{count} calls",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "sharedDsh": "Shared DSH"
   },
   "budgets": {
     "remaining": "Available points",
@@ -1076,7 +1175,9 @@
     "provider_address_plain_http": "Use https. Plain http is allowed only for a local or private address on a server that permits them.",
     "provider_address_unresolved": "That host could not be found. Check the address.",
     "provider_key_rejected": "The provider refused this API key. Check that it is complete and still active.",
-    "model_metadata_unavailable": "The public model catalog could not be read. Retry, or fill the fields in yourself."
+    "model_metadata_unavailable": "The public model catalog could not be read. Retry, or fill the fields in yourself.",
+    "host_key_invalid": "That team host key is not valid.",
+    "host_bound_elsewhere": "That team host key is used by another machine."
   },
   "docs": {
     "title": "Docs",
@@ -1128,5 +1229,22 @@
     "output": "Output, including reasoning",
     "cacheRead": "Cached input",
     "cacheWrite": "Cache write (if supported)"
+  },
+  "relayErrors": {
+    "offline": "The machine is offline.",
+    "not_found": "You cannot reach that machine or session any more.",
+    "busy": "The agent is busy. Wait for it to finish.",
+    "stale": "That was already answered.",
+    "locked": "Locked: enter your PIN first.",
+    "invite_refused": "The machine refused this invite. Ask your admin for a new one.",
+    "device_key_changed": "The machine's key does not match the invite. Do not continue; tell your admin.",
+    "device_verification_required": "This browser has not joined that machine.",
+    "no_directory": "The machine has no project folder to start in.",
+    "not_authenticated": "The machine is not signed in to the team.",
+    "missing_tools": "The machine is missing tools this preset needs.",
+    "missing_plugins": "The machine is missing plugins this preset needs.",
+    "preset_unavailable": "That preset is not available on the machine.",
+    "model_unavailable": "That model is not available right now.",
+    "unavailable": "The machine could not be reached. Try again."
   }
 }

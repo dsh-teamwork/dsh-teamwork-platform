@@ -24,6 +24,8 @@ type UsageRequest struct {
 	TeamID string `json:"team_id,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	UserID string `json:"user_id,omitempty"`
+	// HostID holds the value of the "host_id" field.
+	HostID string `json:"host_id,omitempty"`
 	// AppURL holds the value of the "app_url" field.
 	AppURL string `json:"app_url,omitempty"`
 	// SubmittedConfigID holds the value of the "submitted_config_id" field.
@@ -88,7 +90,7 @@ func (*UsageRequest) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case usagerequest.FieldAdmittedUnits, usagerequest.FieldAdmittedInput, usagerequest.FieldAdmittedOutput, usagerequest.FieldPointUnits, usagerequest.FieldInputTokens, usagerequest.FieldCacheReadTokens, usagerequest.FieldCacheWriteTokens, usagerequest.FieldOutputTokens, usagerequest.FieldReasoningTokens, usagerequest.FieldQuantity:
 			values[i] = new(sql.NullInt64)
-		case usagerequest.FieldID, usagerequest.FieldTeamID, usagerequest.FieldUserID, usagerequest.FieldAppURL, usagerequest.FieldSubmittedConfigID, usagerequest.FieldConfigID, usagerequest.FieldProvider, usagerequest.FieldModel, usagerequest.FieldState, usagerequest.FieldRateID, usagerequest.FieldRouteOwner, usagerequest.FieldProviderRequestID, usagerequest.FieldErrorCode, usagerequest.FieldMeter:
+		case usagerequest.FieldID, usagerequest.FieldTeamID, usagerequest.FieldUserID, usagerequest.FieldHostID, usagerequest.FieldAppURL, usagerequest.FieldSubmittedConfigID, usagerequest.FieldConfigID, usagerequest.FieldProvider, usagerequest.FieldModel, usagerequest.FieldState, usagerequest.FieldRateID, usagerequest.FieldRouteOwner, usagerequest.FieldProviderRequestID, usagerequest.FieldErrorCode, usagerequest.FieldMeter:
 			values[i] = new(sql.NullString)
 		case usagerequest.FieldCreatedAt, usagerequest.FieldDeadlineAt, usagerequest.FieldFinishedAt:
 			values[i] = new(sql.NullTime)
@@ -130,6 +132,12 @@ func (_m *UsageRequest) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
 				_m.UserID = value.String
+			}
+		case usagerequest.FieldHostID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field host_id", values[i])
+			} else if value.Valid {
+				_m.HostID = value.String
 			}
 		case usagerequest.FieldAppURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -339,6 +347,9 @@ func (_m *UsageRequest) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("user_id=")
 	builder.WriteString(_m.UserID)
+	builder.WriteString(", ")
+	builder.WriteString("host_id=")
+	builder.WriteString(_m.HostID)
 	builder.WriteString(", ")
 	builder.WriteString("app_url=")
 	builder.WriteString(_m.AppURL)

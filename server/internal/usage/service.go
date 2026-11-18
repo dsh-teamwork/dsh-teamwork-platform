@@ -32,12 +32,13 @@ func (s *Service) now() time.Time {
 }
 
 // Call is resolved by the gateway, never populated from caller identity fields.
+// A shared DSH's call (ADR 0047) has a HostID and no UserID.
 type Call struct {
-	TeamID, UserID, SubmittedConfigID, ConfigID, Provider, Model string
-	Stream                                                       bool
-	Bounds                                                       func() (Tokens, error)
-	Owner, Reference                                             string
-	Quote                                                        *edition.FundingQuote
+	TeamID, UserID, HostID, SubmittedConfigID, ConfigID, Provider, Model string
+	Stream                                                               bool
+	Bounds                                                               func() (Tokens, error)
+	Owner, Reference                                                     string
+	Quote                                                                *edition.FundingQuote
 }
 
 func (s *Service) latestRate(ctx context.Context, teamID, configID string) (*ent.ModelRate, error) {
@@ -162,6 +163,7 @@ func (s *Service) Finish(ctx context.Context, request *ent.UsageRequest, observa
 type EntryView struct {
 	ID         string     `json:"id"`
 	UserID     string     `json:"userId"`
+	HostID     string     `json:"hostId"`
 	ConfigID   string     `json:"configId"`
 	Provider   string     `json:"provider"`
 	Model      string     `json:"model"`
@@ -226,7 +228,7 @@ func (s *Service) List(ctx context.Context, f Filter) (Page, error) {
 }
 
 func (s *Service) entryView(r *ent.UsageRequest) EntryView {
-	v := EntryView{Meter: s.meterView(r.Meter, r.Quantity), ID: r.ID, UserID: r.UserID, ConfigID: r.ConfigID, Provider: r.Provider, Model: r.Model,
+	v := EntryView{Meter: s.meterView(r.Meter, r.Quantity), ID: r.ID, UserID: r.UserID, HostID: r.HostID, ConfigID: r.ConfigID, Provider: r.Provider, Model: r.Model,
 		State: string(r.State), Code: r.ErrorCode, CreatedAt: r.CreatedAt.UTC().Format(time.RFC3339Nano),
 		Input: r.InputTokens, CacheRead: r.CacheReadTokens, CacheWrite: r.CacheWriteTokens, Output: r.OutputTokens, Reasoning: r.ReasoningTokens}
 	if r.FinishedAt != nil {

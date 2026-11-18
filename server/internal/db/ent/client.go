@@ -28,8 +28,14 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedarchivesegment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -71,10 +77,22 @@ type Client struct {
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
 	RateWindow *RateWindowClient
+	// RelayHost is the client for interacting with the RelayHost builders.
+	RelayHost *RelayHostClient
+	// RelayPairing is the client for interacting with the RelayPairing builders.
+	RelayPairing *RelayPairingClient
+	// RelayPairingOffer is the client for interacting with the RelayPairingOffer builders.
+	RelayPairingOffer *RelayPairingOfferClient
 	// ResourceArtifact is the client for interacting with the ResourceArtifact builders.
 	ResourceArtifact *ResourceArtifactClient
 	// ResourceSubmission is the client for interacting with the ResourceSubmission builders.
 	ResourceSubmission *ResourceSubmissionClient
+	// SharedArchiveSegment is the client for interacting with the SharedArchiveSegment builders.
+	SharedArchiveSegment *SharedArchiveSegmentClient
+	// SharedHost is the client for interacting with the SharedHost builders.
+	SharedHost *SharedHostClient
+	// SharedHostMember is the client for interacting with the SharedHostMember builders.
+	SharedHostMember *SharedHostMemberClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// TeamConfig is the client for interacting with the TeamConfig builders.
@@ -111,8 +129,14 @@ func (c *Client) init() {
 	c.ModelRate = NewModelRateClient(c.config)
 	c.Password = NewPasswordClient(c.config)
 	c.RateWindow = NewRateWindowClient(c.config)
+	c.RelayHost = NewRelayHostClient(c.config)
+	c.RelayPairing = NewRelayPairingClient(c.config)
+	c.RelayPairingOffer = NewRelayPairingOfferClient(c.config)
 	c.ResourceArtifact = NewResourceArtifactClient(c.config)
 	c.ResourceSubmission = NewResourceSubmissionClient(c.config)
+	c.SharedArchiveSegment = NewSharedArchiveSegmentClient(c.config)
+	c.SharedHost = NewSharedHostClient(c.config)
+	c.SharedHostMember = NewSharedHostMemberClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.TeamConfig = NewTeamConfigClient(c.config)
 	c.TeamProvider = NewTeamProviderClient(c.config)
@@ -209,29 +233,35 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		BudgetEvent:        NewBudgetEventClient(cfg),
-		BudgetGate:         NewBudgetGateClient(cfg),
-		BudgetNotice:       NewBudgetNoticeClient(cfg),
-		BudgetPolicy:       NewBudgetPolicyClient(cfg),
-		BudgetReservation:  NewBudgetReservationClient(cfg),
-		BudgetWindow:       NewBudgetWindowClient(cfg),
-		ConfigRevision:     NewConfigRevisionClient(cfg),
-		Identity:           NewIdentityClient(cfg),
-		Invite:             NewInviteClient(cfg),
-		Membership:         NewMembershipClient(cfg),
-		ModelRate:          NewModelRateClient(cfg),
-		Password:           NewPasswordClient(cfg),
-		RateWindow:         NewRateWindowClient(cfg),
-		ResourceArtifact:   NewResourceArtifactClient(cfg),
-		ResourceSubmission: NewResourceSubmissionClient(cfg),
-		Team:               NewTeamClient(cfg),
-		TeamConfig:         NewTeamConfigClient(cfg),
-		TeamProvider:       NewTeamProviderClient(cfg),
-		UsageRequest:       NewUsageRequestClient(cfg),
-		User:               NewUserClient(cfg),
-		VerificationCode:   NewVerificationCodeClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		BudgetEvent:          NewBudgetEventClient(cfg),
+		BudgetGate:           NewBudgetGateClient(cfg),
+		BudgetNotice:         NewBudgetNoticeClient(cfg),
+		BudgetPolicy:         NewBudgetPolicyClient(cfg),
+		BudgetReservation:    NewBudgetReservationClient(cfg),
+		BudgetWindow:         NewBudgetWindowClient(cfg),
+		ConfigRevision:       NewConfigRevisionClient(cfg),
+		Identity:             NewIdentityClient(cfg),
+		Invite:               NewInviteClient(cfg),
+		Membership:           NewMembershipClient(cfg),
+		ModelRate:            NewModelRateClient(cfg),
+		Password:             NewPasswordClient(cfg),
+		RateWindow:           NewRateWindowClient(cfg),
+		RelayHost:            NewRelayHostClient(cfg),
+		RelayPairing:         NewRelayPairingClient(cfg),
+		RelayPairingOffer:    NewRelayPairingOfferClient(cfg),
+		ResourceArtifact:     NewResourceArtifactClient(cfg),
+		ResourceSubmission:   NewResourceSubmissionClient(cfg),
+		SharedArchiveSegment: NewSharedArchiveSegmentClient(cfg),
+		SharedHost:           NewSharedHostClient(cfg),
+		SharedHostMember:     NewSharedHostMemberClient(cfg),
+		Team:                 NewTeamClient(cfg),
+		TeamConfig:           NewTeamConfigClient(cfg),
+		TeamProvider:         NewTeamProviderClient(cfg),
+		UsageRequest:         NewUsageRequestClient(cfg),
+		User:                 NewUserClient(cfg),
+		VerificationCode:     NewVerificationCodeClient(cfg),
 	}, nil
 }
 
@@ -249,29 +279,35 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		BudgetEvent:        NewBudgetEventClient(cfg),
-		BudgetGate:         NewBudgetGateClient(cfg),
-		BudgetNotice:       NewBudgetNoticeClient(cfg),
-		BudgetPolicy:       NewBudgetPolicyClient(cfg),
-		BudgetReservation:  NewBudgetReservationClient(cfg),
-		BudgetWindow:       NewBudgetWindowClient(cfg),
-		ConfigRevision:     NewConfigRevisionClient(cfg),
-		Identity:           NewIdentityClient(cfg),
-		Invite:             NewInviteClient(cfg),
-		Membership:         NewMembershipClient(cfg),
-		ModelRate:          NewModelRateClient(cfg),
-		Password:           NewPasswordClient(cfg),
-		RateWindow:         NewRateWindowClient(cfg),
-		ResourceArtifact:   NewResourceArtifactClient(cfg),
-		ResourceSubmission: NewResourceSubmissionClient(cfg),
-		Team:               NewTeamClient(cfg),
-		TeamConfig:         NewTeamConfigClient(cfg),
-		TeamProvider:       NewTeamProviderClient(cfg),
-		UsageRequest:       NewUsageRequestClient(cfg),
-		User:               NewUserClient(cfg),
-		VerificationCode:   NewVerificationCodeClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		BudgetEvent:          NewBudgetEventClient(cfg),
+		BudgetGate:           NewBudgetGateClient(cfg),
+		BudgetNotice:         NewBudgetNoticeClient(cfg),
+		BudgetPolicy:         NewBudgetPolicyClient(cfg),
+		BudgetReservation:    NewBudgetReservationClient(cfg),
+		BudgetWindow:         NewBudgetWindowClient(cfg),
+		ConfigRevision:       NewConfigRevisionClient(cfg),
+		Identity:             NewIdentityClient(cfg),
+		Invite:               NewInviteClient(cfg),
+		Membership:           NewMembershipClient(cfg),
+		ModelRate:            NewModelRateClient(cfg),
+		Password:             NewPasswordClient(cfg),
+		RateWindow:           NewRateWindowClient(cfg),
+		RelayHost:            NewRelayHostClient(cfg),
+		RelayPairing:         NewRelayPairingClient(cfg),
+		RelayPairingOffer:    NewRelayPairingOfferClient(cfg),
+		ResourceArtifact:     NewResourceArtifactClient(cfg),
+		ResourceSubmission:   NewResourceSubmissionClient(cfg),
+		SharedArchiveSegment: NewSharedArchiveSegmentClient(cfg),
+		SharedHost:           NewSharedHostClient(cfg),
+		SharedHostMember:     NewSharedHostMemberClient(cfg),
+		Team:                 NewTeamClient(cfg),
+		TeamConfig:           NewTeamConfigClient(cfg),
+		TeamProvider:         NewTeamProviderClient(cfg),
+		UsageRequest:         NewUsageRequestClient(cfg),
+		User:                 NewUserClient(cfg),
+		VerificationCode:     NewVerificationCodeClient(cfg),
 	}, nil
 }
 
@@ -303,9 +339,10 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
-		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.ResourceArtifact,
-		c.ResourceSubmission, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest,
-		c.User, c.VerificationCode,
+		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.RelayHost,
+		c.RelayPairing, c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
+		c.SharedArchiveSegment, c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -317,9 +354,10 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
-		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.ResourceArtifact,
-		c.ResourceSubmission, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest,
-		c.User, c.VerificationCode,
+		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.RelayHost,
+		c.RelayPairing, c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
+		c.SharedArchiveSegment, c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -354,10 +392,22 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Password.mutate(ctx, m)
 	case *RateWindowMutation:
 		return c.RateWindow.mutate(ctx, m)
+	case *RelayHostMutation:
+		return c.RelayHost.mutate(ctx, m)
+	case *RelayPairingMutation:
+		return c.RelayPairing.mutate(ctx, m)
+	case *RelayPairingOfferMutation:
+		return c.RelayPairingOffer.mutate(ctx, m)
 	case *ResourceArtifactMutation:
 		return c.ResourceArtifact.mutate(ctx, m)
 	case *ResourceSubmissionMutation:
 		return c.ResourceSubmission.mutate(ctx, m)
+	case *SharedArchiveSegmentMutation:
+		return c.SharedArchiveSegment.mutate(ctx, m)
+	case *SharedHostMutation:
+		return c.SharedHost.mutate(ctx, m)
+	case *SharedHostMemberMutation:
+		return c.SharedHostMember.mutate(ctx, m)
 	case *TeamMutation:
 		return c.Team.mutate(ctx, m)
 	case *TeamConfigMutation:
@@ -2184,6 +2234,405 @@ func (c *RateWindowClient) mutate(ctx context.Context, m *RateWindowMutation) (V
 	}
 }
 
+// RelayHostClient is a client for the RelayHost schema.
+type RelayHostClient struct {
+	config
+}
+
+// NewRelayHostClient returns a client for the RelayHost from the given config.
+func NewRelayHostClient(c config) *RelayHostClient {
+	return &RelayHostClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `relayhost.Hooks(f(g(h())))`.
+func (c *RelayHostClient) Use(hooks ...Hook) {
+	c.hooks.RelayHost = append(c.hooks.RelayHost, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `relayhost.Intercept(f(g(h())))`.
+func (c *RelayHostClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RelayHost = append(c.inters.RelayHost, interceptors...)
+}
+
+// Create returns a builder for creating a RelayHost entity.
+func (c *RelayHostClient) Create() *RelayHostCreate {
+	mutation := newRelayHostMutation(c.config, OpCreate)
+	return &RelayHostCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RelayHost entities.
+func (c *RelayHostClient) CreateBulk(builders ...*RelayHostCreate) *RelayHostCreateBulk {
+	return &RelayHostCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RelayHostClient) MapCreateBulk(slice any, setFunc func(*RelayHostCreate, int)) *RelayHostCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RelayHostCreateBulk{err: fmt.Errorf("calling to RelayHostClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RelayHostCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RelayHostCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RelayHost.
+func (c *RelayHostClient) Update() *RelayHostUpdate {
+	mutation := newRelayHostMutation(c.config, OpUpdate)
+	return &RelayHostUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RelayHostClient) UpdateOne(_m *RelayHost) *RelayHostUpdateOne {
+	mutation := newRelayHostMutation(c.config, OpUpdateOne, withRelayHost(_m))
+	return &RelayHostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RelayHostClient) UpdateOneID(id string) *RelayHostUpdateOne {
+	mutation := newRelayHostMutation(c.config, OpUpdateOne, withRelayHostID(id))
+	return &RelayHostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RelayHost.
+func (c *RelayHostClient) Delete() *RelayHostDelete {
+	mutation := newRelayHostMutation(c.config, OpDelete)
+	return &RelayHostDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RelayHostClient) DeleteOne(_m *RelayHost) *RelayHostDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RelayHostClient) DeleteOneID(id string) *RelayHostDeleteOne {
+	builder := c.Delete().Where(relayhost.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RelayHostDeleteOne{builder}
+}
+
+// Query returns a query builder for RelayHost.
+func (c *RelayHostClient) Query() *RelayHostQuery {
+	return &RelayHostQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRelayHost},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RelayHost entity by its id.
+func (c *RelayHostClient) Get(ctx context.Context, id string) (*RelayHost, error) {
+	return c.Query().Where(relayhost.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RelayHostClient) GetX(ctx context.Context, id string) *RelayHost {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RelayHostClient) Hooks() []Hook {
+	return c.hooks.RelayHost
+}
+
+// Interceptors returns the client interceptors.
+func (c *RelayHostClient) Interceptors() []Interceptor {
+	return c.inters.RelayHost
+}
+
+func (c *RelayHostClient) mutate(ctx context.Context, m *RelayHostMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RelayHostCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RelayHostUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RelayHostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RelayHostDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RelayHost mutation op: %q", m.Op())
+	}
+}
+
+// RelayPairingClient is a client for the RelayPairing schema.
+type RelayPairingClient struct {
+	config
+}
+
+// NewRelayPairingClient returns a client for the RelayPairing from the given config.
+func NewRelayPairingClient(c config) *RelayPairingClient {
+	return &RelayPairingClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `relaypairing.Hooks(f(g(h())))`.
+func (c *RelayPairingClient) Use(hooks ...Hook) {
+	c.hooks.RelayPairing = append(c.hooks.RelayPairing, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `relaypairing.Intercept(f(g(h())))`.
+func (c *RelayPairingClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RelayPairing = append(c.inters.RelayPairing, interceptors...)
+}
+
+// Create returns a builder for creating a RelayPairing entity.
+func (c *RelayPairingClient) Create() *RelayPairingCreate {
+	mutation := newRelayPairingMutation(c.config, OpCreate)
+	return &RelayPairingCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RelayPairing entities.
+func (c *RelayPairingClient) CreateBulk(builders ...*RelayPairingCreate) *RelayPairingCreateBulk {
+	return &RelayPairingCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RelayPairingClient) MapCreateBulk(slice any, setFunc func(*RelayPairingCreate, int)) *RelayPairingCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RelayPairingCreateBulk{err: fmt.Errorf("calling to RelayPairingClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RelayPairingCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RelayPairingCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RelayPairing.
+func (c *RelayPairingClient) Update() *RelayPairingUpdate {
+	mutation := newRelayPairingMutation(c.config, OpUpdate)
+	return &RelayPairingUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RelayPairingClient) UpdateOne(_m *RelayPairing) *RelayPairingUpdateOne {
+	mutation := newRelayPairingMutation(c.config, OpUpdateOne, withRelayPairing(_m))
+	return &RelayPairingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RelayPairingClient) UpdateOneID(id string) *RelayPairingUpdateOne {
+	mutation := newRelayPairingMutation(c.config, OpUpdateOne, withRelayPairingID(id))
+	return &RelayPairingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RelayPairing.
+func (c *RelayPairingClient) Delete() *RelayPairingDelete {
+	mutation := newRelayPairingMutation(c.config, OpDelete)
+	return &RelayPairingDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RelayPairingClient) DeleteOne(_m *RelayPairing) *RelayPairingDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RelayPairingClient) DeleteOneID(id string) *RelayPairingDeleteOne {
+	builder := c.Delete().Where(relaypairing.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RelayPairingDeleteOne{builder}
+}
+
+// Query returns a query builder for RelayPairing.
+func (c *RelayPairingClient) Query() *RelayPairingQuery {
+	return &RelayPairingQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRelayPairing},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RelayPairing entity by its id.
+func (c *RelayPairingClient) Get(ctx context.Context, id string) (*RelayPairing, error) {
+	return c.Query().Where(relaypairing.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RelayPairingClient) GetX(ctx context.Context, id string) *RelayPairing {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RelayPairingClient) Hooks() []Hook {
+	return c.hooks.RelayPairing
+}
+
+// Interceptors returns the client interceptors.
+func (c *RelayPairingClient) Interceptors() []Interceptor {
+	return c.inters.RelayPairing
+}
+
+func (c *RelayPairingClient) mutate(ctx context.Context, m *RelayPairingMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RelayPairingCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RelayPairingUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RelayPairingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RelayPairingDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RelayPairing mutation op: %q", m.Op())
+	}
+}
+
+// RelayPairingOfferClient is a client for the RelayPairingOffer schema.
+type RelayPairingOfferClient struct {
+	config
+}
+
+// NewRelayPairingOfferClient returns a client for the RelayPairingOffer from the given config.
+func NewRelayPairingOfferClient(c config) *RelayPairingOfferClient {
+	return &RelayPairingOfferClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `relaypairingoffer.Hooks(f(g(h())))`.
+func (c *RelayPairingOfferClient) Use(hooks ...Hook) {
+	c.hooks.RelayPairingOffer = append(c.hooks.RelayPairingOffer, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `relaypairingoffer.Intercept(f(g(h())))`.
+func (c *RelayPairingOfferClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RelayPairingOffer = append(c.inters.RelayPairingOffer, interceptors...)
+}
+
+// Create returns a builder for creating a RelayPairingOffer entity.
+func (c *RelayPairingOfferClient) Create() *RelayPairingOfferCreate {
+	mutation := newRelayPairingOfferMutation(c.config, OpCreate)
+	return &RelayPairingOfferCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RelayPairingOffer entities.
+func (c *RelayPairingOfferClient) CreateBulk(builders ...*RelayPairingOfferCreate) *RelayPairingOfferCreateBulk {
+	return &RelayPairingOfferCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RelayPairingOfferClient) MapCreateBulk(slice any, setFunc func(*RelayPairingOfferCreate, int)) *RelayPairingOfferCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RelayPairingOfferCreateBulk{err: fmt.Errorf("calling to RelayPairingOfferClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RelayPairingOfferCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RelayPairingOfferCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RelayPairingOffer.
+func (c *RelayPairingOfferClient) Update() *RelayPairingOfferUpdate {
+	mutation := newRelayPairingOfferMutation(c.config, OpUpdate)
+	return &RelayPairingOfferUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RelayPairingOfferClient) UpdateOne(_m *RelayPairingOffer) *RelayPairingOfferUpdateOne {
+	mutation := newRelayPairingOfferMutation(c.config, OpUpdateOne, withRelayPairingOffer(_m))
+	return &RelayPairingOfferUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RelayPairingOfferClient) UpdateOneID(id string) *RelayPairingOfferUpdateOne {
+	mutation := newRelayPairingOfferMutation(c.config, OpUpdateOne, withRelayPairingOfferID(id))
+	return &RelayPairingOfferUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RelayPairingOffer.
+func (c *RelayPairingOfferClient) Delete() *RelayPairingOfferDelete {
+	mutation := newRelayPairingOfferMutation(c.config, OpDelete)
+	return &RelayPairingOfferDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RelayPairingOfferClient) DeleteOne(_m *RelayPairingOffer) *RelayPairingOfferDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RelayPairingOfferClient) DeleteOneID(id string) *RelayPairingOfferDeleteOne {
+	builder := c.Delete().Where(relaypairingoffer.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RelayPairingOfferDeleteOne{builder}
+}
+
+// Query returns a query builder for RelayPairingOffer.
+func (c *RelayPairingOfferClient) Query() *RelayPairingOfferQuery {
+	return &RelayPairingOfferQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRelayPairingOffer},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RelayPairingOffer entity by its id.
+func (c *RelayPairingOfferClient) Get(ctx context.Context, id string) (*RelayPairingOffer, error) {
+	return c.Query().Where(relaypairingoffer.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RelayPairingOfferClient) GetX(ctx context.Context, id string) *RelayPairingOffer {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RelayPairingOfferClient) Hooks() []Hook {
+	return c.hooks.RelayPairingOffer
+}
+
+// Interceptors returns the client interceptors.
+func (c *RelayPairingOfferClient) Interceptors() []Interceptor {
+	return c.inters.RelayPairingOffer
+}
+
+func (c *RelayPairingOfferClient) mutate(ctx context.Context, m *RelayPairingOfferMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RelayPairingOfferCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RelayPairingOfferUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RelayPairingOfferUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RelayPairingOfferDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RelayPairingOffer mutation op: %q", m.Op())
+	}
+}
+
 // ResourceArtifactClient is a client for the ResourceArtifact schema.
 type ResourceArtifactClient struct {
 	config
@@ -2447,6 +2896,405 @@ func (c *ResourceSubmissionClient) mutate(ctx context.Context, m *ResourceSubmis
 		return (&ResourceSubmissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ResourceSubmission mutation op: %q", m.Op())
+	}
+}
+
+// SharedArchiveSegmentClient is a client for the SharedArchiveSegment schema.
+type SharedArchiveSegmentClient struct {
+	config
+}
+
+// NewSharedArchiveSegmentClient returns a client for the SharedArchiveSegment from the given config.
+func NewSharedArchiveSegmentClient(c config) *SharedArchiveSegmentClient {
+	return &SharedArchiveSegmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sharedarchivesegment.Hooks(f(g(h())))`.
+func (c *SharedArchiveSegmentClient) Use(hooks ...Hook) {
+	c.hooks.SharedArchiveSegment = append(c.hooks.SharedArchiveSegment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sharedarchivesegment.Intercept(f(g(h())))`.
+func (c *SharedArchiveSegmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SharedArchiveSegment = append(c.inters.SharedArchiveSegment, interceptors...)
+}
+
+// Create returns a builder for creating a SharedArchiveSegment entity.
+func (c *SharedArchiveSegmentClient) Create() *SharedArchiveSegmentCreate {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpCreate)
+	return &SharedArchiveSegmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SharedArchiveSegment entities.
+func (c *SharedArchiveSegmentClient) CreateBulk(builders ...*SharedArchiveSegmentCreate) *SharedArchiveSegmentCreateBulk {
+	return &SharedArchiveSegmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SharedArchiveSegmentClient) MapCreateBulk(slice any, setFunc func(*SharedArchiveSegmentCreate, int)) *SharedArchiveSegmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SharedArchiveSegmentCreateBulk{err: fmt.Errorf("calling to SharedArchiveSegmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SharedArchiveSegmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SharedArchiveSegmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SharedArchiveSegment.
+func (c *SharedArchiveSegmentClient) Update() *SharedArchiveSegmentUpdate {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpUpdate)
+	return &SharedArchiveSegmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SharedArchiveSegmentClient) UpdateOne(_m *SharedArchiveSegment) *SharedArchiveSegmentUpdateOne {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpUpdateOne, withSharedArchiveSegment(_m))
+	return &SharedArchiveSegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SharedArchiveSegmentClient) UpdateOneID(id string) *SharedArchiveSegmentUpdateOne {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpUpdateOne, withSharedArchiveSegmentID(id))
+	return &SharedArchiveSegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SharedArchiveSegment.
+func (c *SharedArchiveSegmentClient) Delete() *SharedArchiveSegmentDelete {
+	mutation := newSharedArchiveSegmentMutation(c.config, OpDelete)
+	return &SharedArchiveSegmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SharedArchiveSegmentClient) DeleteOne(_m *SharedArchiveSegment) *SharedArchiveSegmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SharedArchiveSegmentClient) DeleteOneID(id string) *SharedArchiveSegmentDeleteOne {
+	builder := c.Delete().Where(sharedarchivesegment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SharedArchiveSegmentDeleteOne{builder}
+}
+
+// Query returns a query builder for SharedArchiveSegment.
+func (c *SharedArchiveSegmentClient) Query() *SharedArchiveSegmentQuery {
+	return &SharedArchiveSegmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSharedArchiveSegment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SharedArchiveSegment entity by its id.
+func (c *SharedArchiveSegmentClient) Get(ctx context.Context, id string) (*SharedArchiveSegment, error) {
+	return c.Query().Where(sharedarchivesegment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SharedArchiveSegmentClient) GetX(ctx context.Context, id string) *SharedArchiveSegment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SharedArchiveSegmentClient) Hooks() []Hook {
+	return c.hooks.SharedArchiveSegment
+}
+
+// Interceptors returns the client interceptors.
+func (c *SharedArchiveSegmentClient) Interceptors() []Interceptor {
+	return c.inters.SharedArchiveSegment
+}
+
+func (c *SharedArchiveSegmentClient) mutate(ctx context.Context, m *SharedArchiveSegmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SharedArchiveSegmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SharedArchiveSegmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SharedArchiveSegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SharedArchiveSegmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SharedArchiveSegment mutation op: %q", m.Op())
+	}
+}
+
+// SharedHostClient is a client for the SharedHost schema.
+type SharedHostClient struct {
+	config
+}
+
+// NewSharedHostClient returns a client for the SharedHost from the given config.
+func NewSharedHostClient(c config) *SharedHostClient {
+	return &SharedHostClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sharedhost.Hooks(f(g(h())))`.
+func (c *SharedHostClient) Use(hooks ...Hook) {
+	c.hooks.SharedHost = append(c.hooks.SharedHost, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sharedhost.Intercept(f(g(h())))`.
+func (c *SharedHostClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SharedHost = append(c.inters.SharedHost, interceptors...)
+}
+
+// Create returns a builder for creating a SharedHost entity.
+func (c *SharedHostClient) Create() *SharedHostCreate {
+	mutation := newSharedHostMutation(c.config, OpCreate)
+	return &SharedHostCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SharedHost entities.
+func (c *SharedHostClient) CreateBulk(builders ...*SharedHostCreate) *SharedHostCreateBulk {
+	return &SharedHostCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SharedHostClient) MapCreateBulk(slice any, setFunc func(*SharedHostCreate, int)) *SharedHostCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SharedHostCreateBulk{err: fmt.Errorf("calling to SharedHostClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SharedHostCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SharedHostCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SharedHost.
+func (c *SharedHostClient) Update() *SharedHostUpdate {
+	mutation := newSharedHostMutation(c.config, OpUpdate)
+	return &SharedHostUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SharedHostClient) UpdateOne(_m *SharedHost) *SharedHostUpdateOne {
+	mutation := newSharedHostMutation(c.config, OpUpdateOne, withSharedHost(_m))
+	return &SharedHostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SharedHostClient) UpdateOneID(id string) *SharedHostUpdateOne {
+	mutation := newSharedHostMutation(c.config, OpUpdateOne, withSharedHostID(id))
+	return &SharedHostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SharedHost.
+func (c *SharedHostClient) Delete() *SharedHostDelete {
+	mutation := newSharedHostMutation(c.config, OpDelete)
+	return &SharedHostDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SharedHostClient) DeleteOne(_m *SharedHost) *SharedHostDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SharedHostClient) DeleteOneID(id string) *SharedHostDeleteOne {
+	builder := c.Delete().Where(sharedhost.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SharedHostDeleteOne{builder}
+}
+
+// Query returns a query builder for SharedHost.
+func (c *SharedHostClient) Query() *SharedHostQuery {
+	return &SharedHostQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSharedHost},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SharedHost entity by its id.
+func (c *SharedHostClient) Get(ctx context.Context, id string) (*SharedHost, error) {
+	return c.Query().Where(sharedhost.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SharedHostClient) GetX(ctx context.Context, id string) *SharedHost {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SharedHostClient) Hooks() []Hook {
+	return c.hooks.SharedHost
+}
+
+// Interceptors returns the client interceptors.
+func (c *SharedHostClient) Interceptors() []Interceptor {
+	return c.inters.SharedHost
+}
+
+func (c *SharedHostClient) mutate(ctx context.Context, m *SharedHostMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SharedHostCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SharedHostUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SharedHostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SharedHostDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SharedHost mutation op: %q", m.Op())
+	}
+}
+
+// SharedHostMemberClient is a client for the SharedHostMember schema.
+type SharedHostMemberClient struct {
+	config
+}
+
+// NewSharedHostMemberClient returns a client for the SharedHostMember from the given config.
+func NewSharedHostMemberClient(c config) *SharedHostMemberClient {
+	return &SharedHostMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sharedhostmember.Hooks(f(g(h())))`.
+func (c *SharedHostMemberClient) Use(hooks ...Hook) {
+	c.hooks.SharedHostMember = append(c.hooks.SharedHostMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sharedhostmember.Intercept(f(g(h())))`.
+func (c *SharedHostMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SharedHostMember = append(c.inters.SharedHostMember, interceptors...)
+}
+
+// Create returns a builder for creating a SharedHostMember entity.
+func (c *SharedHostMemberClient) Create() *SharedHostMemberCreate {
+	mutation := newSharedHostMemberMutation(c.config, OpCreate)
+	return &SharedHostMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SharedHostMember entities.
+func (c *SharedHostMemberClient) CreateBulk(builders ...*SharedHostMemberCreate) *SharedHostMemberCreateBulk {
+	return &SharedHostMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SharedHostMemberClient) MapCreateBulk(slice any, setFunc func(*SharedHostMemberCreate, int)) *SharedHostMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SharedHostMemberCreateBulk{err: fmt.Errorf("calling to SharedHostMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SharedHostMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SharedHostMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SharedHostMember.
+func (c *SharedHostMemberClient) Update() *SharedHostMemberUpdate {
+	mutation := newSharedHostMemberMutation(c.config, OpUpdate)
+	return &SharedHostMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SharedHostMemberClient) UpdateOne(_m *SharedHostMember) *SharedHostMemberUpdateOne {
+	mutation := newSharedHostMemberMutation(c.config, OpUpdateOne, withSharedHostMember(_m))
+	return &SharedHostMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SharedHostMemberClient) UpdateOneID(id string) *SharedHostMemberUpdateOne {
+	mutation := newSharedHostMemberMutation(c.config, OpUpdateOne, withSharedHostMemberID(id))
+	return &SharedHostMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SharedHostMember.
+func (c *SharedHostMemberClient) Delete() *SharedHostMemberDelete {
+	mutation := newSharedHostMemberMutation(c.config, OpDelete)
+	return &SharedHostMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SharedHostMemberClient) DeleteOne(_m *SharedHostMember) *SharedHostMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SharedHostMemberClient) DeleteOneID(id string) *SharedHostMemberDeleteOne {
+	builder := c.Delete().Where(sharedhostmember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SharedHostMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for SharedHostMember.
+func (c *SharedHostMemberClient) Query() *SharedHostMemberQuery {
+	return &SharedHostMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSharedHostMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SharedHostMember entity by its id.
+func (c *SharedHostMemberClient) Get(ctx context.Context, id string) (*SharedHostMember, error) {
+	return c.Query().Where(sharedhostmember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SharedHostMemberClient) GetX(ctx context.Context, id string) *SharedHostMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SharedHostMemberClient) Hooks() []Hook {
+	return c.hooks.SharedHostMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *SharedHostMemberClient) Interceptors() []Interceptor {
+	return c.inters.SharedHostMember
+}
+
+func (c *SharedHostMemberClient) mutate(ctx context.Context, m *SharedHostMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SharedHostMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SharedHostMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SharedHostMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SharedHostMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SharedHostMember mutation op: %q", m.Op())
 	}
 }
 
@@ -3397,14 +4245,18 @@ type (
 	hooks struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
 		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
-		Password, RateWindow, ResourceArtifact, ResourceSubmission, Team, TeamConfig,
-		TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
+		Password, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
+		ResourceArtifact, ResourceSubmission, SharedArchiveSegment, SharedHost,
+		SharedHostMember, Team, TeamConfig, TeamProvider, UsageRequest, User,
+		VerificationCode []ent.Hook
 	}
 	inters struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
 		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
-		Password, RateWindow, ResourceArtifact, ResourceSubmission, Team, TeamConfig,
-		TeamProvider, UsageRequest, User, VerificationCode []ent.Interceptor
+		Password, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
+		ResourceArtifact, ResourceSubmission, SharedArchiveSegment, SharedHost,
+		SharedHostMember, Team, TeamConfig, TeamProvider, UsageRequest, User,
+		VerificationCode []ent.Interceptor
 	}
 )
 

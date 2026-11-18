@@ -5,7 +5,11 @@
 // (server/edition).
 package main
 
-import "github.com/dsh-teamwork/dsh-teamwork-platform/server/app"
+import (
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/app"
+
+	_ "github.com/dsh-teamwork/dsh-teamwork-platform/server/relay"
+)
 
 var version = "dev"
 

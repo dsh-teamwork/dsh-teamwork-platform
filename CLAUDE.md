@@ -338,15 +338,20 @@ server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
                      rest by concern: config, db, auth, team, gateway,
                      analytics, httpapi (every route), web (the embedded
                      console and public pages), wire (request shapes and
-                     error codes)
+                     error codes); relay/ is the relay and shared DSHs
+                     (docs/tech/relay.md), an extension every main imports
 apps/web             Vite and React: the console and the public pages,
                      prerendered at its build and embedded in the binary;
                      an edition's web app composes it (mountWeb, ADR 0041)
 api/openapi.yaml     the wire contract
 packages/shared      the languages and the rule that picks one, shared by the
                      console and the closed mobile app
+packages/relay-client  the relay's client: the encrypted channel (the
+                     plugin's, byte for byte), the frames and DSH's Remote API
+                     read into a client's shapes; the web console and the
+                     closed mobile app import it
 premium/server       the closed Go module: the open server with the closed
-                     packages (the relay, the operator console) registered
+                     packages (billing, the operator console) registered
                      through server/edition
 
 Everything under premium/ is closed and stays out of the community edition
@@ -419,7 +424,10 @@ Bearer, both JWE under keys derived from `AUTH_SECRET`, each kind under its
 own, so one never opens as the other. A **computer token** (ADR 0038) is a
 third kind, minted only by an edition for a cloud computer's plugin: one
 member, one team, an hour, accepted by `GET /api/configs` and the gateway
-alone (`requirePlugin` in `internal/httpapi/identity.go`).
+alone (`requirePlugin` in `internal/httpapi/identity.go`). A **host token**
+(ADR 0047) is a fourth, minted only by an edition for a shared DSH: one team,
+no person, an hour, on the same two routes, and its calls are the team's
+(`usage_requests.host_id`), held to no member's budget.
 
 **The DSH plugin signs in through the website** (`docs/adr/0001-plugin-sign-in.md`).
 `/teamwork login` in DSH listens on `http://127.0.0.1:<port>` and prints
@@ -430,9 +438,10 @@ stays on screen to paste (`/teamwork authorize <code>`). The plugin trades code
 and verifier at `POST /api/auth/plugin/token` for a 30-day Bearer token. A
 session or token **cannot be revoked before it expires** — the price of
 having no session table, chosen deliberately; team access is still re-checked
-on every request. A phone app adds `&redirect_uri=…` under
-`MOBILE_REDIRECT_URI`, and after the same confirmation the code goes back to
-it instead of being shown (`docs/adr/0010-the-app-gets-its-code-back.md`).
+on every request. The phone app adds `&redirect_uri=dshteamwork://sign-in`,
+which every server accepts with no setting, and after the same confirmation
+the code goes back to it instead of being shown
+(`docs/adr/0046-every-server-sends-the-app-its-code.md`).
 
 ### Locale
 

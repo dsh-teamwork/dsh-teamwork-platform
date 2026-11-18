@@ -506,7 +506,8 @@
       "close": "关闭导航",
       "waiting": "等待你审核",
       "resources": "团队资源",
-      "submissions": "我的提交"
+      "submissions": "我的提交",
+      "sharedHosts": "共享 DSH"
     },
     "switcher": {
       "label": "切换团队",
@@ -857,6 +858,103 @@
       "noPlugins": "团队还没有固定插件。",
       "propose": "提议预设",
       "proposeChange": "建议修改"
+    },
+    "sharedHosts": {
+      "title": "共享 DSH",
+      "description": "团队为成员运行的 DSH。它用团队授权 key 登录，从不以个人身份登录，模型调用计入团队。",
+      "name": "名称",
+      "namePlaceholder": "例如：构建机",
+      "create": "创建 key",
+      "created": "已创建共享 DSH。",
+      "machine": "机器",
+      "lastSeen": "最近换取 token",
+      "actions": "操作",
+      "bound": "已绑定 {at}",
+      "unbound": "等待首次使用",
+      "never": "从未",
+      "rotate": "更换 key",
+      "rotated": "已签发新 key。",
+      "delete": "删除",
+      "deleted": "已删除。",
+      "empty": "还没有共享 DSH。填一个名称即可创建它的 key。",
+      "keyTitle": "{name} 的团队授权 key",
+      "keyOnce": "只显示这一次。请复制到要共享的那台 DSH；服务器不保留可读副本。",
+      "keyHelp": "在那台 DSH 里运行这条命令。第一台使用它的机器会绑定这个 key，换到其他机器上会被拒绝。能访问这台 DSH 的人都能通过它使用团队模型。",
+      "rotateConfirm": "为这台 DSH 签发新 key？旧 key 立即失效，同一台机器继续使用新 key。",
+      "deleteConfirm": "删除这台共享 DSH？它的 key 立即失效，DSH 最多一小时内失去团队访问。",
+      "access": "可访问的人",
+      "accessTeam": "团队所有成员",
+      "accessListed": "{count} 名成员",
+      "accessListedOption": "仅以下成员",
+      "editAccess": "访问",
+      "accessTitle": "谁可以访问 {name}",
+      "accessHelp": "每个成员还需要这台 DSH 自己发出的邀请。把某人移出名单会立即断开他的配对。",
+      "accessSaved": "访问设置已保存。",
+      "save": "保存",
+      "cancel": "取消",
+      "archiveTitle": "审计归档",
+      "archiveHelp": "每台共享 DSH 都把成员的会话加密到团队的审计密钥后保存在这里。服务器无法打开，只有持有私钥的人可以。",
+      "archiveEmpty": "还没有归档。共享 DSH 在用 /teamwork share audit-key 设置审计密钥之前不会接纳任何成员。",
+      "archiveDeleted": "已删除的共享 DSH（{id}）",
+      "archiveRange": "{segments} 个分段 · {first} – {last}",
+      "archiveDownload": "下载",
+      "archiveRead": "在你自己的电脑上，用 dsh-teamwork-audit keygen 生成的密钥打开下载的文件。缺失或被改动的分段会被指出。"
+    },
+    "sharedDsh": {
+      "title": "共享 DSH",
+      "reachTitle": "你可以访问的共享 DSH",
+      "disclosure": "共享 DSH 是团队的机器，与名单上的其他人共用。你只能看到自己发起的会话；团队管理员可以从加密归档中读取所有会话。",
+      "none": "这个团队还没有向你开放的共享 DSH。",
+      "online": "在线",
+      "offline": "离线",
+      "open": "打开",
+      "needsInvite": "请向管理员索取邀请",
+      "invite": "邀请链接",
+      "join": "加入",
+      "joining": "正在加入…",
+      "deviceName": "网页浏览器",
+      "inviteInvalid": "这不是邀请链接。请粘贴管理员给你的完整 dshteamwork://join 链接。",
+      "inviteOtherServer": "这个邀请属于另一台服务器。",
+      "browserUnsupported": "这个浏览器无法保存共享 DSH 需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。",
+      "back": "全部共享 DSH",
+      "sessionsHelp": "你在这台共享 DSH 上的会话，在这个浏览器和那台机器之间端到端加密。",
+      "newSession": "新会话",
+      "noSessions": "还没有会话。",
+      "waiting": "等待你处理",
+      "untitled": "未命名会话",
+      "running": "运行中",
+      "pick": "选择一个会话，或新建一个。",
+      "steps": "{count} 个步骤",
+      "failed": "失败",
+      "denied": "已拒绝",
+      "thinking": "思考中…",
+      "allow": "允许",
+      "deny": "拒绝",
+      "promptPlaceholder": "给智能体发消息",
+      "send": "发送",
+      "stop": "停止",
+      "pin": {
+        "set": {
+          "title": "设置你的 PIN",
+          "hint": "选四位数字。每次回来时这台机器都会询问。"
+        },
+        "confirm": {
+          "title": "再输入一次",
+          "hint": "同样的四位数字。"
+        },
+        "enter": {
+          "title": "输入你的 PIN",
+          "hint": "你为这台机器设置的四位数字。"
+        },
+        "locked": {
+          "title": "已锁定",
+          "hint": "PIN 错误次数过多。请让管理员在共享 DSH 上为你解锁。"
+        },
+        "wrong": "PIN 错误，还剩 {count} 次。",
+        "mismatch": "两次输入的 PIN 不一致，请重新开始。",
+        "unavailable": "机器没有响应，请重试。",
+        "submit": "继续"
+      }
     }
   },
   "usage": {
@@ -921,7 +1019,8 @@
     "accountingHint": "缓存 Token 已包含在输入中，推理 Token 已包含在输出中。横线表示未定价或尚未确认，不代表零消耗。",
     "count": "共 {count} 次调用",
     "previous": "上一页",
-    "next": "下一页"
+    "next": "下一页",
+    "sharedDsh": "共享 DSH"
   },
   "budgets": {
     "remaining": "可用积分",
@@ -1076,7 +1175,9 @@
     "provider_address_plain_http": "请使用 https。只有在允许内网地址的服务器上，本地或内网地址才能用 http。",
     "provider_address_unresolved": "找不到这个主机，请检查地址。",
     "provider_key_rejected": "提供商拒绝了这个 API 密钥，请检查它是否完整、是否仍然有效。",
-    "model_metadata_unavailable": "无法读取公开模型目录。请重试，或手动填写。"
+    "model_metadata_unavailable": "无法读取公开模型目录。请重试，或手动填写。",
+    "host_key_invalid": "团队授权 key 无效。",
+    "host_bound_elsewhere": "这个团队授权 key 已被另一台机器使用。"
   },
   "docs": {
     "title": "文档",
@@ -1128,5 +1229,22 @@
     "output": "输出（含推理）",
     "cacheRead": "缓存输入",
     "cacheWrite": "缓存写入（如支持）"
+  },
+  "relayErrors": {
+    "offline": "机器离线。",
+    "not_found": "你已无法访问这台机器或这个会话。",
+    "busy": "智能体正忙，请等它完成。",
+    "stale": "这个问题已经被回答过了。",
+    "locked": "已锁定：请先输入 PIN。",
+    "invite_refused": "机器拒绝了这个邀请。请向管理员索取新的。",
+    "device_key_changed": "机器的密钥与邀请不符。请不要继续，并告知管理员。",
+    "device_verification_required": "这个浏览器还没有加入那台机器。",
+    "no_directory": "机器上没有可用的项目文件夹。",
+    "not_authenticated": "机器没有登录到团队。",
+    "missing_tools": "机器缺少这个预设需要的工具。",
+    "missing_plugins": "机器缺少这个预设需要的插件。",
+    "preset_unavailable": "机器上没有这个预设。",
+    "model_unavailable": "这个模型暂时不可用。",
+    "unavailable": "无法连接到机器，请重试。"
   }
 }

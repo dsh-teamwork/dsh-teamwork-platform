@@ -528,7 +528,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** What the plugin syncs — every team the caller is in, with its configuration */
+        /**
+         * What the plugin syncs — every team the caller is in, with its configuration
+         * @description A computer token (ADR 0038) or a shared DSH's host token (ADR 0047) receives its one team alone; a host token's team carries role `member`.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -2595,10 +2598,999 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/relay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where the relay's plugin socket is (ADR 0044; docs/tech/relay.md) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The plugin socket's address */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            url: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/shared-hosts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** A team's shared DSHs, for a team admin's browser session (docs/tech/shared-dsh.md) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The shared DSHs, oldest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            hosts: components["schemas"]["SharedHost"][];
+                        };
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        /** Create a shared DSH; its team host key is shown this once */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SharedHostName"];
+                };
+            };
+            responses: {
+                /** @description The shared DSH and its key */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SharedHostKey"];
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/shared-hosts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a shared DSH; its key stops at once */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Rename a shared DSH */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SharedHostName"];
+                };
+            };
+            responses: {
+                /** @description The shared DSH */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            host: components["schemas"]["SharedHost"];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        trace?: never;
+    };
+    "/teams/{teamId}/shared-hosts/{id}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Give a shared DSH a new key, keeping its machine; shown this once */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description The shared DSH and its new key */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SharedHostKey"];
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/shared-hosts/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Who may reach a shared DSH; anyone else's pairings with it end at once */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        access: "team" | "listed";
+                        /** @description The team members a listed host admits */
+                        userIds: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description The shared DSH */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            host: components["schemas"]["SharedHost"];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/shared-archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Every shared DSH's audit archive, deleted hosts included (team admins) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description One summary per shared DSH that uploaded a segment */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            hosts: components["schemas"]["SharedArchiveHost"][];
+                        };
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/shared-archive/{hostId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                hostId: string;
+            };
+            cookie?: never;
+        };
+        /** One shared DSH's archive: its segments in order, one per line, exactly as uploaded (team admins) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    hostId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Sealed segments, read with dsh-teamwork-audit read and the admin's own key */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/x-ndjson": string;
+                    };
+                };
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/shared": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The shared DSHs the caller may reach */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The shared DSHs, oldest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            hosts: {
+                                id: string;
+                                name: string;
+                                teamId: string;
+                                teamName: string;
+                                online: boolean;
+                            }[];
+                        };
+                    };
+                };
+                401: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/shared/{hostId}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a handset's pairing with a shared DSH, pending until the DSH checks the member's invite */
+        post: {
+            parameters: {
+                query?: never;
+                header: {
+                    "X-Device-Key": string;
+                };
+                path: {
+                    hostId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        deviceName: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The pending pairing */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            pairing: components["schemas"]["RelayPairing"];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/shared/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A shared DSH uploads the next segment of its sealed audit archive
+         * @description The DSH's host token. The segment must be signed by the identity key the host bound and be the next in its chain; a retried upload of the last segment answers 200.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SharedArchiveSegment"];
+                };
+            };
+            responses: {
+                /** @description The segment was already kept */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            seq: number;
+                            digest: string;
+                        };
+                    };
+                };
+                /** @description The segment is kept */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            seq: number;
+                            digest: string;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                /** @description Not the next segment in the chain */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                            next?: number;
+                            prev?: string;
+                        };
+                    };
+                };
+                413: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/plugin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The plugin's relay socket (WebSocket); its first frame is a hello with its Bearer token */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Switched to the relay's frames (docs/tech/relay.md, Frames) */
+                101: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A phone's or a browser's relay socket (WebSocket); its first frame is a hello with its token and handset credential
+         * @description A page of this site may leave the token out: its session cookie, with an Origin of APP_URL, admits it instead.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Switched to the relay's frames (docs/tech/relay.md, Frames) */
+                101: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/pair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A phone redeems a pairing code its owner's DSH showed */
+        post: {
+            parameters: {
+                query?: never;
+                header: {
+                    "X-Device-Key": string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        code: string;
+                        deviceName: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The pending pairing */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            pairing: components["schemas"]["RelayPairing"];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/pairings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** This handset's pairings */
+        get: {
+            parameters: {
+                query?: never;
+                header: {
+                    "X-Device-Key": string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The pairings */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            pairings: components["schemas"]["RelayPairing"][];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/pairings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke one of this handset's pairings */
+        delete: {
+            parameters: {
+                query?: never;
+                header: {
+                    "X-Device-Key": string;
+                };
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Revoked */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/pairings/{id}/push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Turn a pairing's notifications on (an Expo push token) or off (null) */
+        put: {
+            parameters: {
+                query?: never;
+                header: {
+                    "X-Device-Key": string;
+                };
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        pushToken: string | null;
+                        locale?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Saved */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/shared/challenge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A two-minute nonce for a team host key's exchange (ADR 0047) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        key: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The nonce */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            nonce: string;
+                            /** Format: date-time */
+                            expiresAt: string;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relay/shared/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trade a team host key and a signature of the nonce by the DSH's identity key for a host token
+         * @description The first exchange binds the key to that identity; another identity is refused with `host_bound_elsewhere`. The signature covers "dsh-teamwork shared host\n" + nonce + "\n" + host id + "\n" + APP_URL.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        key: string;
+                        /** @description The raw Ed25519 public key, base64 */
+                        publicKey: string;
+                        nonce: string;
+                        /** @description Ed25519, base64 */
+                        signature: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description A host token for the shared DSH's team */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            token: string;
+                            /** Format: date-time */
+                            expiresAt: string;
+                            hostId: string;
+                            teamId: string;
+                            name: string;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        SharedHost: {
+            id: string;
+            name: string;
+            /** @description Whether a machine has bound the key */
+            bound: boolean;
+            /** Format: date-time */
+            boundAt: string | null;
+            /** Format: date-time */
+            lastSeenAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * @description Every team member reaches it, or only those listed
+             * @enum {string}
+             */
+            access: "team" | "listed";
+            memberIds: string[];
+        };
+        SharedArchiveHost: {
+            hostId: string;
+            /** @description The shared DSH's name; empty once it was deleted */
+            name: string;
+            deleted: boolean;
+            segments: number;
+            /** Format: date-time */
+            firstAt: string;
+            /** Format: date-time */
+            lastAt: string;
+            lastSeq: number;
+            /** @description SHA-256 of the last segment's bytes */
+            lastDigest: string;
+        };
+        SharedArchiveSegment: {
+            /** @enum {integer} */
+            v: 1;
+            host: string;
+            seq: number;
+            /** @description SHA-256 of the previous segment's bytes, empty for the first */
+            prev: string;
+            /** @description SHA-256 of the audit public key */
+            key: string;
+            /** @description HPKE encapsulated key (base64) */
+            enc: string;
+            /** @description HPKE ciphertext (base64) */
+            ct: string;
+            /** @description Ed25519 signature by the DSH's identity key (base64) */
+            sig: string;
+        };
+        SharedHostName: {
+            name: string;
+        };
+        SharedHostKey: {
+            host: components["schemas"]["SharedHost"];
+            /** @description The team host key, shown this once */
+            key: string;
+        };
+        RelayPairing: {
+            id: string;
+            hostId: string;
+            /** @description The member whose handset it is */
+            userId: string;
+            hostName: string;
+            deviceName: string;
+            /** @enum {string} */
+            status: "pending" | "confirmed";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastUsedAt: string | null;
+            online?: boolean;
+            push?: boolean;
+        };
         BudgetNotice: {
             id: string;
             recipientId: string;
@@ -2727,7 +3719,10 @@ export interface components {
         };
         UsageEntry: {
             id: string;
+            /** @description The member who made the call; empty for a shared DSH's. */
             userId: string;
+            /** @description The shared DSH that made the call (ADR 0047); empty for a member's. */
+            hostId: string;
             configId: string;
             provider: string;
             model: string;
@@ -2782,7 +3777,8 @@ export interface components {
                 google: boolean;
             };
             setupOpen: boolean;
-            mobileRedirectPrefix: string;
+            /** @description The phone app's sign-in address, where /plugin sends its code (ADR 0046) */
+            appRedirect: string;
         };
         PasswordSignIn: {
             email: string;

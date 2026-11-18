@@ -1,0 +1,2141 @@
+{
+ "note": "Recorded from DeepSeek Harness 0.2.2-rc.1 through the relay; paths scrubbed, system prompt, tool schemas and replay state omitted. followWithStream is a second session followed with assistantStream: true.",
+ "sessionList": {
+  "items": [
+   {
+    "sessionId": "session-c1dbfc81-0b65-42a5-931e-4b3b37dbf5fd",
+    "updatedAt": 1794560444251,
+    "agentAvailable": true,
+    "formatStatus": "current",
+    "running": false,
+    "blank": false,
+    "cwd": "/home/ada/project",
+    "projections": {
+     "kind": "sequenced",
+     "asOfSeq": 23,
+     "values": {
+      "userQuestions": {
+       "active": [],
+       "settled": []
+      },
+      "tokenUsage": {
+       "uncachedInputTokens": 10,
+       "outputTokens": 6,
+       "cacheReadTokens": 0,
+       "cacheWriteTokens": 0
+      },
+      "title": "Should I deploy?",
+      "agentPreset": "standard",
+      "goal": null,
+      "modelSelection": {
+       "lastUsed": {
+        "provider": "teamwork-platform",
+        "model": "coder"
+       },
+       "next": {
+        "provider": "teamwork-platform",
+        "model": "coder"
+       }
+      },
+      "workingDirectory": "/home/ada/project",
+      "inbox": {
+       "next-turn": [],
+       "next-step": []
+      },
+      "permissions": {
+       "currentValue": "workspace-write"
+      },
+      "subagentCatalog": [],
+      "subagentTiming": {
+       "settledMs": 0
+      },
+      "subagent": null,
+      "plan": {
+       "active": false,
+       "pending": false
+      },
+      "teamworkTask": {
+       "task": "Should I deploy?",
+       "outcome": "completed",
+       "failureCode": null,
+       "turn": 1
+      },
+      "sessionListMetadata": {
+       "blank": false,
+       "lastPromptAt": 1794560444251
+      }
+     }
+    }
+   },
+   {
+    "sessionId": "session-acaea14b-f5dc-4553-b50f-37a3a0e5a0ac",
+    "updatedAt": 1794556336272,
+    "agentAvailable": false,
+    "formatStatus": "current",
+    "running": false,
+    "blank": false,
+    "cwd": "/home/ada/dsh",
+    "projections": {
+     "kind": "cached",
+     "asOfSeq": 23,
+     "values": {
+      "userQuestions": {
+       "active": [],
+       "settled": []
+      },
+      "tokenUsage": {
+       "uncachedInputTokens": 10,
+       "outputTokens": 6,
+       "cacheReadTokens": 0,
+       "cacheWriteTokens": 0
+      },
+      "title": "Should I deploy?",
+      "agentPreset": "standard",
+      "goal": null,
+      "modelSelection": {
+       "lastUsed": {
+        "provider": "teamwork-platform",
+        "model": "coder"
+       },
+       "next": {
+        "provider": "teamwork-platform",
+        "model": "coder"
+       }
+      },
+      "workingDirectory": "/home/ada/dsh",
+      "inbox": {
+       "next-turn": [],
+       "next-step": []
+      },
+      "permissions": {
+       "currentValue": "workspace-write"
+      },
+      "subagentCatalog": [],
+      "subagentTiming": {
+       "settledMs": 0
+      },
+      "subagent": null,
+      "plan": {
+       "active": false,
+       "pending": false
+      },
+      "teamworkTask": {
+       "task": "Should I deploy?",
+       "outcome": "completed",
+       "failureCode": null,
+       "turn": 1
+      },
+      "sessionListMetadata": {
+       "blank": false,
+       "lastPromptAt": 1794556336272
+      }
+     }
+    }
+   }
+  ]
+ },
+ "followSnapshot": {
+  "type": "snapshot",
+  "header": {
+   "version": 4,
+   "id": "session-c1dbfc81-0b65-42a5-931e-4b3b37dbf5fd",
+   "createdAt": 1794560443573,
+   "cwd": "/home/ada/project",
+   "isSeeded": false,
+   "agentPreset": "standard"
+  },
+  "cursor": 23,
+  "hasMore": false,
+  "records": [
+   {
+    "type": "event",
+    "event": {
+     "type": "permission/preset",
+     "seq": 0,
+     "time": 1794560443581,
+     "data": {
+      "preset": "workspace-write"
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "sandbox/mode",
+     "seq": 1,
+     "time": 1794560443582,
+     "data": {
+      "mode": "workspace-write"
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "approval/policy",
+     "seq": 2,
+     "time": 1794560443583,
+     "data": {
+      "policy": "ask"
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "model/selection",
+     "seq": 3,
+     "time": 1794560443595,
+     "data": {
+      "provider": "teamwork-platform",
+      "model": "coder"
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "agent/inbox/spliced",
+     "seq": 4,
+     "time": 1794560444150,
+     "data": {
+      "target": "next-turn",
+      "start": 0,
+      "inserted": [
+       {
+        "content": [
+         {
+          "type": "text",
+          "text": "Should I deploy?"
+         }
+        ],
+        "source": {
+         "kind": "user",
+         "rpcId": "6556f05a-5963-475b-a932-695a84a68f46"
+        },
+        "role": "user",
+        "id": "f74beb3f-315b-4a7c-bab4-4c969ad49a0a"
+       }
+      ]
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "turn/start",
+     "seq": 5,
+     "time": 1794560444152,
+     "data": {
+      "turn": 1
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "agent/inbox/spliced",
+     "seq": 6,
+     "time": 1794560444157,
+     "data": {
+      "target": "next-turn",
+      "start": 0,
+      "removedCount": 1,
+      "inserted": []
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "step/start",
+     "seq": 7,
+     "time": 1794560444246,
+     "data": {
+      "turn": 1,
+      "step": 1
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "system/message",
+     "seq": 8,
+     "time": 1794560444249,
+     "data": {
+      "omitted": true
+     },
+     "surfaceOp": "append"
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "user/message",
+     "seq": 9,
+     "time": 1794560444251,
+     "data": {
+      "content": [
+       {
+        "type": "text",
+        "text": "Should I deploy?"
+       }
+      ],
+      "source": {
+       "kind": "user",
+       "rpcId": "6556f05a-5963-475b-a932-695a84a68f46"
+      },
+      "role": "user",
+      "id": "f74beb3f-315b-4a7c-bab4-4c969ad49a0a"
+     },
+     "surfaceOp": "append"
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "user/message",
+     "seq": 10,
+     "time": 1794560444253,
+     "data": {
+      "content": [
+       {
+        "type": "text",
+        "text": "(runtime context, omitted)"
+       }
+      ],
+      "source": {
+       "kind": "runtime-context",
+       "form": "snapshot",
+       "sections": [
+        {
+         "name": "working-directory:current",
+         "text": "Current working directory: \"/home/ada/project\"."
+        },
+        {
+         "name": "sandbox:policy",
+         "text": "Current DSH file policy: workspace-write. Any available operation enforced by the DSH file sandbox may modify files under the session workspace: \"/home/ada/project\". Some platform temporary areas may also be writable."
+        },
+        {
+         "name": "approval:policy",
+         "text": "Approval prompts are enabled in this session: operations that require approval may ask through the configured answerers; without an available answerer, the request fails closed."
+        },
+        {
+         "name": "harness:source",
+         "text": "Current DeepSeek Harness implementation checkout: \"/home/ada/dsh\"."
+        },
+        {
+         "name": "app:web-surface",
+         "text": "Current DeepSeek Harness Web GUI URL: \"http://127.0.0.1:18791\"."
+        }
+       ]
+      },
+      "role": "user",
+      "id": "a6a34c1d-98ed-434d-a660-3c6696fe306b"
+     },
+     "surfaceOp": "append"
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "user/message",
+     "seq": 11,
+     "time": 1794560444253,
+     "data": {
+      "content": [
+       {
+        "type": "text",
+        "text": "(runtime context, omitted)"
+       }
+      ],
+      "source": {
+       "kind": "time-context",
+       "form": "snapshot",
+       "sections": [
+        {
+         "name": "time-context",
+         "text": "Time sampled while preparing turn 1, step 1: 2026-11-13T09:00:44+00:00[UTC]\nBrowser time zone for this request: unavailable. Ask the user to clarify otherwise-unqualified dates and times.\nElapsed since the preceding model-visible message: unavailable."
+        }
+       ]
+      },
+      "role": "user",
+      "id": "a146c51e-f069-476e-9eae-c88ae0f8603e"
+     },
+     "surfaceOp": "append"
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "request/header",
+     "seq": 12,
+     "time": 1794560444255,
+     "data": {
+      "omitted": true
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "request/context",
+     "seq": 13,
+     "time": 1794560444257,
+     "data": {
+      "provider": "teamwork-platform",
+      "model": "coder",
+      "contextWindow": 32768
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "session/title",
+     "seq": 14,
+     "time": 1794560444263,
+     "data": {
+      "title": "Should I deploy?",
+      "messageSeqs": [
+       9
+      ],
+      "source": {
+       "kind": "fallback"
+      }
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "session/title-llm-request",
+     "seq": 15,
+     "time": 1794560444266,
+     "data": {
+      "omitted": true
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "assistant/message",
+     "seq": 16,
+     "time": 1794560444507,
+     "data": {
+      "turn": 1,
+      "step": 1,
+      "message": {
+       "role": "assistant",
+       "content": [
+        {
+         "type": "tool-call",
+         "id": "call_q",
+         "name": "ask_user_question",
+         "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+        }
+       ],
+       "source": {
+        "kind": "model",
+        "provider": "teamwork-platform",
+        "model": "coder",
+        "replayState": {
+         "response": {
+          "kind": "pi-ai",
+          "version": 2,
+          "api": "openai-completions",
+          "provider": "teamwork-platform",
+          "model": "coder",
+          "responseId": "c1",
+          "stopReason": "toolUse"
+         },
+         "blocks": [
+          {
+           "type": "tool-call"
+          }
+         ]
+        }
+       },
+       "id": "311fbc9d-769d-43a3-8431-f50bae628c8e"
+      },
+      "usage": {
+       "inputTokens": 0,
+       "outputTokens": 0,
+       "totalTokens": 0
+      },
+      "stream": [
+       {
+        "type": "chunk",
+        "time": 1794560444504,
+        "chunk": {
+         "type": "block-start",
+         "index": 0,
+         "blockType": "tool-call"
+        }
+       },
+       {
+        "type": "tool-call-chunks",
+        "time0": 1794560444505,
+        "index": 0,
+        "dt": [],
+        "id": "call_q",
+        "name": "ask_user_question",
+        "args": [
+         "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+        ]
+       },
+       {
+        "type": "chunk",
+        "time": 1794560444505,
+        "chunk": {
+         "type": "block-end",
+         "index": 0,
+         "block": {
+          "type": "tool-call",
+          "id": "call_q",
+          "name": "ask_user_question",
+          "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+         }
+        }
+       },
+       {
+        "type": "chunk",
+        "time": 1794560444506,
+        "chunk": {
+         "type": "usage",
+         "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0
+         }
+        }
+       },
+       {
+        "type": "chunk",
+        "time": 1794560444506,
+        "chunk": {
+         "type": "finish",
+         "reason": {
+          "kind": "tool-calls"
+         },
+         "replayState": {
+          "response": {
+           "kind": "pi-ai",
+           "version": 2,
+           "api": "openai-completions",
+           "provider": "teamwork-platform",
+           "model": "coder",
+           "responseId": "c1",
+           "stopReason": "toolUse"
+          },
+          "blocks": [
+           {
+            "type": "tool-call"
+           }
+          ]
+         }
+        }
+       }
+      ]
+     },
+     "surfaceOp": "append"
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "tool/call",
+     "seq": 17,
+     "time": 1794560444510,
+     "data": {
+      "turn": 1,
+      "step": 1,
+      "callId": "call_q",
+      "name": "ask_user_question",
+      "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "tool/result",
+     "seq": 18,
+     "time": 1794560444830,
+     "data": {
+      "turn": 1,
+      "step": 1,
+      "message": {
+       "role": "tool",
+       "source": {
+        "kind": "tool",
+        "callId": "call_q"
+       },
+       "toolCallId": "call_q",
+       "content": [
+        {
+         "type": "text",
+         "text": "{\"answers\":[{\"id\":\"go\",\"selected\":[\"Yes\"]}]}"
+        }
+       ],
+       "isError": false,
+       "id": "bace923a-b5cb-4454-9b4b-ca5ec68af8e4"
+      }
+     },
+     "sourceEventSeqs": [
+      17
+     ],
+     "surfaceOp": "append"
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "step/end",
+     "seq": 19,
+     "time": 1794560444831,
+     "data": {
+      "turn": 1,
+      "step": 1
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "step/start",
+     "seq": 20,
+     "time": 1794560444846,
+     "data": {
+      "turn": 1,
+      "step": 2
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "assistant/message",
+     "seq": 21,
+     "time": 1794560444860,
+     "data": {
+      "turn": 1,
+      "step": 2,
+      "message": {
+       "role": "assistant",
+       "content": [
+        {
+         "type": "text",
+         "text": "The phone answered: [\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+        }
+       ],
+       "source": {
+        "kind": "model",
+        "provider": "teamwork-platform",
+        "model": "coder",
+        "replayState": {
+         "response": {
+          "kind": "pi-ai",
+          "version": 2,
+          "api": "openai-completions",
+          "provider": "teamwork-platform",
+          "model": "coder",
+          "responseId": "c1",
+          "stopReason": "stop"
+         },
+         "blocks": [
+          {
+           "type": "text"
+          }
+         ]
+        }
+       },
+       "id": "0c0b1433-e8f9-42d9-9f25-10680548e06e"
+      },
+      "usage": {
+       "inputTokens": 10,
+       "outputTokens": 6,
+       "totalTokens": 16
+      },
+      "stream": [
+       {
+        "type": "chunk",
+        "time": 1794560444859,
+        "chunk": {
+         "type": "block-start",
+         "index": 0,
+         "blockType": "text"
+        }
+       },
+       {
+        "type": "text-chunks",
+        "time0": 1794560444859,
+        "index": 0,
+        "dt": [
+         0
+        ],
+        "texts": [
+         "The phone answered: ",
+         "[\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+        ]
+       },
+       {
+        "type": "chunk",
+        "time": 1794560444860,
+        "chunk": {
+         "type": "block-end",
+         "index": 0,
+         "block": {
+          "type": "text",
+          "text": "The phone answered: [\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+         }
+        }
+       },
+       {
+        "type": "chunk",
+        "time": 1794560444860,
+        "chunk": {
+         "type": "usage",
+         "usage": {
+          "inputTokens": 10,
+          "outputTokens": 6,
+          "totalTokens": 16
+         }
+        }
+       },
+       {
+        "type": "chunk",
+        "time": 1794560444860,
+        "chunk": {
+         "type": "finish",
+         "reason": {
+          "kind": "stop"
+         },
+         "replayState": {
+          "response": {
+           "kind": "pi-ai",
+           "version": 2,
+           "api": "openai-completions",
+           "provider": "teamwork-platform",
+           "model": "coder",
+           "responseId": "c1",
+           "stopReason": "stop"
+          },
+          "blocks": [
+           {
+            "type": "text"
+           }
+          ]
+         }
+        }
+       }
+      ]
+     },
+     "surfaceOp": "append"
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "step/end",
+     "seq": 22,
+     "time": 1794560444863,
+     "data": {
+      "turn": 1,
+      "step": 2
+     }
+    }
+   },
+   {
+    "type": "event",
+    "event": {
+     "type": "turn/end",
+     "seq": 23,
+     "time": 1794560444864,
+     "data": {
+      "turn": 1,
+      "reason": {
+       "kind": "completed"
+      }
+     }
+    }
+   }
+  ],
+  "projections": {
+   "asOfSeq": 23,
+   "values": {
+    "title": "Should I deploy?",
+    "userQuestions": {
+     "active": [],
+     "settled": []
+    }
+   }
+  }
+ },
+ "followEvents": [
+  {
+   "type": "agent/inbox/spliced",
+   "seq": 4,
+   "time": 1794560444150,
+   "data": {
+    "target": "next-turn",
+    "start": 0,
+    "inserted": [
+     {
+      "content": [
+       {
+        "type": "text",
+        "text": "Should I deploy?"
+       }
+      ],
+      "source": {
+       "kind": "user",
+       "rpcId": "6556f05a-5963-475b-a932-695a84a68f46"
+      },
+      "role": "user",
+      "id": "f74beb3f-315b-4a7c-bab4-4c969ad49a0a"
+     }
+    ]
+   }
+  },
+  {
+   "type": "turn/start",
+   "seq": 5,
+   "time": 1794560444152,
+   "data": {
+    "turn": 1
+   }
+  },
+  {
+   "type": "agent/inbox/spliced",
+   "seq": 6,
+   "time": 1794560444157,
+   "data": {
+    "target": "next-turn",
+    "start": 0,
+    "removedCount": 1,
+    "inserted": []
+   }
+  },
+  {
+   "type": "step/start",
+   "seq": 7,
+   "time": 1794560444246,
+   "data": {
+    "turn": 1,
+    "step": 1
+   }
+  },
+  {
+   "type": "system/message",
+   "seq": 8,
+   "time": 1794560444249,
+   "data": {
+    "omitted": true
+   },
+   "surfaceOp": "append"
+  },
+  {
+   "type": "user/message",
+   "seq": 9,
+   "time": 1794560444251,
+   "data": {
+    "content": [
+     {
+      "type": "text",
+      "text": "Should I deploy?"
+     }
+    ],
+    "source": {
+     "kind": "user",
+     "rpcId": "6556f05a-5963-475b-a932-695a84a68f46"
+    },
+    "role": "user",
+    "id": "f74beb3f-315b-4a7c-bab4-4c969ad49a0a"
+   },
+   "surfaceOp": "append"
+  },
+  {
+   "type": "user/message",
+   "seq": 10,
+   "time": 1794560444253,
+   "data": {
+    "content": [
+     {
+      "type": "text",
+      "text": "(runtime context, omitted)"
+     }
+    ],
+    "source": {
+     "kind": "runtime-context",
+     "form": "snapshot",
+     "sections": [
+      {
+       "name": "working-directory:current",
+       "text": "Current working directory: \"/home/ada/project\"."
+      },
+      {
+       "name": "sandbox:policy",
+       "text": "Current DSH file policy: workspace-write. Any available operation enforced by the DSH file sandbox may modify files under the session workspace: \"/home/ada/project\". Some platform temporary areas may also be writable."
+      },
+      {
+       "name": "approval:policy",
+       "text": "Approval prompts are enabled in this session: operations that require approval may ask through the configured answerers; without an available answerer, the request fails closed."
+      },
+      {
+       "name": "harness:source",
+       "text": "Current DeepSeek Harness implementation checkout: \"/home/ada/dsh\"."
+      },
+      {
+       "name": "app:web-surface",
+       "text": "Current DeepSeek Harness Web GUI URL: \"http://127.0.0.1:18791\"."
+      }
+     ]
+    },
+    "role": "user",
+    "id": "a6a34c1d-98ed-434d-a660-3c6696fe306b"
+   },
+   "surfaceOp": "append"
+  },
+  {
+   "type": "user/message",
+   "seq": 11,
+   "time": 1794560444253,
+   "data": {
+    "content": [
+     {
+      "type": "text",
+      "text": "(runtime context, omitted)"
+     }
+    ],
+    "source": {
+     "kind": "time-context",
+     "form": "snapshot",
+     "sections": [
+      {
+       "name": "time-context",
+       "text": "Time sampled while preparing turn 1, step 1: 2026-11-13T09:00:44+00:00[UTC]\nBrowser time zone for this request: unavailable. Ask the user to clarify otherwise-unqualified dates and times.\nElapsed since the preceding model-visible message: unavailable."
+      }
+     ]
+    },
+    "role": "user",
+    "id": "a146c51e-f069-476e-9eae-c88ae0f8603e"
+   },
+   "surfaceOp": "append"
+  },
+  {
+   "type": "request/header",
+   "seq": 12,
+   "time": 1794560444255,
+   "data": {
+    "omitted": true
+   }
+  },
+  {
+   "type": "request/context",
+   "seq": 13,
+   "time": 1794560444257,
+   "data": {
+    "provider": "teamwork-platform",
+    "model": "coder",
+    "contextWindow": 32768
+   }
+  },
+  {
+   "type": "session/title",
+   "seq": 14,
+   "time": 1794560444263,
+   "data": {
+    "title": "Should I deploy?",
+    "messageSeqs": [
+     9
+    ],
+    "source": {
+     "kind": "fallback"
+    }
+   }
+  },
+  {
+   "type": "session/title-llm-request",
+   "seq": 15,
+   "time": 1794560444266,
+   "data": {
+    "omitted": true
+   }
+  },
+  {
+   "type": "assistant/message",
+   "seq": 16,
+   "time": 1794560444507,
+   "data": {
+    "turn": 1,
+    "step": 1,
+    "message": {
+     "role": "assistant",
+     "content": [
+      {
+       "type": "tool-call",
+       "id": "call_q",
+       "name": "ask_user_question",
+       "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+      }
+     ],
+     "source": {
+      "kind": "model",
+      "provider": "teamwork-platform",
+      "model": "coder",
+      "replayState": {
+       "response": {
+        "kind": "pi-ai",
+        "version": 2,
+        "api": "openai-completions",
+        "provider": "teamwork-platform",
+        "model": "coder",
+        "responseId": "c1",
+        "stopReason": "toolUse"
+       },
+       "blocks": [
+        {
+         "type": "tool-call"
+        }
+       ]
+      }
+     },
+     "id": "311fbc9d-769d-43a3-8431-f50bae628c8e"
+    },
+    "usage": {
+     "inputTokens": 0,
+     "outputTokens": 0,
+     "totalTokens": 0
+    },
+    "stream": [
+     {
+      "type": "chunk",
+      "time": 1794560444504,
+      "chunk": {
+       "type": "block-start",
+       "index": 0,
+       "blockType": "tool-call"
+      }
+     },
+     {
+      "type": "tool-call-chunks",
+      "time0": 1794560444505,
+      "index": 0,
+      "dt": [],
+      "id": "call_q",
+      "name": "ask_user_question",
+      "args": [
+       "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+      ]
+     },
+     {
+      "type": "chunk",
+      "time": 1794560444505,
+      "chunk": {
+       "type": "block-end",
+       "index": 0,
+       "block": {
+        "type": "tool-call",
+        "id": "call_q",
+        "name": "ask_user_question",
+        "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+       }
+      }
+     },
+     {
+      "type": "chunk",
+      "time": 1794560444506,
+      "chunk": {
+       "type": "usage",
+       "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0
+       }
+      }
+     },
+     {
+      "type": "chunk",
+      "time": 1794560444506,
+      "chunk": {
+       "type": "finish",
+       "reason": {
+        "kind": "tool-calls"
+       },
+       "replayState": {
+        "response": {
+         "kind": "pi-ai",
+         "version": 2,
+         "api": "openai-completions",
+         "provider": "teamwork-platform",
+         "model": "coder",
+         "responseId": "c1",
+         "stopReason": "toolUse"
+        },
+        "blocks": [
+         {
+          "type": "tool-call"
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "surfaceOp": "append"
+  },
+  {
+   "type": "tool/call",
+   "seq": 17,
+   "time": 1794560444510,
+   "data": {
+    "turn": 1,
+    "step": 1,
+    "callId": "call_q",
+    "name": "ask_user_question",
+    "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+   }
+  },
+  {
+   "type": "tool/result",
+   "seq": 18,
+   "time": 1794560444830,
+   "data": {
+    "turn": 1,
+    "step": 1,
+    "message": {
+     "role": "tool",
+     "source": {
+      "kind": "tool",
+      "callId": "call_q"
+     },
+     "toolCallId": "call_q",
+     "content": [
+      {
+       "type": "text",
+       "text": "{\"answers\":[{\"id\":\"go\",\"selected\":[\"Yes\"]}]}"
+      }
+     ],
+     "isError": false,
+     "id": "bace923a-b5cb-4454-9b4b-ca5ec68af8e4"
+    }
+   },
+   "sourceEventSeqs": [
+    17
+   ],
+   "surfaceOp": "append"
+  },
+  {
+   "type": "step/end",
+   "seq": 19,
+   "time": 1794560444831,
+   "data": {
+    "turn": 1,
+    "step": 1
+   }
+  },
+  {
+   "type": "step/start",
+   "seq": 20,
+   "time": 1794560444846,
+   "data": {
+    "turn": 1,
+    "step": 2
+   }
+  },
+  {
+   "type": "assistant/message",
+   "seq": 21,
+   "time": 1794560444860,
+   "data": {
+    "turn": 1,
+    "step": 2,
+    "message": {
+     "role": "assistant",
+     "content": [
+      {
+       "type": "text",
+       "text": "The phone answered: [\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+      }
+     ],
+     "source": {
+      "kind": "model",
+      "provider": "teamwork-platform",
+      "model": "coder",
+      "replayState": {
+       "response": {
+        "kind": "pi-ai",
+        "version": 2,
+        "api": "openai-completions",
+        "provider": "teamwork-platform",
+        "model": "coder",
+        "responseId": "c1",
+        "stopReason": "stop"
+       },
+       "blocks": [
+        {
+         "type": "text"
+        }
+       ]
+      }
+     },
+     "id": "0c0b1433-e8f9-42d9-9f25-10680548e06e"
+    },
+    "usage": {
+     "inputTokens": 10,
+     "outputTokens": 6,
+     "totalTokens": 16
+    },
+    "stream": [
+     {
+      "type": "chunk",
+      "time": 1794560444859,
+      "chunk": {
+       "type": "block-start",
+       "index": 0,
+       "blockType": "text"
+      }
+     },
+     {
+      "type": "text-chunks",
+      "time0": 1794560444859,
+      "index": 0,
+      "dt": [
+       0
+      ],
+      "texts": [
+       "The phone answered: ",
+       "[\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+      ]
+     },
+     {
+      "type": "chunk",
+      "time": 1794560444860,
+      "chunk": {
+       "type": "block-end",
+       "index": 0,
+       "block": {
+        "type": "text",
+        "text": "The phone answered: [\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+       }
+      }
+     },
+     {
+      "type": "chunk",
+      "time": 1794560444860,
+      "chunk": {
+       "type": "usage",
+       "usage": {
+        "inputTokens": 10,
+        "outputTokens": 6,
+        "totalTokens": 16
+       }
+      }
+     },
+     {
+      "type": "chunk",
+      "time": 1794560444860,
+      "chunk": {
+       "type": "finish",
+       "reason": {
+        "kind": "stop"
+       },
+       "replayState": {
+        "response": {
+         "kind": "pi-ai",
+         "version": 2,
+         "api": "openai-completions",
+         "provider": "teamwork-platform",
+         "model": "coder",
+         "responseId": "c1",
+         "stopReason": "stop"
+        },
+        "blocks": [
+         {
+          "type": "text"
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "surfaceOp": "append"
+  },
+  {
+   "type": "step/end",
+   "seq": 22,
+   "time": 1794560444863,
+   "data": {
+    "turn": 1,
+    "step": 2
+   }
+  },
+  {
+   "type": "turn/end",
+   "seq": 23,
+   "time": 1794560444864,
+   "data": {
+    "turn": 1,
+    "reason": {
+     "kind": "completed"
+    }
+   }
+  }
+ ],
+ "events": [
+  {
+   "type": "ready",
+   "clientId": "ac99a986-6bd6-4916-89d1-79b5c75a5820",
+   "host": {
+    "home": "/home/ada"
+   }
+  },
+  {
+   "type": "emit",
+   "event": "api-session/status",
+   "args": [
+    "session-c1dbfc81-0b65-42a5-931e-4b3b37dbf5fd",
+    true
+   ]
+  },
+  {
+   "type": "waterfall",
+   "event": "user-questions/request",
+   "eventId": "236b999d-ee3e-4acb-94da-30453dab1510",
+   "agentId": "session-c1dbfc81-0b65-42a5-931e-4b3b37dbf5fd",
+   "request": {
+    "questions": [
+     {
+      "id": "go",
+      "question": "Deploy to staging?",
+      "options": [
+       {
+        "label": "Yes"
+       },
+       {
+        "label": "No"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "type": "emit",
+   "event": "api-session/status",
+   "args": [
+    "session-c1dbfc81-0b65-42a5-931e-4b3b37dbf5fd",
+    false
+   ]
+  }
+ ],
+ "followWithStream": [
+  {
+   "type": "event",
+   "event": {
+    "type": "agent/inbox/spliced",
+    "seq": 4,
+    "time": 1794561004577,
+    "data": {
+     "target": "next-turn",
+     "start": 0,
+     "inserted": [
+      {
+       "content": [
+        {
+         "type": "text",
+         "text": "Should I deploy?"
+        }
+       ],
+       "source": {
+        "kind": "user",
+        "rpcId": "c680fa69-7a7b-4f35-b002-939e2729ee01"
+       },
+       "role": "user",
+       "id": "dd06dcd9-5f30-4c64-927c-0e3121332f97"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "turn/start",
+    "seq": 5,
+    "time": 1794561004577,
+    "data": {
+     "turn": 1
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "agent/inbox/spliced",
+    "seq": 6,
+    "time": 1794561004578,
+    "data": {
+     "target": "next-turn",
+     "start": 0,
+     "removedCount": 1,
+     "inserted": []
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "step/start",
+    "seq": 7,
+    "time": 1794561004604,
+    "data": {
+     "turn": 1,
+     "step": 1
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "system/message",
+    "seq": 8,
+    "time": 1794561004606,
+    "data": {
+     "omitted": true
+    },
+    "surfaceOp": "append"
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "user/message",
+    "seq": 9,
+    "time": 1794561004607,
+    "data": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Should I deploy?"
+      }
+     ],
+     "source": {
+      "kind": "user",
+      "rpcId": "c680fa69-7a7b-4f35-b002-939e2729ee01"
+     },
+     "role": "user",
+     "id": "dd06dcd9-5f30-4c64-927c-0e3121332f97"
+    },
+    "surfaceOp": "append"
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "user/message",
+    "seq": 10,
+    "time": 1794561004608,
+    "data": {
+     "content": [
+      {
+       "type": "text",
+       "text": "(runtime context, omitted)"
+      }
+     ],
+     "source": {
+      "kind": "runtime-context",
+      "form": "snapshot",
+      "sections": [
+       {
+        "name": "working-directory:current",
+        "text": "Current working directory: \"/home/ada/dsh\"."
+       },
+       {
+        "name": "sandbox:policy",
+        "text": "Current DSH file policy: workspace-write. Any available operation enforced by the DSH file sandbox may modify files under the session workspace: \"/home/ada/dsh\". Some platform temporary areas may also be writable."
+       },
+       {
+        "name": "approval:policy",
+        "text": "Approval prompts are enabled in this session: operations that require approval may ask through the configured answerers; without an available answerer, the request fails closed."
+       },
+       {
+        "name": "harness:source",
+        "text": "Current DeepSeek Harness implementation checkout: \"/home/ada/dsh\"."
+       },
+       {
+        "name": "app:web-surface",
+        "text": "Current DeepSeek Harness Web GUI URL: \"http://127.0.0.1:18791\"."
+       }
+      ]
+     },
+     "role": "user",
+     "id": "80504660-0311-4476-96c5-681eca3a7f43"
+    },
+    "surfaceOp": "append"
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "user/message",
+    "seq": 11,
+    "time": 1794561004608,
+    "data": {
+     "content": [
+      {
+       "type": "text",
+       "text": "(runtime context, omitted)"
+      }
+     ],
+     "source": {
+      "kind": "time-context",
+      "form": "snapshot",
+      "sections": [
+       {
+        "name": "time-context",
+        "text": "Time sampled while preparing turn 1, step 1: 2026-11-13T09:10:04+00:00[UTC]\nBrowser time zone for this request: unavailable. Ask the user to clarify otherwise-unqualified dates and times.\nElapsed since the preceding model-visible message: unavailable."
+       }
+      ]
+     },
+     "role": "user",
+     "id": "fc8cf079-26c3-499b-a1f2-6f2f329f8169"
+    },
+    "surfaceOp": "append"
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "request/header",
+    "seq": 12,
+    "time": 1794561004609,
+    "data": {
+     "omitted": true
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "request/context",
+    "seq": 13,
+    "time": 1794561004610,
+    "data": {
+     "provider": "teamwork-platform",
+     "model": "coder",
+     "contextWindow": 32768
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "start",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:1",
+    "revision": 1,
+    "turn": 1,
+    "step": 1,
+    "startedAfterSeq": 13
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "session/title",
+    "seq": 14,
+    "time": 1794561004613,
+    "data": {
+     "title": "Should I deploy?",
+     "messageSeqs": [
+      9
+     ],
+     "source": {
+      "kind": "fallback"
+     }
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "session/title-llm-request",
+    "seq": 15,
+    "time": 1794561004615,
+    "data": {
+     "omitted": true
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:1",
+    "revision": 2,
+    "index": 0,
+    "time": 1794561004633,
+    "chunk": {
+     "type": "block-start",
+     "index": 0,
+     "blockType": "tool-call"
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:1",
+    "revision": 3,
+    "index": 1,
+    "time": 1794561004633,
+    "chunk": {
+     "type": "tool-call-delta",
+     "index": 0,
+     "id": "call_q",
+     "name": "ask_user_question",
+     "argumentsDelta": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:1",
+    "revision": 4,
+    "index": 2,
+    "time": 1794561004634,
+    "chunk": {
+     "type": "block-end",
+     "index": 0,
+     "block": {
+      "type": "tool-call",
+      "id": "call_q",
+      "name": "ask_user_question",
+      "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+     }
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:1",
+    "revision": 5,
+    "index": 3,
+    "time": 1794561004634,
+    "chunk": {
+     "type": "usage",
+     "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "totalTokens": 0
+     }
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:1",
+    "revision": 6,
+    "index": 4,
+    "time": 1794561004634,
+    "chunk": {
+     "type": "finish",
+     "reason": {
+      "kind": "tool-calls"
+     }
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "assistant/message",
+    "seq": 16,
+    "time": 1794561004634,
+    "data": {
+     "turn": 1,
+     "step": 1,
+     "message": {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "tool-call",
+        "id": "call_q",
+        "name": "ask_user_question",
+        "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+       }
+      ],
+      "source": {
+       "kind": "model",
+       "provider": "teamwork-platform",
+       "model": "coder",
+       "replayState": {
+        "response": {
+         "kind": "pi-ai",
+         "version": 2,
+         "api": "openai-completions",
+         "provider": "teamwork-platform",
+         "model": "coder",
+         "responseId": "c1",
+         "stopReason": "toolUse"
+        },
+        "blocks": [
+         {
+          "type": "tool-call"
+         }
+        ]
+       }
+      },
+      "id": "4bb86350-aa3d-47c4-acf4-83d5b99ebe5c"
+     },
+     "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "totalTokens": 0
+     },
+     "stream": [
+      {
+       "type": "chunk",
+       "time": 1794561004633,
+       "chunk": {
+        "type": "block-start",
+        "index": 0,
+        "blockType": "tool-call"
+       }
+      },
+      {
+       "type": "tool-call-chunks",
+       "time0": 1794561004633,
+       "index": 0,
+       "dt": [],
+       "id": "call_q",
+       "name": "ask_user_question",
+       "args": [
+        "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+       ]
+      },
+      {
+       "type": "chunk",
+       "time": 1794561004634,
+       "chunk": {
+        "type": "block-end",
+        "index": 0,
+        "block": {
+         "type": "tool-call",
+         "id": "call_q",
+         "name": "ask_user_question",
+         "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+        }
+       }
+      },
+      {
+       "type": "chunk",
+       "time": 1794561004634,
+       "chunk": {
+        "type": "usage",
+        "usage": {
+         "inputTokens": 0,
+         "outputTokens": 0,
+         "totalTokens": 0
+        }
+       }
+      },
+      {
+       "type": "chunk",
+       "time": 1794561004634,
+       "chunk": {
+        "type": "finish",
+        "reason": {
+         "kind": "tool-calls"
+        },
+        "replayState": {
+         "response": {
+          "kind": "pi-ai",
+          "version": 2,
+          "api": "openai-completions",
+          "provider": "teamwork-platform",
+          "model": "coder",
+          "responseId": "c1",
+          "stopReason": "toolUse"
+         },
+         "blocks": [
+          {
+           "type": "tool-call"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    },
+    "surfaceOp": "append"
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "end",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:1",
+    "revision": 7,
+    "index": 5,
+    "outcome": {
+     "kind": "committed",
+     "eventType": "assistant/message",
+     "seq": 16
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "tool/call",
+    "seq": 17,
+    "time": 1794561004635,
+    "data": {
+     "turn": 1,
+     "step": 1,
+     "callId": "call_q",
+     "name": "ask_user_question",
+     "arguments": "{\"questions\":[{\"id\":\"go\",\"question\":\"Deploy to staging?\",\"options\":[{\"label\":\"Yes\"},{\"label\":\"No\"}]}]}"
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "tool/result",
+    "seq": 18,
+    "time": 1794561004948,
+    "data": {
+     "turn": 1,
+     "step": 1,
+     "message": {
+      "role": "tool",
+      "source": {
+       "kind": "tool",
+       "callId": "call_q"
+      },
+      "toolCallId": "call_q",
+      "content": [
+       {
+        "type": "text",
+        "text": "{\"answers\":[{\"id\":\"go\",\"selected\":[\"Yes\"]}]}"
+       }
+      ],
+      "isError": false,
+      "id": "fe29180f-fc9c-46b4-9a51-6dff16a180eb"
+     }
+    },
+    "sourceEventSeqs": [
+     17
+    ],
+    "surfaceOp": "append"
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "step/end",
+    "seq": 19,
+    "time": 1794561004949,
+    "data": {
+     "turn": 1,
+     "step": 1
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "step/start",
+    "seq": 20,
+    "time": 1794561004966,
+    "data": {
+     "turn": 1,
+     "step": 2
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "start",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:2",
+    "revision": 8,
+    "turn": 1,
+    "step": 2,
+    "startedAfterSeq": 20
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:2",
+    "revision": 9,
+    "index": 0,
+    "time": 1794561004977,
+    "chunk": {
+     "type": "block-start",
+     "index": 0,
+     "blockType": "text"
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:2",
+    "revision": 10,
+    "index": 1,
+    "time": 1794561004977,
+    "chunk": {
+     "type": "text-delta",
+     "index": 0,
+     "text": "The phone answered: "
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:2",
+    "revision": 11,
+    "index": 2,
+    "time": 1794561004977,
+    "chunk": {
+     "type": "text-delta",
+     "index": 0,
+     "text": "[\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:2",
+    "revision": 12,
+    "index": 3,
+    "time": 1794561004977,
+    "chunk": {
+     "type": "block-end",
+     "index": 0,
+     "block": {
+      "type": "text",
+      "text": "The phone answered: [\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+     }
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:2",
+    "revision": 13,
+    "index": 4,
+    "time": 1794561004977,
+    "chunk": {
+     "type": "usage",
+     "usage": {
+      "inputTokens": 10,
+      "outputTokens": 6,
+      "totalTokens": 16
+     }
+    }
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "chunk",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:2",
+    "revision": 14,
+    "index": 5,
+    "time": 1794561004977,
+    "chunk": {
+     "type": "finish",
+     "reason": {
+      "kind": "stop"
+     }
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "assistant/message",
+    "seq": 21,
+    "time": 1794561004978,
+    "data": {
+     "turn": 1,
+     "step": 2,
+     "message": {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "text",
+        "text": "The phone answered: [\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+       }
+      ],
+      "source": {
+       "kind": "model",
+       "provider": "teamwork-platform",
+       "model": "coder",
+       "replayState": {
+        "response": {
+         "kind": "pi-ai",
+         "version": 2,
+         "api": "openai-completions",
+         "provider": "teamwork-platform",
+         "model": "coder",
+         "responseId": "c1",
+         "stopReason": "stop"
+        },
+        "blocks": [
+         {
+          "type": "text"
+         }
+        ]
+       }
+      },
+      "id": "f523a1a0-405a-435e-bad8-b3af43db45fa"
+     },
+     "usage": {
+      "inputTokens": 10,
+      "outputTokens": 6,
+      "totalTokens": 16
+     },
+     "stream": [
+      {
+       "type": "chunk",
+       "time": 1794561004977,
+       "chunk": {
+        "type": "block-start",
+        "index": 0,
+        "blockType": "text"
+       }
+      },
+      {
+       "type": "text-chunks",
+       "time0": 1794561004977,
+       "index": 0,
+       "dt": [
+        0
+       ],
+       "texts": [
+        "The phone answered: ",
+        "[\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+       ]
+      },
+      {
+       "type": "chunk",
+       "time": 1794561004977,
+       "chunk": {
+        "type": "block-end",
+        "index": 0,
+        "block": {
+         "type": "text",
+         "text": "The phone answered: [\"{\\\"answers\\\":[{\\\"id\\\":\\\"go\\\",\\\"selected\\\":[\\\"Yes\\\"]}]}\"]"
+        }
+       }
+      },
+      {
+       "type": "chunk",
+       "time": 1794561004977,
+       "chunk": {
+        "type": "usage",
+        "usage": {
+         "inputTokens": 10,
+         "outputTokens": 6,
+         "totalTokens": 16
+        }
+       }
+      },
+      {
+       "type": "chunk",
+       "time": 1794561004977,
+       "chunk": {
+        "type": "finish",
+        "reason": {
+         "kind": "stop"
+        },
+        "replayState": {
+         "response": {
+          "kind": "pi-ai",
+          "version": 2,
+          "api": "openai-completions",
+          "provider": "teamwork-platform",
+          "model": "coder",
+          "responseId": "c1",
+          "stopReason": "stop"
+         },
+         "blocks": [
+          {
+           "type": "text"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    },
+    "surfaceOp": "append"
+   }
+  },
+  {
+   "type": "assistant-stream",
+   "frame": {
+    "type": "end",
+    "attemptId": "session-ae0f7c5c-d091-42f5-aeb3-676f87d5bfe1:2",
+    "revision": 15,
+    "index": 6,
+    "outcome": {
+     "kind": "committed",
+     "eventType": "assistant/message",
+     "seq": 21
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "step/end",
+    "seq": 22,
+    "time": 1794561004979,
+    "data": {
+     "turn": 1,
+     "step": 2
+    }
+   }
+  },
+  {
+   "type": "event",
+   "event": {
+    "type": "turn/end",
+    "seq": 23,
+    "time": 1794561004979,
+    "data": {
+     "turn": 1,
+     "reason": {
+      "kind": "completed"
+     }
+    }
+   }
+  }
+ ]
+}

@@ -50,3 +50,9 @@ OpenRouter 服务商查 OpenRouter，其他服务商查 Models.dev（Models.dev 
 ## 6. 审核成员分享的内容
 
 成员可以提交预设和插件。在**审核**中对比提交内容与当前线上内容，批准后发布，或填写理由后拒绝。
+
+## 7. 与团队共享一台 DSH
+
+在**共享 DSH**中为团队要给成员使用的 DSH 起个名字，复制只显示一次的命令 `/teamwork share enable <key>`，在那台 DSH 里运行。之后它以团队身份登录而不是个人，只同步这个团队，团队模型的调用计入团队。第一台使用 key 的机器会绑定它；**更换 key** 为同一台机器签发新 key，**删除**则立即切断。在**访问**中选择谁可以访问它：整个团队或指定成员。对其中每个人，在那台 DSH 里运行 `/teamwork share invite <email>`，并亲自把链接交给对方；每个成员只能访问自己发起的会话。成员在手机 App 中打开链接，或粘贴到控制台的**共享 DSH**页。
+
+共享 DSH 在接纳任何人之前，需要团队的**审计密钥**。在你自己的电脑上安装插件包后运行 `dsh-teamwork-audit keygen`：它会写出只由你保管的 `audit-key.json`，并打印出要在共享 DSH 里运行的 `/teamwork share audit-key <public key>`。此后共享 DSH 会把成员在上面做的一切加密到这把密钥并上传，服务器保存它却无法读取。在同一页的**审计归档**中下载某台共享 DSH 的归档，用 `dsh-teamwork-audit read <file> --key audit-key.json` 打开，它还会指出缺失或被改动的部分。**丢失的密钥无法找回**，持有它的人可以读取所有成员的会话。

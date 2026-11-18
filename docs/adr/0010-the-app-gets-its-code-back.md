@@ -1,6 +1,6 @@
 # 0010. A phone app gets its sign-in code back by redirect, after the same confirmation
 
-> **Status:** Accepted · **Date:** 2026-11-13
+> **Status:** Superseded by 0046 · **Date:** 2026-11-13
 
 ## Context
 

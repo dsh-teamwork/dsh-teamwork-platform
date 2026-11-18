@@ -131,6 +131,13 @@ func TestExtension(t *testing.T) {
 		if in, err := host.Users.InTeam(ctx, ada); !in || err != nil {
 			t.Fatalf("not in the team it created: %v %v", in, err)
 		}
+
+		// An admin-set first password, still unchanged, opens no extension's route.
+		bea := in.Account("bea@example.com")
+		in.FirstPassword(bea)
+		if who := call(t, in, func(r *http.Request) { r.AddCookie(in.Session(bea, "password")) }); who != nil {
+			t.Fatalf("a first password's session: %+v", who)
+		}
 	})
 }
 

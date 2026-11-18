@@ -25,6 +25,7 @@ import {
   Menu,
   Puzzle,
   Send,
+  Server,
   Users,
   X,
   type LucideIcon,
@@ -41,7 +42,7 @@ import { api, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets';
+type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'sharedHosts';
 type GroupKey = 'work' | 'manage';
 
 /** The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon. */
@@ -53,6 +54,7 @@ const GROUPS: { key: GroupKey; admin: boolean; sections: { path: string; key: Se
       { path: '', key: 'overview', icon: House },
       { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'submissions', key: 'submissions', icon: Send },
+      { path: 'shared-hosts', key: 'sharedHosts', icon: Server },
     ],
   },
   {

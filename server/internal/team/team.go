@@ -18,6 +18,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
+	entteam "github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -198,38 +199,65 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 	}
 	out := Snapshot{Teams: make([]TeamSnapshot, 0, len(ms))}
 	for _, m := range ms {
-		configs := m.Edges.Team.Edges.Configs
-		sortConfigs(configs)
-		views := make([]ConfigView, 0, len(configs))
-		for _, c := range configs {
-			views = append(views, configView(c))
+		t, err := s.teamSnapshot(ctx, m.Edges.Team, string(m.Role))
+		if err != nil {
+			return Snapshot{}, err
 		}
-		pins := []PluginVersionView{}
-		seen := map[string]bool{}
-		for _, c := range configs {
-			if c.Kind != teamconfig.KindPreset {
-				continue
-			}
-			var preset wire.PresetData
-			if json.Unmarshal(c.Data, &preset) != nil {
-				continue
-			}
-			for _, pin := range preset.PluginDependencies {
-				key := pin.PluginConfigID + "@" + pin.Version
-				if seen[key] {
-					continue
-				}
-				seen[key] = true
-				data, name, err := s.resolvePlugin(ctx, m.TeamID, pin.PluginConfigID, pin.Version)
-				if err != nil {
-					return Snapshot{}, err
-				}
-				pins = append(pins, PluginVersionView{ConfigID: pin.PluginConfigID, Name: name, Data: *data})
-			}
-		}
-		out.Teams = append(out.Teams, TeamSnapshot{TeamID: m.TeamID, TeamName: m.Edges.Team.Name, Role: string(m.Role), Configs: views, PluginVersions: pins})
+		out.Teams = append(out.Teams, t)
 	}
 	return out, nil
+}
+
+// HostSnapshot is the configuration a shared DSH syncs (ADR 0047): its one
+// team, as a member sees it, or no team once the team is gone.
+func (s *Service) HostSnapshot(ctx context.Context, teamID string) (Snapshot, error) {
+	t, err := s.DB.Team.Query().Where(entteam.ID(teamID)).WithConfigs().Only(ctx)
+	if ent.IsNotFound(err) {
+		return Snapshot{Teams: []TeamSnapshot{}}, nil
+	}
+	if err != nil {
+		return Snapshot{}, err
+	}
+	view, err := s.teamSnapshot(ctx, t, string(membership.RoleMember))
+	if err != nil {
+		return Snapshot{}, err
+	}
+	return Snapshot{Teams: []TeamSnapshot{view}}, nil
+}
+
+// teamSnapshot is one team's configurations and the plugin versions its
+// presets pin; t carries its configs.
+func (s *Service) teamSnapshot(ctx context.Context, t *ent.Team, role string) (TeamSnapshot, error) {
+	configs := t.Edges.Configs
+	sortConfigs(configs)
+	views := make([]ConfigView, 0, len(configs))
+	for _, c := range configs {
+		views = append(views, configView(c))
+	}
+	pins := []PluginVersionView{}
+	seen := map[string]bool{}
+	for _, c := range configs {
+		if c.Kind != teamconfig.KindPreset {
+			continue
+		}
+		var preset wire.PresetData
+		if json.Unmarshal(c.Data, &preset) != nil {
+			continue
+		}
+		for _, pin := range preset.PluginDependencies {
+			key := pin.PluginConfigID + "@" + pin.Version
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			data, name, err := s.resolvePlugin(ctx, t.ID, pin.PluginConfigID, pin.Version)
+			if err != nil {
+				return TeamSnapshot{}, err
+			}
+			pins = append(pins, PluginVersionView{ConfigID: pin.PluginConfigID, Name: name, Data: *data})
+		}
+	}
+	return TeamSnapshot{TeamID: t.ID, TeamName: t.Name, Role: role, Configs: views, PluginVersions: pins}, nil
 }
 
 // checkReferences holds what a configuration names to the team: a provider

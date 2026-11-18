@@ -65,8 +65,12 @@ func Resolve(databaseURL, dataDir string) (Target, error) {
 	}
 }
 
+// sqlitePath escapes what a file: URI would read as its query or fragment, so
+// a path holding ? or # (a test's temporary directory can) is the file opened.
+var sqlitePath = strings.NewReplacer("%", "%25", "?", "%3F", "#", "%23")
+
 func sqliteTarget(path string) Target {
-	return Target{Dialect: dialect.SQLite, Driver: "sqlite", DSN: "file:" + filepath.ToSlash(path) + "?" + SQLitePragmas}
+	return Target{Dialect: dialect.SQLite, Driver: "sqlite", DSN: "file:" + sqlitePath.Replace(filepath.ToSlash(path)) + "?" + SQLitePragmas}
 }
 
 // mysqlTarget turns mysql://user:pass@host:port/db?… into the driver's DSN.

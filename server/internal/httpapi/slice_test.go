@@ -86,9 +86,12 @@ func TestPKCEExchange(t *testing.T) {
 		if r := do(t, http.DefaultClient, "POST", e.url+"/api/auth/plugin/code", map[string]string{"challenge": auth.ChallengeOf(verifier)}, map[string]string{"Authorization": "Bearer " + tok}); r.status != 401 {
 			t.Fatalf("a token minted a code: %d", r.status)
 		}
-		// Only this server's loopback or the app's prefix may receive a code.
+		// Only this server's loopback or the phone app's address may receive a code; the app's needs no setting.
 		if r := admin.post("/api/auth/plugin/code", map[string]string{"challenge": auth.ChallengeOf(verifier), "redirectUri": "https://evil.example/cb"}); r.status != 400 {
 			t.Fatalf("foreign redirect: %d", r.status)
+		}
+		if back := must(t, admin.post("/api/auth/plugin/code", map[string]string{"challenge": auth.ChallengeOf(verifier), "redirectUri": "dshteamwork://sign-in"}), 200)["returnTo"].(map[string]any); back["to"] != "app" {
+			t.Fatalf("the app's address: %v", back)
 		}
 		if r := admin.post("/api/auth/plugin/code", map[string]string{"challenge": "too-short"}); r.status != 401 {
 			t.Fatalf("malformed challenge: %d", r.status)

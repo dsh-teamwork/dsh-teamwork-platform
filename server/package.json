@@ -10,7 +10,9 @@
     "db:drift": "node scripts/drift.mjs"
   },
   "devDependencies": {
+    "@dsh-teamwork/manage": "workspace:*",
+    "@dsh-teamwork/relay-client": "workspace:*",
     "@dsh-teamwork/web": "workspace:*",
-    "@dsh-teamwork/manage": "workspace:*"
+    "esbuild": "0.27.1"
   }
 }

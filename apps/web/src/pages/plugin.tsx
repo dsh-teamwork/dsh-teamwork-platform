@@ -33,7 +33,7 @@ export function PluginPage() {
   // What the code will reach: every team the account is in (the plugin syncs them all, ADR 0013).
   const teams = useApi<TeamSummary[]>(session.user && !session.user.mustChangePassword ? 'teams' : null);
 
-  const to = redirectUri === null ? null : isLoopback(redirectUri) ? 'dsh' : session.mobileRedirectPrefix && redirectUri.startsWith(session.mobileRedirectPrefix) ? 'app' : undefined;
+  const to = redirectUri === null ? null : isLoopback(redirectUri) ? 'dsh' : redirectUri === session.appRedirect ? 'app' : undefined;
   const valid = CHALLENGE.test(challenge) && to !== undefined;
   if (!valid) return <CardPage title={t('title')} description={t('invalid')} wide />;
   const here = location.pathname + location.search;

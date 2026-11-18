@@ -26,8 +26,14 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/predicate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedarchivesegment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -45,27 +51,33 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeBudgetEvent        = "BudgetEvent"
-	TypeBudgetGate         = "BudgetGate"
-	TypeBudgetNotice       = "BudgetNotice"
-	TypeBudgetPolicy       = "BudgetPolicy"
-	TypeBudgetReservation  = "BudgetReservation"
-	TypeBudgetWindow       = "BudgetWindow"
-	TypeConfigRevision     = "ConfigRevision"
-	TypeIdentity           = "Identity"
-	TypeInvite             = "Invite"
-	TypeMembership         = "Membership"
-	TypeModelRate          = "ModelRate"
-	TypePassword           = "Password"
-	TypeRateWindow         = "RateWindow"
-	TypeResourceArtifact   = "ResourceArtifact"
-	TypeResourceSubmission = "ResourceSubmission"
-	TypeTeam               = "Team"
-	TypeTeamConfig         = "TeamConfig"
-	TypeTeamProvider       = "TeamProvider"
-	TypeUsageRequest       = "UsageRequest"
-	TypeUser               = "User"
-	TypeVerificationCode   = "VerificationCode"
+	TypeBudgetEvent          = "BudgetEvent"
+	TypeBudgetGate           = "BudgetGate"
+	TypeBudgetNotice         = "BudgetNotice"
+	TypeBudgetPolicy         = "BudgetPolicy"
+	TypeBudgetReservation    = "BudgetReservation"
+	TypeBudgetWindow         = "BudgetWindow"
+	TypeConfigRevision       = "ConfigRevision"
+	TypeIdentity             = "Identity"
+	TypeInvite               = "Invite"
+	TypeMembership           = "Membership"
+	TypeModelRate            = "ModelRate"
+	TypePassword             = "Password"
+	TypeRateWindow           = "RateWindow"
+	TypeRelayHost            = "RelayHost"
+	TypeRelayPairing         = "RelayPairing"
+	TypeRelayPairingOffer    = "RelayPairingOffer"
+	TypeResourceArtifact     = "ResourceArtifact"
+	TypeResourceSubmission   = "ResourceSubmission"
+	TypeSharedArchiveSegment = "SharedArchiveSegment"
+	TypeSharedHost           = "SharedHost"
+	TypeSharedHostMember     = "SharedHostMember"
+	TypeTeam                 = "Team"
+	TypeTeamConfig           = "TeamConfig"
+	TypeTeamProvider         = "TeamProvider"
+	TypeUsageRequest         = "UsageRequest"
+	TypeUser                 = "User"
+	TypeVerificationCode     = "VerificationCode"
 )
 
 // BudgetEventMutation represents an operation that mutates the BudgetEvent nodes in the graph.
@@ -11047,6 +11059,2059 @@ func (m *RateWindowMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown RateWindow edge %s", name)
 }
 
+// RelayHostMutation represents an operation that mutates the RelayHost nodes in the graph.
+type RelayHostMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	user_id       *string
+	client_id     *string
+	name          *string
+	dsh_version   *string
+	last_seen_at  *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*RelayHost, error)
+	predicates    []predicate.RelayHost
+}
+
+var _ ent.Mutation = (*RelayHostMutation)(nil)
+
+// relayhostOption allows management of the mutation configuration using functional options.
+type relayhostOption func(*RelayHostMutation)
+
+// newRelayHostMutation creates new mutation for the RelayHost entity.
+func newRelayHostMutation(c config, op Op, opts ...relayhostOption) *RelayHostMutation {
+	m := &RelayHostMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRelayHost,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRelayHostID sets the ID field of the mutation.
+func withRelayHostID(id string) relayhostOption {
+	return func(m *RelayHostMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RelayHost
+		)
+		m.oldValue = func(ctx context.Context) (*RelayHost, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RelayHost.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRelayHost sets the old RelayHost of the mutation.
+func withRelayHost(node *RelayHost) relayhostOption {
+	return func(m *RelayHostMutation) {
+		m.oldValue = func(context.Context) (*RelayHost, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RelayHostMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RelayHostMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RelayHost entities.
+func (m *RelayHostMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RelayHostMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RelayHostMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RelayHost.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *RelayHostMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RelayHostMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the RelayHost entity.
+// If the RelayHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayHostMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RelayHostMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *RelayHostMutation) SetUserID(s string) {
+	m.user_id = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *RelayHostMutation) UserID() (r string, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the RelayHost entity.
+// If the RelayHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayHostMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *RelayHostMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetClientID sets the "client_id" field.
+func (m *RelayHostMutation) SetClientID(s string) {
+	m.client_id = &s
+}
+
+// ClientID returns the value of the "client_id" field in the mutation.
+func (m *RelayHostMutation) ClientID() (r string, exists bool) {
+	v := m.client_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClientID returns the old "client_id" field's value of the RelayHost entity.
+// If the RelayHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayHostMutation) OldClientID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClientID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClientID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClientID: %w", err)
+	}
+	return oldValue.ClientID, nil
+}
+
+// ResetClientID resets all changes to the "client_id" field.
+func (m *RelayHostMutation) ResetClientID() {
+	m.client_id = nil
+}
+
+// SetName sets the "name" field.
+func (m *RelayHostMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RelayHostMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the RelayHost entity.
+// If the RelayHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayHostMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RelayHostMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDshVersion sets the "dsh_version" field.
+func (m *RelayHostMutation) SetDshVersion(s string) {
+	m.dsh_version = &s
+}
+
+// DshVersion returns the value of the "dsh_version" field in the mutation.
+func (m *RelayHostMutation) DshVersion() (r string, exists bool) {
+	v := m.dsh_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDshVersion returns the old "dsh_version" field's value of the RelayHost entity.
+// If the RelayHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayHostMutation) OldDshVersion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDshVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDshVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDshVersion: %w", err)
+	}
+	return oldValue.DshVersion, nil
+}
+
+// ResetDshVersion resets all changes to the "dsh_version" field.
+func (m *RelayHostMutation) ResetDshVersion() {
+	m.dsh_version = nil
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (m *RelayHostMutation) SetLastSeenAt(t time.Time) {
+	m.last_seen_at = &t
+}
+
+// LastSeenAt returns the value of the "last_seen_at" field in the mutation.
+func (m *RelayHostMutation) LastSeenAt() (r time.Time, exists bool) {
+	v := m.last_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSeenAt returns the old "last_seen_at" field's value of the RelayHost entity.
+// If the RelayHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayHostMutation) OldLastSeenAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSeenAt: %w", err)
+	}
+	return oldValue.LastSeenAt, nil
+}
+
+// ResetLastSeenAt resets all changes to the "last_seen_at" field.
+func (m *RelayHostMutation) ResetLastSeenAt() {
+	m.last_seen_at = nil
+}
+
+// Where appends a list predicates to the RelayHostMutation builder.
+func (m *RelayHostMutation) Where(ps ...predicate.RelayHost) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RelayHostMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RelayHostMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RelayHost, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RelayHostMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RelayHostMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RelayHost).
+func (m *RelayHostMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RelayHostMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.created_at != nil {
+		fields = append(fields, relayhost.FieldCreatedAt)
+	}
+	if m.user_id != nil {
+		fields = append(fields, relayhost.FieldUserID)
+	}
+	if m.client_id != nil {
+		fields = append(fields, relayhost.FieldClientID)
+	}
+	if m.name != nil {
+		fields = append(fields, relayhost.FieldName)
+	}
+	if m.dsh_version != nil {
+		fields = append(fields, relayhost.FieldDshVersion)
+	}
+	if m.last_seen_at != nil {
+		fields = append(fields, relayhost.FieldLastSeenAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RelayHostMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case relayhost.FieldCreatedAt:
+		return m.CreatedAt()
+	case relayhost.FieldUserID:
+		return m.UserID()
+	case relayhost.FieldClientID:
+		return m.ClientID()
+	case relayhost.FieldName:
+		return m.Name()
+	case relayhost.FieldDshVersion:
+		return m.DshVersion()
+	case relayhost.FieldLastSeenAt:
+		return m.LastSeenAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RelayHostMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case relayhost.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case relayhost.FieldUserID:
+		return m.OldUserID(ctx)
+	case relayhost.FieldClientID:
+		return m.OldClientID(ctx)
+	case relayhost.FieldName:
+		return m.OldName(ctx)
+	case relayhost.FieldDshVersion:
+		return m.OldDshVersion(ctx)
+	case relayhost.FieldLastSeenAt:
+		return m.OldLastSeenAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown RelayHost field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RelayHostMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case relayhost.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case relayhost.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case relayhost.FieldClientID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClientID(v)
+		return nil
+	case relayhost.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case relayhost.FieldDshVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDshVersion(v)
+		return nil
+	case relayhost.FieldLastSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSeenAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RelayHost field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RelayHostMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RelayHostMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RelayHostMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown RelayHost numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RelayHostMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RelayHostMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RelayHostMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown RelayHost nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RelayHostMutation) ResetField(name string) error {
+	switch name {
+	case relayhost.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case relayhost.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case relayhost.FieldClientID:
+		m.ResetClientID()
+		return nil
+	case relayhost.FieldName:
+		m.ResetName()
+		return nil
+	case relayhost.FieldDshVersion:
+		m.ResetDshVersion()
+		return nil
+	case relayhost.FieldLastSeenAt:
+		m.ResetLastSeenAt()
+		return nil
+	}
+	return fmt.Errorf("unknown RelayHost field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RelayHostMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RelayHostMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RelayHostMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RelayHostMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RelayHostMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RelayHostMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RelayHostMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown RelayHost unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RelayHostMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown RelayHost edge %s", name)
+}
+
+// RelayPairingMutation represents an operation that mutates the RelayPairing nodes in the graph.
+type RelayPairingMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *string
+	created_at      *time.Time
+	user_id         *string
+	host_id         *string
+	device_name     *string
+	device_key_hash *string
+	push_token      *string
+	push_locale     *string
+	confirmed_at    *time.Time
+	revoked_at      *time.Time
+	last_used_at    *time.Time
+	clearedFields   map[string]struct{}
+	done            bool
+	oldValue        func(context.Context) (*RelayPairing, error)
+	predicates      []predicate.RelayPairing
+}
+
+var _ ent.Mutation = (*RelayPairingMutation)(nil)
+
+// relaypairingOption allows management of the mutation configuration using functional options.
+type relaypairingOption func(*RelayPairingMutation)
+
+// newRelayPairingMutation creates new mutation for the RelayPairing entity.
+func newRelayPairingMutation(c config, op Op, opts ...relaypairingOption) *RelayPairingMutation {
+	m := &RelayPairingMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRelayPairing,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRelayPairingID sets the ID field of the mutation.
+func withRelayPairingID(id string) relaypairingOption {
+	return func(m *RelayPairingMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RelayPairing
+		)
+		m.oldValue = func(ctx context.Context) (*RelayPairing, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RelayPairing.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRelayPairing sets the old RelayPairing of the mutation.
+func withRelayPairing(node *RelayPairing) relaypairingOption {
+	return func(m *RelayPairingMutation) {
+		m.oldValue = func(context.Context) (*RelayPairing, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RelayPairingMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RelayPairingMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RelayPairing entities.
+func (m *RelayPairingMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RelayPairingMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RelayPairingMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RelayPairing.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *RelayPairingMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RelayPairingMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RelayPairingMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *RelayPairingMutation) SetUserID(s string) {
+	m.user_id = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *RelayPairingMutation) UserID() (r string, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *RelayPairingMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetHostID sets the "host_id" field.
+func (m *RelayPairingMutation) SetHostID(s string) {
+	m.host_id = &s
+}
+
+// HostID returns the value of the "host_id" field in the mutation.
+func (m *RelayPairingMutation) HostID() (r string, exists bool) {
+	v := m.host_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostID returns the old "host_id" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldHostID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostID: %w", err)
+	}
+	return oldValue.HostID, nil
+}
+
+// ResetHostID resets all changes to the "host_id" field.
+func (m *RelayPairingMutation) ResetHostID() {
+	m.host_id = nil
+}
+
+// SetDeviceName sets the "device_name" field.
+func (m *RelayPairingMutation) SetDeviceName(s string) {
+	m.device_name = &s
+}
+
+// DeviceName returns the value of the "device_name" field in the mutation.
+func (m *RelayPairingMutation) DeviceName() (r string, exists bool) {
+	v := m.device_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeviceName returns the old "device_name" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldDeviceName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeviceName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeviceName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeviceName: %w", err)
+	}
+	return oldValue.DeviceName, nil
+}
+
+// ResetDeviceName resets all changes to the "device_name" field.
+func (m *RelayPairingMutation) ResetDeviceName() {
+	m.device_name = nil
+}
+
+// SetDeviceKeyHash sets the "device_key_hash" field.
+func (m *RelayPairingMutation) SetDeviceKeyHash(s string) {
+	m.device_key_hash = &s
+}
+
+// DeviceKeyHash returns the value of the "device_key_hash" field in the mutation.
+func (m *RelayPairingMutation) DeviceKeyHash() (r string, exists bool) {
+	v := m.device_key_hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeviceKeyHash returns the old "device_key_hash" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldDeviceKeyHash(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeviceKeyHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeviceKeyHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeviceKeyHash: %w", err)
+	}
+	return oldValue.DeviceKeyHash, nil
+}
+
+// ClearDeviceKeyHash clears the value of the "device_key_hash" field.
+func (m *RelayPairingMutation) ClearDeviceKeyHash() {
+	m.device_key_hash = nil
+	m.clearedFields[relaypairing.FieldDeviceKeyHash] = struct{}{}
+}
+
+// DeviceKeyHashCleared returns if the "device_key_hash" field was cleared in this mutation.
+func (m *RelayPairingMutation) DeviceKeyHashCleared() bool {
+	_, ok := m.clearedFields[relaypairing.FieldDeviceKeyHash]
+	return ok
+}
+
+// ResetDeviceKeyHash resets all changes to the "device_key_hash" field.
+func (m *RelayPairingMutation) ResetDeviceKeyHash() {
+	m.device_key_hash = nil
+	delete(m.clearedFields, relaypairing.FieldDeviceKeyHash)
+}
+
+// SetPushToken sets the "push_token" field.
+func (m *RelayPairingMutation) SetPushToken(s string) {
+	m.push_token = &s
+}
+
+// PushToken returns the value of the "push_token" field in the mutation.
+func (m *RelayPairingMutation) PushToken() (r string, exists bool) {
+	v := m.push_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPushToken returns the old "push_token" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldPushToken(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPushToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPushToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPushToken: %w", err)
+	}
+	return oldValue.PushToken, nil
+}
+
+// ClearPushToken clears the value of the "push_token" field.
+func (m *RelayPairingMutation) ClearPushToken() {
+	m.push_token = nil
+	m.clearedFields[relaypairing.FieldPushToken] = struct{}{}
+}
+
+// PushTokenCleared returns if the "push_token" field was cleared in this mutation.
+func (m *RelayPairingMutation) PushTokenCleared() bool {
+	_, ok := m.clearedFields[relaypairing.FieldPushToken]
+	return ok
+}
+
+// ResetPushToken resets all changes to the "push_token" field.
+func (m *RelayPairingMutation) ResetPushToken() {
+	m.push_token = nil
+	delete(m.clearedFields, relaypairing.FieldPushToken)
+}
+
+// SetPushLocale sets the "push_locale" field.
+func (m *RelayPairingMutation) SetPushLocale(s string) {
+	m.push_locale = &s
+}
+
+// PushLocale returns the value of the "push_locale" field in the mutation.
+func (m *RelayPairingMutation) PushLocale() (r string, exists bool) {
+	v := m.push_locale
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPushLocale returns the old "push_locale" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldPushLocale(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPushLocale is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPushLocale requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPushLocale: %w", err)
+	}
+	return oldValue.PushLocale, nil
+}
+
+// ClearPushLocale clears the value of the "push_locale" field.
+func (m *RelayPairingMutation) ClearPushLocale() {
+	m.push_locale = nil
+	m.clearedFields[relaypairing.FieldPushLocale] = struct{}{}
+}
+
+// PushLocaleCleared returns if the "push_locale" field was cleared in this mutation.
+func (m *RelayPairingMutation) PushLocaleCleared() bool {
+	_, ok := m.clearedFields[relaypairing.FieldPushLocale]
+	return ok
+}
+
+// ResetPushLocale resets all changes to the "push_locale" field.
+func (m *RelayPairingMutation) ResetPushLocale() {
+	m.push_locale = nil
+	delete(m.clearedFields, relaypairing.FieldPushLocale)
+}
+
+// SetConfirmedAt sets the "confirmed_at" field.
+func (m *RelayPairingMutation) SetConfirmedAt(t time.Time) {
+	m.confirmed_at = &t
+}
+
+// ConfirmedAt returns the value of the "confirmed_at" field in the mutation.
+func (m *RelayPairingMutation) ConfirmedAt() (r time.Time, exists bool) {
+	v := m.confirmed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfirmedAt returns the old "confirmed_at" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldConfirmedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfirmedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfirmedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfirmedAt: %w", err)
+	}
+	return oldValue.ConfirmedAt, nil
+}
+
+// ClearConfirmedAt clears the value of the "confirmed_at" field.
+func (m *RelayPairingMutation) ClearConfirmedAt() {
+	m.confirmed_at = nil
+	m.clearedFields[relaypairing.FieldConfirmedAt] = struct{}{}
+}
+
+// ConfirmedAtCleared returns if the "confirmed_at" field was cleared in this mutation.
+func (m *RelayPairingMutation) ConfirmedAtCleared() bool {
+	_, ok := m.clearedFields[relaypairing.FieldConfirmedAt]
+	return ok
+}
+
+// ResetConfirmedAt resets all changes to the "confirmed_at" field.
+func (m *RelayPairingMutation) ResetConfirmedAt() {
+	m.confirmed_at = nil
+	delete(m.clearedFields, relaypairing.FieldConfirmedAt)
+}
+
+// SetRevokedAt sets the "revoked_at" field.
+func (m *RelayPairingMutation) SetRevokedAt(t time.Time) {
+	m.revoked_at = &t
+}
+
+// RevokedAt returns the value of the "revoked_at" field in the mutation.
+func (m *RelayPairingMutation) RevokedAt() (r time.Time, exists bool) {
+	v := m.revoked_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRevokedAt returns the old "revoked_at" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldRevokedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRevokedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRevokedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRevokedAt: %w", err)
+	}
+	return oldValue.RevokedAt, nil
+}
+
+// ClearRevokedAt clears the value of the "revoked_at" field.
+func (m *RelayPairingMutation) ClearRevokedAt() {
+	m.revoked_at = nil
+	m.clearedFields[relaypairing.FieldRevokedAt] = struct{}{}
+}
+
+// RevokedAtCleared returns if the "revoked_at" field was cleared in this mutation.
+func (m *RelayPairingMutation) RevokedAtCleared() bool {
+	_, ok := m.clearedFields[relaypairing.FieldRevokedAt]
+	return ok
+}
+
+// ResetRevokedAt resets all changes to the "revoked_at" field.
+func (m *RelayPairingMutation) ResetRevokedAt() {
+	m.revoked_at = nil
+	delete(m.clearedFields, relaypairing.FieldRevokedAt)
+}
+
+// SetLastUsedAt sets the "last_used_at" field.
+func (m *RelayPairingMutation) SetLastUsedAt(t time.Time) {
+	m.last_used_at = &t
+}
+
+// LastUsedAt returns the value of the "last_used_at" field in the mutation.
+func (m *RelayPairingMutation) LastUsedAt() (r time.Time, exists bool) {
+	v := m.last_used_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastUsedAt returns the old "last_used_at" field's value of the RelayPairing entity.
+// If the RelayPairing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingMutation) OldLastUsedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastUsedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastUsedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastUsedAt: %w", err)
+	}
+	return oldValue.LastUsedAt, nil
+}
+
+// ClearLastUsedAt clears the value of the "last_used_at" field.
+func (m *RelayPairingMutation) ClearLastUsedAt() {
+	m.last_used_at = nil
+	m.clearedFields[relaypairing.FieldLastUsedAt] = struct{}{}
+}
+
+// LastUsedAtCleared returns if the "last_used_at" field was cleared in this mutation.
+func (m *RelayPairingMutation) LastUsedAtCleared() bool {
+	_, ok := m.clearedFields[relaypairing.FieldLastUsedAt]
+	return ok
+}
+
+// ResetLastUsedAt resets all changes to the "last_used_at" field.
+func (m *RelayPairingMutation) ResetLastUsedAt() {
+	m.last_used_at = nil
+	delete(m.clearedFields, relaypairing.FieldLastUsedAt)
+}
+
+// Where appends a list predicates to the RelayPairingMutation builder.
+func (m *RelayPairingMutation) Where(ps ...predicate.RelayPairing) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RelayPairingMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RelayPairingMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RelayPairing, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RelayPairingMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RelayPairingMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RelayPairing).
+func (m *RelayPairingMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RelayPairingMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.created_at != nil {
+		fields = append(fields, relaypairing.FieldCreatedAt)
+	}
+	if m.user_id != nil {
+		fields = append(fields, relaypairing.FieldUserID)
+	}
+	if m.host_id != nil {
+		fields = append(fields, relaypairing.FieldHostID)
+	}
+	if m.device_name != nil {
+		fields = append(fields, relaypairing.FieldDeviceName)
+	}
+	if m.device_key_hash != nil {
+		fields = append(fields, relaypairing.FieldDeviceKeyHash)
+	}
+	if m.push_token != nil {
+		fields = append(fields, relaypairing.FieldPushToken)
+	}
+	if m.push_locale != nil {
+		fields = append(fields, relaypairing.FieldPushLocale)
+	}
+	if m.confirmed_at != nil {
+		fields = append(fields, relaypairing.FieldConfirmedAt)
+	}
+	if m.revoked_at != nil {
+		fields = append(fields, relaypairing.FieldRevokedAt)
+	}
+	if m.last_used_at != nil {
+		fields = append(fields, relaypairing.FieldLastUsedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RelayPairingMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case relaypairing.FieldCreatedAt:
+		return m.CreatedAt()
+	case relaypairing.FieldUserID:
+		return m.UserID()
+	case relaypairing.FieldHostID:
+		return m.HostID()
+	case relaypairing.FieldDeviceName:
+		return m.DeviceName()
+	case relaypairing.FieldDeviceKeyHash:
+		return m.DeviceKeyHash()
+	case relaypairing.FieldPushToken:
+		return m.PushToken()
+	case relaypairing.FieldPushLocale:
+		return m.PushLocale()
+	case relaypairing.FieldConfirmedAt:
+		return m.ConfirmedAt()
+	case relaypairing.FieldRevokedAt:
+		return m.RevokedAt()
+	case relaypairing.FieldLastUsedAt:
+		return m.LastUsedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RelayPairingMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case relaypairing.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case relaypairing.FieldUserID:
+		return m.OldUserID(ctx)
+	case relaypairing.FieldHostID:
+		return m.OldHostID(ctx)
+	case relaypairing.FieldDeviceName:
+		return m.OldDeviceName(ctx)
+	case relaypairing.FieldDeviceKeyHash:
+		return m.OldDeviceKeyHash(ctx)
+	case relaypairing.FieldPushToken:
+		return m.OldPushToken(ctx)
+	case relaypairing.FieldPushLocale:
+		return m.OldPushLocale(ctx)
+	case relaypairing.FieldConfirmedAt:
+		return m.OldConfirmedAt(ctx)
+	case relaypairing.FieldRevokedAt:
+		return m.OldRevokedAt(ctx)
+	case relaypairing.FieldLastUsedAt:
+		return m.OldLastUsedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown RelayPairing field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RelayPairingMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case relaypairing.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case relaypairing.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case relaypairing.FieldHostID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostID(v)
+		return nil
+	case relaypairing.FieldDeviceName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeviceName(v)
+		return nil
+	case relaypairing.FieldDeviceKeyHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeviceKeyHash(v)
+		return nil
+	case relaypairing.FieldPushToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPushToken(v)
+		return nil
+	case relaypairing.FieldPushLocale:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPushLocale(v)
+		return nil
+	case relaypairing.FieldConfirmedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfirmedAt(v)
+		return nil
+	case relaypairing.FieldRevokedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRevokedAt(v)
+		return nil
+	case relaypairing.FieldLastUsedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastUsedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RelayPairing field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RelayPairingMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RelayPairingMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RelayPairingMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown RelayPairing numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RelayPairingMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(relaypairing.FieldDeviceKeyHash) {
+		fields = append(fields, relaypairing.FieldDeviceKeyHash)
+	}
+	if m.FieldCleared(relaypairing.FieldPushToken) {
+		fields = append(fields, relaypairing.FieldPushToken)
+	}
+	if m.FieldCleared(relaypairing.FieldPushLocale) {
+		fields = append(fields, relaypairing.FieldPushLocale)
+	}
+	if m.FieldCleared(relaypairing.FieldConfirmedAt) {
+		fields = append(fields, relaypairing.FieldConfirmedAt)
+	}
+	if m.FieldCleared(relaypairing.FieldRevokedAt) {
+		fields = append(fields, relaypairing.FieldRevokedAt)
+	}
+	if m.FieldCleared(relaypairing.FieldLastUsedAt) {
+		fields = append(fields, relaypairing.FieldLastUsedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RelayPairingMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RelayPairingMutation) ClearField(name string) error {
+	switch name {
+	case relaypairing.FieldDeviceKeyHash:
+		m.ClearDeviceKeyHash()
+		return nil
+	case relaypairing.FieldPushToken:
+		m.ClearPushToken()
+		return nil
+	case relaypairing.FieldPushLocale:
+		m.ClearPushLocale()
+		return nil
+	case relaypairing.FieldConfirmedAt:
+		m.ClearConfirmedAt()
+		return nil
+	case relaypairing.FieldRevokedAt:
+		m.ClearRevokedAt()
+		return nil
+	case relaypairing.FieldLastUsedAt:
+		m.ClearLastUsedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown RelayPairing nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RelayPairingMutation) ResetField(name string) error {
+	switch name {
+	case relaypairing.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case relaypairing.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case relaypairing.FieldHostID:
+		m.ResetHostID()
+		return nil
+	case relaypairing.FieldDeviceName:
+		m.ResetDeviceName()
+		return nil
+	case relaypairing.FieldDeviceKeyHash:
+		m.ResetDeviceKeyHash()
+		return nil
+	case relaypairing.FieldPushToken:
+		m.ResetPushToken()
+		return nil
+	case relaypairing.FieldPushLocale:
+		m.ResetPushLocale()
+		return nil
+	case relaypairing.FieldConfirmedAt:
+		m.ResetConfirmedAt()
+		return nil
+	case relaypairing.FieldRevokedAt:
+		m.ResetRevokedAt()
+		return nil
+	case relaypairing.FieldLastUsedAt:
+		m.ResetLastUsedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown RelayPairing field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RelayPairingMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RelayPairingMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RelayPairingMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RelayPairingMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RelayPairingMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RelayPairingMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RelayPairingMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown RelayPairing unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RelayPairingMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown RelayPairing edge %s", name)
+}
+
+// RelayPairingOfferMutation represents an operation that mutates the RelayPairingOffer nodes in the graph.
+type RelayPairingOfferMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	host_id       *string
+	expires_at    *time.Time
+	used_at       *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*RelayPairingOffer, error)
+	predicates    []predicate.RelayPairingOffer
+}
+
+var _ ent.Mutation = (*RelayPairingOfferMutation)(nil)
+
+// relaypairingofferOption allows management of the mutation configuration using functional options.
+type relaypairingofferOption func(*RelayPairingOfferMutation)
+
+// newRelayPairingOfferMutation creates new mutation for the RelayPairingOffer entity.
+func newRelayPairingOfferMutation(c config, op Op, opts ...relaypairingofferOption) *RelayPairingOfferMutation {
+	m := &RelayPairingOfferMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRelayPairingOffer,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRelayPairingOfferID sets the ID field of the mutation.
+func withRelayPairingOfferID(id string) relaypairingofferOption {
+	return func(m *RelayPairingOfferMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RelayPairingOffer
+		)
+		m.oldValue = func(ctx context.Context) (*RelayPairingOffer, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RelayPairingOffer.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRelayPairingOffer sets the old RelayPairingOffer of the mutation.
+func withRelayPairingOffer(node *RelayPairingOffer) relaypairingofferOption {
+	return func(m *RelayPairingOfferMutation) {
+		m.oldValue = func(context.Context) (*RelayPairingOffer, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RelayPairingOfferMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RelayPairingOfferMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RelayPairingOffer entities.
+func (m *RelayPairingOfferMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RelayPairingOfferMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RelayPairingOfferMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RelayPairingOffer.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *RelayPairingOfferMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RelayPairingOfferMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the RelayPairingOffer entity.
+// If the RelayPairingOffer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingOfferMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RelayPairingOfferMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetHostID sets the "host_id" field.
+func (m *RelayPairingOfferMutation) SetHostID(s string) {
+	m.host_id = &s
+}
+
+// HostID returns the value of the "host_id" field in the mutation.
+func (m *RelayPairingOfferMutation) HostID() (r string, exists bool) {
+	v := m.host_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostID returns the old "host_id" field's value of the RelayPairingOffer entity.
+// If the RelayPairingOffer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingOfferMutation) OldHostID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostID: %w", err)
+	}
+	return oldValue.HostID, nil
+}
+
+// ResetHostID resets all changes to the "host_id" field.
+func (m *RelayPairingOfferMutation) ResetHostID() {
+	m.host_id = nil
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *RelayPairingOfferMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *RelayPairingOfferMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the RelayPairingOffer entity.
+// If the RelayPairingOffer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingOfferMutation) OldExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *RelayPairingOfferMutation) ResetExpiresAt() {
+	m.expires_at = nil
+}
+
+// SetUsedAt sets the "used_at" field.
+func (m *RelayPairingOfferMutation) SetUsedAt(t time.Time) {
+	m.used_at = &t
+}
+
+// UsedAt returns the value of the "used_at" field in the mutation.
+func (m *RelayPairingOfferMutation) UsedAt() (r time.Time, exists bool) {
+	v := m.used_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUsedAt returns the old "used_at" field's value of the RelayPairingOffer entity.
+// If the RelayPairingOffer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayPairingOfferMutation) OldUsedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUsedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUsedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUsedAt: %w", err)
+	}
+	return oldValue.UsedAt, nil
+}
+
+// ClearUsedAt clears the value of the "used_at" field.
+func (m *RelayPairingOfferMutation) ClearUsedAt() {
+	m.used_at = nil
+	m.clearedFields[relaypairingoffer.FieldUsedAt] = struct{}{}
+}
+
+// UsedAtCleared returns if the "used_at" field was cleared in this mutation.
+func (m *RelayPairingOfferMutation) UsedAtCleared() bool {
+	_, ok := m.clearedFields[relaypairingoffer.FieldUsedAt]
+	return ok
+}
+
+// ResetUsedAt resets all changes to the "used_at" field.
+func (m *RelayPairingOfferMutation) ResetUsedAt() {
+	m.used_at = nil
+	delete(m.clearedFields, relaypairingoffer.FieldUsedAt)
+}
+
+// Where appends a list predicates to the RelayPairingOfferMutation builder.
+func (m *RelayPairingOfferMutation) Where(ps ...predicate.RelayPairingOffer) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RelayPairingOfferMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RelayPairingOfferMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RelayPairingOffer, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RelayPairingOfferMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RelayPairingOfferMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RelayPairingOffer).
+func (m *RelayPairingOfferMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RelayPairingOfferMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.created_at != nil {
+		fields = append(fields, relaypairingoffer.FieldCreatedAt)
+	}
+	if m.host_id != nil {
+		fields = append(fields, relaypairingoffer.FieldHostID)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, relaypairingoffer.FieldExpiresAt)
+	}
+	if m.used_at != nil {
+		fields = append(fields, relaypairingoffer.FieldUsedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RelayPairingOfferMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case relaypairingoffer.FieldCreatedAt:
+		return m.CreatedAt()
+	case relaypairingoffer.FieldHostID:
+		return m.HostID()
+	case relaypairingoffer.FieldExpiresAt:
+		return m.ExpiresAt()
+	case relaypairingoffer.FieldUsedAt:
+		return m.UsedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RelayPairingOfferMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case relaypairingoffer.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case relaypairingoffer.FieldHostID:
+		return m.OldHostID(ctx)
+	case relaypairingoffer.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	case relaypairingoffer.FieldUsedAt:
+		return m.OldUsedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown RelayPairingOffer field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RelayPairingOfferMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case relaypairingoffer.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case relaypairingoffer.FieldHostID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostID(v)
+		return nil
+	case relaypairingoffer.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	case relaypairingoffer.FieldUsedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUsedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RelayPairingOffer field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RelayPairingOfferMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RelayPairingOfferMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RelayPairingOfferMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown RelayPairingOffer numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RelayPairingOfferMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(relaypairingoffer.FieldUsedAt) {
+		fields = append(fields, relaypairingoffer.FieldUsedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RelayPairingOfferMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RelayPairingOfferMutation) ClearField(name string) error {
+	switch name {
+	case relaypairingoffer.FieldUsedAt:
+		m.ClearUsedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown RelayPairingOffer nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RelayPairingOfferMutation) ResetField(name string) error {
+	switch name {
+	case relaypairingoffer.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case relaypairingoffer.FieldHostID:
+		m.ResetHostID()
+		return nil
+	case relaypairingoffer.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	case relaypairingoffer.FieldUsedAt:
+		m.ResetUsedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown RelayPairingOffer field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RelayPairingOfferMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RelayPairingOfferMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RelayPairingOfferMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RelayPairingOfferMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RelayPairingOfferMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RelayPairingOfferMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RelayPairingOfferMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown RelayPairingOffer unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RelayPairingOfferMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown RelayPairingOffer edge %s", name)
+}
+
 // ResourceArtifactMutation represents an operation that mutates the ResourceArtifact nodes in the graph.
 type ResourceArtifactMutation struct {
 	config
@@ -12948,6 +15013,2016 @@ func (m *ResourceSubmissionMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ResourceSubmissionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown ResourceSubmission edge %s", name)
+}
+
+// SharedArchiveSegmentMutation represents an operation that mutates the SharedArchiveSegment nodes in the graph.
+type SharedArchiveSegmentMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	host_id       *string
+	team_id       *string
+	seq           *int64
+	addseq        *int64
+	prev_digest   *string
+	digest        *string
+	data          *[]byte
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*SharedArchiveSegment, error)
+	predicates    []predicate.SharedArchiveSegment
+}
+
+var _ ent.Mutation = (*SharedArchiveSegmentMutation)(nil)
+
+// sharedarchivesegmentOption allows management of the mutation configuration using functional options.
+type sharedarchivesegmentOption func(*SharedArchiveSegmentMutation)
+
+// newSharedArchiveSegmentMutation creates new mutation for the SharedArchiveSegment entity.
+func newSharedArchiveSegmentMutation(c config, op Op, opts ...sharedarchivesegmentOption) *SharedArchiveSegmentMutation {
+	m := &SharedArchiveSegmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSharedArchiveSegment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSharedArchiveSegmentID sets the ID field of the mutation.
+func withSharedArchiveSegmentID(id string) sharedarchivesegmentOption {
+	return func(m *SharedArchiveSegmentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SharedArchiveSegment
+		)
+		m.oldValue = func(ctx context.Context) (*SharedArchiveSegment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SharedArchiveSegment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSharedArchiveSegment sets the old SharedArchiveSegment of the mutation.
+func withSharedArchiveSegment(node *SharedArchiveSegment) sharedarchivesegmentOption {
+	return func(m *SharedArchiveSegmentMutation) {
+		m.oldValue = func(context.Context) (*SharedArchiveSegment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SharedArchiveSegmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SharedArchiveSegmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of SharedArchiveSegment entities.
+func (m *SharedArchiveSegmentMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SharedArchiveSegmentMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SharedArchiveSegmentMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SharedArchiveSegment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SharedArchiveSegmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SharedArchiveSegmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SharedArchiveSegment entity.
+// If the SharedArchiveSegment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedArchiveSegmentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SharedArchiveSegmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetHostID sets the "host_id" field.
+func (m *SharedArchiveSegmentMutation) SetHostID(s string) {
+	m.host_id = &s
+}
+
+// HostID returns the value of the "host_id" field in the mutation.
+func (m *SharedArchiveSegmentMutation) HostID() (r string, exists bool) {
+	v := m.host_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostID returns the old "host_id" field's value of the SharedArchiveSegment entity.
+// If the SharedArchiveSegment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedArchiveSegmentMutation) OldHostID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostID: %w", err)
+	}
+	return oldValue.HostID, nil
+}
+
+// ResetHostID resets all changes to the "host_id" field.
+func (m *SharedArchiveSegmentMutation) ResetHostID() {
+	m.host_id = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *SharedArchiveSegmentMutation) SetTeamID(s string) {
+	m.team_id = &s
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *SharedArchiveSegmentMutation) TeamID() (r string, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the SharedArchiveSegment entity.
+// If the SharedArchiveSegment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedArchiveSegmentMutation) OldTeamID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *SharedArchiveSegmentMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetSeq sets the "seq" field.
+func (m *SharedArchiveSegmentMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *SharedArchiveSegmentMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the SharedArchiveSegment entity.
+// If the SharedArchiveSegment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedArchiveSegmentMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *SharedArchiveSegmentMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *SharedArchiveSegmentMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *SharedArchiveSegmentMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+}
+
+// SetPrevDigest sets the "prev_digest" field.
+func (m *SharedArchiveSegmentMutation) SetPrevDigest(s string) {
+	m.prev_digest = &s
+}
+
+// PrevDigest returns the value of the "prev_digest" field in the mutation.
+func (m *SharedArchiveSegmentMutation) PrevDigest() (r string, exists bool) {
+	v := m.prev_digest
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPrevDigest returns the old "prev_digest" field's value of the SharedArchiveSegment entity.
+// If the SharedArchiveSegment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedArchiveSegmentMutation) OldPrevDigest(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPrevDigest is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPrevDigest requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPrevDigest: %w", err)
+	}
+	return oldValue.PrevDigest, nil
+}
+
+// ResetPrevDigest resets all changes to the "prev_digest" field.
+func (m *SharedArchiveSegmentMutation) ResetPrevDigest() {
+	m.prev_digest = nil
+}
+
+// SetDigest sets the "digest" field.
+func (m *SharedArchiveSegmentMutation) SetDigest(s string) {
+	m.digest = &s
+}
+
+// Digest returns the value of the "digest" field in the mutation.
+func (m *SharedArchiveSegmentMutation) Digest() (r string, exists bool) {
+	v := m.digest
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDigest returns the old "digest" field's value of the SharedArchiveSegment entity.
+// If the SharedArchiveSegment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedArchiveSegmentMutation) OldDigest(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDigest is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDigest requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDigest: %w", err)
+	}
+	return oldValue.Digest, nil
+}
+
+// ResetDigest resets all changes to the "digest" field.
+func (m *SharedArchiveSegmentMutation) ResetDigest() {
+	m.digest = nil
+}
+
+// SetData sets the "data" field.
+func (m *SharedArchiveSegmentMutation) SetData(b []byte) {
+	m.data = &b
+}
+
+// Data returns the value of the "data" field in the mutation.
+func (m *SharedArchiveSegmentMutation) Data() (r []byte, exists bool) {
+	v := m.data
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldData returns the old "data" field's value of the SharedArchiveSegment entity.
+// If the SharedArchiveSegment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedArchiveSegmentMutation) OldData(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldData is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldData requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldData: %w", err)
+	}
+	return oldValue.Data, nil
+}
+
+// ResetData resets all changes to the "data" field.
+func (m *SharedArchiveSegmentMutation) ResetData() {
+	m.data = nil
+}
+
+// Where appends a list predicates to the SharedArchiveSegmentMutation builder.
+func (m *SharedArchiveSegmentMutation) Where(ps ...predicate.SharedArchiveSegment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SharedArchiveSegmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SharedArchiveSegmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SharedArchiveSegment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SharedArchiveSegmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SharedArchiveSegmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SharedArchiveSegment).
+func (m *SharedArchiveSegmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SharedArchiveSegmentMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.created_at != nil {
+		fields = append(fields, sharedarchivesegment.FieldCreatedAt)
+	}
+	if m.host_id != nil {
+		fields = append(fields, sharedarchivesegment.FieldHostID)
+	}
+	if m.team_id != nil {
+		fields = append(fields, sharedarchivesegment.FieldTeamID)
+	}
+	if m.seq != nil {
+		fields = append(fields, sharedarchivesegment.FieldSeq)
+	}
+	if m.prev_digest != nil {
+		fields = append(fields, sharedarchivesegment.FieldPrevDigest)
+	}
+	if m.digest != nil {
+		fields = append(fields, sharedarchivesegment.FieldDigest)
+	}
+	if m.data != nil {
+		fields = append(fields, sharedarchivesegment.FieldData)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SharedArchiveSegmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case sharedarchivesegment.FieldCreatedAt:
+		return m.CreatedAt()
+	case sharedarchivesegment.FieldHostID:
+		return m.HostID()
+	case sharedarchivesegment.FieldTeamID:
+		return m.TeamID()
+	case sharedarchivesegment.FieldSeq:
+		return m.Seq()
+	case sharedarchivesegment.FieldPrevDigest:
+		return m.PrevDigest()
+	case sharedarchivesegment.FieldDigest:
+		return m.Digest()
+	case sharedarchivesegment.FieldData:
+		return m.Data()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SharedArchiveSegmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case sharedarchivesegment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case sharedarchivesegment.FieldHostID:
+		return m.OldHostID(ctx)
+	case sharedarchivesegment.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case sharedarchivesegment.FieldSeq:
+		return m.OldSeq(ctx)
+	case sharedarchivesegment.FieldPrevDigest:
+		return m.OldPrevDigest(ctx)
+	case sharedarchivesegment.FieldDigest:
+		return m.OldDigest(ctx)
+	case sharedarchivesegment.FieldData:
+		return m.OldData(ctx)
+	}
+	return nil, fmt.Errorf("unknown SharedArchiveSegment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SharedArchiveSegmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case sharedarchivesegment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case sharedarchivesegment.FieldHostID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostID(v)
+		return nil
+	case sharedarchivesegment.FieldTeamID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case sharedarchivesegment.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case sharedarchivesegment.FieldPrevDigest:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPrevDigest(v)
+		return nil
+	case sharedarchivesegment.FieldDigest:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDigest(v)
+		return nil
+	case sharedarchivesegment.FieldData:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetData(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SharedArchiveSegment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SharedArchiveSegmentMutation) AddedFields() []string {
+	var fields []string
+	if m.addseq != nil {
+		fields = append(fields, sharedarchivesegment.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SharedArchiveSegmentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case sharedarchivesegment.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SharedArchiveSegmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case sharedarchivesegment.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SharedArchiveSegment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SharedArchiveSegmentMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SharedArchiveSegmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SharedArchiveSegmentMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown SharedArchiveSegment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SharedArchiveSegmentMutation) ResetField(name string) error {
+	switch name {
+	case sharedarchivesegment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case sharedarchivesegment.FieldHostID:
+		m.ResetHostID()
+		return nil
+	case sharedarchivesegment.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case sharedarchivesegment.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case sharedarchivesegment.FieldPrevDigest:
+		m.ResetPrevDigest()
+		return nil
+	case sharedarchivesegment.FieldDigest:
+		m.ResetDigest()
+		return nil
+	case sharedarchivesegment.FieldData:
+		m.ResetData()
+		return nil
+	}
+	return fmt.Errorf("unknown SharedArchiveSegment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SharedArchiveSegmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SharedArchiveSegmentMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SharedArchiveSegmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SharedArchiveSegmentMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SharedArchiveSegmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SharedArchiveSegmentMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SharedArchiveSegmentMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown SharedArchiveSegment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SharedArchiveSegmentMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown SharedArchiveSegment edge %s", name)
+}
+
+// SharedHostMutation represents an operation that mutates the SharedHost nodes in the graph.
+type SharedHostMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	team_id       *string
+	name          *string
+	key_hash      *string
+	identity_key  *string
+	created_by    *string
+	bound_at      *time.Time
+	last_seen_at  *time.Time
+	access        *sharedhost.Access
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*SharedHost, error)
+	predicates    []predicate.SharedHost
+}
+
+var _ ent.Mutation = (*SharedHostMutation)(nil)
+
+// sharedhostOption allows management of the mutation configuration using functional options.
+type sharedhostOption func(*SharedHostMutation)
+
+// newSharedHostMutation creates new mutation for the SharedHost entity.
+func newSharedHostMutation(c config, op Op, opts ...sharedhostOption) *SharedHostMutation {
+	m := &SharedHostMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSharedHost,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSharedHostID sets the ID field of the mutation.
+func withSharedHostID(id string) sharedhostOption {
+	return func(m *SharedHostMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SharedHost
+		)
+		m.oldValue = func(ctx context.Context) (*SharedHost, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SharedHost.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSharedHost sets the old SharedHost of the mutation.
+func withSharedHost(node *SharedHost) sharedhostOption {
+	return func(m *SharedHostMutation) {
+		m.oldValue = func(context.Context) (*SharedHost, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SharedHostMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SharedHostMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of SharedHost entities.
+func (m *SharedHostMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SharedHostMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SharedHostMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SharedHost.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SharedHostMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SharedHostMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SharedHostMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *SharedHostMutation) SetTeamID(s string) {
+	m.team_id = &s
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *SharedHostMutation) TeamID() (r string, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldTeamID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *SharedHostMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetName sets the "name" field.
+func (m *SharedHostMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *SharedHostMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *SharedHostMutation) ResetName() {
+	m.name = nil
+}
+
+// SetKeyHash sets the "key_hash" field.
+func (m *SharedHostMutation) SetKeyHash(s string) {
+	m.key_hash = &s
+}
+
+// KeyHash returns the value of the "key_hash" field in the mutation.
+func (m *SharedHostMutation) KeyHash() (r string, exists bool) {
+	v := m.key_hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKeyHash returns the old "key_hash" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldKeyHash(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKeyHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKeyHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKeyHash: %w", err)
+	}
+	return oldValue.KeyHash, nil
+}
+
+// ResetKeyHash resets all changes to the "key_hash" field.
+func (m *SharedHostMutation) ResetKeyHash() {
+	m.key_hash = nil
+}
+
+// SetIdentityKey sets the "identity_key" field.
+func (m *SharedHostMutation) SetIdentityKey(s string) {
+	m.identity_key = &s
+}
+
+// IdentityKey returns the value of the "identity_key" field in the mutation.
+func (m *SharedHostMutation) IdentityKey() (r string, exists bool) {
+	v := m.identity_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIdentityKey returns the old "identity_key" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldIdentityKey(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIdentityKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIdentityKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIdentityKey: %w", err)
+	}
+	return oldValue.IdentityKey, nil
+}
+
+// ClearIdentityKey clears the value of the "identity_key" field.
+func (m *SharedHostMutation) ClearIdentityKey() {
+	m.identity_key = nil
+	m.clearedFields[sharedhost.FieldIdentityKey] = struct{}{}
+}
+
+// IdentityKeyCleared returns if the "identity_key" field was cleared in this mutation.
+func (m *SharedHostMutation) IdentityKeyCleared() bool {
+	_, ok := m.clearedFields[sharedhost.FieldIdentityKey]
+	return ok
+}
+
+// ResetIdentityKey resets all changes to the "identity_key" field.
+func (m *SharedHostMutation) ResetIdentityKey() {
+	m.identity_key = nil
+	delete(m.clearedFields, sharedhost.FieldIdentityKey)
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (m *SharedHostMutation) SetCreatedBy(s string) {
+	m.created_by = &s
+}
+
+// CreatedBy returns the value of the "created_by" field in the mutation.
+func (m *SharedHostMutation) CreatedBy() (r string, exists bool) {
+	v := m.created_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedBy returns the old "created_by" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldCreatedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedBy: %w", err)
+	}
+	return oldValue.CreatedBy, nil
+}
+
+// ResetCreatedBy resets all changes to the "created_by" field.
+func (m *SharedHostMutation) ResetCreatedBy() {
+	m.created_by = nil
+}
+
+// SetBoundAt sets the "bound_at" field.
+func (m *SharedHostMutation) SetBoundAt(t time.Time) {
+	m.bound_at = &t
+}
+
+// BoundAt returns the value of the "bound_at" field in the mutation.
+func (m *SharedHostMutation) BoundAt() (r time.Time, exists bool) {
+	v := m.bound_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBoundAt returns the old "bound_at" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldBoundAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBoundAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBoundAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBoundAt: %w", err)
+	}
+	return oldValue.BoundAt, nil
+}
+
+// ClearBoundAt clears the value of the "bound_at" field.
+func (m *SharedHostMutation) ClearBoundAt() {
+	m.bound_at = nil
+	m.clearedFields[sharedhost.FieldBoundAt] = struct{}{}
+}
+
+// BoundAtCleared returns if the "bound_at" field was cleared in this mutation.
+func (m *SharedHostMutation) BoundAtCleared() bool {
+	_, ok := m.clearedFields[sharedhost.FieldBoundAt]
+	return ok
+}
+
+// ResetBoundAt resets all changes to the "bound_at" field.
+func (m *SharedHostMutation) ResetBoundAt() {
+	m.bound_at = nil
+	delete(m.clearedFields, sharedhost.FieldBoundAt)
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (m *SharedHostMutation) SetLastSeenAt(t time.Time) {
+	m.last_seen_at = &t
+}
+
+// LastSeenAt returns the value of the "last_seen_at" field in the mutation.
+func (m *SharedHostMutation) LastSeenAt() (r time.Time, exists bool) {
+	v := m.last_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSeenAt returns the old "last_seen_at" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldLastSeenAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSeenAt: %w", err)
+	}
+	return oldValue.LastSeenAt, nil
+}
+
+// ClearLastSeenAt clears the value of the "last_seen_at" field.
+func (m *SharedHostMutation) ClearLastSeenAt() {
+	m.last_seen_at = nil
+	m.clearedFields[sharedhost.FieldLastSeenAt] = struct{}{}
+}
+
+// LastSeenAtCleared returns if the "last_seen_at" field was cleared in this mutation.
+func (m *SharedHostMutation) LastSeenAtCleared() bool {
+	_, ok := m.clearedFields[sharedhost.FieldLastSeenAt]
+	return ok
+}
+
+// ResetLastSeenAt resets all changes to the "last_seen_at" field.
+func (m *SharedHostMutation) ResetLastSeenAt() {
+	m.last_seen_at = nil
+	delete(m.clearedFields, sharedhost.FieldLastSeenAt)
+}
+
+// SetAccess sets the "access" field.
+func (m *SharedHostMutation) SetAccess(s sharedhost.Access) {
+	m.access = &s
+}
+
+// Access returns the value of the "access" field in the mutation.
+func (m *SharedHostMutation) Access() (r sharedhost.Access, exists bool) {
+	v := m.access
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccess returns the old "access" field's value of the SharedHost entity.
+// If the SharedHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMutation) OldAccess(ctx context.Context) (v sharedhost.Access, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccess is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccess requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccess: %w", err)
+	}
+	return oldValue.Access, nil
+}
+
+// ResetAccess resets all changes to the "access" field.
+func (m *SharedHostMutation) ResetAccess() {
+	m.access = nil
+}
+
+// Where appends a list predicates to the SharedHostMutation builder.
+func (m *SharedHostMutation) Where(ps ...predicate.SharedHost) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SharedHostMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SharedHostMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SharedHost, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SharedHostMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SharedHostMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SharedHost).
+func (m *SharedHostMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SharedHostMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.created_at != nil {
+		fields = append(fields, sharedhost.FieldCreatedAt)
+	}
+	if m.team_id != nil {
+		fields = append(fields, sharedhost.FieldTeamID)
+	}
+	if m.name != nil {
+		fields = append(fields, sharedhost.FieldName)
+	}
+	if m.key_hash != nil {
+		fields = append(fields, sharedhost.FieldKeyHash)
+	}
+	if m.identity_key != nil {
+		fields = append(fields, sharedhost.FieldIdentityKey)
+	}
+	if m.created_by != nil {
+		fields = append(fields, sharedhost.FieldCreatedBy)
+	}
+	if m.bound_at != nil {
+		fields = append(fields, sharedhost.FieldBoundAt)
+	}
+	if m.last_seen_at != nil {
+		fields = append(fields, sharedhost.FieldLastSeenAt)
+	}
+	if m.access != nil {
+		fields = append(fields, sharedhost.FieldAccess)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SharedHostMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case sharedhost.FieldCreatedAt:
+		return m.CreatedAt()
+	case sharedhost.FieldTeamID:
+		return m.TeamID()
+	case sharedhost.FieldName:
+		return m.Name()
+	case sharedhost.FieldKeyHash:
+		return m.KeyHash()
+	case sharedhost.FieldIdentityKey:
+		return m.IdentityKey()
+	case sharedhost.FieldCreatedBy:
+		return m.CreatedBy()
+	case sharedhost.FieldBoundAt:
+		return m.BoundAt()
+	case sharedhost.FieldLastSeenAt:
+		return m.LastSeenAt()
+	case sharedhost.FieldAccess:
+		return m.Access()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SharedHostMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case sharedhost.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case sharedhost.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case sharedhost.FieldName:
+		return m.OldName(ctx)
+	case sharedhost.FieldKeyHash:
+		return m.OldKeyHash(ctx)
+	case sharedhost.FieldIdentityKey:
+		return m.OldIdentityKey(ctx)
+	case sharedhost.FieldCreatedBy:
+		return m.OldCreatedBy(ctx)
+	case sharedhost.FieldBoundAt:
+		return m.OldBoundAt(ctx)
+	case sharedhost.FieldLastSeenAt:
+		return m.OldLastSeenAt(ctx)
+	case sharedhost.FieldAccess:
+		return m.OldAccess(ctx)
+	}
+	return nil, fmt.Errorf("unknown SharedHost field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SharedHostMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case sharedhost.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case sharedhost.FieldTeamID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case sharedhost.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case sharedhost.FieldKeyHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKeyHash(v)
+		return nil
+	case sharedhost.FieldIdentityKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIdentityKey(v)
+		return nil
+	case sharedhost.FieldCreatedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedBy(v)
+		return nil
+	case sharedhost.FieldBoundAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBoundAt(v)
+		return nil
+	case sharedhost.FieldLastSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSeenAt(v)
+		return nil
+	case sharedhost.FieldAccess:
+		v, ok := value.(sharedhost.Access)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccess(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SharedHost field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SharedHostMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SharedHostMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SharedHostMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SharedHost numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SharedHostMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(sharedhost.FieldIdentityKey) {
+		fields = append(fields, sharedhost.FieldIdentityKey)
+	}
+	if m.FieldCleared(sharedhost.FieldBoundAt) {
+		fields = append(fields, sharedhost.FieldBoundAt)
+	}
+	if m.FieldCleared(sharedhost.FieldLastSeenAt) {
+		fields = append(fields, sharedhost.FieldLastSeenAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SharedHostMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SharedHostMutation) ClearField(name string) error {
+	switch name {
+	case sharedhost.FieldIdentityKey:
+		m.ClearIdentityKey()
+		return nil
+	case sharedhost.FieldBoundAt:
+		m.ClearBoundAt()
+		return nil
+	case sharedhost.FieldLastSeenAt:
+		m.ClearLastSeenAt()
+		return nil
+	}
+	return fmt.Errorf("unknown SharedHost nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SharedHostMutation) ResetField(name string) error {
+	switch name {
+	case sharedhost.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case sharedhost.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case sharedhost.FieldName:
+		m.ResetName()
+		return nil
+	case sharedhost.FieldKeyHash:
+		m.ResetKeyHash()
+		return nil
+	case sharedhost.FieldIdentityKey:
+		m.ResetIdentityKey()
+		return nil
+	case sharedhost.FieldCreatedBy:
+		m.ResetCreatedBy()
+		return nil
+	case sharedhost.FieldBoundAt:
+		m.ResetBoundAt()
+		return nil
+	case sharedhost.FieldLastSeenAt:
+		m.ResetLastSeenAt()
+		return nil
+	case sharedhost.FieldAccess:
+		m.ResetAccess()
+		return nil
+	}
+	return fmt.Errorf("unknown SharedHost field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SharedHostMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SharedHostMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SharedHostMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SharedHostMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SharedHostMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SharedHostMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SharedHostMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown SharedHost unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SharedHostMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown SharedHost edge %s", name)
+}
+
+// SharedHostMemberMutation represents an operation that mutates the SharedHostMember nodes in the graph.
+type SharedHostMemberMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	host_id       *string
+	user_id       *string
+	added_by      *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*SharedHostMember, error)
+	predicates    []predicate.SharedHostMember
+}
+
+var _ ent.Mutation = (*SharedHostMemberMutation)(nil)
+
+// sharedhostmemberOption allows management of the mutation configuration using functional options.
+type sharedhostmemberOption func(*SharedHostMemberMutation)
+
+// newSharedHostMemberMutation creates new mutation for the SharedHostMember entity.
+func newSharedHostMemberMutation(c config, op Op, opts ...sharedhostmemberOption) *SharedHostMemberMutation {
+	m := &SharedHostMemberMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSharedHostMember,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSharedHostMemberID sets the ID field of the mutation.
+func withSharedHostMemberID(id string) sharedhostmemberOption {
+	return func(m *SharedHostMemberMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SharedHostMember
+		)
+		m.oldValue = func(ctx context.Context) (*SharedHostMember, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SharedHostMember.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSharedHostMember sets the old SharedHostMember of the mutation.
+func withSharedHostMember(node *SharedHostMember) sharedhostmemberOption {
+	return func(m *SharedHostMemberMutation) {
+		m.oldValue = func(context.Context) (*SharedHostMember, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SharedHostMemberMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SharedHostMemberMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of SharedHostMember entities.
+func (m *SharedHostMemberMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SharedHostMemberMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SharedHostMemberMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SharedHostMember.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SharedHostMemberMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SharedHostMemberMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SharedHostMember entity.
+// If the SharedHostMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMemberMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SharedHostMemberMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetHostID sets the "host_id" field.
+func (m *SharedHostMemberMutation) SetHostID(s string) {
+	m.host_id = &s
+}
+
+// HostID returns the value of the "host_id" field in the mutation.
+func (m *SharedHostMemberMutation) HostID() (r string, exists bool) {
+	v := m.host_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostID returns the old "host_id" field's value of the SharedHostMember entity.
+// If the SharedHostMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMemberMutation) OldHostID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostID: %w", err)
+	}
+	return oldValue.HostID, nil
+}
+
+// ResetHostID resets all changes to the "host_id" field.
+func (m *SharedHostMemberMutation) ResetHostID() {
+	m.host_id = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *SharedHostMemberMutation) SetUserID(s string) {
+	m.user_id = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *SharedHostMemberMutation) UserID() (r string, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the SharedHostMember entity.
+// If the SharedHostMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMemberMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *SharedHostMemberMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetAddedBy sets the "added_by" field.
+func (m *SharedHostMemberMutation) SetAddedBy(s string) {
+	m.added_by = &s
+}
+
+// AddedBy returns the value of the "added_by" field in the mutation.
+func (m *SharedHostMemberMutation) AddedBy() (r string, exists bool) {
+	v := m.added_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddedBy returns the old "added_by" field's value of the SharedHostMember entity.
+// If the SharedHostMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SharedHostMemberMutation) OldAddedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddedBy: %w", err)
+	}
+	return oldValue.AddedBy, nil
+}
+
+// ResetAddedBy resets all changes to the "added_by" field.
+func (m *SharedHostMemberMutation) ResetAddedBy() {
+	m.added_by = nil
+}
+
+// Where appends a list predicates to the SharedHostMemberMutation builder.
+func (m *SharedHostMemberMutation) Where(ps ...predicate.SharedHostMember) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SharedHostMemberMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SharedHostMemberMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SharedHostMember, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SharedHostMemberMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SharedHostMemberMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SharedHostMember).
+func (m *SharedHostMemberMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SharedHostMemberMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.created_at != nil {
+		fields = append(fields, sharedhostmember.FieldCreatedAt)
+	}
+	if m.host_id != nil {
+		fields = append(fields, sharedhostmember.FieldHostID)
+	}
+	if m.user_id != nil {
+		fields = append(fields, sharedhostmember.FieldUserID)
+	}
+	if m.added_by != nil {
+		fields = append(fields, sharedhostmember.FieldAddedBy)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SharedHostMemberMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case sharedhostmember.FieldCreatedAt:
+		return m.CreatedAt()
+	case sharedhostmember.FieldHostID:
+		return m.HostID()
+	case sharedhostmember.FieldUserID:
+		return m.UserID()
+	case sharedhostmember.FieldAddedBy:
+		return m.AddedBy()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SharedHostMemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case sharedhostmember.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case sharedhostmember.FieldHostID:
+		return m.OldHostID(ctx)
+	case sharedhostmember.FieldUserID:
+		return m.OldUserID(ctx)
+	case sharedhostmember.FieldAddedBy:
+		return m.OldAddedBy(ctx)
+	}
+	return nil, fmt.Errorf("unknown SharedHostMember field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SharedHostMemberMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case sharedhostmember.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case sharedhostmember.FieldHostID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostID(v)
+		return nil
+	case sharedhostmember.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case sharedhostmember.FieldAddedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddedBy(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SharedHostMember field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SharedHostMemberMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SharedHostMemberMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SharedHostMemberMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SharedHostMember numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SharedHostMemberMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SharedHostMemberMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SharedHostMemberMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown SharedHostMember nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SharedHostMemberMutation) ResetField(name string) error {
+	switch name {
+	case sharedhostmember.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case sharedhostmember.FieldHostID:
+		m.ResetHostID()
+		return nil
+	case sharedhostmember.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case sharedhostmember.FieldAddedBy:
+		m.ResetAddedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown SharedHostMember field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SharedHostMemberMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SharedHostMemberMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SharedHostMemberMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SharedHostMemberMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SharedHostMemberMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SharedHostMemberMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SharedHostMemberMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown SharedHostMember unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SharedHostMemberMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown SharedHostMember edge %s", name)
 }
 
 // TeamMutation represents an operation that mutates the Team nodes in the graph.
@@ -15289,6 +19364,7 @@ type UsageRequestMutation struct {
 	created_at            *time.Time
 	team_id               *string
 	user_id               *string
+	host_id               *string
 	app_url               *string
 	submitted_config_id   *string
 	config_id             *string
@@ -15541,6 +19617,42 @@ func (m *UsageRequestMutation) OldUserID(ctx context.Context) (v string, err err
 // ResetUserID resets all changes to the "user_id" field.
 func (m *UsageRequestMutation) ResetUserID() {
 	m.user_id = nil
+}
+
+// SetHostID sets the "host_id" field.
+func (m *UsageRequestMutation) SetHostID(s string) {
+	m.host_id = &s
+}
+
+// HostID returns the value of the "host_id" field in the mutation.
+func (m *UsageRequestMutation) HostID() (r string, exists bool) {
+	v := m.host_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostID returns the old "host_id" field's value of the UsageRequest entity.
+// If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageRequestMutation) OldHostID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostID: %w", err)
+	}
+	return oldValue.HostID, nil
+}
+
+// ResetHostID resets all changes to the "host_id" field.
+func (m *UsageRequestMutation) ResetHostID() {
+	m.host_id = nil
 }
 
 // SetAppURL sets the "app_url" field.
@@ -16872,7 +20984,7 @@ func (m *UsageRequestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UsageRequestMutation) Fields() []string {
-	fields := make([]string, 0, 28)
+	fields := make([]string, 0, 29)
 	if m.created_at != nil {
 		fields = append(fields, usagerequest.FieldCreatedAt)
 	}
@@ -16881,6 +20993,9 @@ func (m *UsageRequestMutation) Fields() []string {
 	}
 	if m.user_id != nil {
 		fields = append(fields, usagerequest.FieldUserID)
+	}
+	if m.host_id != nil {
+		fields = append(fields, usagerequest.FieldHostID)
 	}
 	if m.app_url != nil {
 		fields = append(fields, usagerequest.FieldAppURL)
@@ -16971,6 +21086,8 @@ func (m *UsageRequestMutation) Field(name string) (ent.Value, bool) {
 		return m.TeamID()
 	case usagerequest.FieldUserID:
 		return m.UserID()
+	case usagerequest.FieldHostID:
+		return m.HostID()
 	case usagerequest.FieldAppURL:
 		return m.AppURL()
 	case usagerequest.FieldSubmittedConfigID:
@@ -17036,6 +21153,8 @@ func (m *UsageRequestMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldTeamID(ctx)
 	case usagerequest.FieldUserID:
 		return m.OldUserID(ctx)
+	case usagerequest.FieldHostID:
+		return m.OldHostID(ctx)
 	case usagerequest.FieldAppURL:
 		return m.OldAppURL(ctx)
 	case usagerequest.FieldSubmittedConfigID:
@@ -17115,6 +21234,13 @@ func (m *UsageRequestMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserID(v)
+		return nil
+	case usagerequest.FieldHostID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostID(v)
 		return nil
 	case usagerequest.FieldAppURL:
 		v, ok := value.(string)
@@ -17552,6 +21678,9 @@ func (m *UsageRequestMutation) ResetField(name string) error {
 		return nil
 	case usagerequest.FieldUserID:
 		m.ResetUserID()
+		return nil
+	case usagerequest.FieldHostID:
+		m.ResetHostID()
 		return nil
 	case usagerequest.FieldAppURL:
 		m.ResetAppURL()

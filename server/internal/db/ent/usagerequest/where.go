@@ -79,6 +79,11 @@ func UserID(v string) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldUserID, v))
 }
 
+// HostID applies equality check predicate on the "host_id" field. It's identical to HostIDEQ.
+func HostID(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldHostID, v))
+}
+
 // AppURL applies equality check predicate on the "app_url" field. It's identical to AppURLEQ.
 func AppURL(v string) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldEQ(FieldAppURL, v))
@@ -362,6 +367,71 @@ func UserIDEqualFold(v string) predicate.UsageRequest {
 // UserIDContainsFold applies the ContainsFold predicate on the "user_id" field.
 func UserIDContainsFold(v string) predicate.UsageRequest {
 	return predicate.UsageRequest(sql.FieldContainsFold(FieldUserID, v))
+}
+
+// HostIDEQ applies the EQ predicate on the "host_id" field.
+func HostIDEQ(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEQ(FieldHostID, v))
+}
+
+// HostIDNEQ applies the NEQ predicate on the "host_id" field.
+func HostIDNEQ(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNEQ(FieldHostID, v))
+}
+
+// HostIDIn applies the In predicate on the "host_id" field.
+func HostIDIn(vs ...string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldIn(FieldHostID, vs...))
+}
+
+// HostIDNotIn applies the NotIn predicate on the "host_id" field.
+func HostIDNotIn(vs ...string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldNotIn(FieldHostID, vs...))
+}
+
+// HostIDGT applies the GT predicate on the "host_id" field.
+func HostIDGT(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGT(FieldHostID, v))
+}
+
+// HostIDGTE applies the GTE predicate on the "host_id" field.
+func HostIDGTE(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldGTE(FieldHostID, v))
+}
+
+// HostIDLT applies the LT predicate on the "host_id" field.
+func HostIDLT(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLT(FieldHostID, v))
+}
+
+// HostIDLTE applies the LTE predicate on the "host_id" field.
+func HostIDLTE(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldLTE(FieldHostID, v))
+}
+
+// HostIDContains applies the Contains predicate on the "host_id" field.
+func HostIDContains(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldContains(FieldHostID, v))
+}
+
+// HostIDHasPrefix applies the HasPrefix predicate on the "host_id" field.
+func HostIDHasPrefix(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldHasPrefix(FieldHostID, v))
+}
+
+// HostIDHasSuffix applies the HasSuffix predicate on the "host_id" field.
+func HostIDHasSuffix(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldHasSuffix(FieldHostID, v))
+}
+
+// HostIDEqualFold applies the EqualFold predicate on the "host_id" field.
+func HostIDEqualFold(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldEqualFold(FieldHostID, v))
+}
+
+// HostIDContainsFold applies the ContainsFold predicate on the "host_id" field.
+func HostIDContainsFold(v string) predicate.UsageRequest {
+	return predicate.UsageRequest(sql.FieldContainsFold(FieldHostID, v))
 }
 
 // AppURLEQ applies the EQ predicate on the "app_url" field.
