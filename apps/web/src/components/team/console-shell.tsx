@@ -20,6 +20,7 @@ import {
   GitPullRequestArrow,
   History,
   House,
+  KeyRound,
   Layers,
   LayoutGrid,
   LogOut,
@@ -44,21 +45,22 @@ import { api, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'sharedHosts';
+type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'teamDsh' | 'teamDshHosts';
 
 /**
  * The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon.
  * Workspace is everyone's; the admin's pages split by what they look after: what the
- * team publishes to its members' DSHs, and who is in it and what they spend.
+ * team publishes to its members' DSHs, and who is in it and what they spend. A page that
+ * lays out columns of its own fills the area beside the sidebar, as `TeamPage.fill` does.
  */
-const GROUPS: { key: TeamGroup; sections: { path: string; key: SectionKey; icon: LucideIcon }[] }[] = [
+const GROUPS: { key: TeamGroup; sections: { path: string; key: SectionKey; icon: LucideIcon; fill?: boolean }[] }[] = [
   {
     key: 'work',
     sections: [
       { path: '', key: 'overview', icon: House },
       { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'submissions', key: 'submissions', icon: Send },
-      { path: 'shared-hosts', key: 'sharedHosts', icon: Server },
+      { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true },
     ],
   },
   {
@@ -67,6 +69,7 @@ const GROUPS: { key: TeamGroup; sections: { path: string; key: SectionKey; icon:
       { path: 'models', key: 'models', icon: Cpu },
       { path: 'presets', key: 'presets', icon: Layers },
       { path: 'plugins', key: 'plugins', icon: Puzzle },
+      { path: 'team-dsh-hosts', key: 'teamDshHosts', icon: KeyRound },
       { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
       { path: 'history', key: 'history', icon: History },
     ],
@@ -128,7 +131,7 @@ export function ConsoleShell({
 }) {
   const t = useTranslations('team');
   const section = sectionOf(useLocation().pathname, team.id);
-  const fill = extraPages().some((page) => page.fill && navPath(page) === section);
+  const fill = GROUPS.some((group) => group.sections.some((s) => s.fill && s.path === section)) || extraPages().some((page) => page.fill && navPath(page) === section);
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 

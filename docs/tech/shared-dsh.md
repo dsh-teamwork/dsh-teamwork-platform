@@ -25,6 +25,9 @@ started it; each member unlocks the DSH with a PIN of their own that only the
 DSH checks. The DSH writes an **audit archive** sealed to a key only the admin
 holds, and the server stores it without being able to open it.
 
+**What people read calls it Team DSH**, in both languages: the console, the apps and
+`/docs`. "Shared DSH" stays the term in code, the API and these documents.
+
 ## Trust model
 
 End-to-end encryption here means: **the server routes and stores, and cannot
@@ -307,12 +310,15 @@ HPKE comes from `@hpke/core` at an exact version; no other new dependency.
 
 ### Clients
 
-- **The open web app** (`apps/web`): the page
-  `/teams/:teamId/shared-hosts`, where every member sees the shared DSHs they
-  may reach and joins one by pasting its invite, and an admin also manages
-  keys, access and the archive; and `/teams/:teamId/shared-hosts/:computerId`,
-  the member's sessions on one, with the PIN, the conversation, answering and
-  sending. Its device key is a non-extractable WebCrypto Ed25519 key in
+- **The open web app** (`apps/web`), two pages apart. Using one is
+  Workspace's `/teams/:teamId/team-dsh[/:computerId[/:sessionId]]`
+  (`pages/team/team-dsh.tsx`), in three columns beside the sidebar: the shared
+  DSHs the member may reach, with their sessions on the open one beneath it,
+  and the session beside; with none open, joining one by pasting its invite.
+  It asks for the PIN, follows the conversation, answers and sends, and a
+  first message starts a session. Managing them is Team assets'
+  `/teams/:teamId/team-dsh-hosts` (`pages/team/team-dsh-hosts.tsx`), the admin's
+  alone: keys, access and the archive. Its device key is a non-extractable WebCrypto Ed25519 key in
   IndexedDB, per account (`apps/web/src/lib/relay.ts`). The page is on the
   server's own origin, so the relay admits it by its session cookie, never a
   token in the page: reads, writes from this site, and a socket only when its

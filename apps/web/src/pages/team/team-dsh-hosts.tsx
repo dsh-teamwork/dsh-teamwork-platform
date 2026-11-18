@@ -1,11 +1,12 @@
 /**
- * A team's shared DSHs (`/teams/{teamId}/shared-hosts`, docs/tech/shared-dsh.md):
- * the team host keys an admin creates, rotates and deletes. A key is shown once,
- * when it is created or rotated, as the command to run in that DSH; the server
- * keeps only its HMAC. Below them, each shared DSH's audit archive, sealed to
- * the admin's own key: the page only lists and downloads it, and
- * `dsh-teamwork-audit read` opens it on the admin's machine. Every member, the
- * admin included, first sees the shared DSHs they may reach (`SharedReach`).
+ * Managing a team's shared DSHs, which the console calls Team DSH
+ * (`/teams/{teamId}/team-dsh-hosts`, under Team assets; docs/tech/shared-dsh.md):
+ * the team host keys an admin creates, rotates and deletes, and who may reach
+ * each. A key is shown once, when it is created or rotated, as the command to
+ * run in that DSH; the server keeps only its HMAC. Below them, each shared
+ * DSH's audit archive, sealed to the admin's own key: the page only lists and
+ * downloads it, and `dsh-teamwork-audit read` opens it on the admin's machine.
+ * Using one is the Workspace page (team-dsh.tsx).
  */
 
 import { useState } from 'react';
@@ -22,20 +23,18 @@ import { api, type Schemas } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
-import { SharedReach } from './shared-dsh';
 
 type SharedHost = Schemas['SharedHost'];
 type Issued = Schemas['SharedHostKey'];
 type Archived = Schemas['SharedArchiveHost'];
 
-export function TeamSharedHostsPage() {
+export function TeamDshHostsPage() {
   const { team } = useTeam();
-  const t = useTranslations('team.sharedHosts');
+  const t = useTranslations('team.teamDshHosts');
   const word = useTeamError();
-  const admin = team.role === 'admin';
   const root = `teams/${team.id}/shared-hosts`;
-  const hosts = useApi<{ hosts: SharedHost[] }>(admin ? root : null);
-  const archive = useApi<{ hosts: Archived[] }>(admin ? `teams/${team.id}/shared-archive` : null);
+  const hosts = useApi<{ hosts: SharedHost[] }>(root);
+  const archive = useApi<{ hosts: Archived[] }>(`teams/${team.id}/shared-archive`);
   const { pending, run } = useMutation(hosts.reload);
   const format = useFormatter();
   const [name, setName] = useState('');
@@ -46,8 +45,7 @@ export function TeamSharedHostsPage() {
   const when = (at: string | null) => (at ? format.dateTime(new Date(at), { dateStyle: 'medium', timeStyle: 'short' }) : t('never'));
   const command = issued ? `/teamwork share enable ${issued.key}` : '';
 
-  const header = <><PageHeader title={t('title')} description={t('description')} /><SharedReach /></>;
-  if (!admin) return header;
+  const header = <PageHeader title={t('title')} description={t('description')} />;
   if (!hosts.data) return <>{header}{hosts.error ? <Failure message={word(hosts.error)} /> : null}</>;
   return (
     <>
