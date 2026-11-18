@@ -960,6 +960,7 @@
       "matches": "They match",
       "waitingApproval": "Now approve this browser on the computer.",
       "refused": "The computer did not accept this browser. Make a new code and try again.",
+      "pairFailed": "The connection to the computer broke before pairing finished. Make a new code on the computer and try again.",
       "deviceName": "Web browser",
       "lockedHint": "Too many wrong PINs. On that computer, run /teamwork pin reset in DSH, then set a new PIN here.",
       "devices": "Devices",

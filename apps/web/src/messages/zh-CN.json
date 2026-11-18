@@ -960,6 +960,7 @@
       "matches": "一致",
       "waitingApproval": "现在请在电脑上批准这个浏览器。",
       "refused": "电脑没有接受这个浏览器。请重新生成配对码再试。",
+      "pairFailed": "配对完成前与电脑的连接断开了。请在电脑上重新生成配对码再试一次。",
       "deviceName": "网页浏览器",
       "lockedHint": "PIN 错误次数过多。请在那台电脑的 DSH 里运行 /teamwork pin reset，然后在这里重新设置 PIN。",
       "devices": "设备",
