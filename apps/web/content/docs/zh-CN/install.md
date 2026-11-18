@@ -31,7 +31,7 @@ dsh web
 
 ## Linux 服务器
 
-团队 DSH 通常运行在没有桌面的服务器上。在 Ubuntu 或 Debian 上，以将要运行 DSH 的用户执行：
+DSH 也可以运行在没有桌面的服务器上。在 Ubuntu 或 Debian 上，以将要运行 DSH 的用户执行：
 
 1. 安装 Node.js 24 或更高版本：
 
@@ -55,7 +55,7 @@ dsh web
 
    第一行只是让 DSH 先建好 profile，这样它自己的设置会写在这两行之前。
 
-4. 安装插件，并在 `tmux` 会话中启动 DSH，退出登录后它会继续运行。请在会话要工作的项目目录里启动：团队 DSH 的成员会在这个目录、或 DSH 已有的工作区里开始会话。
+4. 安装插件，并在 `tmux` 会话中启动 DSH，退出登录后它会继续运行。请在会话要工作的项目目录里启动：会话会在这个目录、或 DSH 已有的工作区里开始。
 
    ```sh
    dsh plugin --profile web add @dsh-teamwork/dsh-teamwork
@@ -72,7 +72,7 @@ dsh web
    npm install -g @dsh-teamwork/dsh-teamwork
    ```
 
-6. 然后个人 DSH 运行 `dsh-teamwork login`，团队 DSH 运行 `dsh-teamwork share enable <key>`，见[命令](/docs/commands#在服务器上-dsh-teamwork)；团队 DSH 后续的配置见[团队 DSH](/docs/team-dsh)。服务器上不需要浏览器。
+6. 然后运行 `dsh-teamwork login`，见[命令](/docs/commands#在服务器上-dsh-teamwork)。服务器上不需要浏览器。
 
 插件把文件保存在 `~/.dsh/dsh-teamwork/`（或 `$DSH_HOME/dsh-teamwork/`）中，与从哪个目录启动 DSH 无关。
 

@@ -172,8 +172,9 @@ brand colour, and never stands without the name beside it.
 
 - **Never a literal colour.** No Tailwind palette step (`text-gray-600`,
   `text-green-600`) in a page and no hex in a component; a colour is a token.
-  The share card, which renders outside the stylesheet, is the one exception
-  and uses the brand hexes above.
+  Two exceptions: the share card, which renders outside the stylesheet and
+  uses the brand hexes above, and Google's four-colour G on the sign-in
+  button, whose colours Google's branding fixes.
 - **`--brand` is not `--accent`.** `accent` is the subtle hover surface every
   shadcn-shaped primitive uses, so a brand colour there tints every hover. Brand
   chrome opts in with `bg-brand` / `text-brand`.
@@ -297,6 +298,16 @@ brand colour, and never stands without the name beside it.
   printed there and nowhere else in the chrome (`apps/web/src/components/account.tsx`). The operator
   console's rail ends the same way: the operator's initial (the address only
   on hover), the theme and signing out (`apps/manage/src/components/layout/sidebar.tsx`).
+- **Sign-in is split in two** (`apps/web/src/pages/sign-in.tsx`). From
+  `lg` up, the left side is the navy plate: the logo, the home page's title in
+  its serif and lede, and three flat bands of the plate's foreground for the
+  sea. The right side is the form on the page ground, with the way home, the
+  theme and the language at its top. The form lists every OAuth door the
+  session's `doors` reports as an outline button with its provider's
+  mark (Google's in its own four colours), then a divider and the one email door (a code, or a
+  password with a show toggle); a sent code turns the screen into *Check your
+  email* with a wide six-digit field, another email and a new code. Below
+  `lg` the plate is dropped and the logo sits above the title.
 - **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as
   cards (each with the team's initials on navy, and a member's home, resources
   and submissions, or an admin's overview, models and members, a click away) grouped by role, a welcome with the first steps when

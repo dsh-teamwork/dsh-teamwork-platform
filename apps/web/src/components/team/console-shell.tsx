@@ -22,7 +22,6 @@ import {
   GitPullRequestArrow,
   History,
   House,
-  KeyRound,
   Laptop,
   Layers,
   LayoutDashboard,
@@ -30,7 +29,6 @@ import {
   LogOut,
   Menu,
   Puzzle,
-  Server,
   ShieldCheck,
   Users,
   X,
@@ -48,7 +46,7 @@ import { api, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'teamDsh' | 'teamDshHosts';
+type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh';
 
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
@@ -95,9 +93,6 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
       // Listed only once one of this person's computers connected; the same computers in every team.
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true },
-      // Listed in every team, to show what it offers where the team does not have it yet; the admin's own page is
-      // under Team assets.
-      { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true, hint: true },
     ],
   },
   // The team overview heads Team management on its own; the toggle below it names the group.
@@ -111,7 +106,6 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'models', key: 'models', icon: Cpu },
       { path: 'presets', key: 'presets', icon: Layers },
       { path: 'plugins', key: 'plugins', icon: Puzzle },
-      { path: 'team-dsh-hosts', key: 'teamDshHosts', icon: KeyRound },
       { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
       { path: 'history', key: 'history', icon: History },
     ],
@@ -270,18 +264,21 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
 
   return (
     <Tooltip.Provider delayDuration={200}>
-      <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="px-3 pb-4">{group(GROUPS[0])}</div>
-        {/* Team management sits apart from the workspace: its own divider and a slightly deeper ground. */}
+      <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 overflow-y-auto px-3 pb-4">{group(GROUPS[0])}</div>
+        {/* Team management sits apart from the workspace: its own divider and a slightly deeper ground.
+            Open, it takes at most half the sidebar's height and scrolls inside, so the workspace stays in view. */}
         {team.role === 'admin' && (
-          <div className="mt-auto flex flex-col gap-4 border-t bg-secondary/60 px-3 py-3">
-            {open && <div id="team-management" className="flex flex-col gap-4">{GROUPS.slice(1).map(group)}</div>}
-            <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'font-medium')}>
-              <ShieldCheck className="size-4" aria-hidden />
-              <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
-              {!open && waiting.overview && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
-              <ChevronUp className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
-            </button>
+          <div className="mt-auto flex max-h-[50dvh] shrink-0 flex-col gap-4 border-t bg-secondary/60 py-3">
+            {open && <div id="team-management" className="flex min-h-0 flex-col gap-4 overflow-y-auto px-3">{GROUPS.slice(1).map(group)}</div>}
+            <div className="px-3">
+              <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'w-full font-medium')}>
+                <ShieldCheck className="size-4" aria-hidden />
+                <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
+                {!open && waiting.overview && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
+                <ChevronUp className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
+              </button>
+            </div>
           </div>
         )}
       </nav>
