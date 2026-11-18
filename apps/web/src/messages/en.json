@@ -989,7 +989,14 @@
         "model": "Model",
         "desktopDefault": "Desktop default",
         "followPreset": "Preset / desktop model",
-        "noPreset": "No preset"
+        "noPreset": "No preset",
+        "effort": "Reasoning",
+        "effortDefault": "Model default"
+      },
+      "files": {
+        "add": "Add files",
+        "remove": "Remove {name}",
+        "progress": "Uploading {name} · {percent}%"
       },
       "pin": {
         "set": {
@@ -1372,6 +1379,15 @@
     "missing_plugins": "The machine is missing plugins this preset needs.",
     "preset_unavailable": "That preset is not available on the machine.",
     "model_unavailable": "That model is not available right now.",
-    "unavailable": "The machine could not be reached. Try again."
+    "unavailable": "The machine could not be reached. Try again.",
+    "file_type": "Choose a text, code, log, CSV, JSON or PDF file. Images and other formats are not supported yet.",
+    "file_too_large": "Up to 5 files per message: 20 MB each, 50 MB in total.",
+    "invalid_upload": "The files didn’t reach your computer in full. Send the message again.",
+    "upload_expired": "Your computer no longer has these files. Send again to upload them again.",
+    "upload_failed": "Couldn’t upload the file. Your draft is kept; retry or remove the file.",
+    "upload_cancelled": "Upload cancelled. Your draft and selected files are kept.",
+    "upload_unsupported": "Update the Teamwork plugin on this computer to send files.",
+    "send_uncertain": "This message may already have been sent. Confirm or retry before editing.",
+    "file_name": "The file name is too long or contains unsupported characters. Rename it and choose it again."
   }
 }

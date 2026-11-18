@@ -80,9 +80,9 @@ Decided with this premise:
   reads them; a shared DSH is the team's own machine and is not.
 - A budget per shared DSH: a team caps its shared DSH by capping the team. It
   would be a new budget scope if a team asks for one.
-- Files or images from the web client; the app has them. The web client
-  chooses a new session's folder, preset and model, and changes a session's
-  model, as the app does (`SessionSettings` in `dsh-session.tsx`).
+- Images, from any client. The web client chooses a new session's folder,
+  preset and model, changes a session's model, and sends files, as the app
+  does (`SessionSettings` and `useFiles` in `dsh-session.tsx`).
 
 ## Who may run one
 
@@ -252,8 +252,10 @@ The plugin's `src/pin-lock.ts`; the clients' gates are the app's
   key; **shared mode admits no member until it has one**.
 - Every frame between a member's device and the DSH, both ways, becomes a
   record: member, device, direction, time and the frame. A string over 64 KiB
-  (a file's bytes) is kept as its length and SHA-256. Records are batched into
-  segments of at most 1 MiB or one minute. Each segment is HPKE-sealed
+  (a file's bytes) is kept as its length and SHA-256. Each record reaches a
+  journal on the DSH's disk as it is made, so a crash loses none; the next
+  start seals what the journal holds. Records are batched into segments of at
+  most 1 MiB or one minute. Each segment is HPKE-sealed
   (RFC 9180: DHKEM X25519, HKDF-SHA256, AES-256-GCM) to the audit public key,
   under a clear header the AEAD binds: host id, sequence number, the previous
   segment's SHA-256, and the audit key's fingerprint. The DSH signs the header
