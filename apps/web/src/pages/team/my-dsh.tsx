@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { browserCanJoin, myComputers, relayFor, removeDevice, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
-import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, row, SessionList, useComputer, useRelayError } from './dsh-session';
+import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, SessionList, useComputer, useRelayError } from './dsh-session';
 import { useTeam } from './layout';
 
 /** The member's own computers and their sessions on the one open, beside the conversation or, with `devices`, its devices. */
@@ -67,22 +67,32 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
             const open = h.id === hostId;
             return (
               <div key={h.id} className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-0.5">
-                  <div className="min-w-0 flex-1">
-                    <ComputerRow icon={Laptop} name={h.name} note={note(h)} online={h.online} to={`${base}/${h.id}`} open={open} current={open && !sessionId && !devices} onPick={onPick} />
-                  </div>
-                  <Link
-                    to={`${base}/${h.id}/devices`}
-                    onClick={onPick}
-                    aria-label={t('deviceCount', { count: h.pairings.length, name: h.name })}
-                    title={t('deviceCount', { count: h.pairings.length, name: h.name })}
-                    aria-current={open && devices ? 'page' : undefined}
-                    className={cn(row, 'shrink-0 gap-1 self-stretch px-2 text-xs text-muted-foreground tabular-nums', open && devices && 'bg-secondary text-foreground')}
-                  >
-                    <Smartphone className="size-3.5" aria-hidden />
-                    {h.pairings.length}
-                  </Link>
-                </div>
+                <ComputerRow
+                  icon={Laptop}
+                  name={h.name}
+                  note={note(h)}
+                  online={h.online}
+                  to={`${base}/${h.id}`}
+                  open={open}
+                  current={open && !sessionId && !devices}
+                  onPick={onPick}
+                  extra={
+                    <Link
+                      to={`${base}/${h.id}/devices`}
+                      onClick={onPick}
+                      aria-label={t('deviceCount', { count: h.pairings.length, name: h.name })}
+                      title={t('deviceCount', { count: h.pairings.length, name: h.name })}
+                      aria-current={open && devices ? 'page' : undefined}
+                      className={cn(
+                        'flex items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-xs font-normal text-muted-foreground tabular-nums hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                        open && devices && 'border-brand text-foreground',
+                      )}
+                    >
+                      <Smartphone className="size-3.5" aria-hidden />
+                      {h.pairings.length}
+                    </Link>
+                  }
+                />
                 {open && computerId && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
