@@ -32,7 +32,6 @@
     "subtitle": "无需密码。使用 Google，或通过邮箱获取一次性验证码。",
     "subtitleEmailOnly": "无需密码。通过邮箱获取一次性验证码。",
     "google": "使用 Google 继续",
-    "or": "或",
     "email": "邮箱",
     "emailPlaceholder": "you@example.com",
     "sendCode": "发送验证码",
@@ -43,7 +42,13 @@
     "subtitlePassword": "使用邮箱和密码登录。",
     "subtitlePasswordGoogle": "使用 Google，或邮箱和密码登录。",
     "password": "密码",
-    "noAccount": "还没有账号？请团队管理员为你创建。"
+    "noAccount": "还没有账号？请团队管理员为你创建。",
+    "orEmail": "或使用邮箱继续",
+    "checkEmail": "查收邮件",
+    "resend": "重新发送验证码",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码",
+    "setupHint": "这个实例还没有账号。请打开服务器启动时打印的设置链接，创建第一个账号。"
   },
   "authErrors": {
     "invalid_email": "邮箱地址格式不正确。",

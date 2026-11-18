@@ -29,10 +29,9 @@
   },
   "signIn": {
     "title": "Sign in",
-    "subtitle": "No password. Use Google, or get a one-time code by email.",
+    "subtitle": "Continue with Google, or get a one-time code by email. No password needed.",
     "subtitleEmailOnly": "No password. Get a one-time code by email.",
     "google": "Continue with Google",
-    "or": "or",
     "email": "Email",
     "emailPlaceholder": "you@example.com",
     "sendCode": "Email me a code",
@@ -43,7 +42,13 @@
     "subtitlePassword": "Sign in with your email and password.",
     "subtitlePasswordGoogle": "Use Google, or your email and password.",
     "password": "Password",
-    "noAccount": "No account yet? Your team admin creates one for you."
+    "noAccount": "No account yet? Your team admin creates one for you.",
+    "orEmail": "or continue with email",
+    "checkEmail": "Check your email",
+    "resend": "Send a new code",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "setupHint": "This instance has no account yet. Open the setup link the server printed when it started to create the first one."
   },
   "authErrors": {
     "invalid_email": "That doesn't look like an email address.",
