@@ -22,6 +22,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition/editiontest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 )
 
 type obj = map[string]any
@@ -146,7 +147,7 @@ func (w *world) openWith(path string, header http.Header, hello obj) *peer {
 
 func (w *world) host(token, clientID string) *peer {
 	w.t.Helper()
-	return w.open("/relay/plugin", obj{"t": "hello", "token": token, "clientId": clientID, "name": "laptop", "dshVersion": "0.2.2-rc.1"})
+	return w.open("/relay/plugin", obj{"t": "hello", "token": token, "clientId": clientID, "name": "laptop", "dshVersion": "0.2.2-rc.1", "os": "macos"})
 }
 
 func (w *world) phone(h handset) *peer {
@@ -265,7 +266,8 @@ func TestPluginSocket(t *testing.T) {
 		// A team member is welcomed, and the computer recorded as a host.
 		p := w.host(w.ada, "client-one")
 		host, err := w.r.db.RelayHost.Get(context.Background(), p.hostID())
-		if err != nil || host.ClientID != "client-one" || host.DshVersion != "0.2.2-rc.1" || host.UserID != w.adaID {
+		if err != nil || host.ClientID != "client-one" || host.DshVersion != "0.2.2-rc.1" || host.UserID != w.adaID ||
+			host.Os == nil || *host.Os != relayhost.OsMacos {
 			t.Fatalf("host %+v %v", host, err)
 		}
 		w.r.mu.Lock()
@@ -288,6 +290,16 @@ func TestPluginSocket(t *testing.T) {
 		}
 		if code := w.host(w.ada, "bad id!").code; code != closeBadHello {
 			t.Fatalf("bad client id: %d", code)
+		}
+		// An operating system the relay does not name is refused; a plugin too old to report one is not.
+		hello := obj{"t": "hello", "token": w.ada, "clientId": "client-three", "name": "box", "dshVersion": "0.2.2-rc.1", "os": "darwin"}
+		if code := w.open("/relay/plugin", hello).code; code != closeBadHello {
+			t.Fatalf("unknown os: %d", code)
+		}
+		delete(hello, "os")
+		old := w.open("/relay/plugin", hello)
+		if h := w.r.db.RelayHost.GetX(context.Background(), old.hostID()); h.Os != nil {
+			t.Fatalf("an old plugin's os %v", *h.Os)
 		}
 		// No hello at all: 4400 when the time is up, not a dropped connection.
 		helloTimeout = 300 * time.Millisecond
@@ -365,7 +377,7 @@ func TestPairing(t *testing.T) {
 		equal(t, host.ask(obj{"t": "decide", "pairingId": id, "accept": true})["value"], nil)
 		_, listed := w.call(w.adaPhone, "GET", "/relay/pairings", nil)
 		got := listed["pairings"].([]any)[0].(obj)
-		if got["id"] != id || got["status"] != "confirmed" || got["online"] != true || got["hostName"] != "laptop" {
+		if got["id"] != id || got["status"] != "confirmed" || got["online"] != true || got["hostName"] != "laptop" || got["hostOs"] != "macos" {
 			t.Fatalf("listed %v", got)
 		}
 		if list := host.ask(obj{"t": "pairings"})["value"].([]any); len(list) != 1 || list[0].(obj)["status"] != "confirmed" {

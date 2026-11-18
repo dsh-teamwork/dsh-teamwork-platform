@@ -247,7 +247,7 @@ func (r *relay) joinShared(w http.ResponseWriter, req *http.Request) {
 		rejectedJSON(w, err)
 		return
 	}
-	paired := view(pairing, h.Name)
+	paired := view(pairing, h.Name, nil)
 	r.tell(hostID, map[string]any{"t": "paired", "pairing": paired})
 	writeJSON(w, http.StatusCreated, map[string]any{"pairing": paired})
 }

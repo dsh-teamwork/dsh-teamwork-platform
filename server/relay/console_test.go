@@ -62,7 +62,7 @@ func TestConsoleManagesTheMembersDevices(t *testing.T) {
 			t.Fatalf("hosts %v", hosts)
 		}
 		h := hosts[0].(obj)
-		equal(t, []any{h["id"], h["name"], h["dshVersion"], h["online"]}, []any{pc, "laptop", "0.2.2-rc.1", true})
+		equal(t, []any{h["id"], h["name"], h["dshVersion"], h["os"], h["online"]}, []any{pc, "laptop", "0.2.2-rc.1", "macos", true})
 		devices := map[string]obj{}
 		for _, d := range h["pairings"].([]any) {
 			devices[d.(obj)["id"].(string)] = d.(obj)

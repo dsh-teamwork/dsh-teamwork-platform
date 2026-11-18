@@ -3,26 +3,28 @@
  * member's own computers, the same in every team, in Workspace. The second column lists them, with the member's
  * sessions beneath the one open once this browser is paired with it; the third pairs this browser (the code from the
  * computer's Teamwork panel, then the safety code), asks for the computer's PIN, and holds the conversation. Each
- * computer's devices, every phone and browser of the member's paired with it, are listed and removable here (ADR
- * 0048). The computer's id in the address is its host id; the relay is spoken to through this browser's pairing.
+ * computer in the list counts its devices, every phone and browser of the member's paired with it; the count opens
+ * them on a page of their own (`/teams/{teamId}/my-dsh/{hostId}/devices`), each removable (ADR 0048). The computer's id
+ * in the address is its host id; the relay is spoken to through this browser's pairing.
  */
 
-import { Check, Laptop, Loader, Monitor, Smartphone } from 'lucide-react';
+import { ArrowLeft, Check, Laptop, Loader, Monitor, Smartphone } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
-import { normalizePairingCode, PAIRING_CODE_LENGTH, RelayError, type Pairing } from '@dsh-teamwork/relay-client';
+import { HOST_OS_NAMES, normalizePairingCode, PAIRING_CODE_LENGTH, RelayError, type Pairing } from '@dsh-teamwork/relay-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { browserCanJoin, myComputers, relayFor, removeDevice, type MyComputer } from '@/lib/relay';
+import { cn } from '@/lib/utils';
 
-import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, SessionList, useComputer, useRelayError } from './dsh-session';
+import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, row, SessionList, useComputer, useRelayError } from './dsh-session';
 import { useTeam } from './layout';
 
-/** The member's own computers and their sessions on the one open, beside the conversation. */
-export function MyDshPage() {
+/** The member's own computers and their sessions on the one open, beside the conversation or, with `devices`, its devices. */
+export function MyDshPage({ devices = false }: { devices?: boolean }) {
   const { team, me } = useTeam();
   const { hostId = '', sessionId = '' } = useParams();
   const t = useTranslations('team.myDsh');
@@ -52,7 +54,7 @@ export function MyDshPage() {
   // Two records can share a name (two DSHs on one machine, or one signed in again): a short id tells them apart.
   const twin = (h: MyComputer) => (hosts ?? []).some((o) => o.id !== h.id && o.name === h.name);
   const note = (h: MyComputer) =>
-    [h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
+    [h.os ? HOST_OS_NAMES[h.os] : null, h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
   const problem = failed ?? unreachable;
 
   return (
@@ -65,7 +67,22 @@ export function MyDshPage() {
             const open = h.id === hostId;
             return (
               <div key={h.id} className="flex flex-col gap-0.5">
-                <ComputerRow icon={Laptop} name={h.name} note={note(h)} online={h.online} to={`${base}/${h.id}`} open={open} current={open && !sessionId} onPick={onPick} />
+                <div className="flex items-center gap-0.5">
+                  <div className="min-w-0 flex-1">
+                    <ComputerRow icon={Laptop} name={h.name} note={note(h)} online={h.online} to={`${base}/${h.id}`} open={open} current={open && !sessionId && !devices} onPick={onPick} />
+                  </div>
+                  <Link
+                    to={`${base}/${h.id}/devices`}
+                    onClick={onPick}
+                    aria-label={t('deviceCount', { count: h.pairings.length, name: h.name })}
+                    title={t('deviceCount', { count: h.pairings.length, name: h.name })}
+                    aria-current={open && devices ? 'page' : undefined}
+                    className={cn(row, 'shrink-0 gap-1 self-stretch px-2 text-xs text-muted-foreground tabular-nums', open && devices && 'bg-secondary text-foreground')}
+                  >
+                    <Smartphone className="size-3.5" aria-hidden />
+                    {h.pairings.length}
+                  </Link>
+                </div>
                 {open && computerId && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
@@ -80,11 +97,13 @@ export function MyDshPage() {
           <h2 className="text-xl font-semibold tracking-tight">{t('introTitle')}</h2>
           <p className="text-sm text-muted-foreground">{hosts?.length === 0 ? t('none') : t('intro')}</p>
         </section>
+      ) : devices ? (
+        <DevicesView host={host} back={`${base}/${host.id}`} changed={() => void load()} />
       ) : sessionId && computerId && !locked ? (
         <Conversation key={sessionId} computerId={computerId} sessionId={sessionId} title={session?.title || tt('untitled')} />
       ) : (
         <>
-          <HostHeader host={host} note={note(host)} changed={() => void load()} />
+          <HostHeader host={host} note={note(host)} />
           {!computerId ? (
             <Pair
               host={host}
@@ -105,31 +124,22 @@ export function MyDshPage() {
   );
 }
 
-/** The open computer: its name, state and version, and its devices, folded until asked for. */
-function HostHeader({ host, note, changed }: { host: MyComputer; note: string; changed: () => void }) {
+/** The open computer: its name, operating system, state and version. */
+function HostHeader({ host, note }: { host: MyComputer; note: string }) {
   const t = useTranslations('team.myDsh');
   return (
-    <header className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{host.name}</h2>
-        <span className="text-xs text-muted-foreground">
-          {note}
-          {host.dshVersion && ` · ${t('version', { version: host.dshVersion })}`}
-        </span>
-      </div>
-      <details className="group rounded-lg border text-sm">
-        <summary className="flex list-none items-center justify-between gap-3 px-4 py-2.5 font-medium [&::-webkit-details-marker]:hidden">
-          <span>{t('devices')}</span>
-          <span className="text-xs font-normal text-muted-foreground">{host.pairings.length}</span>
-        </summary>
-        <Devices host={host} changed={changed} />
-      </details>
+    <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{host.name}</h2>
+      <span className="text-xs text-muted-foreground">
+        {note}
+        {host.dshVersion && ` · ${t('version', { version: host.dshVersion })}`}
+      </span>
     </header>
   );
 }
 
-/** Every phone and browser of the member's paired with the computer, each removable (ADR 0048). */
-function Devices({ host, changed }: { host: MyComputer; changed: () => void }) {
+/** The computer's devices page: every phone and browser of the member's paired with it, each removable (ADR 0048). */
+function DevicesView({ host, back, changed }: { host: MyComputer; back: string; changed: () => void }) {
   const { me } = useTeam();
   const t = useTranslations('team.myDsh');
   const format = useFormatter();
@@ -150,10 +160,17 @@ function Devices({ host, changed }: { host: MyComputer; changed: () => void }) {
     }
   }
   return (
-    <div className="flex flex-col gap-1 border-t px-4 py-3">
-      <p className="pb-1 text-xs text-muted-foreground">{t('devicesHelp', { name: host.name })}</p>
+    <div className="flex flex-col gap-4 text-sm">
+      <header className="flex flex-col gap-1.5">
+        <Link to={back} className="flex w-fit items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-3.5" aria-hidden />
+          <span className="[overflow-wrap:anywhere]">{host.name}</span>
+        </Link>
+        <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{t('devicesOf', { name: host.name })}</h2>
+        <p className="text-muted-foreground">{t('devicesHelp')}</p>
+      </header>
       {host.pairings.length === 0 && <p className="text-muted-foreground">{t('noDevices')}</p>}
-      <ul className="flex flex-col">
+      <ul className="flex flex-col rounded-lg border px-4 empty:hidden">
         {host.pairings.map((device) => {
           const Icon = device.current ? Monitor : Smartphone;
           return (

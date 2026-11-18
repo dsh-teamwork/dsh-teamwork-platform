@@ -85,6 +85,26 @@ func (_u *RelayHostUpdate) SetNillableDshVersion(v *string) *RelayHostUpdate {
 	return _u
 }
 
+// SetOs sets the "os" field.
+func (_u *RelayHostUpdate) SetOs(v relayhost.Os) *RelayHostUpdate {
+	_u.mutation.SetOs(v)
+	return _u
+}
+
+// SetNillableOs sets the "os" field if the given value is not nil.
+func (_u *RelayHostUpdate) SetNillableOs(v *relayhost.Os) *RelayHostUpdate {
+	if v != nil {
+		_u.SetOs(*v)
+	}
+	return _u
+}
+
+// ClearOs clears the value of the "os" field.
+func (_u *RelayHostUpdate) ClearOs() *RelayHostUpdate {
+	_u.mutation.ClearOs()
+	return _u
+}
+
 // SetLastSeenAt sets the "last_seen_at" field.
 func (_u *RelayHostUpdate) SetLastSeenAt(v time.Time) *RelayHostUpdate {
 	_u.mutation.SetLastSeenAt(v)
@@ -153,6 +173,11 @@ func (_u *RelayHostUpdate) check() error {
 			return &ValidationError{Name: "dsh_version", err: fmt.Errorf(`ent: validator failed for field "RelayHost.dsh_version": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Os(); ok {
+		if err := relayhost.OsValidator(v); err != nil {
+			return &ValidationError{Name: "os", err: fmt.Errorf(`ent: validator failed for field "RelayHost.os": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -185,6 +210,12 @@ func (_u *RelayHostUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.DshVersion(); ok {
 		_spec.SetField(relayhost.FieldDshVersion, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Os(); ok {
+		_spec.SetField(relayhost.FieldOs, field.TypeEnum, value)
+	}
+	if _u.mutation.OsCleared() {
+		_spec.ClearField(relayhost.FieldOs, field.TypeEnum)
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)
@@ -264,6 +295,26 @@ func (_u *RelayHostUpdateOne) SetNillableDshVersion(v *string) *RelayHostUpdateO
 	if v != nil {
 		_u.SetDshVersion(*v)
 	}
+	return _u
+}
+
+// SetOs sets the "os" field.
+func (_u *RelayHostUpdateOne) SetOs(v relayhost.Os) *RelayHostUpdateOne {
+	_u.mutation.SetOs(v)
+	return _u
+}
+
+// SetNillableOs sets the "os" field if the given value is not nil.
+func (_u *RelayHostUpdateOne) SetNillableOs(v *relayhost.Os) *RelayHostUpdateOne {
+	if v != nil {
+		_u.SetOs(*v)
+	}
+	return _u
+}
+
+// ClearOs clears the value of the "os" field.
+func (_u *RelayHostUpdateOne) ClearOs() *RelayHostUpdateOne {
+	_u.mutation.ClearOs()
 	return _u
 }
 
@@ -348,6 +399,11 @@ func (_u *RelayHostUpdateOne) check() error {
 			return &ValidationError{Name: "dsh_version", err: fmt.Errorf(`ent: validator failed for field "RelayHost.dsh_version": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Os(); ok {
+		if err := relayhost.OsValidator(v); err != nil {
+			return &ValidationError{Name: "os", err: fmt.Errorf(`ent: validator failed for field "RelayHost.os": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -397,6 +453,12 @@ func (_u *RelayHostUpdateOne) sqlSave(ctx context.Context) (_node *RelayHost, er
 	}
 	if value, ok := _u.mutation.DshVersion(); ok {
 		_spec.SetField(relayhost.FieldDshVersion, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Os(); ok {
+		_spec.SetField(relayhost.FieldOs, field.TypeEnum, value)
+	}
+	if _u.mutation.OsCleared() {
+		_spec.ClearField(relayhost.FieldOs, field.TypeEnum)
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)

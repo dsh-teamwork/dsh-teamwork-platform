@@ -27,6 +27,8 @@ type RelayHost struct {
 	Name string `json:"name,omitempty"`
 	// DshVersion holds the value of the "dsh_version" field.
 	DshVersion string `json:"dsh_version,omitempty"`
+	// Os holds the value of the "os" field.
+	Os *relayhost.Os `json:"os,omitempty"`
 	// LastSeenAt holds the value of the "last_seen_at" field.
 	LastSeenAt   time.Time `json:"last_seen_at,omitempty"`
 	selectValues sql.SelectValues
@@ -37,7 +39,7 @@ func (*RelayHost) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case relayhost.FieldID, relayhost.FieldUserID, relayhost.FieldClientID, relayhost.FieldName, relayhost.FieldDshVersion:
+		case relayhost.FieldID, relayhost.FieldUserID, relayhost.FieldClientID, relayhost.FieldName, relayhost.FieldDshVersion, relayhost.FieldOs:
 			values[i] = new(sql.NullString)
 		case relayhost.FieldCreatedAt, relayhost.FieldLastSeenAt:
 			values[i] = new(sql.NullTime)
@@ -91,6 +93,13 @@ func (_m *RelayHost) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field dsh_version", values[i])
 			} else if value.Valid {
 				_m.DshVersion = value.String
+			}
+		case relayhost.FieldOs:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field os", values[i])
+			} else if value.Valid {
+				_m.Os = new(relayhost.Os)
+				*_m.Os = relayhost.Os(value.String)
 			}
 		case relayhost.FieldLastSeenAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -148,6 +157,11 @@ func (_m *RelayHost) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("dsh_version=")
 	builder.WriteString(_m.DshVersion)
+	builder.WriteString(", ")
+	if v := _m.Os; v != nil {
+		builder.WriteString("os=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("last_seen_at=")
 	builder.WriteString(_m.LastSeenAt.Format(time.ANSIC))

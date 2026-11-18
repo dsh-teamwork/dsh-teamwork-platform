@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A computer's operating system, and My DSH's devices page
+
+- **What:** The plugin's relay hello adds `os` (`macos`, `windows` or `linux`; any other value is refused 4400, none is allowed), stored in the new nullable `relay_hosts.os` and refreshed on every connection. `GET /relay/pairings` adds `hostOs` and `GET /relay/hosts` adds `os`; `@dsh-teamwork/relay-client`'s `Computer` adds `os`. My DSH shows each computer's operating system and, beside it, the number of devices paired with it, which opens a devices page of its own (`/teams/{teamId}/my-dsh/{hostId}/devices`) where each is removed; the computer's page no longer lists them.
+- **Why:** A member with several computers tells them apart by their system, and the devices were folded away under a computer's sessions, where nobody looked for them.
+- **Breaking:** None: a plugin that sends no `os` connects as before and its computer shows none.
+- **Upgrade:** The migration `relay_host_os` runs at start. A computer shows its system once a plugin that reports it (the release after 0.11.3) reconnects.
+- **Refs:** `server/relay/protocol.go`, `apps/web/src/pages/team/my-dsh.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-18 — An open console survives a deploy
 
 - **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.

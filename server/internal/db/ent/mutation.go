@@ -11070,6 +11070,7 @@ type RelayHostMutation struct {
 	client_id     *string
 	name          *string
 	dsh_version   *string
+	os            *relayhost.Os
 	last_seen_at  *time.Time
 	clearedFields map[string]struct{}
 	done          bool
@@ -11361,6 +11362,55 @@ func (m *RelayHostMutation) ResetDshVersion() {
 	m.dsh_version = nil
 }
 
+// SetOs sets the "os" field.
+func (m *RelayHostMutation) SetOs(r relayhost.Os) {
+	m.os = &r
+}
+
+// Os returns the value of the "os" field in the mutation.
+func (m *RelayHostMutation) Os() (r relayhost.Os, exists bool) {
+	v := m.os
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOs returns the old "os" field's value of the RelayHost entity.
+// If the RelayHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayHostMutation) OldOs(ctx context.Context) (v *relayhost.Os, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOs is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOs requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOs: %w", err)
+	}
+	return oldValue.Os, nil
+}
+
+// ClearOs clears the value of the "os" field.
+func (m *RelayHostMutation) ClearOs() {
+	m.os = nil
+	m.clearedFields[relayhost.FieldOs] = struct{}{}
+}
+
+// OsCleared returns if the "os" field was cleared in this mutation.
+func (m *RelayHostMutation) OsCleared() bool {
+	_, ok := m.clearedFields[relayhost.FieldOs]
+	return ok
+}
+
+// ResetOs resets all changes to the "os" field.
+func (m *RelayHostMutation) ResetOs() {
+	m.os = nil
+	delete(m.clearedFields, relayhost.FieldOs)
+}
+
 // SetLastSeenAt sets the "last_seen_at" field.
 func (m *RelayHostMutation) SetLastSeenAt(t time.Time) {
 	m.last_seen_at = &t
@@ -11431,7 +11481,7 @@ func (m *RelayHostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RelayHostMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.created_at != nil {
 		fields = append(fields, relayhost.FieldCreatedAt)
 	}
@@ -11446,6 +11496,9 @@ func (m *RelayHostMutation) Fields() []string {
 	}
 	if m.dsh_version != nil {
 		fields = append(fields, relayhost.FieldDshVersion)
+	}
+	if m.os != nil {
+		fields = append(fields, relayhost.FieldOs)
 	}
 	if m.last_seen_at != nil {
 		fields = append(fields, relayhost.FieldLastSeenAt)
@@ -11468,6 +11521,8 @@ func (m *RelayHostMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case relayhost.FieldDshVersion:
 		return m.DshVersion()
+	case relayhost.FieldOs:
+		return m.Os()
 	case relayhost.FieldLastSeenAt:
 		return m.LastSeenAt()
 	}
@@ -11489,6 +11544,8 @@ func (m *RelayHostMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldName(ctx)
 	case relayhost.FieldDshVersion:
 		return m.OldDshVersion(ctx)
+	case relayhost.FieldOs:
+		return m.OldOs(ctx)
 	case relayhost.FieldLastSeenAt:
 		return m.OldLastSeenAt(ctx)
 	}
@@ -11535,6 +11592,13 @@ func (m *RelayHostMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDshVersion(v)
 		return nil
+	case relayhost.FieldOs:
+		v, ok := value.(relayhost.Os)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOs(v)
+		return nil
 	case relayhost.FieldLastSeenAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -11571,7 +11635,11 @@ func (m *RelayHostMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *RelayHostMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(relayhost.FieldOs) {
+		fields = append(fields, relayhost.FieldOs)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -11584,6 +11652,11 @@ func (m *RelayHostMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *RelayHostMutation) ClearField(name string) error {
+	switch name {
+	case relayhost.FieldOs:
+		m.ClearOs()
+		return nil
+	}
 	return fmt.Errorf("unknown RelayHost nullable field %s", name)
 }
 
@@ -11605,6 +11678,9 @@ func (m *RelayHostMutation) ResetField(name string) error {
 		return nil
 	case relayhost.FieldDshVersion:
 		m.ResetDshVersion()
+		return nil
+	case relayhost.FieldOs:
+		m.ResetOs()
 		return nil
 	case relayhost.FieldLastSeenAt:
 		m.ResetLastSeenAt()

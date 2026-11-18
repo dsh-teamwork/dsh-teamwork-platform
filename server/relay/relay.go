@@ -409,13 +409,13 @@ func (r *relay) recordHost(ctx context.Context, userID string, h hello) (string,
 	for try := 0; ; try++ {
 		existing, err := r.db.RelayHost.Query().Where(relayhost.UserID(userID), relayhost.ClientID(h.clientID)).Only(ctx)
 		if err == nil {
-			return existing.ID, r.db.RelayHost.UpdateOne(existing).SetName(h.name).SetDshVersion(h.dshVersion).SetLastSeenAt(now).Exec(ctx)
+			return existing.ID, r.db.RelayHost.UpdateOne(existing).SetName(h.name).SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetLastSeenAt(now).Exec(ctx)
 		}
 		if !ent.IsNotFound(err) {
 			return "", err
 		}
 		created, err := r.db.RelayHost.Create().SetUserID(userID).SetClientID(h.clientID).SetName(h.name).
-			SetDshVersion(h.dshVersion).SetLastSeenAt(now).SetCreatedAt(now).Save(ctx)
+			SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetLastSeenAt(now).SetCreatedAt(now).Save(ctx)
 		// Two sockets of one computer racing: the loser reads the winner's row.
 		if ent.IsConstraintError(err) && try == 0 {
 			continue
@@ -822,6 +822,7 @@ type hostView struct {
 	ID         string           `json:"id"`
 	Name       string           `json:"name"`
 	DSHVersion string           `json:"dshVersion"`
+	OS         *relayhost.Os    `json:"os"`
 	Online     bool             `json:"online"`
 	LastSeenAt string           `json:"lastSeenAt"`
 	Pairings   []hostDeviceView `json:"pairings"`
@@ -875,7 +876,7 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	}
 	devices := map[string][]hostDeviceView{}
 	for _, p := range rows {
-		v := view(p, "")
+		v := view(p, "", nil)
 		devices[p.HostID] = append(devices[p.HostID], hostDeviceView{
 			ID: v.ID, DeviceName: v.DeviceName, Status: v.Status, CreatedAt: v.CreatedAt, LastUsedAt: v.LastUsedAt,
 			Push: p.PushToken != nil, Current: mine != "" && p.DeviceKeyHash != nil && *p.DeviceKeyHash == mine,
@@ -885,7 +886,7 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	for i, h := range hosts {
 		_, online := r.hosts[h.ID]
-		out[i] = hostView{ID: h.ID, Name: h.Name, DSHVersion: h.DshVersion, Online: online, LastSeenAt: iso(h.LastSeenAt), Pairings: devices[h.ID]}
+		out[i] = hostView{ID: h.ID, Name: h.Name, DSHVersion: h.DshVersion, OS: h.Os, Online: online, LastSeenAt: iso(h.LastSeenAt), Pairings: devices[h.ID]}
 		if out[i].Pairings == nil {
 			out[i].Pairings = []hostDeviceView{}
 		}

@@ -17,11 +17,20 @@ export interface DeviceKeys {
   forget(id: string): Promise<void>;
 }
 
+/** A member's computer's operating system, as its plugin reports it to the relay. */
+export const HOST_OS = ['macos', 'windows', 'linux'] as const;
+export type HostOs = (typeof HOST_OS)[number];
+
+/** How a client names an operating system: a product name, the same in every language. */
+export const HOST_OS_NAMES: Record<HostOs, string> = { macos: 'macOS', windows: 'Windows', linux: 'Linux' };
+
 export interface Computer {
   /** The pairing's id: every frame for this computer names it. */
   id: string;
   /** The machine's name, as its DSH reported it. */
   name: string;
+  /** Its operating system; null for a team's shared DSH, or a plugin too old to report one. */
+  os: HostOs | null;
   /** Whether its DSH holds a connection to the relay right now. */
   online: boolean;
   /** A locally pinned desktop identity exists; routing status alone does not grant trust. */
