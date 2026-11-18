@@ -1,6 +1,6 @@
 # Self-hosting the community server
 
-> **Status:** Current · **Updated:** 2026-11-16
+> **Status:** Current · **Updated:** 2026-11-17
 
 Run a community instance, connect a member's DSH, and retain the database,
 private plugin bytes and secrets across upgrades.
@@ -96,7 +96,8 @@ The service never falls back to local disk after S3 is explicitly selected.
 The database keeps artifact metadata; a database backup alone cannot recreate
 private archives.
 
-Both providers organize retained objects as `teams/{teamId}/plugins/{artifactId}.tgz`.
+Both providers organize retained objects as `teams/{teamId}/plugins/{artifactId}.tgz`;
+an edition that stores its own objects adds `teams/{teamId}/{kind}/{id}` beside them.
 Before a member process serves, startup verifies referenced bytes and copies
 missing scoped objects from the old flat layout, retaining sources. The offline
 `--migrate-artifact-paths` command runs the same pass. Preserve flat sources until

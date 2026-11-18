@@ -26,7 +26,7 @@ func (s *Server) listSubmissions(w http.ResponseWriter, r *http.Request) error {
 	if e != nil {
 		return e
 	}
-	rows, e := s.Team.ListSubmissions(r.Context(), c.user.ID, r.PathValue("teamId"), offset, r.URL.Query().Get("state"))
+	rows, e := s.Team.ListSubmissions(r.Context(), c.user.ID, r.PathValue("teamId"), offset, r.URL.Query().Get("state"), r.URL.Query().Get("mine") == "true")
 	if e != nil {
 		return e
 	}

@@ -1432,7 +1432,7 @@ export interface paths {
         put?: never;
         /**
          * Query a public upstream live for transient model form suggestions
-         * @description No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented. A catalog that cannot be read is model_metadata_unavailable.
+         * @description No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented. For models_dev, a provider the catalog does not name (or none) searches every provider for the exact model id instead of a substring. A catalog that cannot be read is model_metadata_unavailable.
          */
         post: {
             parameters: {
@@ -1448,14 +1448,14 @@ export interface paths {
                     "application/json": {
                         /** @enum {string} */
                         source: "models_dev" | "openrouter";
-                        provider: string;
+                        provider?: string;
                         query: string;
                         pricing?: boolean;
                     };
                 };
             };
             responses: {
-                /** @description Up to fifty candidates; the administrator explicitly selects a reference */
+                /** @description Up to fifty candidates, exact id first; the console fills the form only from a unique exact match */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2145,6 +2145,8 @@ export interface paths {
                     offset?: number;
                     /** @description Keep only submissions in this state */
                     state?: "draft" | "pending" | "published" | "rejected" | "withdrawn";
+                    /** @description Only the caller's own submissions, for an administrator too */
+                    mine?: "true";
                 };
                 header?: never;
                 path: {

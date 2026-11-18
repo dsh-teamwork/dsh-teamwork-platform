@@ -3,8 +3,10 @@
  * whole team shares: the team model it calls, the DSH tools it needs, the
  * plugins it pins and the persona it works by. An admin starts one from a
  * template (`PRESET_TEMPLATES`, copied in the admin's language and the team's
- * own from then on) or from nothing, in an editor with three tabs. Members see
- * every preset and its details, and pick one in DSH.
+ * own from then on) or from nothing, in an editor with three tabs. It is Team
+ * management's (ADR 0043); a member reads the presets in Team resources and
+ * proposes one, or a change to one, in the same editor, which sends it to
+ * review instead of publishing it.
  */
 
 import { ChevronDown, Cpu, Plus, Puzzle } from 'lucide-react';
@@ -34,7 +36,7 @@ type Plugin = ConfigOf<'plugin'>;
 type Reload = () => Promise<unknown>;
 
 /** What the editor edits; `route` keeps a preset that names its own provider and model as it is. */
-interface Draft {
+export interface Draft {
   name: string;
   description: string;
   modelConfigId: string;
@@ -45,6 +47,40 @@ interface Draft {
   required: string[];
   optional: string[];
   plugins: string[];
+}
+
+/** An empty preset, calling the team's first model. */
+export function blankDraft(models: Model[]): Draft {
+  return {
+    name: '',
+    description: '',
+    modelConfigId: models[0]?.id ?? '__inherit__',
+    route: null,
+    outputDescription: '',
+    instructions: '',
+    systemPrompt: '',
+    required: [],
+    optional: [],
+    plugins: [],
+  };
+}
+
+/** A published preset, as the editor edits it. */
+export function presetDraft(preset: Preset): Draft {
+  return {
+    name: preset.name,
+    description: preset.data.description,
+    modelConfigId: preset.data.inheritModel ? '__inherit__' : preset.data.modelConfigId ?? '',
+    route: preset.data.modelConfigId || !preset.data.provider || !preset.data.model
+      ? null
+      : { provider: preset.data.provider, model: preset.data.model, contextWindow: preset.data.contextWindow, maxTokens: preset.data.maxTokens },
+    outputDescription: preset.data.outputDescription,
+    instructions: preset.data.instructions,
+    systemPrompt: preset.data.systemPrompt,
+    required: [...preset.data.requiredTools],
+    optional: [...preset.data.optionalTools],
+    plugins: preset.data.pluginDependencies.map((d) => d.pluginConfigId),
+  };
 }
 
 export function TeamPresetsPage() {
@@ -58,26 +94,13 @@ export function TeamPresetsPage() {
 function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[]; reload: Reload }) {
   const t = useTranslations('team.presets');
   const tt = useTranslations('team.templates');
-  const admin = team.role === 'admin';
   const presets = configs.filter((c): c is Preset => c.kind === 'preset').sort((a,b)=>Number(b.builtin === 'team-assistant')-Number(a.builtin === 'team-assistant'));
   const models = configs.filter((c): c is Model => c.kind === 'model');
   const plugins = configs.filter((c): c is Plugin => c.kind === 'plugin');
   const [editing, setEditing] = useState<{ draft: Draft; preset?: Preset; template?: string } | null>(null);
 
-  const blank = (): Draft => ({
-    name: '',
-    description: '',
-    modelConfigId: models[0]?.id ?? '__inherit__',
-    route: null,
-    outputDescription: '',
-    instructions: '',
-    systemPrompt: '',
-    required: [],
-    optional: [],
-    plugins: [],
-  });
   const fromTemplate = (template: PresetTemplate): Draft => ({
-    ...blank(),
+    ...blankDraft(models),
     name: tt(`${template.id}.name`),
     description: tt(`${template.id}.description`),
     outputDescription: tt(`${template.id}.deliverable`),
@@ -86,29 +109,15 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
     required: [...template.requiredTools],
     optional: [...template.optionalTools],
   });
-  const fromPreset = (preset: Preset): Draft => ({
-    name: preset.name,
-    description: preset.data.description,
-    modelConfigId: preset.data.inheritModel ? '__inherit__' : preset.data.modelConfigId ?? '',
-    route: preset.data.modelConfigId || !preset.data.provider || !preset.data.model
-      ? null
-      : { provider: preset.data.provider, model: preset.data.model, contextWindow: preset.data.contextWindow, maxTokens: preset.data.maxTokens },
-    outputDescription: preset.data.outputDescription,
-    instructions: preset.data.instructions,
-    systemPrompt: preset.data.systemPrompt,
-    required: [...preset.data.requiredTools],
-    optional: [...preset.data.optionalTools],
-    plugins: preset.data.pluginDependencies.map((d) => d.pluginConfigId),
-  });
 
   return (
     <>
       <PageHeader
         title={t('title')}
-        description={admin ? t('descriptionAdmin') : t('descriptionMember')}
+        description={t('intro')}
         action={
           (
-            <Button variant="outline" onClick={() => setEditing({ draft: blank() })}>
+            <Button variant="outline" onClick={() => setEditing({ draft: blankDraft(models) })}>
               <Plus />
               {t('blank')}
             </Button>
@@ -118,7 +127,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
 
       {presets.length === 0 ? (
         <Card>
-          <CardContent className="pt-6 text-center text-sm text-muted-foreground">{admin ? t('emptyAdmin') : t('emptyMember')}</CardContent>
+          <CardContent className="pt-6 text-center text-sm text-muted-foreground">{t('empty')}</CardContent>
         </Card>
       ) : (
         // Rows, not cards (docs/design.md, "Lists are rows"): the templates below are the one block set apart.
@@ -131,8 +140,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
               preset={p}
               model={models.find((m) => m.id === p.data.modelConfigId)}
               plugins={plugins}
-              admin={admin}
-              onEdit={() => setEditing({ draft: fromPreset(p), preset: p })}
+              onEdit={() => setEditing({ draft: presetDraft(p), preset: p })}
             />
           ))}
         </ul>
@@ -171,7 +179,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
       {editing && (
         <PresetEditor
           teamId={team.id}
-          submitForReview={!admin}
+          submitForReview={false}
           reload={reload}
           initial={editing.draft}
           preset={editing.preset}
@@ -208,7 +216,6 @@ function PresetCard({
   preset,
   model,
   plugins,
-  admin,
   onEdit,
 }: {
   teamId: string;
@@ -216,7 +223,6 @@ function PresetCard({
   preset: Preset;
   model: Model | undefined;
   plugins: Plugin[];
-  admin: boolean;
   onEdit: () => void;
 }) {
   const t = useTranslations('team.presets');
@@ -261,7 +267,7 @@ function PresetCard({
               <Button size="sm" variant="ghost" onClick={onEdit}>
                 {t('edit')}
               </Button>
-              {admin && <Button
+              <Button
                 size="sm"
                 variant="ghost"
                 disabled={pending}
@@ -270,7 +276,7 @@ function PresetCard({
                 }}
               >
                 {t('remove')}
-              </Button>}
+              </Button>
             </>
           )}
         </span>
@@ -302,7 +308,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 type Tab = 'basics' | 'tools' | 'persona';
 
 /** Publish or edit one preset; the server checks its model and plugin pins belong to the team, at those versions. */
-function PresetEditor({
+export function PresetEditor({
   teamId,
   submitForReview,
   reload,

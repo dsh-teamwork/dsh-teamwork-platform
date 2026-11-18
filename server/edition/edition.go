@@ -14,6 +14,7 @@ package edition
 import (
 	"context"
 	"database/sql"
+	"io"
 	"io/fs"
 	"net/http"
 	"sync"
@@ -106,6 +107,9 @@ type Host struct {
 	// GET /api/configs and the model gateway. host names the computer or
 	// session it is for. The member must be in the team.
 	MintComputerToken func(ctx context.Context, userID, teamID, host string, ttl time.Duration) (string, time.Time, error)
+	// Objects keeps an extension's bytes under a team, in the server's own
+	// store; nil on a management process, which has none.
+	Objects Objects
 	// SameOrigin reports whether r, a write, came from this site.
 	SameOrigin func(r *http.Request) bool
 	Users      Users
@@ -147,6 +151,22 @@ const (
 )
 
 type TeamChangeHandler func(context.Context, SQLExecutor, TeamChange) error
+
+// Objects is the server's object store as an extension uses it: the local
+// data directory, or the bucket ARTIFACT_STORAGE_PROVIDER=s3 names, the same
+// one that holds plugin archives. An object is named by its team, a kind the
+// extension owns (lower-case, not "plugins") and an id of at most 32
+// characters from [A-Za-z0-9_-]. The server keeps no record of them: the
+// extension's own tables say what exists, and the extension deletes what it
+// stored (ADR 0042).
+type Objects interface {
+	// Put writes size bytes of body, replacing any object of that name.
+	Put(ctx context.Context, teamID, kind, id string, body io.ReadSeeker, size int64) error
+	// Open reads an object; one that does not exist is fs.ErrNotExist.
+	Open(ctx context.Context, teamID, kind, id string) (io.ReadCloser, error)
+	// Delete removes an object; one already gone is not an error.
+	Delete(ctx context.Context, teamID, kind, id string) error
+}
 
 // Extension is one closed feature.
 type Extension struct {

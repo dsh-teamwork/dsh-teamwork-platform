@@ -146,12 +146,15 @@ the team keeps its records under a former member.
 lookup against fixed Models.dev or OpenRouter URLs, with a request deadline
 and bounded responses. Pricing lookups also obtain live USD/CNY FX from
 Frankfurter. There is no local catalog, cache, scheduled sync or saved mapping.
-The console selects a reference candidate, previews changes and explicitly
-applies known fields to the form. Existing configuration and rate APIs save
+For Models.dev, a provider the catalog does not name (a team's own proxy)
+searches every provider for the exact model id instead of a substring. The
+console fills known fields into the form in one click, only from the one
+candidate whose id is the model's own, and says where they came from with an
+undo; no match or several leave the form alone and offer a picker. Existing configuration and rate APIs save
 only final values; the actual provider/model ID is never replaced. Model
 configuration includes an optional `vision` boolean, propagated through the
-plugin snapshot to image input support. Output modalities are displayed as
-reference information; the gateway remains a chat-completions route.
+plugin snapshot to image input support. The gateway remains a
+chat-completions route.
 
 ## Signing in on the web
 

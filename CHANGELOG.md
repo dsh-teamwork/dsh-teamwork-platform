@@ -29,6 +29,30 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing
 - **Refs:** `apps/web/src/public/controls.tsx`, `apps/web/src/public/home.tsx`.
 
+## 2026-11-17 — Model information and reference prices fill in one click
+
+- **What:** **Fill from public catalog** (model forms) and **Fill reference prices** (the rate form, estimated-cost basis) fill at once from the one catalog entry whose id is the model's own, and a note says where the values came from, what changed and, for prices, the exchange rate and its date, with an undo. No match, or the same id at several providers, changes nothing and offers a picker. The price multiplier is gone. `POST /api/teams/{teamId}/model-metadata/lookup` no longer requires `provider`; for Models.dev, one the catalog does not name searches every provider by exact id.
+- **Why:** Choosing a source, a provider and a candidate before anything filled was slow for the common case, and a team's rates are its own budget shares, not resale prices that need a multiplier.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/model-metadata.tsx`, `server/internal/httpapi/model_metadata.go`, `docs/tech/usage-budgets.md`.
+
+## 2026-11-17 — The team console is work first
+
+- **What:** A team's sidebar has two groups: Work for everyone (Home, Team resources, My submissions, an edition's work pages) and Team management for its admin alone (models, presets, plugins, Review, history, members, usage, budgets); a member opening a management page is sent home. Team resources lists the models (with their rates), presets and plugins, and is where a member proposes a preset or a change to one. A member leaves from the team switcher. An edition's team page (`mountWeb`) names its `audience`, `work` or `admin`, and may give `visible(team)`, answered by the edition's own API, for a page only some teams have. `GET /api/teams/{teamId}/submissions` takes `mine=true`.
+- **Why:** Most people who open a team work in it; cloud sessions, for every member of a team the operator admits, are the first edition work page.
+- **Breaking:** An edition's `mountWeb` team page must name its `audience` (`work` or `admin`), and may give `visible(team)` for a page only some teams have. Members no longer see usage, budgets, history, or the models, presets and plugins management pages.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0043, `apps/web/src/lib/edition.ts`, `apps/web/src/components/team/console-shell.tsx`, `apps/web/src/pages/team/resources.tsx`.
+
+## 2026-11-17 — Editions can store objects in the server's store
+
+- **What:** `edition.Host.Objects` lends an edition the server's own object store (the data directory, or the `ARTIFACT_STORAGE_PROVIDER=s3` bucket) under keys `teams/{teamId}/{kind}/{id}`, beside the plugin archives and never among them (`plugins` is refused). `Put`, `Open` (a missing object is `fs.ErrNotExist`) and `Delete`; nil on a management process.
+- **Why:** The hosted edition keeps each cloud session's record after its VM ends, in the store that already holds plugin archives rather than in a bucket of its own.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0042, `server/internal/artifactstore`, `server/edition/edition.go`.
+
 ## 2026-11-17 — `apps/web`, one development address, and editions compose the web app
 
 - **What:** The user frontend is `apps/web` (`@dsh-teamwork/web`) and the shared management app `@dsh-teamwork/manage`. `pnpm dev` runs the edition's outermost Go server on :3800 with `DEV_VITE=1`, which takes the console, its modules and the public pages from the web Vite on :3810 and `/manage` from the management Vite on :3811; Go sources, migrations and embedded JSON restart the server. An edition's web app composes the open one through `mountWeb` (`@dsh-teamwork/web/app`): it adds routes and team pages, replacing an open one at the same path, and adds or replaces public pages by file name, which the server now serves generically (`/{name}` from `{name}.{locale}.html` or `{name}.html`, also in the sitemap). `Host.SetWebConsole` hands the server an edition's web build. `Host.AddTeamPage` and the session's `teamPages` are removed.

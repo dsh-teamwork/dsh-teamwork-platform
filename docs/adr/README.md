@@ -30,6 +30,8 @@ or the hosted service, kept with the closed edition rather than here.
 - [0039 — Deleting an account](0039-deleting-an-account.md) — self-service deletion, admin handover first, lone teams deleted with it.
 - [0040 — The app deletes the account](0040-the-app-deletes-the-account.md) — the phone app's token deletes the account too, with the email typed back.
 - [0041 — An edition composes the web app](0041-an-edition-composes-the-web-app.md) — `mountWeb` and `SetWebConsole`; development served through Go on :3800.
+- [0042 — Editions store objects](0042-editions-store-objects-beside-plugin-archives.md) — an edition's bytes live in the server's store, under a kind of its own.
+- [0043 — A work-first team console](0043-a-work-first-team-console.md) — everyone works in the team; only its admin sees Team management.
 
 The template:
 
