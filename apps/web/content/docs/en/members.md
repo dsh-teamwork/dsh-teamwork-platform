@@ -41,6 +41,22 @@ Every team has an assistant preset. Start a session with it and ask about the
 team's resources, your usage, budgets, members, or what is waiting for review.
 Anything it would change still asks for your approval.
 
+## Work on your own DSH from the browser
+
+**My DSH** appears under Workspace once a computer of yours, with DSH signed in
+to Teamwork, has connected. It lists those computers, the same in every team.
+Open one and pair this browser with it once: in DSH on that computer, open the
+Teamwork panel, choose **Phone** and make a code, type the code here, check
+that both screens show the same safety code, and approve on the computer. Then
+set a four-digit PIN, which the computer asks for again when you come back.
+After that you start, follow and answer sessions on it from the browser, end to
+end encrypted between the browser and the computer.
+
+Under **Devices** you see every phone and browser paired with that computer,
+and **Remove** cuts any of them off at once, a lost phone included. If you
+enter the wrong PIN too often, run `/teamwork pin reset` in DSH on that
+computer.
+
 ## Work on a Team DSH
 
 If your team runs a Team DSH, its admin hands you an invite link
@@ -51,7 +67,8 @@ machine asks for it again when you come back. Each browser joins once, and
 keeps its key in the browser's own storage: clearing the site's data means
 asking for a new invite. You see only the sessions you start there, and your
 team's admin can read every session from the machine's encrypted archive. The
-phone app opens the same link.
+phone app opens the same link, or scans its QR code under **Pair a computer**;
+the Team DSH then sits in the computer list under your team's name.
 
 ## More than one team
 

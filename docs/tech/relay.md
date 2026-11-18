@@ -60,7 +60,7 @@ The hosted edition's smallest useful version works end to end:
 | The relay: WebSocket endpoints for plugins and phones, pairing checks, envelopes, push, and `GET /api/relay` | `server/relay`, an extension every binary's main imports, served under `/relay` on the server's own port | Open |
 | Pairing and device tables | `server/internal/db/schema/relay.go`, migrated with the rest of the open schema | Open |
 | The plugin's outbound connection, pairing panel and allow-list | `dsh-teamwork/dsh-teamwork` (`src/relay.ts`, the Teamwork panel) | Open |
-| The client: the encrypted channel, the frames, the live client and DSH's Remote API read into a client's shapes | `packages/relay-client`, imported by the web console and the app; its tests run on Node, and `server/e2e` drives it against the real plugin | Open |
+| The client: the encrypted channel, the frames, the live client and DSH's Remote API read into a client's shapes, and a session whose streams a server relays (`src/relayed.ts`, which the hosted cloud's stream uses) | `packages/relay-client`, imported by the web console and the app; its tests run on Node, and `server/e2e` drives it against the real plugin | Open |
 | The app | `premium/apps/mobile` where that directory exists, from seed's Expo app | Closed; it reaches any server |
 
 The relay mounts through `server/edition` like a closed extension, so it reads
@@ -464,6 +464,51 @@ module registration is shimmed; its AES implementation is not mocked.
 - DSH's experimental Remote API and approval behavior must be revalidated when
   its pinned version changes. No relay-side content audit or content search
   can operate on encrypted payloads.
+
+## My DSH in the web console
+
+A member uses their own computers from the browser, as the phone app does, and
+sees and revokes every device paired with them. It is the web console's third
+way to reach a DSH, beside Team DSH ([shared-dsh.md](shared-dsh.md)) and, in
+the hosted edition, Cloud DSH.
+
+- **Workspace → My DSH**, `/teams/{teamId}/my-dsh[/{hostId}[/{sessionId}]]`
+  (`apps/web/src/pages/team/my-dsh.tsx`), in the same three columns as Team
+  DSH, whose parts it shares (`dsh-session.tsx`). It is listed while the
+  account has at least one recorded host, in every team alike: the computers
+  are the person's, not a team's.
+- **The second column lists the account's computers**: name, online or when
+  last seen. The open one shows its sessions beneath it once this browser is
+  paired and unlocked.
+- **The third column** is, by state: pairing this browser (the six-letter code
+  from the Teamwork panel's Phone page, the eight-digit safety code to
+  compare, then approval on the desktop: "Pairing" above, unchanged); the
+  computer's PIN, `owner`'s; a session, or a new one started by its first
+  message. Above it, the computer's name, state and DSH version, and its
+  **Devices**: every pairing of the account to it, the phone app's and every
+  browser's, with its name, status, last use and whether it pushes, this
+  browser marked, each removable.
+- **A session** is followed as on the phone: a snapshot that fits the
+  channel, "Show earlier messages" for what came before it, and a follow that
+  comes back by itself after the socket, the channel or the computer drops
+  ("Frames" above).
+- **The server** ([ADR 0048](../adr/0048-the-console-manages-every-device.md)):
+  `GET /relay/hosts` answers the console's session cookie alone, with the
+  account's hosts, whether each socket is open, `last_seen_at`, `dsh_version`
+  and every pairing of the account to each, `current` when its handset
+  credential is this browser's. `DELETE /relay/pairings/{id}` from that
+  session revokes any pairing of the account to its own computers; an app's
+  Bearer stays handset-scoped. Another device's pairing is revoked through the
+  relay alone, as for an offline desktop (step 6 above). No table changed.
+- **Not built:** a team admin seeing a member's computers; removing a
+  computer's record, which comes back the next time its plugin connects;
+  telling a member their DSH or plugin is older than the team pins; push to a
+  browser.
+- **Verified by** `server/e2e`'s relay test, which pairs and passes encrypted
+  calls once as the app and once as the console (a cookie from this site, no
+  token), and `server/relay/console_test.go`, which pins the console's reach:
+  its own computers' pairings only, from this site only, and none of an app
+  token's.
 
 ## Open questions
 

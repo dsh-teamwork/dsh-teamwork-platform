@@ -41,6 +41,7 @@ const TeamResourcesPage = lazy(() => import('@/pages/team/resources').then((m) =
 const AdminOnly = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.AdminOnly })));
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
+const MyDshPage = lazy(() => import('@/pages/team/my-dsh').then((m) => ({ default: m.MyDshPage })));
 const TeamDshPage = lazy(() => import('@/pages/team/team-dsh').then((m) => ({ default: m.TeamDshPage })));
 const TeamDshHostsPage = lazy(() => import('@/pages/team/team-dsh-hosts').then((m) => ({ default: m.TeamDshHostsPage })));
 const TeamBudgetsPage = lazy(() => import('@/pages/team/budgets').then((m) => ({ default: m.TeamBudgetsPage })));
@@ -84,6 +85,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { index: true, element: <TeamOverviewPage /> },
       { path: 'resources', element: <TeamResourcesPage /> },
       { path: 'submissions', element: <TeamSharingPage view="mine" /> },
+      { path: 'my-dsh/:hostId?/:sessionId?', element: <MyDshPage /> },
       { path: 'team-dsh/:computerId?/:sessionId?', element: <TeamDshPage /> },
     ],
     own(false),

@@ -181,7 +181,7 @@ export function DocsPage({ locale, slug }: { locale: Locale; slug: Slug }) {
         <main className="min-w-0 py-8 md:py-10">
           {/* Narrow screens: the page list behind a native disclosure. */}
           <details data-menu="" className="mb-6 rounded-lg border md:hidden">
-            <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium">{t('menu')}</summary>
+            <summary className="px-4 py-2.5 text-sm font-medium">{t('menu')}</summary>
             <div className="border-t px-2 py-3">{nav}</div>
           </details>
 

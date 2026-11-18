@@ -38,7 +38,7 @@ export function Select({ label, value, options, change, id, disabled, className 
         <Primitive.Content position="popper" sideOffset={5} className="z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
           <Primitive.Viewport className="max-h-72 overflow-y-auto">
             {options.map((option, index) => (
-              <Primitive.Item key={`${index}:${option.value}`} value={String(index)} className="relative cursor-pointer rounded-md py-1.5 pr-8 pl-2.5 text-sm outline-none data-[highlighted]:bg-accent">
+              <Primitive.Item key={`${index}:${option.value}`} value={String(index)} className="relative rounded-md py-1.5 pr-8 pl-2.5 text-sm outline-none data-[highlighted]:bg-accent">
                 <Primitive.ItemText>{option.label}</Primitive.ItemText>
                 <Primitive.ItemIndicator className="absolute top-1/2 right-2 -translate-y-1/2"><Check className="size-4" /></Primitive.ItemIndicator>
               </Primitive.Item>
