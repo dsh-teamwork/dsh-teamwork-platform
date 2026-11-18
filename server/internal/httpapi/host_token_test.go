@@ -56,10 +56,10 @@ func TestHostTokenReachesOneTeamAsNoMember(t *testing.T) {
 
 		// A member's default budget does not hold a shared DSH; the team's does.
 		must(t, admin.send("PUT", "/api/teams/"+teamA+"/budgets", budgetBody("default_member", "", "100", 0)), 200)
-		refused(t, "member under a default budget", call(e.pluginFor(admin), modelA, false), 403, "budget_model_unpriced")
+		refused(t, "member under a default budget", call(e.pluginFor(admin), modelA, false), 403, "budget_bound_unavailable")
 		must(t, call(host, modelA, false), 200)
 		must(t, admin.send("PUT", "/api/teams/"+teamA+"/budgets", budgetBody("team", "", "100", 0)), 200)
-		refused(t, "host under a team budget", call(host, modelA, false), 403, "budget_model_unpriced")
+		refused(t, "host under a team budget", call(host, modelA, false), 403, "budget_bound_unavailable")
 
 		// Every other route treats it as nobody.
 		for _, path := range []string{"/api/profile", "/api/teams", "/api/teams/" + teamA + "/usage"} {

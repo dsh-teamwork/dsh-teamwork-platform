@@ -25,10 +25,10 @@ interface TeamState {
   me: string;
   /** The instance holds passwords: members get a first password, not an invitation. */
   passwords: boolean;
-  /** What waits on the person, and recent usage (`GET …/summary`); absent until it is read. */
-  summary?: Schemas['TeamSummary'];
-  /** Reads the summary again, after a write that changes what waits. */
-  reloadSummary: () => Promise<unknown>;
+  /** For the team's admin, what waits on the team and its recent usage (`GET …/summary?scope=team`); absent until read, and for a member. */
+  teamSummary?: Schemas['TeamSummary'];
+  /** Reads the team's summary again, after a write that changes what waits. */
+  reloadTeamSummary: () => Promise<unknown>;
 }
 
 const TeamContext = createContext<TeamState | null>(null);
@@ -48,8 +48,10 @@ export function TeamLayout() {
   const team = useApi<Team>(`teams/${encodeURIComponent(teamId)}`);
   // Only the sidebar needs every team, and it stays mounted while the team or the page beside it changes.
   const teams = useApi<TeamSummary[]>('teams');
-  // Read beside the team, never in front of it: the sidebar's dot and the overview wait for it, nothing else does.
-  const summary = useApi<Schemas['TeamSummary']>(`teams/${encodeURIComponent(teamId)}/summary`);
+  // Read beside the team, never in front of it: the sidebar's dots and the team overview wait for it, nothing
+  // else does. Only an admin has one, so it is read once the team says whose console this is.
+  const admin = team.data?.role === 'admin';
+  const summary = useApi<Schemas['TeamSummary']>(admin ? `teams/${encodeURIComponent(teamId)}/summary?scope=team` : null);
   useTitle(team.data?.name);
 
   if (team.error instanceof ApiError && team.error.code === 'team_not_found') {
@@ -77,21 +79,30 @@ export function TeamLayout() {
 
   return (
     <TeamContext.Provider
-      value={{ team: team.data, reload: team.reload, me: session.user.id, passwords: session.doors.password, summary: summary.data, reloadSummary: summary.reload }}
+      value={{ team: team.data, reload: team.reload, me: session.user.id, passwords: session.doors.password, teamSummary: summary.data, reloadTeamSummary: summary.reload }}
     >
-      <ConsoleShell
-        team={team.data}
-        teams={teams.data}
-        reviewsWaiting={team.data.role === 'admin' && (summary.data?.pendingReviews ?? 0) > 0}
-      >
+      <ConsoleShell team={team.data} teams={teams.data} waiting={waiting(summary.data)}>
         <Outlet />
       </ConsoleShell>
     </TeamContext.Provider>
   );
 }
 
-/** The admin's pages, Team assets and Members and spend: a member who opens one is sent to the team's home (ADR 0043). */
+/** Where the sidebar's amber dots go: the team overview while anything waits on the team, and the review queue while a submission does. */
+function waiting(summary?: Schemas['TeamSummary']) {
+  if (!summary) return { overview: false, sharing: false };
+  const any = summary.unpricedModels.length > 0 || summary.overruns > 0 || summary.pendingReviews > 0 || summary.nearLimit.length > 0 || summary.unresolved > 0 || summary.failedNotices > 0;
+  return { overview: any, sharing: summary.pendingReviews > 0 };
+}
+
+/** `/teams/{teamId}` itself: an admin lands on the team overview, a member on the workspace's home (ADR 0049). */
+export function TeamIndex() {
+  const { team } = useTeam();
+  return <Navigate to={`/teams/${encodeURIComponent(team.id)}/${team.role === 'admin' ? 'overview' : 'home'}`} replace />;
+}
+
+/** The admin's pages, Team management: a member who opens one is sent to the workspace's home (ADR 0043). */
 export function AdminOnly() {
   const { team } = useTeam();
-  return team.role === 'admin' ? <Outlet /> : <Navigate to={`/teams/${encodeURIComponent(team.id)}`} replace />;
+  return team.role === 'admin' ? <Outlet /> : <Navigate to={`/teams/${encodeURIComponent(team.id)}/home`} replace />;
 }

@@ -22,14 +22,14 @@ type Window = Schemas['BudgetWindow'];
 type Budgets = { policies: Policy[]; windows: Window[] };
 
 export function TeamBudgetsPage() {
-  const { team, me, reloadSummary } = useTeam();
+  const { team, me, reloadTeamSummary } = useTeam();
   const t = useTranslations('budgets');
   const word = useTeamError();
   const format = useFormatter();
   const data = useApi<Budgets>(`teams/${team.id}/budgets`);
   const providers = useApi<Provider[]>(`teams/${team.id}/providers`);
   const notices = useApi<Schemas['BudgetNotice'][]>(`teams/${team.id}/budgets/notices`);
-  const resend = useMutation(() => Promise.all([notices.reload(), reloadSummary()]));
+  const resend = useMutation(() => Promise.all([notices.reload(), reloadTeamSummary()]));
   const windows = data.data?.windows ?? [];
   const [editing, setEditing] = useState<Policy | 'new' | null>(null);
   const names = new Map(team.members.map((m) => [m.userId, m.email || m.userId]));
@@ -99,7 +99,7 @@ export function TeamBudgetsPage() {
           </tr>)}
         </tbody></table></div>
       </Card>}
-      {editing && <BudgetDialog key={editing === 'new' ? 'new' : editing.id} current={editing === 'new' ? null : editing} policies={data.data?.policies ?? []} providers={providers.data ?? []} reload={() => Promise.all([data.reload(), reloadSummary()])} close={() => setEditing(null)} />}
+      {editing && <BudgetDialog key={editing === 'new' ? 'new' : editing.id} current={editing === 'new' ? null : editing} policies={data.data?.policies ?? []} providers={providers.data ?? []} reload={() => Promise.all([data.reload(), reloadTeamSummary()])} close={() => setEditing(null)} />}
     </>
   );
 }

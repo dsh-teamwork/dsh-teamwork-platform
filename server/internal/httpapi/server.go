@@ -108,6 +108,7 @@ func (s *Server) Handler() http.Handler {
 		get("/api/teams/{teamId}/summary", s.teamSummary)
 		get("/api/teams/{teamId}/usage", s.listUsage)
 		get("/api/teams/{teamId}/usage/export", s.exportUsage)
+		get("/api/teams/{teamId}/usage/stats", s.usageStats)
 		post("/api/teams/{teamId}/usage/{requestId}/resolve", s.resolveUsage)
 		get("/api/teams/{teamId}/budgets", s.getBudgets)
 		write("PUT", "/api/teams/{teamId}/budgets", s.setBudget)

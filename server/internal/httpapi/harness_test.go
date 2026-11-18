@@ -256,5 +256,12 @@ func (e *env) team(b *browser, s *stub, name string) (teamID, modelID string) {
 	modelID = must(e.t, b.post("/api/teams/"+teamID+"/configs", map[string]any{
 		"kind": "model", "name": "Stub", "data": map[string]any{"provider": "stub", "model": "stub-model", "maxTokens": 4096},
 	}), 201)["id"].(string)
+	price(e.t, b, teamID, modelID)
 	return teamID, modelID
+}
+
+// price sets a model's first rate, rateBody's: every call needs one (ADR 0050).
+func price(t *testing.T, b *browser, teamID, modelID string) {
+	t.Helper()
+	must(t, b.send("PUT", "/api/teams/"+teamID+"/model-rates/"+modelID, rateBody(0, "2")), 200)
 }

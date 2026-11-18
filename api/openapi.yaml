@@ -765,13 +765,19 @@ paths:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
     get:
-      summary: Read what waits on the caller and the last 30 days' usage, for the team's overview
+      summary: Read what waits on the caller and the last 30 days' usage, the caller's own or, for an admin, the team's
+      parameters:
+        - name: scope
+          in: query
+          description: "me (the default): the caller's own calls, submissions and the limits that apply to them, for the workspace's home, an admin's included. team: the team's, for its admin's team overview"
+          schema: { type: string, enum: [me, team] }
       responses:
         '200':
-          description: An admin's team-wide summary, or a member's own calls and the limits that apply to them
+          description: The summary in the scope asked for
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TeamSummary' }
+        '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
@@ -800,6 +806,27 @@ paths:
                   total: { type: integer }
                   page: { type: integer }
                   size: { type: integer }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/usage/stats:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: A period's usage totals, days and models; a member reads their own, an admin the team's or one member's
+      parameters:
+        - { name: userId, in: query, schema: { type: string } }
+        - { name: configId, in: query, schema: { type: string } }
+        - { name: since, in: query, description: "Defaults to 30 days before until; at most 92 days before it", schema: { type: string, format: date-time } }
+        - { name: until, in: query, description: Defaults to now, schema: { type: string, format: date-time } }
+        - { name: timezone, in: query, description: "The IANA zone days are drawn in; UTC by default", schema: { type: string } }
+      responses:
+        '200':
+          description: The scoped period at a glance
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsageStats' }
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
@@ -1657,17 +1684,18 @@ components:
             inheritsDefault: { type: boolean }
     TeamSummary:
       type: object
-      required: [since, calls, points, unpriced, unresolved, failedNotices, nearLimit, budget, pendingReviews]
+      required: [since, calls, points, unpriced, unresolved, overruns, failedNotices, nearLimit, unpricedModels, budget, pendingReviews]
       properties:
         since: { type: string, format: date-time, description: "Start of the counted period, 30 days back" }
-        calls: { type: integer, minimum: 0, description: "Model calls in the period; the team's for an admin, the caller's own for a member" }
+        calls: { type: integer, minimum: 0, description: "Model calls in the period, in the scope asked for" }
         points: { type: string, description: "Reference points spent in the period: priced model calls and edition meters" }
         unpriced: { type: integer, minimum: 0, description: "Calls in the period without a price yet, which points leaves out" }
-        unresolved: { type: integer, minimum: 0, description: "Model calls an admin must resolve, from any time; 0 for a member. Metered rows are settled by their edition" }
-        failedNotices: { type: integer, minimum: 0, description: "Budget mail that could not be delivered; 0 for a member" }
+        unresolved: { type: integer, minimum: 0, description: "Model calls whose usage is not known yet, from any time, that an admin may resolve; overruns excluded; 0 outside scope=team. Metered rows are settled by their edition" }
+        overruns: { type: integer, minimum: 0, description: "Model calls past their admitted bound, from any time, which stop budgeted calls on their provider and model until an admin reviews them; 0 outside scope=team" }
+        failedNotices: { type: integer, minimum: 0, description: "Budget mail that could not be delivered; 0 outside scope=team" }
         nearLimit:
           type: array
-          description: Open budget windows at or past a notice threshold
+          description: Open budget windows at or past a notice threshold; outside scope=team, the team's, the providers' and the caller's own
           items:
             type: object
             required: [scope, subjectId, period, threshold]
@@ -1676,8 +1704,56 @@ components:
               subjectId: { type: string }
               period: { type: string, enum: [day, month] }
               threshold: { type: integer, enum: [80, 95, 100] }
+        unpricedModels:
+          type: array
+          description: The team's models no call reaches until a rate is set for the provider and upstream model they call now; empty outside scope=team
+          items: { type: string }
         budget: { $ref: '#/components/schemas/QuotaSummary' }
-        pendingReviews: { type: integer, minimum: 0, description: "Submissions awaiting review; the team's for an admin, the caller's own for a member" }
+        pendingReviews: { type: integer, minimum: 0, description: "Submissions awaiting review, in the scope asked for" }
+    UsageStats:
+      type: object
+      required: [since, until, timezone, totals, days, sources]
+      properties:
+        since: { type: string, format: date-time }
+        until: { type: string, format: date-time }
+        timezone: { type: string }
+        totals:
+          type: object
+          required: [calls, points, unpriced, input, cacheRead, cacheWrite, output, reasoning]
+          properties:
+            calls: { type: integer, minimum: 0, description: Model calls; edition meters are no calls }
+            points: { type: string, description: "Points spent: priced model calls and edition meters" }
+            unpriced: { type: integer, minimum: 0, description: "Calls whose points are not known yet, which points leaves out" }
+            input: { type: integer, minimum: 0, description: "Input tokens, cache reads and writes included" }
+            cacheRead: { type: integer, minimum: 0 }
+            cacheWrite: { type: integer, minimum: 0 }
+            output: { type: integer, minimum: 0, description: "Output tokens, reasoning included" }
+            reasoning: { type: integer, minimum: 0 }
+        days:
+          type: array
+          description: Every calendar day of the period in timezone, oldest first, spent on or not
+          items:
+            type: object
+            required: [day, calls, points]
+            properties:
+              day: { type: string, format: date }
+              calls: { type: integer, minimum: 0 }
+              points: { type: string }
+        sources:
+          type: array
+          description: What each team model and edition meter spent, most points first
+          items:
+            type: object
+            required: [kind, key, name, labels, calls, points, input, output]
+            properties:
+              kind: { type: string, enum: [model, meter] }
+              key: { type: string, description: "A model's configuration id, or a meter's name" }
+              name: { type: string, description: "The model's current name (its upstream model once removed), or the meter's name" }
+              labels: { type: object, additionalProperties: { type: string }, description: "A meter's name in each language its edition registered; empty for a model" }
+              calls: { type: integer, minimum: 0 }
+              points: { type: string }
+              input: { type: integer, minimum: 0 }
+              output: { type: integer, minimum: 0 }
     QuotaSummary:
       type: object
       required: [remaining, state, resetAt, tokenLimited, exhausted]

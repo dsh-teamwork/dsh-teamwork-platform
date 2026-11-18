@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-17
+> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-18
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -24,6 +24,10 @@ policy/window reservations, settlement, recovery and notification work. The
 existing authenticated team API and console expose it on SQLite, Postgres and
 MySQL. Nothing installs a cap automatically. Admins configure reference rates
 in Models, then daily/monthly caps in Budgets; Usage shows the resulting calls.
+A rate is required: a model without one for the provider and upstream model it
+calls now is refused `model_unpriced` before any hold, budget or none
+([ADR 0050](../adr/0050-every-call-needs-a-rate.md)), and the team summary's
+`unpricedModels` lists such models by the same rule.
 
 The scale is `1 CNY = 1,000 reference points` and `1 point = 1,000,000,000`
 integer accounting units ([ADR 0022](../adr/0022-reference-usage-accounting.md)).
@@ -43,8 +47,9 @@ Prices have immutable revisions tied to effective model/provider identity.
 Capture the price before dispatch; changing rates never reprices old calls.
 Referenced presets use the effective model's price. Cache subcounts are already
 inside input, and reasoning is already inside output. Sum disjoint buckets
-once. Unknown rates produce unpriced points, never a zero-price assumption.
-Explicit zero rates are supported. No prompt or response text is stored.
+once. A missing rate refuses the call, never a zero-price assumption; rows
+recorded `unpriced` before that rule remain resolvable. Explicit zero rates are
+supported. No prompt or response text is stored.
 
 ## Admission and calendar windows
 
@@ -86,8 +91,7 @@ cannot cover a maximum call. This trades availability for a conservative cap;
 it does not claim a character heuristic is an accurate tokenizer. Actual
 measured consumption releases the unused hold. Other BYOK providers still have
 JSON/SSE reporting with enforcement disabled; enabling a hard cap rejects an
-unverified route before it reaches the provider. Token-only budgets can operate
-without a reference rate on supported routes.
+unverified route before it reaches the provider.
 
 Protocol replay tests exercise this adapter. No live-provider certification or
 paid production rollout is implied by those tests. Supplier contract changes
@@ -145,12 +149,13 @@ running time ([ADR 0036](../adr/0036-edition-meters.md)), through
 | --- | --- |
 | `GET/PUT /model-rates/{configId}` | Read/edit revisioned reference rates; admins write |
 | `GET /usage` | Paginated user/config/time-filtered request history |
+| `GET /usage/stats` | Same authorization; a period of at most 92 days (30 by default): totals, every day in the caller's IANA zone, and each model's and meter's points, for My usage |
 | `GET /usage/export` | Same authorization/filtering, formula-safe CSV, maximum 10,000 rows; excess fails without partial output |
 | `POST /usage/{requestId}/resolve` | Admin's reasoned estimate or bound-violation review |
 | `GET/PUT /budgets` | Applicable policies/current windows; admin revision-checked writes |
 | `GET /budgets/notices` | Latest notification delivery states, own recipient records for members |
 | `POST /budgets/notices/{noticeId}/retry` | Admin retries a failed notice after cooldown |
-| `GET /summary` | The overview's counts: last 30 days' calls and points, unresolved calls, failed notices, windows past a notice threshold, the caller's quota summary and pending reviews |
+| `GET /summary` | The home's and the team overview's counts: last 30 days' calls and points, unresolved calls, failed notices, windows past a notice threshold, the caller's quota summary and pending reviews; `scope=team` for an admin |
 
 Members see their own calls, per-person policies/windows and notification rows;
 shared team/provider limits remain visible. Admins inspect the whole team.
@@ -166,10 +171,12 @@ not a guarantee that all exhausted limits reopen then. Reads create no windows.
 Companion clients load this independently of configuration sync, clear it on
 team/account/server changes and never use it as an admission authorization.
 The team summary (`GET /summary`, `usage.Service.Summary`) is what the console's
-overview opens with. It is scoped like the rest: an admin counts the team's
-calls, unresolved calls (from any time), failed notices and every window past a
-notice threshold; a member counts their own calls and sees the windows that
-apply to them, with zero for what only an admin resolves. Its thresholds are the
+home and team overview open with (ADR 0049). By default it is the caller's own,
+an admin's included: their own calls and the windows that apply to them, with
+zero for what only an admin resolves. With `scope=team`, which needs an admin,
+it counts the team's calls, unresolved calls and overruns (from any time, kept
+apart: an overrun suspends budgeted calls on its route), failed notices and
+every window past a notice threshold. Its thresholds are the
 notices' (80, 95 and 100 % of a point cap), so the overview and the mail agree.
 Points sum what the period spent, edition meters included; calls, `unpriced`
 and `unresolved` count model calls only, since a metered row is settled by its

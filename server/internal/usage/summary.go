@@ -28,10 +28,14 @@ type Summary struct {
 	Unpriced int `json:"unpriced"`
 	// Calls an admin has to resolve before they count (always 0 for a member).
 	Unresolved int `json:"unresolved"`
+	// Overruns is the calls past their admitted bound that stop budgeted calls on their route until reviewed.
+	Overruns int `json:"overruns"`
 	// Budget mail that could not be delivered (always 0 for a member).
-	FailedNotices int          `json:"failedNotices"`
-	NearLimit     []LimitView  `json:"nearLimit"`
-	Budget        QuotaSummary `json:"budget"`
+	FailedNotices int         `json:"failedNotices"`
+	NearLimit     []LimitView `json:"nearLimit"`
+	// UnpricedModels is the team's models no call reaches until a rate is set; empty outside the team's scope.
+	UnpricedModels []string     `json:"unpricedModels"`
+	Budget         QuotaSummary `json:"budget"`
 }
 
 // LimitView is an open budget window at or past a notice threshold.
@@ -48,7 +52,7 @@ func (s *Service) Summary(ctx context.Context, teamID, userID string, admin bool
 	if !admin {
 		f.UserID = userID
 	}
-	out := Summary{Since: f.Since.Format(time.RFC3339Nano), NearLimit: []LimitView{}}
+	out := Summary{Since: f.Since.Format(time.RFC3339Nano), NearLimit: []LimitView{}, UnpricedModels: []string{}}
 	var err error
 	// Calls, unpriced and unresolved count model calls only: an edition's metered
 	// row (ADR 0036) is no call, and only its edition settles it. Points count
@@ -73,11 +77,19 @@ func (s *Service) Summary(ctx context.Context, teamID, userID string, admin bool
 	}
 	if admin {
 		// The same calls the usage page offers to resolve, whenever they were made.
-		out.Unresolved, err = calls(s.query(Filter{TeamID: teamID})).Where(usagerequest.Or(
-			usagerequest.StateIn(usagerequest.StateUnpriced, usagerequest.StatePending),
-			usagerequest.ErrorCode("usage_bound_exceeded"),
-		)).Count(ctx)
+		// Overruns stop budgeted calls on their provider and model until reviewed, by the condition admission
+		// checks; the rest of what an admin resolves is calls whose usage is not known yet.
+		overrun := usagerequest.ErrorCodeIn(overrunCodes...)
+		if out.Overruns, err = calls(s.query(Filter{TeamID: teamID})).Where(overrun).Count(ctx); err != nil {
+			return out, err
+		}
+		out.Unresolved, err = calls(s.query(Filter{TeamID: teamID})).Where(
+			usagerequest.StateIn(usagerequest.StateUnpriced, usagerequest.StatePending), usagerequest.Not(overrun),
+		).Count(ctx)
 		if err != nil {
+			return out, err
+		}
+		if out.UnpricedModels, err = s.UnpricedModels(ctx, teamID); err != nil {
 			return out, err
 		}
 		if out.FailedNotices, err = s.DB.BudgetNotice.Query().Where(budgetnotice.TeamID(teamID), budgetnotice.StateEQ(budgetnotice.StateFailed)).Count(ctx); err != nil {

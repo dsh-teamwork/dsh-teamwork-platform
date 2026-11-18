@@ -13,6 +13,29 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `server/internal/web/web.go`, `apps/web/src/app.tsx`.
 
+## 2026-11-18 — My usage replaces My submissions in the workspace; overruns apart from calls to resolve
+
+- **What:** The workspace's sidebar lists **My usage** (`/teams/{teamId}/my-usage`) where **My submissions** was: the limits that apply to the reader, a period's (7, 30 or 90 days) calls, points and tokens, points by day and by model, and the latest calls with a CSV, for everyone, an admin's own included. My submissions stays at `/submissions`, a link on **Team resources** (its Chinese label now matches the English), which now holds every way to submit: upload a plugin, import a preset file, write a preset. A new `GET /api/teams/{teamId}/usage/stats` serves the page, scoped as the usage list is. The team summary adds `overruns` (calls past their hold, which suspend budgeted calls on their route) and no longer counts them in `unresolved`; the team overview lists them second, after unpriced models.
+- **Why:** Submissions are sent rarely and followed from where they are sent; a member's own spend and limits had no page at all.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-usage.tsx`, `server/internal/usage/stats.go`, `docs/tech/usage-budgets.md`.
+
+## 2026-11-18 — Every model call needs a reference rate
+
+- **What:** The gateway refuses a call on a team model that has no reference rate for the provider and upstream model it calls now, whether or not a budget applies: `403 model_unpriced`, before any hold or upstream request. It replaces `budget_model_unpriced`. `GET /api/teams/{teamId}/summary?scope=team` adds `unpricedModels`; the team overview lists them first among what waits, getting started counts a model ready only once it is priced, and the models page marks each and leads with **Set rates**. Edition-funded models are unaffected.
+- **Why:** Points must be known for every call, not only where a cap is set; unpriced calls also filled the admin's list of calls to resolve with ones nothing depended on.
+- **Breaking:** A team with a model that has no rate, or whose rate was set for another upstream model, has its members' calls on that model refused until an admin sets one (zero is allowed). Clients reading the old error code see `model_unpriced`.
+- **Upgrade:** Set a rate on every team model. Nothing else.
+- **Refs:** ADR 0050, `server/internal/usage/admission.go`, `server/internal/usage/service.go`.
+
+## 2026-11-18 — Admins land on a team overview; the home is everyone's own
+
+- **What:** A team's console now opens an admin on **Team overview** (`/teams/{teamId}/overview`, heading Team management): what waits on the team, its last 30 days, getting started, its resources and the instructions for a new member. The workspace's **Home** moves to `/teams/{teamId}/home` and is the reader's own for everyone, admins included: their submissions under review, the limits that apply to them (said, not linked to a page a member cannot open), their own figures, the team's recent updates, and the DSH steps folded once their DSH has called. `/teams/{teamId}` redirects by role. `GET /api/teams/{teamId}/summary` returns the caller's own by default; `scope=team` returns the team's and needs an admin.
+- **Why:** The home mixed an admin's team view with a member's own, so an admin could not see their own use and a member's budget alarm linked to a page that sent them home.
+- **Breaking:** `GET …/summary` without `scope` now answers an admin with their own figures; the console asks for `scope=team`.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0049, `apps/web/src/pages/team/overview.tsx`, `server/internal/httpapi/usage.go`.
 ## 2026-11-18 — A Team DSH's audit records survive a crash
 
 - **What:** The plugin appends each audit record to a journal on the DSH's disk as it is made, instead of holding up to a minute of them in memory, and seals what a stopped process left at the next start, never the same batch twice.

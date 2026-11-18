@@ -7,7 +7,7 @@
  * dialog filled in.
  */
 
-import { ArrowRight, BookOpen, Cpu, House, LogIn, Plus, Send, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, ChartColumn, Cpu, House, LayoutDashboard, LogIn, Plus, Users } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
@@ -126,18 +126,18 @@ function initials(name: string): string {
 function TeamCard({ team }: { team: TeamSummary }) {
   const t = useTranslations('team');
   const base = `/teams/${team.id}`;
-  // Work for everyone; an admin's shortcuts are to the team's management (ADR 0043).
+  // Work for everyone; an admin's shortcuts are to the team's management, opening on its overview (ADR 0043, 0049).
   const links =
     team.role === 'admin'
       ? ([
-          { path: '', key: 'overview', icon: House },
+          { path: '/overview', key: 'overview', icon: LayoutDashboard },
           { path: '/models', key: 'models', icon: Cpu },
           { path: '/members', key: 'members', icon: Users },
         ] as const)
       : ([
-          { path: '', key: 'overview', icon: House },
+          { path: '/home', key: 'home', icon: House },
           { path: '/resources', key: 'resources', icon: BookOpen },
-          { path: '/submissions', key: 'submissions', icon: Send },
+          { path: '/my-usage', key: 'myUsage', icon: ChartColumn },
         ] as const);
   return (
     <li className="group relative flex flex-col rounded-xl border bg-card transition-colors hover:border-ring">

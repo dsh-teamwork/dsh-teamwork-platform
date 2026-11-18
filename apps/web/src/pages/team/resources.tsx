@@ -2,24 +2,28 @@
  * What the team provides (`/teams/{teamId}/resources`), under Work for
  * everyone (ADR 0043): its models, presets and pinned plugins as one read-only
  * catalogue, each with how it shows up in DSH, and a model's rate. Changing
- * them is Team assets's, the admin's alone; a member proposes a preset, or
- * a change to one, here in the presets editor, which sends it to review.
+ * them is Team assets's, the admin's alone; a member submits a preset, a
+ * change to one or a plugin package here, for review, and follows what they
+ * sent on My submissions (`/submissions`), one link away rather than a page of
+ * the sidebar, since it is opened far less often.
  */
 
-import { FileJson } from 'lucide-react';
+import { ChevronRight, FileJson, FileUp, Upload } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { Failure } from '@/components/page';
 import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
-import type { TeamConfig } from '@/lib/api';
+import type { Schemas, TeamConfig } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
 import { ModelRateButton } from './model-rate';
 import { blankDraft, presetDraft, PresetEditor, type Draft } from './presets';
+import { PluginDialog, PresetDialog } from './sharing';
 
 export function TeamResourcesPage() {
   const { team } = useTeam();
@@ -27,9 +31,15 @@ export function TeamResourcesPage() {
   const tn = useTranslations('team.nav');
   const word = useTeamError();
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
-  // An admin changes presets in Team assets; a member proposes here.
+  // The reader's own submissions waiting for review, beside the link to them.
+  const summary = useApi<Schemas['TeamSummary']>(`teams/${team.id}/summary`);
+  // An admin changes presets in Team assets; a member submits here.
   const member = team.role === 'member';
   const [proposing, setProposing] = useState<{ draft: Draft; preset?: Extract<TeamConfig, { kind: 'preset' }> } | null>(null);
+  // A file to send: a plugin package, or a preset exported from DSH.
+  const [uploading, setUploading] = useState<'plugin' | 'preset' | null>(null);
+  const base = `/teams/${team.id}`;
+  const waiting = summary.data?.pendingReviews ?? 0;
   if (!configs.data) return configs.error ? <Failure message={word(configs.error)} /> : null;
   const all = configs.data;
   const of = <K extends TeamConfig['kind']>(kind: K) => all.filter((c): c is Extract<TeamConfig, { kind: K }> => c.kind === kind);
@@ -40,14 +50,33 @@ export function TeamResourcesPage() {
         title={tn('resources')}
         description={t('description')}
         action={
-          member && (
-            <Button variant="outline" onClick={() => setProposing({ draft: blankDraft(of('model')) })}>
-              <FileJson />
-              {t('propose')}
+          member ? (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setUploading('plugin')}>
+                <Upload />
+                {t('uploadPlugin')}
+              </Button>
+              <Button variant="outline" onClick={() => setUploading('preset')}>
+                <FileUp />
+                {t('importPreset')}
+              </Button>
+              <Button onClick={() => setProposing({ draft: blankDraft(of('model')) })}>
+                <FileJson />
+                {t('propose')}
+              </Button>
+            </div>
+          ) : (
+            <Button asChild variant="outline">
+              <Link to={`${base}/models`}>{t('manage')}</Link>
             </Button>
           )
         }
       />
+      <Link to={`${base}/submissions`} className="flex w-fit items-center gap-2 rounded-md text-sm text-muted-foreground hover:text-foreground">
+        {tn('submissions')}
+        {waiting > 0 && <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-foreground tabular-nums">{t('waiting', { count: waiting })}</span>}
+        <ChevronRight className="size-4" aria-hidden />
+      </Link>
       <Group title={t('models')} hint={t('modelsHint')} empty={t('noModels')}>
         {of('model').map((m) => (
           <Row key={m.id} name={m.name} detail={m.data.model}>
@@ -75,7 +104,7 @@ export function TeamResourcesPage() {
         <PresetEditor
           teamId={team.id}
           submitForReview
-          reload={configs.reload}
+          reload={() => Promise.all([configs.reload(), summary.reload()])}
           initial={proposing.draft}
           preset={proposing.preset}
           models={of('model')}
@@ -83,6 +112,8 @@ export function TeamResourcesPage() {
           onClose={() => setProposing(null)}
         />
       )}
+      {uploading === 'plugin' && <PluginDialog teamId={team.id} configs={all} reload={() => Promise.all([configs.reload(), summary.reload()])} onClose={() => setUploading(null)} />}
+      {uploading === 'preset' && <PresetDialog teamId={team.id} reload={() => Promise.all([configs.reload(), summary.reload()])} onClose={() => setUploading(null)} />}
     </>
   );
 }
