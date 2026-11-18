@@ -903,6 +903,14 @@
       "promptPlaceholder": "给智能体发消息",
       "send": "发送",
       "stop": "停止",
+      "settings": {
+        "workspace": "工作区",
+        "preset": "预设",
+        "model": "模型",
+        "desktopDefault": "桌面默认预设",
+        "followPreset": "跟随预设／桌面模型",
+        "noPreset": "未使用预设"
+      },
       "pin": {
         "set": {
           "title": "设置你的 PIN",

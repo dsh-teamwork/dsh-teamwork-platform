@@ -80,8 +80,9 @@ Decided with this premise:
   reads them; a shared DSH is the team's own machine and is not.
 - A budget per shared DSH: a team caps its shared DSH by capping the team. It
   would be a new budget scope if a team asks for one.
-- Files, images, or choosing a folder, preset or model when starting a
-  session, from the web client; the app has them.
+- Files or images from the web client; the app has them. The web client
+  chooses a new session's folder, preset and model, and changes a session's
+  model, as the app does (`SessionSettings` in `dsh-session.tsx`).
 
 ## Who may run one
 

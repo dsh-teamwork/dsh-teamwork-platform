@@ -49,7 +49,7 @@ export function MyDshPage() {
   const computerId = host?.pairings.find((p) => p.current && p.status === 'confirmed')?.id ?? '';
   const { sessions, pin, failed: unreachable, reload, locked } = useComputer(computerId);
   const session = sessions?.find((s) => s.id === sessionId);
-  const note = (h: MyComputer) => (h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt)) }));
+  const note = (h: MyComputer) => (h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }));
   const problem = failed ?? unreachable;
 
   return (
@@ -157,7 +157,7 @@ function Devices({ host, changed }: { host: MyComputer; changed: () => void }) {
                 <span className="truncate text-xs text-muted-foreground">
                   {[
                     device.status === 'pending' ? t('pending') : null,
-                    device.lastUsedAt ? t('lastUsed', { time: format.relativeTime(new Date(device.lastUsedAt)) }) : t('neverUsed'),
+                    device.lastUsedAt ? t('lastUsed', { time: format.relativeTime(new Date(device.lastUsedAt), new Date()) }) : t('neverUsed'),
                     device.push ? t('push') : null,
                   ].filter(Boolean).join(' · ')}
                 </span>

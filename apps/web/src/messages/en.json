@@ -903,6 +903,14 @@
       "promptPlaceholder": "Message the agent",
       "send": "Send",
       "stop": "Stop",
+      "settings": {
+        "workspace": "Workspace",
+        "preset": "Preset",
+        "model": "Model",
+        "desktopDefault": "Desktop default",
+        "followPreset": "Preset / desktop model",
+        "noPreset": "No preset"
+      },
       "pin": {
         "set": {
           "title": "Set your PIN",

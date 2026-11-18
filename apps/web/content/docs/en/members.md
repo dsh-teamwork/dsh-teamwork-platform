@@ -52,6 +52,13 @@ set a four-digit PIN, which the computer asks for again when you come back.
 After that you start, follow and answer sessions on it from the browser, end to
 end encrypted between the browser and the computer.
 
+Beside the message box, a new session offers the computer's folders, presets
+(a team preset included; one the computer cannot run yet says why) and models,
+before its first message; leave them as they are for the computer's defaults.
+In a session that has started, the folder and preset stay as they are, and you
+can change its model while it is not working, for that session alone. The same
+choices are there on a Team DSH.
+
 Under **Devices** you see every phone and browser paired with that computer,
 and **Remove** cuts any of them off at once, a lost phone included. If you
 enter the wrong PIN too often, run `/teamwork pin reset` in DSH on that
