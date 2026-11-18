@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-18 — The sign-in page is redesigned
 
-- **What:** `/sign-in` is a split screen: the navy plate with the title and a layered sea beside a form that lists each OAuth door the server reports in `doors` (Google today, with its mark), then the email door. The code step becomes *Check your email* with a six-digit field and a *Send a new code* link; the password field can be shown; an instance whose first account is unclaimed points to the setup link; errors and pending buttons are visible as such.
+- **What:** `/sign-in` is a split screen: the navy plate with the title and a layered sea beside a form that lists each OAuth door the server reports in `doors` (Google today, with its four-colour G), then the email door. The code step becomes *Check your email* with a six-digit field and a *Send a new code* link; the password field can be shown; an instance whose first account is unclaimed points to the setup link; errors and pending buttons are visible as such.
 - **Why:** The page was a bare card that did not look like the product and gave no feedback while a request ran.
 - **Breaking:** None.
 - **Upgrade:** Nothing.

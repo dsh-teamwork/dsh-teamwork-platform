@@ -161,8 +161,9 @@ icon set.
 
 - **Never a literal colour.** No Tailwind palette step (`text-gray-600`,
   `text-green-600`) in a page and no hex in a component; a colour is a token.
-  The share card, which renders outside the stylesheet, is the one exception
-  and uses the brand hexes above.
+  Two exceptions: the share card, which renders outside the stylesheet and
+  uses the brand hexes above, and Google's four-colour G on the sign-in
+  button, whose colours Google's branding fixes.
 - **`--brand` is not `--accent`.** `accent` is the subtle hover surface every
   shadcn-shaped primitive uses, so a brand colour there tints every hover. Brand
   chrome opts in with `bg-brand` / `text-brand`.
@@ -292,7 +293,7 @@ icon set.
   sea. The right side is the form on the page ground, with the way home, the
   theme and the language at its top. The form lists every OAuth door the
   session's `doors` reports as an outline button with its provider's
-  single-colour mark, then a divider and the one email door (a code, or a
+  mark (Google's in its own four colours), then a divider and the one email door (a code, or a
   password with a show toggle); a sent code turns the screen into *Check your
   email* with a wide six-digit field, another email and a new code. Below
   `lg` the plate is dropped and the logo sits above the title.
