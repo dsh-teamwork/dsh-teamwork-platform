@@ -182,7 +182,8 @@ icon set.
   landing illustration in `apps/web/src/public/sea.tsx` uses the fluke shape
   as a woodcut, with hatching on the tail and engraved lines in the water.
 - **The landing page follows the dive.** A full-width woodcut forms the
-  horizon beneath the opening copy. The fluke takes its indigo from the logo plate.
+  horizon beneath the opening copy, at the same height in both languages.
+  The fluke takes its indigo from the logo plate.
   White paper behind the text opens into a pale sky with two low cloud banks.
   The engraving uses several sea-blue ink values, with near-white upper chapters
   and a navy seabed. Dark mode carries the same shapes into a dusk sky.
@@ -202,14 +203,23 @@ icon set.
   screens, and reduced motion keeps the artwork still.
 - **The landing page's first screen is what the product is and how to start.**
   The title, one sentence, the plugin to copy and the install guide sit
-  above the waterline. The header carries *Create a team*. The dive link at the lower right scrolls to the opening chapter, *one person's work*.
+  above the waterline. The header carries *Create a team* and a GitHub icon
+  beside the theme switch that links to the Teamwork plugin. The dive link at
+  the lower right scrolls to the team overview at −5 m. The overview asks
+  how the whole team can make the most of DSH and introduces access,
+  collaboration, governance, and team assets in page order.
+  *Collaborate* shows a market research preset moving from submission to
+  review, publication, and team sync. *Team assets* shows how teams can keep
+  workflows from marketing, operations, and research. Its sample history lists
+  each resource's type, version, approval, reviewer, and time, newest first.
   In the first chapter, the team diagram reads
   left to right (`apps/web/src/public/topology.tsx`): the team's people,
   each with an icon for where they work (DSH Desktop, a terminal, the phone,
   the admin's web console), curved arrows into DSH Teamwork in the middle, and
   on the right the mainstream upstream providers, each by its own logo
   (`provider-logos.ts`, from LobeHub's icons; the console keeps letter tiles),
-  and cloud DSH, coming. The phone's icon carries `public/logo.svg` on its
+  as well as a custom provider. Cloud DSH sits below them as a separate
+  workspace in limited trial on the hosted edition. The phone's icon carries `public/logo.svg` on its
   screen, since the app is ours. The hub lists the page's sections, each with
   one line of what it gives a team, said as value rather than as a feature. The lines carry no words: an amber pulse plays the story
   on a loop (the admin publishes, every member's card ticks, a call goes out
@@ -218,12 +228,22 @@ icon set.
   stops under reduced motion. It is drawn from tokens, so it follows the
   theme, and its words are the page's language.
 - **Real screens live in the sections below, never in the first screen.**
-  *Everywhere* gives each way in a row (who it is for, what it does, its
-  screen); *Collaborate* shows the review comparison and
-  *Govern* the usage page. Each screen sits in a plain window or phone frame
+  *Everywhere* presents desktop and terminal, browser, and phone as equal
+  columns that stack on narrow screens. Each pairs a short scenario with a
+  screenshot. The open page describes joining a shared DSH by invitation from
+  a browser or phone. An edition can provide copy for its own workspace.
+  *Collaborate* shows the market research preset's proposed changes in the
+  review screen and describes how members work on a shared DSH, each in
+  their own session. The hosted page shows the community workspace alongside
+  its own cloud workspace. *Govern* pairs the usage page with three
+  questions managers ask about budgets, security, and access. Each screen sits in a plain window or phone frame
   drawn from tokens. They are captures of the real interfaces with a demo team,
   in `apps/web/public/home/`, one per language, captured again when those
   screens change, never drawn.
+- **Pricing clarifies the cost of each deployment choice.** Community
+  self-hosting has no license fee. Hosted models on Teamwork Cloud are
+  prepaid by usage. Enterprise private hosting is listed for inquiries
+  about requirements and availability.
 - **The web app's `/` is the landing page on every instance**, self-hosted
   ones included (ADR 0007), so every claim holds for any instance. A
   capability only the hosted service offers, or one that is planned, appears

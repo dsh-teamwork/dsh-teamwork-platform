@@ -1,4 +1,5 @@
 import { createTranslator } from 'use-intl';
+import { BatteryFull, Check, Github, Signal, Users, Wifi } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -32,8 +33,6 @@ import { SeaBed, SeaSurface, WhalePassage, WhalePod } from './sea';
  * them, and the narrow screen's menu is a <details>.
  */
 
-const code = (chunks: ReactNode) => <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.9em]">{chunks}</code>;
-
 function Depth({ depth, label }: { depth: string; label: string }) {
   return (
     <p className="mb-6 flex items-center gap-3 font-mono text-xs font-semibold tracking-wider text-foreground">
@@ -61,26 +60,14 @@ const cells = 'mt-12 grid gap-px overflow-hidden rounded-xl bg-border ring-1 rin
 // The community edition: the open half of this product (ADR 0005), self-hosted.
 const communityRepo = 'https://github.com/dsh-teamwork/dsh-teamwork-platform';
 
-/** The three ways into a team, each with who it is for (docs/design.md, "The landing page's first screen"). */
-const ENTRIES = [
-  { key: 'desktop', tone: 'member' },
-  { key: 'console', tone: 'admin' },
-  { key: 'phone', tone: 'hosted' },
-] as const;
-
 /** The deep floor's layers, newest on top: an example of what a team keeps, drawn darker as it settles. */
 const STRATA = [
-  { name: 'pr-review', version: 'v12', kind: 'preset', shade: 'bg-foreground/[0.03]' },
-  { name: '@acme/dsh-lint', version: '2.3.1', kind: 'plugin', shade: 'bg-foreground/[0.06]' },
-  { name: 'incident-triage', version: 'v4', kind: 'preset', shade: 'bg-foreground/[0.09]' },
-  { name: 'release-notes', version: 'v7', kind: 'preset', shade: 'bg-foreground/[0.12]' },
-  { name: 'acme-infra assistant', version: 'v1', kind: 'preset', shade: 'bg-foreground/[0.15]' },
+  { workflow: 'marketResearch', version: 'v5', kind: 'preset', approvedAt: '2026-11-17T14:20:00Z', shade: 'bg-foreground/[0.03]' },
+  { workflow: 'surveyExport', version: '1.4.0', kind: 'plugin', approvedAt: '2026-11-16T16:45:00Z', shade: 'bg-foreground/[0.06]' },
+  { workflow: 'operationsBrief', version: 'v3', kind: 'preset', approvedAt: '2026-11-16T09:30:00Z', shade: 'bg-foreground/[0.09]' },
+  { workflow: 'interviewNotes', version: 'v2', kind: 'preset', approvedAt: '2026-11-13T15:10:00Z', shade: 'bg-foreground/[0.12]' },
+  { workflow: 'spreadsheetCleanup', version: '2.1.0', kind: 'plugin', approvedAt: '2026-11-12T11:05:00Z', shade: 'bg-foreground/[0.15]' },
 ] as const;
-
-/** A capability that is not here yet, said where it appears (ADR 0007). */
-function Coming({ label }: { label: string }) {
-  return <span className="rounded-full border border-dashed border-input px-2 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">{label}</span>;
-}
 
 /** The plugin's npm name: what DSH installs to join a team (the plugin's own README, "Install"). */
 const PLUGIN = '@dsh-teamwork/dsh-teamwork';
@@ -88,9 +75,9 @@ const PLUGIN = '@dsh-teamwork/dsh-teamwork';
 /** The package to copy, with its button (wired by client.ts, since this page runs no React). */
 function Copyable({ text, prefix, label }: { text: string; prefix: string; label: string }) {
   return (
-    <span className="flex h-12 min-w-0 max-w-full items-center gap-2 rounded-lg border bg-muted pr-1.5 pl-3 font-mono text-[13px] sm:gap-3 sm:pl-4 sm:text-sm">
+    <span className="grid min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 rounded-lg border bg-muted p-1.5 pl-3 font-mono text-[13px] sm:gap-x-3 sm:pl-4 sm:text-sm @min-[32rem]:grid-cols-[auto_minmax(0,1fr)_auto]">
       <span className="shrink-0 font-sans text-xs text-muted-foreground">{prefix}</span>
-      <code className="min-w-0 overflow-x-auto whitespace-nowrap">{text}</code>
+      <code className="min-w-0 overflow-x-auto whitespace-nowrap @max-[32rem]:col-span-2 @max-[32rem]:row-start-2 @max-[32rem]:pb-1">{text}</code>
       <button type="button" data-copy={text} className="h-9 min-w-14 shrink-0 rounded-md bg-primary px-3 font-sans text-sm font-medium text-primary-foreground hover:bg-primary/90">
         {label}
       </button>
@@ -114,40 +101,44 @@ function Shot({ src, alt, width, height, bar }: { src: string; alt: string; widt
 }
 
 /** The phone app's screen, in a phone frame cut off at the bottom of its panel. */
-function PhoneShot({ src, alt }: { src: string; alt: string }) {
+function PhoneShot({ src, alt, platformsLabel, storeSearch }: {
+  src: string; alt: string; platformsLabel: string; storeSearch: ReactNode;
+}) {
   return (
-    <div className="grid place-items-center overflow-hidden rounded-xl border bg-muted pt-8">
-      <div className="w-[min(46%,16rem)] overflow-hidden rounded-t-[2rem] border-[7px] border-b-0 border-foreground bg-card">
+    <div className="flex aspect-[8/5] items-start justify-center gap-4 overflow-hidden rounded-xl border bg-muted px-3 pt-4 sm:gap-6 lg:aspect-auto lg:[contain:size]">
+      <div className="w-[min(46%,10rem)] shrink-0 overflow-hidden rounded-t-[2rem] border-[5px] border-b-0 border-foreground bg-white">
+        <div aria-hidden="true" className="flex h-6 items-center justify-between gap-1 px-2.5 text-black">
+          <span className="text-[9px] font-semibold tabular-nums">9:41</span>
+          <span className="flex items-center gap-0.5">
+            <Signal className="size-2.5" />
+            <Wifi className="size-2.5" />
+            <BatteryFull className="h-3 w-3.5" />
+          </span>
+        </div>
         <img src={src} alt={alt} width={560} height={953} loading="lazy" className="block w-full" />
+      </div>
+      <div className="min-w-0 self-center text-xs text-muted-foreground">
+        <ul aria-label={platformsLabel} className="flex flex-col gap-2 font-medium">
+          {['iOS App', 'Android App'].map((platform) => (
+            <li key={platform} className="flex items-center gap-1.5">
+              <Check aria-hidden="true" className="size-3.5 shrink-0 text-foreground" />
+              {platform}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 leading-relaxed">{storeSearch}</p>
       </div>
     </div>
   );
 }
 
-/** One way into the team, with what it is for on one side and its real screen on the other. */
-function Entry({ who, whoTone, title, items, flip, children }: {
-  who: string; whoTone: 'member' | 'admin' | 'hosted'; title: string; items: { title: string; body: string }[]; flip?: boolean; children: ReactNode;
-}) {
-  const tone = whoTone === 'admin' ? 'border-brand bg-brand text-brand-foreground' : whoTone === 'hosted' ? 'border-dashed border-input' : 'border-border';
-  return (
-    <div className={`grid items-center gap-10 lg:gap-14 ${flip ? 'lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]' : 'lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]'}`}>
-      <div className={flip ? 'lg:order-2' : undefined}>
-        <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-wider text-muted-foreground">
-          <span className={`rounded-full border px-2 py-0.5 ${tone}`}>{who}</span>
-          {title}
-        </p>
-        <ul className="mt-5 flex flex-col gap-4">
-          {items.map((item) => (
-            <li key={item.title}>
-              <h3 className="text-base font-bold">{item.title}</h3>
-              <p className="text-sm text-muted-foreground">{item.body}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-      {children}
-    </div>
-  );
+/** Public content for workspaces offered by a different edition. */
+export interface HomeWorkspace {
+  browserDescription: string;
+  phoneDescription: string;
+  title: string;
+  description: string;
+  icon?: ReactNode;
 }
 
 export interface HomeProps {
@@ -155,12 +146,16 @@ export interface HomeProps {
   signedIn: boolean;
   /** Whether this build published the legal pages (LEGAL_DIR was set). */
   legal: boolean;
+  workspace?: HomeWorkspace;
 }
 
-export function HomePage({ locale, signedIn, legal }: HomeProps) {
+export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
   const messages = locale === 'zh-CN' ? zhCN : en;
   const t = createTranslator({ locale, messages, namespace: 'home' });
   const tc = createTranslator({ locale, messages, namespace: 'common' });
+  const approvalDate = new Intl.DateTimeFormat(locale, {
+    dateStyle: 'short', timeStyle: 'short', hourCycle: 'h23', timeZone: 'UTC',
+  });
   const tag = locale === 'zh-CN' ? 'zh' : 'en';
 
   const origin = SITE_ORIGIN;
@@ -180,10 +175,10 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
     ['#collaborate', 'nav.collaborate'],
     ['#govern', 'nav.govern'],
     ['#assets', 'nav.assets'],
-    ['#self-host', 'nav.selfhost'],
+    ['#self-host', 'nav.pricing'],
     ['/docs', 'nav.docs'],
   ] as const;
-  const faqs = [1, 2, 3, 4, 5, 6] as const;
+  const faqs = ['install', 'pricing', 'selfHost', 'security'] as const;
 
   return (
     <>
@@ -194,8 +189,8 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
       />
 
       <header className="relative z-20 mx-auto flex h-16 max-w-7xl items-center gap-1 px-3 sm:gap-4 sm:px-6 xl:gap-8">
-        <a href="/" className="flex shrink-0 items-center gap-1.5 text-base font-bold sm:gap-2.5 sm:text-lg tracking-tight">
-          <img src="/logo.svg" alt="" width={30} height={30} />
+        <a href="/" className="flex shrink-0 items-center gap-1 text-sm font-bold tracking-tight min-[22.5rem]:gap-1.5 min-[22.5rem]:text-base sm:gap-2.5 sm:text-lg">
+          <img src="/logo.svg" alt="" width={30} height={30} className="max-[22.5rem]:size-7" />
           {tc('appName')}
         </a>
         <nav aria-label={t('nav.label')} className="hidden gap-6 text-sm text-muted-foreground lg:flex">
@@ -205,9 +200,14 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
             </a>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center min-[22.5rem]:gap-2">
           <LocaleMenu locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} placement="header" />
           <ThemeButton label={tc('theme.toggle')} />
+          <Button asChild variant="ghost" size="icon" className="shrink-0 text-muted-foreground">
+            <a href="https://github.com/dsh-teamwork/dsh-teamwork" aria-label={t('nav.pluginRepo')} title={t('nav.pluginRepo')}>
+              <Github aria-hidden />
+            </a>
+          </Button>
           <Button asChild className="hidden sm:inline-flex">
             <a href={start.href}>{start.label}</a>
           </Button>
@@ -240,12 +240,9 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
           <SeaSurface />
           <div className="tide-intro-copy mx-auto w-full max-w-7xl px-6">
             <div className="flex w-full min-w-0 max-w-xl flex-col gap-5">
-              {/* Mono capitals suit the English label; a Chinese one is set in the page's own face. */}
-              <p className={`text-xs font-semibold text-muted-foreground ${locale === 'en' ? 'font-mono uppercase tracking-widest' : 'tracking-wider'}`}>{t('eyebrow')}</p>
               <h1 className="tide-title text-balance [word-break:auto-phrase]">{t('title')}</h1>
-              {/* A language whose sentence needs a chosen break writes it in the message (\n). */}
-              <p className="whitespace-pre-line text-lg text-muted-foreground">{t('lede')}</p>
-              <div className="mt-2 flex flex-col items-start gap-2.5">
+              <p className="tide-intro-lede text-lg font-semibold text-foreground">{t('lede')}</p>
+              <div className="@container mt-2 flex flex-col items-start gap-2.5">
                 <Copyable text={PLUGIN} prefix={t('install.plugin')} label={t('install.copy')} />
                 <p className="text-sm text-muted-foreground">
                   {t('install.hint')}{' '}
@@ -261,22 +258,10 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
 
         <Zone id="shift">
           <Depth depth={t('shift.depth')} label={t('shift.label')} />
-          <h2 className={zoneTitle}>{t('shift.title')}</h2>
-          <p className={zoneLede}>{t('shift.lede')}</p>
-          <div className="mt-12 grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div>
-              <div className="grid grid-cols-2 gap-6 pb-3 font-mono text-xs font-semibold tracking-wider text-muted-foreground">
-                <span>{t('shift.alone')}</span>
-                <span className="text-brand">{t('shift.together')}</span>
-              </div>
-              <ul>
-                {([1, 2, 3, 4] as const).map((n) => (
-                  <li key={n} className="grid grid-cols-2 gap-6 border-t border-border py-5 last:border-b">
-                    <p className="text-sm text-muted-foreground sm:text-base">{t(`shift.from${n}`)}</p>
-                    <p className="text-sm font-semibold sm:text-base">{t(`shift.to${n}`)}</p>
-                  </li>
-                ))}
-              </ul>
+              <h2 className={`${zoneTitle} whitespace-pre-line`}>{t('shift.title')}</h2>
+              <p className={zoneLede}>{t('shift.lede')}</p>
             </div>
             <Topology locale={locale} />
           </div>
@@ -285,54 +270,83 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
         <Zone id="everywhere">
           <Depth depth={t('everywhere.depth')} label={t('everywhere.label')} />
           <h2 className={zoneTitle}>{t('everywhere.title')}</h2>
-          <p className={zoneLede}>{t('everywhere.lede')}</p>
-          <div className="mt-14 flex flex-col gap-20">
-            {ENTRIES.map(({ key, tone }, i) => (
-              <Entry
-                key={key}
-                who={t(`everywhere.${key}.who`)}
-                whoTone={tone}
-                flip={i % 2 === 1}
-                title={t(`everywhere.${key}.title`)}
-                items={([1, 2, 3] as const).map((n) => ({ title: t(`everywhere.${key}.item${n}Title`), body: t(`everywhere.${key}.item${n}Body`) }))}
-              >
-                {key === 'phone' ? (
-                  <PhoneShot src={`/home/phone-${tag}.webp`} alt={t('everywhere.phone.alt')} />
-                ) : key === 'console' ? (
-                  <Shot src={`/home/console-${tag}.webp`} alt={t('everywhere.console.alt')} width={1400} height={766} bar={tc('appName')} />
-                ) : (
-                  <Shot src={`/home/desktop-${tag}.webp`} alt={t('everywhere.desktop.alt')} width={1400} height={875} bar="DSH · Teamwork" />
-                )}
-              </Entry>
-            ))}
+          <div className="mt-12 grid gap-x-6 gap-y-10 lg:grid-cols-3 lg:gap-y-4">
+            <div className="grid min-w-0 gap-4 lg:row-span-2 lg:grid-rows-subgrid">
+              <div>
+                <h3 className="text-lg font-bold">{t('everywhere.desktop.title')}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{t('everywhere.desktop.description')}</p>
+              </div>
+              <Shot src={`/home/desktop-${tag}.webp`} alt={t('everywhere.desktop.alt')} width={1400} height={875} bar="DSH · Teamwork" />
+            </div>
+            <div className="grid min-w-0 gap-4 lg:row-span-2 lg:grid-rows-subgrid">
+              <div>
+                <h3 className="text-lg font-bold">{t('everywhere.console.title')}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{workspace?.browserDescription ?? t('everywhere.console.description')}</p>
+              </div>
+              <Shot src={`/home/console-${tag}.webp`} alt={t('everywhere.console.alt')} width={1400} height={766} bar={tc('appName')} />
+            </div>
+            <div className="grid min-w-0 gap-4 lg:row-span-2 lg:grid-rows-subgrid">
+              <div>
+                <h3 className="text-lg font-bold">{t('everywhere.phone.title')}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{workspace?.phoneDescription ?? t('everywhere.phone.description')}</p>
+              </div>
+              <PhoneShot
+                src={`/home/phone-${tag}.webp`}
+                alt={t('everywhere.phone.alt')}
+                platformsLabel={t('everywhere.phone.platformsLabel')}
+                storeSearch={t.rich('everywhere.phone.storeSearch', {
+                  appName: tc('appName'),
+                  strong: (chunks) => <strong className="block font-semibold text-foreground">{chunks}</strong>,
+                })}
+              />
+            </div>
           </div>
         </Zone>
 
         <Zone id="collaborate">
           <Depth depth={t('collaborate.depth')} label={t('collaborate.label')} />
-          <h2 className={zoneTitle}>{t('collaborate.title')}</h2>
-          <p className={zoneLede}>{t('collaborate.lede')}</p>
-          <div className="mt-12 grid items-start gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-            <ul className="flex flex-col">
-              {(['presets', 'plugins', 'assistant', 'review'] as const).map((item) => (
-                <li key={item} className="flex flex-col gap-1 border-t border-border py-5 last:border-b">
-                  <h3 className="text-base font-bold">{t(`collaborate.${item}Title`)}</h3>
-                  <p className="text-sm text-muted-foreground">{t.rich(`collaborate.${item}Body`, { code })}</p>
-                </li>
-              ))}
-            </ul>
-            <Shot src={`/home/review-${tag}.webp`} alt={t('collaborate.alt')} width={1100} height={550} />
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+            <div>
+              <h2 className={zoneTitle}>{t('collaborate.title')}</h2>
+              <ol className="mt-6 list-decimal space-y-4 pl-6 marker:font-mono marker:text-sm marker:text-muted-foreground">
+                {(['submit', 'review', 'sync'] as const).map((step) => (
+                  <li key={step} className="pl-1">
+                    <h3 className="text-base font-bold">{t(`collaborate.${step}Title`)}</h3>
+                    <p className="mt-0.5 text-sm text-muted-foreground">{t(`collaborate.${step}Body`)}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <Shot src={`/home/review-${tag}.webp`} alt={t('collaborate.alt')} width={959} height={locale === 'zh-CN' ? 287 : 303} />
+          </div>
+          <div className={`mt-10 grid gap-x-10 gap-y-6 border-t border-border pt-5 ${workspace ? 'md:grid-cols-2' : ''}`}>
+            <div>
+              <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-bold">
+                <Users aria-hidden="true" className="size-5 shrink-0" />
+                <span>{t('collaborate.sharedTitle')}</span>
+                <span className="text-xs font-medium text-muted-foreground">{t('collaborate.sharedEdition')}</span>
+              </h3>
+              <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{t('collaborate.sharedBody')}</p>
+            </div>
+            {workspace && (
+              <div>
+                <h3 className="flex items-center gap-2 text-base font-bold">
+                  {workspace.icon}
+                  <span>{workspace.title}</span>
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">{workspace.description}</p>
+              </div>
+            )}
           </div>
         </Zone>
 
         <Zone id="govern">
           <Depth depth={t('govern.depth')} label={t('govern.label')} />
           <h2 className={zoneTitle}>{t('govern.title')}</h2>
-          <p className={zoneLede}>{t('govern.lede')}</p>
-          <div className="mt-12 grid items-start gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <div className="mt-12 grid items-center gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
             <Shot src={`/home/usage-${tag}.webp`} alt={t('govern.alt')} width={1100} height={599} />
             <ul className="flex flex-col">
-              {(['budgets', 'usage', 'keys', 'members'] as const).map((item) => (
+              {(['usage', 'security', 'access'] as const).map((item) => (
                 <li key={item} className="flex flex-col gap-1 border-t border-border py-5 last:border-b">
                   <h3 className="text-base font-bold">{t(`govern.${item}Title`)}</h3>
                   <p className="text-sm text-muted-foreground">{t(`govern.${item}Body`)}</p>
@@ -340,67 +354,69 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
               ))}
             </ul>
           </div>
-          <blockquote className="mt-12 border-t border-border pt-8">
-            <p className="max-w-3xl text-balance text-xl font-bold sm:text-2xl">“{t('govern.promise')}”</p>
-            <p className="mt-3 font-mono text-xs text-muted-foreground">{t('govern.promiseNote')}</p>
-          </blockquote>
         </Zone>
 
         <div className="tide-deep">
           <Zone id="assets">
             <Depth depth={t('assets.depth')} label={t('assets.label')} />
-            <h2 className={zoneTitle}>{t('assets.title')}</h2>
-            <p className={zoneLede}>{t('assets.lede')}</p>
-            <div className="mt-12 grid items-start gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+            <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+              <div>
+                <h2 className={zoneTitle}>{t('assets.title')}</h2>
+                <p className={zoneLede}>{t('assets.lede')}</p>
+              </div>
               <figure className="min-w-0">
                 {/* Layers settling: newest on top, each a shade darker as it goes down. */}
                 <ol className="overflow-hidden rounded-xl ring-1 ring-border">
                   {STRATA.map((layer) => (
-                    <li key={layer.name} className={`flex items-baseline gap-3 border-t border-border px-5 py-3.5 font-mono text-[13px] first:border-t-0 ${layer.shade}`}>
-                      <span className="w-12 shrink-0 text-xs text-muted-foreground">{layer.kind}</span>
-                      <span className="min-w-0 flex-1 truncate font-semibold">{layer.name}</span>
-                      <span className="shrink-0 text-muted-foreground">{layer.version}</span>
+                    <li key={layer.workflow} className={`border-t border-border px-4 py-3 first:border-t-0 sm:px-5 ${layer.shade}`}>
+                      <div className="flex items-baseline gap-3">
+                        <span className="w-12 shrink-0 text-xs text-muted-foreground">{t(`assets.${layer.kind}`)}</span>
+                        <span className="min-w-0 flex-1 text-sm font-semibold">{t(`assets.workflows.${layer.workflow}.name`)}</span>
+                        <span className="shrink-0 font-mono text-xs text-muted-foreground">{layer.version}</span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <span>{t('assets.approval', { reviewer: t(`assets.workflows.${layer.workflow}.reviewer`) })}</span>
+                        <time className="ml-auto whitespace-nowrap font-mono" dateTime={layer.approvedAt}>
+                          {approvalDate.format(new Date(layer.approvedAt))}
+                        </time>
+                      </div>
                     </li>
                   ))}
                 </ol>
                 <figcaption className="mt-3 text-sm text-muted-foreground">{t('assets.caption')}</figcaption>
               </figure>
-              <ul className="flex flex-col">
-                {(['versions', 'restore', 'export'] as const).map((item) => (
-                  <li key={item} className="flex flex-col gap-1 border-t border-border py-5">
-                    <h3 className="text-base font-bold">{t(`assets.${item}Title`)}</h3>
-                    <p className="text-sm text-muted-foreground">{t(`assets.${item}Body`)}</p>
-                  </li>
-                ))}
-                <li className="flex flex-col gap-1 border-y border-dashed border-border py-5">
-                  <h3 className="flex flex-wrap items-center gap-2 text-base font-bold">
-                    {t('assets.nextTitle')}
-                    <Coming label={t('everywhere.status.coming')} />
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{t('assets.nextBody')}</p>
-                </li>
-              </ul>
             </div>
           </Zone>
 
           <Zone id="self-host">
-            <Depth depth={t('community.depth')} label={t('community.label')} />
-            <h2 className={zoneTitle}>{t('community.title')}</h2>
-            <p className={zoneLede}>{t('community.lede')}</p>
-            <div className={`${cells} md:grid-cols-2`}>
+            <Depth depth={t('pricing.depth')} label={t('pricing.label')} />
+            <h2 className={zoneTitle}>{t('pricing.title')}</h2>
+            <div className={`${cells} md:grid-cols-3`}>
               <div className="flex flex-col gap-3 bg-background p-6">
-                <h3 className="text-base font-bold">{t('community.hostedTitle')}</h3>
-                <p className="flex-1 text-sm text-muted-foreground">{t('community.hostedBody')}</p>
-              </div>
-              <div className="flex flex-col gap-3 bg-background p-6">
-                <h3 className="text-base font-bold">{t('community.openTitle')}</h3>
-                <p className="flex-1 text-sm text-muted-foreground">{t('community.openBody')}</p>
+                <h3 className="text-lg font-bold">{t('pricing.openTitle')}</h3>
+                <p className="text-base font-semibold">{t('pricing.openRate')}</p>
+                <p className="flex-1 text-sm text-muted-foreground">{t('pricing.openBody')}</p>
                 <div className="mt-2 flex flex-wrap gap-3">
                   <Button asChild>
-                    <a href={communityRepo}>{t('community.repo')}</a>
+                    <a href={communityRepo}>{t('pricing.repo')}</a>
                   </Button>
                   <Button asChild variant="outline">
-                    <a href="/docs/self-hosting">{t('community.guide')}</a>
+                    <a href="/docs/self-hosting">{t('pricing.guide')}</a>
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 bg-background p-6">
+                <h3 className="text-lg font-bold">{t('pricing.hostedTitle')}</h3>
+                <p className="text-base font-semibold">{t('pricing.hostedRate')}</p>
+                <p className="text-sm text-muted-foreground">{t('pricing.hostedBody')}</p>
+              </div>
+              <div className="flex flex-col gap-3 bg-background p-6">
+                <h3 className="text-lg font-bold">{t('pricing.enterpriseTitle')}</h3>
+                <p className="text-base font-semibold">{t('pricing.enterpriseRate')}</p>
+                <p className="flex-1 text-sm text-muted-foreground">{t('pricing.enterpriseBody')}</p>
+                <div className="mt-2">
+                  <Button asChild variant="outline">
+                    <a href="mailto:support@dshteamwork.com">{t('pricing.contact')}</a>
                   </Button>
                 </div>
               </div>
@@ -411,15 +427,15 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
             <Depth depth={t('faq.depth')} label={t('faq.label')} />
             <h2 className={zoneTitle}>{t('faq.title')}</h2>
             <div className="mt-10 max-w-3xl">
-              {faqs.map((n) => (
-                <details key={n} open={n === 1} className="group border-t border-border py-5 last:border-b">
+              {faqs.map((key) => (
+                <details key={key} open={key === 'install'} className="group border-t border-border py-5 last:border-b">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold [&::-webkit-details-marker]:hidden">
-                    {t(`faq.q${n}`)}
+                    {t(`faq.${key}.question`)}
                     <span aria-hidden="true" className="font-mono text-xl font-normal text-muted-foreground group-open:rotate-45 transition-transform">
                       +
                     </span>
                   </summary>
-                  <p className="mt-3 max-w-2xl text-muted-foreground">{t(`faq.a${n}`)}</p>
+                  <p className="mt-3 max-w-2xl text-muted-foreground">{t(`faq.${key}.answer`)}</p>
                 </details>
               ))}
             </div>
@@ -433,8 +449,7 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
                 {t('final.depth')}
                 <span className="opacity-75">{t('final.label')}</span>
               </p>
-              <h2 className={zoneTitle}>{t('final.title')}</h2>
-              <p className="mt-5 max-w-2xl text-base opacity-80 sm:text-lg">{t('final.lede')}</p>
+              <h2 className={`${zoneTitle} whitespace-pre-line`}>{t('final.title')}</h2>
               <Button asChild size="lg" className="mt-8">
                 <a href={start.href}>{start.label}</a>
               </Button>

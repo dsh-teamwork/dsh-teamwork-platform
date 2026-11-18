@@ -149,14 +149,20 @@ body:has(.tide-story) {
 }
 .dark .tide-story #shift .text-brand { color: #b4c6ef; }
 .tide-intro {
+  /* Both languages reserve the same scene height, including in short windows. */
+  --intro-scene-height: clamp(36rem, 44vw, 40rem);
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  min-height: calc(100svh - 4rem);
+  min-height: max(calc(100svh - 4rem), var(--intro-scene-height));
   padding-block: clamp(2.5rem, 8vh, 6rem) clamp(11rem, 28vh, 19rem);
   background: var(--sky);
 }
+:lang(en) .tide-intro {
+  padding-block: clamp(2.5rem, 5svh, 4.5rem) clamp(10rem, 26svh, 17.5rem);
+}
+:lang(en) .tide-intro-copy > div { gap: 1rem; }
 @media (min-width: 46.01rem) {
   .tide-intro-copy > div { max-width: min(36rem, 49vw); }
 }
@@ -167,6 +173,10 @@ body:has(.tide-story) {
   line-height: 1.22;
 }
 .tide-title { font-size: clamp(2.6rem, 5.6vw, 5.8rem); }
+:lang(en) .tide-title {
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  line-height: 1.12;
+}
 :lang(zh-CN) .tide-title { max-width: 6.1em; }
 .tide-intro > .tide-link {
   position: absolute;
@@ -345,13 +355,23 @@ body:has(.tide-story) {
 .tide-footer a:hover { color: var(--foreground); }
 .tide-footer a:not(.tide-link):hover { text-decoration: underline; }
 .tide-footer a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
-.tide-arrival h2 { max-width: 24em; }
+.tide-arrival h2 {
+  max-width: 24em;
+  font-size: clamp(1rem, 5vw, 3rem);
+}
 .tide-arrival { position: relative; padding-bottom: clamp(2rem, 7vh, 6rem); }
 @media (max-width: 46rem) {
   .tide-intro {
+    --intro-art-space: clamp(12.5rem, 32svh, 18rem);
+    --intro-copy-space: 23rem;
+    --intro-scene-height: calc(var(--intro-art-space) + var(--intro-copy-space));
     align-items: start;
-    padding-block: 2rem clamp(12.5rem, 32svh, 18rem);
+    padding-block: 2rem var(--intro-art-space);
   }
+  :lang(en) .tide-intro {
+    padding-block: 1.75rem clamp(9rem, 24svh, 13rem);
+  }
+  :lang(en) .tide-intro-lede { font-size: 1rem; line-height: 1.5; }
   .tide-clouds { top: auto; bottom: 25%; right: 3%; width: 62%; }
   .tide-surface { --waterline: calc(100% - clamp(4.5rem, 13svh, 8rem)); }
   .tide-story { --fluke-size: clamp(10rem, 48vw, 17rem); }
@@ -359,6 +379,9 @@ body:has(.tide-story) {
   #fluke-hatching { transform: rotate(76deg) scale(1.65); }
   .tide-arrival { padding-bottom: clamp(7rem, 31vw, 13rem); }
   .tide-pod { right: 1%; bottom: 2.75rem; width: 96%; height: clamp(8rem, 33vw, 14rem); }
+}
+@media (max-width: 22rem) {
+  .tide-intro { --intro-copy-space: 25rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tide-fluke { transform: translate(-50%, -72%); }
