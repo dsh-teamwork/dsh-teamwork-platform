@@ -128,6 +128,7 @@ export function ConsoleShell({
 }) {
   const t = useTranslations('team');
   const section = sectionOf(useLocation().pathname, team.id);
+  const fill = extraPages().some((page) => page.fill && navPath(page) === section);
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -173,7 +174,7 @@ export function ConsoleShell({
         </Dialog.Portal>
       </Dialog.Root>
 
-      <main className="mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">{children}</main>
+      <main className={fill ? 'flex min-w-0 flex-col md:min-h-dvh' : 'mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-6 px-4 py-6 md:px-8 md:py-8'}>{children}</main>
     </div>
   );
 }
