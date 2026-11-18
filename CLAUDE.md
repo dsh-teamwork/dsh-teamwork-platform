@@ -200,6 +200,7 @@ if the table and the script disagree, the script is right.
 | --- | --- |
 | `apps/*/src/messages/*.json`, `premium/apps/*/src/messages/*.json`, and an Expo app's `apps/mobile/lib/i18n/locales/*.json` (seed's layout), under `premium/` too | The product ships in `en` and `zh-CN` (`LOCALES` in `@dsh-teamwork/shared`). |
 | `packages/shared/src/locales.ts` | Endonyms: a language picker names each language in itself. |
+| An app's store listings in seed's layout, `assets/{ios,android}/…/listings/zh*/`, `assets/store-captions.json` and the screenshots' demonstration content `assets/screenshots/**/*.json`, at the root or one tree down | The stores show them verbatim to a user who reads that language. |
 | `apps/web/content/docs/zh-CN/*.md` | The published `/docs` site's Chinese pages, beside the English ones in `content/docs/en/`. |
 | Root `README.zh-CN.md`, and the language-switch link in `README.md` | User-facing Chinese getting-started documentation explicitly requested for the public product. Other documentation remains English. |
 

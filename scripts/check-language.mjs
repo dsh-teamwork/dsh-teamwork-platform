@@ -51,6 +51,14 @@ const ALLOWED = [
     why: 'Locale files: the product speaking to its user in the language that user chose. Keys and structure are English.',
   },
   {
+    // Seed's layout (assets/ios/listings/, assets/android/play-store/listings/,
+    // assets/store-captions.json), and the demonstration content drawn into
+    // the screenshots (assets/screenshots/**/*.json), at the root or one tree down.
+    match: (f) =>
+      /^(?:[^/]+\/)?assets\/(?:(?:ios|android)\/(?:[^/]+\/)*listings\/zh[^/]*\/.+|store-captions\.json|screenshots\/(?:[^/]+\/)*[^/]+\.json)$/.test(f),
+    why: 'Store listings, screenshot captions and the content drawn into the screenshots: the stores show them verbatim to a user who reads that language.',
+  },
+  {
     match: (f) => /^(?:[^/]+\/)?server\/(?:[^/]+\/)*messages\/[^/]+\.json$/.test(f),
     why: 'Locale files the Go server embeds, such as what a notification says: the same data as the apps\' messages, beside the package that sends it.',
   },
