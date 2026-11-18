@@ -21,6 +21,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/content/docs/{en,zh-CN}/team-dsh.md`, `apps/web/src/pages/team/team-dsh-hosts.tsx`.
 
+## 2026-11-18 — A pasted pairing code keeps its last letter
+
+- **What:** My DSH's pairing code field drops spaces before it holds the code to six characters, so a code pasted as the panel shows it ("PQP WGG") arrives whole.
+- **Why:** The field's length limit cut the seventh character, the code's last letter, before the space was removed.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`.
+
 ## 2026-11-18 — My DSH opens the computer a pairing code came from
 
 - **What:** When the code typed on one computer's page came from another of the member's computers (two records may share a name: two DSHs on one machine), My DSH now opens the computer the pairing belongs to once it confirms, instead of waiting on the first. Computers sharing a name show a short id beside it.
