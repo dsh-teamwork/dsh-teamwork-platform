@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log/slog"
 	"net"
@@ -234,6 +235,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		MintComputerToken: srv.MintComputerToken,
 		MintHostToken:     srv.MintHostToken,
+		Objects:           objects(teams.Artifacts),
 		Users:             NewUsers(client), Env: env,
 		WithTeamTx:          meter.WithTeamTx,
 		ResolveFundingUsage: meter.ResolveFunding,
@@ -297,4 +299,27 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	manage.Mount(host, client, console, adminRoutes, devManage)
 	srv.ManageRoot = cfg.ServiceRole == "manage" && console.Base == "" && env("ADMIN_EMAILS") != ""
 	return srv, srv.Handler(), stop, nil
+}
+
+// objects lends an edition the server's object store, beside its plugin
+// archives; nil on a process without one.
+func objects(store artifactstore.Store) edition.Objects {
+	if store == nil {
+		return nil
+	}
+	return storeObjects{store}
+}
+
+type storeObjects struct{ store artifactstore.Store }
+
+func (o storeObjects) Put(ctx context.Context, teamID, kind, id string, body io.ReadSeeker, size int64) error {
+	return o.store.PutObject(ctx, teamID, kind, id, body, size)
+}
+
+func (o storeObjects) Open(ctx context.Context, teamID, kind, id string) (io.ReadCloser, error) {
+	return o.store.OpenObject(ctx, teamID, kind, id)
+}
+
+func (o storeObjects) Delete(ctx context.Context, teamID, kind, id string) error {
+	return o.store.DeleteObject(ctx, teamID, kind, id)
 }

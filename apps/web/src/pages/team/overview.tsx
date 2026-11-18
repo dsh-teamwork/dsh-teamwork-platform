@@ -114,7 +114,7 @@ function Waiting({ summary, base }: { summary?: Summary; base: string }) {
       key: 'reviews',
       icon: <GitPullRequestArrow className="size-4" aria-hidden />,
       text: t(admin ? 'reviews' : 'reviewsMine', { count: summary.pendingReviews }),
-      href: `${base}/sharing`,
+      href: admin ? `${base}/sharing` : `${base}/submissions`,
     });
   }
   for (const w of summary.nearLimit) {
@@ -337,7 +337,7 @@ function PresetList({ configs, base }: { configs: TeamConfig[]; base: string }) 
       <CardHeader className="flex-row items-center justify-between gap-3">
         <CardTitle>{t('presets')}</CardTitle>
         <Button asChild size="sm" variant="outline">
-          <Link to={`${base}/presets`}>{t('all')}</Link>
+          <Link to={`${base}/resources`}>{t('all')}</Link>
         </Button>
       </CardHeader>
       <CardContent className="px-0 pb-2">

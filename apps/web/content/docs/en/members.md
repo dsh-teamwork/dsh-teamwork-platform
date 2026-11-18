@@ -4,7 +4,9 @@ description: Use team presets and models in DSH, share your own, and ask the tea
 ---
 
 Once you are signed in, the team's models, presets and plugins appear in DSH
-next to your own setup.
+next to your own setup. In the console, your team opens on **Home**; **Team
+resources** lists what the team provides, and **My submissions** what you have
+sent for review.
 
 ## Start from a team preset
 
@@ -29,8 +31,9 @@ you confirm.
 ## Share what works
 
 Ask the team assistant to prepare a preset or plugin from your session, or
-submit one under **Sharing and review** in the console. An admin reviews the
-exact contents; once approved, everyone gets it at their next sync.
+submit one in the console: a plugin or a preset file under **My submissions**,
+or a new preset, or a change to one, under **Team resources**. An admin reviews
+the exact contents; once approved, everyone gets it at their next sync.
 
 ## Ask the team assistant
 

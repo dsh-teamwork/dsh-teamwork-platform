@@ -3,7 +3,9 @@ package edition_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"strings"
 	"testing"
@@ -266,6 +268,36 @@ func TestEditionMintsComputerTokensOnlyForMembers(t *testing.T) {
 		// It is not a plugin token: an edition's own Bearer check does not open it.
 		if who, err := host.Bearer(ctx, token); err != nil || who != nil {
 			t.Fatalf("Bearer opened a computer token: %+v %v", who, err)
+		}
+	})
+}
+func TestEditionStoresObjectsInTheServersStore(t *testing.T) {
+	var host edition.Host
+	dir := t.TempDir()
+	editiontest.Each(t, []edition.Extension{probe(&host)}, editiontest.Options{Env: map[string]string{"ARTIFACT_LOCAL_DIR": dir}}, func(t *testing.T, in *editiontest.Instance) {
+		ctx := context.Background()
+		team := in.Team(in.Account("ada@example.test"))
+		body := "a session's archive"
+		if err := host.Objects.Put(ctx, team, "probe-notes", "note-1", strings.NewReader(body), int64(len(body))); err != nil {
+			t.Fatal(err)
+		}
+		r, err := host.Objects.Open(ctx, team, "probe-notes", "note-1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, _ := io.ReadAll(r)
+		r.Close()
+		if string(got) != body {
+			t.Fatalf("read back %q", got)
+		}
+		if err := host.Objects.Delete(ctx, team, "probe-notes", "note-1"); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := host.Objects.Open(ctx, team, "probe-notes", "note-1"); !errors.Is(err, fs.ErrNotExist) {
+			t.Fatalf("after delete: %v", err)
+		}
+		if err := host.Objects.Put(ctx, team, "plugins", "note-1", strings.NewReader(body), int64(len(body))); err == nil {
+			t.Fatal("an edition wrote among the plugin archives")
 		}
 	})
 }

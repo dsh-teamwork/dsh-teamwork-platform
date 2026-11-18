@@ -6,7 +6,7 @@
  */
 
 import { createContext, useContext } from 'react';
-import { Link, Outlet, useParams } from 'react-router';
+import { Link, Navigate, Outlet, useParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { CardPage, Loading, useTitle } from '@/components/page';
@@ -88,4 +88,10 @@ export function TeamLayout() {
       </ConsoleShell>
     </TeamContext.Provider>
   );
+}
+
+/** Team management's pages, for the team's admin: a member who opens one is sent to the team's home (ADR 0043). */
+export function AdminOnly() {
+  const { team } = useTeam();
+  return team.role === 'admin' ? <Outlet /> : <Navigate to={`/teams/${encodeURIComponent(team.id)}`} replace />;
 }

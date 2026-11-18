@@ -31,7 +31,7 @@ export function TeamUsagePage() {
   const [exporting, setExporting] = useState(false);
   const [params, setParams] = useSearchParams();
   const period = params.get('period') ?? 'month';
-  const member = team.role === 'admin' ? params.get('userId') ?? '' : '';
+  const member = params.get('userId') ?? '';
   const [anchor] = useState(() => Date.now());
   const since = new Date(anchor - ({ day: 1, week: 7, month: 30 }[period] ?? 30) * 86400000).toISOString();
   const page = Math.max(1, Number(params.get('page')) || 1);
@@ -46,7 +46,7 @@ export function TeamUsagePage() {
   });
   const names = new Map(team.members.map((m) => [m.userId, m.email || m.userId]));
   return <>
-    <PageHeader title={t('title')} description={t(team.role === 'admin' ? 'descriptionAdmin' : 'descriptionMember')} action={<div className="flex gap-2"><Button variant="outline" disabled={exporting} onClick={() => {
+    <PageHeader title={t('title')} description={t('description')} action={<div className="flex gap-2"><Button variant="outline" disabled={exporting} onClick={() => {
       setExporting(true);
       const filters = new URLSearchParams(query);
       filters.delete('page'); filters.delete('size');
@@ -54,18 +54,18 @@ export function TeamUsagePage() {
     }}><Download />{t('export')}</Button><Button variant="outline" onClick={() => void usage.reload()}><RefreshCw />{t('refresh')}</Button></div>} />
     <div className="flex flex-wrap gap-2">
       <Select label={t('period')} value={period} options={(['day', 'week', 'month'] as const).map((value) => ({ value, label: t(`periods.${value}`) }))} change={(v) => update('period', v)} />
-      {team.role === 'admin' && <Select label={t('member')} value={member} options={[{ value: '', label: t('allMembers') }, ...team.members.map((m) => ({ value: m.userId, label: m.email || m.userId }))]} change={(v) => update('userId', v)} />}
+      <Select label={t('member')} value={member} options={[{ value: '', label: t('allMembers') }, ...team.members.map((m) => ({ value: m.userId, label: m.email || m.userId }))]} change={(v) => update('userId', v)} />
     </div>
     {!!usage.error && <p role="alert" className="text-sm text-destructive">{word(usage.error)}</p>}
     <Card className="overflow-hidden">
       {!usage.data ? !usage.error && <p className="p-6 text-sm text-muted-foreground">{t('loading')}</p> : usage.data.entries.length === 0 ? <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p> : <div className="overflow-x-auto"><table className="w-full whitespace-nowrap text-left text-sm">
-        <thead className="border-b bg-muted text-xs text-muted-foreground"><tr>{(['when', 'member', 'model', 'input', 'cacheRead', 'output', 'points', 'status'] as const).map((key) => <th key={key} className="px-4 py-3 font-medium">{t(key)}</th>)}{team.role === 'admin' && <th className="px-4 py-3">{t('manage')}</th>}</tr></thead>
+        <thead className="border-b bg-muted text-xs text-muted-foreground"><tr>{(['when', 'member', 'model', 'input', 'cacheRead', 'output', 'points', 'status'] as const).map((key) => <th key={key} className="px-4 py-3 font-medium">{t(key)}</th>)}<th className="px-4 py-3">{t('manage')}</th></tr></thead>
         <tbody>{usage.data.entries.map((row) => <tr key={row.id} className="border-b last:border-0">
           <td className="whitespace-nowrap px-4 py-3">{format.dateTime(new Date(row.createdAt), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
           <td className="px-4 py-3">{row.hostId ? t('sharedDsh') : names.get(row.userId) ?? t('formerMember')}</td><td className="px-4 py-3 font-medium">{what(row)}</td>
           <td className="px-4 py-3 tabular-nums">{row.input ?? '—'}</td><td className="px-4 py-3 tabular-nums">{row.cacheRead ?? '—'}</td><td className="px-4 py-3 tabular-nums">{row.output ?? '—'}</td>
           <td className="px-4 py-3 tabular-nums">{row.points ?? '—'}</td><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{t(`states.${row.state}`)}</td>
-          {team.role === 'admin' && <td className="px-4 py-3 text-right">{!row.meter && (row.state === 'pending' || row.state === 'unpriced' || row.code === 'usage_bound_exceeded') && <Button variant="ghost" size="sm" onClick={() => setResolving(row)}>{t(row.code === 'usage_bound_exceeded' ? 'reviewRoute' : 'resolve')}</Button>}</td>}
+          <td className="px-4 py-3 text-right">{!row.meter && (row.state === 'pending' || row.state === 'unpriced' || row.code === 'usage_bound_exceeded') && <Button variant="ghost" size="sm" onClick={() => setResolving(row)}>{t(row.code === 'usage_bound_exceeded' ? 'reviewRoute' : 'resolve')}</Button>}</td>
         </tr>)}</tbody>
       </table></div>}
     </Card>

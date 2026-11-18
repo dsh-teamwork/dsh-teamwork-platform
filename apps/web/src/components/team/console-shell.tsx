@@ -1,14 +1,16 @@
 /**
  * The frame of a team's console (`/teams/{teamId}/…`): a sidebar with the team
  * switcher, the pages in groups and the account menu, and the page beside it.
- * The groups follow how a team uses the product: the team's assets (what it
- * publishes), collaboration (how members share and what was kept), and
- * governance (who is in and what they spend); an edition's own team pages
- * join governance. On a narrow screen the sidebar becomes a top bar whose menu
- * opens the same navigation in a sheet. Which pages exist is `GROUPS`.
+ * The console is work first (ADR 0043): everyone sees Work — the home page,
+ * what the team provides, their own submissions and an edition's work pages —
+ * and the team's admin alone sees Team management below it. On a narrow screen
+ * the sidebar becomes a top bar whose menu opens the same navigation in a
+ * sheet. Which pages exist is `GROUPS`; the router sends a member who opens a
+ * management page home (`AdminOnly` in pages/team/layout.tsx).
  */
 
 import {
+  BookOpen,
   ChartNoAxesCombined,
   Check,
   ChevronsUpDown,
@@ -16,67 +18,86 @@ import {
   Gauge,
   GitPullRequestArrow,
   History,
+  House,
   Layers,
-  LayoutDashboard,
   LayoutGrid,
+  LogOut,
   Menu,
   Puzzle,
+  Send,
   Server,
   Users,
   X,
   type LucideIcon,
 } from 'lucide-react';
 import { Dialog, DropdownMenu } from 'radix-ui';
-import { useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { AccountRow } from '@/components/account';
 import { ThemeToggle } from '@/components/theme-toggle';
-import type { Team, TeamSummary } from '@/lib/api';
-import { editionTeamPages } from '@/lib/edition';
+import { api, type Team, type TeamSummary } from '@/lib/api';
+import { editionTeamPages, navPath, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'overview' | 'models' | 'presets' | 'plugins' | 'members' | 'usage' | 'budgets' | 'sharing' | 'history' | 'sharedHosts';
-type GroupKey = 'assets' | 'collaboration' | 'governance';
+type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'sharedHosts';
+type GroupKey = 'work' | 'manage';
 
 /** The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon. */
-const GROUPS: { key: GroupKey | null; sections: { path: string; key: SectionKey; icon: LucideIcon }[] }[] = [
-  { key: null, sections: [{ path: '', key: 'overview', icon: LayoutDashboard }] },
+const GROUPS: { key: GroupKey; admin: boolean; sections: { path: string; key: SectionKey; icon: LucideIcon }[] }[] = [
   {
-    key: 'assets',
+    key: 'work',
+    admin: false,
     sections: [
-      { path: 'models', key: 'models', icon: Cpu },
-      { path: 'presets', key: 'presets', icon: Layers },
-      { path: 'plugins', key: 'plugins', icon: Puzzle },
-    ],
-  },
-  {
-    key: 'collaboration',
-    sections: [
-      { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
-      { path: 'history', key: 'history', icon: History },
+      { path: '', key: 'overview', icon: House },
+      { path: 'resources', key: 'resources', icon: BookOpen },
+      { path: 'submissions', key: 'submissions', icon: Send },
       { path: 'shared-hosts', key: 'sharedHosts', icon: Server },
     ],
   },
   {
-    key: 'governance',
+    key: 'manage',
+    admin: true,
     sections: [
+      { path: 'models', key: 'models', icon: Cpu },
+      { path: 'presets', key: 'presets', icon: Layers },
+      { path: 'plugins', key: 'plugins', icon: Puzzle },
+      { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
+      { path: 'history', key: 'history', icon: History },
       { path: 'members', key: 'members', icon: Users },
       { path: 'usage', key: 'usage', icon: ChartNoAxesCombined },
       { path: 'budgets', key: 'budgets', icon: Gauge },
     ],
   },
 ];
+
 const PATHS = GROUPS.flatMap((g) => g.sections.map((s) => s.path));
 
-/** An edition's team pages that are not open ones it replaced: listed under governance. */
-const extraPages = () => editionTeamPages().filter((page) => !PATHS.includes(page.path));
+/** An edition's team pages that are not open ones it replaced, each listed in the group its audience names. */
+const extraPages = () => editionTeamPages().filter((page) => !PATHS.includes(navPath(page)));
+
+/** The extra pages this person sees in this team: an admin's need the admin, and a page with `visible` waits for its answer. */
+function useTeamPages(team: Team): TeamPage[] {
+  const [shown, setShown] = useState<{ teamId: string; pages: TeamPage[] }>({ teamId: '', pages: [] });
+  useEffect(() => {
+    let live = true;
+    const candidates = extraPages().filter((page) => page.audience === 'work' || team.role === 'admin');
+    Promise.all(candidates.map((page) => (page.visible ? page.visible(team).catch(() => false) : Promise.resolve(true)))).then((answers) => {
+      if (live) setShown({ teamId: team.id, pages: candidates.filter((_, i) => answers[i]) });
+    });
+    return () => {
+      live = false;
+    };
+  }, [team]);
+  return shown.teamId === team.id ? shown.pages : [];
+}
 
 /** The section the path is in, so switching team keeps the person on the same kind of page. */
 function sectionOf(pathname: string, teamId: string): string {
   const rest = pathname.slice(`/teams/${teamId}`.length).replace(/^\//, '').split('/')[0] ?? '';
-  return PATHS.includes(rest) || extraPages().some((page) => page.path === rest) ? rest : '';
+  return PATHS.includes(rest) || extraPages().some((page) => navPath(page) === rest) ? rest : '';
 }
 
 const href = (teamId: string, path: string) => (path ? `/teams/${teamId}/${path}` : `/teams/${teamId}`);
@@ -146,15 +167,17 @@ export function ConsoleShell({
   );
 }
 
-/** The console's pages in their groups, then an edition's own team pages under governance. */
+/** Work, then — for the team's admin — Team management; an edition's entries join the group their audience names. */
 function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team; section: string; reviewsWaiting: boolean; onNavigate?: () => void }) {
   const t = useTranslations('team');
   const locale = useLocale();
+  const admin = team.role === 'admin';
+  const pages = useTeamPages(team);
   return (
     <nav aria-label={t('nav.label')} className="flex flex-col gap-4">
-      {GROUPS.map((group) => (
-        <div key={group.key ?? 'top'} className="flex flex-col gap-0.5">
-          {group.key && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${group.key}`)}</p>}
+      {GROUPS.filter((group) => admin || !group.admin).map((group) => (
+        <div key={group.key} className="flex flex-col gap-0.5">
+          <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${group.key}`)}</p>
           {group.sections.map(({ path, key, icon: Icon }) => (
             <Link key={key} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
               <Icon className="size-4" aria-hidden />
@@ -163,13 +186,18 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
               {key === 'sharing' && reviewsWaiting && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
             </Link>
           ))}
-          {group.key === 'governance' &&
-            extraPages().map(({ path, labels, icon: Icon }) => (
-              <Link key={path} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
-                <Icon className="size-4" aria-hidden />
-                <span className="flex-1">{labels[locale === 'zh-CN' ? 'zh-CN' : 'en']}</span>
-              </Link>
-            ))}
+          {pages
+            .filter((page) => (page.audience === 'admin') === group.admin)
+            .map((page) => {
+              const path = navPath(page);
+              const Icon = page.icon;
+              return (
+                <Link key={path} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
+                  <Icon className="size-4" aria-hidden />
+                  <span className="flex-1">{page.labels[locale === 'zh-CN' ? 'zh-CN' : 'en']}</span>
+                </Link>
+              );
+            })}
         </div>
       ))}
     </nav>
@@ -179,6 +207,17 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
 /** The team the console shows, and every other team the person is in. */
 function TeamSwitcher({ team, teams, section }: { team: Team; teams: TeamSummary[]; section: string }) {
   const t = useTranslations('team');
+  const navigate = useNavigate();
+  const leave = () => {
+    if (!confirm(t('leave.confirm'))) return;
+    api(`teams/${team.id}/membership`, { method: 'DELETE' }).then(
+      () => {
+        toast.success(t('leave.done'));
+        navigate('/teams');
+      },
+      () => toast.error(t('leave.failed')),
+    );
+  };
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger className="flex w-full items-center gap-2.5 rounded-md p-1.5 text-left hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
@@ -215,6 +254,13 @@ function TeamSwitcher({ team, teams, section }: { team: Team; teams: TeamSummary
               {t('switcher.all')}
             </Link>
           </DropdownMenu.Item>
+          {/* An admin hands the team over first (Members), so only a member leaves from here. */}
+          {team.role === 'member' && (
+            <DropdownMenu.Item className={menuItem} onSelect={leave}>
+              <LogOut className="size-4" aria-hidden />
+              {t('leave.submit')}
+            </DropdownMenu.Item>
+          )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

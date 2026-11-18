@@ -576,7 +576,7 @@ paths:
       - { name: teamId, in: path, required: true, schema: { type: string } }
     post:
       summary: Query a public upstream live for transient model form suggestions
-      description: No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented. A catalog that cannot be read is model_metadata_unavailable.
+      description: No cache, persistence or configuration association. Prices are base USD per million text tokens; conditional and non-token charges are not represented. For models_dev, a provider the catalog does not name (or none) searches every provider for the exact model id instead of a substring. A catalog that cannot be read is model_metadata_unavailable.
       requestBody:
         required: true
         content:
@@ -584,7 +584,7 @@ paths:
             schema:
               type: object
               additionalProperties: false
-              required: [source, provider, query]
+              required: [source, query]
               properties:
                 source: { type: string, enum: [models_dev, openrouter] }
                 provider: { type: string, maxLength: 100 }
@@ -592,7 +592,7 @@ paths:
                 pricing: { type: boolean }
       responses:
         '200':
-          description: Up to fifty candidates; the administrator explicitly selects a reference
+          description: Up to fifty candidates, exact id first; the console fills the form only from a unique exact match
           content:
             application/json:
               schema:
@@ -901,6 +901,7 @@ paths:
       parameters:
         - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
         - { name: state, in: query, description: Keep only submissions in this state, schema: { type: string, enum: [draft, pending, published, rejected, withdrawn] } }
+        - { name: mine, in: query, description: "Only the caller's own submissions, for an administrator too", schema: { type: string, enum: ['true'] } }
       responses:
         '200':
           description: Success

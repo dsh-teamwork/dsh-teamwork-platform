@@ -37,6 +37,8 @@ const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => 
 const TeamPluginsPage = lazy(() => import('@/pages/team/plugins').then((m) => ({ default: m.TeamPluginsPage })));
 const TeamHistoryPage = lazy(() => import('@/pages/team/history').then((m) => ({ default: m.TeamHistoryPage })));
 const TeamSharingPage = lazy(() => import('@/pages/team/sharing').then((m) => ({ default: m.TeamSharingPage })));
+const TeamResourcesPage = lazy(() => import('@/pages/team/resources').then((m) => ({ default: m.TeamResourcesPage })));
+const AdminOnly = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.AdminOnly })));
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
 const TeamSharedHostsPage = lazy(() => import('@/pages/team/shared-hosts').then((m) => ({ default: m.TeamSharedHostsPage })));
@@ -73,22 +75,34 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
   watchSystemTheme();
   setEditionTeamPages(teamPages);
 
-  const team = replacing(
+  // Work, for everyone in the team; Team management, for its admin, who alone
+  // reaches those pages: a member is sent home (ADR 0043). An edition's team
+  // page joins the group its audience names, replacing an open one at its path.
+  const own = (audience: TeamPage['audience']) => teamPages.filter((page) => page.audience === audience).map(({ path, element }) => ({ path, element }));
+  const work = replacing(
     [
       { index: true, element: <TeamOverviewPage /> },
-      { path: 'models', element: <TeamModelsPage /> },
-      { path: 'usage', element: <TeamUsagePage /> },
-      { path: 'budgets', element: <TeamBudgetsPage /> },
-      { path: 'history', element: <TeamHistoryPage /> },
-      { path: 'sharing', element: <TeamSharingPage /> },
+      { path: 'resources', element: <TeamResourcesPage /> },
+      { path: 'submissions', element: <TeamSharingPage view="mine" /> },
       { path: 'shared-hosts', element: <TeamSharedHostsPage /> },
       { path: 'shared-hosts/:computerId', element: <TeamSharedDshPage /> },
+    ],
+    own('work'),
+  );
+  const manage = replacing(
+    [
+      { path: 'models', element: <TeamModelsPage /> },
       { path: 'presets', element: <TeamPresetsPage /> },
       { path: 'plugins', element: <TeamPluginsPage /> },
+      { path: 'sharing', element: <TeamSharingPage view="review" /> },
+      { path: 'history', element: <TeamHistoryPage /> },
       { path: 'members', element: <TeamMembersPage /> },
+      { path: 'usage', element: <TeamUsagePage /> },
+      { path: 'budgets', element: <TeamBudgetsPage /> },
     ],
-    teamPages.map(({ path, element }) => ({ path, element })),
+    own('admin'),
   );
+  const team: RouteObject[] = [...work, { element: <AdminOnly />, children: manage }];
   const router = createBrowserRouter([
     ...replacing(
       [

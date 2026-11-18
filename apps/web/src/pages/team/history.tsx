@@ -40,7 +40,6 @@ export function TeamHistoryPage() {
 function History({ team }: { team: Team }) {
   const t = useTranslations('team.history');
   const word = useTeamError();
-  const admin = team.role === 'admin';
   const [kind, setKind] = useState('');
   const [configId, setConfigId] = useState('');
   const [author, setAuthor] = useState('');
@@ -116,7 +115,7 @@ function History({ team }: { team: Team }) {
           {/* The timeline's spine. */}
           <span aria-hidden className="absolute top-4 bottom-4 left-[11px] w-px bg-border" />
           {rows.data.map((row) => (
-            <RevisionRow key={row.id} row={row} team={team} current={configs.data?.find((c) => c.id === row.configId) ?? null} names={names} admin={admin} onRestore={() => setRestore(row)} />
+            <RevisionRow key={row.id} row={row} team={team} current={configs.data?.find((c) => c.id === row.configId) ?? null} names={names} onRestore={() => setRestore(row)} />
           ))}
         </ol>
       )}
@@ -145,7 +144,7 @@ function History({ team }: { team: Team }) {
   );
 }
 
-function RevisionRow({ row, team, current, names, admin, onRestore }: { row: Revision; team: Team; current: TeamConfig | null; names: ReadonlyMap<string, string>; admin: boolean; onRestore: () => void }) {
+function RevisionRow({ row, team, current, names, onRestore }: { row: Revision; team: Team; current: TeamConfig | null; names: ReadonlyMap<string, string>; onRestore: () => void }) {
   const t = useTranslations('team.history');
   const tk = useTranslations('team.overview.kind');
   const format = useFormatter();
@@ -190,7 +189,7 @@ function RevisionRow({ row, team, current, names, admin, onRestore }: { row: Rev
               afterLabel={t('thisVersion', { version: row.version })}
             />
           )}
-          {admin && row.kind !== 'model' && (
+          {row.kind !== 'model' && (
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" disabled={pending} onClick={() => void run(() => download(`teams/${team.id}/history/${row.id}/export`, `teamwork-${row.id}.tgz`))}>
                 <Download />

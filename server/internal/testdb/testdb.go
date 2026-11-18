@@ -51,8 +51,14 @@ func New(t *testing.T, name string, extra ...db.Set) *DB {
 	var raw string
 	switch name {
 	case "sqlite":
-		// Escaped: a subtest's directory can hold a #, which a URL reads as its fragment.
-		raw = "sqlite://" + (&url.URL{Path: filepath.ToSlash(filepath.Join(t.TempDir(), "db.sqlite"))}).EscapedPath()
+		// Not t.TempDir(): a repeated subtest is named "sqlite#01", and the
+		// "#" would end the URL's path, so every repeat shared one file.
+		dir, err := os.MkdirTemp("", "testdb-")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { os.RemoveAll(dir) })
+		raw = "sqlite://" + filepath.ToSlash(filepath.Join(dir, "db.sqlite"))
 	case "postgres", "mysql":
 		server := os.Getenv("TEST_" + strings.ToUpper(name) + "_URL")
 		if server == "" {

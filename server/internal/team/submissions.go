@@ -64,14 +64,15 @@ func (s *Service) Submission(ctx context.Context, userID, teamID, id string) (*e
 }
 
 // ListSubmissions pages the submissions the caller may see, newest first: the
-// team's for an admin, their own for a member; `state`, when given, keeps one.
-func (s *Service) ListSubmissions(ctx context.Context, userID, teamID string, offset int, state string) ([]SubmissionView, error) {
+// team's for an admin, their own for a member or for an admin who asks for
+// theirs (mine); `state`, when given, keeps one.
+func (s *Service) ListSubmissions(ctx context.Context, userID, teamID string, offset int, state string, mine bool) ([]SubmissionView, error) {
 	m, err := s.RequireMembership(ctx, userID, teamID, false)
 	if err != nil {
 		return nil, err
 	}
 	q := s.DB.ResourceSubmission.Query().Where(resourcesubmission.TeamID(teamID))
-	if m.Role != membership.RoleAdmin {
+	if mine || m.Role != membership.RoleAdmin {
 		q.Where(resourcesubmission.AuthorID(userID))
 	}
 	if state != "" {
