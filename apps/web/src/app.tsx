@@ -41,8 +41,8 @@ const TeamResourcesPage = lazy(() => import('@/pages/team/resources').then((m) =
 const AdminOnly = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.AdminOnly })));
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
-const TeamSharedHostsPage = lazy(() => import('@/pages/team/shared-hosts').then((m) => ({ default: m.TeamSharedHostsPage })));
-const TeamSharedDshPage = lazy(() => import('@/pages/team/shared-dsh').then((m) => ({ default: m.TeamSharedDshPage })));
+const TeamDshPage = lazy(() => import('@/pages/team/team-dsh').then((m) => ({ default: m.TeamDshPage })));
+const TeamDshHostsPage = lazy(() => import('@/pages/team/team-dsh-hosts').then((m) => ({ default: m.TeamDshHostsPage })));
 const TeamBudgetsPage = lazy(() => import('@/pages/team/budgets').then((m) => ({ default: m.TeamBudgetsPage })));
 const TeamsPage = lazy(() => import('@/pages/teams').then((m) => ({ default: m.TeamsPage })));
 
@@ -84,8 +84,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { index: true, element: <TeamOverviewPage /> },
       { path: 'resources', element: <TeamResourcesPage /> },
       { path: 'submissions', element: <TeamSharingPage view="mine" /> },
-      { path: 'shared-hosts', element: <TeamSharedHostsPage /> },
-      { path: 'shared-hosts/:computerId', element: <TeamSharedDshPage /> },
+      { path: 'team-dsh/:computerId?/:sessionId?', element: <TeamDshPage /> },
     ],
     own(false),
   );
@@ -94,6 +93,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { path: 'models', element: <TeamModelsPage /> },
       { path: 'presets', element: <TeamPresetsPage /> },
       { path: 'plugins', element: <TeamPluginsPage /> },
+      { path: 'team-dsh-hosts', element: <TeamDshHostsPage /> },
       { path: 'sharing', element: <TeamSharingPage view="review" /> },
       { path: 'history', element: <TeamHistoryPage /> },
       { path: 'members', element: <TeamMembersPage /> },

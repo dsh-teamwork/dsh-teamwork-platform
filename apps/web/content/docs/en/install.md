@@ -35,7 +35,7 @@ restart instructions.
 
 ## A Linux server
 
-A team's shared DSH usually runs on a server with no desktop. On Ubuntu or
+A Team DSH usually runs on a server with no desktop. On Ubuntu or
 Debian, as the user DSH will run as:
 
 1. Install Node.js 24 or later:
@@ -66,7 +66,7 @@ Debian, as the user DSH will run as:
 
 4. From another shell on the same machine, use `dsh-teamwork`, which comes
    with the plugin: `dsh-teamwork login` for your own DSH, or
-   `dsh-teamwork share enable <key>` for the team's shared DSH. See
+   `dsh-teamwork share enable <key>` for a Team DSH. See
    [Commands](/docs/commands#on-a-server-dsh-teamwork). No browser is needed on
    the server.
 

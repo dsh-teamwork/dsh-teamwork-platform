@@ -9,13 +9,13 @@ description: 所有 /teamwork 命令，在 DSH 的命令输入框中使用。
 | --- | --- |
 | `/teamwork login` | 打开浏览器登录。 |
 | `/teamwork authorize <code>` | 用网站上的授权码完成登录。 |
-| `/teamwork share enable <key>` | 用**共享 DSH**里的 key 把这台 DSH 设为团队的共享 DSH。 |
+| `/teamwork share enable <key>` | 用**团队资产 → 团队 DSH**里的 key 把这台 DSH 设为团队 DSH。 |
 | `/teamwork share disable` | 关闭共享模式并删除 key。 |
-| `/teamwork share status` | 查看共享 DSH 的名称、团队和 token。 |
-| `/teamwork share invite <email>` | 生成一次性链接，让名单中一位成员的设备配对到这台共享 DSH。 |
-| `/teamwork share members` | 查看可访问这台共享 DSH 的成员及其设备。 |
-| `/teamwork share unlock <email>` | 清除某个成员在这台共享 DSH 上的 PIN 和锁定。 |
-| `/teamwork share audit-key <key>` | 把这台共享 DSH 的归档加密到 `dsh-teamwork-audit keygen` 打印的密钥；设置之后才会接纳成员。 |
+| `/teamwork share status` | 查看团队 DSH 的名称、团队和 token。 |
+| `/teamwork share invite <email>` | 生成一次性链接，让名单中一位成员的设备配对到这台团队 DSH。 |
+| `/teamwork share members` | 查看可访问这台团队 DSH 的成员及其设备。 |
+| `/teamwork share unlock <email>` | 清除某个成员在这台团队 DSH 上的 PIN 和锁定。 |
+| `/teamwork share audit-key <key>` | 把这台团队 DSH 的归档加密到 `dsh-teamwork-audit keygen` 打印的密钥；设置之后才会接纳成员。 |
 | `/teamwork pin reset` | 清除你自己手机在这台计算机上的 PIN 和锁定。 |
 | `/teamwork status` | 查看登录、同步状态和最近的错误。 |
 | `/teamwork sync` | 立即刷新团队资源。 |
@@ -34,7 +34,7 @@ description: 所有 /teamwork 命令，在 DSH 的命令输入框中使用。
 
 ## 在服务器上：dsh-teamwork
 
-在 DSH 所在的机器上，随插件安装的 `dsh-teamwork` 可以在终端里完成 Teamwork 面板的操作，不需要浏览器，适合运行在服务器上的 DSH，尤其是共享 DSH。DSH 必须以同一个用户在这台机器上运行；命令通过 `~/.dsh`（或 `$DSH_HOME`）中的插件目录找到它。支持 Linux 和 macOS。
+在 DSH 所在的机器上，随插件安装的 `dsh-teamwork` 可以在终端里完成 Teamwork 面板的操作，不需要浏览器，适合运行在服务器上的 DSH，尤其是团队 DSH。DSH 必须以同一个用户在这台机器上运行；命令通过 `~/.dsh`（或 `$DSH_HOME`）中的插件目录找到它。支持 Linux 和 macOS。
 
 | 命令 | 作用 |
 | --- | --- |
@@ -48,7 +48,7 @@ description: 所有 /teamwork 命令，在 DSH 的命令输入框中使用。
 | `dsh-teamwork phone list` | 查看已配对和等待中的手机，以及等待中手机的安全码。 |
 | `dsh-teamwork phone accept <id>` | 手机显示相同的安全码后确认它；`reject <id>` 拒绝。 |
 | `dsh-teamwork phone revoke <id>` | 移除一台已配对的手机。 |
-| `dsh-teamwork share enable <key>` | 用**共享 DSH**里的 key 把这台 DSH 设为团队的共享 DSH。 |
+| `dsh-teamwork share enable <key>` | 用**团队资产 → 团队 DSH**里的 key 把这台 DSH 设为团队 DSH。 |
 | `dsh-teamwork share audit-key <key>` | 把归档加密到 `dsh-teamwork-audit keygen` 打印的密钥。 |
 | `dsh-teamwork share status` | 查看名称、团队、审计密钥和错误。 |
 | `dsh-teamwork share members` | 查看可访问的成员、他们的设备和锁定状态。 |

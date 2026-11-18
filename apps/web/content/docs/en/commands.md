@@ -10,13 +10,13 @@ Type these in DSH's command input, not in your shell. Ids come from
 | --- | --- |
 | `/teamwork login` | Open browser sign-in. |
 | `/teamwork authorize <code>` | Finish sign-in with a code from the website. |
-| `/teamwork share enable <key>` | Make this DSH its team's shared DSH, with a key from **Shared DSHs**. |
+| `/teamwork share enable <key>` | Make this DSH a Team DSH of its team, with a key from **Team assets → Team DSH**. |
 | `/teamwork share disable` | End shared mode and delete the key. |
-| `/teamwork share status` | Show the shared DSH's name, team and token. |
-| `/teamwork share invite <email>` | A single-use link that pairs one listed member's device with this shared DSH. |
-| `/teamwork share members` | Who may reach this shared DSH, and their devices. |
-| `/teamwork share unlock <email>` | Clear a member's PIN and lock on this shared DSH. |
-| `/teamwork share audit-key <key>` | Seal this shared DSH's archive to the key `dsh-teamwork-audit keygen` printed; members are admitted only once it is set. |
+| `/teamwork share status` | Show the Team DSH's name, team and token. |
+| `/teamwork share invite <email>` | A single-use link that pairs one listed member's device with this Team DSH. |
+| `/teamwork share members` | Who may reach this Team DSH, and their devices. |
+| `/teamwork share unlock <email>` | Clear a member's PIN and lock on this Team DSH. |
+| `/teamwork share audit-key <key>` | Seal this Team DSH's archive to the key `dsh-teamwork-audit keygen` printed; members are admitted only once it is set. |
 | `/teamwork pin reset` | Clear your own phone PIN and lock on this computer. |
 | `/teamwork status` | Show sign-in, sync state and recent errors. |
 | `/teamwork sync` | Refresh the team's resources now. |
@@ -37,7 +37,7 @@ Type these in DSH's command input, not in your shell. Ids come from
 
 On the machine a DSH runs on, `dsh-teamwork` (installed with the plugin) does
 what the Teamwork panel does, from a shell, with no browser: for a DSH on a
-server, a shared one above all. DSH must be running there as the same user; the
+server, a Team DSH above all. DSH must be running there as the same user; the
 command finds it through the plugin's directory in `~/.dsh`, or `$DSH_HOME`.
 Linux and macOS.
 
@@ -53,7 +53,7 @@ Linux and macOS.
 | `dsh-teamwork phone list` | Paired and waiting phones, with a waiting phone's safety code. |
 | `dsh-teamwork phone accept <id>` | Accept a waiting phone once it shows the same safety code; `reject <id>` refuses it. |
 | `dsh-teamwork phone revoke <id>` | Remove a paired phone. |
-| `dsh-teamwork share enable <key>` | Make this DSH its team's shared DSH, with a key from **Shared DSHs**. |
+| `dsh-teamwork share enable <key>` | Make this DSH a Team DSH, with a key from **Team assets → Team DSH**. |
 | `dsh-teamwork share audit-key <key>` | Seal its archive to the key `dsh-teamwork-audit keygen` printed. |
 | `dsh-teamwork share status` | Its name, team, audit key and any error. |
 | `dsh-teamwork share members` | Who may reach it, their devices, and who is locked. |

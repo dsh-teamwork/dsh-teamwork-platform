@@ -7,11 +7,19 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-18 — A DSH can be run and managed from a Linux shell
 
-- **What:** `/docs` describes installing DSH and the plugin on a Linux server (DSH needs its exact prerelease version) and the plugin's new `dsh-teamwork` command. It does what the Teamwork panel does against the DSH running on that machine, with no browser: the server, sign-in by pasted code, status, sync and sign-out, phone pairing (a QR code in the terminal, accepted after comparing the safety code), and the shared DSH's `share` actions (enable, audit-key, status, members, invite, unlock, disable). The plugin now keeps its files in `$DSH_HOME/dsh-teamwork/` (else `~/.dsh/dsh-teamwork/`) instead of the directory DSH was started from.
-- **Why:** A DSH on a server, a shared one above all, has no desktop: the only way in was an SSH tunnel to DSH's web UI; and a shared DSH started from another directory lost its key, roster and PIN locks.
-- **Breaking:** With the plugin release carrying this change, a signed-in DSH signs in again, and a shared DSH needs a new key (**Rotate key**) and fresh invites: files left in the old start directory are not moved.
+- **What:** `/docs` describes installing DSH and the plugin on a Linux server (DSH needs its exact prerelease version) and the plugin's new `dsh-teamwork` command. It does what the Teamwork panel does against the DSH running on that machine, with no browser: the server, sign-in by pasted code, status, sync and sign-out, phone pairing (a QR code in the terminal, accepted after comparing the safety code), and a Team DSH's `share` actions (enable, audit-key, status, members, invite, unlock, disable). The plugin now keeps its files in `$DSH_HOME/dsh-teamwork/` (else `~/.dsh/dsh-teamwork/`) instead of the directory DSH was started from.
+- **Why:** A DSH on a server, a Team DSH above all, has no desktop: the only way in was an SSH tunnel to DSH's web UI; and a Team DSH started from another directory lost its key, roster and PIN locks.
+- **Breaking:** With the plugin release carrying this change, a signed-in DSH signs in again, and a Team DSH needs a new key (**Rotate key**) and fresh invites: files left in the old start directory are not moved.
 - **Upgrade:** Update the plugin.
-- **Refs:** the plugin's `src/share-cli.ts` and `src/control-socket.ts`; `apps/web/content/docs/{en,zh-CN}/{install,commands,admins}.md`.
+- **Refs:** the plugin's `src/teamwork-cli.ts` and `src/control-socket.ts`; `apps/web/content/docs/{en,zh-CN}/{install,commands,admins}.md`.
+
+## 2026-11-18 — Shared DSHs are Team DSH, used in Workspace and managed under Team assets
+
+- **What:** The console, `/docs` and every message call a shared DSH "Team DSH" in both languages. Using one and managing one are separate pages: Workspace's `/teams/{teamId}/team-dsh[/{computerId}[/{sessionId}]]`, listed in the navigation only when the team runs one the member may reach, lists the DSHs a member may reach, their sessions on the open one and the conversation in three columns, joins by invite and starts a session with its first message; Team assets' `/teams/{teamId}/team-dsh-hosts`, for the admin, keeps keys, access and the archive. `/teams/{teamId}/shared-hosts` is gone. A team page may fill the area beside the sidebar (`TeamPage.fill`, and the open pages' own `fill`), full height on a phone too.
+- **Why:** "Shared DSH" read like the Workspace's "team shared" page, and a member's page mixed in the admin's keys and archive.
+- **Breaking:** A bookmark to `/teams/{teamId}/shared-hosts[/…]` no longer opens. The API is unchanged.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/team-dsh.tsx`, `apps/web/src/pages/team/team-dsh-hosts.tsx`, `docs/tech/shared-dsh.md`.
 
 ## 2026-11-18 — Team resources has a new Chinese name
 
