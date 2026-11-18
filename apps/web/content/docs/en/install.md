@@ -53,18 +53,34 @@ Debian, as the user DSH will run as:
    npm install -g @deepseek-ai/dsh@0.2.2-rc.1
    ```
 
-3. Install the plugin and start DSH in a `tmux` session, so it keeps running
-   after you log out:
+3. If `pnpm --version` says 11 or later, first let DSH's profile take a
+   release from today and skip dependencies' build scripts it does not need;
+   otherwise pnpm 11 installs an older version, or stops with
+   `ERR_PNPM_IGNORED_BUILDS`:
+
+   ```sh
+   dsh plugin --profile web list
+   printf 'minimumReleaseAge: 0\nstrictDepBuilds: false\n' >> ~/.dsh/profiles/web/pnpm-workspace.yaml
+   ```
+
+   The first line only makes DSH create the profile, so its own settings are
+   written before these two.
+
+4. Install the plugin, then start DSH in a `tmux` session, so it keeps running
+   after you log out. Start it in the project folder sessions should work in:
+   a Team DSH's members start their sessions there, or in a workspace DSH
+   already has.
 
    ```sh
    dsh plugin --profile web add @dsh-teamwork/dsh-teamwork
    tmux new -s dsh
+   cd /path/to/project
    dsh web --no-open
    ```
 
    Detach with `Ctrl+B` then `D`; `tmux attach -t dsh` returns to it.
 
-4. In another shell on the same machine, install the plugin's commands,
+5. In another shell on the same machine, install the plugin's commands,
    `dsh-teamwork` and `dsh-teamwork-audit`. The copy inside DSH's profile is not
    on your `PATH`:
 
@@ -72,7 +88,7 @@ Debian, as the user DSH will run as:
    npm install -g @dsh-teamwork/dsh-teamwork
    ```
 
-5. Then run `dsh-teamwork login` for your own DSH, or
+6. Then run `dsh-teamwork login` for your own DSH, or
    `dsh-teamwork share enable <key>` for a Team DSH. See
    [Commands](/docs/commands#on-a-server-dsh-teamwork). No browser is needed on
    the server.

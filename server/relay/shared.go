@@ -57,6 +57,34 @@ func (r *relay) sharedRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /relay/shared/token", r.sharedToken)
 }
 
+// --- who may run one ----------------------------------------------------------
+
+// teamDSHUnavailable answers a team an edition's gate keeps from running a
+// Team DSH (edition.Host.GateTeamDSH): the hosted service admits teams one by
+// one; a self-hosted server has no gate.
+type teamDSHUnavailable struct{}
+
+func (teamDSHUnavailable) Error() string     { return "team_dsh_unavailable" }
+func (teamDSHUnavailable) HTTPStatus() int   { return http.StatusForbidden }
+func (teamDSHUnavailable) ErrorCode() string { return "team_dsh_unavailable" }
+
+// teamDSHAllowed reports whether a team may run a Team DSH now.
+func (r *relay) teamDSHAllowed(ctx context.Context, teamID string) (bool, error) {
+	if r.host.TeamDSHAllowed == nil {
+		return true, nil
+	}
+	return r.host.TeamDSHAllowed(ctx, teamID)
+}
+
+func (r *relay) requireTeamDSH(ctx context.Context, teamID string) error {
+	if ok, err := r.teamDSHAllowed(ctx, teamID); err != nil {
+		return err
+	} else if !ok {
+		return teamDSHUnavailable{}
+	}
+	return nil
+}
+
 // --- keys ------------------------------------------------------------------
 
 // newHostKey is a key for host id and the HMAC it is stored as.
@@ -228,11 +256,18 @@ func (r *relay) listShared(w http.ResponseWriter, req *http.Request, _, teamID s
 		}
 		out = append(out, v)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"hosts": out})
+	available, err := r.teamDSHAllowed(req.Context(), teamID)
+	if err != nil {
+		return err
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"available": available, "hosts": out})
 	return nil
 }
 
 func (r *relay) createShared(w http.ResponseWriter, req *http.Request, userID, teamID string) error {
+	if err := r.requireTeamDSH(req.Context(), teamID); err != nil {
+		return err
+	}
 	name, err := sharedName(req)
 	if err != nil {
 		return err
@@ -274,6 +309,9 @@ func (r *relay) renameShared(w http.ResponseWriter, req *http.Request, _, teamID
 // rotateShared gives a host a new key, keeping its machine: the old key stops
 // at its next exchange.
 func (r *relay) rotateShared(w http.ResponseWriter, req *http.Request, _, teamID string) error {
+	if err := r.requireTeamDSH(req.Context(), teamID); err != nil {
+		return err
+	}
 	if err := readJSON(req, &struct{}{}); err != nil {
 		return err
 	}
@@ -392,6 +430,16 @@ func (r *relay) sharedToken(w http.ResponseWriter, req *http.Request) {
 	}
 	if !r.nonceValid(id, in.Nonce, now) || !ed25519.Verify(public, signedExchange(in.Nonce, id, r.host.AppURL), signature) {
 		refuse()
+		return
+	}
+	// A team the gate no longer admits gets no token: its DSH drops off within
+	// the hour its last one lasts, and a key is not bound meanwhile.
+	if ok, err := r.teamDSHAllowed(ctx, h.TeamID); err != nil {
+		slog.Error("relay: Team DSH gate", "error", err)
+		errorJSON(w, http.StatusInternalServerError, "internal")
+		return
+	} else if !ok {
+		errorJSON(w, http.StatusForbidden, "team_dsh_unavailable")
 		return
 	}
 	// The first exchange binds the machine; a race for it has one winner.

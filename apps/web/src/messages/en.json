@@ -838,6 +838,7 @@
       "proposeChange": "Propose a change"
     },
     "teamDshHosts": {
+      "unavailable": "Team DSH is not enabled for this team yet. On the hosted service it is open to some teams at a time; contact support to have it enabled. Existing keys stay listed below, but no DSH signs in with them and no member can reach one.",
       "title": "Team DSH",
       "description": "A DSH your team runs for its members. It signs in with a team host key, never as a person, and its model calls are the team's.",
       "name": "Name",
@@ -1197,7 +1198,8 @@
     "provider_key_rejected": "The provider refused this API key. Check that it is complete and still active.",
     "model_metadata_unavailable": "The public model catalog could not be read. Retry, or fill the fields in yourself.",
     "host_key_invalid": "That team host key is not valid.",
-    "host_bound_elsewhere": "That team host key is used by another machine."
+    "host_bound_elsewhere": "That team host key is used by another machine.",
+    "team_dsh_unavailable": "Team DSH is not enabled for this team."
   },
   "docs": {
     "title": "Docs",

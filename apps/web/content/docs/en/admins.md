@@ -90,6 +90,11 @@ a reason.
 
 ## 7. Run a Team DSH
 
+On the hosted service, Team DSH is enabled for some teams at a time while its
+security is proven in use: until yours is, the Team DSH page says so and offers
+no key, so write to support to have it enabled. A self-hosted server enables it
+for every team.
+
 Under **Team assets → Team DSH**, name a DSH the team will run for its members and copy
 the command shown once: `/teamwork share enable <key>`. Run it in that DSH. It
 then signs in as the team, never as a person, syncs this team alone, and its
