@@ -1,7 +1,8 @@
 /**
- * DSH's Remote API, read into the app's shapes (`types.ts`). Pure: the live
- * client (`live.ts`) feeds it what the relay carries, and the tests feed it
- * frames recorded from a real DSH (`__tests__/fixtures/dsh-session.json`).
+ * DSH's Remote API, read into what a session screen draws (`types.ts`). Pure:
+ * the live client (`live.ts`) feeds it what the relay carries, the hosted
+ * edition's cloud sessions what its server relays from a cloud computer, and
+ * the tests frames recorded from a real DSH (`__tests__/fixtures/dsh-session.json`).
  *
  * What is read, and from where (docs/tech/relay.md):
  * - `session/list` → `SessionSummary`: its `items`, minus blank sessions.
@@ -15,7 +16,7 @@
  *   `approval/request`, answered through `$events/result`.
  */
 
-import type { ConversationItem, Pending, SessionEvent, SessionState, SessionStatus, SessionSummary } from './types';
+import type { ConversationItem, Pending, SessionChange, SessionState, SessionStatus, SessionSummary } from './types';
 
 type Json = Record<string, unknown>;
 const isObject = (value: unknown): value is Json => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -88,7 +89,7 @@ function summarize(args: unknown): string {
  * What one committed session event means to the screen, given the state so
  * far (a tool result needs the call it answers). Most events mean nothing.
  */
-export function eventsOf(event: unknown, state: Pick<SessionState, 'items'>): SessionEvent[] {
+export function eventsOf(event: unknown, state: Pick<SessionState, 'items'>): SessionChange[] {
   if (!isObject(event) || typeof event.type !== 'string') return [];
   const data = isObject(event.data) ? event.data : {};
   const id = `seq-${String(event.seq)}`;
@@ -158,7 +159,7 @@ export const newStreams = (): Streams => ({ attempts: new Map() });
  * text deltas become a reply that grows as the model writes. A retried attempt
  * starts its step's reply over; tool calls and usage are not shown.
  */
-export function streamEventsOf(frame: unknown, streams: Streams, state: Pick<SessionState, 'items'>): SessionEvent[] {
+export function streamEventsOf(frame: unknown, streams: Streams, state: Pick<SessionState, 'items'>): SessionChange[] {
   if (!isObject(frame) || typeof frame.attemptId !== 'string') return [];
   if (frame.type === 'start' && typeof frame.turn === 'number' && typeof frame.step === 'number') {
     streams.attempts.set(frame.attemptId, { id: replyId(frame.turn, frame.step), shown: false });
@@ -183,13 +184,13 @@ export function snapshotOf(frame: unknown): SessionState {
   let state: SessionState = { status: 'idle', items: [], pending: null, closed: null };
   for (const record of records) {
     const event = isObject(record) ? record.event : undefined;
-    for (const change of eventsOf(event, state)) state = applyLocally(state, change);
+    for (const change of eventsOf(event, state)) state = applyChange(state, change);
   }
   // A reply being written when the follow opened: its text so far.
   const active = isObject(frame) && isObject(frame.assistantStream) && isObject(frame.assistantStream.activeAttempt) ? frame.assistantStream.activeAttempt : null;
   if (active && typeof active.turn === 'number' && typeof active.step === 'number' && Array.isArray(active.stream)) {
     const written = active.stream.map((c) => (isObject(c) && c.type === 'text-delta' && typeof c.text === 'string' ? c.text : '')).join('');
-    if (written) state = applyLocally(state, { type: 'item', item: { kind: 'assistant', id: replyId(active.turn, active.step), text: written } });
+    if (written) state = applyChange(state, { type: 'item', item: { kind: 'assistant', id: replyId(active.turn, active.step), text: written } });
   }
   return state;
 }
@@ -206,14 +207,24 @@ export function latestDirectoryOf(value: unknown): string | null {
   return latest?.cwd ?? null;
 }
 
-function applyLocally(state: SessionState, change: SessionEvent): SessionState {
-  if (change.type === 'status') return { ...state, status: change.status as SessionStatus };
-  if (change.type !== 'item') return state;
-  const at = state.items.findIndex((i) => i.id === change.item.id);
-  if (at === -1) return { ...state, items: [...state.items, change.item] };
-  const items = state.items.slice();
-  items[at] = change.item;
-  return { ...state, items };
+/** Folds one change into a session. Pure, so a reducer can use it. */
+export function applyChange<S extends SessionState<unknown>>(state: S, change: SessionChange): S {
+  switch (change.type) {
+    case 'status':
+      return { ...state, status: change.status as SessionStatus };
+    case 'item': {
+      const at = state.items.findIndex((i) => i.id === change.item.id);
+      if (at === -1) return { ...state, items: [...state.items, change.item] };
+      const items = state.items.slice();
+      items[at] = change.item;
+      return { ...state, items };
+    }
+    case 'delta':
+      return {
+        ...state,
+        items: state.items.map((item) => (item.id === change.id && item.kind === 'assistant' ? { ...item, text: item.text + change.text } : item)),
+      };
+  }
 }
 
 /** One question of a `user-questions/request` batch. */

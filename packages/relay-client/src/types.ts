@@ -79,23 +79,31 @@ export type Pending =
 
 export type Answer = { kind: 'question'; optionId: string } | { kind: 'approval'; approve: boolean };
 
-export interface SessionState {
+/**
+ * A session as a screen draws it. `Closed` is why a client's stream ended for good, in that client's own words: the
+ * relay's codes here, another reason for a session the hosted edition reaches through its server.
+ */
+export interface SessionState<Closed = RelayErrorCode> {
   status: SessionStatus;
   items: ConversationItem[];
   pending: Pending | null;
   /** Set once the stream has ended for good; the screen says why. */
-  closed: RelayErrorCode | null;
+  closed: Closed | null;
 }
+
+/** What one frame changes in a session (`eventsOf`, `streamEventsOf` in `dsh.ts`), folded in by `applyChange`. */
+export type SessionChange =
+  /** An item added, or replaced when its id is already there. */
+  | { type: 'item'; item: ConversationItem }
+  /** Streamed text appended to an assistant item. */
+  | { type: 'delta'; id: string; text: string }
+  | { type: 'status'; status: SessionStatus };
 
 /** What `follow` delivers, in order. `applySessionEvent` (session.ts) folds them into a `SessionState`. */
 export type SessionEvent =
   /** The whole state, first on every follow. */
   | { type: 'snapshot'; state: SessionState }
-  /** An item added, or replaced when its id is already there. */
-  | { type: 'item'; item: ConversationItem }
-  /** Streamed text appended to an assistant item. */
-  | { type: 'delta'; id: string; text: string }
-  | { type: 'status'; status: SessionStatus }
+  | SessionChange
   | { type: 'pending'; pending: Pending | null }
   | { type: 'closed'; reason: RelayErrorCode };
 

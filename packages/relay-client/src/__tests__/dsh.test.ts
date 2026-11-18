@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import fixture from './fixtures/dsh-session.json';
 
 import {
+  applyChange,
   approvalResult,
   eventsOf,
   latestDirectoryOf,
@@ -19,7 +20,6 @@ import {
   streamEventsOf,
   waitingOf,
 } from '../dsh';
-import { applySessionEvent } from '../session';
 import type { SessionState } from '../types';
 
 describe('reading DSH', () => {
@@ -53,7 +53,7 @@ describe('reading DSH', () => {
     const statuses: string[] = [];
     for (const event of fixture.followEvents) {
       for (const change of eventsOf(event, state)) {
-        state = applySessionEvent(state, change);
+        state = applyChange(state, change);
         if (change.type === 'status') statuses.push(change.status);
       }
     }
@@ -100,7 +100,7 @@ describe('reading DSH', () => {
     for (const frame of fixture.followWithStream) {
       const changes = frame.type === 'event' ? eventsOf((frame as { event: unknown }).event, state) : streamEventsOf((frame as { frame: unknown }).frame, streams, state);
       for (const change of changes) {
-        state = applySessionEvent(state, change);
+        state = applyChange(state, change);
         if (change.type === 'item' && change.item.kind === 'assistant') replies.push(change.item.text);
         if (change.type === 'delta') replies.push(`+${change.text}`);
       }

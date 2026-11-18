@@ -1,6 +1,6 @@
 /**
- * How a session's items are laid out on the phone. What a person reads on a
- * small screen is the conversation; the agent's tool calls are how it got
+ * How a session's items are laid out, on the phone and on the web. What a
+ * person reads is the conversation; the agent's tool calls are how it got
  * there, so consecutive ones fold into one "steps" row that opens on a tap.
  * The question tool is not a step: its card asks the member directly.
  */
