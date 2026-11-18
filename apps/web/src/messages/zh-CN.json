@@ -918,6 +918,7 @@
       "newHint": "{name} 上的新会话，在这个浏览器和那台机器之间端到端加密。",
       "firstPlaceholder": "描述任务。开始后还可以继续发消息。",
       "steps": "{count} 个步骤",
+      "earlier": "显示更早的消息",
       "failed": "失败",
       "denied": "已拒绝",
       "thinking": "思考中…",
@@ -926,6 +927,14 @@
       "promptPlaceholder": "给智能体发消息",
       "send": "发送",
       "stop": "停止",
+      "settings": {
+        "workspace": "工作区",
+        "preset": "预设",
+        "model": "模型",
+        "desktopDefault": "桌面默认预设",
+        "followPreset": "跟随预设／桌面模型",
+        "noPreset": "未使用预设"
+      },
       "pin": {
         "set": {
           "title": "设置你的 PIN",

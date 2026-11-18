@@ -15,14 +15,20 @@ import {
   applySessionEvent,
   EMPTY_SESSION,
   isThinking,
+  directoryName,
   pinPrompt,
   RelayError,
   rowsOf,
+  type ModelSelection,
   type PinState,
+  type RelayErrorCode,
+  type SessionConfiguration,
+  type SessionOptions,
   type SessionState,
   type SessionSummary,
 } from '@dsh-teamwork/relay-client';
 import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -143,7 +149,7 @@ export function SessionList({ base, locked, sessions, sessionId, onPick }: { bas
                 <span className="truncate">{s.title || t('untitled')}</span>
               </span>
               <span className="truncate text-xs font-normal text-muted-foreground">
-                {s.status === 'running' ? t('running') : format.relativeTime(new Date(s.updatedAt))} · {s.directory}
+                {s.status === 'running' ? t('running') : format.relativeTime(new Date(s.updatedAt), new Date())} · {s.directory}
               </span>
             </Link>
           ))}
@@ -180,12 +186,14 @@ export function NewSession({ computerId, name, started }: { computerId: string; 
   const relay = relayFor(me);
   const [sent, setSent] = useState('');
   const [failed, setFailed] = useState<string | null>(null);
+  const [options, setOptions] = useState<SessionOptions>({});
 
   async function start(text: string) {
     setSent(text);
     setFailed(null);
     try {
-      const created = await relay.createSession(computerId);
+      const created = await relay.createSession(computerId, { cwd: options.cwd, agentPreset: options.agentPreset });
+      if (options.model) await relay.selectModel(computerId, created.id, options.model);
       await relay.prompt(computerId, created.id, text);
       started(created.id);
       return true;
@@ -214,12 +222,114 @@ export function NewSession({ computerId, name, started }: { computerId: string; 
         </section>
       )}
       {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
-      <Composer busy={sent !== ''} placeholder={t('firstPlaceholder')} send={start} />
+      <Composer busy={sent !== ''} placeholder={t('firstPlaceholder')} send={start}>
+        <SessionSettings computerId={computerId} disabled={sent !== ''} value={options} onChange={setOptions} />
+      </Composer>
     </>
   );
 }
 
 /** The message box at a conversation's foot: Enter sends, Shift+Enter breaks the line; `send` says whether to clear it. */
+const modelKey = (model: ModelSelection | null | undefined) => (model ? JSON.stringify([model.provider, model.model]) : '');
+
+/**
+ * The workspace, preset and model a session runs with, as its computer reports them (`configuration`), beside the
+ * composer. A new session's are chosen before its first message (`value`, given back through `onChange`); an existing
+ * session shows its folder and preset, which stay as they are, and changes its model while it is idle, for that session
+ * alone (`teamwork/selectModel`); whether it is idle is the conversation's, which follows it, not the read's. A computer whose plugin reports none shows nothing, and its defaults hold.
+ */
+function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange }: {
+  computerId: string;
+  sessionId?: string;
+  disabled: boolean;
+  value?: SessionOptions;
+  onChange?: (value: SessionOptions) => void;
+}) {
+  const { me } = useTeam();
+  const t = useTranslations('team.dsh.settings');
+  const word = useRelayError();
+  const relay = relayFor(me);
+  const [data, setData] = useState<SessionConfiguration | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    setData(null);
+    relay.configuration(computerId, sessionId).then(
+      (read) => { if (live) setData(read); },
+      // An older plugin, or a computer that went away: the defaults hold, as before there were choices.
+      () => {},
+    );
+    return () => { live = false; };
+  }, [relay, computerId, sessionId]);
+
+  if (!data) return null;
+  const current = sessionId ? data.current : null;
+  const models = [
+    ...(sessionId ? [] : [{ value: '', label: t('followPreset') }]),
+    ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}` })),
+  ];
+  const chosenModel = sessionId ? current?.model : value.model;
+  const toModel = (key: string): ModelSelection | undefined => {
+    if (!key) return undefined;
+    const [provider, model] = JSON.parse(key) as [string, string];
+    return { provider, model };
+  };
+
+  async function changeModel(next: ModelSelection) {
+    setSaving(true);
+    setFailed(null);
+    try {
+      const selected = await relay.selectModel(computerId, sessionId!, next);
+      setData((read) => (read?.current ? { ...read, current: { ...read.current, model: selected } } : read));
+    } catch (error) {
+      setFailed(word(error));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (sessionId) {
+    if (!current) return null;
+    const preset = data.presets.find((item) => item.id === current.agentPreset);
+    return (
+      <>
+        <span className="truncate text-xs text-muted-foreground" title={current.cwd}>
+          {[directoryName(current.cwd) || current.cwd, preset?.name ?? current.agentPreset ?? t('noPreset')].join(' · ')}
+        </span>
+        <Select label={t('model')} value={modelKey(current.model)} options={models} disabled={disabled || saving}
+          change={(key) => { const next = toModel(key); if (next) void changeModel(next); }} className="h-8 max-w-56 text-xs" />
+        {failed && <span role="alert" className="text-xs text-destructive">{failed}</span>}
+      </>
+    );
+  }
+
+  const presets = [
+    { value: '', label: [t('desktopDefault'), data.presets.find((item) => item.isDefault)?.name].filter(Boolean).join(' · ') },
+    // A preset its computer cannot run yet (a missing tool or plugin) is shown, with why, and cannot be chosen.
+    ...data.presets.map((item) => ({
+      value: item.id,
+      label: [item.name, item.teamName, item.blocked && word(new RelayError(item.blocked as RelayErrorCode))].filter(Boolean).join(' · '),
+      disabled: !!item.blocked,
+    })),
+  ];
+  const cwd = value.cwd ?? data.directories[0]?.path ?? '';
+  return (
+    <>
+      {data.directories.length > 0 && (
+        <Select label={t('workspace')} value={cwd} disabled={disabled} className="h-8 max-w-48 text-xs"
+          options={data.directories.map((item) => ({ value: item.path, label: item.name }))}
+          change={(path) => onChange?.({ ...value, cwd: path })} />
+      )}
+      <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className="h-8 max-w-48 text-xs"
+        change={(id) => onChange?.({ ...value, agentPreset: id || undefined, model: undefined })} />
+      <Select label={t('model')} value={modelKey(chosenModel)} options={models} disabled={disabled} className="h-8 max-w-56 text-xs"
+        change={(key) => onChange?.({ ...value, model: toModel(key) })} />
+    </>
+  );
+}
+
 function Composer({ busy, placeholder, send, children }: { busy: boolean; placeholder: string; send: (text: string) => Promise<boolean>; children?: ReactNode }) {
   const t = useTranslations('team.dsh');
   const [text, setText] = useState('');
@@ -250,9 +360,9 @@ function Composer({ busy, placeholder, send, children }: { busy: boolean; placeh
             }
           }}
         />
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {children}
-          <Button type="submit" size="sm" disabled={!can}>{t('send')}</Button>
+          <Button type="submit" size="sm" className="ml-auto" disabled={!can}>{t('send')}</Button>
         </div>
       </div>
     </form>
@@ -289,6 +399,11 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
     <>
       <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{title}</h2>
       <div className="flex flex-col gap-4 text-sm">
+        {state.earlier !== null && (
+          <Button type="button" variant="ghost" size="sm" className="self-center" disabled={busy} onClick={() => void act(() => relay.older(computerId, sessionId))}>
+            {t('earlier')}
+          </Button>
+        )}
         {rows.map((row) =>
           row.kind === 'user' ? (
             <p key={row.id} className="ml-auto max-w-[85%] rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>
@@ -340,6 +455,7 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
           return sent;
         }}
       >
+        <SessionSettings computerId={computerId} sessionId={sessionId} disabled={busy || running || !!state.pending} />
         {running && <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void act(() => relay.cancel(computerId, sessionId))}>{t('stop')}</Button>}
       </Composer>
     </>

@@ -918,6 +918,7 @@
       "newHint": "A new session on {name}, end-to-end encrypted between this browser and the machine.",
       "firstPlaceholder": "Describe the task. You can keep sending messages once it starts.",
       "steps": "{count, plural, one {# step} other {# steps}}",
+      "earlier": "Show earlier messages",
       "failed": "failed",
       "denied": "denied",
       "thinking": "Thinking…",
@@ -926,6 +927,14 @@
       "promptPlaceholder": "Message the agent",
       "send": "Send",
       "stop": "Stop",
+      "settings": {
+        "workspace": "Workspace",
+        "preset": "Preset",
+        "model": "Model",
+        "desktopDefault": "Desktop default",
+        "followPreset": "Preset / desktop model",
+        "noPreset": "No preset"
+      },
       "pin": {
         "set": {
           "title": "Set your PIN",

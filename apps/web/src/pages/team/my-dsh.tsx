@@ -52,7 +52,7 @@ export function MyDshPage() {
   // Two records can share a name (two DSHs on one machine, or one signed in again): a short id tells them apart.
   const twin = (h: MyComputer) => (hosts ?? []).some((o) => o.id !== h.id && o.name === h.name);
   const note = (h: MyComputer) =>
-    [h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt)) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
+    [h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
   const problem = failed ?? unreachable;
 
   return (
@@ -167,7 +167,7 @@ function Devices({ host, changed }: { host: MyComputer; changed: () => void }) {
                 <span className="truncate text-xs text-muted-foreground">
                   {[
                     device.status === 'pending' ? t('pending') : null,
-                    device.lastUsedAt ? t('lastUsed', { time: format.relativeTime(new Date(device.lastUsedAt)) }) : t('neverUsed'),
+                    device.lastUsedAt ? t('lastUsed', { time: format.relativeTime(new Date(device.lastUsedAt), new Date()) }) : t('neverUsed'),
                     device.push ? t('push') : null,
                   ].filter(Boolean).join(' · ')}
                 </span>

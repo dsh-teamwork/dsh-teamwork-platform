@@ -11,6 +11,7 @@ import {
   applyChange,
   approvalResult,
   eventsOf,
+  historyOf,
   latestDirectoryOf,
   newStreams,
   pendingOf,
@@ -20,6 +21,7 @@ import {
   streamEventsOf,
   waitingOf,
 } from '../dsh';
+import { applySessionEvent } from '../session';
 import type { SessionState } from '../types';
 
 describe('reading DSH', () => {
@@ -48,8 +50,18 @@ describe('reading DSH', () => {
     expect(state.status).toBe('idle');
   });
 
+  it('says where older history begins only when the window does not reach the session’s start', () => {
+    const said = (seq: number) => ({ type: 'event', event: { type: 'user/message', seq, data: { source: { kind: 'user' }, content: [{ type: 'text', text: `m${seq}` }] } } });
+    expect(historyOf({ records: [said(7), said(9)], hasMore: true })).toMatchObject({ earlier: 7, items: [{ id: 'seq-7' }, { id: 'seq-9' }] });
+    expect(historyOf({ records: [said(0)], hasMore: false }).earlier).toBeNull();
+    expect(snapshotOf(fixture.followSnapshot).earlier).toBeNull();
+    const older = applySessionEvent({ ...snapshotOf({ records: [said(9)], hasMore: true }) }, { type: 'older', items: historyOf({ records: [said(7), said(9)] }).items, earlier: null });
+    expect(older.items.map((i) => i.id)).toEqual(['seq-7', 'seq-9']);
+    expect(older.earlier).toBeNull();
+  });
+
   it('folds live events into the same conversation the snapshot shows', () => {
-    let state: SessionState = { status: 'idle', items: [], pending: null, closed: null };
+    let state: SessionState = { status: 'idle', items: [], pending: null, closed: null, earlier: null };
     const statuses: string[] = [];
     for (const event of fixture.followEvents) {
       for (const change of eventsOf(event, state)) {
@@ -94,7 +106,7 @@ describe('reading DSH', () => {
   });
 
   it('shows a reply as it is written, and the committed reply replaces it rather than repeating it', () => {
-    let state: SessionState = { status: 'idle', items: [], pending: null, closed: null };
+    let state: SessionState = { status: 'idle', items: [], pending: null, closed: null, earlier: null };
     const streams = newStreams();
     const replies: string[] = [];
     for (const frame of fixture.followWithStream) {

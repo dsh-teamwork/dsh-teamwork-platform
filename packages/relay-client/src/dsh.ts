@@ -178,14 +178,25 @@ export function streamEventsOf(frame: unknown, streams: Streams, state: Pick<Ses
   return [{ type: 'item', item: { kind: 'assistant', id: attempt.id, text: chunk.text } }];
 }
 
-/** A follow's opening snapshot, folded into the state the screen starts from. */
-export function snapshotOf(frame: unknown): SessionState {
+/**
+ * A window of history (a follow's opening snapshot, or a `session/page`), folded into items; and the event older
+ * history is read before, or null when the window begins at the session's start.
+ */
+export function historyOf(frame: unknown): Pick<SessionState, 'items' | 'status' | 'earlier'> {
   const records = isObject(frame) && Array.isArray(frame.records) ? frame.records : [];
-  let state: SessionState = { status: 'idle', items: [], pending: null, closed: null };
+  let state: SessionState = { status: 'idle', items: [], pending: null, closed: null, earlier: null };
   for (const record of records) {
     const event = isObject(record) ? record.event : undefined;
     for (const change of eventsOf(event, state)) state = applyChange(state, change);
   }
+  const first = isObject(records[0]) && isObject(records[0].event) ? records[0].event.seq : undefined;
+  const earlier = isObject(frame) && frame.hasMore === true && typeof first === 'number' ? first : null;
+  return { items: state.items, status: state.status, earlier };
+}
+
+/** A follow's opening snapshot, folded into the state the screen starts from. */
+export function snapshotOf(frame: unknown): SessionState {
+  let state: SessionState = { ...historyOf(frame), pending: null, closed: null };
   // A reply being written when the follow opened: its text so far.
   const active = isObject(frame) && isObject(frame.assistantStream) && isObject(frame.assistantStream.activeAttempt) ? frame.assistantStream.activeAttempt : null;
   if (active && typeof active.turn === 'number' && typeof active.step === 'number' && Array.isArray(active.stream)) {

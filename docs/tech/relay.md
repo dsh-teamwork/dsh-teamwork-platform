@@ -239,7 +239,24 @@ plaintext delivery. Close before counter 0xffffffff or more than 64 GiB of
 plaintext per key; reconnect with fresh keys instead of resetting a counter.
 
 Encrypted application messages keep their four-byte length prefix, 1 MiB limit
-and bounded 2 MiB queues. AES records arriving before local key import completes
+and bounded 2 MiB queues. A message over the limit would close the channel, so
+the plugin's bridge makes everything it sends back fit (`fitFrame` in
+`src/bridge.ts`): a frame within the limit passes as it is; a larger one has
+its long strings (a tool's output, a file written) cut to 64, 16, 4 and then
+1 KiB, and a follow's snapshot or a `session/page` result then keeps its newest
+records and says `hasMore`. A stream frame that still cannot fit ends that
+stream with `too_large`, and a call's result answers 502 `too_large`, without
+touching the channel. The clients read the history before a snapshot with
+`session/page` (`beforeSeq`, 50 messages, as DSH's own opening window), from
+the member's "Show earlier messages".
+
+A client keeps its follows when its socket, the channel or the computer goes
+away for now (`packages/relay-client`, `live.ts`): each says it is closed,
+tries again after 1, 2, 4, 8 and 15 seconds and then every 30, and opens with
+a fresh snapshot, which clears what it said. DSH's `session/follow` takes no
+cursor, so a follow never resumes part-way; the bounded snapshot is what makes
+that cheap. A revoked pairing, another socket taking the handset's place, a
+session DSH no longer has, or signing out ends a follow for good. AES records arriving before local key import completes
 wait in a bounded queue. The handshake/bootstrap deadline is 20 seconds; human
 verification has two minutes. Missing native crypto, authentication failure or
 transport loss closes the channel, without downgrading. AES keys are memory-only;
@@ -471,6 +488,14 @@ the hosted edition, Cloud DSH.
   **Devices**: every pairing of the account to it, the phone app's and every
   browser's, with its name, status, last use and whether it pushes, this
   browser marked, each removable.
+- **A new session** offers the computer's folders, presets and models before
+  its first message, and a session's model changes while it is idle, through
+  `teamwork/configuration` and `teamwork/selectModel` as the app does; a plugin
+  that reports none leaves the computer's defaults.
+- **A session** is followed as on the phone: a snapshot that fits the
+  channel, "Show earlier messages" for what came before it, and a follow that
+  comes back by itself after the socket, the channel or the computer drops
+  ("Frames" above).
 - **The server** ([ADR 0048](../adr/0048-the-console-manages-every-device.md)):
   `GET /relay/hosts` answers the console's session cookie alone, with the
   account's hosts, whether each socket is open, `last_seen_at`, `dsh_version`
