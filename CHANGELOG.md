@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A new session from the console lands in the team's default workspace
+
+- **What:** `teamwork/configuration` gains `teamDirectories`, each synced team's default workspace on the computer, which the member sets in the plugin's panel under My teams (the folder DSH was started in until then). `relay-client`'s `createSession` takes a `teamId` and, naming no folder, starts there ahead of the latest session's folder (`defaultDirectory`); My DSH and Team DSH pass the console's team. `latestDirectoryOf` is removed.
+- **Why:** A member in several teams keeps each team's work in its own folder; a phone or browser should open there without a choice each time.
+- **Breaking:** None. A plugin that sends no `teamDirectories` behaves as before.
+- **Upgrade:** Nothing; the plugin release that sends it is `@dsh-teamwork/dsh-teamwork` after 0.11.3.
+- **Refs:** `packages/relay-client/src/session-config.ts`, `docs/tech/relay.md`, the plugin's `src/team-workspaces.ts`.
+
 ## 2026-11-18 — An open console survives a deploy
 
 - **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.

@@ -206,18 +206,6 @@ export function snapshotOf(frame: unknown): SessionState {
   return state;
 }
 
-/** The working directory of a computer's most recently changed session, where a new one starts; null when it has none. */
-export function latestDirectoryOf(value: unknown): string | null {
-  const items = isObject(value) && Array.isArray(value.items) ? value.items : [];
-  let latest: { cwd: string; at: number } | null = null;
-  for (const item of items) {
-    if (!isObject(item) || typeof item.cwd !== 'string' || !item.cwd) continue;
-    const at = typeof item.updatedAt === 'number' ? item.updatedAt : 0;
-    if (!latest || at > latest.at) latest = { cwd: item.cwd, at };
-  }
-  return latest?.cwd ?? null;
-}
-
 /** Folds one change into a session. Pure, so a reducer can use it. */
 export function applyChange<S extends SessionState<unknown>>(state: S, change: SessionChange): S {
   switch (change.type) {

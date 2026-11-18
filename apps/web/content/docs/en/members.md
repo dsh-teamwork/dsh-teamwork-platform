@@ -58,6 +58,8 @@ end encrypted between the browser and the computer.
 Beside the message box, a new session offers the computer's folders, presets
 (a team preset included; one the computer cannot run yet says why) and models,
 before its first message; leave them as they are for the computer's defaults.
+The folder starts as this team's default workspace on that computer, which
+you set in DSH's Teamwork panel under **My teams**.
 A model that can reason harder offers its efforts beside it. In a session that
 has started, the folder and preset stay as they are, and you can change its
 model and effort while it is not working, for that session alone. The
