@@ -40,6 +40,11 @@ const (
 var semver = regexp.MustCompile(`^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$`)
 var npmPackage = regexp.MustCompile(`^(?:@[a-z0-9-]+/)?[a-z0-9][a-z0-9._-]*$`)
 
+// avatarID is the shape of a preset avatar's id. The library itself is the
+// clients' (packages/shared/src/avatars.ts), and a client draws an id it does
+// not know as a fallback, so the server checks only the shape.
+var avatarID = regexp.MustCompile(`^[a-z][a-z0-9-]{0,39}$`)
+
 func length(s string) int { return utf8.RuneCountInString(s) }
 
 // name is the trimmed name rule: 1 to 100 characters.
@@ -153,6 +158,7 @@ type PresetData struct {
 	ContextWindow      *int64             `json:"contextWindow,omitempty"`
 	MaxTokens          *int64             `json:"maxTokens,omitempty"`
 	ModelConfigID      *string            `json:"modelConfigId,omitempty"`
+	Avatar             string             `json:"avatar,omitempty"`
 	Description        string             `json:"description"`
 	Instructions       string             `json:"instructions"`
 	OutputDescription  string             `json:"outputDescription"`
@@ -188,6 +194,9 @@ func (p *PresetData) validate(is *Issues) {
 	tokens(is, p.MaxTokens, "data", "maxTokens")
 	if p.ModelConfigID != nil && (length(*p.ModelConfigID) < 1 || length(*p.ModelConfigID) > 100) {
 		is.Add("Between 1 and 100 characters", "data", "modelConfigId")
+	}
+	if p.Avatar != "" && !avatarID.MatchString(p.Avatar) {
+		is.Add("A preset avatar's id", "data", "avatar")
 	}
 	maxLen(is, p.Description, 500, "data", "description")
 	maxLen(is, p.Instructions, 4000, "data", "instructions")

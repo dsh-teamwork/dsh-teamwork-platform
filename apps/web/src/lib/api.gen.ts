@@ -4036,6 +4036,8 @@ export interface components {
             contextWindow?: components["schemas"]["Tokens"];
             maxTokens?: components["schemas"]["Tokens"];
             modelConfigId?: string;
+            /** @description A preset avatar's id from the clients' library (packages/shared); a client draws an id it does not know, or none, as one picked from the preset's id. */
+            avatar?: string;
             description?: string;
             instructions?: string;
             outputDescription?: string;

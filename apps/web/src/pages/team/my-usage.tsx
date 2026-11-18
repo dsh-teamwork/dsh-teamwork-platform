@@ -13,6 +13,7 @@ import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { useFormatter, useLocale, useTranslations } from 'use-intl';
 
+import { ProviderMark } from '@/components/provider-mark';
 import { Failure } from '@/components/page';
 import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
@@ -291,7 +292,9 @@ function Sources({ stats }: { stats: Stats }) {
             <tbody>
               {stats.sources.map((s) => (
                 <tr key={`${s.kind}:${s.key}`} className="border-b last:border-b-0">
-                  <td className="px-4 py-3 font-medium">{s.kind === 'meter' ? (s.labels[locale] ?? s.name) : s.name}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {s.kind === 'meter' ? (s.labels[locale] ?? s.name) : <span className="flex items-center gap-2"><ProviderMark hints={[s.name]} name={s.name} />{s.name}</span>}
+                  </td>
                   <td className="px-4 py-3 text-right tabular-nums">{s.kind === 'meter' ? '—' : format.number(s.calls)}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{s.points}</td>
                   <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">{total > 0 ? format.number(Number(s.points) / total, { style: 'percent', maximumFractionDigits: 1 }) : '—'}</td>
@@ -333,7 +336,10 @@ function Recent({ page, stats }: { page?: Page; stats?: Stats }) {
               <time dateTime={row.createdAt} className="w-28 shrink-0 text-xs text-muted-foreground tabular-nums">
                 {format.dateTime(new Date(row.createdAt), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </time>
-              <span className="min-w-0 flex-1 truncate font-medium">{what(row)}</span>
+              <span className="flex min-w-0 flex-1 items-center gap-2 self-center font-medium">
+                {!row.meter && <ProviderMark hints={[row.model, what(row), row.provider]} name={what(row)} />}
+                <span className="truncate">{what(row)}</span>
+              </span>
               {!row.meter && (
                 <span className="hidden text-xs text-muted-foreground tabular-nums sm:inline">
                   {t('tokens', { input: format.number(row.input ?? 0), output: format.number(row.output ?? 0) })}

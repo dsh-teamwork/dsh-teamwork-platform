@@ -1,10 +1,9 @@
+import { PROVIDER_MARKS } from '@dsh-teamwork/shared';
 import { createTranslator } from 'use-intl';
 
 import type { Locale } from '@/lib/locale';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
-
-import { PROVIDER_LOGOS } from './provider-logos';
 
 /*
  * The home page's team diagram (docs/design.md, "The landing page's
@@ -13,7 +12,7 @@ import { PROVIDER_LOGOS } from './provider-logos';
  * admin's web console); in the middle, the one place that governs and syncs,
  * its name over the page's sections ticked off as what it does;
  * on the right, the mainstream providers it forwards calls to, each by its
- * logo (./provider-logos.ts), and Cloud DSH as a separate workspace.
+ * logo (`PROVIDER_MARKS` in @dsh-teamwork/shared), and Cloud DSH as a separate workspace.
  *
  * The value is shown rather than labelled. A pulse plays the story on a loop
  * (globals.css, "topology"): the admin publishes, the hub syncs it to every
@@ -200,7 +199,7 @@ export function Topology({ locale }: { locale: Locale }) {
                 </>
               ) : (
                 <svg x={x} y={y} width={18} height={18} viewBox="0 0 24 24" className="fill-foreground">
-                  {PROVIDER_LOGOS[id].map((d) => (
+                  {PROVIDER_MARKS[id].map(({ d }) => (
                     <path key={d} d={d} fillRule="evenodd" />
                   ))}
                 </svg>

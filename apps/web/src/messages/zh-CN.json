@@ -32,7 +32,6 @@
     "subtitle": "无需密码。使用 Google，或通过邮箱获取一次性验证码。",
     "subtitleEmailOnly": "无需密码。通过邮箱获取一次性验证码。",
     "google": "使用 Google 继续",
-    "or": "或",
     "email": "邮箱",
     "emailPlaceholder": "you@example.com",
     "sendCode": "发送验证码",
@@ -43,7 +42,13 @@
     "subtitlePassword": "使用邮箱和密码登录。",
     "subtitlePasswordGoogle": "使用 Google，或邮箱和密码登录。",
     "password": "密码",
-    "noAccount": "还没有账号？请团队管理员为你创建。"
+    "noAccount": "还没有账号？请团队管理员为你创建。",
+    "orEmail": "或使用邮箱继续",
+    "checkEmail": "查收邮件",
+    "resend": "重新发送验证码",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码",
+    "setupHint": "这个实例还没有账号。请打开服务器启动时打印的设置链接，创建第一个账号。"
   },
   "authErrors": {
     "invalid_email": "邮箱地址格式不正确。",
@@ -520,12 +525,12 @@
     "catalog": {
       "deepseek": "DeepSeek",
       "openai": "OpenAI",
-      "qwen": "通义千问（阿里云百炼）",
-      "moonshot": "Kimi（月之暗面）",
-      "zhipu": "智谱 GLM",
-      "doubao": "豆包（火山方舟）",
-      "minimax": "MiniMax",
-      "siliconflow": "硅基流动",
+      "alibaba-cn": "通义千问（阿里云百炼）",
+      "moonshotai-cn": "Kimi（月之暗面）",
+      "zhipuai": "智谱 GLM",
+      "volcengine": "豆包（火山方舟）",
+      "minimax-cn": "MiniMax",
+      "siliconflow-cn": "硅基流动",
       "openrouter": "OpenRouter"
     },
     "models": {
@@ -571,14 +576,13 @@
       "providerAdded": "提供商已接入。",
       "reading": "正在读取模型列表…",
       "chooseModels": "选择要发布的模型",
-      "chooseModelsHint": "勾选的模型会发布给整个团队。上下文长度来自厂商，厂商不报的可以之后补。",
+      "chooseModelsHint": "勾选的模型会发布给整个团队，并按公开参考自动带上上下文长度和积分单价，之后都可以修改。",
       "allPublished": "这个提供商列出的模型都已发布。",
       "noList": "这个提供商没有返回模型列表，请手动填写模型 ID。",
       "listFailed": "无法读取模型列表：{reason}请检查 API 密钥，或手动填写模型 ID。",
       "modelId": "模型 ID",
       "displayName": "显示名称",
       "publish": "发布 {count} 个模型",
-      "published": "已发布 {count} 个模型。",
       "done": "完成",
       "rekeyTitle": "更换「{name}」的密钥或地址",
       "rekeyHint": "名称不变，团队模型继续指向它。",
@@ -588,7 +592,15 @@
       "editTitle": "编辑团队模型",
       "limitsHint": "厂商没说明的限制可以留空。",
       "modelSaved": "已保存，成员下次同步后生效。",
-      "checking": "正在验证密钥…"
+      "checking": "正在验证密钥…",
+      "publishedPriced": "已发布 {count} 个模型，其中 {priced} 个已按公开参考价设好单价。",
+      "referenceReading": "正在查询参考单价…",
+      "referenceNoRate": "没有公开参考价，发布后需手动设置单价。",
+      "referenceRate": "输入 {input} 元 / 输出 {output} 元每百万 Token，参考 {from}",
+      "unpricedNotice": "{count} 个模型还没有单价，成员暂时无法调用。",
+      "fillRates": "按参考价填写",
+      "fillingRates": "填写中…",
+      "ratesFilled": "已按公开参考价设好 {priced} 个；{left} 个没有参考价，需要手动设置。"
     },
     "templates": {
       "writer": {
@@ -630,6 +642,26 @@
       "ask_user_question": "向用户提问",
       "skill": "调用技能"
     },
+    "avatars": {
+      "assistant": "团队助理",
+      "finance": "财务",
+      "admin": "行政",
+      "hr": "人力资源",
+      "marketing": "市场",
+      "sales": "商务",
+      "engineer": "工程师",
+      "product": "产品",
+      "legal": "法务",
+      "design": "设计",
+      "support": "客服",
+      "operations": "运营",
+      "project": "项目管理",
+      "training": "培训",
+      "developer": "软件开发",
+      "researcher": "研究",
+      "analyst": "数据分析",
+      "writer": "写作"
+    },
     "presets": {
       "title": "预设",
       "description": "一句话说明",
@@ -661,6 +693,7 @@
         "tools": "工具与插件",
         "persona": "人设与方法"
       },
+      "avatar": "头像",
       "name": "名称",
       "descriptionHint": "成员在 DSH 的预设列表里看到这句话。",
       "model": "使用的模型",
@@ -830,6 +863,7 @@
       "raw": "查看原始 JSON",
       "fields": {
         "name": "名称",
+        "avatar": "头像",
         "description": "描述",
         "inheritModel": "使用会话模型",
         "modelConfigId": "团队模型",

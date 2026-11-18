@@ -3,6 +3,7 @@ package wire_test
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -47,6 +48,19 @@ func TestConfigInputRefusesMixedOrMissingRoute(t *testing.T) {
 	}
 	if config(t, `{"kind":"preset","name":"Review","data":{"systemPrompt":"No model"}}`) == nil {
 		t.Fatal("accepted a preset with no route")
+	}
+}
+
+// A preset keeps an avatar id of any known shape, so a newer client's avatar survives an older server.
+func TestPresetAvatarIsAnIdShape(t *testing.T) {
+	var c wire.ConfigInput
+	if err := json.Unmarshal([]byte(presetWith(`["Shell"]`, `,"avatar":"flask"`)), &c); err != nil || c.Validate() != nil || c.Preset.Avatar != "flask" {
+		t.Fatalf("preset with an avatar: %v %+v", err, c.Preset)
+	}
+	for _, bad := range []string{`"Flask"`, `"../x"`, `"a b"`, `"` + strings.Repeat("a", 41) + `"`} {
+		if config(t, presetWith(`["Shell"]`, `,"avatar":`+bad)) == nil {
+			t.Fatalf("accepted avatar %s", bad)
+		}
 	}
 }
 

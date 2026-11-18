@@ -13,6 +13,36 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** The migration `relay_host_os` runs at start. A computer shows its system once a plugin that reports it (the release after 0.11.3) reconnects.
 - **Refs:** `server/relay/protocol.go`, `apps/web/src/pages/team/my-dsh.tsx`, `docs/tech/relay.md`.
 
+## 2026-11-18 — Presets have avatars
+
+- **What:** A preset carries `avatar`, the id of one of 18 vector avatars in `@dsh-teamwork/shared` (`avatars.ts`), which the web console and the phone app both draw: an abstract emblem of a role, a few flat shapes in paper and one accent on the role's own plate (team assistant, finance, administration, HR, marketing, sales, engineering, product, legal, design, support, operations, project management, training, development, research, data analysis, writing). The preset editor chooses one (a blank preset starts with a random one, a template with its role's, a new team assistant with `assistant`); the presets page, Team resources, review diffs and the DSH session bar show it. A preset with none, or one a client does not know, shows one picked from its name. The server checks only the id's shape (`^[a-z][a-z0-9-]{0,39}$`); the plugin passes it to the relay's session configuration.
+- **Why:** Presets were text-only, hard to tell apart in a list or on a phone, and a team hands work to a preset as to an expert.
+- **Breaking:** None; the field is optional and readers ignore it.
+- **Upgrade:** Nothing. Release the plugin for the avatar to reach the phone and My DSH.
+- **Refs:** `packages/shared/src/avatars.ts`, `apps/web/src/components/preset-avatar.tsx`, `docs/design.md` ("Preset avatars").
+## 2026-11-18 — The listed providers are named as Models.dev names them
+
+- **What:** The console's provider list (`PROVIDER_CATALOG`) uses Models.dev's provider ids as each provider's id and default name in the team (`deepseek`, `openai`, `alibaba-cn`, `moonshotai-cn`, `zhipuai`, `volcengine`, `minimax-cn`, `siliconflow-cn`, `openrouter`), at the address Models.dev states (DeepSeek moves to `https://api.deepseek.com`); OpenAI, which Models.dev gives no address, and MiniMax, whose address there is its Anthropic API, keep their OpenAI-compatible ones. `modelsDevId` is gone: a provider's name is the namespace its models' limits and prices are read under, and a renamed second account is matched by address. The display names' message keys follow the ids.
+- **Why:** One id for a provider in the team and in its public reference, so a model maps straight to its metadata and price.
+- **Breaking:** A provider connected earlier under `qwen`, `moonshot`, `zhipu`, `doubao`, `minimax` or `siliconflow` keeps its name and still reads Models.dev through its address; one renamed from DeepSeek at `…/v1` now searches every Models.dev provider for its exact model ids. Reconnect it to take the new name.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/lib/provider-catalog.ts`, `docs/tech/architecture.md`, the `/docs` admins page.
+
+## 2026-11-18 — Providers and models by their logos; publishing a model sets its rate
+
+- **What:** `@dsh-teamwork/shared` holds the marks of the mainstream model makers and providers (OpenAI, Anthropic, Gemini, DeepSeek, Qwen, Kimi, GLM, Doubao, MiniMax, Llama, Mistral, Grok, Ernie, Hunyuan, Step, Baichuan, SiliconFlow, OpenRouter, Ollama; LobeHub's icons, MIT) and `providerMark`, which picks one from a model's id, name, provider or address. The console shows them wherever it names a provider or a model (models, team resources, presets, usage, My usage, a DSH session's model menu, whose `Select` options take an icon), as does the home page's diagram, whose `provider-logos.ts` is gone. Publishing from a provider's list looks each ticked model up as it is ticked and publishes it with the limits and reference rate its agreeing public reference states (a missing cache rate charged as uncached input), so it can be called at once; the per-model form in that dialog is gone, kept for a model ID typed by hand. The models page lists models with no rate and fills them all from reference prices in one click, and a rate dialog for an unpriced model opens filled. `mountWeb` takes `models`, a section an edition shows first on the models page for the models it supplies.
+- **Why:** A team admin published a model and then had to open a second form per model to price it before anyone could call it; and a model was a name with no sign of whose it is.
+- **Breaking:** `CatalogProvider` loses `mark`.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/shared/src/providers.ts`, `apps/web/src/components/provider-mark.tsx`, `apps/web/src/pages/team/models.tsx`, `apps/web/src/lib/model-metadata.ts`, `docs/design.md` ("Icons"), `docs/tech/architecture.md`, the `/docs` admins page.
+## 2026-11-18 — The sign-in page is redesigned
+
+- **What:** `/sign-in` is a split screen: the navy plate with the title and a layered sea beside a form that lists each OAuth door the server reports in `doors` (Google today, with its four-colour G), then the email door. The code step becomes *Check your email* with a six-digit field and a *Send a new code* link; the password field can be shown; an instance whose first account is unclaimed points to the setup link; errors and pending buttons are visible as such.
+- **Why:** The page was a bare card that did not look like the product and gave no feedback while a request ran.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/sign-in.tsx`, `docs/design.md`.
+
 ## 2026-11-18 — Browser analytics send page views and nothing else, whatever the project enables
 
 - **What:** The browser's PostHog client turns off heatmaps, dead clicks and web vitals in its own config, and its filter (`scrubEvent`) drops every event but `$pageview`. Before, a PostHog project with those switched on in its settings made the client send `$web_vitals` and heatmap events.

@@ -36,6 +36,8 @@ import {
   type SessionState,
   type SessionSummary,
 } from '@dsh-teamwork/relay-client';
+import { PresetAvatar } from '@/components/preset-avatar';
+import { ProviderMark } from '@/components/provider-mark';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -299,7 +301,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
   const current = sessionId ? data.current : null;
   const models = [
     ...(sessionId ? [] : [{ value: '', label: t('followPreset') }]),
-    ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}` })),
+    ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}`, icon: <ProviderMark hints={[model.id, model.name, model.providerName, model.provider]} name={model.name} /> })),
   ];
   const chosenModel = sessionId ? current?.model : value.model;
   // How hard the chosen model reasons, where it says it can be told: its own default, or one of its efforts.
@@ -330,6 +332,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
     const preset = data.presets.find((item) => item.id === current.agentPreset);
     return (
       <>
+        {preset && <PresetAvatar avatar={preset.avatar} name={preset.name} className="size-6" />}
         <span className="truncate text-xs text-muted-foreground" title={current.cwd}>
           {[directoryName(current.cwd) || current.cwd, preset?.name ?? current.agentPreset ?? t('noPreset')].join(' · ')}
         </span>
@@ -355,6 +358,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
   ];
   // A new session opens in this team's default workspace on the computer unless another folder is picked.
   const cwd = value.cwd ?? defaultDirectory(data.directories, data.teamDirectories, team.id) ?? '';
+  const chosenPreset = data.presets.find((item) => (value.agentPreset ? item.id === value.agentPreset : item.isDefault));
   return (
     <>
       {data.directories.length > 0 && (
@@ -362,6 +366,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
           options={data.directories.map((item) => ({ value: item.path, label: item.name }))}
           change={(path) => onChange?.({ ...value, cwd: path })} />
       )}
+      {chosenPreset && <PresetAvatar avatar={chosenPreset.avatar} name={chosenPreset.name} className="size-6" />}
       <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className="h-8 max-w-48 text-xs"
         change={(id) => onChange?.({ ...value, agentPreset: id || undefined, model: undefined })} />
       <Select label={t('model')} value={modelKey(chosenModel)} options={models} disabled={disabled} className="h-8 max-w-56 text-xs"
