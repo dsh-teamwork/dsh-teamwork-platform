@@ -1,6 +1,6 @@
 # Shared DSH
 
-> **Status:** Plan — steps 0 to 3, 5 and 6 done, step 4 but the desktop panel · **Updated:** 2026-11-18
+> **Status:** Plan — steps 0 to 3 and 5 to 7 done, step 4 but the desktop panel · **Updated:** 2026-11-18
 
 How a team shares one DSH that it runs itself: members reach it from the app
 or the web through the relay, end to end encrypted, and the server can route
@@ -302,13 +302,21 @@ HPKE comes from `@hpke/core` at an exact version; no other new dependency.
 
 ### Clients
 
-- **The open web app** (`apps/web`): the admin's page
-  `/teams/:teamId/shared-hosts` for keys, access and archive download (done in
-  step 3), and a member's page
-  `/teams/:teamId/shared/:hostId` with the sessions screen, its device key a
-  non-extractable WebCrypto Ed25519 key in IndexedDB (step 0). The relay
-  client, the secure channel and the reader of DSH's wire, which the closed
-  app holds today, become an open package both import.
+- **The open web app** (`apps/web`, done in steps 3, 6 and 7): the page
+  `/teams/:teamId/shared-hosts`, where every member sees the shared DSHs they
+  may reach and joins one by pasting its invite, and an admin also manages
+  keys, access and the archive; and `/teams/:teamId/shared-hosts/:computerId`,
+  the member's sessions on one, with the PIN, the conversation, answering and
+  sending. Its device key is a non-extractable WebCrypto Ed25519 key in
+  IndexedDB, per account (`apps/web/src/lib/relay.ts`). The page is on the
+  server's own origin, so the relay admits it by its session cookie, never a
+  token in the page: reads, writes from this site, and a socket only when its
+  upgrade's `Origin` is `APP_URL`. A session whose account still has an
+  admin-set first password is nobody to the relay, as to every extension.
+  The relay client, the secure channel and the reader of DSH's wire are the
+  open `packages/relay-client`, which the app imports too. Files, images and
+  choosing a folder, preset or model when starting a session are the app's
+  alone for now.
 - **The phone app** (closed, under `premium/` where that directory exists):
   `dshteamwork://join` links and QR; the disclosure; the PIN; shared DSHs in
   the computer switcher under their team's name; and a server address in
@@ -366,7 +374,10 @@ Each step is a vertical slice, lands green, and brings its ADR.
    sealing, upload, storage, the console's list and download,
    `dsh-teamwork-audit read`; `server/e2e` reads back a member's call from
    the archive with the admin's key. The hosted privacy policy states it.
-7. **The web client** (about 8 days). The open package, then the page.
+7. **The web client — done 2026-11-18.** The open package, then the page;
+   `server/e2e` drives the package against the real plugin, and the page was
+   driven in Chromium against a real server and shared DSH, from the invite
+   to the PIN to the member's own session.
 8. **The app reaches any server** (about 2 days): a server address in release
    builds and the default redirect.
 

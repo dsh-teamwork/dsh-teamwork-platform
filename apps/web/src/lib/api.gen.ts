@@ -3194,7 +3194,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A phone's relay socket (WebSocket); its first frame is a hello with its token and handset credential */
+        /**
+         * A phone's or a browser's relay socket (WebSocket); its first frame is a hello with its token and handset credential
+         * @description A page of this site may leave the token out: its session cookie, with an Origin of APP_URL, admits it instead.
+         */
         get: {
             parameters: {
                 query?: never;

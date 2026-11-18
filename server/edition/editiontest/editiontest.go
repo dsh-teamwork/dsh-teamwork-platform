@@ -128,6 +128,15 @@ func (in *Instance) Bearer(userID string) string {
 	return token
 }
 
+// FirstPassword gives the account a password a team admin set, which its
+// owner must change before anything else opens.
+func (in *Instance) FirstPassword(userID string) {
+	in.t.Helper()
+	if err := in.srv.Auth.SetPassword(context.Background(), userID, "a first password", true); err != nil {
+		in.t.Fatal(err)
+	}
+}
+
 // Session is a browser's session cookie for the account, through door via.
 func (in *Instance) Session(userID, via string) *http.Cookie {
 	in.t.Helper()

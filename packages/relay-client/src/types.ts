@@ -28,6 +28,17 @@ export interface Computer {
   verified?: boolean;
   /** Whether the relay notifies this phone when the agent on it waits; the token itself never comes back. */
   push: boolean;
+  /** The relay host the pairing reaches: for a team's shared DSH, its shared host's id. */
+  hostId: string;
+}
+
+/** A team's shared DSH the member may reach (`GET /relay/shared`). */
+export interface SharedHost {
+  id: string;
+  name: string;
+  teamId: string;
+  teamName: string;
+  online: boolean;
 }
 
 export interface Pairing {
@@ -141,6 +152,8 @@ export interface RelayClient {
   reset(): void;
   /** The member's paired computers: confirmed pairings only. */
   listComputers(): Promise<Computer[]>;
+  /** The teams' shared DSHs this member may reach, joined or not. */
+  sharedHosts(): Promise<SharedHost[]>;
   /**
    * Redeems the code a computer's Teamwork panel shows; the pairing then waits
    * for the member to confirm it on that computer. Rejects

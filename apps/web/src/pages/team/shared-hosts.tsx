@@ -4,8 +4,8 @@
  * when it is created or rotated, as the command to run in that DSH; the server
  * keeps only its HMAC. Below them, each shared DSH's audit archive, sealed to
  * the admin's own key: the page only lists and downloads it, and
- * `dsh-teamwork-audit read` opens it on the admin's machine. A member sees that
- * only an admin manages them.
+ * `dsh-teamwork-audit read` opens it on the admin's machine. Every member, the
+ * admin included, first sees the shared DSHs they may reach (`SharedReach`).
  */
 
 import { useState } from 'react';
@@ -22,6 +22,7 @@ import { api, type Schemas } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
+import { SharedReach } from './shared-dsh';
 
 type SharedHost = Schemas['SharedHost'];
 type Issued = Schemas['SharedHostKey'];
@@ -45,11 +46,12 @@ export function TeamSharedHostsPage() {
   const when = (at: string | null) => (at ? format.dateTime(new Date(at), { dateStyle: 'medium', timeStyle: 'short' }) : t('never'));
   const command = issued ? `/teamwork share enable ${issued.key}` : '';
 
-  if (!admin) return <><PageHeader title={t('title')} description={t('description')} /><p className="text-sm text-muted-foreground">{t('adminOnly')}</p></>;
-  if (!hosts.data) return hosts.error ? <Failure message={word(hosts.error)} /> : null;
+  const header = <><PageHeader title={t('title')} description={t('description')} /><SharedReach /></>;
+  if (!admin) return header;
+  if (!hosts.data) return <>{header}{hosts.error ? <Failure message={word(hosts.error)} /> : null}</>;
   return (
     <>
-      <PageHeader title={t('title')} description={t('description')} />
+      {header}
       {issued && (
         <Card aria-live="polite">
           <CardHeader>

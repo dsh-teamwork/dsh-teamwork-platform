@@ -18,3 +18,4 @@ export * from './session';
 export * from './session-config';
 export * from './types';
 export * from './uploads';
+export * from './web-identity';

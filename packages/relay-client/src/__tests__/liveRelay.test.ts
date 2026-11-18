@@ -206,7 +206,7 @@ describe('the live relay client', () => {
 
   it('lists confirmed pairings as computers, from the relay the server names', async () => {
     const { relay, asked } = setup();
-    expect(await relay.listComputers()).toEqual([{ id: 'p1', name: 'laptop', online: true, verified: true, push: true }]);
+    expect(await relay.listComputers()).toEqual([{ id: 'p1', name: 'laptop', online: true, verified: true, push: true, hostId: 'h' }]);
     const pairings = asked.find((a) => a.url.endsWith('/pairings'))!;
     expect(pairings.url).toBe('https://relay.example.test/pairings');
     expect(pairings.init!.headers).toMatchObject({ authorization: 'Bearer bearer-1', 'x-device-key': 'phone-key' });
@@ -409,7 +409,7 @@ describe('joining a shared DSH', () => {
     const trusted: string[] = [];
     const request = (async (url: string) => {
       if (url.endsWith('/api/relay')) return new Response(JSON.stringify({ url: 'wss://relay.example.test/plugin' }));
-      if (url.endsWith('/shared/h1/join')) return new Response(JSON.stringify({ pairing: { id: 'j1', hostName: 'build box', status: 'pending' } }), { status: 201 });
+      if (url.endsWith('/shared/h1/join')) return new Response(JSON.stringify({ pairing: { id: 'j1', hostId: 'h1', hostName: 'build box', status: 'pending' } }), { status: 201 });
       if (url.endsWith('/shared/h2/join')) return new Response(JSON.stringify({ error: 'not_found' }), { status: 404 });
       return new Response('{}', { status: 404 });
     }) as typeof fetch;

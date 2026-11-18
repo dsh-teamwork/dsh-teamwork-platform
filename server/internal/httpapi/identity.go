@@ -214,12 +214,23 @@ func (s *Server) endSession(w http.ResponseWriter) {
 
 // SessionIdentity is the browser's session on r, or nil; a Bearer token is
 // not looked at.
+//
+// A session whose account still has an admin-set first password is nobody to
+// an extension, as requireUser keeps it from every route but changing it.
 func (s *Server) SessionIdentity(r *http.Request) (*edition.Identity, error) {
 	c, err := r.Cookie(s.cookieName())
 	if err != nil || c.Value == "" {
 		return nil, nil
 	}
-	return s.open(r.Context(), auth.Session, c.Value)
+	who, err := s.open(r.Context(), auth.Session, c.Value)
+	if err != nil || who == nil {
+		return who, err
+	}
+	must, err := s.Auth.MustChange(r.Context(), who.UserID)
+	if err != nil || must {
+		return nil, err
+	}
+	return who, nil
 }
 
 // BearerIdentity opens a token the plugin or the app holds, or is nil.

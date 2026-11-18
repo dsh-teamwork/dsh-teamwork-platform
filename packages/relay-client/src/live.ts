@@ -46,8 +46,11 @@ import { RelayError, type DeviceKeys, type Answer, type Computer, type Pending, 
 export interface LiveRelayOptions {
   keys: DeviceKeys;
   random: RandomBytes;
-  /** The signed-in member's server and token, or null when signed out. */
-  session: () => Promise<{ server: string; token: string } | null>;
+  /**
+   * The signed-in member's server and token, or null when signed out. A page of the server's own site gives no token:
+   * its session cookie goes with every request and with the socket's upgrade.
+   */
+  session: () => Promise<{ server: string; token?: string } | null>;
   /** The language a question or approval reason is shown in. */
   locale: () => string;
   request?: typeof fetch;
@@ -59,7 +62,7 @@ export interface LiveRelayOptions {
 /** How long a call may wait for its result before the screen is told it failed. */
 export const CALL_TIMEOUT_MS = 20_000;
 
-const PairingSchema = z.object({ id: z.string(), hostName: z.string(), status: z.enum(['pending', 'confirmed']), online: z.boolean().optional(), push: z.boolean().optional() });
+const PairingSchema = z.object({ id: z.string(), hostId: z.string(), hostName: z.string(), status: z.enum(['pending', 'confirmed']), online: z.boolean().optional(), push: z.boolean().optional() });
 
 /** The relay's refusals, in the words the screens already have. */
 const PHONE_ERRORS: Record<string, RelayErrorCode> = { not_paired: 'not_found', offline: 'offline', rate_limited: 'unavailable' };
@@ -225,7 +228,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     const { server, token } = await signedIn();
     const response = await request(`${await relayOrigin(server)}${path}`, {
       ...init,
-      headers: { authorization: `Bearer ${token}`, 'x-device-key': await options.keys.relayKey({ server, token }), 'content-type': 'application/json', ...init.headers },
+      headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), 'x-device-key': await options.keys.relayKey({ server, token }), 'content-type': 'application/json', ...init.headers },
     });
     return response;
   }
@@ -242,7 +245,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       activeSocket = socket;
       const send = (frame: unknown) => socket.send(JSON.stringify(frame));
       await new Promise<void>((resolve, reject) => {
-        socket.onopen = () => send({ t: 'hello', token, deviceKey });
+        socket.onopen = () => send({ t: 'hello', ...(token ? { token } : {}), deviceKey });
         socket.onerror = () => reject(new RelayError('unavailable'));
         socket.onclose = () => {
           reject(new RelayError('unavailable'));
@@ -454,7 +457,13 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       const response = await relayHttp('/pairings');
       if (!response.ok) throw new RelayError('unavailable');
       const { pairings } = z.object({ pairings: PairingSchema.array() }).parse(await response.json());
-      return Promise.all(pairings.filter((p) => p.status === 'confirmed').map(async (p) => ({ id: p.id, name: p.hostName, online: p.online === true, verified: !!await options.keys.peer(p.id), push: p.push === true })));
+      return Promise.all(pairings.filter((p) => p.status === 'confirmed').map(async (p) => ({ id: p.id, name: p.hostName, online: p.online === true, verified: !!await options.keys.peer(p.id), push: p.push === true, hostId: p.hostId })));
+    },
+
+    async sharedHosts() {
+      const response = await relayHttp('/shared');
+      if (!response.ok) throw new RelayError('unavailable');
+      return z.object({ hosts: z.object({ id: z.string(), name: z.string(), teamId: z.string(), teamName: z.string(), online: z.boolean() }).array() }).parse(await response.json()).hosts;
     },
 
     async pair(code, deviceName, expectedKey) {

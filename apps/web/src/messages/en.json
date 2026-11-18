@@ -876,7 +876,6 @@
     "sharedHosts": {
       "title": "Shared DSHs",
       "description": "A DSH your team runs for its members. It signs in with a team host key, never as a person, and its model calls are the team's.",
-      "adminOnly": "Only a team admin manages shared DSHs.",
       "name": "Name",
       "namePlaceholder": "For example: Build box",
       "create": "Create key",
@@ -914,6 +913,62 @@
       "archiveRange": "{segments, plural, one {# segment} other {# segments}} · {first} – {last}",
       "archiveDownload": "Download",
       "archiveRead": "Open a download on your own machine, with the key dsh-teamwork-audit keygen wrote. It says if any segment is missing or altered."
+    },
+    "sharedDsh": {
+      "title": "Shared DSH",
+      "reachTitle": "Shared DSHs you can reach",
+      "disclosure": "A shared DSH is your team's machine, shared with others on its list. You see only the sessions you start; your team's admin can read every session from its encrypted archive.",
+      "none": "None of this team's shared DSHs is open to you yet.",
+      "online": "Online",
+      "offline": "Offline",
+      "open": "Open",
+      "needsInvite": "Ask your admin for an invite",
+      "invite": "Invite link",
+      "join": "Join",
+      "joining": "Joining…",
+      "deviceName": "Web browser",
+      "inviteInvalid": "That is not an invite link. Paste the whole dshteamwork://join link your admin gave you.",
+      "inviteOtherServer": "That invite is for another server.",
+      "browserUnsupported": "This browser cannot keep the key a shared DSH needs. Use a current Chrome, Edge, Firefox or Safari, outside private browsing.",
+      "back": "All shared DSHs",
+      "sessionsHelp": "Your sessions on this shared DSH, end-to-end encrypted between this browser and the machine.",
+      "newSession": "New session",
+      "noSessions": "No sessions yet.",
+      "waiting": "Waiting on you",
+      "untitled": "Untitled session",
+      "running": "Running",
+      "pick": "Pick a session, or start a new one.",
+      "steps": "{count, plural, one {# step} other {# steps}}",
+      "failed": "failed",
+      "denied": "denied",
+      "thinking": "Thinking…",
+      "allow": "Allow",
+      "deny": "Deny",
+      "promptPlaceholder": "Message the agent",
+      "send": "Send",
+      "stop": "Stop",
+      "pin": {
+        "set": {
+          "title": "Set your PIN",
+          "hint": "Choose four digits. This machine asks for them each time you come back."
+        },
+        "confirm": {
+          "title": "Type it again",
+          "hint": "The same four digits."
+        },
+        "enter": {
+          "title": "Enter your PIN",
+          "hint": "The four digits you set for this machine."
+        },
+        "locked": {
+          "title": "Locked",
+          "hint": "Too many wrong PINs. Ask your admin to unlock you on the shared DSH."
+        },
+        "wrong": "Wrong PIN. {count, plural, one {# try} other {# tries}} left.",
+        "mismatch": "The two PINs differ. Start again.",
+        "unavailable": "The machine did not answer. Try again.",
+        "submit": "Continue"
+      }
     }
   },
   "usage": {
@@ -1191,5 +1246,22 @@
     "output": "Output",
     "fxAutomatic": "Converted automatically using the Frankfurter reference rate dated {date}.",
     "fxFailed": "The exchange rate is unavailable. Retry the lookup or enter prices manually; no guessed rate is applied."
+  },
+  "relayErrors": {
+    "offline": "The machine is offline.",
+    "not_found": "You cannot reach that machine or session any more.",
+    "busy": "The agent is busy. Wait for it to finish.",
+    "stale": "That was already answered.",
+    "locked": "Locked: enter your PIN first.",
+    "invite_refused": "The machine refused this invite. Ask your admin for a new one.",
+    "device_key_changed": "The machine's key does not match the invite. Do not continue; tell your admin.",
+    "device_verification_required": "This browser has not joined that machine.",
+    "no_directory": "The machine has no project folder to start in.",
+    "not_authenticated": "The machine is not signed in to the team.",
+    "missing_tools": "The machine is missing tools this preset needs.",
+    "missing_plugins": "The machine is missing plugins this preset needs.",
+    "preset_unavailable": "That preset is not available on the machine.",
+    "model_unavailable": "That model is not available right now.",
+    "unavailable": "The machine could not be reached. Try again."
   }
 }

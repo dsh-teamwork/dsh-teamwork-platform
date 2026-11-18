@@ -83,6 +83,11 @@ needing no call elsewhere on a connection.
 - **The app** signs in through the website the way the plugin does ([ADR 0001](../adr/0001-plugin-sign-in.md)):
   PKCE and a code. It receives its own Bearer, with `via` naming the app. The
   token says who the person is. On its own it reaches no computer.
+- **The web console** is a client too, from the server's own origin: no
+  token, its session cookie instead. The relay's HTTP routes take the cookie
+  when no Bearer is sent (a write only from this site), and `/relay/phone`
+  takes a hello without a token only when the upgrade's `Origin` is
+  `APP_URL`, re-opening the cookie at every ping as it re-opens a token.
 - **A pairing** is what lets an app token reach a host. Every phone frame
   names a `pairingId`. The relay accepts the frame only if three things hold:
   the pairing belongs to the token's subject, it is not revoked, and its host

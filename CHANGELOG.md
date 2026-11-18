@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Members reach a shared DSH from the web console
+
+- **What:** **Shared DSHs** in the team console now shows every member the shared DSHs they may reach; pasting an invite joins this browser, and `/teams/{teamId}/shared-hosts/{computerId}` is the member's own sessions there, with the PIN, the conversation, answers and sending, end-to-end encrypted through the relay with a non-extractable WebCrypto key kept in IndexedDB. The relay admits the console by its session cookie: HTTP routes when no Bearer is sent (writes only from this site), and `/relay/phone` without a token only when the upgrade's `Origin` is `APP_URL`. `edition.Host.Session` no longer opens a session whose account still has an admin-set first password. The relay client gains `sharedHosts()` and each computer's `hostId`. `/docs` describes it.
+- **Why:** Step 7 of `docs/tech/shared-dsh.md`: a member needs no phone to use the team's shared DSH.
+- **Breaking:** An extension's session check refuses an account with an unchanged first password, as every core route already did.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/shared-dsh.tsx`, `apps/web/src/lib/relay.ts`, `packages/relay-client/src/web-identity.ts`, `server/relay/relay.go`, `docs/tech/relay.md`.
+
 ## 2026-11-18 — The relay's client is an open package
 
 - **What:** `packages/relay-client` (`@dsh-teamwork/relay-client`) holds the client side of the relay, moved from the closed phone app: the encrypted channel (the plugin's `secure-channel.ts`, byte for byte), the relay's frames, the live client with a WebCrypto AES-GCM default, DSH's Remote API read into session shapes, and the pure rules a session screen draws by. `server/e2e` now joins a shared DSH, is refused while locked and sets a PIN through this client, and checks its channel against the plugin's.

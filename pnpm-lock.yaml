@@ -105,6 +105,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@dsh-teamwork/relay-client':
+        specifier: workspace:*
+        version: link:../../packages/relay-client
       '@dsh-teamwork/shared':
         specifier: workspace:*
         version: link:../../packages/shared

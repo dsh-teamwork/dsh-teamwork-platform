@@ -1240,7 +1240,7 @@ paths:
     servers: [{ url: / }]
     get:
       summary: The shared DSHs the caller may reach
-      security: [{ bearer: [] }]
+      security: [{ bearer: [] }, { session: [] }]
       responses:
         '200':
           description: The shared DSHs, oldest first
@@ -1266,7 +1266,7 @@ paths:
     servers: [{ url: / }]
     post:
       summary: Start a handset's pairing with a shared DSH, pending until the DSH checks the member's invite
-      security: [{ bearer: [] }]
+      security: [{ bearer: [] }, { session: [] }]
       parameters:
         - { name: hostId, in: path, required: true, schema: { type: string } }
         - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
@@ -1333,7 +1333,8 @@ paths:
   /relay/phone:
     servers: [{ url: / }]
     get:
-      summary: A phone's relay socket (WebSocket); its first frame is a hello with its token and handset credential
+      summary: A phone's or a browser's relay socket (WebSocket); its first frame is a hello with its token and handset credential
+      description: 'A page of this site may leave the token out: its session cookie, with an Origin of APP_URL, admits it instead.'
       security: []
       responses:
         '101':
@@ -1342,7 +1343,7 @@ paths:
     servers: [{ url: / }]
     post:
       summary: A phone redeems a pairing code its owner's DSH showed
-      security: [{ bearer: [] }]
+      security: [{ bearer: [] }, { session: [] }]
       parameters:
         - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
       requestBody:
@@ -1370,7 +1371,7 @@ paths:
     servers: [{ url: / }]
     get:
       summary: This handset's pairings
-      security: [{ bearer: [] }]
+      security: [{ bearer: [] }, { session: [] }]
       parameters:
         - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
       responses:
@@ -1388,7 +1389,7 @@ paths:
     servers: [{ url: / }]
     delete:
       summary: Revoke one of this handset's pairings
-      security: [{ bearer: [] }]
+      security: [{ bearer: [] }, { session: [] }]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string } }
         - { name: X-Device-Key, in: header, required: true, schema: { type: string } }
@@ -1401,7 +1402,7 @@ paths:
     servers: [{ url: / }]
     put:
       summary: Turn a pairing's notifications on (an Expo push token) or off (null)
-      security: [{ bearer: [] }]
+      security: [{ bearer: [] }, { session: [] }]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string } }
         - { name: X-Device-Key, in: header, required: true, schema: { type: string } }

@@ -122,10 +122,15 @@ func validDeviceKey(key string) bool { return deviceKeyPattern.MatchString(key) 
 
 func parsePhoneHello(data []byte) (phoneHello, bool) {
 	f, ok := parse(data)
-	if !ok || f.T != "hello" || !str(f.Token, 1, 1<<20) || f.DeviceKey == nil || !validDeviceKey(*f.DeviceKey) {
+	// A browser sends no token: its session cookie came with the upgrade.
+	if !ok || f.T != "hello" || (f.Token != nil && !str(f.Token, 1, 1<<20)) || f.DeviceKey == nil || !validDeviceKey(*f.DeviceKey) {
 		return phoneHello{}, false
 	}
-	return phoneHello{token: *f.Token, deviceKey: *f.DeviceKey}, true
+	h := phoneHello{deviceKey: *f.DeviceKey}
+	if f.Token != nil {
+		h.token = *f.Token
+	}
+	return h, true
 }
 
 // pluginRequest is what a plugin asks after its welcome; id pairs it with

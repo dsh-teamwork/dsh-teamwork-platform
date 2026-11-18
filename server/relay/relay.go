@@ -158,6 +158,28 @@ func (r *relay) member(ctx context.Context, token string) (string, error) {
 	return who.UserID, nil
 }
 
+// browserMember is member for a browser: the account its session cookie
+// names, if it is in any team.
+func (r *relay) browserMember(req *http.Request) (string, error) {
+	who, err := r.host.Session(req)
+	if err != nil || who == nil {
+		return "", err
+	}
+	in, err := r.host.Users.InTeam(req.Context(), who.UserID)
+	if err != nil || !in {
+		return "", err
+	}
+	return who.UserID, nil
+}
+
+// fromSite is whether a socket's upgrade came from a page of this site: the
+// one way a browser's session cookie may admit it, so a page elsewhere cannot
+// ride a member's cookie (an upgrade carries cookies but no CORS check).
+func (r *relay) fromSite(req *http.Request) bool {
+	origin := req.Header.Get("Origin")
+	return origin != "" && origin == r.host.AppURL
+}
+
 // --- sockets ---------------------------------------------------------------
 
 type socket struct {
@@ -165,6 +187,9 @@ type socket struct {
 	ctx context.Context
 	// token is what the socket proved itself with, once its hello passed.
 	token atomic.Value // string
+	// cookie is a browser's upgrade request, kept to re-open its session at
+	// each ping, when that, not a token, admitted it.
+	cookie atomic.Value // *http.Request
 }
 
 // send writes one frame; a socket that cannot take it is closing anyway.
@@ -182,8 +207,9 @@ func (s *socket) send(v any) {
 	s.c.Write(ctx, websocket.MessageText, b)
 }
 
-// accept upgrades the request. The socket proves who it is in its first
-// frame, never by a cookie, so any origin may open one.
+// accept upgrades the request from any origin: a socket proves who it is in
+// its first frame, and only a page of this site may lean on its session
+// cookie instead (acceptPhone, fromSite).
 func (r *relay) accept(w http.ResponseWriter, req *http.Request) (*socket, func()) {
 	c, err := websocket.Accept(w, req, &websocket.AcceptOptions{InsecureSkipVerify: true})
 	if err != nil {
@@ -228,6 +254,10 @@ func (r *relay) keepAlive(s *socket) {
 				s.c.Close(closeUnauthorized, "not a member")
 				return
 			}
+			if browser, _ := s.cookie.Load().(*http.Request); browser != nil && !r.stillAdmitted(s, "") {
+				s.c.Close(closeUnauthorized, "not a member")
+				return
+			}
 		}
 	}
 }
@@ -237,7 +267,15 @@ func (r *relay) keepAlive(s *socket) {
 // shared DSH's token must still name its shared host, whose list it is sent
 // again, so its roster follows a member leaving the team.
 func (r *relay) stillAdmitted(s *socket, token string) bool {
-	id, err := r.member(s.ctx, token)
+	var id string
+	var err error
+	if browser, _ := s.cookie.Load().(*http.Request); token == "" && browser != nil {
+		if id, err = r.browserMember(browser.WithContext(s.ctx)); err == nil && id == "" {
+			return false
+		}
+	} else {
+		id, err = r.member(s.ctx, token)
+	}
 	if err != nil {
 		return true
 	}
@@ -509,6 +547,9 @@ func (r *relay) answer(hostID string, q pluginRequest) reply {
 // --- the phone's socket ----------------------------------------------------
 
 func (r *relay) acceptPhone(w http.ResponseWriter, req *http.Request) {
+	// A browser on this site proves who it is by its session cookie and
+	// sends no token; anything else proves it in its hello.
+	browser := req.Clone(context.Background())
 	s, done := r.accept(w, req)
 	if s == nil {
 		return
@@ -523,7 +564,13 @@ func (r *relay) acceptPhone(w http.ResponseWriter, req *http.Request) {
 		s.c.Close(closeBadHello, "bad hello")
 		return
 	}
-	userID, err := r.member(s.ctx, hello.token)
+	var userID string
+	var err error
+	if hello.token != "" {
+		userID, err = r.member(s.ctx, hello.token)
+	} else if r.fromSite(browser) {
+		userID, err = r.browserMember(browser.WithContext(s.ctx))
+	}
 	if err != nil {
 		slog.Error("relay: member", "error", err)
 		s.c.Close(websocket.StatusInternalError, "internal")
@@ -533,7 +580,11 @@ func (r *relay) acceptPhone(w http.ResponseWriter, req *http.Request) {
 		s.c.Close(closeUnauthorized, "not a member")
 		return
 	}
-	s.token.Store(hello.token)
+	if hello.token != "" {
+		s.token.Store(hello.token)
+	} else {
+		s.cookie.Store(browser)
+	}
 	ph := phone{userID: userID, deviceHash: r.pairings.deviceHash(hello.deviceKey)}
 	s.send(map[string]string{"t": "welcome"})
 	defer r.phoneLeft(s)
@@ -656,17 +707,22 @@ func (r *relay) discover(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"url": url + "/relay/plugin"})
 }
 
-// caller is the member a request's Bearer names, or "" after answering 401.
+// caller is the member a request's Bearer names, or, without one, the
+// browser session's member (a write only from this site); "" after answering
+// 401.
 func (r *relay) caller(w http.ResponseWriter, req *http.Request) string {
 	token, _ := strings.CutPrefix(req.Header.Get("Authorization"), "Bearer ")
-	userID := ""
+	var userID string
+	var err error
 	if token = strings.TrimSpace(token); token != "" {
-		var err error
-		if userID, err = r.member(req.Context(), token); err != nil {
-			slog.Error("relay: member", "error", err)
-			errorJSON(w, http.StatusInternalServerError, "internal")
-			return ""
-		}
+		userID, err = r.member(req.Context(), token)
+	} else if req.Method == http.MethodGet || r.host.SameOrigin(req) {
+		userID, err = r.browserMember(req)
+	}
+	if err != nil {
+		slog.Error("relay: member", "error", err)
+		errorJSON(w, http.StatusInternalServerError, "internal")
+		return ""
 	}
 	if userID == "" {
 		errorJSON(w, http.StatusUnauthorized, "unauthorized")

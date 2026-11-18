@@ -271,6 +271,65 @@ func TestMembersReachASharedDSHByTheServersList(t *testing.T) {
 	})
 }
 
+// A browser on the site reaches the relay by its session cookie: reads, and
+// writes from this origin; its socket only when the upgrade came from a page
+// here. A page elsewhere, or an account with an unchanged first password, is
+// nobody.
+func TestABrowserReachesTheRelayByItsSession(t *testing.T) {
+	eachShared(t, func(t *testing.T, w *sharedWorld) {
+		rw := &world{t: t, in: w.in, r: w.r}
+		base := "/api/teams/" + w.teamID + "/shared-hosts"
+		_, created := w.do("POST", base, w.admin, "", obj{"name": "Build box"})
+		hostID, key := created["host"].(obj)["id"].(string), created["key"].(string)
+		_, token := w.exchange(key, machine(t))
+		dsh := rw.open("/relay/plugin", obj{"t": "hello", "token": token["token"], "clientId": "shared-box-1", "name": "box", "dshVersion": "0.2.2-rc.3"})
+		dsh.next(is("members"))
+
+		browser := func(method, path, origin string, cookie *http.Cookie, body any) int {
+			t.Helper()
+			data, _ := json.Marshal(body)
+			req, _ := http.NewRequest(method, w.in.URL+path, bytes.NewReader(data))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Origin", origin)
+			req.Header.Set("X-Device-Key", keyA)
+			req.AddCookie(cookie)
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			res.Body.Close()
+			return res.StatusCode
+		}
+		if s := browser("GET", "/relay/shared", w.in.URL, w.member, nil); s != 200 {
+			t.Fatalf("a member's session listing: %d", s)
+		}
+		if s := browser("POST", "/relay/shared/"+hostID+"/join", "https://elsewhere.example", w.member, obj{"deviceName": "browser"}); s != 401 {
+			t.Fatalf("a write from another site: %d", s)
+		}
+		if s := browser("POST", "/relay/shared/"+hostID+"/join", w.in.URL, w.member, obj{"deviceName": "browser"}); s != 201 {
+			t.Fatalf("a write from this site: %d", s)
+		}
+		dsh.next(is("paired"))
+
+		socket := func(origin string, cookie *http.Cookie) *peer {
+			return rw.openWith("/relay/phone", http.Header{"Origin": {origin}, "Cookie": {cookie.String()}}, obj{"t": "hello", "deviceKey": keyA})
+		}
+		if p := socket(w.in.URL, w.member); p.welcome == nil {
+			t.Fatalf("a page of this site was refused: %d", p.code)
+		}
+		if p := socket("https://elsewhere.example", w.member); p.welcome != nil || p.code != closeUnauthorized {
+			t.Fatalf("a page elsewhere rode the cookie: %v %d", p.welcome, p.code)
+		}
+		w.in.FirstPassword(w.memberID)
+		if p := socket(w.in.URL, w.member); p.welcome != nil || p.code != closeUnauthorized {
+			t.Fatalf("a first password's session: %v %d", p.welcome, p.code)
+		}
+		if s := browser("GET", "/relay/shared", w.in.URL, w.member, nil); s != 401 {
+			t.Fatalf("a first password's session listing: %d", s)
+		}
+	})
+}
+
 // raw sends a body as is, with a Bearer token.
 func (w *sharedWorld) raw(path, bearer string, body []byte) (int, obj) {
 	w.t.Helper()

@@ -19,6 +19,7 @@
     "api:types": "openapi-typescript ../../api/openapi.yaml -o src/lib/api.gen.ts"
   },
   "dependencies": {
+    "@dsh-teamwork/relay-client": "workspace:*",
     "@dsh-teamwork/shared": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

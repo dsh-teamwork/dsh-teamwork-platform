@@ -93,8 +93,15 @@ type peer struct {
 
 func (w *world) open(path string, hello obj) *peer {
 	w.t.Helper()
+	return w.openWith(path, nil, hello)
+}
+
+// openWith opens a socket whose upgrade carries header, as a browser's
+// carries its Origin and cookies.
+func (w *world) openWith(path string, header http.Header, hello obj) *peer {
+	w.t.Helper()
 	url := strings.Replace(w.in.URL, "http", "ws", 1) + path
-	c, _, err := websocket.Dial(context.Background(), url, nil)
+	c, _, err := websocket.Dial(context.Background(), url, &websocket.DialOptions{HTTPHeader: header})
 	if err != nil {
 		w.t.Fatal(err)
 	}
