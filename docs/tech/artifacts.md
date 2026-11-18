@@ -130,11 +130,43 @@ a credential.**
   a wide screen the card opens a fourth column beside the conversation: the
   frame, the title, the version picker, **Share with team**, **Open in a new
   tab** and **Copy link** (to the console's page, never the view address); on
-  a narrow one it covers the conversation, with a way back. The workspace's
-  sidebar gains **Artifacts** (`/teams/{teamId}/artifacts[/{id}]`): the
-  reader's own and the team's, newest first, each opening the same viewer, its
-  versions with author and date, and the session it came from where the reader
-  can open it.
+  a narrow one it covers the conversation, with a way back.
+- **The sidebar's Artifacts entry** ("In the console's sidebar" below) is
+  where an artifact is found again away from its session.
+
+### In the console's sidebar
+
+**Workspace gains Artifacts, for everyone in every team, with two lists: the
+reader's own, and those teammates shared with the team.**
+
+- **Where**: `GROUPS`' `work` group in
+  `apps/web/src/components/team/console-shell.tsx`, after Team DSH, so the
+  group reads as the places a member works and then what that work made.
+  Always listed, unlike My DSH: a member with none sees how to make one (ask
+  the agent in a session), which is the entry's first use.
+- **Routes**: `/teams/{teamId}/artifacts` opens **Mine**;
+  `?list=shared` opens **Shared with me**; `/teams/{teamId}/artifacts/{id}`
+  keeps the entry selected (`within`). The page fills the area beside the
+  sidebar (`fill`), in two columns as My DSH lays out its own: the list, and
+  the viewer of the open one.
+- **Mine**: every artifact of this team the reader owns, private or shared,
+  newest version first, each marked with its visibility.
+- **Shared with me**: every `team` artifact of this team someone else owns,
+  newest version first, with the owner, and the reader's own version count
+  where they added one. A teammate's private artifact is never listed here,
+  admins included; whether an admin may open one is the open question below.
+- **A row** shows the title, the kind, who made the newest version and when.
+  A filter by title runs over the loaded list; search over content is not in
+  this plan.
+- **The viewer** is the column the conversation opens, plus what only this
+  page offers: the versions with author, date and session (a link to that
+  session where the reader can open it on My DSH or Team DSH), **Share with
+  team** and **Make private** for the owner and the team's admins, **Restore**
+  on an older version, and **Delete**.
+- **The server**: `GET /api/teams/{teamId}/artifacts?list=mine|shared`, the
+  same rule for both lists as the page says, paged by the newest version's
+  time. The team's home and the teams page gain nothing.
+- **Words** (`team.nav.artifacts`, `artifacts.*`) in both locales' messages.
 - **The hosted edition's clients** (its cloud sessions on the web, and the
   phone app) read the same item from the same package and mint the same view
   address.
@@ -157,7 +189,7 @@ a credential.**
   - `POST /api/teams/{teamId}/artifacts` and `…/{id}/versions`, multipart,
     from a plugin, computer or host token (`requirePlugin` gains these
     routes);
-  - `GET /api/teams/{teamId}/artifacts`, `…/{id}`, `PATCH …/{id}` (title,
+  - `GET /api/teams/{teamId}/artifacts?list=mine|shared`, `…/{id}`, `PATCH …/{id}` (title,
     visibility), `DELETE …/{id}`, `POST …/{id}/versions/{n}/restore` (a new
     version copying an old one), from a session;
   - `POST …/versions/{n}/view`, from a session or the app's token;
@@ -203,9 +235,10 @@ a credential.**
    `tool/result` with the tool's name, both live and from `session/page`.
 3. **One path, private only.** Schema and migration; the upload route for a
    plugin token; `create` and `update`; the view address and `/a/`; the card
-   and the column on My DSH. The ADRs for uploading at creation and for the
+   and the column on My DSH; the sidebar's Artifacts entry with **Mine**, so
+   what a member made is found again from the first day. The ADRs for uploading at creation and for the
    view address are written with this commit.
-4. **The team.** Visibility, the Artifacts page, versions and restore, `open`
+4. **The team.** Visibility, **Shared with me**, versions and restore, `open`
    in the tool, `baseVersion` conflicts, Team DSH's host token.
 5. **The hosted edition**: public links, the phone, cloud sessions (in its own
    plan).
