@@ -933,7 +933,9 @@
         "model": "Model",
         "desktopDefault": "Desktop default",
         "followPreset": "Preset / desktop model",
-        "noPreset": "No preset"
+        "noPreset": "No preset",
+        "effort": "Reasoning",
+        "effortDefault": "Model default"
       },
       "files": {
         "add": "Add files",

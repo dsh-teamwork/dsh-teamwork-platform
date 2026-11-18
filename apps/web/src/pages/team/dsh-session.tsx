@@ -288,6 +288,10 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
     ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}` })),
   ];
   const chosenModel = sessionId ? current?.model : value.model;
+  // How hard the chosen model reasons, where it says it can be told: its own default, or one of its efforts.
+  const reasoning = data.models.find((model) => model.provider === chosenModel?.provider && model.id === chosenModel?.model)?.reasoning;
+  const efforts = reasoning ? [{ value: '', label: t('effortDefault') }, ...reasoning.efforts.map((effort) => ({ value: effort.id, label: effort.name }))] : [];
+  const withEffort = (effort: string): ModelSelection => ({ provider: chosenModel!.provider, model: chosenModel!.model, ...(effort ? { reasoningEffort: effort } : {}) });
   const toModel = (key: string): ModelSelection | undefined => {
     if (!key) return undefined;
     const [provider, model] = JSON.parse(key) as [string, string];
@@ -317,6 +321,10 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
         </span>
         <Select label={t('model')} value={modelKey(current.model)} options={models} disabled={disabled || saving}
           change={(key) => { const next = toModel(key); if (next) void changeModel(next); }} className="h-8 max-w-56 text-xs" />
+        {reasoning && (
+          <Select label={t('effort')} value={current.model?.reasoningEffort ?? ''} options={efforts} disabled={disabled || saving}
+            change={(effort) => void changeModel(withEffort(effort))} className="h-8 max-w-40 text-xs" />
+        )}
         {failed && <span role="alert" className="text-xs text-destructive">{failed}</span>}
       </>
     );
@@ -343,6 +351,10 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
         change={(id) => onChange?.({ ...value, agentPreset: id || undefined, model: undefined })} />
       <Select label={t('model')} value={modelKey(chosenModel)} options={models} disabled={disabled} className="h-8 max-w-56 text-xs"
         change={(key) => onChange?.({ ...value, model: toModel(key) })} />
+      {reasoning && (
+        <Select label={t('effort')} value={value.model?.reasoningEffort ?? ''} options={efforts} disabled={disabled} className="h-8 max-w-40 text-xs"
+          change={(effort) => onChange?.({ ...value, model: withEffort(effort) })} />
+      )}
     </>
   );
 }

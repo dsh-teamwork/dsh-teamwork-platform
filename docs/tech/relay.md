@@ -498,8 +498,9 @@ the hosted edition, Cloud DSH.
   **Devices**: every pairing of the account to it, the phone app's and every
   browser's, with its name, status, last use and whether it pushes, this
   browser marked, each removable.
-- **A new session** offers the computer's folders, presets and models before
-  its first message, and a session's model changes while it is idle, through
+- **A new session** offers the computer's folders, presets and models (with a
+  model's reasoning efforts where it has them) before its first message, and a
+  session's model and effort change while it is idle, through
   `teamwork/configuration` and `teamwork/selectModel` as the app does; a plugin
   that reports none leaves the computer's defaults.
 - **A session** is followed as on the phone: a snapshot that fits the

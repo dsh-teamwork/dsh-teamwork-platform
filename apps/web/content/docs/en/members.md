@@ -55,8 +55,9 @@ end encrypted between the browser and the computer.
 Beside the message box, a new session offers the computer's folders, presets
 (a team preset included; one the computer cannot run yet says why) and models,
 before its first message; leave them as they are for the computer's defaults.
-In a session that has started, the folder and preset stay as they are, and you
-can change its model while it is not working, for that session alone. The
+A model that can reason harder offers its efforts beside it. In a session that
+has started, the folder and preset stay as they are, and you can change its
+model and effort while it is not working, for that session alone. The
 paperclip beside them adds files (text, code, logs, CSV, JSON or PDF; up to
 five, 20 MB each), sent with the message, or on their own. The same choices are
 there on a Team DSH.
