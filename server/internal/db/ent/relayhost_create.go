@@ -61,6 +61,20 @@ func (_c *RelayHostCreate) SetDshVersion(v string) *RelayHostCreate {
 	return _c
 }
 
+// SetOs sets the "os" field.
+func (_c *RelayHostCreate) SetOs(v relayhost.Os) *RelayHostCreate {
+	_c.mutation.SetOs(v)
+	return _c
+}
+
+// SetNillableOs sets the "os" field if the given value is not nil.
+func (_c *RelayHostCreate) SetNillableOs(v *relayhost.Os) *RelayHostCreate {
+	if v != nil {
+		_c.SetOs(*v)
+	}
+	return _c
+}
+
 // SetLastSeenAt sets the "last_seen_at" field.
 func (_c *RelayHostCreate) SetLastSeenAt(v time.Time) *RelayHostCreate {
 	_c.mutation.SetLastSeenAt(v)
@@ -163,6 +177,11 @@ func (_c *RelayHostCreate) check() error {
 			return &ValidationError{Name: "dsh_version", err: fmt.Errorf(`ent: validator failed for field "RelayHost.dsh_version": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.Os(); ok {
+		if err := relayhost.OsValidator(v); err != nil {
+			return &ValidationError{Name: "os", err: fmt.Errorf(`ent: validator failed for field "RelayHost.os": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.LastSeenAt(); !ok {
 		return &ValidationError{Name: "last_seen_at", err: errors.New(`ent: missing required field "RelayHost.last_seen_at"`)}
 	}
@@ -226,6 +245,10 @@ func (_c *RelayHostCreate) createSpec() (*RelayHost, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DshVersion(); ok {
 		_spec.SetField(relayhost.FieldDshVersion, field.TypeString, value)
 		_node.DshVersion = value
+	}
+	if value, ok := _c.mutation.Os(); ok {
+		_spec.SetField(relayhost.FieldOs, field.TypeEnum, value)
+		_node.Os = &value
 	}
 	if value, ok := _c.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)
@@ -328,6 +351,24 @@ func (u *RelayHostUpsert) SetDshVersion(v string) *RelayHostUpsert {
 // UpdateDshVersion sets the "dsh_version" field to the value that was provided on create.
 func (u *RelayHostUpsert) UpdateDshVersion() *RelayHostUpsert {
 	u.SetExcluded(relayhost.FieldDshVersion)
+	return u
+}
+
+// SetOs sets the "os" field.
+func (u *RelayHostUpsert) SetOs(v relayhost.Os) *RelayHostUpsert {
+	u.Set(relayhost.FieldOs, v)
+	return u
+}
+
+// UpdateOs sets the "os" field to the value that was provided on create.
+func (u *RelayHostUpsert) UpdateOs() *RelayHostUpsert {
+	u.SetExcluded(relayhost.FieldOs)
+	return u
+}
+
+// ClearOs clears the value of the "os" field.
+func (u *RelayHostUpsert) ClearOs() *RelayHostUpsert {
+	u.SetNull(relayhost.FieldOs)
 	return u
 }
 
@@ -447,6 +488,27 @@ func (u *RelayHostUpsertOne) SetDshVersion(v string) *RelayHostUpsertOne {
 func (u *RelayHostUpsertOne) UpdateDshVersion() *RelayHostUpsertOne {
 	return u.Update(func(s *RelayHostUpsert) {
 		s.UpdateDshVersion()
+	})
+}
+
+// SetOs sets the "os" field.
+func (u *RelayHostUpsertOne) SetOs(v relayhost.Os) *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.SetOs(v)
+	})
+}
+
+// UpdateOs sets the "os" field to the value that was provided on create.
+func (u *RelayHostUpsertOne) UpdateOs() *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.UpdateOs()
+	})
+}
+
+// ClearOs clears the value of the "os" field.
+func (u *RelayHostUpsertOne) ClearOs() *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.ClearOs()
 	})
 }
 
@@ -735,6 +797,27 @@ func (u *RelayHostUpsertBulk) SetDshVersion(v string) *RelayHostUpsertBulk {
 func (u *RelayHostUpsertBulk) UpdateDshVersion() *RelayHostUpsertBulk {
 	return u.Update(func(s *RelayHostUpsert) {
 		s.UpdateDshVersion()
+	})
+}
+
+// SetOs sets the "os" field.
+func (u *RelayHostUpsertBulk) SetOs(v relayhost.Os) *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.SetOs(v)
+	})
+}
+
+// UpdateOs sets the "os" field to the value that was provided on create.
+func (u *RelayHostUpsertBulk) UpdateOs() *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.UpdateOs()
+	})
+}
+
+// ClearOs clears the value of the "os" field.
+func (u *RelayHostUpsertBulk) ClearOs() *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.ClearOs()
 	})
 }
 

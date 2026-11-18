@@ -170,8 +170,11 @@ export function SessionList({ base, locked, sessions, sessionId, onPick }: { bas
   );
 }
 
-/** A computer's row in the column: its name, a word under it, and a navy dot while it is online. */
-export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick }: { icon?: LucideIcon; name: string; note: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void }) {
+/**
+ * A computer's row in the column: its name, a word under it, a navy dot while it is online, and `extra` at its end. The
+ * row's link covers all of it, so `extra` may hold a link of its own (one link cannot hold another).
+ */
+export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra }: { icon?: LucideIcon; name: string; note: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode }) {
   const inner = (
     <>
       <Icon className="size-4 shrink-0" aria-hidden />
@@ -183,9 +186,19 @@ export function ComputerRow({ icon: Icon = Server, name, note, online, to, open,
     </>
   );
   return to ? (
-    <Link to={to} onClick={onPick} className={cn(row, 'gap-2.5', current && selected, open && 'font-medium')}>{inner}</Link>
+    <div className={cn(row, 'gap-2.5', current && selected, open && 'font-medium')}>
+      <Link
+        to={to}
+        onClick={onPick}
+        aria-current={current ? 'page' : undefined}
+        className="flex min-w-0 flex-1 items-center gap-2.5 after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+      >
+        {inner}
+      </Link>
+      {extra && <span className="relative flex shrink-0">{extra}</span>}
+    </div>
   ) : (
-    <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}</div>
+    <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}{extra}</div>
   );
 }
 

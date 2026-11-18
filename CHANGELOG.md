@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A computer's operating system, and My DSH's devices page
+
+- **What:** The plugin's relay hello adds `os` (`macos`, `windows` or `linux`; any other value is refused 4400, none is allowed), stored in the new nullable `relay_hosts.os` and refreshed on every connection. `GET /relay/pairings` adds `hostOs` and `GET /relay/hosts` adds `os`; `@dsh-teamwork/relay-client`'s `Computer` adds `os`. My DSH shows each computer's operating system and, beside it, the number of devices paired with it, which opens a devices page of its own (`/teams/{teamId}/my-dsh/{hostId}/devices`) where each is removed; the computer's page no longer lists them.
+- **Why:** A member with several computers tells them apart by their system, and the devices were folded away under a computer's sessions, where nobody looked for them.
+- **Breaking:** None: a plugin that sends no `os` connects as before and its computer shows none.
+- **Upgrade:** The migration `relay_host_os` runs at start. A computer shows its system once a plugin that reports it (the release after 0.11.3) reconnects.
+- **Refs:** `server/relay/protocol.go`, `apps/web/src/pages/team/my-dsh.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-18 — Presets have avatars
 
 - **What:** A preset carries `avatar`, the id of one of 18 vector avatars in `@dsh-teamwork/shared` (`avatars.ts`), which the web console and the phone app both draw: an abstract emblem of a role, a few flat shapes in paper and one accent on the role's own plate (team assistant, finance, administration, HR, marketing, sales, engineering, product, legal, design, support, operations, project management, training, development, research, data analysis, writing). The preset editor chooses one (a blank preset starts with a random one, a template with its role's, a new team assistant with `assistant`); the presets page, Team resources, review diffs and the DSH session bar show it. A preset with none, or one a client does not know, shows one picked from its name. The server checks only the id's shape (`^[a-z][a-z0-9-]{0,39}$`); the plugin passes it to the relay's session configuration.

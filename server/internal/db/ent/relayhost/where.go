@@ -394,6 +394,36 @@ func DshVersionContainsFold(v string) predicate.RelayHost {
 	return predicate.RelayHost(sql.FieldContainsFold(FieldDshVersion, v))
 }
 
+// OsEQ applies the EQ predicate on the "os" field.
+func OsEQ(v Os) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldEQ(FieldOs, v))
+}
+
+// OsNEQ applies the NEQ predicate on the "os" field.
+func OsNEQ(v Os) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNEQ(FieldOs, v))
+}
+
+// OsIn applies the In predicate on the "os" field.
+func OsIn(vs ...Os) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldIn(FieldOs, vs...))
+}
+
+// OsNotIn applies the NotIn predicate on the "os" field.
+func OsNotIn(vs ...Os) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNotIn(FieldOs, vs...))
+}
+
+// OsIsNil applies the IsNil predicate on the "os" field.
+func OsIsNil() predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldIsNull(FieldOs))
+}
+
+// OsNotNil applies the NotNil predicate on the "os" field.
+func OsNotNil() predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNotNull(FieldOs))
+}
+
 // LastSeenAtEQ applies the EQ predicate on the "last_seen_at" field.
 func LastSeenAtEQ(v time.Time) predicate.RelayHost {
 	return predicate.RelayHost(sql.FieldEQ(FieldLastSeenAt, v))

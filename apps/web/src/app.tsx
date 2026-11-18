@@ -122,6 +122,7 @@ export function mountWeb({ routes = [], teamPages = [], models }: WebExtension =
       { path: 'resources', element: <TeamResourcesPage /> },
       { path: 'submissions', element: <TeamSharingPage view="mine" /> },
       { path: 'my-usage', element: <TeamMyUsagePage /> },
+      { path: 'my-dsh/:hostId/devices', element: <MyDshPage devices /> },
       { path: 'my-dsh/:hostId?/:sessionId?', element: <MyDshPage /> },
     ],
     own(false),

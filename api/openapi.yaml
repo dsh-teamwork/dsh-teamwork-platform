@@ -1597,11 +1597,12 @@ components:
         key: { type: string, description: 'The team host key, shown this once' }
     RelayHost:
       type: object
-      required: [id, name, dshVersion, online, lastSeenAt, pairings]
+      required: [id, name, dshVersion, os, online, lastSeenAt, pairings]
       properties:
         id: { type: string }
         name: { type: string }
         dshVersion: { type: string }
+        os: { $ref: '#/components/schemas/HostOs' }
         online: { type: boolean }
         lastSeenAt: { type: string, format: date-time }
         pairings:
@@ -1617,14 +1618,20 @@ components:
               lastUsedAt: { type: string, format: date-time, nullable: true }
               push: { type: boolean }
               current: { type: boolean, description: The pairing of the browser asking }
+    HostOs:
+      type: string
+      enum: [macos, windows, linux, null]
+      nullable: true
+      description: "A member's computer's operating system as its plugin reports it; null for a shared DSH or a plugin too old to report one"
     RelayPairing:
       type: object
-      required: [id, hostId, userId, hostName, deviceName, status, createdAt, lastUsedAt]
+      required: [id, hostId, userId, hostName, hostOs, deviceName, status, createdAt, lastUsedAt]
       properties:
         id: { type: string }
         hostId: { type: string }
         userId: { type: string, description: The member whose handset it is }
         hostName: { type: string }
+        hostOs: { $ref: '#/components/schemas/HostOs' }
         deviceName: { type: string }
         status: { type: string, enum: [pending, confirmed] }
         createdAt: { type: string, format: date-time }

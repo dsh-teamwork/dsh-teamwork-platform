@@ -3683,6 +3683,7 @@ export interface components {
             id: string;
             name: string;
             dshVersion: string;
+            os: components["schemas"]["HostOs"];
             online: boolean;
             /** Format: date-time */
             lastSeenAt: string;
@@ -3700,12 +3701,18 @@ export interface components {
                 current: boolean;
             }[];
         };
+        /**
+         * @description A member's computer's operating system as its plugin reports it; null for a shared DSH or a plugin too old to report one
+         * @enum {string|null}
+         */
+        HostOs: "macos" | "windows" | "linux" | null;
         RelayPairing: {
             id: string;
             hostId: string;
             /** @description The member whose handset it is */
             userId: string;
             hostName: string;
+            hostOs: components["schemas"]["HostOs"];
             deviceName: string;
             /** @enum {string} */
             status: "pending" | "confirmed";

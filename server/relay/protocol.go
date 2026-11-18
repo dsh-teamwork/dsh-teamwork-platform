@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 )
 
 // helloTimeout is how long a socket has to send its hello; tests shorten it.
@@ -71,6 +73,7 @@ type frame struct {
 	ClientID   *string `json:"clientId"`
 	Name       *string `json:"name"`
 	DSHVersion *string `json:"dshVersion"`
+	OS         *string `json:"os"`
 	ID         *string `json:"id"`
 	PairingID  *string `json:"pairingId"`
 	Accept     *bool   `json:"accept"`
@@ -100,8 +103,11 @@ func trimmed(p *string, min, max int) (string, bool) {
 }
 
 // hello is the first frame on a plugin socket: who is connecting, from which
-// computer.
-type hello struct{ token, clientID, name, dshVersion string }
+// computer. os is nil from a plugin too old to report its operating system.
+type hello struct {
+	token, clientID, name, dshVersion string
+	os                                *relayhost.Os
+}
 
 func parseHello(data []byte) (hello, bool) {
 	f, ok := parse(data)
@@ -113,7 +119,15 @@ func parseHello(data []byte) (hello, bool) {
 	if !ok1 || !ok2 {
 		return hello{}, false
 	}
-	return hello{token: *f.Token, clientID: *f.ClientID, name: name, dshVersion: version}, true
+	h := hello{token: *f.Token, clientID: *f.ClientID, name: name, dshVersion: version}
+	if f.OS != nil {
+		os := relayhost.Os(*f.OS)
+		if relayhost.OsValidator(os) != nil {
+			return hello{}, false
+		}
+		h.os = &os
+	}
+	return h, true
 }
 
 type phoneHello struct{ token, deviceKey string }

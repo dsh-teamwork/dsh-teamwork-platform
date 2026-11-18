@@ -36,7 +36,8 @@ func (created) Annotations() []schema.Annotation {
 // RelayHost is a member's DSH, as the teamwork plugin announces it on
 // connecting to the relay. client_id is the id the plugin generated and keeps
 // beside its cache, so one computer stays one host across restarts; it is
-// unique per member only, since a plugin chooses it.
+// unique per member only, since a plugin chooses it. os is the computer's
+// operating system as its plugin reports it; null from a plugin too old to.
 type RelayHost struct{ ent.Schema }
 
 func (RelayHost) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
@@ -46,6 +47,7 @@ func (RelayHost) Fields() []ent.Field {
 		field.String("client_id").NotEmpty().MaxLen(64),
 		field.String("name").MaxLen(runes(100)),
 		field.String("dsh_version").MaxLen(runes(40)),
+		field.Enum("os").Values("macos", "windows", "linux").Optional().Nillable(),
 		field.Time("last_seen_at").SchemaType(mysqlTime),
 	}
 }

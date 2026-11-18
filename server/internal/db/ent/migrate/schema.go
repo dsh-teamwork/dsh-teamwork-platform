@@ -401,6 +401,7 @@ var (
 		{Name: "client_id", Type: field.TypeString, Size: 64},
 		{Name: "name", Type: field.TypeString, Size: 400},
 		{Name: "dsh_version", Type: field.TypeString, Size: 160},
+		{Name: "os", Type: field.TypeEnum, Nullable: true, Enums: []string{"macos", "windows", "linux"}},
 		{Name: "last_seen_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 	}
 	// RelayHostsTable holds the schema information for the "relay_hosts" table.

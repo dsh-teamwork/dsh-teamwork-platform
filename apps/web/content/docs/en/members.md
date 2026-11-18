@@ -47,8 +47,9 @@ Anything it would change still asks for your approval.
 ## Work on your own DSH from the browser
 
 **My DSH** appears under Workspace once a computer of yours, with DSH signed in
-to Teamwork, has connected. It lists those computers, the same in every team.
-Open one and pair this browser with it once: in DSH on that computer, open the
+to Teamwork, has connected. It lists those computers, the same in every team,
+each with its operating system and the number of devices paired with it. Open
+one and pair this browser with it once: in DSH on that computer, open the
 Teamwork panel, choose **Devices** and make a code, type the code here, check
 that both screens show the same safety code, and approve on the computer. Then
 set a four-digit PIN, which the computer asks for again when you come back.
@@ -66,10 +67,10 @@ model and effort while it is not working, for that session alone. The
 paperclip beside them adds files (text, code, logs, CSV, JSON or PDF; up to
 five, 20 MB each), sent with the message, or on their own.
 
-Under **Devices** you see every phone and browser paired with that computer,
-and **Remove** cuts any of them off at once, a lost phone included. If you
-enter the wrong PIN too often, run `/teamwork pin reset` in DSH on that
-computer.
+The device count beside a computer opens its devices: every phone and browser
+paired with it, where **Remove** cuts any of them off at once, a lost phone
+included. If you enter the wrong PIN too often, run `/teamwork pin reset` in
+DSH on that computer.
 
 ## More than one team
 
