@@ -20,7 +20,12 @@
     },
     "copy": "Copy",
     "copied": "Copied",
-    "copyFailed": "Could not copy; select the text and copy it yourself."
+    "copyFailed": "Could not copy; select the text and copy it yourself.",
+    "failed": {
+      "title": "This page could not load",
+      "description": "The site may have just been updated. Reload to get the latest version.",
+      "reload": "Reload"
+    }
   },
   "signIn": {
     "title": "Sign in",

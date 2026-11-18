@@ -20,7 +20,12 @@
     },
     "copy": "复制",
     "copied": "已复制",
-    "copyFailed": "复制失败，请选中文字自行复制。"
+    "copyFailed": "复制失败，请选中文字自行复制。",
+    "failed": {
+      "title": "页面加载失败",
+      "description": "网站可能刚刚更新，请刷新以加载最新版本。",
+      "reload": "刷新"
+    }
   },
   "signIn": {
     "title": "登录",

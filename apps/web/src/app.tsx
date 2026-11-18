@@ -10,11 +10,12 @@
 
 import { lazy, StrictMode, Suspense, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, Navigate, RouterProvider, useLocation, type RouteObject } from 'react-router';
+import { createBrowserRouter, Navigate, RouterProvider, useLocation, useRouteError, type RouteObject } from 'react-router';
 import { Toaster } from 'sonner';
-import { IntlProvider } from 'use-intl';
+import { IntlProvider, useTranslations } from 'use-intl';
 
-import { Loading } from '@/components/page';
+import { CardPage, Loading } from '@/components/page';
+import { Button } from '@/components/ui/button';
 import { startAnalytics } from '@/lib/analytics';
 import { replacing, setEditionTeamPages, type TeamPage } from '@/lib/edition';
 import { currentLocale } from '@/lib/locale';
@@ -62,6 +63,35 @@ function FallbackPage() {
   return manage ? <Loading /> : <Navigate to="/teams" replace />;
 }
 
+// A page still running an earlier build asks for chunks the server no longer
+// holds once a new one is deployed. Reload once to fetch the current build; a
+// second failure within a minute is a real one, left to RouteError.
+const reloadedAt = 'dsh-chunk-reload';
+function reloadOnStaleChunk(event: Event) {
+  try {
+    if (Date.now() - (Number(sessionStorage.getItem(reloadedAt)) || 0) < 60_000) return;
+    sessionStorage.setItem(reloadedAt, String(Date.now()));
+  } catch {
+    return;
+  }
+  event.preventDefault();
+  window.location.reload();
+}
+
+/** What a route shows when it throws, instead of React Router's developer page. */
+function RouteError() {
+  const error = useRouteError();
+  const t = useTranslations('common.failed');
+  useEffect(() => console.error(error), [error]);
+  return (
+    <CardPage title={t('title')} description={t('description')}>
+      <Button className="w-full" onClick={() => window.location.reload()}>
+        {t('reload')}
+      </Button>
+    </CardPage>
+  );
+}
+
 export interface WebExtension {
   /** Pages beside the console's own; wrap one in RequireUser (@/lib/session) for a signed-in page. */
   routes?: RouteObject[];
@@ -75,6 +105,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
   void startAnalytics();
   watchSystemTheme();
   setEditionTeamPages(teamPages);
+  window.addEventListener('vite:preloadError', reloadOnStaleChunk);
 
   // Workspace, for everyone in the team; Team assets and Members and spend, for its
   // admin, who alone reaches those pages: a member is sent home (ADR 0043). An
@@ -106,25 +137,30 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
   );
   const team: RouteObject[] = [...work, { element: <AdminOnly />, children: manage }];
   const router = createBrowserRouter([
-    ...replacing(
-      [
-        { path: '/', element: <Navigate to="/teams" replace /> },
-        { path: '/sign-in', element: <SignInPage /> },
-        { path: '/setup', element: <SetupPage /> },
-        { path: '/password', element: <PasswordPage /> },
-        { path: '/plugin', element: <PluginPage /> },
-        {
-          element: <RequireUser />,
-          children: [
-            { path: '/account', element: <AccountPage /> },
-            { path: '/teams', element: <TeamsPage /> },
-            { path: '/teams/:teamId', element: <TeamLayout />, children: team },
+    {
+      errorElement: <RouteError />,
+      children: [
+        ...replacing(
+          [
+            { path: '/', element: <Navigate to="/teams" replace /> },
+            { path: '/sign-in', element: <SignInPage /> },
+            { path: '/setup', element: <SetupPage /> },
+            { path: '/password', element: <PasswordPage /> },
+            { path: '/plugin', element: <PluginPage /> },
+            {
+              element: <RequireUser />,
+              children: [
+                { path: '/account', element: <AccountPage /> },
+                { path: '/teams', element: <TeamsPage /> },
+                { path: '/teams/:teamId', element: <TeamLayout />, children: team },
+              ],
+            },
           ],
-        },
+          routes,
+        ),
+        { path: '*', element: <FallbackPage /> },
       ],
-      routes,
-    ),
-    { path: '*', element: <FallbackPage /> },
+    },
   ]);
 
   createRoot(document.getElementById('root')!).render(

@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — An open console survives a deploy
+
+- **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.
+- **Why:** A tab opened before a deploy asked for its old chunks, got HTML back, and showed "Failed to fetch dynamically imported module".
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/web/web.go`, `apps/web/src/app.tsx`.
+
 ## 2026-11-18 — A Team DSH's audit records survive a crash
 
 - **What:** The plugin appends each audit record to a journal on the DSH's disk as it is made, instead of holding up to a minute of them in memory, and seals what a stopped process left at the next start, never the same batch twice.
