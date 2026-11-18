@@ -75,7 +75,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
   watchSystemTheme();
   setEditionTeamPages(teamPages);
 
-  // Work, for everyone in the team; Team setup and Members and spend, for its
+  // Workspace, for everyone in the team; Team assets and Members and spend, for its
   // admin, who alone reaches those pages: a member is sent home (ADR 0043). An
   // edition's team page joins the group it names, replacing an open one at its path.
   const own = (admin: boolean) => teamPages.filter((page) => (page.group !== 'work') === admin).map(({ path, element }) => ({ path, element }));

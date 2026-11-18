@@ -2,7 +2,7 @@
  * Submissions and review: members submit presets and plugin packages, and an
  * admin approves the exact contents before the team gets them. One page in two
  * places (ADR 0043): under Work, `/teams/{teamId}/submissions` is the reader's
- * own submissions and where they send new ones; under Team setup,
+ * own submissions and where they send new ones; under Team assets,
  * `/teams/{teamId}/sharing` is the admin's review queue, opening on what
  * waits, with the team's whole history one tab away. Submitting a preset or a
  * plugin happens in a dialog; each submission is a row that opens to show,

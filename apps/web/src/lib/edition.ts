@@ -11,8 +11,8 @@ import type { RouteObject } from 'react-router';
 import type { Team } from '@/lib/api';
 import type { Locale } from '@/lib/locale';
 
-/** The console's navigation groups: Work for everyone, the other two for the team's admin alone. */
-export type TeamGroup = 'work' | 'setup' | 'people';
+/** The console's navigation groups: Workspace for everyone, the other two for the team's admin alone. */
+export type TeamGroup = 'work' | 'assets' | 'people';
 
 export interface TeamPage {
   /**
@@ -26,9 +26,9 @@ export interface TeamPage {
   labels: Record<Locale, string>;
   icon: LucideIcon;
   /**
-   * The navigation group it joins: Work, for every member, or one of the
-   * admin's two, Team setup (what the team publishes) and Members and spend
-   * (ADR 0043).
+   * The navigation group it joins: Workspace, for every member, or one of the
+   * admin's two under Team management, Team assets (what the team publishes)
+   * and Members and spend (ADR 0043).
    */
   group: TeamGroup;
   /**

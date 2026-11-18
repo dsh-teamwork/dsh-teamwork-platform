@@ -5,10 +5,10 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
-## 2026-11-18 — The admin's sidebar is two groups
+## 2026-11-18 — Team management folds at the foot of the sidebar
 
-- **What:** A team admin's sidebar splits Team management in two: **Team setup** (models, presets, plugins, review, history), what the team publishes to its members' DSHs, and **Members and spend** (members, usage, budgets). Work is unchanged and still the only group a member sees. An edition's `mountWeb` team page names its `group` (`work`, `setup` or `people`) in place of `audience`.
-- **Why:** Nine pages in one group read as a flat list; the two groups follow the two jobs an admin does.
+- **What:** The console sidebar's top group is **Workspace** (was Work), still the only one a member sees. A team admin's pages move to **Team management** at the foot of the sidebar, folded by default and opened by itself on one of its pages, in two groups: **Team assets** (models, presets, plugins, review, history), what the team publishes to its members' DSHs, and **Members and spend** (members, usage, budgets). An edition's `mountWeb` team page names its `group` (`work`, `assets` or `people`) in place of `audience`.
+- **Why:** Nine management pages in one group under the work pages read as one flat list; folding them away at the foot keeps the workspace apart, and the two groups follow the two jobs an admin does.
 - **Breaking:** An edition's team page passes `group` instead of `audience` (`admin` becomes `setup` or `people`).
 - **Upgrade:** Nothing.
 - **Refs:** ADR 0043, `apps/web/src/components/team/console-shell.tsx`, `apps/web/src/lib/edition.ts`.

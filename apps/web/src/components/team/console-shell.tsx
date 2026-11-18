@@ -1,10 +1,10 @@
 /**
  * The frame of a team's console (`/teams/{teamId}/…`): a sidebar with the team
  * switcher, the pages in groups and the account menu, and the page beside it.
- * The console is work first (ADR 0043): everyone sees Work — the home page,
- * what the team provides, their own submissions and an edition's work pages —
- * and the team's admin alone sees Team setup and Members and spend below it. On a narrow screen
- * the sidebar becomes a top bar whose menu opens the same navigation in a
+ * The console is work first (ADR 0043): everyone sees Workspace — the home
+ * page, what the team provides, their own submissions and an edition's work
+ * pages — and the team's admin alone sees Team management, folded at the
+ * sidebar's foot. On a narrow screen the sidebar becomes a top bar whose menu opens the same navigation in a
  * sheet. Which pages exist is `GROUPS`; the router sends a member who opens a
  * management page home (`AdminOnly` in pages/team/layout.tsx).
  */
@@ -13,6 +13,7 @@ import {
   BookOpen,
   ChartNoAxesCombined,
   Check,
+  ChevronUp,
   ChevronsUpDown,
   Cpu,
   Gauge,
@@ -26,6 +27,7 @@ import {
   Puzzle,
   Send,
   Server,
+  ShieldCheck,
   Users,
   X,
   type LucideIcon,
@@ -46,7 +48,7 @@ type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets
 
 /**
  * The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon.
- * Work is everyone's; the admin's pages split by what they look after: what the
+ * Workspace is everyone's; the admin's pages split by what they look after: what the
  * team publishes to its members' DSHs, and who is in it and what they spend.
  */
 const GROUPS: { key: TeamGroup; sections: { path: string; key: SectionKey; icon: LucideIcon }[] }[] = [
@@ -60,7 +62,7 @@ const GROUPS: { key: TeamGroup; sections: { path: string; key: SectionKey; icon:
     ],
   },
   {
-    key: 'setup',
+    key: 'assets',
     sections: [
       { path: 'models', key: 'models', icon: Cpu },
       { path: 'presets', key: 'presets', icon: Layers },
@@ -173,39 +175,56 @@ export function ConsoleShell({
   );
 }
 
-/** Work, then — for the team's admin — Team setup and Members and spend; an edition's entries join the group they name. */
+/**
+ * Workspace at the top; for the team's admin, Team management at the foot of
+ * the sidebar, folded by default so the two read apart: its toggle sits just
+ * above the account row and opens Team assets and Members and spend above it.
+ * It opens by itself on one of its pages, and a waiting review shows on the
+ * toggle while it is folded. An edition's entries join the group they name.
+ */
 function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team; section: string; reviewsWaiting: boolean; onNavigate?: () => void }) {
   const t = useTranslations('team');
   const locale = useLocale();
-  const admin = team.role === 'admin';
   const pages = useTeamPages(team);
+  const managing = GROUPS.some((group) => group.key !== 'work' && group.sections.some((s) => s.path === section)) || pages.some((page) => page.group !== 'work' && navPath(page) === section);
+  // Opening one of its pages opens it again, adjusted while rendering rather than in an effect.
+  const [open, setOpen] = useState(managing);
+  const [wasManaging, setWasManaging] = useState(managing);
+  if (managing !== wasManaging) {
+    setWasManaging(managing);
+    if (managing) setOpen(true);
+  }
+
+  const link = (path: string, label: ReactNode, Icon: LucideIcon, dot = false) => (
+    <Link key={path} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
+      <Icon className="size-4" aria-hidden />
+      <span className="flex-1">{label}</span>
+      {/* Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules"). */}
+      {dot && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
+    </Link>
+  );
+  const group = ({ key, sections }: (typeof GROUPS)[number]) => (
+    <div key={key} className="flex flex-col gap-0.5">
+      <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>
+      {sections.map((s) => link(s.path, t(`nav.${s.key}`), s.icon, s.key === 'sharing' && reviewsWaiting))}
+      {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[locale === 'zh-CN' ? 'zh-CN' : 'en'], page.icon))}
+    </div>
+  );
+
   return (
-    <nav aria-label={t('nav.label')} className="flex flex-col gap-4">
-      {GROUPS.filter((group) => admin || group.key === 'work').map((group) => (
-        <div key={group.key} className="flex flex-col gap-0.5">
-          <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${group.key}`)}</p>
-          {group.sections.map(({ path, key, icon: Icon }) => (
-            <Link key={key} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
-              <Icon className="size-4" aria-hidden />
-              <span className="flex-1">{t(`nav.${key}`)}</span>
-              {/* Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules"). */}
-              {key === 'sharing' && reviewsWaiting && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
-            </Link>
-          ))}
-          {pages
-            .filter((page) => page.group === group.key)
-            .map((page) => {
-              const path = navPath(page);
-              const Icon = page.icon;
-              return (
-                <Link key={path} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
-                  <Icon className="size-4" aria-hidden />
-                  <span className="flex-1">{page.labels[locale === 'zh-CN' ? 'zh-CN' : 'en']}</span>
-                </Link>
-              );
-            })}
+    <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+      {group(GROUPS[0])}
+      {team.role === 'admin' && (
+        <div className="mt-auto flex flex-col gap-4">
+          {open && <div id="team-management" className="flex flex-col gap-4">{GROUPS.slice(1).map(group)}</div>}
+          <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'font-medium')}>
+            <ShieldCheck className="size-4" aria-hidden />
+            <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
+            {!open && reviewsWaiting && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
+            <ChevronUp className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
+          </button>
         </div>
-      ))}
+      )}
     </nav>
   );
 }

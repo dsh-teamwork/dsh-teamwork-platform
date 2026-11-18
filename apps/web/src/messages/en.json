@@ -469,9 +469,10 @@
       "sharing": "Review",
       "history": "Versions and backups",
       "groups": {
-        "work": "Work",
-        "setup": "Team setup",
-        "people": "Members and spend"
+        "work": "Workspace",
+        "assets": "Team assets",
+        "people": "Members and spend",
+        "manage": "Team management"
       },
       "open": "Open navigation",
       "close": "Close navigation",
