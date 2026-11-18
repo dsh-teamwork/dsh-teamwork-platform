@@ -11,6 +11,9 @@ import type { RouteObject } from 'react-router';
 import type { Team } from '@/lib/api';
 import type { Locale } from '@/lib/locale';
 
+/** The console's navigation groups: Workspace for everyone, the other two for the team's admin alone. */
+export type TeamGroup = 'work' | 'assets' | 'people';
+
 export interface TeamPage {
   /**
    * Its route under a team, /teams/:teamId/{path}; an open page's path
@@ -22,8 +25,12 @@ export interface TeamPage {
   /** Its entry in the team navigation, in each language. */
   labels: Record<Locale, string>;
   icon: LucideIcon;
-  /** Work, for every member, or Team management, for the team's admin alone (ADR 0043). */
-  audience: 'work' | 'admin';
+  /**
+   * The navigation group it joins: Workspace, for every member, or one of the
+   * admin's two under Team management, Team assets (what the team publishes)
+   * and Members and spend (ADR 0043).
+   */
+  group: TeamGroup;
   /**
    * Whether the entry is listed in this team, for a page some teams have
    * (an edition's per-team switch); omitted, it is listed in every team. The

@@ -90,7 +90,7 @@ export function TeamLayout() {
   );
 }
 
-/** Team management's pages, for the team's admin: a member who opens one is sent to the team's home (ADR 0043). */
+/** The admin's pages, Team assets and Members and spend: a member who opens one is sent to the team's home (ADR 0043). */
 export function AdminOnly() {
   const { team } = useTeam();
   return team.role === 'admin' ? <Outlet /> : <Navigate to={`/teams/${encodeURIComponent(team.id)}`} replace />;

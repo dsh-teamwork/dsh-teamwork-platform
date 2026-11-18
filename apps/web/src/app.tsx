@@ -75,10 +75,10 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
   watchSystemTheme();
   setEditionTeamPages(teamPages);
 
-  // Work, for everyone in the team; Team management, for its admin, who alone
-  // reaches those pages: a member is sent home (ADR 0043). An edition's team
-  // page joins the group its audience names, replacing an open one at its path.
-  const own = (audience: TeamPage['audience']) => teamPages.filter((page) => page.audience === audience).map(({ path, element }) => ({ path, element }));
+  // Workspace, for everyone in the team; Team assets and Members and spend, for its
+  // admin, who alone reaches those pages: a member is sent home (ADR 0043). An
+  // edition's team page joins the group it names, replacing an open one at its path.
+  const own = (admin: boolean) => teamPages.filter((page) => (page.group !== 'work') === admin).map(({ path, element }) => ({ path, element }));
   const work = replacing(
     [
       { index: true, element: <TeamOverviewPage /> },
@@ -87,7 +87,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { path: 'shared-hosts', element: <TeamSharedHostsPage /> },
       { path: 'shared-hosts/:computerId', element: <TeamSharedDshPage /> },
     ],
-    own('work'),
+    own(false),
   );
   const manage = replacing(
     [
@@ -100,7 +100,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { path: 'usage', element: <TeamUsagePage /> },
       { path: 'budgets', element: <TeamBudgetsPage /> },
     ],
-    own('admin'),
+    own(true),
   );
   const team: RouteObject[] = [...work, { element: <AdminOnly />, children: manage }];
   const router = createBrowserRouter([

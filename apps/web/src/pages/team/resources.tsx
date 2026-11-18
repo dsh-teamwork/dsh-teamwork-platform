@@ -2,7 +2,7 @@
  * What the team provides (`/teams/{teamId}/resources`), under Work for
  * everyone (ADR 0043): its models, presets and pinned plugins as one read-only
  * catalogue, each with how it shows up in DSH, and a model's rate. Changing
- * them is Team management's, the admin's alone; a member proposes a preset, or
+ * them is Team assets's, the admin's alone; a member proposes a preset, or
  * a change to one, here in the presets editor, which sends it to review.
  */
 
@@ -27,7 +27,7 @@ export function TeamResourcesPage() {
   const tn = useTranslations('team.nav');
   const word = useTeamError();
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
-  // An admin changes presets in Team management; a member proposes here.
+  // An admin changes presets in Team assets; a member proposes here.
   const member = team.role === 'member';
   const [proposing, setProposing] = useState<{ draft: Draft; preset?: Extract<TeamConfig, { kind: 'preset' }> } | null>(null);
   if (!configs.data) return configs.error ? <Failure message={word(configs.error)} /> : null;

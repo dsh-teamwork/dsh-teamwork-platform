@@ -469,7 +469,9 @@
       "sharing": "审核",
       "history": "版本与备份",
       "groups": {
-        "work": "工作",
+        "work": "工作区",
+        "assets": "团队资产",
+        "people": "成员与费用",
         "manage": "团队管理"
       },
       "open": "打开导航",
