@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Team resources has a new Chinese name
+
+- **What:** The Workspace page listing what the team provides has a new zh-CN name, "team shared" rather than "team resources" (`team.nav.resources` in `zh-CN.json`); English stays "Team resources". `/docs` (zh-CN) follows.
+- **Why:** In Chinese, "team resources" and the admin's "Team assets" group read as the same thing.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/messages/zh-CN.json`, `apps/web/content/docs/zh-CN/members.md`.
+
 ## 2026-11-18 — Team management folds at the foot of the sidebar
 
 - **What:** The console sidebar's top group is **Workspace** (was Work), still the only one a member sees. A team admin's pages move to **Team management** at the foot of the sidebar, folded by default and opened by itself on one of its pages, in two groups: **Team assets** (models, presets, plugins, review, history), what the team publishes to its members' DSHs, and **Members and spend** (members, usage, budgets). An edition's `mountWeb` team page names its `group` (`work`, `assets` or `people`) in place of `audience`.
