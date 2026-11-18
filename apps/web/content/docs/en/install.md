@@ -90,7 +90,8 @@ Debian, as the user DSH will run as:
 
 6. Then run `dsh-teamwork login` for your own DSH, or
    `dsh-teamwork share enable <key>` for a Team DSH. See
-   [Commands](/docs/commands#on-a-server-dsh-teamwork). No browser is needed on
+   [Commands](/docs/commands#on-a-server-dsh-teamwork), and
+   [Team DSH](/docs/team-dsh) for the rest of a Team DSH's setup. No browser is needed on
    the server.
 
 The plugin keeps its files in `~/.dsh/dsh-teamwork/` (or `$DSH_HOME/dsh-teamwork/`),

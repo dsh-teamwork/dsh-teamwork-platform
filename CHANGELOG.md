@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A Team DSH guide, and the console's key card says what comes next
+
+- **What:** A new `/docs/team-dsh` page, in English and Chinese, takes an admin from installing DSH on a server to a member's first session, in shell commands (`dsh-teamwork share …`), with day-to-day tasks and troubleshooting; the admins page's Team DSH section now points to it. The console's Team DSH page links to it, and the key card shows the command in both forms (DSH's command input and a shell) and the steps that follow.
+- **Why:** Admins setting up a Team DSH on a server had the commands scattered across three pages and a key card with one command.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/content/docs/{en,zh-CN}/team-dsh.md`, `apps/web/src/pages/team/team-dsh-hosts.tsx`.
+
 ## 2026-11-18 — A pasted pairing code keeps its last letter
 
 - **What:** My DSH's pairing code field drops spaces before it holds the code to six characters, so a code pasted as the panel shows it ("PQP WGG") arrives whole.

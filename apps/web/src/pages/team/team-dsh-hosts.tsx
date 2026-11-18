@@ -3,15 +3,16 @@
  * (`/teams/{teamId}/team-dsh-hosts`, under Team assets; docs/tech/shared-dsh.md):
  * the team host keys an admin creates, rotates and deletes, and who may reach
  * each. A key is shown once, when it is created or rotated, as the command to
- * run in that DSH; the server keeps only its HMAC. Below them, each shared
- * DSH's audit archive, sealed to the admin's own key: the page only lists and
+ * run in that DSH, in both its forms (DSH's command input and a shell), with the
+ * steps that follow and a link to the setup guide (/docs/team-dsh); the server
+ * keeps only its HMAC. Below them, each shared DSH's audit archive, sealed to the admin's own key: the page only lists and
  * downloads it, and `dsh-teamwork-audit read` opens it on the admin's machine.
  * Using one is the Workspace page (team-dsh.tsx). A team the hosted service
  * has not admitted (`available: false`) sees why, and no way to create or
  * rotate a key; what it has stays listed, to rename, delete or audit.
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import { CopyButton } from '@/components/copy-button';
@@ -45,9 +46,18 @@ export function TeamDshHostsPage() {
   // The host whose access is being edited, and the draft of it.
   const [editing, setEditing] = useState<{ id: string; access: 'team' | 'listed'; userIds: string[] } | null>(null);
   const when = (at: string | null) => (at ? format.dateTime(new Date(at), { dateStyle: 'medium', timeStyle: 'short' }) : t('never'));
-  const command = issued ? `/teamwork share enable ${issued.key}` : '';
+  // The same command in its two forms: DSH's own command input, and a shell on a machine with no DSH window.
+  const commands = issued
+    ? ([['keyInDsh', `/teamwork share enable ${issued.key}`], ['keyInShell', `dsh-teamwork share enable ${issued.key}`]] as const)
+    : [];
+  const guide = (chunks: ReactNode) => <a href="/docs/team-dsh" className="text-foreground underline underline-offset-4">{chunks}</a>;
 
-  const header = <PageHeader title={t('title')} description={t('description')} />;
+  const header = (
+    <>
+      <PageHeader title={t('title')} description={t('description')} />
+      <p className="text-sm text-muted-foreground">{t.rich('guide', { link: guide })}</p>
+    </>
+  );
   if (!hosts.data) return <>{header}{hosts.error ? <Failure message={word(hosts.error)} /> : null}</>;
   const { available } = hosts.data;
   return (
@@ -60,14 +70,25 @@ export function TeamDshHostsPage() {
             <CardDescription>{t('keyOnce')}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <code className="min-w-0 flex-1 rounded-md bg-muted px-3 py-2 text-xs break-all">{command}</code>
-              <CopyButton text={command} />
-            </div>
+            {commands.map(([label, command]) => (
+              <div key={label} className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">{t(label)}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <code className="min-w-0 flex-1 rounded-md bg-muted px-3 py-2 text-xs break-all">{command}</code>
+                  <CopyButton text={command} />
+                </div>
+              </div>
+            ))}
             <p className="text-xs text-muted-foreground">{t('keyHelp')}</p>
             <p className="text-xs text-muted-foreground">
               {t.rich('keyInstall', { link: (chunks) => <a href="/docs/install" className="text-foreground underline underline-offset-4">{chunks}</a> })}
             </p>
+            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{t('nextTitle')}</span>
+              <ol className="list-decimal space-y-1 pl-5">
+                {(['nextAudit', 'nextAccess', 'nextInvite', 'nextJoin', 'nextCheck'] as const).map((step) => <li key={step}>{t(step)}</li>)}
+              </ol>
+            </div>
           </CardContent>
         </Card>
       )}
