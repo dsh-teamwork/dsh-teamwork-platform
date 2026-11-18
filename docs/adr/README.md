@@ -40,6 +40,8 @@ or the hosted service, kept with the closed edition rather than here.
 
 - [0049 — The admin lands on the team overview](0049-the-admin-lands-on-the-team-overview.md) — Workspace is everyone's own; Team management opens on the team's overview.
 
+- [0050 — Every call needs a rate](0050-every-call-needs-a-rate.md) — a model without a reference rate cannot be called, budget or none.
+
 The template:
 
 ```markdown

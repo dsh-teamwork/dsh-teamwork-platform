@@ -130,8 +130,6 @@ func TestBudgetPermissionsReconciliationNoticesAndExport(t *testing.T) {
 		must(t, admin.send("PUT", path+"/budgets", budgetBody("member", memberID, "100", 0)), 200)
 		must(t, admin.send("PUT", path+"/budgets", budgetBody("member", "admin-unknown", "100", 0)), 404)
 		// Unverified providers fail closed when a hard budget applies.
-		refused(t, "unpriced budget", call(e.pluginFor(member), modelID, false), 403, "budget_model_unpriced")
-		must(t, admin.send("PUT", path+"/model-rates/"+modelID, rateBody(0, "2")), 200)
 		refused(t, "unverified upstream", call(e.pluginFor(member), modelID, false), 403, "budget_bound_unavailable")
 		if u.hits() != 0 {
 			t.Fatal("budget refusal contacted provider")

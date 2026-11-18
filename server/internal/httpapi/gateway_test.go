@@ -60,6 +60,7 @@ func stubTeam(t *testing.T, b *browser, u *upstream, key string) (teamID, modelI
 	modelID = must(t, b.post("/api/teams/"+teamID+"/configs", map[string]any{
 		"kind": "model", "name": "Stub", "data": map[string]any{"provider": "stub", "model": "stub-model"},
 	}), 201)["id"].(string)
+	price(t, b, teamID, modelID)
 	return teamID, modelID
 }
 

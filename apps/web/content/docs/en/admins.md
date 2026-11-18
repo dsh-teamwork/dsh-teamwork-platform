@@ -25,7 +25,11 @@ key, or enter any OpenAI-compatible address under **Custom**. The key is checked
 with the provider before it is saved: a key the provider refuses, or an address
 this server may not call, is shown on the form with what to change. The key is
 stored encrypted and can never be read back. Then tick the models the team
-should use and publish them.
+should use and publish them, and give each one a reference rate (its **Set
+rates** button): a model without one cannot be called, and the team overview
+lists it until it has one. A rate of zero is allowed. A rate belongs to the
+upstream model it was set for, so pointing a model at another one needs a new
+rate.
 
 Members see team models only: never the address or the key.
 
@@ -74,7 +78,7 @@ beside them; you become a member.
 
 ## 5. Set budgets
 
-Under **Models**, set a reference rate for each model. Then, under **Budgets**,
+Every model has its reference rate from step 2. Under **Budgets**,
 add daily or monthly caps for the whole team, a default for each member, or a
 provider. A call reserves its largest possible cost before it runs, and one that
 would pass a cap is refused. Budgets count **points**, the team's own measure of

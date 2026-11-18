@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Every model call needs a reference rate
+
+- **What:** The gateway refuses a call on a team model that has no reference rate for the provider and upstream model it calls now, whether or not a budget applies: `403 model_unpriced`, before any hold or upstream request. It replaces `budget_model_unpriced`. `GET /api/teams/{teamId}/summary?scope=team` adds `unpricedModels`; the team overview lists them first among what waits, getting started counts a model ready only once it is priced, and the models page marks each and leads with **Set rates**. Edition-funded models are unaffected.
+- **Why:** Points must be known for every call, not only where a cap is set; unpriced calls also filled the admin's list of calls to resolve with ones nothing depended on.
+- **Breaking:** A team with a model that has no rate, or whose rate was set for another upstream model, has its members' calls on that model refused until an admin sets one (zero is allowed). Clients reading the old error code see `model_unpriced`.
+- **Upgrade:** Set a rate on every team model. Nothing else.
+- **Refs:** ADR 0050, `server/internal/usage/admission.go`, `server/internal/usage/service.go`.
+
 ## 2026-11-18 — Admins land on a team overview; the home is everyone's own
 
 - **What:** A team's console now opens an admin on **Team overview** (`/teams/{teamId}/overview`, heading Team management): what waits on the team, its last 30 days, getting started, its resources and the instructions for a new member. The workspace's **Home** moves to `/teams/{teamId}/home` and is the reader's own for everyone, admins included: their submissions under review, the limits that apply to them (said, not linked to a page a member cannot open), their own figures, the team's recent updates, and the DSH steps folded once their DSH has called. `/teams/{teamId}` redirects by role. `GET /api/teams/{teamId}/summary` returns the caller's own by default; `scope=team` returns the team's and needs an admin.

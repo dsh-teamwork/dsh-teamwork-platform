@@ -9,7 +9,7 @@
  * scope, the caller's own, and the overview with `scope=team`.
  */
 
-import { ArrowRight, Check, CircleCheck, Gauge, GitPullRequestArrow, MailWarning, ReceiptText } from 'lucide-react';
+import { ArrowRight, Check, CircleCheck, Gauge, GitPullRequestArrow, MailWarning, ReceiptText, Tag } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useFormatter, useNow, useTranslations } from 'use-intl';
@@ -89,7 +89,8 @@ export function TeamOverviewPage() {
   // In the order a new team gets ready: each step needs the one before it.
   const steps = [
     { key: 'provider', hint: 'hint', done: providers.data.length > 0, href: `${base}/models` },
-    { key: 'model', hint: 'hint', done: count('model') > 0, href: `${base}/models` },
+    // A model is ready once it has a rate: no call reaches it before (ADR 0050).
+    { key: 'model', hint: 'hint', done: count('model') > 0 && (teamSummary?.unpricedModels.length ?? 0) === 0, href: `${base}/models` },
     { key: 'preset', hint: 'hint', done: count('preset') > 0, href: `${base}/presets` },
     { key: 'members', hint: passwords ? 'hintPasswords' : 'hint', done: team.members.length > 1, href: `${base}/members` },
   ] as const;
@@ -141,6 +142,10 @@ function Waiting({ scope, summary, base }: { scope: Scope; summary?: Summary; ba
     return t('scope.member', { email: team.members.find((m) => m.userId === limit.subjectId)?.email ?? limit.subjectId });
   };
   const items: Item[] = [];
+  // First, since it stops calls outright: models no call reaches until a rate is set.
+  if (summary.unpricedModels.length > 0) {
+    items.push({ key: 'unpriced', icon: <Tag className="size-4" aria-hidden />, text: t('unpricedModels', { count: summary.unpricedModels.length }), href: `${base}/models` });
+  }
   if (summary.pendingReviews > 0) {
     items.push({
       key: 'reviews',

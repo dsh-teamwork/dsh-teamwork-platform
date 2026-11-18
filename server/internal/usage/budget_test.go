@@ -14,12 +14,13 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
-func TestMemberInheritanceUnpricedTokensAndClockRegression(t *testing.T) {
+func TestMemberInheritanceTokensAndClockRegression(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		ctx := context.Background()
 		now := time.Date(2026, 11, 14, 12, 0, 0, 0, time.UTC)
 		s := &Service{DB: d.Client, Now: func() time.Time { return now }}
 		call := referenceCall("member", 100, 100)
+		setTestRate(t, s, call)
 		total := int64(400)
 		policy := PolicyInput{Scope: "default_member", Period: "day", Timezone: "UTC", Enabled: true, Total: &total}
 		if _, err := s.SetPolicy(ctx, "team", "admin", policy); err != nil {
@@ -35,18 +36,15 @@ func TestMemberInheritanceUnpricedTokensAndClockRegression(t *testing.T) {
 		}
 		_, err = s.Begin(ctx, call)
 		wantCode(t, err, "budget_exhausted")
-		// Missing monetary reference rates do not serialize a token-only budget.
+		// A token-only budget spends the tokens measured, not the bounds held.
 		for _, r := range []*ent.UsageRequest{first, second} {
 			if err := s.Finish(ctx, r, Observation{Known: true, Complete: true, Tokens: Tokens{Input: 100, Output: 50}}, ""); err != nil {
 				t.Fatal(err)
 			}
 		}
-		if err := s.Resolve(ctx, "team", "admin", first.ID, ResolutionInput{Reason: "Supplier usage report confirmed these token counts", Tokens: Tokens{Input: 100, Output: 50}, Points: new("0.15")}); err != nil {
-			t.Fatal(err)
-		}
 		w := d.Client.BudgetWindow.Query().OnlyX(ctx)
-		if w.UnpricedCount != 1 || w.SpentUnits != 150000000 || w.SpentInput != 200 || w.SpentOutput != 100 {
-			t.Fatalf("unpriced resolution changed token usage: %+v", w)
+		if w.UnpricedCount != 0 || w.SpentInput != 200 || w.SpentOutput != 100 || w.ReservedInput != 0 || w.ReservedOutput != 0 {
+			t.Fatalf("token-only settlement: %+v", w)
 		}
 		// Temporarily removing a member override does not create a fresh allowance.
 		override := PolicyInput{Scope: "member", SubjectID: "member", Period: "day", Timezone: "UTC", Enabled: false, Points: new("0")}

@@ -39,14 +39,7 @@ func TestUsagePricesJSONStreamsAndUncertainResponses(t *testing.T) {
 		teamID, modelID := stubTeam(t, admin, u, "sk-test")
 		path := "/api/teams/" + teamID
 		p := e.pluginFor(admin)
-		must(t, call(p, modelID, false), 200)
-		v := must(t, admin.get(path+"/usage"), 200)
-		first := v["entries"].([]any)[0].(map[string]any)
-		if first["state"] != "unpriced" || first["points"] != nil || first["input"] != float64(2000) {
-			t.Fatalf("unpriced must not be zero: %+v", first)
-		}
 		ratePath := path + "/model-rates/" + modelID
-		must(t, admin.send("PUT", ratePath, rateBody(0, "2")), 200)
 		must(t, call(p, modelID, false), 200)
 		mode.Store(1)
 		if r := call(p, modelID, true); r.status != 200 {
@@ -56,8 +49,8 @@ func TestUsagePricesJSONStreamsAndUncertainResponses(t *testing.T) {
 		if r := call(p, modelID, true); r.status != 200 {
 			t.Fatalf("truncated stream failed: %d %s", r.status, r.body)
 		}
-		v = must(t, admin.get(path+"/usage"), 200)
-		var measured, pending, unpriced int
+		v := must(t, admin.get(path+"/usage"), 200)
+		var measured, pending int
 		for _, row := range v["entries"].([]any) {
 			entry := row.(map[string]any)
 			switch entry["state"] {
@@ -71,12 +64,12 @@ func TestUsagePricesJSONStreamsAndUncertainResponses(t *testing.T) {
 				if entry["points"] != nil {
 					t.Fatalf("interrupted response charged: %+v", entry)
 				}
-			case "unpriced":
-				unpriced++
+			default:
+				t.Fatalf("a priced model's call left %s: %+v", entry["state"], entry)
 			}
 		}
-		if measured != 2 || pending != 1 || unpriced != 1 {
-			t.Fatalf("measured=%d pending=%d unpriced=%d: %+v", measured, pending, unpriced, v)
+		if measured != 2 || pending != 1 {
+			t.Fatalf("measured=%d pending=%d: %+v", measured, pending, v)
 		}
 		refused(t, "stale rate form", admin.send("PUT", ratePath, rateBody(0, "99")), 409, "rate_changed")
 		refused(t, "excess rate precision", admin.send("PUT", ratePath, rateBody(1, "0.0000001")), 400, "invalid_request")
@@ -92,7 +85,6 @@ func TestUsageScopeAndPresetAttribution(t *testing.T) {
 		path := "/api/teams/" + teamID
 		member, memberID := e.person("member@usage.test")
 		must(t, admin.post(path+"/members", map[string]string{"email": "member@usage.test"}), 201)
-		must(t, admin.send("PUT", path+"/model-rates/"+modelID, rateBody(0, "2")), 200)
 		presetID := must(t, admin.post(path+"/configs", map[string]any{"kind": "preset", "name": "Alias", "data": map[string]any{"modelConfigId": modelID}}), 201)["id"].(string)
 		must(t, call(e.pluginFor(admin), modelID, false), 200)
 		must(t, call(e.pluginFor(member), presetID, false), 200)
@@ -127,7 +119,6 @@ func TestUsageCapturesPriceBeforeDispatchAndSettlesOnce(t *testing.T) {
 		admin := e.admin("admin@usage.test")
 		teamID, modelID := stubTeam(t, admin, u, "sk-test")
 		path := "/api/teams/" + teamID
-		must(t, admin.send("PUT", path+"/model-rates/"+modelID, rateBody(0, "2")), 200)
 		p := e.pluginFor(admin)
 		done := make(chan response, 1)
 		go func() { done <- call(p, modelID, false) }()
@@ -152,6 +143,51 @@ func TestUsageCapturesPriceBeforeDispatchAndSettlesOnce(t *testing.T) {
 		}
 		if after.PointUnits == nil || *after.PointUnits != *row.PointUnits || snapshot.Input != 2_000_000 {
 			t.Fatalf("settlement replay changed facts: %+v", after)
+		}
+	})
+}
+
+// Every call needs a rate, budget or none (ADR 0050): a model without one is
+// refused before its provider is reached and leaves no usage, and so is one
+// whose latest rate was set for another upstream model. The team's summary
+// lists the models refused this way, by the same rule.
+func TestEveryCallNeedsARate(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{allowPrivate: true})
+		u := newUpstream(t, func(w http.ResponseWriter, r *http.Request) { answerJSON(w, `{"usage":`+usageFixture+`}`) })
+		admin := e.admin("admin@rate.test")
+		teamID := newTeam(t, admin, "Rates")
+		path := "/api/teams/" + teamID
+		must(t, admin.post(path+"/providers", map[string]string{"name": "stub", "baseUrl": u.URL, "apiKey": "sk-test"}), 201)
+		model := map[string]any{"kind": "model", "name": "Stub", "data": map[string]any{"provider": "stub", "model": "stub-model"}}
+		modelID := must(t, admin.post(path+"/configs", model), 201)["id"].(string)
+		unpriced := func() []any { return must(t, admin.get(path+"/summary?scope=team"), 200)["unpricedModels"].([]any) }
+		p := e.pluginFor(admin)
+
+		if got := unpriced(); len(got) != 1 || got[0] != modelID {
+			t.Fatalf("unpriced models before a rate: %v", got)
+		}
+		refused(t, "a model without a rate", call(p, modelID, false), 403, "model_unpriced")
+		if u.hits() != 0 || must(t, admin.get(path+"/usage"), 200)["total"] != float64(0) {
+			t.Fatalf("a refused call reached the provider (%d) or left usage", u.hits())
+		}
+
+		price(t, admin, teamID, modelID)
+		must(t, call(p, modelID, false), 200)
+		if got := unpriced(); len(got) != 0 {
+			t.Fatalf("unpriced models after a rate: %v", got)
+		}
+
+		// Pointing the model at another upstream model leaves its rate behind.
+		model["data"] = map[string]any{"provider": "stub", "model": "other-model"}
+		model["version"] = 1
+		must(t, admin.send("PATCH", path+"/configs/"+modelID, model), 200)
+		if got := unpriced(); len(got) != 1 || got[0] != modelID {
+			t.Fatalf("unpriced models after the route changed: %v", got)
+		}
+		refused(t, "a rate for another upstream model", call(p, modelID, false), 403, "model_unpriced")
+		if own := must(t, admin.get(path+"/summary"), 200)["unpricedModels"].([]any); len(own) != 0 {
+			t.Fatalf("the caller's own summary lists models: %v", own)
 		}
 	})
 }

@@ -351,8 +351,8 @@
           "hint": "选提供商，粘贴 API 密钥"
         },
         "model": {
-          "title": "发布团队模型",
-          "hint": "成员通过网关调用，密钥不出服务器"
+          "title": "发布团队模型并设置单价",
+          "hint": "设好单价成员才能调用，每次调用的积分都有据可查"
         },
         "preset": {
           "title": "添加预设",
@@ -382,6 +382,7 @@
       "waiting": {
         "title": "待处理",
         "none": "目前没有需要你处理的事项。",
+        "unpricedModels": "{count} 个模型未设置单价，成员暂时无法调用",
         "reviews": "有 {count} 项提交等待你审核",
         "reviewsMine": "你有 {count} 项提交正在等待审核",
         "limitNear": "{who}{period, select, day {今日} other {本月}}已用 {threshold}%",
@@ -536,6 +537,7 @@
       "maxOutput": "最大输出",
       "usedBy": "被预设使用",
       "unused": "未使用",
+      "unpriced": "未设单价，成员暂时无法调用",
       "edit": "编辑",
       "remove": "删除",
       "keySaved": "密钥已保存",
@@ -1027,6 +1029,7 @@
     "title": "使用量",
     "description": "团队模型的调用记录，按 Token 和积分统计。积分是团队自己的成本计量：按参考单价，1 元折合 1,000 积分，预算按积分计算。使用自己的提供商密钥时，费用仍由提供商直接向你收取。",
     "rate": "积分单价",
+    "setRate": "设置单价",
     "rateTitle": "参考单价 · {name}",
     "rateHint": "单位为元／百万 Token，1 元折合 1,000 参考积分。此处计价不会扣除托管服务余额。",
     "hostedRateHint": "托管模型价格由平台发布，团队预算也按此价格计量积分。",
@@ -1166,7 +1169,7 @@
     "notice_retry_later": "请稍后重试该通知。",
     "budget_changed": "预算已被其他操作更新，请刷新并核对当前设置。",
     "budget_exhausted": "团队、成员或上游的预算已达到上限。",
-    "budget_model_unpriced": "此模型尚未设置积分单价，请联系团队管理员。",
+    "model_unpriced": "此模型还没有设置积分单价，暂时无法调用。请联系团队管理员设置。",
     "budget_bound_unavailable": "此模型暂不支持可靠的最大用量预占，请联系团队管理员。",
     "budget_request_unsupported": "请求包含此模型预算控制暂不支持的功能或输出上限。",
     "budget_pending_usage": "存在未定价或未确认的用量，暂不能确认可用额度，请联系团队管理员。",

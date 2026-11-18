@@ -91,7 +91,7 @@ export function TeamLayout() {
 /** Where the sidebar's amber dots go: the team overview while anything waits on the team, and the review queue while a submission does. */
 function waiting(summary?: Schemas['TeamSummary']) {
   if (!summary) return { overview: false, sharing: false };
-  const any = summary.pendingReviews > 0 || summary.nearLimit.length > 0 || summary.unresolved > 0 || summary.failedNotices > 0;
+  const any = summary.unpricedModels.length > 0 || summary.pendingReviews > 0 || summary.nearLimit.length > 0 || summary.unresolved > 0 || summary.failedNotices > 0;
   return { overview: any, sharing: summary.pendingReviews > 0 };
 }
 

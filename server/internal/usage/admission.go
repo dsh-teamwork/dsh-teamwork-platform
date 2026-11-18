@@ -122,13 +122,15 @@ func (s *Service) admit(ctx context.Context, call Call) (*ent.UsageRequest, erro
 		}
 		rates, rateID, priced = call.Quote.Rates, call.Quote.RateID, true
 	}
+	// Every call is priced, budget or none: the points it spends are known even
+	// where no cap is set (ADR 0050). UnpricedModels lists what this refuses.
+	if !priced {
+		return nil, wire.E(http.StatusForbidden, "model_unpriced")
+	}
 	var bound Tokens
 	bounded := false
 	needBound := call.Owner != ""
 	for _, p := range policies {
-		if p.Enabled && p.PointLimit != nil && !priced {
-			return nil, limitError("budget_model_unpriced", p, nil)
-		}
 		needBound = needBound || p.Enabled
 	}
 	if needBound {

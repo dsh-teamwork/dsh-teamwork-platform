@@ -64,14 +64,15 @@ function freeModelName(name: string, provider: string, taken: Set<string>) {
 }
 
 export function TeamModelsPage() {
-  const { team } = useTeam();
+  const { team, reloadTeamSummary } = useTeam();
   const word = useTeamError();
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
   const providers = useApi<Provider[]>(`teams/${team.id}/providers`);
   const failed = (!configs.data && configs.error) || (!providers.data && providers.error);
   if (failed) return <Failure message={word(failed)} />;
   if (!configs.data || !providers.data) return null;
-  const reload = () => Promise.all([configs.reload(), providers.reload()]);
+  // A model pointed elsewhere leaves its rate behind, which the team's summary lists.
+  const reload = () => Promise.all([configs.reload(), providers.reload(), reloadTeamSummary()]);
   return <Models team={team} configs={configs.data} providers={providers.data} reload={reload} />;
 }
 
@@ -214,11 +215,22 @@ function Mark({ text }: { text: string }) {
 
 function ModelRow({ teamId, reload, model, usedBy, referenceProvider }: { teamId: string; reload: Reload; model: ModelConfig; usedBy: string[]; referenceProvider: string }) {
   const t = useTranslations('team.models');
+  const { teamSummary } = useTeam();
   const { pending, run } = useMutation(reload);
   const [editing, setEditing] = useState(false);
+  const unpriced = teamSummary?.unpricedModels.includes(model.id) ?? false;
   return (
     <tr className="border-b last:border-b-0">
-      <td className="px-4 py-3 font-medium">{model.name}</td>
+      <td className="px-4 py-3">
+        <span className="font-medium">{model.name}</span>
+        {unpriced && (
+          <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            {/* Amber, as a dot: no member's call reaches this model until its admin sets a rate (docs/design.md). */}
+            <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-signal" />
+            {t('unpriced')}
+          </span>
+        )}
+      </td>
       <td className="px-4 py-3 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
         {model.data.provider} / {model.data.model}
       </td>
@@ -238,7 +250,7 @@ function ModelRow({ teamId, reload, model, usedBy, referenceProvider }: { teamId
         )}
       </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">
-        <ModelRateButton teamId={teamId} configId={model.id} name={model.name} admin provider={referenceProvider} model={model.data.model} />
+        <ModelRateButton teamId={teamId} configId={model.id} name={model.name} admin provider={referenceProvider} model={model.data.model} missing={unpriced} />
         <>
           {!model.owner && <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
             {t('edit')}

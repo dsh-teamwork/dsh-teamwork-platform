@@ -351,8 +351,8 @@
           "hint": "Pick one and paste its API key"
         },
         "model": {
-          "title": "Publish team models",
-          "hint": "Members call them through the gateway; the key stays on the server"
+          "title": "Publish team models and their rates",
+          "hint": "Members call a model once it has rates, so every call’s points are known"
         },
         "preset": {
           "title": "Add a preset",
@@ -382,6 +382,7 @@
       "waiting": {
         "title": "Waiting on you",
         "none": "Nothing waits on you.",
+        "unpricedModels": "{count, plural, one {# model has} other {# models have}} no rates: members cannot call {count, plural, one {it} other {them}}",
         "reviews": "{count, plural, one {# submission waits} other {# submissions wait}} for your review",
         "reviewsMine": "{count, plural, one {# of your submissions is} other {# of your submissions are}} awaiting review",
         "limitNear": "{who} is {threshold}% used {period, select, day {today} other {this month}}",
@@ -536,6 +537,7 @@
       "maxOutput": "Max output",
       "usedBy": "Used by presets",
       "unused": "Unused",
+      "unpriced": "No rates yet: members cannot call it",
       "edit": "Edit",
       "remove": "Remove",
       "keySaved": "Key saved",
@@ -1027,6 +1029,7 @@
     "title": "Usage",
     "description": "The team's model calls, in tokens and points. Points are the team's own measure of cost: CNY 1 = 1,000 points at the reference rates, and budgets count them. With your own provider key, the provider still bills you directly.",
     "rate": "Point rates",
+    "setRate": "Set rates",
     "rateTitle": "Reference rates · {name}",
     "rateHint": "CNY per million tokens. CNY 1 = 1,000 reference points. These rates do not charge a hosted balance.",
     "hostedRateHint": "Hosted prices are published by the service. These prices also determine the points counted against your team budgets.",
@@ -1166,7 +1169,7 @@
     "notice_retry_later": "Wait before retrying this notification.",
     "budget_changed": "This budget changed. Refresh and review the current values.",
     "budget_exhausted": "A team, member or provider budget has been reached.",
-    "budget_model_unpriced": "This model needs reference rates before a points budget can be enforced. Contact your team admin.",
+    "model_unpriced": "This model has no rates yet, so it cannot be called. Ask your team admin to set them.",
     "budget_bound_unavailable": "This model does not yet support verified maximum-usage reservations. Contact your team admin.",
     "budget_request_unsupported": "This request contains features or output limits unsupported by the model's budget controls.",
     "budget_pending_usage": "Unpriced or unconfirmed usage prevents a reliable remaining allowance. Contact your team admin.",

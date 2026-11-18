@@ -24,6 +24,10 @@ policy/window reservations, settlement, recovery and notification work. The
 existing authenticated team API and console expose it on SQLite, Postgres and
 MySQL. Nothing installs a cap automatically. Admins configure reference rates
 in Models, then daily/monthly caps in Budgets; Usage shows the resulting calls.
+A rate is required: a model without one for the provider and upstream model it
+calls now is refused `model_unpriced` before any hold, budget or none
+([ADR 0050](../adr/0050-every-call-needs-a-rate.md)), and the team summary's
+`unpricedModels` lists such models by the same rule.
 
 The scale is `1 CNY = 1,000 reference points` and `1 point = 1,000,000,000`
 integer accounting units ([ADR 0022](../adr/0022-reference-usage-accounting.md)).
@@ -43,8 +47,9 @@ Prices have immutable revisions tied to effective model/provider identity.
 Capture the price before dispatch; changing rates never reprices old calls.
 Referenced presets use the effective model's price. Cache subcounts are already
 inside input, and reasoning is already inside output. Sum disjoint buckets
-once. Unknown rates produce unpriced points, never a zero-price assumption.
-Explicit zero rates are supported. No prompt or response text is stored.
+once. A missing rate refuses the call, never a zero-price assumption; rows
+recorded `unpriced` before that rule remain resolvable. Explicit zero rates are
+supported. No prompt or response text is stored.
 
 ## Admission and calendar windows
 
@@ -86,8 +91,7 @@ cannot cover a maximum call. This trades availability for a conservative cap;
 it does not claim a character heuristic is an accurate tokenizer. Actual
 measured consumption releases the unused hold. Other BYOK providers still have
 JSON/SSE reporting with enforcement disabled; enabling a hard cap rejects an
-unverified route before it reaches the provider. Token-only budgets can operate
-without a reference rate on supported routes.
+unverified route before it reaches the provider.
 
 Protocol replay tests exercise this adapter. No live-provider certification or
 paid production rollout is implied by those tests. Supplier contract changes

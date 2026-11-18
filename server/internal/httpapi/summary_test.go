@@ -31,7 +31,6 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 		}
 
 		// One priced call each, 10.2 points apiece; then the member's is left for an admin to resolve.
-		must(t, admin.send("PUT", path+"/model-rates/"+modelID, rateBody(0, "2")), 200)
 		must(t, call(e.pluginFor(admin), modelID, false), 200)
 		must(t, call(e.pluginFor(member), modelID, false), 200)
 		d.Client.UsageRequest.Update().Where(usagerequest.UserID(memberID)).SetState(usagerequest.StatePending).ExecX(ctx)

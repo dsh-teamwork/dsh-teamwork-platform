@@ -3733,6 +3733,8 @@ export interface components {
                 /** @enum {integer} */
                 threshold: 80 | 95 | 100;
             }[];
+            /** @description The team's models no call reaches until a rate is set for the provider and upstream model they call now; empty outside scope=team */
+            unpricedModels: string[];
             budget: components["schemas"]["QuotaSummary"];
             /** @description Submissions awaiting review, in the scope asked for */
             pendingReviews: number;
