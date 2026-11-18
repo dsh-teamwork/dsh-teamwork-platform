@@ -39,7 +39,8 @@ On the machine a DSH runs on, `dsh-teamwork` (`npm install -g @dsh-teamwork/dsh-
 what the Teamwork panel does, from a shell, with no browser: for a DSH on a
 server, a Team DSH above all. DSH must be running there as the same user; the
 command finds it through the plugin's directory in `~/.dsh`, or `$DSH_HOME`.
-Linux and macOS.
+Linux and macOS. [Team DSH](/docs/team-dsh) puts the `share` commands in the
+order a setup runs them.
 
 | Command | What it does |
 | --- | --- |
