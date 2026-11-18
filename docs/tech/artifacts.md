@@ -125,6 +125,19 @@ a credential.**
   `/a/{token}/` with a token sealed under its own key from `AUTH_SECRET`: one
   version, one viewer, one hour. Relative paths in the page resolve under it,
   so supporting files load with no cookie at all.
+- **Where `/a/` is served: `CONTENT_URL`**, an origin of its own when one is
+  set, else `APP_URL`'s. The hosted service sets `https://dshteam.work`, a
+  domain registered for nothing else, so a page is not merely an opaque
+  origin but another site: the console's cookies are host-only on
+  `APP_URL` and never sent there, a page cannot pass for the console in the
+  address bar, and a browser or WebView that ignored the sandbox still could
+  not reach the console. A self-hosted server needs no second domain and
+  relies on the sandbox alone. When the two differ, `CONTENT_URL`'s host
+  answers `/a/` and nothing else (no API, no console, no cookie, a
+  `robots.txt` that refuses every crawler, a 404 elsewhere), and `APP_URL`'s
+  host answers `/a/` with a 404. It must be a different site from `APP_URL`,
+  not a subdomain of it, which would share its cookies' site: the server
+  refuses to start on one. The view address is absolute, on `CONTENT_URL`.
 - **`/a/` re-checks the reader on every request**, not only when the address
   is minted: a member removed from the list or the team, or an artifact made
   private, stops loading at once, even in a page already open.
@@ -133,8 +146,9 @@ a credential.**
   (no `allow-same-origin`), a `default-src 'none'` policy that admits the
   page's own files, inline script and style, `data:` and `blob:` images, and
   scripts and styles from a fixed CDN list (cdnjs, jsdelivr, unpkg),
-  `connect-src` limited to the same list, `X-Content-Type-Options: nosniff`,
-  and no cookie set or read. Opened directly in a tab, the page is still an
+  `connect-src` limited to the same list, `frame-ancestors` limited to
+  `APP_URL` (and the app's WebView, which loads it as a top-level page),
+  `X-Content-Type-Options: nosniff`, and no cookie set or read. Opened directly in a tab, the page is still an
   opaque origin, so it cannot read the console's storage or call the API as
   the viewer, and registers no service worker.
 - **Markdown and SVG** go through the same address; Markdown is rendered into
@@ -226,7 +240,7 @@ whole team.**
     once, so two dialogs cannot half-merge), `DELETE …/{id}`, `POST …/{id}/versions/{n}/restore` (a new
     version copying an old one), from a session;
   - `POST …/versions/{n}/view`, from a session or the app's token;
-  - `GET /a/{token}/{path}`, from no one in particular.
+  - `GET /a/{token}/{path}` on `CONTENT_URL`, from no one in particular.
 - **Rules** (`internal/team`, beside the others): the owner and the team's
   admins change sharing, restore and delete; every reader may add a version
   (a read-only reader is not in this plan); a chosen member must be in the
@@ -249,8 +263,10 @@ whole team.**
 
 ## What is expensive to change
 
-- **The view address and its headers.** They are the security boundary; a
-  hole there is every viewer's account.
+- **The view address, its headers and its domain.** They are the security
+  boundary; a hole there is every viewer's account. On the hosted service,
+  `dshteam.work` is in every view address once pages are open in a tab, so
+  it is kept registered for as long as the service runs.
 - **The tool's arguments and the upload's shape.** An installed plugin is a
   client this repository cannot update.
 - **The object keys.** Once a bucket holds team files under them, moving them
@@ -261,11 +277,14 @@ whole team.**
 ## Order of work, and what gates what
 
 1. **Spike, thrown away: the isolation.** A page served with the headers
-   above, from the address shape above, in Chrome, Safari, Firefox, Android's
-   WebView and iOS's WKWebView: its `document.cookie`, `localStorage` and a
-   `fetch` to `/api/me` each fail; a relative image, a script from jsdelivr and
-   an inline script each work. If a WebView will not keep the opaque origin,
-   the phone viewer changes shape before anything lands.
+   above, from the address shape above, both on `APP_URL`'s origin (the
+   self-hosted case) and on a second site (the hosted case), in Chrome,
+   Safari, Firefox, Android's WebView and iOS's WKWebView: its
+   `document.cookie`, `localStorage` and a `fetch` to `/api/me` each fail; a
+   relative image, a script from jsdelivr and an inline script each work, and
+   the console frames it. If a WebView will not keep the opaque origin on the
+   same site, a self-hosted phone viewer changes shape before anything
+   lands.
 2. **Spike, thrown away: the tool's result on the wire.** A plugin tool's
    result reaches the console through the relay intact and readable as
    `tool/result` with the tool's name, both live and from `session/page`.
@@ -303,7 +322,9 @@ whole team.**
 - **A test of the boundary**: a view address opens only its own version, not
   after its hour, not with another team's id, not once its viewer is taken
   off the list, and every `/a/` response carries the sandbox policy and sets
-  no cookie.
+  no cookie; with `CONTENT_URL` set, `/a/` on `APP_URL` is a 404, the content
+  host serves nothing else, and a `CONTENT_URL` on `APP_URL`'s site stops the
+  server at start.
 - **The plugin's end-to-end test** (`server/e2e`) makes an artifact from a
   real DSH session, adds a version, and reads both through view addresses.
 - **A browser test** of step 1's checks against the real server, kept in CI,
