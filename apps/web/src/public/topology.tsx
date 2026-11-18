@@ -13,7 +13,7 @@ import { PROVIDER_LOGOS } from './provider-logos';
  * admin's web console); in the middle, the one place that governs and syncs,
  * its name over the page's sections ticked off as what it does;
  * on the right, the mainstream providers it forwards calls to, each by its
- * logo (./provider-logos.ts), and the cloud DSH that is coming.
+ * logo (./provider-logos.ts), and Cloud DSH as a separate workspace.
  *
  * The value is shown rather than labelled. A pulse plays the story on a loop
  * (globals.css, "topology"): the admin publishes, the hub syncs it to every
@@ -61,14 +61,15 @@ const curve = (x1: number, y1: number, x2: number, y2: number) => {
   return `M${x1} ${y1}C${m} ${y1} ${m} ${y2} ${x2} ${y2}`;
 };
 
-// Three columns: the people, the hub, and one narrow column of providers over cloud DSH.
+// Three columns: the people, the hub, and the providers above Cloud DSH.
 const WIDTH = 760;
 const LEFT = 4;
+const NODE_WIDTH = 192;
 const HUB = { x: 296, y: 82, width: 200, height: 268 } as const;
 const RIGHT = 600;
 const RIGHT_WIDTH = 156;
-/** The providers' box, centred with cloud DSH beside the hub. */
-const UPSTREAM = { y: 60, height: 232 } as const;
+const UPSTREAM = { y: 62, height: 232 } as const;
+const CLOUD_Y = UPSTREAM.y + UPSTREAM.height + 22;
 const ROW = 28;
 
 function Icon({ name, x, y }: { name: keyof typeof ICONS; x: number; y: number }) {
@@ -82,19 +83,19 @@ function Icon({ name, x, y }: { name: keyof typeof ICONS; x: number; y: number }
   );
 }
 
-function Node({ x, y, width = 192, icon, who, where, admin, coming, synced, f }: {
-  x: number; y: number; width?: number; icon: keyof typeof ICONS; who: string; where: string; admin?: boolean; coming?: boolean;
+function Node({ x, y, width = NODE_WIDTH, icon, who, where, admin, synced, f }: {
+  x: number; y: number; width?: number; icon: keyof typeof ICONS; who: string; where: string; admin?: boolean;
   /** Ticks when the pulse's sync reaches this card. */
   synced?: boolean;
   /** The hub features this node belongs to, for the hover highlight. */
   f: string;
 }) {
   return (
-    <g opacity={coming ? 0.6 : 1} data-f={f}>
+    <g data-f={f}>
       <rect
         x={x} y={y} width={width} height={64} rx={14}
-        className={admin ? 'fill-background stroke-brand' : coming ? 'fill-none stroke-input' : 'fill-background stroke-border'}
-        strokeWidth={admin ? 1.6 : 1.2} strokeDasharray={coming ? '5 5' : undefined}
+        className={admin ? 'fill-background stroke-brand' : 'fill-background stroke-border'}
+        strokeWidth={admin ? 1.6 : 1.2}
       />
       <Icon name={icon} x={x + 13} y={y + 13} />
       <text x={x + 62} y={y + 28} className="fill-foreground text-[13px] font-semibold">{who}</text>
@@ -124,24 +125,19 @@ export function Topology({ locale }: { locale: Locale }) {
     { y: 228, to: 244, icon: 'phone', key: 'phone' },
     { y: 316, to: 288, icon: 'console', key: 'admin', admin: true },
   ] as const;
-  const features = ['collaborate', 'govern', 'everywhere', 'assets'] as const;
+  const features = ['everywhere', 'collaborate', 'govern', 'assets'] as const;
   const hubRight = HUB.x + HUB.width;
   const hubCentre = HUB.x + HUB.width / 2;
   const edge = (p: (typeof people)[number]) => curve(LEFT + 194, p.y + 32, HUB.x - 2, p.to);
   const toModels = curve(hubRight + 2, 200, RIGHT - 2, 170);
+  const toCloud = curve(hubRight + 2, 286, RIGHT - 2, CLOUD_Y + 32);
   return (
-    <svg viewBox={`0 0 ${WIDTH} 420`} role="img" aria-label={t('label')} className="topology block h-auto w-full max-w-full text-foreground">
+    <svg viewBox={`0 12 ${WIDTH} 408`} role="img" aria-label={t('label')} className="topology block h-auto w-full max-w-full text-foreground">
       <defs>
         <marker id="topology-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" className="fill-foreground" />
         </marker>
       </defs>
-
-      <g className="fill-muted-foreground font-mono text-[11px] tracking-wider">
-        <text x={LEFT} y={30}>{t('columns.people')}</text>
-        <text x={hubCentre} y={30} textAnchor="middle">{t('columns.hub')}</text>
-        <text x={RIGHT + RIGHT_WIDTH} y={30} textAnchor="end">{t('columns.upstream')}</text>
-      </g>
 
       {/* People to the hub: both ways for members (config down, calls up), into it for the admin. */}
       <g className="fill-none stroke-foreground" strokeWidth={1.4}>
@@ -171,9 +167,9 @@ export function Topology({ locale }: { locale: Locale }) {
         </g>
       ))}
 
-      {/* The hub to the providers. */}
+      {/* Model calls and cloud workspace access take separate paths from the hub. */}
       <path data-f="govern" d={toModels} className="fill-none stroke-foreground" strokeWidth={1.6} markerEnd="url(#topology-arrow)" />
-      <path data-f="everywhere" d={curve(hubRight + 2, 300, RIGHT - 2, 340)} className="fill-none stroke-foreground" strokeWidth={1.4} strokeDasharray="5 5" opacity={0.5} markerStart="url(#topology-arrow)" markerEnd="url(#topology-arrow)" />
+      <path data-f="everywhere" d={toCloud} className="fill-none stroke-foreground" strokeWidth={1.4} markerEnd="url(#topology-arrow)" markerStart="url(#topology-arrow)" />
 
       {/* The story's pulses, in amber over the lines: publish, sync to every member, a member's call out to a model. */}
       <g className="fill-none stroke-signal" strokeWidth={3.5} strokeLinecap="round" aria-hidden="true">
@@ -214,7 +210,7 @@ export function Topology({ locale }: { locale: Locale }) {
           );
         })}
       </g>
-      <Node x={RIGHT} y={UPSTREAM.y + UPSTREAM.height + 16} width={RIGHT_WIDTH} icon="cloud" who={t('cloud.who')} where={t('cloud.where')} coming f="everywhere" />
+      <Node x={RIGHT} y={CLOUD_Y} width={RIGHT_WIDTH} icon="cloud" who={t('cloud.title')} where={t('cloud.status')} f="everywhere" />
 
       {people.map((p) => (
         <Node

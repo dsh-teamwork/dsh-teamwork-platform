@@ -18,7 +18,7 @@ import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
 
 import { DOC_PAGES, DocsPage, docPath, loadDoc } from './docs';
-import { HomePage } from './home';
+import { HomePage, type HomeWorkspace } from './home';
 import { LegalDocument } from './legal-document';
 import { SITE_ORIGIN } from './site';
 
@@ -87,14 +87,19 @@ function Document({ locale, title, description, path, assets, children }: Docume
 const page = (element: ReactNode) => `<!doctype html>${renderToStaticMarkup(element)}`;
 
 /** Every public page, by the file name the Go server looks it up by. */
-export function renderPages(assets: Assets, legal: LegalSources | null): Record<string, string> {
+export function renderPages(
+  assets: Assets,
+  legal: LegalSources | null,
+  homeWorkspace?: (locale: Locale) => HomeWorkspace,
+): Record<string, string> {
   const pages: Record<string, string> = {};
   for (const locale of LOCALES) {
+    const workspace = homeWorkspace?.(locale);
     const tagline = (locale === 'zh-CN' ? zhCN : en).home.tagline;
     for (const signedIn of [false, true]) {
       pages[`home.${locale}${signedIn ? '.signed-in' : ''}.html`] = page(
         <Document locale={locale} title={APP_NAME} description={tagline} path="/" assets={assets}>
-          <HomePage locale={locale} signedIn={signedIn} legal={legal !== null} />
+          <HomePage locale={locale} signedIn={signedIn} legal={legal !== null} workspace={workspace} />
         </Document>,
       );
     }
