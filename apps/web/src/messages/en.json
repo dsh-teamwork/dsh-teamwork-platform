@@ -634,6 +634,7 @@
       "skill": "Use a skill"
     },
     "avatars": {
+      "assistant": "Team assistant",
       "finance": "Finance",
       "admin": "Administration",
       "hr": "Human resources",
@@ -647,22 +648,10 @@
       "operations": "Operations",
       "project": "Project management",
       "training": "Training",
-      "spark": "Spark",
-      "code": "Code",
-      "terminal": "Terminal",
-      "search": "Search",
-      "pen": "Pen",
-      "shield": "Shield",
-      "chart": "Chart",
-      "bug": "Bug",
-      "book": "Book",
-      "bulb": "Light bulb",
-      "compass": "Compass",
-      "layers": "Layers",
-      "chat": "Chat",
-      "flask": "Flask",
-      "globe": "Globe",
-      "database": "Database"
+      "developer": "Software development",
+      "researcher": "Research",
+      "analyst": "Data analysis",
+      "writer": "Writing"
     },
     "presets": {
       "title": "Presets",

@@ -2,13 +2,17 @@
  * The preset avatars: one vector library the web console and the phone app
  * both draw, so a preset looks the same wherever a member meets it.
  *
- * An avatar is a glyph in paper on the navy plate the mark sits on (navy says
- * "this is the team's", docs/design.md), drawn as stroked paths on a 32-unit
- * square: the plate is the whole square with the logo's corner, the glyph keeps
- * inside 8–24. A client draws the plate, then each path with no fill, the
- * stroke width given here, round caps and round joins; a dot is a path of
- * length zero, which a round cap draws as a disc. Nothing here knows the DOM or
- * React Native.
+ * An avatar is a professional, not a tool: a head-and-shoulders figure in
+ * paper, faceless, told apart by what the role wears or carries (an
+ * engineer's hard hat, counsel's gown and bands, a support agent's headset)
+ * and by its own plate and accent colour (docs/design.md, "Preset avatars").
+ *
+ * Each is drawn on a 32-unit square: the plate is the whole square with the
+ * logo's corner, then each layer in order, filled and/or stroked in one of
+ * three tones — the figure's paper, the avatar's plate (a cut-out on the
+ * figure) or its accent — with round caps and joins. The figure stays clear of
+ * the plate's rounded corners, so no client needs a clip. Nothing here knows
+ * the DOM or React Native.
  *
  * A preset stores the avatar's id (`PresetData.avatar`). The id is the stored
  * contract: an avatar may be redrawn freely, but an id once published is never
@@ -18,111 +22,272 @@
  * every surface shows of it, so the console and the phone draw the same.
  */
 
-export interface PresetAvatar {
-  id: string;
-  /** Path data on the 32-unit square, each stroked with `PRESET_AVATAR_STYLE`. */
-  paths: readonly string[];
+export type PresetAvatarTone = 'figure' | 'plate' | 'accent';
+
+export interface PresetAvatarLayer {
+  d: string;
+  fill?: PresetAvatarTone;
+  stroke?: PresetAvatarTone;
+  /** Stroke width in units of the 32-unit square; 1 when omitted. */
+  width?: number;
 }
 
-/** The square every avatar is drawn on, and how its plate and glyph are painted. */
+export interface PresetAvatar {
+  id: string;
+  plate: string;
+  accent: string;
+  layers: readonly PresetAvatarLayer[];
+}
+
+/** The square every avatar is drawn on, and the paper its figure is drawn in. */
 export const PRESET_AVATAR_STYLE = {
   size: 32,
   /** The logo's corner: 22 % of the side. */
   radius: 7,
-  /** Navy: the brand plate (docs/design.md, "Brand colours"). */
-  plate: '#1E2F6D',
-  /** Paper: the mark's fluke. */
-  ink: '#F8F5EF',
-  strokeWidth: 2,
+  /** Paper: the mark's fluke (docs/design.md, "Brand colours"). */
+  figure: '#F8F5EF',
 } as const;
 
-const dot = (x: number, y: number) => `M${x} ${y}h0`;
+/** The colour a layer's tone is painted in, for this avatar. */
+export function presetAvatarColor(avatar: PresetAvatar, tone: PresetAvatarTone): string {
+  return tone === 'figure' ? PRESET_AVATAR_STYLE.figure : tone === 'plate' ? avatar.plate : avatar.accent;
+}
+
+// The figure every avatar starts from: a head over shoulders that stop short of the plate's corners.
+const HEAD = 'M21 13.5A5 5 0 1 1 11 13.5A5 5 0 1 1 21 13.5Z';
+const BODY = 'M7.5 32V28.5C7.5 24.3 11.2 21.2 16 21.2C20.8 21.2 24.5 24.3 24.5 28.5V32Z';
+const head: PresetAvatarLayer = { d: HEAD, fill: 'figure' };
+const body: PresetAvatarLayer = { d: BODY, fill: 'figure' };
+const circle = (cx: number, cy: number, r: number) => `M${cx + r} ${cy}A${r} ${r} 0 1 1 ${cx - r} ${cy}A${r} ${r} 0 1 1 ${cx + r} ${cy}Z`;
+
+// What several roles share.
+const glasses: PresetAvatarLayer = { d: `${circle(13.7, 14, 1.5)}${circle(18.3, 14, 1.5)}M15.2 14H16.8`, stroke: 'plate', width: 0.9 };
+const lapels: PresetAvatarLayer = { d: 'M12.2 21.9L16 27L19.8 21.9', stroke: 'plate', width: 0.9 };
+const tie: PresetAvatarLayer = { d: 'M16 22.2L14.9 23.4L16 29.5L17.1 23.4Z', fill: 'accent' };
 
 export const PRESET_AVATARS: readonly PresetAvatar[] = [
-  // Office roles first: what a team most often names a preset after.
   {
+    // The team assistant every team is given: a spark on the chest.
+    id: 'assistant',
+    plate: '#1E2F6D',
+    accent: '#E8A33D',
+    layers: [body, head, { d: 'M16 23.3L16.9 25.9L19.5 26.8L16.9 27.7L16 30.3L15.1 27.7L12.5 26.8L15.1 25.9Z', fill: 'accent' }],
+  },
+  {
+    // Finance: glasses, a tie, and the ledger's green.
     id: 'finance',
-    paths: ['M11 8H21A1.5 1.5 0 0 1 22.5 9.5V22.5A1.5 1.5 0 0 1 21 24H11A1.5 1.5 0 0 1 9.5 22.5V9.5A1.5 1.5 0 0 1 11 8Z', 'M13 11.5H19', dot(13, 16), dot(16, 16), dot(19, 16), dot(13, 20), dot(16, 20), dot(19, 20)],
+    plate: '#1F4D3A',
+    accent: '#D9B44A',
+    layers: [body, head, lapels, tie, glasses],
   },
   {
+    // Administration: hair in a bun and a lanyard badge.
     id: 'admin',
-    paths: ['M12 9.5H11A1.5 1.5 0 0 0 9.5 11V22.5A1.5 1.5 0 0 0 11 24H21A1.5 1.5 0 0 0 22.5 22.5V11A1.5 1.5 0 0 0 21 9.5H20', 'M13.5 8H18.5V11H13.5Z', 'M13 15.5H19', 'M13 19.5H17'],
+    plate: '#5A3A5E',
+    accent: '#E9B8C8',
+    layers: [
+      body,
+      head,
+      { d: circle(16, 7.6, 2.1), fill: 'accent' },
+      { d: 'M11 13C11.6 10.1 13.6 8.6 16 8.6C18.4 8.6 20.4 10.1 21 13C19.2 11.6 17.4 11.1 15.6 11.2C13.8 11.3 12.3 11.9 11 13Z', fill: 'accent' },
+      { d: 'M13 21.6L16 26L19 21.6', stroke: 'accent', width: 0.8 },
+      { d: 'M14.6 26H17.4V29.4H14.6Z', fill: 'accent' },
+    ],
   },
   {
+    // Human resources: shoulder-length hair and a heart pin.
     id: 'hr',
-    paths: ['M16 12.5A2.5 2.5 0 1 1 11 12.5A2.5 2.5 0 1 1 16 12.5Z', 'M8.5 23C8.5 19.5 10.5 17.5 13.5 17.5C16.5 17.5 18.5 19.5 18.5 23', 'M19 10A2.5 2.5 0 0 1 19 15', 'M20.5 17.8C22.4 18.4 23.5 20.2 23.5 23'],
+    plate: '#7A2E3B',
+    accent: '#F2A07B',
+    layers: [
+      { d: 'M9.6 14.5C9.6 9.4 12.4 7.4 16 7.4C19.6 7.4 22.4 9.4 22.4 14.5V20.4C21 21 19.6 20.6 19 19.6H13C12.4 20.6 11 21 9.6 20.4Z', fill: 'accent' },
+      body,
+      head,
+      { d: 'M11.1 12.4C12 10.2 14 9.2 16.2 9.6C15.2 10.8 13.4 12 11.1 12.4Z', fill: 'accent' },
+      { d: 'M19.8 25.6C19.8 24.9 20.9 24.5 21.4 25.3C21.9 24.5 23 24.9 23 25.6C23 26.6 21.4 27.6 21.4 27.6C21.4 27.6 19.8 26.6 19.8 25.6Z', fill: 'accent' },
+    ],
   },
-  { id: 'marketing', paths: ['M9 14V18H12L19 22V10L12 14Z', 'M12 18L13.5 23', 'M22 13.5C23 14.5 23 17.5 22 18.5'] },
   {
+    // Marketing: a megaphone raised at the shoulder.
+    id: 'marketing',
+    plate: '#A2441F',
+    accent: '#FFD27A',
+    layers: [body, head, { d: 'M20.2 22.4L26 19.6V26.8L20.2 24.6Z', fill: 'accent' }, { d: 'M20.6 23.5H19.2', stroke: 'accent', width: 1.4 }],
+  },
+  {
+    // Sales and business: a suit, a tie and a pocket square.
     id: 'sales',
-    paths: ['M9.5 13H22.5A1 1 0 0 1 23.5 14V22A1 1 0 0 1 22.5 23H9.5A1 1 0 0 1 8.5 22V14A1 1 0 0 1 9.5 13Z', 'M13 13V10.5A1.5 1.5 0 0 1 14.5 9H17.5A1.5 1.5 0 0 1 19 10.5V13', 'M8.5 17.5H23.5'],
+    plate: '#16324F',
+    accent: '#E07A5F',
+    layers: [
+      body,
+      head,
+      { d: 'M7.5 32V28.5C7.5 25.4 9.5 22.9 12.4 21.8L16 27L19.6 21.8C22.5 22.9 24.5 25.4 24.5 28.5V32Z', fill: 'plate' },
+      { d: 'M7.5 32V28.5C7.5 25.4 9.5 22.9 12.4 21.8L16 27L19.6 21.8C22.5 22.9 24.5 25.4 24.5 28.5V32', stroke: 'figure', width: 0.8 },
+      tie,
+      { d: 'M19.6 26.4L21.8 25.8L21.6 27.2Z', fill: 'accent' },
+    ],
   },
-  { id: 'engineer', paths: ['M8.5 19.5H23.5V22.5H8.5Z', 'M10.5 19.5V17.5A5.5 5.5 0 0 1 14 12.4', 'M18 12.4A5.5 5.5 0 0 1 21.5 17.5V19.5', 'M14 16.5V10.5H18V16.5'] },
-  { id: 'product', paths: ['M16 8.5L23 12V20L16 23.5L9 20V12Z', 'M9 12L16 15.5L23 12', 'M16 15.5V23.5'] },
-  { id: 'legal', paths: ['M16 9V23', 'M12.5 23H19.5', 'M10 11.5H22', 'M8 17L10 11.5L12 17', 'M8 17C8.5 18.5 11.5 18.5 12 17', 'M20 17L22 11.5L24 17', 'M20 17C20.5 18.5 23.5 18.5 24 17'] },
   {
+    // Engineering: a hard hat and a vest's reflective stripes.
+    id: 'engineer',
+    plate: '#2F3B45',
+    accent: '#F2B134',
+    layers: [
+      body,
+      head,
+      { d: 'M10.4 12.4C10.4 8.6 12.9 6.6 16 6.6C19.1 6.6 21.6 8.6 21.6 12.4Z', fill: 'accent' },
+      { d: 'M9 12.2H23V13.8H9Z', fill: 'accent' },
+      { d: 'M16 7V10.8', stroke: 'plate', width: 0.9 },
+      { d: 'M12.6 21.8V32M19.4 21.8V32', stroke: 'accent', width: 1.4 },
+    ],
+  },
+  {
+    // Product: a turtleneck, glasses and a sticky note.
+    id: 'product',
+    plate: '#3B2F6B',
+    accent: '#8FD1B5',
+    layers: [
+      body,
+      head,
+      { d: 'M13.2 19.2H18.8V22.6H13.2Z', fill: 'figure' },
+      { d: 'M13.2 20.4H18.8M13.2 21.6H18.8', stroke: 'plate', width: 0.5 },
+      { d: 'M18.6 24.6H23L23 28.2L21.8 29H18.6Z', fill: 'accent' },
+      glasses,
+    ],
+  },
+  {
+    // Legal: counsel's wig, gown and white bands.
+    id: 'legal',
+    plate: '#5C1F2E',
+    accent: '#1A1A22',
+    layers: [
+      { d: BODY, fill: 'accent' },
+      head,
+      { d: 'M12.4 21.8L16 26L19.6 21.8', stroke: 'figure', width: 0.8 },
+      { d: 'M15 22.6H15.9V26.6H15ZM16.1 22.6H17V26.6H16.1Z', fill: 'figure' },
+      {
+        d: 'M9.2 13.4C9.6 9 12.4 7.4 16 7.4C19.6 7.4 22.4 9 22.8 13.4V16.6C22.2 17.2 21.6 17 21.2 16.4V12.4C19 11.2 13 11.2 10.8 12.4V16.4C10.4 17 9.8 17.2 9.2 16.6Z',
+        fill: 'figure',
+      },
+      { d: 'M9.2 14.4H10.8M9.2 15.6H10.8M21.2 14.4H22.8M21.2 15.6H22.8', stroke: 'plate', width: 0.4 },
+    ],
+  },
+  {
+    // Design: a beret and a pencil in the pocket.
     id: 'design',
-    paths: [
-      'M16 8.5A7.5 7.5 0 0 0 16 23.5C17.5 23.5 18 22.5 17.5 21.3C17 20 17.8 19 19 19H21A2.5 2.5 0 0 0 23.5 16.5C23.5 12 20.2 8.5 16 8.5Z',
-      dot(12.5, 14),
-      dot(15.5, 11.8),
-      dot(19.5, 12.8),
-      dot(12.5, 18),
+    plate: '#0F5257',
+    accent: '#F28E7B',
+    layers: [
+      body,
+      head,
+      { d: 'M10 11C10.2 8 12.8 6.6 16.4 6.8C20.2 7 22.6 8.4 22.2 11C20.2 10.2 13 10.2 10 11Z', fill: 'accent' },
+      { d: 'M16.6 6.8V5.6', stroke: 'accent', width: 1.2 },
+      { d: 'M20 22.6L21.6 29', stroke: 'accent', width: 1.4 },
     ],
   },
   {
+    // Customer support: a headset with its microphone.
     id: 'support',
-    paths: ['M9.5 18V16A6.5 6.5 0 0 1 22.5 16V18', 'M9.5 17H11.5V21H10.5A1 1 0 0 1 9.5 20Z', 'M22.5 17H20.5V21H21.5A1 1 0 0 0 22.5 20Z', 'M20.5 21C20.5 22.5 19.5 23.5 17.5 23.5H16'],
+    plate: '#1E5A8C',
+    accent: '#7FD3F0',
+    layers: [
+      body,
+      head,
+      { d: 'M10.2 14A5.8 5.8 0 0 1 21.8 14', stroke: 'accent', width: 1.3 },
+      { d: 'M9.2 12.6H11.4V16.6H9.2ZM20.6 12.6H22.8V16.6H20.6Z', fill: 'accent' },
+      { d: 'M10.4 16.6C10.4 18.6 12 19.6 14.2 19.6', stroke: 'accent', width: 1 },
+      { d: circle(14.6, 19.6, 0.8), fill: 'accent' },
+    ],
   },
-  { id: 'operations', paths: ['M23.5 16A7.5 7.5 0 1 1 8.5 16A7.5 7.5 0 1 1 23.5 16Z', 'M20.5 16A4.5 4.5 0 1 1 11.5 16A4.5 4.5 0 1 1 20.5 16Z', dot(16, 16)] },
   {
+    // Operations: a cap and a radio.
+    id: 'operations',
+    plate: '#4E5320',
+    accent: '#E8C547',
+    layers: [
+      body,
+      head,
+      { d: 'M10.8 12.2C10.8 9 13 7.4 16 7.4C19 7.4 21.2 9 21.2 12.2Z', fill: 'accent' },
+      { d: 'M16 12.2H24', stroke: 'accent', width: 1.4 },
+      { d: 'M19.6 24H22.6V29.6H19.6Z', fill: 'accent' },
+      { d: 'M21.8 24V21.6', stroke: 'accent', width: 0.8 },
+    ],
+  },
+  {
+    // Project management: a clipboard held to the chest.
     id: 'project',
-    paths: ['M10 10.5H22A1.5 1.5 0 0 1 23.5 12V22A1.5 1.5 0 0 1 22 23.5H10A1.5 1.5 0 0 1 8.5 22V12A1.5 1.5 0 0 1 10 10.5Z', 'M8.5 15H23.5', 'M12.5 8.5V12', 'M19.5 8.5V12', dot(12.5, 19), dot(16, 19), dot(19.5, 19)],
-  },
-  { id: 'training', paths: ['M16 9.5L24 13.5L16 17.5L8 13.5Z', 'M11.5 15.5V19.5C11.5 21 13.5 22.5 16 22.5C18.5 22.5 20.5 21 20.5 19.5V15.5', 'M24 13.5V18'] },
-  // Then what a preset does.
-  { id: 'spark', paths: ['M16 8L17.9 14.1L24 16L17.9 17.9L16 24L14.1 17.9L8 16L14.1 14.1Z'] },
-  { id: 'code', paths: ['M12 11L8 16L12 21', 'M20 11L24 16L20 21', 'M17.5 9.5L14.5 22.5'] },
-  { id: 'terminal', paths: ['M9 11L14 16L9 21', 'M16 21H23'] },
-  { id: 'search', paths: ['M20 14.5A5.5 5.5 0 1 1 9 14.5A5.5 5.5 0 1 1 20 14.5Z', 'M18.5 18.5L23.5 23.5'] },
-  { id: 'pen', paths: ['M19.5 8.5L23.5 12.5L13 23H9V19Z', 'M17 11L21 15'] },
-  { id: 'shield', paths: ['M16 8L23 10.5V15.5C23 19.5 20 22.5 16 24C12 22.5 9 19.5 9 15.5V10.5Z', 'M13 16L15.2 18.2L19.5 13.8'] },
-  { id: 'chart', paths: ['M9 23H23', 'M11.5 19.5V15', 'M16 19.5V9.5', 'M20.5 19.5V12.5'] },
-  {
-    id: 'bug',
-    paths: [
-      'M16 12.5C18.8 12.5 20.5 14.8 20.5 17.8C20.5 20.8 18.5 23.5 16 23.5C13.5 23.5 11.5 20.8 11.5 17.8C11.5 14.8 13.2 12.5 16 12.5Z',
-      'M13.5 12.5C13.5 10.6 14.5 9 16 9C17.5 9 18.5 10.6 18.5 12.5',
-      'M16 15.5V23.5',
-      'M11.5 17H8.5',
-      'M20.5 17H23.5',
-      'M12 21L9.5 23',
-      'M20 21L22.5 23',
-    ],
-  },
-  { id: 'book', paths: ['M16 11C14 9.5 11.5 9 8.5 9V22C11.5 22 14 22.5 16 24C18 22.5 20.5 22 23.5 22V9C20.5 9 18 9.5 16 11Z', 'M16 11V24'] },
-  { id: 'bulb', paths: ['M13 20C13 18 11 17 11 13.5A5 5 0 0 1 21 13.5C21 17 19 18 19 20Z', 'M13.5 23.5H18.5'] },
-  { id: 'compass', paths: ['M23.5 16A7.5 7.5 0 1 1 8.5 16A7.5 7.5 0 1 1 23.5 16Z', 'M19.5 12.5L17.5 17.5L12.5 19.5L14.5 14.5Z'] },
-  { id: 'layers', paths: ['M16 8.5L23.5 12.5L16 16.5L8.5 12.5Z', 'M8.5 16.5L16 20.5L23.5 16.5', 'M8.5 20L16 24L23.5 20'] },
-  {
-    id: 'chat',
-    paths: ['M11 9H21A2 2 0 0 1 23 11V18A2 2 0 0 1 21 20H15L11 23.5V20A2 2 0 0 1 9 18V11A2 2 0 0 1 11 9Z', dot(12.5, 14.5), dot(16, 14.5), dot(19.5, 14.5)],
-  },
-  { id: 'flask', paths: ['M13.5 8.5H18.5', 'M14.5 8.5V13.5L9.7 21.4A1.4 1.4 0 0 0 10.9 23.5H21.1A1.4 1.4 0 0 0 22.3 21.4L17.5 13.5V8.5', 'M12 19H20'] },
-  {
-    id: 'globe',
-    paths: [
-      'M23.5 16A7.5 7.5 0 1 1 8.5 16A7.5 7.5 0 1 1 23.5 16Z',
-      'M16 8.5C13.8 10.8 12.7 13.3 12.7 16C12.7 18.7 13.8 21.2 16 23.5C18.2 21.2 19.3 18.7 19.3 16C19.3 13.3 18.2 10.8 16 8.5Z',
-      'M8.5 16H23.5',
+    plate: '#334E68',
+    accent: '#F6B26B',
+    layers: [
+      body,
+      head,
+      { d: 'M12.6 24.4H19.4V31.4H12.6Z', fill: 'accent' },
+      { d: 'M14.6 23.6H17.4V25.2H14.6Z', fill: 'plate' },
+      { d: 'M14 27H18M14 29H16.6', stroke: 'plate', width: 0.8 },
     ],
   },
   {
-    id: 'database',
-    paths: [
-      'M9 11C9 9.3 12.1 8 16 8C19.9 8 23 9.3 23 11C23 12.7 19.9 14 16 14C12.1 14 9 12.7 9 11Z',
-      'M9 11V21C9 22.7 12.1 24 16 24C19.9 24 23 22.7 23 21V11',
-      'M9 16C9 17.7 12.1 19 16 19C19.9 19 23 17.7 23 16',
+    // Training: a mortarboard and its tassel.
+    id: 'training',
+    plate: '#283C63',
+    accent: '#D9B44A',
+    layers: [
+      body,
+      head,
+      { d: 'M16 5.4L24 8.8L16 12.2L8 8.8Z', fill: 'plate' },
+      { d: 'M16 5.4L24 8.8L16 12.2L8 8.8Z', stroke: 'figure', width: 0.7 },
+      { d: 'M11.4 10.4V12.4C13 13.2 19 13.2 20.6 12.4V10.4', fill: 'plate' },
+      { d: 'M24 8.8V13', stroke: 'accent', width: 0.9 },
+      { d: circle(24, 13.4, 0.7), fill: 'accent' },
+    ],
+  },
+  {
+    // Software development: headphones and a hoodie's cords.
+    id: 'developer',
+    plate: '#22313F',
+    accent: '#5EE0A0',
+    layers: [
+      body,
+      { d: 'M11.6 21.8C12 19.8 13.6 18.8 16 18.8C18.4 18.8 20 19.8 20.4 21.8', stroke: 'plate', width: 0.8 },
+      head,
+      { d: 'M10 13.6A6 6 0 0 1 22 13.6', stroke: 'accent', width: 1.4 },
+      { d: 'M8.8 12.8H11.4V17.2H8.8ZM20.6 12.8H23.2V17.2H20.6Z', fill: 'accent' },
+      { d: 'M14.6 22.4V26.4M17.4 22.4V26.4', stroke: 'plate', width: 0.7 },
+    ],
+  },
+  {
+    // Research: a lab coat and goggles on the brow.
+    id: 'researcher',
+    plate: '#0E4D64',
+    accent: '#9AD1D4',
+    layers: [
+      body,
+      head,
+      { d: 'M16 21.4V32M12.4 21.9L16 25.4L19.6 21.9', stroke: 'plate', width: 0.8 },
+      { d: 'M18.8 26.2H21.8', stroke: 'plate', width: 0.8 },
+      { d: 'M11 9.6H21V12.4H11Z', fill: 'accent' },
+      { d: 'M16 9.6V12.4', stroke: 'plate', width: 0.6 },
+    ],
+  },
+  {
+    // Data analysis: glasses and a chart on the badge.
+    id: 'analyst',
+    plate: '#1D3557',
+    accent: '#A8DADC',
+    layers: [body, head, glasses, { d: 'M18.4 24.4H23.4V29.4H18.4Z', fill: 'accent' }, { d: 'M19.6 28.4V27M20.9 28.4V25.6M22.2 28.4V26.4', stroke: 'plate', width: 0.7 }],
+  },
+  {
+    // Writing: a scarf and a fountain pen.
+    id: 'writer',
+    plate: '#6B4226',
+    accent: '#E9C46A',
+    layers: [
+      body,
+      head,
+      { d: 'M11.6 20.6C13 21.8 19 21.8 20.4 20.6L20.8 22.4C19 23.8 13 23.8 11.2 22.4Z', fill: 'accent' },
+      { d: 'M17.6 22.8L19.2 28.6L17.4 28.2Z', fill: 'accent' },
+      { d: 'M21 24L23.2 30.6', stroke: 'plate', width: 1.2 },
     ],
   },
 ];

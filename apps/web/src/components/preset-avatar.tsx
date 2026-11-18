@@ -4,18 +4,26 @@
  * chooses one with. Sized by `className` like an icon.
  */
 
-import { PRESET_AVATAR_STYLE as STYLE, PRESET_AVATARS, presetAvatar } from '@dsh-teamwork/shared';
+import { PRESET_AVATAR_STYLE as STYLE, PRESET_AVATARS, presetAvatar, presetAvatarColor } from '@dsh-teamwork/shared';
 
 import { cn } from '@/lib/utils';
 
 /** The avatar `avatar` names, or the one the preset's `name` picks when it names none this console knows. */
 export function PresetAvatar({ avatar, name, className }: { avatar?: string | null; name: string; className?: string }) {
-  const { paths } = presetAvatar(avatar, name);
+  const shown = presetAvatar(avatar, name);
   return (
     <svg viewBox={`0 0 ${STYLE.size} ${STYLE.size}`} aria-hidden className={cn('size-8 shrink-0', className)}>
-      <rect width={STYLE.size} height={STYLE.size} rx={STYLE.radius} fill={STYLE.plate} />
-      {paths.map((d) => (
-        <path key={d} d={d} fill="none" stroke={STYLE.ink} strokeWidth={STYLE.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <rect width={STYLE.size} height={STYLE.size} rx={STYLE.radius} fill={shown.plate} />
+      {shown.layers.map((layer, i) => (
+        <path
+          key={i}
+          d={layer.d}
+          fill={layer.fill ? presetAvatarColor(shown, layer.fill) : 'none'}
+          stroke={layer.stroke ? presetAvatarColor(shown, layer.stroke) : undefined}
+          strokeWidth={layer.width ?? 1}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       ))}
     </svg>
   );

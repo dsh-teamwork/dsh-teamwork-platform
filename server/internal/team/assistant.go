@@ -37,7 +37,7 @@ func provisionAssistant(ctx context.Context, client *ent.Client, teamID, teamNam
 		locale = "en"
 	}
 	name := strings.Replace(text.Name[locale], "{team}", teamName, 1)
-	data := wire.PresetData{InheritModel: true, Avatar: "spark", Description: text.Description[locale], SystemPrompt: text.SystemPrompt, RequiredTools: []string{}, OptionalTools: []string{}, PluginDependencies: []wire.PluginDependency{}}
+	data := wire.PresetData{InheritModel: true, Avatar: "assistant", Description: text.Description[locale], SystemPrompt: text.SystemPrompt, RequiredTools: []string{}, OptionalTools: []string{}, PluginDependencies: []wire.PluginDependency{}}
 	encoded, err := json.Marshal(data)
 	if err != nil {
 		return err

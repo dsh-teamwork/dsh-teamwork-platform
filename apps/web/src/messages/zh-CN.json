@@ -634,6 +634,7 @@
       "skill": "调用技能"
     },
     "avatars": {
+      "assistant": "团队助理",
       "finance": "财务",
       "admin": "行政",
       "hr": "人力资源",
@@ -647,22 +648,10 @@
       "operations": "运营",
       "project": "项目管理",
       "training": "培训",
-      "spark": "火花",
-      "code": "代码",
-      "terminal": "终端",
-      "search": "搜索",
-      "pen": "钢笔",
-      "shield": "盾牌",
-      "chart": "图表",
-      "bug": "虫子",
-      "book": "书本",
-      "bulb": "灯泡",
-      "compass": "指南针",
-      "layers": "图层",
-      "chat": "对话",
-      "flask": "烧瓶",
-      "globe": "地球",
-      "database": "数据库"
+      "developer": "软件开发",
+      "researcher": "研究",
+      "analyst": "数据分析",
+      "writer": "写作"
     },
     "presets": {
       "title": "预设",

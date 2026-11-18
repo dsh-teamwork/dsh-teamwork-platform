@@ -79,8 +79,8 @@ by `apps/web/src/lib/theme.ts` and the instance console's own
 script sets it before the first paint. Grounds
 and text are a neutral grey (hue 286, chroma under 0.02): white grounds and
 near-black text in light, near-black grounds and white text in dark. Colour
-appears in three places only: the mark (and the preset avatars, drawn in its
-colours), the two accents, and the outcome colours.
+appears in four places only: the mark, the preset avatars (each in its own
+plate and accent), the two accents, and the outcome colours.
 
 ### Brand colours
 
@@ -162,14 +162,26 @@ icon set.
 A preset's face is one of a fixed library of avatars,
 `packages/shared/src/avatars.ts`, which the web console and the phone app both
 draw (`apps/web/src/components/preset-avatar.tsx` and the app's own), so a
-preset looks the same everywhere. Each is a glyph in **Paper** on a **Navy**
-plate with the logo's corner (22 %): a preset is the team's, and navy says so.
-Glyphs are 2-unit round-capped strokes on a 32-unit square, kept inside its
-middle half, so they read at 20 px. Every avatar shares the plate; they differ
-by glyph alone, and the plate is never recoloured per avatar. These two hexes,
-in that file, are an exception to "never a literal colour": like the
-share card, the avatar is drawn outside the stylesheet and the same in both
-themes, as the logo is.
+preset looks the same everywhere. **An avatar is a professional, not a tool
+icon**: a faceless head-and-shoulders figure in **Paper**, told apart by what
+the role wears or carries — the engineer's hard hat, counsel's wig and bands,
+the support agent's headset, the researcher's lab coat — on a plate with the
+logo's corner (22 %). Generic app glyphs (a magnifier, a gear, a chart) are
+what it is not: they make every preset look like a menu item rather than an
+expert the team hands work to.
+
+- **Each role has its own plate and one accent.** Plates are deep, muted
+  tones (dark enough that the paper figure always reads) and accents the
+  lighter colour of its attribute; no two neighbouring roles share a hue
+  family. The team assistant keeps the brand's navy and amber.
+- **Faceless.** No eyes or mouth, so no age, gender or ethnicity is implied;
+  hair, glasses and dress are the role's, not the person's.
+- **Flat fills and a few thin strokes**, three tones per avatar (figure, plate,
+  accent), on a 32-unit square; the figure stays clear of the plate's rounded
+  corners, so no client clips. Each must read at 20 px.
+- These hexes, in that file, are an exception to "never a literal colour":
+  like the share card, the avatar is drawn outside the stylesheet and the same
+  in both themes, as the logo is.
 
 ## Component rules
 

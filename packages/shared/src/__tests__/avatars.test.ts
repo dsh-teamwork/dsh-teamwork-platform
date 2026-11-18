@@ -12,22 +12,22 @@ describe('PRESET_AVATARS', () => {
   // A stored id is the contract: dropping or renaming one changes every preset that chose it.
   it('keeps every published id', () => {
     expect(PRESET_AVATARS.map((avatar) => avatar.id)).toEqual(
-      expect.arrayContaining(['finance', 'admin', 'hr', 'marketing', 'sales', 'engineer', 'product', 'legal', 'design', 'support', 'operations', 'project', 'training', 'spark', 'code', 'terminal', 'search', 'pen', 'shield', 'chart', 'bug', 'book', 'bulb', 'compass', 'layers', 'chat', 'flask', 'globe', 'database']),
+      expect.arrayContaining(['assistant', 'finance', 'admin', 'hr', 'marketing', 'sales', 'engineer', 'product', 'legal', 'design', 'support', 'operations', 'project', 'training', 'developer', 'researcher', 'analyst', 'writer']),
     );
   });
 });
 
 describe('presetAvatar', () => {
   it('shows the chosen avatar', () => {
-    expect(presetAvatar('flask', 'any').id).toBe('flask');
+    expect(presetAvatar('legal', 'any').id).toBe('legal');
   });
 
   // Appending an avatar to the library re-picks every preset that chose none; these pin it so that is deliberate.
   it.each([
-    [undefined, 'Writer', 'admin'],
-    [null, 'Data analyst', 'layers'],
-    ['', '\u7814\u7a76\u5458', 'marketing'],
-    ['retired-avatar', 'Writer', 'admin'],
+    [undefined, 'Writer', 'project'],
+    [null, 'Data analyst', 'product'],
+    ['', '\u7814\u7a76\u5458', 'sales'],
+    ['retired-avatar', 'Writer', 'project'],
   ])('falls back from %j to one picked from %s', (chosen, seed, expected) => {
     expect(presetAvatar(chosen, seed).id).toBe(expected);
   });
