@@ -142,7 +142,8 @@ frames stay as they are.
    link and QR:
    `dshteamwork://join?server=…&host=<hostId>&key=<DSH public key>&invite=<id>&secret=<128-bit>`,
    valid 24 hours, single use. The DSH keeps the invite id, the member's id
-   and the secret's hash. The app opens the link; in a browser it is pasted
+   and the secret's hash. The app opens the link, or scans its QR on the
+   pairing screen; in a browser it is pasted
    into the console's Shared DSHs page.
 2. **The admin hands it over outside the server**: in person, or through a
    channel the team trusts. An invite carried by the server could be swapped

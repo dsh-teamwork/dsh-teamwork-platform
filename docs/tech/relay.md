@@ -60,7 +60,7 @@ The hosted edition's smallest useful version works end to end:
 | The relay: WebSocket endpoints for plugins and phones, pairing checks, envelopes, push, and `GET /api/relay` | `server/relay`, an extension every binary's main imports, served under `/relay` on the server's own port | Open |
 | Pairing and device tables | `server/internal/db/schema/relay.go`, migrated with the rest of the open schema | Open |
 | The plugin's outbound connection, pairing panel and allow-list | `dsh-teamwork/dsh-teamwork` (`src/relay.ts`, the Teamwork panel) | Open |
-| The client: the encrypted channel, the frames, the live client and DSH's Remote API read into a client's shapes | `packages/relay-client`, imported by the web console and the app; its tests run on Node, and `server/e2e` drives it against the real plugin | Open |
+| The client: the encrypted channel, the frames, the live client and DSH's Remote API read into a client's shapes, and a session whose streams a server relays (`src/relayed.ts`, which the hosted cloud's stream uses) | `packages/relay-client`, imported by the web console and the app; its tests run on Node, and `server/e2e` drives it against the real plugin | Open |
 | The app | `premium/apps/mobile` where that directory exists, from seed's Expo app | Closed; it reaches any server |
 
 The relay mounts through `server/edition` like a closed extension, so it reads
