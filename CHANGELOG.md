@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A Team DSH's audit records survive a crash
+
+- **What:** The plugin appends each audit record to a journal on the DSH's disk as it is made, instead of holding up to a minute of them in memory, and seals what a stopped process left at the next start, never the same batch twice.
+- **Why:** A crash of the plugin lost the records of the minute before it, a gap in the record the admin relies on.
+- **Breaking:** None; the archive's format (ADR 0045) is unchanged.
+- **Upgrade:** Release the plugin.
+- **Refs:** the plugin's `src/audit-archive.ts`, `docs/tech/shared-dsh.md` ("The audit archive").
+
 ## 2026-11-18 — The web console chooses a model's reasoning effort
 
 - **What:** Beside the model on My DSH and Team DSH, a model that advertises reasoning efforts offers them (or its own default), for a new session and for an idle one, through `teamwork/selectModel`, as the phone app does.

@@ -252,8 +252,10 @@ The plugin's `src/pin-lock.ts`; the clients' gates are the app's
   key; **shared mode admits no member until it has one**.
 - Every frame between a member's device and the DSH, both ways, becomes a
   record: member, device, direction, time and the frame. A string over 64 KiB
-  (a file's bytes) is kept as its length and SHA-256. Records are batched into
-  segments of at most 1 MiB or one minute. Each segment is HPKE-sealed
+  (a file's bytes) is kept as its length and SHA-256. Each record reaches a
+  journal on the DSH's disk as it is made, so a crash loses none; the next
+  start seals what the journal holds. Records are batched into segments of at
+  most 1 MiB or one minute. Each segment is HPKE-sealed
   (RFC 9180: DHKEM X25519, HKDF-SHA256, AES-256-GCM) to the audit public key,
   under a clear header the AEAD binds: host id, sequence number, the previous
   segment's SHA-256, and the audit key's fingerprint. The DSH signs the header
