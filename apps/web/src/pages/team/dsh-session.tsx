@@ -13,6 +13,7 @@ import { useFormatter, useTranslations } from 'use-intl';
 
 import {
   applySessionEvent,
+  defaultDirectory,
   deliverFiles,
   EMPTY_SESSION,
   ensureFileTarget,
@@ -188,7 +189,7 @@ export function ComputerRow({ icon: Icon = Server, name, note, online, to, open,
 
 /** A new session looks like one with nothing in it yet: sending the first message starts it, then opens it. */
 export function NewSession({ computerId, name, started }: { computerId: string; name: string; started: (sessionId: string) => void }) {
-  const { me } = useTeam();
+  const { me, team } = useTeam();
   const t = useTranslations('team.dsh');
   const word = useRelayError();
   const relay = relayFor(me);
@@ -203,8 +204,8 @@ export function NewSession({ computerId, name, started }: { computerId: string; 
     try {
       // Files need their session before their bytes move; a retry after a failed upload reuses it.
       const created = files.files.length
-        ? await files.target({ cwd: options.cwd, agentPreset: options.agentPreset })
-        : await relay.createSession(computerId, { cwd: options.cwd, agentPreset: options.agentPreset });
+        ? await files.target({ cwd: options.cwd, agentPreset: options.agentPreset, teamId: team.id })
+        : await relay.createSession(computerId, { cwd: options.cwd, agentPreset: options.agentPreset, teamId: team.id });
       if (options.model) await relay.selectModel(computerId, created.id, options.model);
       if (files.files.length) await files.send(created.id, text);
       else await relay.prompt(computerId, created.id, text);
@@ -262,7 +263,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
   value?: SessionOptions;
   onChange?: (value: SessionOptions) => void;
 }) {
-  const { me } = useTeam();
+  const { me, team } = useTeam();
   const t = useTranslations('team.dsh.settings');
   const word = useRelayError();
   const relay = relayFor(me);
@@ -339,7 +340,8 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
       disabled: !!item.blocked,
     })),
   ];
-  const cwd = value.cwd ?? data.directories[0]?.path ?? '';
+  // A new session opens in this team's default workspace on the computer unless another folder is picked.
+  const cwd = value.cwd ?? defaultDirectory(data.directories, data.teamDirectories, team.id) ?? '';
   return (
     <>
       {data.directories.length > 0 && (

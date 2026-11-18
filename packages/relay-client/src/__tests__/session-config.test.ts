@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { configurationOf, directoriesOf } from '../session-config';
+import { configurationOf, defaultDirectory, directoriesOf, startableDirectories } from '../session-config';
 
 it('keeps full paths so equal folder names never select the wrong project', () => {
   expect(
@@ -44,4 +44,14 @@ it('reads native model capabilities and the desktop-confirmed session selection'
   expect(value.models[0]).toMatchObject({ provider: 'p', id: 'm', reasoning: { efforts: [{ id: 'high' }] } });
   expect(value.current?.model?.reasoningEffort).toBe('high');
   expect(value.modelFailures).toEqual(['Offline provider']);
+});
+
+it('starts a new session in the team’s default workspace, else in the folder of the latest session', () => {
+  const startable = startableDirectories({ items: [{ cwd: '/a', updatedAt: 1 }, { cwd: '/b', updatedAt: 9 }] }, ['/srv/team']);
+  expect(defaultDirectory(startable, { t: '/srv/team' }, 't')).toBe('/srv/team');
+  expect(defaultDirectory(startable, { t: '/srv/team' })).toBe('/b');
+  expect(defaultDirectory(startable, { other: '/srv/team' }, 't')).toBe('/b');
+  // A default the computer does not offer is never where a session starts.
+  expect(defaultDirectory(startable, { t: '/etc' }, 't')).toBe('/b');
+  expect(defaultDirectory([], {}, 't')).toBeUndefined();
 });
