@@ -13,6 +13,7 @@ import { ChevronDown, Cpu, Plus, Puzzle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 
+import { ProviderMark } from '@/components/provider-mark';
 import { Failure } from '@/components/page';
 import { PageHeader } from '@/components/team/console-shell';
 import { Field } from '@/components/team/field';
@@ -246,7 +247,7 @@ function PresetCard({
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span className="flex flex-wrap items-center gap-3">
           <span className={cn('flex items-center gap-1', preset.data.modelConfigId && !model && 'text-destructive')}>
-            <Cpu className="size-3.5" aria-hidden />
+            {model ? <ProviderMark hints={[model.data.model, model.name, model.data.provider]} name={model.name} /> : preset.data.model ? <ProviderMark hints={[preset.data.model, preset.data.provider]} name={preset.data.model} /> : <Cpu className="size-3.5" aria-hidden />}
             {route}
           </span>
           {pinned.length > 0 && (
@@ -432,7 +433,7 @@ export function PresetEditor({
                       : draft.modelConfigId
                         ? []
                         : [{ value: '', label: t('chooseModel') }]),
-                    ...models.map((m) => ({ value: m.id, label: m.name })),
+                    ...models.map((m) => ({ value: m.id, label: m.name, icon: <ProviderMark hints={[m.data.model, m.name, m.data.provider]} name={m.name} /> })),
                   ]}
                   change={(value) => set('modelConfigId', value)}
                   className="w-full"

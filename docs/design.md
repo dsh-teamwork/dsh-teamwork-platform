@@ -157,6 +157,17 @@ Lucide (`lucide-react`) on web and console, sized and coloured through
 `className` from tokens (e.g. `text-muted-foreground`). There is no product
 icon set.
 
+**Model providers are shown by their makers' marks.** `PROVIDER_MARKS` in
+`packages/shared/src/providers.ts` holds them, single-colour paths copied from
+LobeHub's icons, and `providerMark` picks one from what names a model (its
+id and name first, then its provider's name and address), so a model resold
+by OpenRouter shows its maker. Every place that names a model or a provider
+draws one: a mark in `--foreground` on a `--secondary` tile (20px beside a
+line of text or in a menu, 36px heading a card), drawn by
+`apps/web/src/components/provider-mark.tsx` and the phone app's own; an
+unknown one shows two initials on the same tile. A mark is never in its
+brand colour, and never stands without the name beside it.
+
 ## Component rules
 
 - **Never a literal colour.** No Tailwind palette step (`text-gray-600`,
@@ -223,7 +234,7 @@ icon set.
   each with an icon for where they work (DSH Desktop, a terminal, the phone,
   the admin's web console), curved arrows into DSH Teamwork in the middle, and
   on the right the mainstream upstream providers, each by its own logo
-  (`provider-logos.ts`, from LobeHub's icons; the console keeps letter tiles),
+  (`PROVIDER_MARKS`, the same marks the console draws),
   as well as a custom provider. Cloud DSH sits below them as a separate
   workspace in limited trial on the hosted edition. The phone's icon carries `public/logo.svg` on its
   screen, since the app is ours. The hub lists the page's sections, each with
