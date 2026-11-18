@@ -84,6 +84,7 @@ export function relayFor(account: string): RelayClient {
     random: (n) => crypto.getRandomValues(new Uint8Array(n)),
     session: async () => ({ server: window.location.origin }),
     locale: currentLocale,
+    device: 'web',
   });
   current = { account, relay };
   return relay;

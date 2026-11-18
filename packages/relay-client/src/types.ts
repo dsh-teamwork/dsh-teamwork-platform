@@ -89,6 +89,8 @@ export interface SessionState<Closed = RelayErrorCode> {
   pending: Pending | null;
   /** Set once the stream has ended for good; the screen says why. */
   closed: Closed | null;
+  /** The event older history is read before (`RelayClient.older`), or null when the items begin at the session's start. */
+  earlier: number | null;
 }
 
 /** What one frame changes in a session (`eventsOf`, `streamEventsOf` in `dsh.ts`), folded in by `applyChange`. */
@@ -105,6 +107,8 @@ export type SessionEvent =
   | { type: 'snapshot'; state: SessionState }
   | SessionChange
   | { type: 'pending'; pending: Pending | null }
+  /** Items from before the oldest shown, read by `RelayClient.older`. */
+  | { type: 'older'; items: ConversationItem[]; earlier: number | null }
   | { type: 'closed'; reason: RelayErrorCode };
 
 export type RelayErrorCode =
@@ -160,8 +164,11 @@ export interface RelayClient {
   reset(): void;
   /** The member's paired computers: confirmed pairings only. */
   listComputers(): Promise<Computer[]>;
-  /** The teams' shared DSHs this member may reach, joined or not. */
-  sharedHosts(): Promise<SharedHost[]>;
+  /**
+   * The teams' shared DSHs this member may reach, joined or not, and the member's teams the server has not enabled
+   * Team DSH for, which reach none.
+   */
+  sharedHosts(): Promise<{ hosts: SharedHost[]; unavailableTeamIds: string[] }>;
   /**
    * Redeems the code a computer's Teamwork panel shows; the pairing then waits
    * for the member to confirm it on that computer. Rejects
@@ -232,6 +239,11 @@ export interface RelayClient {
   watchSessions(computerId: string, onChange: () => void): () => void;
   /** Follows one session: a snapshot, then every change, a reply's text as it is written. Returns a function that stops following. */
   follow(computerId: string, sessionId: string, onEvent: (event: SessionEvent) => void): () => void;
+  /**
+   * Reads the history before a followed session's oldest item (its `earlier`), delivered to its followers as an
+   * `older` event. Does nothing when the session is not followed or begins at its start.
+   */
+  older(computerId: string, sessionId: string): Promise<void>;
   /** Sends the member's message. Rejects `busy` while the agent is working or waiting. */
   prompt(
     computerId: string,

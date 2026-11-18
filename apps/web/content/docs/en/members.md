@@ -49,11 +49,18 @@ Anything it would change still asks for your approval.
 **My DSH** appears under Workspace once a computer of yours, with DSH signed in
 to Teamwork, has connected. It lists those computers, the same in every team.
 Open one and pair this browser with it once: in DSH on that computer, open the
-Teamwork panel, choose **Phone** and make a code, type the code here, check
+Teamwork panel, choose **Devices** and make a code, type the code here, check
 that both screens show the same safety code, and approve on the computer. Then
 set a four-digit PIN, which the computer asks for again when you come back.
 After that you start, follow and answer sessions on it from the browser, end to
 end encrypted between the browser and the computer.
+
+Beside the message box, a new session offers the computer's folders, presets
+(a team preset included; one the computer cannot run yet says why) and models,
+before its first message; leave them as they are for the computer's defaults.
+In a session that has started, the folder and preset stay as they are, and you
+can change its model while it is not working, for that session alone. The same
+choices are there on a Team DSH.
 
 Under **Devices** you see every phone and browser paired with that computer,
 and **Remove** cuts any of them off at once, a lost phone included. If you
@@ -63,12 +70,12 @@ computer.
 ## Work on a Team DSH
 
 If your team runs a Team DSH, its admin hands you an invite link
-(`dshteamwork://join?…`). **Team DSH** appears under Workspace in the team console once
-its admin lets you reach one; open it,
+(`dshteamwork://join?…`). Open **Team DSH** under Workspace in the team console,
 choose **Join with an invite**, paste it and choose **Join**, then set a four-digit PIN; the
 machine asks for it again when you come back. Each browser joins once, and
 keeps its key in the browser's own storage: clearing the site's data means
-asking for a new invite. You see only the sessions you start there, and your
+asking for a new invite. Where your team does not have Team DSH yet, the page
+says what it offers and who enables it. You see only the sessions you start there, and your
 team's admin can read every session from the machine's encrypted archive. The
 phone app opens the same link, or scans its QR code under **Pair a computer**;
 the Team DSH then sits in the computer list under your team's name. Your admin's

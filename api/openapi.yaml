@@ -1277,13 +1277,17 @@ paths:
       security: [{ bearer: [] }, { session: [] }]
       responses:
         '200':
-          description: The shared DSHs, oldest first
+          description: The shared DSHs, oldest first, and the caller's teams that may not run one
           content:
             application/json:
               schema:
                 type: object
-                required: [hosts]
+                required: [hosts, unavailableTeamIds]
                 properties:
+                  unavailableTeamIds:
+                    type: array
+                    description: The caller's teams the hosted service has not enabled Team DSH for; a self-hosted server lists none.
+                    items: { type: string }
                   hosts:
                     type: array
                     items:

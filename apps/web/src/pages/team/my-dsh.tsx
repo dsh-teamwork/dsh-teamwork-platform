@@ -52,7 +52,7 @@ export function MyDshPage() {
   // Two records can share a name (two DSHs on one machine, or one signed in again): a short id tells them apart.
   const twin = (h: MyComputer) => (hosts ?? []).some((o) => o.id !== h.id && o.name === h.name);
   const note = (h: MyComputer) =>
-    [h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt)) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
+    [h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
   const problem = failed ?? unreachable;
 
   return (
@@ -167,7 +167,7 @@ function Devices({ host, changed }: { host: MyComputer; changed: () => void }) {
                 <span className="truncate text-xs text-muted-foreground">
                   {[
                     device.status === 'pending' ? t('pending') : null,
-                    device.lastUsedAt ? t('lastUsed', { time: format.relativeTime(new Date(device.lastUsedAt)) }) : t('neverUsed'),
+                    device.lastUsedAt ? t('lastUsed', { time: format.relativeTime(new Date(device.lastUsedAt), new Date()) }) : t('neverUsed'),
                     device.push ? t('push') : null,
                   ].filter(Boolean).join(' · ')}
                 </span>
@@ -264,9 +264,10 @@ function Pair({ host, paired }: { host: MyComputer; paired: (hostId: string | un
               value={code}
               autoFocus
               autoComplete="one-time-code"
-              maxLength={PAIRING_CODE_LENGTH}
               className="text-center font-mono text-2xl tracking-[0.4em] uppercase"
-              onChange={(event) => setCode(normalizePairingCode(event.target.value))}
+              // No maxLength: the panel shows the code with a space ("PQP WGG"), and a pasted code must keep its last
+              // letter; the space goes first, then the length is held.
+              onChange={(event) => setCode(normalizePairingCode(event.target.value).slice(0, PAIRING_CODE_LENGTH))}
             />
           </label>
           <Button type="submit" disabled={busy || code.length !== PAIRING_CODE_LENGTH}>{busy ? t('pairing') : t('pair')}</Button>

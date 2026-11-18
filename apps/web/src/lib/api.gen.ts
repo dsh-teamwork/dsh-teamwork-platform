@@ -3058,13 +3058,15 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The shared DSHs, oldest first */
+                /** @description The shared DSHs, oldest first, and the caller's teams that may not run one */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
+                            /** @description The caller's teams the hosted service has not enabled Team DSH for; a self-hosted server lists none. */
+                            unavailableTeamIds: string[];
                             hosts: {
                                 id: string;
                                 name: string;

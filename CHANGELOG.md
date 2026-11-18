@@ -28,6 +28,37 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** `GET …/summary` without `scope` now answers an admin with their own figures; the console asks for `scope=team`.
 - **Upgrade:** Nothing.
 - **Refs:** ADR 0049, `apps/web/src/pages/team/overview.tsx`, `server/internal/httpapi/usage.go`.
+## 2026-11-18 — The web console chooses a session's folder, preset and model
+
+- **What:** On My DSH and Team DSH, a new session offers the computer's folders, presets (one it cannot run yet shown with why, and not chosen) and models beside the composer before its first message, and a started session shows its folder and preset and changes its model while idle, for that session alone, as the phone app does. The console's `Select` gains disabled options.
+- **Why:** The browser could only start a session with the computer's defaults, in its latest folder, and never change a session's model.
+- **Breaking:** None.
+- **Upgrade:** Nothing; a plugin that reports no configuration leaves the defaults, as before.
+- **Refs:** `apps/web/src/pages/team/dsh-session.tsx` (`SessionSettings`), `docs/tech/relay.md`, `docs/tech/shared-dsh.md`, `/docs` members page.
+
+## 2026-11-18 — Long sessions open from the phone and web (My DSH and Team DSH), and follows come back by themselves
+
+- **What:** The plugin's bridge makes every frame it sends a phone or browser fit the encrypted channel's 1 MiB message: long strings are cut short, and a snapshot or `session/page` keeps its newest records and says `hasMore`. `@dsh-teamwork/relay-client` reads older history through `session/page` (`RelayClient.older`, the `older` event, `SessionState.earlier`), shown as "Show earlier messages" on the Team DSH page; and a follow whose socket, channel or computer went away retries with backoff and reopens with a fresh snapshot instead of ending.
+- **Why:** A session with large tool output produced a snapshot over 1 MiB, which closed the channel, so it could never be opened remotely; and any dropped socket left the page showing an error until it was reopened.
+- **Breaking:** `SessionState` has a required `earlier` and `RelayClient` an `older` method, so every implementation of either (the phone app's demo client) adds them.
+- **Upgrade:** Release the plugin with this change; the oversized-snapshot fix lives there.
+- **Refs:** `docs/tech/relay.md`, `packages/relay-client/src/live.ts`, the plugin's `src/bridge.ts` (`fitFrame`).
+
+## 2026-11-18 — A device says what it is when it pairs
+
+- **What:** The relay client takes the device it runs on (`device`: `ios`, `android` or `web`) and says it in `pairHello` and `shareJoin`, so a computer's Devices page can name each paired device: iOS phone, Android phone or Web browser. The console says `web`. My DSH and `/docs` point to the panel's page by its new name, Devices.
+- **Why:** The plugin's panel said phone for every paired device, browsers included.
+- **Breaking:** None; a computer whose plugin is older ignores the field, and a device paired before shows no kind.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/relay-client/src/live.ts`, `apps/web/src/lib/relay.ts`; the plugin's `src/phone-security.ts`.
+
+## 2026-11-18 — Team DSH is in every team's Workspace
+
+- **What:** Workspace lists **Team DSH** in every team, not only once a member may reach one. Where the server has not enabled Team DSH for the team, the page says what it offers and that the platform operator enables it, sending an admin to support and a member to their admin; an admin of an enabled team with none is pointed to Team assets. `GET /relay/shared` adds `unavailableTeamIds`, and `@dsh-teamwork/relay-client`'s `sharedHosts()` answers `{ hosts, unavailableTeamIds }`.
+- **Why:** The feature was invisible to the teams it was meant to reach first.
+- **Breaking:** `sharedHosts()` answers an object instead of an array; its callers in this repository and the closed mobile app are updated.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/team-dsh.tsx`, `server/relay/access.go`, `docs/tech/shared-dsh.md`.
 
 ## 2026-11-18 — A Team DSH guide, and the console's key card says what comes next
 
@@ -36,6 +67,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None.
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/content/docs/{en,zh-CN}/team-dsh.md`, `apps/web/src/pages/team/team-dsh-hosts.tsx`.
+
+## 2026-11-18 — A pasted pairing code keeps its last letter
+
+- **What:** My DSH's pairing code field drops spaces before it holds the code to six characters, so a code pasted as the panel shows it ("PQP WGG") arrives whole.
+- **Why:** The field's length limit cut the seventh character, the code's last letter, before the space was removed.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`.
 
 ## 2026-11-18 — My DSH opens the computer a pairing code came from
 

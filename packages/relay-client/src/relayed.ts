@@ -40,7 +40,7 @@ export interface RelayedSession {
 }
 
 export const EMPTY_RELAYED_SESSION: RelayedSession = {
-  state: { status: 'idle', items: [], pending: null, closed: null },
+  state: { status: 'idle', items: [], pending: null, closed: null, earlier: null },
   streams: newStreams(),
   session: null,
   client: null,
