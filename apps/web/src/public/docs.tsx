@@ -28,7 +28,7 @@ import { LocaleMenu, ThemeButton } from './controls';
 /** The sidebar: each section's pages, by slug. `index` is `/docs` itself. */
 export const SECTIONS = [
   { key: 'start', pages: ['index', 'install'] },
-  { key: 'teams', pages: ['admins', 'members', 'team-dsh', 'commands'] },
+  { key: 'teams', pages: ['admins', 'members', 'commands'] },
   { key: 'run', pages: ['self-hosting'] },
 ] as const;
 
