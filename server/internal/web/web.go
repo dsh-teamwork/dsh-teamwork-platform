@@ -208,6 +208,13 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.src.file(w, r) {
 		return
 	}
+	// A chunk this build does not hold is one a page from an earlier build
+	// asked for. The console in its place would reach the browser as a module
+	// it refuses with a misleading error; a 404 tells the page to reload.
+	if strings.HasPrefix(clean, "/assets/") {
+		http.NotFound(w, r)
+		return
+	}
 	index, ok := s.src.index()
 	if !ok {
 		http.Error(w, s.src.missing(), http.StatusNotFound)

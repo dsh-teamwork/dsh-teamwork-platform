@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — An open console survives a deploy
+
+- **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.
+- **Why:** A tab opened before a deploy asked for its old chunks, got HTML back, and showed "Failed to fetch dynamically imported module".
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/web/web.go`, `apps/web/src/app.tsx`.
+
 ## 2026-11-18 — My usage replaces My submissions in the workspace; overruns apart from calls to resolve
 
 - **What:** The workspace's sidebar lists **My usage** (`/teams/{teamId}/my-usage`) where **My submissions** was: the limits that apply to the reader, a period's (7, 30 or 90 days) calls, points and tokens, points by day and by model, and the latest calls with a CSV, for everyone, an admin's own included. My submissions stays at `/submissions`, a link on **Team resources** (its Chinese label now matches the English), which now holds every way to submit: upload a plugin, import a preset file, write a preset. A new `GET /api/teams/{teamId}/usage/stats` serves the page, scoped as the usage list is. The team summary adds `overruns` (calls past their hold, which suspend budgeted calls on their route) and no longer counts them in `unresolved`; the team overview lists them second, after unpriced models.

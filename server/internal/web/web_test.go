@@ -200,6 +200,11 @@ func TestTheConsoleKeepsEveryOtherPath(t *testing.T) {
 	if res.Header.Get("Cache-Control") != "public, max-age=31536000, immutable" {
 		t.Fatalf("an asset: %v", res.Header)
 	}
+	// A chunk from an earlier build is not found, never the console: a page
+	// still running that build has to see the failure to reload.
+	if res := serve(t, h, "/assets/my-dsh-old.js", nil); res.StatusCode != http.StatusNotFound || strings.Contains(body(t, res), "spa") {
+		t.Fatalf("a missing asset: %d", res.StatusCode)
+	}
 }
 
 func TestBrowserAnalyticsKey(t *testing.T) {
