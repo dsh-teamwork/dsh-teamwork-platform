@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Shared DSHs are finished: the panel, and the last decisions
+
+- **What:** The plugin's Teamwork panel manages shared mode as `/teamwork share` does: turn it on with a team host key, set the audit key, see the members who may reach the DSH with their devices and locks, make an invite (link and QR code), unlock a member, turn it off. `docs/tech/shared-dsh.md` now describes what was built, with three decisions: the archive costs a team nothing on the hosted service with no limit, a deleted account's records stay in the team's archive, and a team may have any number of shared DSHs.
+- **Why:** The last part of the shared DSH work, and the open questions it left.
+- **Breaking:** None.
+- **Upgrade:** Update the plugin for the panel.
+- **Refs:** `docs/tech/shared-dsh.md`, the plugin's `src/web/TeamworkPanel.tsx` and `src/panel.ts`.
+
 ## 2026-11-18 — Every server sends the phone app its sign-in code
 
 - **What:** `/plugin` accepts the official app's `redirect_uri`, exactly `dshteamwork://sign-in`, on every server with no setting, and nothing else beside the plugin's loopback address; `MOBILE_REDIRECT_URI` is removed, and the session's `mobileRedirectPrefix` is now `appRedirect`, that exact address. `/docs` tells self-hosters the app connects to their server.
