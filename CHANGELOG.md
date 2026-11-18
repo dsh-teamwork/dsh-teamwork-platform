@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — An edition can choose which teams run a Team DSH
+
+- **What:** `edition.Host` gains `GateTeamDSH` and `TeamDSHAllowed`. Where an edition sets a gate, a team it does not admit cannot create or rotate a Team DSH key (`403 team_dsh_unavailable`), its DSH gets no host token, and its members reach none; `GET /api/teams/{teamId}/shared-hosts` adds `available`, and the console's Team DSH page says the team is not enabled and offers no key. A self-hosted server sets no gate, so nothing changes there.
+- **Why:** The hosted service opens Team DSH to chosen teams first, while its security is proven in use.
+- **Breaking:** `GET /api/teams/{teamId}/shared-hosts` answers `available` beside `hosts`.
+- **Upgrade:** Nothing.
+- **Refs:** `server/edition/edition.go`, `server/relay/shared.go`, `server/relay/access.go`, `docs/tech/shared-dsh.md` ("Who may run one").
+
 ## 2026-11-18 — A Team DSH member can start a first session
 
 - **What:** A computer's `teamwork/configuration` answer carries `directories`: the folder DSH was started in, then its workspaces. The relay client starts a new session in the reader's latest folder, else the first one offered, and accepts only those (`startableDirectories` in `packages/relay-client`), so the console's Team DSH page and the phone app work for a member with no session yet. On a Team DSH the plugin refuses a member's `session/create` in any other folder. `/docs` says to start `dsh web` in the project folder, and on pnpm 11 to let DSH's profile take a release from today and skip unneeded build scripts.

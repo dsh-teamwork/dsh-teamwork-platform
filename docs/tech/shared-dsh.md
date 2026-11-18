@@ -83,6 +83,24 @@ Decided with this premise:
 - Files, images, or choosing a folder, preset or model when starting a
   session, from the web client; the app has them.
 
+## Who may run one
+
+A self-hosted server lets every team run a Team DSH. An edition can narrow
+that with a gate (`edition.Host.GateTeamDSH`, at most one), which the relay
+asks about the team on every request that needs it:
+
+- creating or rotating a key is refused `403 team_dsh_unavailable`, and
+  `GET …/shared-hosts` says `available: false`, which the console's Team DSH
+  page reads to say the team is not enabled and offer no key;
+- the key exchange gives the DSH no host token, and binds no machine, so a
+  running DSH drops off within the hour its last token lasts;
+- `canReach` is false, so members list, join and connect to none at once.
+
+Keys, access lists and archives stay as they were, to rename, delete or
+export, and work again once the gate admits the team. The hosted service's
+closed edition (where `premium/` exists) sets such a gate: an operator admits
+teams one at a time while Team DSH's security is proven in use.
+
 ## Identities and keys
 
 | Who | Proves itself with | Kept | Opens |
