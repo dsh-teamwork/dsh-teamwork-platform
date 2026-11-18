@@ -47,7 +47,7 @@ Debian, as the user DSH will run as:
 
 2. Install DSH. It is published as prereleases for now, so name the exact
    version [npm lists](https://www.npmjs.com/package/@deepseek-ai/dsh?activeTab=versions)
-   as `latest`; without one, npm finds no version:
+   as `latest`; without one, some npm versions find none:
 
    ```sh
    npm install -g @deepseek-ai/dsh@0.2.2-rc.1
@@ -64,8 +64,15 @@ Debian, as the user DSH will run as:
 
    Detach with `Ctrl+B` then `D`; `tmux attach -t dsh` returns to it.
 
-4. From another shell on the same machine, use `dsh-teamwork`, which comes
-   with the plugin: `dsh-teamwork login` for your own DSH, or
+4. In another shell on the same machine, install the plugin's commands,
+   `dsh-teamwork` and `dsh-teamwork-audit`. The copy inside DSH's profile is not
+   on your `PATH`:
+
+   ```sh
+   npm install -g @dsh-teamwork/dsh-teamwork
+   ```
+
+5. Then run `dsh-teamwork login` for your own DSH, or
    `dsh-teamwork share enable <key>` for a Team DSH. See
    [Commands](/docs/commands#on-a-server-dsh-teamwork). No browser is needed on
    the server.
@@ -94,7 +101,14 @@ out and clears the previous server's team resources.
 ## Update
 
 Update with the same plugin manager you installed with: the app's **Plugins**
-page on Desktop, or `dsh plugin` on the CLI.
+page on Desktop. On the CLI, update the profile with `--latest`; without it, a
+new minor version such as 0.11 after 0.10 is not picked up. On a server, also
+update the commands, then restart DSH:
+
+```sh
+dsh plugin --profile web update --latest @dsh-teamwork/dsh-teamwork
+npm install -g @dsh-teamwork/dsh-teamwork
+```
 
 ## If something goes wrong
 

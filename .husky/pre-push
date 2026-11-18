@@ -4,6 +4,13 @@
 # before a branch leaves the machine. The two are meant to stay in step — a
 # step added there belongs here as well.
 #
+# In the closed edition (where premium/ exists) it is the only check a pull
+# request gets: its repository is private, so CI skips pull requests and runs
+# only after a merge into main. There nothing may skip — the databases the
+# suites need and the plugin's checkout are required, and a push without them
+# is refused. Here, in the open edition, CI runs on every pull request, so a
+# laptop without them may push and CI covers what it skipped.
+#
 # To skip it on a work-in-progress branch: `git push --no-verify`. That is an
 # escape hatch for a branch nobody will merge yet, not a way to land a red main.
 
@@ -25,6 +32,23 @@ run() {
 
 printf '\033[1mRunning CI locally before pushing…\033[0m\n'
 
+plugin=${DSH_TEAMWORK_PLUGIN:-../dsh-teamwork}
+if [ -d premium ]; then
+  missing=''
+  for var in TEST_POSTGRES_URL TEST_MYSQL_URL MIGRATE_DEV_POSTGRES MIGRATE_DEV_MYSQL; do
+    eval "value=\${$var:-}"
+    [ -n "$value" ] || missing="$missing $var"
+  done
+  if [ -n "$missing" ] || [ ! -f "$plugin/lib/client.js" ]; then
+    printf '\n'
+    red '✗ pre-push refused: the closed edition runs all of CI here, and nothing may skip'
+    [ -z "$missing" ] || printf '  Not set:%s\n  Run pnpm dev:setup and export the four variables it prints.\n' "$missing"
+    [ -f "$plugin/lib/client.js" ] || printf '  No built DSH plugin at %s: clone dsh-teamwork beside this checkout and run pnpm build there, or set DSH_TEAMWORK_PLUGIN.\n' "$plugin"
+    printf '  For a work-in-progress branch nobody will merge yet: git push --no-verify\n\n'
+    exit 1
+  fi
+fi
+
 run 'Type check      (pnpm tsc)' pnpm tsc
 
 run 'Language check  (pnpm lint:lang)' pnpm lint:lang
@@ -36,20 +60,20 @@ run 'Icons check     (pnpm assets:icons --check)' pnpm assets:icons --check
 run 'Lint            (pnpm lint)' pnpm lint
 
 # Skips with a warning without MIGRATE_DEV_POSTGRES and MIGRATE_DEV_MYSQL (see
-# server/scripts/drift.mjs), so a laptop without those databases can still push.
+# server/scripts/drift.mjs), so a laptop without those databases can still push
+# the open edition; the closed one was refused above.
 run 'Migration drift (pnpm db:drift)' pnpm db:drift
 
 # The Go suites run every database case on SQLite, and on Postgres and MySQL
-# where TEST_POSTGRES_URL and TEST_MYSQL_URL name a server; CI sets both, so
-# those cases are never skipped there.
+# where TEST_POSTGRES_URL and TEST_MYSQL_URL name a server; CI sets both, and
+# the closed edition requires both above.
 run 'Test            (pnpm test)' pnpm test
 
 run 'Build           (pnpm build)' pnpm build
 
 # The DSH plugin, unchanged, against the Go server (server/e2e). It needs the
-# plugin's checkout beside this one, or DSH_TEAMWORK_PLUGIN; without either it
-# skips with a warning, and CI runs it.
-plugin=${DSH_TEAMWORK_PLUGIN:-../dsh-teamwork}
+# plugin's checkout beside this one, or DSH_TEAMWORK_PLUGIN; without either the
+# open edition skips it with a warning, and CI runs it.
 if [ -f "$plugin/lib/client.js" ]; then
   # Absolute, since the test resolves it from server/e2e.
   DSH_TEAMWORK_PLUGIN=$(cd "$plugin" && pwd)

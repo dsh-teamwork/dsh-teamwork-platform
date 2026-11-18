@@ -279,7 +279,9 @@ end-to-end test is `go test -tags e2e ./e2e` in `server/`, against
 by hand from the Actions tab: the gate above, the plugin's end-to-end test in
 every Go module that has one. A private edition such as premium, whose Actions
 minutes are billed, skips pull requests and runs only on a merge into `main` and
-by hand; its pull requests rely on the pre-push gate. All jobs use Linux, and a newer run cancels an
+by hand; its pull requests rely on the pre-push gate, which there refuses to
+push unless the four database variables are set and the plugin's checkout is
+built, so nothing in it can skip. All jobs use Linux, and a newer run cancels an
 older run for the same pull request or branch. The Platform repository also
 packs the release and runs it with `npx` in the same job, and has a `self-host`
 job that builds `server/Dockerfile` and starts `compose.yaml`; downstream

@@ -107,7 +107,7 @@ and so on ([Install](/docs/install#a-linux-server),
 [Commands](/docs/commands#on-a-server-dsh-teamwork)).
 
 Before it admits anyone, a Team DSH needs your team's **audit key**. On your
-own computer, with the plugin's package installed, run
+own computer, after `npm install -g @dsh-teamwork/dsh-teamwork`, run
 `dsh-teamwork-audit keygen`: it writes `audit-key.json`, which only you keep,
 and prints `/teamwork share audit-key <public key>` to run in the Team DSH.
 From then on the Team DSH seals everything members do on it to that key and
