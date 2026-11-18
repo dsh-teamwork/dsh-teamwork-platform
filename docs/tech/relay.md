@@ -320,6 +320,16 @@ prompt containing text and/or completed receipts. Send never transfers bytes. Fi
 when the desktop originated them. A failed file never silently drops out of
 an otherwise submitted message.
 
+The rules of the transfer (limits, acknowledged chunks, the receipts and the
+one request id an ambiguous acknowledgement keeps) are the relay client's
+`attachments.ts`, which the app and the web console share. **The web console
+transfers at Send instead** (`useFiles` in `dsh-session.tsx`): its picker is the
+browser's, its bytes are the page's own `File`s, and a new session's first
+message makes the session, uploads into it and then prompts, keeping that
+session for a retry; changing its folder or preset before Send leaves it
+behind. On a fast desktop link the overlap the app needs is not worth a
+provisional session per draft.
+
 A new-session draft creates a provisional native session on first selection.
 Changing its workspace or preset releases the old plugin receipts, creates a
 new target and uploads the retained files again. Changing only the model keeps
@@ -488,8 +498,9 @@ the hosted edition, Cloud DSH.
   **Devices**: every pairing of the account to it, the phone app's and every
   browser's, with its name, status, last use and whether it pushes, this
   browser marked, each removable.
-- **A new session** offers the computer's folders, presets and models before
-  its first message, and a session's model changes while it is idle, through
+- **A new session** offers the computer's folders, presets and models (with a
+  model's reasoning efforts where it has them) before its first message, and a
+  session's model and effort change while it is idle, through
   `teamwork/configuration` and `teamwork/selectModel` as the app does; a plugin
   that reports none leaves the computer's defaults.
 - **A session** is followed as on the phone: a snapshot that fits the
