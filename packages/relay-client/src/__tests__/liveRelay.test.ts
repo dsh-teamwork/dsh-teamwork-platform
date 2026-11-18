@@ -19,7 +19,7 @@ vi.mock('../secure-channel', () => ({
   },
 }));
 import { describe, expect, it, vi } from 'vitest';
-import { createLiveRelay } from '../live';
+import { createLiveRelay, RETRY_MS } from '../live';
 import { RelayError, type SessionEvent } from '../types';
 
 class FakeSocket {
@@ -330,6 +330,70 @@ describe('the live relay client', () => {
     s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: follow.streamId, value: { type: 'snapshot', records: [], cursor: 0 } } });
     const snapshot = seen.find((e) => e.type === 'snapshot');
     expect(snapshot).toMatchObject({ state: { pending: { kind: 'question', id: 'q-0#0', question: 'Deploy?' } } });
+  });
+
+  it('reads the history before a snapshot that did not reach the session’s start, and stops at its start', async () => {
+    const { relay, socket } = setup();
+    const seen: SessionEvent[] = [];
+    relay.follow('p1', 's1', (e) => seen.push(e));
+    const s = await socket();
+    await until(() => s.sent.filter((f) => f.t === 'mux').length >= 2);
+    const [events, follow] = s.sent.filter((f) => f.t === 'mux').map((f) => f.body);
+    s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: events.streamId, value: { type: 'ready', clientId: 'c-1' } } });
+    const said = (seq: number, text: string) => ({ type: 'event', event: { type: 'user/message', seq, data: { source: { kind: 'user' }, content: [{ type: 'text', text }] } } });
+    s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: follow.streamId, value: { type: 'snapshot', records: [said(40, 'latest')], cursor: 40, hasMore: true } } });
+    expect(seen.at(-1)).toMatchObject({ type: 'snapshot', state: { earlier: 40 } });
+
+    const reading = relay.older('p1', 's1');
+    await until(() => s.sent.some((f) => f.method === 'session/page'));
+    const page = s.sent.find((f) => f.method === 'session/page');
+    expect(page.body.args).toEqual({ request: { address: { kind: 'session', sessionId: 's1' }, beforeSeq: 40, maxMessages: 50 } });
+    s.push({ t: 'result', pairingId: 'p1', id: page.id, status: 200, body: { result: { ok: true, value: { records: [said(3, 'first')], hasMore: false, cursor: 40 } } } });
+    await reading;
+    expect(seen.at(-1)).toEqual({ type: 'older', items: [{ kind: 'user', id: 'seq-3', text: 'first' }], earlier: null });
+
+    // At its start there is nothing more to read.
+    await relay.older('p1', 's1');
+    expect(s.sent.filter((f) => f.method === 'session/page')).toHaveLength(1);
+  });
+
+  it('follows again on a new socket after the old one drops, from a fresh snapshot', async () => {
+    const { relay, socket } = setup();
+    const seen: SessionEvent[] = [];
+    relay.follow('p1', 's1', (e) => seen.push(e));
+    const s = await socket();
+    await until(() => s.sent.filter((f) => f.t === 'mux').length >= 2);
+    s.close();
+    expect(seen.at(-1)).toEqual({ type: 'closed', reason: 'unavailable' });
+
+    // The first retry waits a second, then opens a socket of its own.
+    await new Promise((resolve) => setTimeout(resolve, RETRY_MS[0]! + 50));
+    await until(() => FakeSocket.made.length > 1 && FakeSocket.made[1]!.sent.length > 0);
+    const next = FakeSocket.made[1]!;
+    next.push({ t: 'welcome' });
+    await until(() => next.sent.filter((f) => f.t === 'mux').length >= 2);
+    const [events, follow] = next.sent.filter((f) => f.t === 'mux').map((f) => f.body);
+    expect(follow).toMatchObject({ type: 'open', endpoint: 'session/follow', payload: { args: { request: { address: { sessionId: 's1' } } } } });
+    next.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: events.streamId, value: { type: 'ready', clientId: 'c-2' } } });
+    next.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: follow.streamId, value: { type: 'snapshot', records: [], cursor: 0 } } });
+    expect(seen.at(-1)).toMatchObject({ type: 'snapshot', state: { closed: null } });
+  });
+
+  it('does not follow again a session whose pairing was revoked, nor after sign-out', async () => {
+    const { relay, socket } = setup();
+    const seen: SessionEvent[] = [];
+    relay.follow('p1', 's1', (e) => seen.push(e));
+    const s = await socket();
+    await until(() => s.sent.filter((f) => f.t === 'mux').length >= 2);
+    s.push({ t: 'revoked', pairingId: 'p1' });
+    const other: SessionEvent[] = [];
+    relay.follow('p1', 's2', (e) => other.push(e));
+    await until(() => s.sent.filter((f) => f.t === 'mux').length >= 4);
+    relay.reset();
+    await new Promise((resolve) => setTimeout(resolve, RETRY_MS[0]! + 50));
+    expect(FakeSocket.made).toHaveLength(1);
+    expect(seen.at(-1)).toEqual({ type: 'closed', reason: 'not_found' });
+    expect(other.at(-1)).toEqual({ type: 'closed', reason: 'not_found' });
   });
 
   it('ends a follow when its pairing is revoked or its computer goes away', async () => {

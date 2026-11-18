@@ -384,6 +384,11 @@ function Conversation({ computerId, sessionId, title }: { computerId: string; se
     <>
       <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{title}</h2>
       <div className="flex flex-col gap-4 text-sm">
+        {state.earlier !== null && (
+          <Button type="button" variant="ghost" size="sm" className="self-center" disabled={busy} onClick={() => void act(() => relay.older(computerId, sessionId))}>
+            {t('earlier')}
+          </Button>
+        )}
         {rows.map((row) =>
           row.kind === 'user' ? (
             <p key={row.id} className="ml-auto max-w-[85%] rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>

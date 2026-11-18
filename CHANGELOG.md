@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Long sessions open from the phone and web, and follows come back by themselves
+
+- **What:** The plugin's bridge makes every frame it sends a phone or browser fit the encrypted channel's 1 MiB message: long strings are cut short, and a snapshot or `session/page` keeps its newest records and says `hasMore`. `@dsh-teamwork/relay-client` reads older history through `session/page` (`RelayClient.older`, the `older` event, `SessionState.earlier`), shown as "Show earlier messages" on the Team DSH page; and a follow whose socket, channel or computer went away retries with backoff and reopens with a fresh snapshot instead of ending.
+- **Why:** A session with large tool output produced a snapshot over 1 MiB, which closed the channel, so it could never be opened remotely; and any dropped socket left the page showing an error until it was reopened.
+- **Breaking:** `SessionState` has a required `earlier` and `RelayClient` an `older` method, so every implementation of either (the phone app's demo client) adds them.
+- **Upgrade:** Release the plugin with this change; the oversized-snapshot fix lives there.
+- **Refs:** `docs/tech/relay.md`, `packages/relay-client/src/live.ts`, the plugin's `src/bridge.ts` (`fitFrame`).
+
 ## 2026-11-18 — A DSH can be run and managed from a Linux shell
 
 - **What:** `/docs` describes installing DSH and the plugin on a Linux server (DSH needs its exact prerelease version) and the plugin's new `dsh-teamwork` command. It does what the Teamwork panel does against the DSH running on that machine, with no browser: the server, sign-in by pasted code, status, sync and sign-out, phone pairing (a QR code in the terminal, accepted after comparing the safety code), and a Team DSH's `share` actions (enable, audit-key, status, members, invite, unlock, disable). The plugin now keeps its files in `$DSH_HOME/dsh-teamwork/` (else `~/.dsh/dsh-teamwork/`) instead of the directory DSH was started from.

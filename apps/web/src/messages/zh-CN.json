@@ -902,6 +902,7 @@
       "newHint": "{name} 上的新会话，在这个浏览器和那台机器之间端到端加密。",
       "firstPlaceholder": "描述任务。开始后还可以继续发消息。",
       "steps": "{count} 个步骤",
+      "earlier": "显示更早的消息",
       "failed": "失败",
       "denied": "已拒绝",
       "thinking": "思考中…",

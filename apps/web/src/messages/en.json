@@ -902,6 +902,7 @@
       "newHint": "A new session on {name}, end-to-end encrypted between this browser and the machine.",
       "firstPlaceholder": "Describe the task. You can keep sending messages once it starts.",
       "steps": "{count, plural, one {# step} other {# steps}}",
+      "earlier": "Show earlier messages",
       "failed": "failed",
       "denied": "denied",
       "thinking": "Thinking…",
