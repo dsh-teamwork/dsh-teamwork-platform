@@ -93,13 +93,3 @@ call by member and model and exports it as CSV.
 Members can submit presets and plugins. Under **Review**, compare
 the proposed contents with what is live, then approve to publish or reject with
 a reason.
-
-## 7. Run a Team DSH
-
-A Team DSH is a DSH your team runs on a machine of its own, usually a server,
-for members to work on from the browser or the phone app. It signs in with a
-key from **Team assets → Team DSH**, never as a person, and admits a member
-only with an invite made on that machine and a PIN they set. You set it up from
-the console and a shell on the machine; [Team DSH](/docs/team-dsh) walks
-through every step, in order, with each command.
-

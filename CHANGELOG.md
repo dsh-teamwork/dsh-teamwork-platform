@@ -12,6 +12,37 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None; the field is optional and readers ignore it.
 - **Upgrade:** Nothing. Release the plugin for the avatar to reach the phone and My DSH.
 - **Refs:** `packages/shared/src/avatars.ts`, `apps/web/src/components/preset-avatar.tsx`, `docs/design.md` ("Preset avatars").
+## 2026-11-18 — The sign-in page is redesigned
+
+- **What:** `/sign-in` is a split screen: the navy plate with the title and a layered sea beside a form that lists each OAuth door the server reports in `doors` (Google today, with its four-colour G), then the email door. The code step becomes *Check your email* with a six-digit field and a *Send a new code* link; the password field can be shown; an instance whose first account is unclaimed points to the setup link; errors and pending buttons are visible as such.
+- **Why:** The page was a bare card that did not look like the product and gave no feedback while a request ran.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/sign-in.tsx`, `docs/design.md`.
+
+## 2026-11-18 — Browser analytics send page views and nothing else, whatever the project enables
+
+- **What:** The browser's PostHog client turns off heatmaps, dead clicks and web vitals in its own config, and its filter (`scrubEvent`) drops every event but `$pageview`. Before, a PostHog project with those switched on in its settings made the client send `$web_vitals` and heatmap events.
+- **Why:** `docs/ops/analytics.md` and the hosted privacy policy promise page views only; the project's remote settings could break that promise without a code change.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/lib/analytics.ts`, `docs/ops/analytics.md`.
+
+## 2026-11-18 — A new session from the console lands in the team's default workspace
+
+- **What:** `teamwork/configuration` gains `teamDirectories`, each synced team's default workspace on the computer, which the member sets in the plugin's panel under My teams (the folder DSH was started in until then). `relay-client`'s `createSession` takes a `teamId` and, naming no folder, starts there ahead of the latest session's folder (`defaultDirectory`); My DSH passes the console's team. `latestDirectoryOf` is removed.
+- **Why:** A member in several teams keeps each team's work in its own folder; a phone or browser should open there without a choice each time.
+- **Breaking:** None. A plugin that sends no `teamDirectories` behaves as before.
+- **Upgrade:** Nothing; the plugin release that sends it is `@dsh-teamwork/dsh-teamwork` after 0.11.3.
+- **Refs:** `packages/relay-client/src/session-config.ts`, `docs/tech/relay.md`, the plugin's `src/team-workspaces.ts`.
+
+## 2026-11-18 — Team DSH is offline
+
+- **What:** The server no longer mounts any Team DSH route: `/api/teams/{teamId}/shared-hosts…`, `/api/teams/{teamId}/shared-archive…`, `/relay/shared…` are 404, a host token opens nothing on the relay, and no member reaches a shared host. The console drops **Team DSH** from Workspace and Team assets, the home page drops its Team DSH card, and the `/docs` site drops the Team DSH guide and every mention of it. The code, the tables and the tests stay: `relay.Extension` takes `teamDSH`, false in the binary, true in the tests.
+- **Why:** The feature is being reconsidered before anyone relies on it.
+- **Breaking:** A running Team DSH loses its relay connection and cannot renew its host token; the one it holds still reaches `GET /api/configs` and the gateway until it expires, within the hour. Its plugin's `share` commands fail with 404.
+- **Upgrade:** Nothing.
+- **Refs:** `server/relay/relay.go`, `docs/tech/shared-dsh.md`.
 
 ## 2026-11-18 — An open console survives a deploy
 

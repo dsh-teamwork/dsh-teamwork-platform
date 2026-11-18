@@ -1,6 +1,6 @@
 # Shared DSH
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current — offline: the code is kept, nothing mounts it · **Updated:** 2026-11-18
 
 How a team shares one DSH that it runs itself: members reach it from the app
 or the web through the relay, end to end encrypted, and the server can route
@@ -8,6 +8,17 @@ their traffic but never read it. It is part of the community edition
 ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md)), on a
 self-hosted server as on the hosted one. This file is how it works, where
 each part lives, the decisions it rests on, and how it is tested.
+
+**Team DSH is offline while its design is reconsidered.** The relay every
+binary registers is built with `teamDSH` false (`server/relay/relay.go`): none
+of the routes below are mounted, a host token opens nothing on the relay, and
+no member reaches a shared host. The console lists neither Team DSH page and
+the `/docs` site has no Team DSH guide; the pages, the plugin's shared mode and
+this design stay, and the tests mount them with `teamDSH` true.
+`TestTeamDSHOffline` (`server/relay/relay_test.go`) holds the binary to that.
+Bringing it back is passing true in the relay's `init`, restoring the two
+console routes and their sidebar entries, and listing `team-dsh` in the docs'
+`SECTIONS` again.
 
 ## The route in one paragraph
 
@@ -198,7 +209,8 @@ before it replays anything:
   `sessionId → memberId` in the roster file. The DSH offers the folder `dsh`
   was started in, then its own workspaces (`startDirectories`), and sends
   them as `directories` in `teamwork/configuration`. A client starts in the
-  member's latest folder, else the first offered one, so a member with no
+  team's default workspace (`teamDirectories`, set where the DSH runs), else
+  the member's latest folder, else the first offered one, so a member with no
   session yet can still start one.
 - `session/list` returns only the member's sessions, and no sub-agent
   entries; `$events` forwards only items whose session id (`sessionId`,

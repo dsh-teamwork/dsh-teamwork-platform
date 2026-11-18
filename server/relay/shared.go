@@ -68,8 +68,12 @@ func (teamDSHUnavailable) Error() string     { return "team_dsh_unavailable" }
 func (teamDSHUnavailable) HTTPStatus() int   { return http.StatusForbidden }
 func (teamDSHUnavailable) ErrorCode() string { return "team_dsh_unavailable" }
 
-// teamDSHAllowed reports whether a team may run a Team DSH now.
+// teamDSHAllowed reports whether a team may run a Team DSH now: never while
+// the relay mounts no shared DSHs.
 func (r *relay) teamDSHAllowed(ctx context.Context, teamID string) (bool, error) {
+	if !r.teamDSH {
+		return false, nil
+	}
 	if r.host.TeamDSHAllowed == nil {
 		return true, nil
 	}

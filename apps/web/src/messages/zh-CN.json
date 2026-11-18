@@ -32,7 +32,6 @@
     "subtitle": "无需密码。使用 Google，或通过邮箱获取一次性验证码。",
     "subtitleEmailOnly": "无需密码。通过邮箱获取一次性验证码。",
     "google": "使用 Google 继续",
-    "or": "或",
     "email": "邮箱",
     "emailPlaceholder": "you@example.com",
     "sendCode": "发送验证码",
@@ -43,7 +42,13 @@
     "subtitlePassword": "使用邮箱和密码登录。",
     "subtitlePasswordGoogle": "使用 Google，或邮箱和密码登录。",
     "password": "密码",
-    "noAccount": "还没有账号？请团队管理员为你创建。"
+    "noAccount": "还没有账号？请团队管理员为你创建。",
+    "orEmail": "或使用邮箱继续",
+    "checkEmail": "查收邮件",
+    "resend": "重新发送验证码",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码",
+    "setupHint": "这个实例还没有账号。请打开服务器启动时打印的设置链接，创建第一个账号。"
   },
   "authErrors": {
     "invalid_email": "邮箱地址格式不正确。",
@@ -132,14 +137,14 @@
       "console": {
         "title": "浏览器 · 工作与管理",
         "alt": "团队控制台概览：一条待审核提交，调用次数、积分和预算",
-        "description": "在网页里管理团队，也能通过邀请进入团队 DSH，开始或继续自己的会话。"
+        "description": "在网页里管理团队：模型、预设、成员和用量。"
       },
       "phone": {
         "title": "手机 · 随时跟进",
         "platformsLabel": "支持的平台",
         "storeSearch": "应用商店搜索 <strong>{appName}</strong>",
         "alt": "手机 App 的会话列表，一个会话在等你批准",
-        "description": "在手机上连到自己的电脑，或通过邀请加入团队 DSH，查看进度、发消息和处理审批。"
+        "description": "在手机上连到自己的电脑，查看进度、发消息和处理审批。"
       }
     },
     "collaborate": {
@@ -152,9 +157,6 @@
       "reviewBody": "对比新旧版本，确认新增的调研要求后发布。",
       "syncTitle": "全队同步使用",
       "syncBody": "下次同步时，更新后的调研规则就会出现在成员的 DSH 里。",
-      "sharedTitle": "团队 DSH",
-      "sharedEdition": "开源社区版",
-      "sharedBody": "管理员可以把一台团队 DSH 开放给全队或指定成员。成员收到邀请后，可从网页或手机接入同一台 DSH，在各自的会话里开展任务。",
       "alt": "分享与审批界面。市场调研预设拟在 v1 基础上新增标注信息来源、区分事实与推测的要求，等待管理员批准并发布。"
     },
     "govern": {

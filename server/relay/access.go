@@ -37,8 +37,12 @@ func (r *relay) accessRoutes(mux *http.ServeMux) {
 }
 
 // sharedHostOf is the shared host a host token names, while that host still
-// exists in the token's team; "" for any other token.
+// exists in the token's team; "" for any other token, and for every token
+// while the relay mounts no shared DSHs.
 func (r *relay) sharedHostOf(ctx context.Context, token string) (string, error) {
+	if !r.teamDSH {
+		return "", nil
+	}
 	claims, err := auth.NewSealer(r.host.AuthSecret, nil).Open(auth.HostBearer, token)
 	if err != nil {
 		return "", nil
