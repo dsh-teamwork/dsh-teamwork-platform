@@ -162,23 +162,22 @@ icon set.
 A preset's face is one of a fixed library of avatars,
 `packages/shared/src/avatars.ts`, which the web console and the phone app both
 draw (`apps/web/src/components/preset-avatar.tsx` and the app's own), so a
-preset looks the same everywhere. **An avatar is a professional, not a tool
-icon**: a faceless head-and-shoulders figure in **Paper**, told apart by what
-the role wears or carries — the engineer's hard hat, counsel's wig and bands,
-the support agent's headset, the researcher's lab coat — on a plate with the
-logo's corner (22 %). Generic app glyphs (a magnifier, a gear, a chart) are
-what it is not: they make every preset look like a menu item rather than an
-expert the team hands work to.
+preset looks the same everywhere. **An avatar is an abstract emblem of a
+role**: two or three flat shapes — circles, arcs, rounded bars — composed to
+suggest what the role does (a balance for legal, a stack of coins for finance,
+work laid out in time for project management), in **Paper** and one accent on
+a plate with the logo's corner (22 %). It is neither a stock app glyph (a
+magnifier, a gear), which makes a preset read as a menu item, nor a drawing of
+a person or a character, which at this size reads as clip art.
 
 - **Each role has its own plate and one accent.** Plates are deep, muted
   tones (dark enough that the paper figure always reads) and accents the
   lighter colour of its attribute; no two neighbouring roles share a hue
   family. The team assistant keeps the brand's navy and amber.
-- **Faceless.** No eyes or mouth, so no age, gender or ethnicity is implied;
-  hair, glasses and dress are the role's, not the person's.
-- **Flat fills and a few thin strokes**, three tones per avatar (figure, plate,
-  accent), on a 32-unit square; the figure stays clear of the plate's rounded
-  corners, so no client clips. Each must read at 20 px.
+- **Flat fills, rarely a stroke**, three tones per avatar (paper, plate as a
+  cut-out, accent), on a 32-unit square; shapes stay clear of the plate's
+  rounded corners, so no client clips. Each must read at 20 px, so a detail
+  smaller than about 1.5 units is left out.
 - These hexes, in that file, are an exception to "never a literal colour":
   like the share card, the avatar is drawn outside the stylesheet and the same
   in both themes, as the logo is.
