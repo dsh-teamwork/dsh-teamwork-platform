@@ -66,6 +66,14 @@ const until = async (check: () => boolean) => {
   for (let i = 0; i < 100 && !check(); i++) await tick();
 };
 
+/** Answers a computer's `teamwork/configuration` with the directories it offers; `nth` picks a later call. */
+async function answerDirectories(s: FakeSocket, pairingId: string, directories: string[], nth = 0) {
+  const asked = () => s.sent.filter((f) => f.method === 'teamwork/configuration' && f.pairingId === pairingId);
+  await until(() => asked().length > nth);
+  const call = asked()[nth];
+  s.push({ t: 'result', pairingId, id: call.id, status: 200, body: { result: { ok: true, value: { presets: [], current: null, directories } } } });
+}
+
 function setup() {
   FakeSocket.made = [];
   FakeSocket.quiet = false;
@@ -355,6 +363,7 @@ describe('the live relay client', () => {
     await until(() => s.sent.some((f) => f.method === 'session/list'));
     const list = s.sent.find((f) => f.method === 'session/list');
     s.push({ t: 'result', pairingId: 'p1', id: list.id, status: 200, body: { result: { ok: true, value: { items: [{ sessionId: 'old', cwd: '/home/ada/app', updatedAt: 5 }] } } } });
+    await answerDirectories(s, 'p1', ['/srv/project']);
     await until(() => s.sent.some((f) => f.method === 'session/create'));
     const create = s.sent.find((f) => f.method === 'session/create');
     expect(create.body.args).toEqual({ request: { cwd: '/home/ada/app' } });
@@ -365,7 +374,30 @@ describe('the live relay client', () => {
     await until(() => s.sent.filter((f) => f.method === 'session/list').length > 1);
     const second = s.sent.filter((f) => f.method === 'session/list')[1];
     s.push({ t: 'result', pairingId: 'p2', id: second.id, status: 200, body: { result: { ok: true, value: { items: [] } } } });
+    await answerDirectories(s, 'p2', []);
     await expect(none).rejects.toMatchObject({ code: 'no_directory' });
+  });
+
+  it('starts a member new to a shared DSH where the computer offers, and nowhere it does not', async () => {
+    const { relay, socket } = setup();
+    const created = relay.createSession('p1');
+    const s = await socket();
+    await until(() => s.sent.some((f) => f.method === 'session/list'));
+    const list = s.sent.find((f) => f.method === 'session/list');
+    s.push({ t: 'result', pairingId: 'p1', id: list.id, status: 200, body: { result: { ok: true, value: { items: [] } } } });
+    await answerDirectories(s, 'p1', ['/srv/project', '/srv/docs']);
+    await until(() => s.sent.some((f) => f.method === 'session/create'));
+    const create = s.sent.find((f) => f.method === 'session/create');
+    expect(create.body.args).toEqual({ request: { cwd: '/srv/project' } });
+    s.push({ t: 'result', pairingId: 'p1', id: create.id, status: 200, body: { result: { ok: true, value: { sessionId: 'new-2' } } } });
+    expect(await created).toEqual({ id: 'new-2', directory: 'project' });
+
+    const elsewhere = relay.createSession('p1', { cwd: '/etc' });
+    await until(() => s.sent.filter((f) => f.method === 'session/list').length > 1);
+    const again = s.sent.filter((f) => f.method === 'session/list')[1];
+    s.push({ t: 'result', pairingId: 'p1', id: again.id, status: 200, body: { result: { ok: true, value: { items: [] } } } });
+    await answerDirectories(s, 'p1', ['/srv/project'], 1);
+    await expect(elsewhere).rejects.toMatchObject({ code: 'invalid_directory' });
   });
 
   it('creates in the exact known folder and native preset selected on the phone', async () => {
@@ -375,6 +407,7 @@ describe('the live relay client', () => {
     await until(()=>s.sent.some(f=>f.method==='session/list'));
     const list=s.sent.find(f=>f.method==='session/list');
     s.push({t:'result',pairingId:'p1',id:list.id,status:200,body:{result:{ok:true,value:{items:[{cwd:'/old/site',updatedAt:3},{cwd:'/other/site',updatedAt:1}]}}}});
+    await answerDirectories(s, 'p1', []);
     await until(()=>s.sent.some(f=>f.method==='session/create'));
     const create=s.sent.find(f=>f.method==='session/create');
     expect(create.body.args.request).toEqual({cwd:'/other/site',agentPreset:'team:t:review'});

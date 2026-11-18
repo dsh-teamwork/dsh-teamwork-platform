@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A Team DSH member can start a first session
+
+- **What:** A computer's `teamwork/configuration` answer carries `directories`: the folder DSH was started in, then its workspaces. The relay client starts a new session in the reader's latest folder, else the first one offered, and accepts only those (`startableDirectories` in `packages/relay-client`), so the console's Team DSH page and the phone app work for a member with no session yet. On a Team DSH the plugin refuses a member's `session/create` in any other folder. `/docs` says to start `dsh web` in the project folder, and on pnpm 11 to let DSH's profile take a release from today and skip unneeded build scripts.
+- **Why:** A client took the folder only from the reader's own sessions, and a Team DSH shows a member only theirs, so a new member got "no project folder on the machine" and could not start at all.
+- **Breaking:** None. An older plugin offers no folders, so nothing changes against it.
+- **Upgrade:** Update the plugin to 0.11.1 on each Team DSH, and restart DSH in the project folder.
+- **Refs:** the plugin's `src/shared-owner.ts`; `packages/relay-client/src/session-config.ts`, `src/live.ts`; `docs/tech/shared-dsh.md`; `apps/web/content/docs/{en,zh-CN}/install.md`.
+
 ## 2026-11-18 — Everything clickable shows the hand
 
 - **What:** Buttons, menu items, options, disclosure summaries and the labels of checkboxes and file inputs show the pointer cursor from the base styles of the web app and of `/manage`; disabled ones keep the arrow. The per-component `cursor-pointer` classes are gone.

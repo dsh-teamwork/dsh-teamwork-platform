@@ -172,7 +172,12 @@ done on the DSH, or from the device itself (it revokes its pairing as today).
 The bridge (`src/bridge.ts`) asks the owner filter (`src/shared-owner.ts`)
 before it replays anything:
 
-- `session/create` records `sessionId → memberId` in the roster file.
+- `session/create` must name a folder the DSH offers, and records
+  `sessionId → memberId` in the roster file. The DSH offers the folder `dsh`
+  was started in, then its own workspaces (`startDirectories`), and sends
+  them as `directories` in `teamwork/configuration`. A client starts in the
+  member's latest folder, else the first offered one, so a member with no
+  session yet can still start one.
 - `session/list` returns only the member's sessions, and no sub-agent
   entries; `$events` forwards only items whose session id (`sessionId`,
   `args[0]` or `agentId`) is the member's.
