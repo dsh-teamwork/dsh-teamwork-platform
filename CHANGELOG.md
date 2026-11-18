@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — A computer's sessions run over any link; the console's session parts take their client
+
+- **What:** `@dsh-teamwork/relay-client` splits a computer's sessions (list, follow, start, prompt, answer, configure, upload) from the relay into `dsh-sessions.ts`: `createDshSessions` runs them over any `DshLink` (a unary call, a stream, a close), and the live relay is one such link. `bridgeValue` reads a plugin bridge's `{ status, body }` answer. The web console's session parts (`dsh-session.tsx`) speak to `SessionClientContext`'s client when a page provides one, and to this browser's relay otherwise. `relayed.ts` (`receiveRelayed`, `relayedPending`, `answerRelayed`), which only the hosted edition's cloud sessions used, is removed.
+- **Why:** The hosted edition's Cloud DSH, a member's own computer its server reaches without the relay, uses the same screens as My DSH instead of a thinner copy.
+- **Breaking:** An edition importing `relayed.ts` moves to `createDshSessions` over its own link.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/relay-client/src/dsh-sessions.ts`, `apps/web/src/pages/team/dsh-session.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-18 — An open console survives a deploy
 
 - **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.

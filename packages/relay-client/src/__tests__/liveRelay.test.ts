@@ -19,7 +19,8 @@ vi.mock('../secure-channel', () => ({
   },
 }));
 import { describe, expect, it, vi } from 'vitest';
-import { createLiveRelay, RETRY_MS } from '../live';
+import { createLiveRelay } from '../live';
+import { RETRY_MS } from '../dsh-sessions';
 import { RelayError, type SessionEvent } from '../types';
 
 class FakeSocket {

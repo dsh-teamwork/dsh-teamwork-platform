@@ -60,7 +60,7 @@ The hosted edition's smallest useful version works end to end:
 | The relay: WebSocket endpoints for plugins and phones, pairing checks, envelopes, push, and `GET /api/relay` | `server/relay`, an extension every binary's main imports, served under `/relay` on the server's own port | Open |
 | Pairing and device tables | `server/internal/db/schema/relay.go`, migrated with the rest of the open schema | Open |
 | The plugin's outbound connection, pairing panel and allow-list | `dsh-teamwork/dsh-teamwork` (`src/relay.ts`, the Teamwork panel) | Open |
-| The client: the encrypted channel, the frames, the live client and DSH's Remote API read into a client's shapes, and a session whose streams a server relays (`src/relayed.ts`, which the hosted cloud's stream uses) | `packages/relay-client`, imported by the web console and the app; its tests run on Node, and `server/e2e` drives it against the real plugin | Open |
+| The client: the encrypted channel, the frames, the live client, a computer's sessions over any link to its DSH (`src/dsh-sessions.ts`: the relay's channel is one, a server that reaches a computer itself another) and DSH's Remote API read into a client's shapes | `packages/relay-client`, imported by the web console and the app; its tests run on Node, and `server/e2e` drives it against the real plugin | Open |
 | The app | `premium/apps/mobile` where that directory exists, from seed's Expo app | Closed; it reaches any server |
 
 The relay mounts through `server/edition` like a closed extension, so it reads
@@ -251,7 +251,7 @@ touching the channel. The clients read the history before a snapshot with
 the member's "Show earlier messages".
 
 A client keeps its follows when its socket, the channel or the computer goes
-away for now (`packages/relay-client`, `live.ts`): each says it is closed,
+away for now (`packages/relay-client`, `dsh-sessions.ts`): each says it is closed,
 tries again after 1, 2, 4, 8 and 15 seconds and then every 30, and opens with
 a fresh snapshot, which clears what it said. DSH's `session/follow` takes no
 cursor, so a follow never resumes part-way; the bounded snapshot is what makes
@@ -484,7 +484,10 @@ the hosted edition, Cloud DSH.
 
 - **Workspace → My DSH**, `/teams/{teamId}/my-dsh[/{hostId}[/{sessionId}]]`
   (`apps/web/src/pages/team/my-dsh.tsx`), in the same three columns as Team
-  DSH, whose parts it shares (`dsh-session.tsx`). It is listed while the
+  DSH, whose parts it shares (`dsh-session.tsx`). Those parts speak to this
+  browser's relay unless a page provides another client
+  (`SessionClientContext`), as an edition does for a computer its server
+  reaches itself. It is listed while the
   account has at least one recorded host, in every team alike: the computers
   are the person's, not a team's.
 - **The second column lists the account's computers**: name, online or when
