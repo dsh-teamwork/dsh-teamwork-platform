@@ -7,11 +7,11 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-18 — Everything clickable shows the hand
 
-- **What:** Buttons, menu items, options, disclosure summaries and the labels of checkboxes and file inputs show the pointer cursor from the web app's base styles; disabled ones keep the arrow. The per-component `cursor-pointer` classes are gone.
+- **What:** Buttons, menu items, options, disclosure summaries and the labels of checkboxes and file inputs show the pointer cursor from the base styles of the web app and of `/manage`; disabled ones keep the arrow. The per-component `cursor-pointer` classes are gone.
 - **Why:** Tailwind 4 leaves buttons on the arrow, so most of the console looked unclickable on hover.
 - **Breaking:** None.
 - **Upgrade:** Nothing.
-- **Refs:** `apps/web/src/globals.css`, `docs/design.md` ("Component rules").
+- **Refs:** `apps/web/src/globals.css`, `apps/manage/src/globals.css`, `docs/design.md` ("Component rules").
 
 ## 2026-11-18 — A question mark beside Team DSH says what it is
 

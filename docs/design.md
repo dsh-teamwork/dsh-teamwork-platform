@@ -178,9 +178,9 @@ icon set.
   `--warning`.
 - **What a click acts on shows the hand.** Buttons, menu items, options,
   disclosure summaries and the labels of checkboxes and file inputs get
-  `cursor: pointer` from the base layer in `apps/web/src/globals.css`, as links
-  do; a disabled control keeps the arrow. A component adds no `cursor-pointer`
-  of its own.
+  `cursor: pointer` from the base layer in `apps/web/src/globals.css` and
+  `apps/manage/src/globals.css`, as links do; a disabled control keeps the
+  arrow. A component adds no `cursor-pointer` of its own.
 - **Lists are rows, not cards.** Rows are divided by `--border` hairlines; a
   card's border and fill are kept for the one block that has to stand apart.
 - **The logo keeps its plate.** Use `public/logo.svg` at its square size. The
