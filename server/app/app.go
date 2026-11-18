@@ -223,6 +223,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		}
 		return nil
 	}
+	var teamDSHGate func(context.Context, string) (bool, error)
 	console := edition.AdminConsole{Base: "/manage"}
 	var webFiles fs.FS
 	var adminRoutes []edition.AdminRoute
@@ -235,8 +236,21 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		MintComputerToken: srv.MintComputerToken,
 		MintHostToken:     srv.MintHostToken,
-		Objects:           objects(teams.Artifacts),
-		Users:             NewUsers(client), Env: env,
+		GateTeamDSH: func(allowed func(context.Context, string) (bool, error)) error {
+			if allowed == nil || teamDSHGate != nil {
+				return errors.New("invalid or duplicate Team DSH gate")
+			}
+			teamDSHGate = allowed
+			return nil
+		},
+		TeamDSHAllowed: func(ctx context.Context, teamID string) (bool, error) {
+			if teamDSHGate == nil {
+				return true, nil
+			}
+			return teamDSHGate(ctx, teamID)
+		},
+		Objects: objects(teams.Artifacts),
+		Users:   NewUsers(client), Env: env,
 		WithTeamTx:          meter.WithTeamTx,
 		ResolveFundingUsage: meter.ResolveFunding,
 		TeamExists: func(ctx context.Context, id string) (bool, error) {

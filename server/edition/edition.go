@@ -113,6 +113,13 @@ type Host struct {
 	// and no member's. The edition checks the host is the team's and not
 	// revoked before it mints; the team must exist.
 	MintHostToken func(ctx context.Context, hostID, teamID string, ttl time.Duration) (string, time.Time, error)
+	// GateTeamDSH lets an edition decide which teams may run a Team DSH
+	// (docs/tech/shared-dsh.md, "Who may run one"): allowed answers for one
+	// team, read on every request that needs it. Mount-only, at most once;
+	// without a gate every team may, as on a self-hosted server.
+	GateTeamDSH func(allowed func(ctx context.Context, teamID string) (bool, error)) error
+	// TeamDSHAllowed asks that gate about one team: true where none is set.
+	TeamDSHAllowed func(ctx context.Context, teamID string) (bool, error)
 	// Objects keeps an extension's bytes under a team, in the server's own
 	// store; nil on a management process, which has none.
 	Objects Objects

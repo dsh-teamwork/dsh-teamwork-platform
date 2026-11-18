@@ -6,7 +6,9 @@
  * run in that DSH; the server keeps only its HMAC. Below them, each shared
  * DSH's audit archive, sealed to the admin's own key: the page only lists and
  * downloads it, and `dsh-teamwork-audit read` opens it on the admin's machine.
- * Using one is the Workspace page (team-dsh.tsx).
+ * Using one is the Workspace page (team-dsh.tsx). A team the hosted service
+ * has not admitted (`available: false`) sees why, and no way to create or
+ * rotate a key; what it has stays listed, to rename, delete or audit.
  */
 
 import { useState } from 'react';
@@ -33,7 +35,7 @@ export function TeamDshHostsPage() {
   const t = useTranslations('team.teamDshHosts');
   const word = useTeamError();
   const root = `teams/${team.id}/shared-hosts`;
-  const hosts = useApi<{ hosts: SharedHost[] }>(root);
+  const hosts = useApi<{ available: boolean; hosts: SharedHost[] }>(root);
   const archive = useApi<{ hosts: Archived[] }>(`teams/${team.id}/shared-archive`);
   const { pending, run } = useMutation(hosts.reload);
   const format = useFormatter();
@@ -47,6 +49,7 @@ export function TeamDshHostsPage() {
 
   const header = <PageHeader title={t('title')} description={t('description')} />;
   if (!hosts.data) return <>{header}{hosts.error ? <Failure message={word(hosts.error)} /> : null}</>;
+  const { available } = hosts.data;
   return (
     <>
       {header}
@@ -68,7 +71,10 @@ export function TeamDshHostsPage() {
           </CardContent>
         </Card>
       )}
-      <Card>
+      {!available && (
+        <p role="status" className="rounded-md border px-4 py-3 text-sm text-muted-foreground">{t('unavailable')}</p>
+      )}
+      {available && <Card>
         <CardContent className="pt-6">
           <form
             className="flex flex-wrap items-end gap-3"
@@ -87,7 +93,7 @@ export function TeamDshHostsPage() {
             <Button type="submit" disabled={pending || !name.trim()}>{t('create')}</Button>
           </form>
         </CardContent>
-      </Card>
+      </Card>}
       {hosts.data.hosts.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('empty')}</p>
       ) : (
@@ -111,7 +117,7 @@ export function TeamDshHostsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        disabled={pending}
+                        disabled={pending || !available}
                         onClick={() => {
                           if (confirm(t('rotateConfirm'))) void run(async () => setIssued(await api<Issued>(`${root}/${host.id}/rotate`, { body: {} })), t('rotated'));
                         }}
