@@ -22,7 +22,6 @@ import {
   GitPullRequestArrow,
   History,
   House,
-  KeyRound,
   Laptop,
   Layers,
   LayoutDashboard,
@@ -30,7 +29,6 @@ import {
   LogOut,
   Menu,
   Puzzle,
-  Server,
   ShieldCheck,
   Users,
   X,
@@ -48,7 +46,7 @@ import { api, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'teamDsh' | 'teamDshHosts';
+type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh';
 
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
@@ -95,9 +93,6 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
       // Listed only once one of this person's computers connected; the same computers in every team.
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true },
-      // Listed in every team, to show what it offers where the team does not have it yet; the admin's own page is
-      // under Team assets.
-      { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true, hint: true },
     ],
   },
   // The team overview heads Team management on its own; the toggle below it names the group.
@@ -111,7 +106,6 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'models', key: 'models', icon: Cpu },
       { path: 'presets', key: 'presets', icon: Layers },
       { path: 'plugins', key: 'plugins', icon: Puzzle },
-      { path: 'team-dsh-hosts', key: 'teamDshHosts', icon: KeyRound },
       { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
       { path: 'history', key: 'history', icon: History },
     ],
