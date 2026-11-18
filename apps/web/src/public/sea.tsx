@@ -17,8 +17,21 @@ function WhaleHatching({ id, transform }: { id: string; transform: string }) {
 export function SeaSurface() {
   return (
     <div className="tide-surface" aria-hidden="true">
+      <svg className="tide-clouds" viewBox="0 0 780 140" aria-hidden="true">
+        <path d="M22 61C48 57 56 56 75 55C89 46 106 43 123 45C137 33 155 30 173 34C183 26 202 18 219 19C245 18 264 29 275 42C295 38 314 41 328 49C352 47 383 52 410 56C312 58 219 61 154 60C106 58 62 61 22 61Z" />
+        <path d="M472 103C490 100 514 98 530 98C547 88 563 87 581 89C595 79 613 74 630 75C648 74 667 81 679 90C697 87 720 91 735 96L773 99C722 101 669 101 631 102C578 104 522 103 472 103Z" />
+      </svg>
       <svg className="tide-fluke" viewBox="4 10 50 40">
         <defs>
+          {/* Map the print's luminance to navy ink, sea blue and paper highlights. */}
+          <filter id="ocean-ink" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="saturate" values="0" />
+            <feComponentTransfer>
+              <feFuncR type="table" tableValues=".067 .15 .26 .64 .97" />
+              <feFuncG type="table" tableValues=".102 .29 .48 .77 .99" />
+              <feFuncB type="table" tableValues=".259 .51 .72 .92 1" />
+            </feComponentTransfer>
+          </filter>
           <WhaleHatching id="fluke-hatching" transform="rotate(76)" />
         </defs>
         <path d={FLUKE} transform="rotate(-15 32 42)" fill="url(#fluke-hatching)" />
@@ -73,7 +86,7 @@ export function WhalePod() {
 export function SeaBed() {
   return (
     <svg className="tide-bed" viewBox="0 0 1200 100" preserveAspectRatio="none" aria-hidden="true">
-      <path fill="#1c303a" d="M0 24C79 29 131 50 229 52S384 61 465 65C602 73 714 61 796 54S930 50 997 37C1073 24 1148 27 1200 18V100H0Z" />
+      <path fill="var(--sediment-ridge)" d="M0 24C79 29 131 50 229 52S384 61 465 65C602 73 714 61 796 54S930 50 997 37C1073 24 1148 27 1200 18V100H0Z" />
       <path fill="var(--sediment)" d="M0 44C86 48 131 62 202 63S326 67 409 75C545 85 652 79 734 73S916 65 987 56C1078 45 1147 49 1200 40V100H0Z" />
     </svg>
   );

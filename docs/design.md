@@ -7,7 +7,7 @@ The DSH Teamwork visual system — the whale mark, the black-and-white palette w
 The brand is one picture: a whale sounding, its paper fluke rising from a sea
 that settles in layers under an indigo sky. What surfaces is this one piece of
 work; what goes under, layer on layer, is what the team keeps: *work done with
-AI comes back to the team*. The landing page interprets the mark as a muted tidal woodcut.
+AI comes back to the team*. The landing page interprets the mark as a navy woodcut with white clouds above a blue sea.
 The product interface uses neutral black and white, the same frame as DeepSeek
 Harness itself, so the plugin sits inside DSH without a seam; two accents set
 the team edition apart, **navy** for what belongs to the team and **amber** for
@@ -182,7 +182,11 @@ icon set.
   landing illustration in `apps/web/src/public/sea.tsx` uses the fluke shape
   as a woodcut, with hatching on the tail and engraved lines in the water.
 - **The landing page follows the dive.** A full-width woodcut forms the
-  horizon beneath the opening copy. Two overlapping swells travel along
+  horizon beneath the opening copy. The fluke takes its indigo from the logo plate.
+  White paper behind the text opens into a pale sky with two low cloud banks.
+  The engraving uses several sea-blue ink values, with near-white upper chapters
+  and a navy seabed. Dark mode carries the same shapes into a dusk sky.
+  Two overlapping swells travel along
   the engraved water, bending the waterline and its ink strokes every frame. Both fluke tips stay inside the artwork
   and the stalk ends below the water throughout the cycle. Native scroll carries the tail
   under the water. A large humpback passes behind the middle chapters. Its

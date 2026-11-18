@@ -98,25 +98,33 @@
 /* One full-bleed water column. The section backgrounds meet at their edges;
    the artwork sits behind the text, screenshots and native controls. */
 body:has(.tide-story) {
-  --sky: #f6f2e7;
-  --shallows: #e1e9df;
-  --coast: #d5e3df;
-  --channel: #c5d9d7;
-  --shelf: #b3cdcf;
-  --deep: #254851;
-  --whale-ink: #263e43;
-  --whale-grain: #adbbb0;
+  --sky: #ffffff;
+  --horizon: #d9ebf7;
+  --cloud: #ffffff;
+  --foreground: #202938;
+  --muted-foreground: #536174;
+  --shallows: #f5f9fc;
+  --coast: #f0f5f9;
+  --channel: #e7eff6;
+  --shelf: #dbe6f1;
+  --deep: #294464;
+  --whale-ink: #1e2f6d;
+  --whale-grain: #c3d1e9;
   background: var(--sky);
 }
 .dark body:has(.tide-story) {
-  --sky: #1c292d;
-  --shallows: #223438;
-  --coast: #21363b;
-  --channel: #20343b;
-  --shelf: #1c323a;
-  --deep: #172f38;
-  --whale-ink: #b4c7bd;
-  --whale-grain: #41575b;
+  --sky: #151c2c;
+  --horizon: #293e59;
+  --cloud: #354a62;
+  --foreground: #f1f4fa;
+  --muted-foreground: #c2cddc;
+  --shallows: #1b283b;
+  --coast: #1a293d;
+  --channel: #18283d;
+  --shelf: #17273c;
+  --deep: #17263e;
+  --whale-ink: #e4e9f3;
+  --whale-grain: #7485a7;
 }
 .tide-story { --fluke-size: min(44vw, 68vh, 42rem); position: relative; isolation: isolate; scroll-margin-top: 4rem; }
 .tide-story section > div:not([aria-hidden]) { position: relative; z-index: 2; }
@@ -132,13 +140,14 @@ body:has(.tide-story) {
   background: linear-gradient(var(--shelf), var(--deep));
 }
 .tide-story > section[id] {
-  --muted-foreground: #3c5154;
-  --border: #91acac;
+  --muted-foreground: #445367;
+  --border: #a8b8c8;
 }
 .dark .tide-story > section[id] {
-  --muted-foreground: #bfceca;
-  --border: #496368;
+  --muted-foreground: #c8d2df;
+  --border: #4c607a;
 }
+.dark .tide-story #shift .text-brand { color: #b4c6ef; }
 .tide-intro {
   position: relative;
   display: grid;
@@ -183,21 +192,30 @@ body:has(.tide-story) {
   position: absolute;
   inset: 0;
   --waterline: calc(100% - clamp(8rem, 24vh, 17rem));
-  background: radial-gradient(ellipse at 74% 66%, #98aca033, transparent 56%);
+  /* The paper stays white behind the copy. Sky color gathers at the horizon. */
+  background: radial-gradient(ellipse 62% 80% at 92% 65%, var(--horizon), transparent);
 }
 .tide-surface::before {
   content: '';
   position: absolute;
   inset: 0;
   background: url('/home/tide-grain.webp') repeat;
-  opacity: .47;
-  mask-image: linear-gradient(transparent, black 40%);
+  opacity: .18;
+  mask-image: linear-gradient(transparent 45%, black 90%);
+}
+.tide-clouds {
+  position: absolute;
+  top: 21%;
+  right: 2%;
+  width: min(53%, 58rem);
+  height: auto;
+  fill: var(--cloud);
 }
 .tide-surface::after {
   content: '';
   position: absolute;
   inset: auto 0 0;
-  height: 12%;
+  height: min(14%, calc((100% - var(--waterline)) * .85));
   background: linear-gradient(transparent, var(--shallows));
 }
 .tide-fluke {
@@ -215,8 +233,9 @@ body:has(.tide-story) {
   width: 100%;
   height: 75%;
   translate: 0 var(--wave-lift, 0%);
+  filter: url(#ocean-ink);
 }
-.dark .tide-water { filter: brightness(.53) saturate(.85); }
+.dark .tide-water { filter: url(#ocean-ink) brightness(.58); }
 .tide-water img { width: 100%; height: 100%; }
 .tide-water canvas {
   position: absolute;
@@ -239,13 +258,13 @@ body:has(.tide-story) {
   position: sticky;
   top: 0;
   height: 100svh;
-  --whale-ink: #062530;
-  --whale-grain: #d6e3dc;
+  --whale-ink: #172d50;
+  --whale-grain: #e1ebf4;
   opacity: 0;
 }
 .whale-in-water .tide-passage { opacity: .095; transition: opacity 1.8s ease; }
 .dark .whale-in-water .tide-passage,
-.whale-in-deep.whale-in-water .tide-passage { opacity: .28; --whale-ink: #04151d; --whale-grain: #58757b; }
+.whale-in-deep.whale-in-water .tide-passage { opacity: .28; --whale-ink: #0b152c; --whale-grain: #677f9d; }
 .whale-traveller {
   position: absolute;
   top: 34%;
@@ -267,9 +286,9 @@ body:has(.tide-story) {
   pointer-events: none;
 }
 .tide-pod svg { position: absolute; }
-.whale-lead { left: 36%; top: 32%; width: 60%; color: #203540; filter: blur(.12px); }
-.whale-calf { left: 9%; top: 66%; width: 32%; color: #081820; rotate: -5deg; filter: blur(.25px); }
-.whale-distant { left: 48%; top: 4%; width: 35%; color: #29424d; rotate: 4deg; filter: blur(.45px); }
+.whale-lead { left: 36%; top: 32%; width: 60%; color: #24354e; filter: blur(.12px); }
+.whale-calf { left: 9%; top: 66%; width: 32%; color: #0a132a; rotate: -5deg; filter: blur(.25px); }
+.whale-distant { left: 48%; top: 4%; width: 35%; color: #2e425e; rotate: 4deg; filter: blur(.45px); }
 @media (prefers-reduced-motion: no-preference) {
   /* The passage starts just inside the left edge; the last fifth is open water. */
   .whale-traveller { animation: whale-passage 64s linear -8s infinite paused; }
@@ -298,20 +317,21 @@ body:has(.tide-story) {
   to { transform: translate(5%, -4%) rotate(1deg); }
 }
 .tide-deep {
-  --sediment: #152a33;
+  --sediment: #19263d;
+  --sediment-ridge: #23324b;
   position: relative;
-  background: linear-gradient(var(--deep), #203b49 46%, #122a36 82%, #10232d);
-  --foreground: #eff5f0;
-  --muted-foreground: #c4d3cf;
-  --border: #547077;
-  --input: #637d82;
-  --background: #203b45;
-  --card: #203b45;
+  background: linear-gradient(var(--deep), #213551 46%, #182941 82%, #131f36);
+  --foreground: #f5f7fb;
+  --muted-foreground: #ced8e6;
+  --border: #576d87;
+  --input: #71839b;
+  --background: #293e59;
+  --card: #293e59;
   --card-foreground: var(--foreground);
-  --accent: #38535c;
+  --accent: #3b506c;
   --accent-foreground: var(--foreground);
-  --primary: #edf3e9;
-  --primary-foreground: #132d37;
+  --primary: #f8f9fc;
+  --primary-foreground: #14243c;
   color: var(--foreground);
 }
 .tide-bed {
@@ -332,9 +352,11 @@ body:has(.tide-story) {
     align-items: start;
     padding-block: 2rem clamp(12.5rem, 32svh, 18rem);
   }
+  .tide-clouds { top: auto; bottom: 25%; right: 3%; width: 62%; }
   .tide-surface { --waterline: calc(100% - clamp(4.5rem, 13svh, 8rem)); }
   .tide-story { --fluke-size: clamp(10rem, 48vw, 17rem); }
   .tide-fluke { left: 71%; }
+  #fluke-hatching { transform: rotate(76deg) scale(1.65); }
   .tide-arrival { padding-bottom: clamp(7rem, 31vw, 13rem); }
   .tide-pod { right: 1%; bottom: 2.75rem; width: 96%; height: clamp(8rem, 33vw, 14rem); }
 }
