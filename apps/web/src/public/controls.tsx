@@ -6,7 +6,7 @@
  * the first-paint script sets; the language menu is a <details> whose items post the choice and reload.
  */
 
-import { Check, ChevronDown, Moon, Sun } from 'lucide-react';
+import { Check, ChevronDown, Languages, Moon, Sun } from 'lucide-react';
 
 import { LOCALES, type Locale } from '@/lib/locale';
 import { cn } from '@/lib/utils';
@@ -26,18 +26,53 @@ export function ThemeButton({ label, className }: { label: string; className?: s
   );
 }
 
-/** The language, opening upwards: it lives in a footer. */
-export function LocaleMenu({ locale, label, names }: { locale: Locale; label: string; names: (l: Locale) => string }) {
+/**
+ * The language. In a footer it is a bordered select opening upwards; in a
+ * header it sits beside the theme button, drawn like it, and opens downwards.
+ */
+export function LocaleMenu({
+  locale,
+  label,
+  names,
+  placement = 'footer',
+}: {
+  locale: Locale;
+  label: string;
+  names: (l: Locale) => string;
+  placement?: 'header' | 'footer';
+}) {
+  const header = placement === 'header';
   return (
     <details data-menu="" className="relative">
       <summary
         aria-label={label}
-        className="flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-foreground hover:bg-accent [&::-webkit-details-marker]:hidden"
+        title={header ? label : undefined}
+        className={cn(
+          'flex h-9 cursor-pointer list-none items-center rounded-md text-sm hover:bg-accent [&::-webkit-details-marker]:hidden',
+          header
+            ? 'gap-1.5 px-2.5 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+            : 'gap-2 border border-input bg-background px-3 text-foreground',
+        )}
       >
-        {names(locale)}
-        <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
+        {header ? (
+          <>
+            <Languages className="size-4" aria-hidden />
+            <span className="hidden sm:inline">{names(locale)}</span>
+          </>
+        ) : (
+          <>
+            {names(locale)}
+            <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
+          </>
+        )}
       </summary>
-      <div role="menu" className="absolute right-0 bottom-full z-20 mb-1.5 min-w-40 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+      <div
+        role="menu"
+        className={cn(
+          'absolute right-0 z-20 min-w-40 rounded-lg border bg-card p-1 text-card-foreground shadow-lg',
+          header ? 'top-full mt-1.5' : 'bottom-full mb-1.5',
+        )}
+      >
         {LOCALES.map((l) => (
           <button
             key={l}
