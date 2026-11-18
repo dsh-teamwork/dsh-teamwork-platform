@@ -9,19 +9,18 @@ import zhCN from '@/messages/zh-CN.json';
 import { LocaleMenu, ThemeButton } from './controls';
 import { SITE_ORIGIN } from './site';
 import { Topology } from './topology';
-import { Sea } from './sea';
+import { SeaBed, SeaSurface, WhalePassage, WhalePod } from './sea';
 
 /*
  * The home page every instance has: what DSH Teamwork is, as an open-source
  * project and as a service, and the one way in: the title, one sentence and
- * the plugin to copy on the left (the header carries *Create a team*), how a
- * team uses it as one diagram on the right (./topology.tsx), and the
+ * the plugin to copy above the tide (the header carries *Create a team*),
+ * a diagram of the team at work below (./topology.tsx), and the
  * product's real screens in the sections below (docs/design.md, "The landing page's first screen"). The story is the brand's
  * (docs/design.md, "The mark"): one person's work surfaces, and what the team
  * does settles underneath as its own assets. So the page goes down: from the
  * surface where people work (every platform), through collaboration and
- * governance, to the team's assets on the deep floor, then the closing call on
- * the one navy band. Each section is labelled with its depth. A capability
+ * governance, to the team's assets and the closing call on the deep floor. Each section is labelled with its depth. A capability
  * that is planned, or offered only by the hosted service, says so where it
  * appears (ADR 0007: a claim here holds for any instance). A deployment's
  * legal pages are linked when it has them.
@@ -194,8 +193,8 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
-      <header className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-6">
-        <a href="/" className="flex shrink-0 items-center gap-2.5 text-lg font-bold tracking-tight">
+      <header className="relative z-20 mx-auto flex h-16 max-w-7xl items-center gap-1 px-3 sm:gap-4 sm:px-6 xl:gap-8">
+        <a href="/" className="flex shrink-0 items-center gap-1.5 text-base font-bold sm:gap-2.5 sm:text-lg tracking-tight">
           <img src="/logo.svg" alt="" width={30} height={30} />
           {tc('appName')}
         </a>
@@ -235,14 +234,15 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
         </div>
       </header>
 
-      <main>
-        {/* The first screen: the hero centred above the sea, whose line sits at the screen's foot. */}
-        <div className="flex flex-col lg:min-h-[calc(100svh-4rem)]">
-          <section className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-[minmax(0,1fr)] gap-12 px-6 pt-12 sm:pt-14 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:content-center lg:items-center lg:gap-14 lg:pt-6">
-            <div className="flex flex-col gap-6">
+      <main className="tide-story" id="surface">
+        <WhalePassage />
+        <section className="tide-intro">
+          <SeaSurface />
+          <div className="tide-intro-copy mx-auto w-full max-w-7xl px-6">
+            <div className="flex w-full min-w-0 max-w-xl flex-col gap-5">
               {/* Mono capitals suit the English label; a Chinese one is set in the page's own face. */}
               <p className={`text-xs font-semibold text-muted-foreground ${locale === 'en' ? 'font-mono uppercase tracking-widest' : 'tracking-wider'}`}>{t('eyebrow')}</p>
-              <h1 className="text-balance [word-break:auto-phrase] text-4xl font-black tracking-tight sm:text-5xl sm:leading-[1.08]">{t('title')}</h1>
+              <h1 className="tide-title text-balance [word-break:auto-phrase]">{t('title')}</h1>
               {/* A language whose sentence needs a chosen break writes it in the message (\n). */}
               <p className="whitespace-pre-line text-lg text-muted-foreground">{t('lede')}</p>
               <div className="mt-2 flex flex-col items-start gap-2.5">
@@ -255,18 +255,16 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
                 </p>
               </div>
             </div>
-            <Topology locale={locale} />
-          </section>
+          </div>
+          <a href="#shift" className="tide-link">{t('woodcut.dive')} <span aria-hidden="true">↓</span></a>
+        </section>
 
-          <Sea />
-        </div>
-
-        <div>
-          <Zone id="shift">
-            <Depth depth={t('shift.depth')} label={t('shift.label')} />
-            <h2 className={zoneTitle}>{t('shift.title')}</h2>
-            <p className={zoneLede}>{t('shift.lede')}</p>
-            <div className="mt-12 max-w-4xl">
+        <Zone id="shift">
+          <Depth depth={t('shift.depth')} label={t('shift.label')} />
+          <h2 className={zoneTitle}>{t('shift.title')}</h2>
+          <p className={zoneLede}>{t('shift.lede')}</p>
+          <div className="mt-12 grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+            <div>
               <div className="grid grid-cols-2 gap-6 pb-3 font-mono text-xs font-semibold tracking-wider text-muted-foreground">
                 <span>{t('shift.alone')}</span>
                 <span className="text-brand">{t('shift.together')}</span>
@@ -280,77 +278,80 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
                 ))}
               </ul>
             </div>
-          </Zone>
+            <Topology locale={locale} />
+          </div>
+        </Zone>
 
-          <Zone id="everywhere">
-            <Depth depth={t('everywhere.depth')} label={t('everywhere.label')} />
-            <h2 className={zoneTitle}>{t('everywhere.title')}</h2>
-            <p className={zoneLede}>{t('everywhere.lede')}</p>
-            <div className="mt-14 flex flex-col gap-20">
-              {ENTRIES.map(({ key, tone }, i) => (
-                <Entry
-                  key={key}
-                  who={t(`everywhere.${key}.who`)}
-                  whoTone={tone}
-                  title={t(`everywhere.${key}.title`)}
-                  items={([1, 2, 3] as const).map((n) => ({ title: t(`everywhere.${key}.item${n}Title`), body: t(`everywhere.${key}.item${n}Body`) }))}
-                  flip={i % 2 === 1}
-                >
-                  {key === 'phone' ? (
-                    <PhoneShot src={`/home/phone-${tag}.webp`} alt={t('everywhere.phone.alt')} />
-                  ) : key === 'console' ? (
-                    <Shot src={`/home/console-${tag}.webp`} alt={t('everywhere.console.alt')} width={1400} height={766} bar={tc('appName')} />
-                  ) : (
-                    <Shot src={`/home/desktop-${tag}.webp`} alt={t('everywhere.desktop.alt')} width={1400} height={875} bar="DSH · Teamwork" />
-                  )}
-                </Entry>
+        <Zone id="everywhere">
+          <Depth depth={t('everywhere.depth')} label={t('everywhere.label')} />
+          <h2 className={zoneTitle}>{t('everywhere.title')}</h2>
+          <p className={zoneLede}>{t('everywhere.lede')}</p>
+          <div className="mt-14 flex flex-col gap-20">
+            {ENTRIES.map(({ key, tone }, i) => (
+              <Entry
+                key={key}
+                who={t(`everywhere.${key}.who`)}
+                whoTone={tone}
+                flip={i % 2 === 1}
+                title={t(`everywhere.${key}.title`)}
+                items={([1, 2, 3] as const).map((n) => ({ title: t(`everywhere.${key}.item${n}Title`), body: t(`everywhere.${key}.item${n}Body`) }))}
+              >
+                {key === 'phone' ? (
+                  <PhoneShot src={`/home/phone-${tag}.webp`} alt={t('everywhere.phone.alt')} />
+                ) : key === 'console' ? (
+                  <Shot src={`/home/console-${tag}.webp`} alt={t('everywhere.console.alt')} width={1400} height={766} bar={tc('appName')} />
+                ) : (
+                  <Shot src={`/home/desktop-${tag}.webp`} alt={t('everywhere.desktop.alt')} width={1400} height={875} bar="DSH · Teamwork" />
+                )}
+              </Entry>
+            ))}
+          </div>
+        </Zone>
+
+        <Zone id="collaborate">
+          <Depth depth={t('collaborate.depth')} label={t('collaborate.label')} />
+          <h2 className={zoneTitle}>{t('collaborate.title')}</h2>
+          <p className={zoneLede}>{t('collaborate.lede')}</p>
+          <div className="mt-12 grid items-start gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+            <ul className="flex flex-col">
+              {(['presets', 'plugins', 'assistant', 'review'] as const).map((item) => (
+                <li key={item} className="flex flex-col gap-1 border-t border-border py-5 last:border-b">
+                  <h3 className="text-base font-bold">{t(`collaborate.${item}Title`)}</h3>
+                  <p className="text-sm text-muted-foreground">{t.rich(`collaborate.${item}Body`, { code })}</p>
+                </li>
               ))}
-            </div>
-          </Zone>
+            </ul>
+            <Shot src={`/home/review-${tag}.webp`} alt={t('collaborate.alt')} width={1100} height={550} />
+          </div>
+        </Zone>
 
-          <Zone id="collaborate">
-            <Depth depth={t('collaborate.depth')} label={t('collaborate.label')} />
-            <h2 className={zoneTitle}>{t('collaborate.title')}</h2>
-            <p className={zoneLede}>{t('collaborate.lede')}</p>
-            <div className="mt-12 grid items-center gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-              <ul className="flex flex-col">
-                {(['presets', 'plugins', 'assistant', 'review'] as const).map((item) => (
-                  <li key={item} className="flex flex-col gap-1 border-t border-border py-5 last:border-b">
-                    <h3 className="text-base font-bold">{t(`collaborate.${item}Title`)}</h3>
-                    <p className="text-sm text-muted-foreground">{t.rich(`collaborate.${item}Body`, { code })}</p>
-                  </li>
-                ))}
-              </ul>
-              <Shot src={`/home/review-${tag}.webp`} alt={t('collaborate.alt')} width={1100} height={550} />
-            </div>
-          </Zone>
+        <Zone id="govern">
+          <Depth depth={t('govern.depth')} label={t('govern.label')} />
+          <h2 className={zoneTitle}>{t('govern.title')}</h2>
+          <p className={zoneLede}>{t('govern.lede')}</p>
+          <div className="mt-12 grid items-start gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <Shot src={`/home/usage-${tag}.webp`} alt={t('govern.alt')} width={1100} height={599} />
+            <ul className="flex flex-col">
+              {(['budgets', 'usage', 'keys', 'members'] as const).map((item) => (
+                <li key={item} className="flex flex-col gap-1 border-t border-border py-5 last:border-b">
+                  <h3 className="text-base font-bold">{t(`govern.${item}Title`)}</h3>
+                  <p className="text-sm text-muted-foreground">{t(`govern.${item}Body`)}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <blockquote className="mt-12 border-t border-border pt-8">
+            <p className="max-w-3xl text-balance text-xl font-bold sm:text-2xl">“{t('govern.promise')}”</p>
+            <p className="mt-3 font-mono text-xs text-muted-foreground">{t('govern.promiseNote')}</p>
+          </blockquote>
+        </Zone>
 
-          <Zone id="govern">
-            <Depth depth={t('govern.depth')} label={t('govern.label')} />
-            <h2 className={zoneTitle}>{t('govern.title')}</h2>
-            <p className={zoneLede}>{t('govern.lede')}</p>
-            <div className="mt-12 grid items-center gap-12 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-              <Shot src={`/home/usage-${tag}.webp`} alt={t('govern.alt')} width={1100} height={599} />
-              <ul className="flex flex-col">
-                {(['budgets', 'usage', 'keys', 'members'] as const).map((item) => (
-                  <li key={item} className="flex flex-col gap-1 border-t border-border py-5 last:border-b">
-                    <h3 className="text-base font-bold">{t(`govern.${item}Title`)}</h3>
-                    <p className="text-sm text-muted-foreground">{t(`govern.${item}Body`)}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <blockquote className="mt-12 border-t border-border pt-8">
-              <p className="max-w-3xl text-balance text-xl font-bold sm:text-2xl">“{t('govern.promise')}”</p>
-              <p className="mt-3 font-mono text-xs text-muted-foreground">{t('govern.promiseNote')}</p>
-            </blockquote>
-          </Zone>
-
+        <div className="tide-deep">
           <Zone id="assets">
             <Depth depth={t('assets.depth')} label={t('assets.label')} />
             <h2 className={zoneTitle}>{t('assets.title')}</h2>
             <p className={zoneLede}>{t('assets.lede')}</p>
-            <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+            <div className="mt-12 grid items-start gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
               <figure className="min-w-0">
                 {/* Layers settling: newest on top, each a shade darker as it goes down. */}
                 <ol className="overflow-hidden rounded-xl ring-1 ring-border">
@@ -424,8 +425,9 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
             </div>
           </Zone>
 
-          <section className="bg-brand text-brand-foreground">
-            <div className="mx-auto max-w-7xl px-6 py-20 sm:py-28">
+          <section id="seabed" className="tide-arrival">
+            <WhalePod />
+            <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
               <p className="mb-6 flex items-center gap-3 font-mono text-xs font-semibold tracking-wider">
                 <span aria-hidden="true" className="size-1.5 rounded-full bg-signal" />
                 {t('final.depth')}
@@ -433,35 +435,29 @@ export function HomePage({ locale, signedIn, legal }: HomeProps) {
               </p>
               <h2 className={zoneTitle}>{t('final.title')}</h2>
               <p className="mt-5 max-w-2xl text-base opacity-80 sm:text-lg">{t('final.lede')}</p>
-              <Button asChild size="lg" className="mt-8 bg-background text-foreground hover:bg-background/90">
+              <Button asChild size="lg" className="mt-8">
                 <a href={start.href}>{start.label}</a>
               </Button>
             </div>
           </section>
 
-          <footer className="border-t border-border">
-            <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-8 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2 font-bold text-foreground">
-                <img src="/logo.svg" alt="" width={22} height={22} />
+          <SeaBed />
+          <footer className="tide-footer">
+            <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4 text-sm text-muted-foreground">
+              <span className="inline-flex shrink-0 items-center gap-2 font-medium">
+                <img src="/logo.svg" alt="" width={24} height={24} />
                 {tc('appName')}
               </span>
-              <a href="/docs" className="underline-offset-4 hover:underline">
-                {t('nav.docs')}
-              </a>
-              {legal && (
-                <>
-                  <a href="/privacy" className="underline-offset-4 hover:underline">
-                    {tc('privacy')}
-                  </a>
-                  <a href="/terms" className="underline-offset-4 hover:underline">
-                    {tc('terms')}
-                  </a>
-                </>
-              )}
-              <div className="ml-auto flex items-center gap-2">
-                <ThemeButton label={tc('theme.toggle')} />
-                <LocaleMenu locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} />
-              </div>
+              <nav aria-label={t('nav.label')} className="ml-auto flex flex-wrap items-center justify-end gap-x-4 sm:gap-x-6">
+                <a href="/docs">{t('nav.docs')}</a>
+                {legal && (
+                  <>
+                    <a href="/privacy">{tc('privacy')}</a>
+                    <a href="/terms">{tc('terms')}</a>
+                  </>
+                )}
+                <a href="#surface" className="tide-link">{t('woodcut.return')} <span aria-hidden="true">↑</span></a>
+              </nav>
             </div>
           </footer>
         </div>

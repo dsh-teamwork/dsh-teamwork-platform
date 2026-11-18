@@ -7,7 +7,7 @@ import zhCN from '@/messages/zh-CN.json';
 import { PROVIDER_LOGOS } from './provider-logos';
 
 /*
- * The home page's first-screen diagram (docs/design.md, "The landing page's
+ * The home page's team diagram (docs/design.md, "The landing page's
  * first screen"): how a team uses DSH Teamwork, left to right. On the left,
  * the people and where each one works (DSH Desktop, a terminal, the phone, the
  * admin's web console); in the middle, the one place that governs and syncs,

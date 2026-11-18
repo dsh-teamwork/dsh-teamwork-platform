@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-17 — The home page follows the whale from the surface to the seabed
+
+- **What:** The whole home page is a tidal woodcut. Two traveling swells bend the engraved water around the whale fluke. The lower-right dive link scrolls smoothly to the opening chapter, *one person's work*. The opening fluke is engraved diagonally down to the right. A horizontally hatched humpback crosses behind the middle chapters, with a slow stroke that builds from its back to its tail. A viewport of open water separates the solitary whale from the other scenes during fast scrolls. Three solid whale silhouettes gather above a quiet, flat seabed, with a subdued blue-gray upper whale, a slightly darker second whale and an ink-blue calf. Tighter spacing above the closing invitation and two shallow sediment layers lead into a compact footer with the whale logo and name on the left and navigation on the right. Its rightmost link is underlined, points up and scrolls back to the surface. The layout follows the same dive on phones, with still artwork for reduced motion.
+- **Why:** The brand's dive connects a member's work with the assets the team keeps, while each product section stays readable.
+- **Breaking:** None
+- **Upgrade:** Nothing
+- **Refs:** `apps/web/src/public/sea.tsx`, `docs/design.md`.
+
 ## 2026-11-17 — The home page's first screen, redrawn around what a team gains
 
 - **What:** The first screen fills the window with the hero centred above the wave line, and every section widens to `max-w-7xl`. Its left side is the title, one sentence and the plugin to copy (*Create a team* stays in the header; the three pillars are gone). The diagram keeps its layout with a compact hub listing the four features, each with one line of value; the lines carry no words. An amber pulse loops the story (the admin publishes, every member's card ticks, a call goes out to a model), and hovering a feature dims what it does not involve. The upstream column is one list of mainstream providers by their logos (Anthropic, OpenAI, DeepSeek, GLM, Kimi, and your own), copied from LobeHub's icons into `provider-logos.ts`; the phone shows the app's logo, and the Chinese page names its people in Chinese.

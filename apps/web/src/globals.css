@@ -95,19 +95,254 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* The hero's wave line drifts left by one wave period (160 of the SVG's units) and loops. */
-.sea-drift {
-  animation: sea-drift 14s linear infinite;
+/* One full-bleed water column. The section backgrounds meet at their edges;
+   the artwork sits behind the text, screenshots and native controls. */
+body:has(.tide-story) {
+  --sky: #f6f2e7;
+  --shallows: #e1e9df;
+  --coast: #d5e3df;
+  --channel: #c5d9d7;
+  --shelf: #b3cdcf;
+  --deep: #254851;
+  --whale-ink: #263e43;
+  --whale-grain: #adbbb0;
+  background: var(--sky);
 }
-@keyframes sea-drift {
-  to {
-    transform: translateX(-160px);
+.dark body:has(.tide-story) {
+  --sky: #1c292d;
+  --shallows: #223438;
+  --coast: #21363b;
+  --channel: #20343b;
+  --shelf: #1c323a;
+  --deep: #172f38;
+  --whale-ink: #b4c7bd;
+  --whale-grain: #41575b;
+}
+.tide-story { --fluke-size: min(44vw, 68vh, 42rem); position: relative; isolation: isolate; scroll-margin-top: 4rem; }
+.tide-story section > div:not([aria-hidden]) { position: relative; z-index: 2; }
+.tide-story section[id] { border-top: 0; }
+.tide-story #shift { background: linear-gradient(var(--shallows), var(--coast)); }
+.tide-story #everywhere { background: linear-gradient(var(--coast), var(--channel)); }
+.tide-story #collaborate { background: linear-gradient(var(--channel), var(--shelf)); }
+.tide-story #govern { background: var(--shelf); }
+.tide-story #govern::after {
+  content: '';
+  display: block;
+  height: clamp(5rem, 14vw, 12rem);
+  background: linear-gradient(var(--shelf), var(--deep));
+}
+.tide-story > section[id] {
+  --muted-foreground: #3c5154;
+  --border: #91acac;
+}
+.dark .tide-story > section[id] {
+  --muted-foreground: #bfceca;
+  --border: #496368;
+}
+.tide-intro {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  min-height: calc(100svh - 4rem);
+  padding-block: clamp(2.5rem, 8vh, 6rem) clamp(11rem, 28vh, 19rem);
+  background: var(--sky);
+}
+@media (min-width: 46.01rem) {
+  .tide-intro-copy > div { max-width: min(36rem, 49vw); }
+}
+.tide-title, .tide-story h2 {
+  font-family: Georgia, 'Noto Serif CJK SC', 'Songti SC', 'STSong', serif;
+  font-weight: 650;
+  letter-spacing: -.045em;
+  line-height: 1.22;
+}
+.tide-title { font-size: clamp(2.6rem, 5.6vw, 5.8rem); }
+:lang(zh-CN) .tide-title { max-width: 6.1em; }
+.tide-intro > .tide-link {
+  position: absolute;
+  z-index: 2;
+  right: max(1.5rem, calc((100% - 80rem) / 2 + 1.5rem));
+  bottom: clamp(1.25rem, 4vh, 3rem);
+}
+.tide-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid currentColor;
+  padding-block: .4rem;
+  font-size: .875rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.tide-story #shift:target, .tide-story#surface:target) { scroll-behavior: smooth; }
+}
+.tide-link:hover { color: var(--muted-foreground); }
+.tide-surface {
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  --waterline: calc(100% - clamp(8rem, 24vh, 17rem));
+  background: radial-gradient(ellipse at 74% 66%, #98aca033, transparent 56%);
+}
+.tide-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/home/tide-grain.webp') repeat;
+  opacity: .47;
+  mask-image: linear-gradient(transparent, black 40%);
+}
+.tide-surface::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 12%;
+  background: linear-gradient(transparent, var(--shallows));
+}
+.tide-fluke {
+  position: absolute;
+  width: var(--fluke-size);
+  height: auto;
+  left: 73%;
+  /* Anchor the stalk beneath the lowest swell at every fluke size. */
+  top: calc(var(--waterline) + 1rem);
+  transform: translate(-50%, calc(-72% + var(--fluke-drop, 0%)));
+}
+.tide-water {
+  position: absolute;
+  top: var(--waterline);
+  width: 100%;
+  height: 75%;
+  translate: 0 var(--wave-lift, 0%);
+}
+.dark .tide-water { filter: brightness(.53) saturate(.85); }
+.tide-water img { width: 100%; height: 100%; }
+.tide-water canvas {
+  position: absolute;
+  /* Room for a crest to rise past the still print's top edge. */
+  inset: auto 0 0;
+  width: 100%;
+}
+.tide-swim-zone {
+  /* Keep a viewport of open water next to both other scenes. Native scroll
+     enforces this clip even before the next animation frame after a jump. */
+  position: absolute;
+  inset-inline: 0;
+  top: calc(var(--swim-start, 0px) + 100lvh);
+  height: max(0px, calc(var(--swim-length, 0px) - 200lvh));
+  overflow: clip;
+  pointer-events: none;
+  z-index: 1;
+}
+.tide-passage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  --whale-ink: #062530;
+  --whale-grain: #d6e3dc;
+  opacity: 0;
+}
+.whale-in-water .tide-passage { opacity: .095; transition: opacity 1.8s ease; }
+.dark .whale-in-water .tide-passage,
+.whale-in-deep.whale-in-water .tide-passage { opacity: .28; --whale-ink: #04151d; --whale-grain: #58757b; }
+.whale-traveller {
+  position: absolute;
+  top: 34%;
+  width: calc(var(--fluke-size) * 2.4);
+  max-width: none;
+  filter: blur(.25px);
+  mask-image: linear-gradient(100deg, #0008, black 65%, #000d);
+  transform: translateX(-105%);
+}
+.whale-tail { transform-origin: 148px 101px; }
+.whale-fin { transform-origin: 367px 113px; }
+.tide-pod {
+  position: absolute;
+  z-index: 1;
+  right: 3%;
+  bottom: 5%;
+  width: min(61%, 65rem);
+  height: 68%;
+  pointer-events: none;
+}
+.tide-pod svg { position: absolute; }
+.whale-lead { left: 36%; top: 32%; width: 60%; color: #203540; filter: blur(.12px); }
+.whale-calf { left: 9%; top: 66%; width: 32%; color: #081820; rotate: -5deg; filter: blur(.25px); }
+.whale-distant { left: 48%; top: 4%; width: 35%; color: #29424d; rotate: 4deg; filter: blur(.45px); }
+@media (prefers-reduced-motion: no-preference) {
+  /* The passage starts just inside the left edge; the last fifth is open water. */
+  .whale-traveller { animation: whale-passage 64s linear -8s infinite paused; }
+  .whale-in-water .whale-traveller { animation-play-state: running; }
+  .tide-pod .whale-tail { animation: whale-tailbeat 7s ease-in-out infinite alternate; }
+  .tide-pod .whale-fin { animation: whale-finbeat 9s ease-in-out infinite alternate-reverse; }
+  .tide-pod svg { animation: whale-glide 18s ease-in-out infinite alternate; }
+  .tide-pod .whale-calf, .whale-calf :is(.whale-tail, .whale-fin) { animation-delay: -4s; }
+  .tide-pod .whale-distant, .whale-distant :is(.whale-tail, .whale-fin) { animation-delay: -11s; }
+}
+@keyframes whale-passage {
+  0% { transform: translate(-105%, 11%) rotate(-4deg); }
+  38% { transform: translate(calc(48vw - 54%), -7%) rotate(2deg); }
+  80%, 100% { transform: translate(101vw, 6%) rotate(-2deg); }
+}
+@keyframes whale-tailbeat {
+  from { transform: rotate(-5deg) scaleY(.94); }
+  to { transform: rotate(5deg) scaleY(1.06); }
+}
+@keyframes whale-finbeat {
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(5deg); }
+}
+@keyframes whale-glide {
+  from { transform: translate(-4%, 3%) rotate(-4deg); }
+  to { transform: translate(5%, -4%) rotate(1deg); }
+}
+.tide-deep {
+  --sediment: #152a33;
+  position: relative;
+  background: linear-gradient(var(--deep), #203b49 46%, #122a36 82%, #10232d);
+  --foreground: #eff5f0;
+  --muted-foreground: #c4d3cf;
+  --border: #547077;
+  --input: #637d82;
+  --background: #203b45;
+  --card: #203b45;
+  --card-foreground: var(--foreground);
+  --accent: #38535c;
+  --accent-foreground: var(--foreground);
+  --primary: #edf3e9;
+  --primary-foreground: #132d37;
+  color: var(--foreground);
+}
+.tide-bed {
+  display: block;
+  width: 100%;
+  height: clamp(5.5rem, 11vw, 10rem);
+  pointer-events: none;
+}
+.tide-footer { background: var(--sediment); }
+.tide-footer a { padding-block: .4rem; text-underline-offset: .25em; }
+.tide-footer a:hover { color: var(--foreground); }
+.tide-footer a:not(.tide-link):hover { text-decoration: underline; }
+.tide-footer a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.tide-arrival h2 { max-width: 24em; }
+.tide-arrival { position: relative; padding-bottom: clamp(2rem, 7vh, 6rem); }
+@media (max-width: 46rem) {
+  .tide-intro {
+    align-items: start;
+    padding-block: 2rem clamp(12.5rem, 32svh, 18rem);
   }
+  .tide-surface { --waterline: calc(100% - clamp(4.5rem, 13svh, 8rem)); }
+  .tide-story { --fluke-size: clamp(10rem, 48vw, 17rem); }
+  .tide-fluke { left: 71%; }
+  .tide-arrival { padding-bottom: clamp(7rem, 31vw, 13rem); }
+  .tide-pod { right: 1%; bottom: 2.75rem; width: 96%; height: clamp(8rem, 33vw, 14rem); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sea-drift {
-    animation: none;
-  }
+  .tide-fluke { transform: translate(-50%, -72%); }
+  .tide-water { translate: none; }
+  .whale-in-water .tide-passage { transition: none; }
+  .whale-traveller { transform: translateX(30vw) rotate(-3deg); }
 }
 
 /*

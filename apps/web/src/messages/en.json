@@ -83,10 +83,14 @@
     "submit": "Create account"
   },
   "home": {
+    "woodcut": {
+      "dive": "Follow the dive",
+      "return": "Back to the surface"
+    },
     "title": "From super individual to super team.",
     "tagline": "From super individual to super team: DSH Teamwork turns DeepSeek Harness into your team's agent workspace.",
     "eyebrow": "The team edition of DeepSeek Harness",
-    "lede": "One place for your team’s models, presets and budget, synced to every member’s DSH.",
+    "lede": "What one person figures out, the whole team uses. Every cost and every key stays under your control.",
     "createTeam": "Create a team",
     "openConsole": "Open team console",
     "install": {
@@ -109,23 +113,23 @@
       "depth": "0 m",
       "label": "Surface · one person's work",
       "title": "One person with agents goes far. A team with them goes further.",
-      "lede": "Every member already has an agent that writes, reviews and ships. What they lack is each other's best setup, a shared budget, and a place where good work stays.",
+      "lede": "Every member already has an agent that writes, reviews and ships. What sets a team apart is making its best way of working everyone's, keeping spend in hand, and keeping what it learns.",
       "alone": "On your own",
       "together": "As a team",
-      "from1": "Everyone tunes their own prompts and tools.",
-      "to1": "The best setup is published once, and everyone runs the same one.",
-      "from2": "API keys pasted into a chat and rotated when someone leaves.",
-      "to2": "Keys stay on the server; removing someone takes effect on their next request.",
+      "from1": "Everyone tunes their own prompts; results depend on who you ask.",
+      "to1": "The best setup is published once; a new hire has it on day one.",
+      "from2": "API keys pasted into a chat, all rotated when someone leaves.",
+      "to2": "Keys never leave the server; when someone leaves, remove them, with no keys to rotate.",
       "from3": "Nobody knows what the agents cost until the bill arrives.",
-      "to3": "Team and member budgets, with every call counted.",
-      "from4": "A great workflow lives and dies on one laptop.",
-      "to4": "It becomes the team's: versioned, reviewed and kept."
+      "to3": "The team and each member have budgets, and every call is accounted for.",
+      "from4": "A great workflow lives on one laptop and leaves with its owner.",
+      "to4": "It becomes the team's: versioned, reviewed, and still here when people move on."
     },
     "everywhere": {
       "depth": "−10 m",
       "label": "Everywhere · one team, three ways in",
-      "title": "Everyone comes in from where they work.",
-      "lede": "One team, one setup and one budget, each in the place that suits it: members work in DSH, admins manage on the web, and everyone keeps up from the phone.",
+      "title": "Go anywhere, start anytime.",
+      "lede": "Members work in DSH, admins manage on the web, and anyone can keep up from a phone. One team, one setup, one budget.",
       "status": {
         "coming": "Coming"
       },
@@ -133,63 +137,63 @@
         "who": "Member",
         "title": "DSH Desktop",
         "alt": "The Teamwork panel in DSH Desktop, listing the team assistant and three team presets",
-        "item1Title": "The team's setup, one click away",
+        "item1Title": "Start at the team's standard",
         "item1Body": "Team presets and models are in the Teamwork panel; New session starts work with one. The same works in a terminal.",
-        "item2Title": "Plugins at the same version",
-        "item2Body": "Only the versions the team approved, on every computer.",
-        "item3Title": "Share what works",
-        "item3Body": "Submit a preset from the panel; once an admin approves it, the whole team has it."
+        "item2Title": "Everyone runs the same thing",
+        "item2Body": "Only the plugin versions the team approved, on every computer: no more “works on my machine”.",
+        "item3Title": "Good ideas leave the laptop",
+        "item3Body": "Submit from the panel; once an admin approves it, the whole team has it."
       },
       "console": {
         "who": "Admin",
         "title": "Web console",
         "alt": "The team console's overview: a submission waiting for review, calls, points and budget",
-        "item1Title": "Publish once, for everyone",
+        "item1Title": "Change once, everyone has it",
         "item1Body": "Connect providers and publish models and presets; members get them at their next sync.",
-        "item2Title": "What waits, at a glance",
+        "item2Title": "What needs you, at a glance",
         "item2Body": "Submissions to review, the budget left and the last 30 days of calls, on the overview.",
-        "item3Title": "Members and roles",
+        "item3Title": "People changes in a few clicks",
         "item3Body": "Invite people and hand the admin role over; one person can be in several teams."
       },
       "phone": {
         "who": "Hosted service",
         "title": "Phone",
         "alt": "The phone app's session list, one session waiting for an approval",
-        "item1Title": "Away from your desk, still in the loop",
+        "item1Title": "Step away; the agent keeps going",
         "item1Body": "When DSH waits on you, your phone is notified; approve it there.",
-        "item2Title": "Follow and reply",
+        "item2Title": "Pick it up from anywhere",
         "item2Body": "See which step a session is on, and send it the next message.",
-        "item3Title": "Only your own computer",
+        "item3Title": "Only you can see the work",
         "item3Body": "End-to-end encrypted: the server cannot read the session."
       }
     },
     "collaborate": {
       "depth": "−50 m",
       "label": "Collaborate · what the team shares",
-      "title": "One person's best setup becomes everyone's.",
-      "lede": "Presets, plugins and the team assistant are published once. Every member's next sync carries them, and nothing of their own is overwritten.",
-      "presetsTitle": "Presets",
-      "presetsBody": "A role the team shares: the model it calls, the tools it needs and the way it works. Start from a template, then make it the team's.",
-      "pluginsTitle": "Plugins",
-      "pluginsBody": "npm packages pinned at exact versions, or the team's private packages checked file by file, so everyone runs the same build.",
-      "assistantTitle": "Team assistant",
+      "title": "Good know-how, shared by everyone.",
+      "lede": "The presets, plugins and ways of working your best people found are published once. Every member's next sync carries them, and nothing of their own is touched.",
+      "presetsTitle": "Your best people's methods, as templates",
+      "presetsBody": "A preset is a role the team shares: the model it calls, the tools it needs and the way it works. Start from a template, then make it the team's.",
+      "pluginsTitle": "One version for everyone, no surprises",
+      "pluginsBody": "Plugins are npm packages pinned at exact versions, or the team's private packages checked file by file, so everyone runs the same build.",
+      "assistantTitle": "Questions about the team? Ask its assistant",
       "assistantBody": "Every new team gets one. Ask it in DSH about the team's resources, usage, budgets and members, or what is waiting for review.",
-      "reviewTitle": "Share and review",
+      "reviewTitle": "Checked before it spreads",
       "reviewBody": "Any member can submit a preset or plugin from their own DSH. An admin approves the exact contents before the team gets it.",
       "alt": "Sharing and review: a new preset compared field by field, with Approve and publish and Reject"
     },
     "govern": {
       "depth": "−200 m",
       "label": "Govern · safe to hand over",
-      "title": "Give everyone agents, and keep the controls.",
-      "lede": "An admin decides which models the team calls, how much it may spend and who is in. The server enforces it on every call.",
-      "budgetsTitle": "Budgets",
+      "title": "Give everyone agents; keep the money and the keys.",
+      "lede": "An admin decides which models the team uses, how much it may spend and who is in. The server enforces it on every call, not on trust.",
+      "budgetsTitle": "A limit before the spend",
       "budgetsBody": "Daily and monthly caps for the team, for each member and for each provider. A call reserves its cost before it runs, so a cap is not overrun.",
-      "usageTitle": "Usage",
+      "usageTitle": "See where every call goes",
       "usageBody": "Every model call by member and model, priced in reference points at the reference rates, and exported as CSV. No prompt or reply is stored.",
-      "keysTitle": "Keys stay on the server",
+      "keysTitle": "Keys never reach a laptop",
       "keysBody": "Provider keys are stored encrypted, cannot be read back, and never reach a member's computer. Team-model calls go through the gateway.",
-      "membersTitle": "Checked on every request",
+      "membersTitle": "Someone leaves, access ends",
       "membersBody": "Every request re-reads the caller's membership. Remove someone, and their next request is refused.",
       "promise": "Nothing a caller sends can name a URL, a header or a key.",
       "promiseNote": "The model is resolved within your team; the provider and its key are the server's to choose.",
@@ -198,26 +202,26 @@
     "assets": {
       "depth": "−1000 m",
       "label": "Deep · what the team keeps",
-      "title": "Daily work settles into the team's assets.",
-      "lede": "A preset someone wrote on Tuesday is how the whole team works by Friday. Each publication is kept as a layer: who wrote it, who approved it, and exactly what it was.",
+      "title": "It settles in, and keeps getting stronger.",
+      "lede": "A preset someone wrote on Tuesday is how the whole team works by Friday. Each publication is kept as a layer: who wrote it, who approved it and exactly what it was. People move on; the know-how stays.",
       "caption": "An example of a team's published resources, newest on top.",
-      "versionsTitle": "Every version kept",
+      "versionsTitle": "Every improvement on record",
       "versionsBody": "Each approved preset and plugin is a version with its author and reviewer. Compare any version with what is live today.",
-      "restoreTitle": "Restore through review",
+      "restoreTitle": "Broke something? Roll back",
       "restoreBody": "An older version comes back as a draft and goes through the same review, even after the resource was deleted.",
-      "exportTitle": "Export a backup",
+      "exportTitle": "Your data stays yours",
       "exportBody": "Export a resource with what it depends on, to keep a copy outside the server.",
-      "nextTitle": "Sessions, workspaces and memory",
+      "nextTitle": "Next: what agents did stays too",
       "nextBody": "Next, what members do with their agents stays with the team too: sessions, workspaces and a memory the team can search."
     },
     "community": {
       "depth": "−2000 m",
       "label": "Open core · run it your way",
-      "title": "Use the hosted service, or run it on your own server.",
+      "title": "Hosted for ease, self-hosted for control.",
       "lede": "What one team needs is open source. What a company needs to run agents across many teams comes with the hosted service.",
-      "hostedTitle": "Hosted service",
+      "hostedTitle": "Hosted: start today",
       "hostedBody": "Nothing to install: sign in, create a team and invite people. It adds hosted models paid in advance, the mobile app and, next, DSH in the cloud.",
-      "openTitle": "Community edition",
+      "openTitle": "Community edition: fully yours",
       "openBody": "Apache-2.0: teams, models, presets, plugins, the assistant, review and history, usage and budgets, and the gateway. Docker Compose or a source build, on SQLite, Postgres or MySQL.",
       "repo": "Source on GitHub",
       "guide": "Self-hosting guide"
@@ -243,7 +247,7 @@
       "depth": "Seabed",
       "label": "Start",
       "title": "Turn a team of super individuals into a super team.",
-      "lede": "Create a team, publish its first preset and invite the people you work with. Their next sync brings them in."
+      "lede": "Create a team, publish its first preset and invite the people you work with. At their next sync, they work the team's best way."
     },
     "topology": {
       "label": "Left to right: members in DSH Desktop, a terminal and on a phone, and the admin in the web console, connect to DSH Teamwork. The admin publishes once and every member syncs; budgets and usage are seen, keys stay on the server, and the team's presets are kept with versions. Through it the team reaches Anthropic, OpenAI, DeepSeek, GLM, Kimi or any other provider. Cloud DSH is coming.",
@@ -285,10 +289,10 @@
         "where": "Coming"
       },
       "features": {
-        "collaborate": "Best setups, for everyone",
+        "collaborate": "Good know-how, for everyone",
         "govern": "Clear costs, safe keys",
-        "everywhere": "Work goes where you go",
-        "assets": "Know-how stays put"
+        "everywhere": "Go anywhere, start anytime",
+        "assets": "Stronger with every use"
       }
     }
   },
