@@ -838,6 +838,7 @@
       "proposeChange": "建议修改"
     },
     "teamDshHosts": {
+      "unavailable": "这个团队还没有开通团队 DSH。托管服务目前分批为部分团队开通，如需使用请联系客服。下面仍会列出已有的 key，但用它们登录的 DSH 会被拒绝，成员也连接不上。",
       "title": "团队 DSH",
       "description": "团队为成员运行的 DSH。它用团队授权 key 登录，从不以个人身份登录，模型调用计入团队。",
       "name": "名称",
@@ -1198,7 +1199,8 @@
     "provider_key_rejected": "提供商拒绝了这个 API 密钥，请检查它是否完整、是否仍然有效。",
     "model_metadata_unavailable": "无法读取公开模型目录。请重试，或手动填写。",
     "host_key_invalid": "团队授权 key 无效。",
-    "host_bound_elsewhere": "这个团队授权 key 已被另一台机器使用。"
+    "host_bound_elsewhere": "这个团队授权 key 已被另一台机器使用。",
+    "team_dsh_unavailable": "这个团队还没有开通团队 DSH。"
   },
   "docs": {
     "title": "文档",

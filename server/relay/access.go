@@ -61,6 +61,9 @@ func (r *relay) canReach(ctx context.Context, userID, hostID string) (shared, ok
 	if err != nil {
 		return true, false, err
 	}
+	if allowed, err := r.teamDSHAllowed(ctx, h.TeamID); err != nil || !allowed {
+		return true, false, err
+	}
 	in, err := r.db.Membership.Query().Where(membership.UserID(userID), membership.TeamID(h.TeamID)).Exist(ctx)
 	if err != nil || !in {
 		return true, false, err

@@ -13,6 +13,22 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Release the plugin with this change; the oversized-snapshot fix lives there.
 - **Refs:** `docs/tech/relay.md`, `packages/relay-client/src/live.ts`, the plugin's `src/bridge.ts` (`fitFrame`).
 
+## 2026-11-18 — An edition can choose which teams run a Team DSH
+
+- **What:** `edition.Host` gains `GateTeamDSH` and `TeamDSHAllowed`. Where an edition sets a gate, a team it does not admit cannot create or rotate a Team DSH key (`403 team_dsh_unavailable`), its DSH gets no host token, and its members reach none; `GET /api/teams/{teamId}/shared-hosts` adds `available`, and the console's Team DSH page says the team is not enabled and offers no key. A self-hosted server sets no gate, so nothing changes there.
+- **Why:** The hosted service opens Team DSH to chosen teams first, while its security is proven in use.
+- **Breaking:** `GET /api/teams/{teamId}/shared-hosts` answers `available` beside `hosts`.
+- **Upgrade:** Nothing.
+- **Refs:** `server/edition/edition.go`, `server/relay/shared.go`, `server/relay/access.go`, `docs/tech/shared-dsh.md` ("Who may run one").
+
+## 2026-11-18 — A Team DSH member can start a first session
+
+- **What:** A computer's `teamwork/configuration` answer carries `directories`: the folder DSH was started in, then its workspaces. The relay client starts a new session in the reader's latest folder, else the first one offered, and accepts only those (`startableDirectories` in `packages/relay-client`), so the console's Team DSH page and the phone app work for a member with no session yet. On a Team DSH the plugin refuses a member's `session/create` in any other folder. `/docs` says to start `dsh web` in the project folder, and on pnpm 11 to let DSH's profile take a release from today and skip unneeded build scripts.
+- **Why:** A client took the folder only from the reader's own sessions, and a Team DSH shows a member only theirs, so a new member got "no project folder on the machine" and could not start at all.
+- **Breaking:** None. An older plugin offers no folders, so nothing changes against it.
+- **Upgrade:** Update the plugin to 0.11.1 on each Team DSH, and restart DSH in the project folder.
+- **Refs:** the plugin's `src/shared-owner.ts`; `packages/relay-client/src/session-config.ts`, `src/live.ts`; `docs/tech/shared-dsh.md`; `apps/web/content/docs/{en,zh-CN}/install.md`.
+
 ## 2026-11-18 — My DSH: a member's own computers in the web console
 
 - **What:** Workspace → My DSH (`/teams/{teamId}/my-dsh`) lists the member's own computers, listed once one has connected. The browser pairs with one as the phone app does (code, safety code, approval on the desktop), unlocks it with the PIN, and drives its sessions end to end encrypted; each computer's devices, every phone and browser paired with it, are listed and removable. The relay adds `GET /relay/hosts` for the console's session, and `DELETE /relay/pairings/{id}` from that session revokes any pairing of the member's to their own computers (ADR 0048); an app token stays handset-scoped. Team DSH and My DSH now share their columns, conversation and PIN gate (`apps/web/src/pages/team/dsh-session.tsx`), and their shared messages moved to `team.dsh`. `/docs` (members) describes it.

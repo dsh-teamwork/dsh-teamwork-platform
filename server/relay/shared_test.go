@@ -29,13 +29,18 @@ type sharedWorld struct {
 	other  *http.Cookie // an admin of another team
 	// The three accounts' ids, in the same order.
 	adminID, memberID, otherID string
+	// denied holds the teams the edition's gate keeps from running a Team DSH.
+	denied map[string]bool
 }
 
 func eachShared(t *testing.T, f func(t *testing.T, w *sharedWorld)) {
-	w := &sharedWorld{}
+	w := &sharedWorld{denied: map[string]bool{}}
 	ext := edition.Extension{
 		Name: "open-relay",
 		Mount: func(h edition.Host) (func(), error) {
+			if err := h.GateTeamDSH(func(_ context.Context, teamID string) (bool, error) { return !w.denied[teamID], nil }); err != nil {
+				return nil, err
+			}
 			w.r = newRelay(h, nil, 200*time.Millisecond)
 			if err := h.SubscribeTeams(w.r.teamChanged); err != nil {
 				return nil, err
@@ -55,6 +60,7 @@ func eachShared(t *testing.T, f func(t *testing.T, w *sharedWorld)) {
 		in.Team(otherID)
 		w.admin, w.member, w.other = in.Session(adminID, "password"), in.Session(memberID, "password"), in.Session(otherID, "password")
 		w.adminID, w.memberID, w.otherID = adminID, memberID, otherID
+		clear(w.denied)
 		f(t, w)
 	})
 }
@@ -412,6 +418,47 @@ func TestTheArchiveKeepsOneSignedChainPerSharedDSH(t *testing.T) {
 		w.do("DELETE", base+"/"+hostID, w.admin, "", nil)
 		if _, out := w.do("GET", "/api/teams/"+w.teamID+"/shared-archive", w.admin, "", nil); out["hosts"].([]any)[0].(obj)["deleted"] != true {
 			t.Fatalf("after deleting the host: %v", out)
+		}
+	})
+}
+
+// A team the edition's gate does not admit cannot make, rotate or sign in a
+// Team DSH, and its members reach none; admitting it again restores them.
+func TestTheGateKeepsATeamFromRunningATeamDSH(t *testing.T) {
+	eachShared(t, func(t *testing.T, w *sharedWorld) {
+		base := "/api/teams/" + w.teamID + "/shared-hosts"
+		s, created := w.do("POST", base, w.admin, "", obj{"name": "Build box"})
+		if s != 201 {
+			t.Fatalf("create: %d %v", s, created)
+		}
+		key, hostID := created["key"].(string), created["host"].(obj)["id"].(string)
+		w.do("PUT", base+"/"+hostID+"/members", w.admin, "", obj{"access": "team"})
+
+		w.denied[w.teamID] = true
+		if s, out := w.do("GET", base, w.admin, "", nil); s != 200 || out["available"] != false || len(out["hosts"].([]any)) != 1 {
+			t.Fatalf("list while not admitted: %d %v", s, out)
+		}
+		for _, call := range []struct{ method, path string }{{"POST", base}, {"POST", base + "/" + hostID + "/rotate"}} {
+			if s, out := w.do(call.method, call.path, w.admin, "", obj{"name": "Again"}); s != 403 || out["error"] != "team_dsh_unavailable" {
+				t.Fatalf("%s %s while not admitted: %d %v", call.method, call.path, s, out)
+			}
+		}
+		if s, out := w.exchange(key, machine(t)); s != 403 || out["error"] != "team_dsh_unavailable" {
+			t.Fatalf("token while not admitted: %d %v", s, out)
+		}
+		if s, out := w.do("GET", "/relay/shared", w.member, "", nil); s != 200 || len(out["hosts"].([]any)) != 0 {
+			t.Fatalf("a member reached a Team DSH of a team not admitted: %d %v", s, out)
+		}
+
+		delete(w.denied, w.teamID)
+		if s, out := w.do("GET", base, w.admin, "", nil); s != 200 || out["available"] != true {
+			t.Fatalf("list once admitted: %d %v", s, out)
+		}
+		if s, out := w.exchange(key, machine(t)); s != 200 {
+			t.Fatalf("token once admitted: %d %v", s, out)
+		}
+		if s, out := w.do("GET", "/relay/shared", w.member, "", nil); s != 200 || len(out["hosts"].([]any)) != 1 {
+			t.Fatalf("a member of an admitted team: %d %v", s, out)
 		}
 	})
 }

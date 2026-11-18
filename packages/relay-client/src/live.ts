@@ -23,7 +23,7 @@ import { webAesKey } from './aes-gcm';
 import { SecureChannel, securePacket, newChannelId, type AesKey, type RandomBytes } from './secure-channel';
 import { z } from 'zod';
 import { UploadLimitsSchema } from './uploads';
-import { configurationOf, directoriesOf, ModelSelectionSchema } from './session-config';
+import { configurationOf, ModelSelectionSchema, startableDirectories } from './session-config';
 
 import {
   approvalResult,
@@ -691,9 +691,11 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
 
     async createSession(computerId, options = {}) {
       const sessions = await call(computerId, 'session/list', { _request: {} });
-      const cwd = options.cwd ?? latestDirectoryOf(sessions);
+      const offered = ((await call(computerId, 'teamwork/configuration', { request: {} }).catch(() => null)) as { directories?: unknown } | null)?.directories;
+      const directories = startableDirectories(sessions, Array.isArray(offered) ? offered.filter((path): path is string => typeof path === 'string') : []);
+      const cwd = options.cwd ?? latestDirectoryOf(sessions) ?? directories[0]?.path;
       if (!cwd) throw new RelayError('no_directory');
-      if (!directoriesOf(sessions).some(directory => directory.path === cwd)) throw new RelayError('invalid_directory');
+      if (!directories.some(directory => directory.path === cwd)) throw new RelayError('invalid_directory');
       const created = (await call(computerId, 'session/create', { request: { cwd, ...(options.agentPreset ? { agentPreset: options.agentPreset } : {}) } })) as { sessionId?: unknown } | null;
       if (typeof created?.sessionId !== 'string') throw new RelayError('unavailable');
       return { id: created.sessionId, directory: directoryName(cwd) };

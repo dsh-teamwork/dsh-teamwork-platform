@@ -2657,13 +2657,14 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The shared DSHs, oldest first */
+                /** @description The shared DSHs, oldest first, and whether the team may run one now: an edition's gate can keep a team out (the hosted service admits teams one by one), when creating or rotating a key answers 403 team_dsh_unavailable and its DSHs and members are cut off; a self-hosted server has no gate. */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
+                            available: boolean;
                             hosts: components["schemas"]["SharedHost"][];
                         };
                     };

@@ -46,23 +46,33 @@ dsh web
    npm install -g @deepseek-ai/dsh@0.2.2-rc.1
    ```
 
-3. 安装插件，并在 `tmux` 会话中启动 DSH，退出登录后它会继续运行：
+3. 如果 `pnpm --version` 显示 11 或更高，先让 DSH 的 profile 接受当天发布的版本，并跳过它用不到的依赖构建脚本；否则 pnpm 11 会装上旧版本，或者以 `ERR_PNPM_IGNORED_BUILDS` 中断：
+
+   ```sh
+   dsh plugin --profile web list
+   printf 'minimumReleaseAge: 0\nstrictDepBuilds: false\n' >> ~/.dsh/profiles/web/pnpm-workspace.yaml
+   ```
+
+   第一行只是让 DSH 先建好 profile，这样它自己的设置会写在这两行之前。
+
+4. 安装插件，并在 `tmux` 会话中启动 DSH，退出登录后它会继续运行。请在会话要工作的项目目录里启动：团队 DSH 的成员会在这个目录、或 DSH 已有的工作区里开始会话。
 
    ```sh
    dsh plugin --profile web add @dsh-teamwork/dsh-teamwork
    tmux new -s dsh
+   cd /path/to/project
    dsh web --no-open
    ```
 
    按 `Ctrl+B` 再按 `D` 离开会话，`tmux attach -t dsh` 回到会话。
 
-4. 在同一台机器的另一个终端里，安装插件附带的命令 `dsh-teamwork` 和 `dsh-teamwork-audit`。DSH profile 里的那一份不在 `PATH` 上：
+5. 在同一台机器的另一个终端里，安装插件附带的命令 `dsh-teamwork` 和 `dsh-teamwork-audit`。DSH profile 里的那一份不在 `PATH` 上：
 
    ```sh
    npm install -g @dsh-teamwork/dsh-teamwork
    ```
 
-5. 然后个人 DSH 运行 `dsh-teamwork login`，团队 DSH 运行 `dsh-teamwork share enable <key>`，见[命令](/docs/commands#在服务器上-dsh-teamwork)。服务器上不需要浏览器。
+6. 然后个人 DSH 运行 `dsh-teamwork login`，团队 DSH 运行 `dsh-teamwork share enable <key>`，见[命令](/docs/commands#在服务器上-dsh-teamwork)。服务器上不需要浏览器。
 
 插件把文件保存在 `~/.dsh/dsh-teamwork/`（或 `$DSH_HOME/dsh-teamwork/`）中，与从哪个目录启动 DSH 无关。
 

@@ -41,6 +41,8 @@ const CatalogSchema = z.object({
 });
 const ConfigurationSchema = z.object({
   presets: PresetSchema.array(),
+  /** Where the computer lets a session start: where DSH was started, then its workspaces. Older plugins send none. */
+  directories: z.string().array().default([]),
   current: z
     .object({
       sessionId: z.string(),
@@ -67,11 +69,22 @@ export function directoriesOf(value: unknown): { path: string; name: string }[] 
       return [{ path: item.cwd, name: directoryName(item.cwd) || item.cwd }];
     });
 }
+/**
+ * The folders a new session can start in: those of the reader's own sessions, newest first, then the ones the
+ * computer offers. A member new to a shared DSH, or a computer with no session yet, has only the second.
+ */
+export function startableDirectories(sessions: unknown, offered: readonly string[]) {
+  const known = directoriesOf(sessions);
+  const seen = new Set(known.map((item) => item.path));
+  return [...known, ...offered.filter((path) => !seen.has(path)).map((path) => ({ path, name: directoryName(path) || path }))];
+}
+
 export function configurationOf(sessions: unknown, models: unknown, configuration: unknown) {
   const catalog = CatalogSchema.parse(models);
+  const parsed = ConfigurationSchema.parse(configuration);
   return {
-    ...ConfigurationSchema.parse(configuration),
-    directories: directoriesOf(sessions),
+    ...parsed,
+    directories: startableDirectories(sessions, parsed.directories),
     defaultModel: catalog.default,
     models: catalog.groups.flatMap((group) =>
       group.models.map((model) => ({ ...model, provider: group.id, providerName: group.name })),

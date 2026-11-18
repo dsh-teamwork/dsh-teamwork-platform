@@ -1089,13 +1089,19 @@ paths:
       security: [{ session: [] }]
       responses:
         '200':
-          description: The shared DSHs, oldest first
+          description: >-
+            The shared DSHs, oldest first, and whether the team may run one now: an
+            edition's gate can keep a team out (the hosted service admits teams one
+            by one), when creating or rotating a key answers 403 team_dsh_unavailable
+            and its DSHs and members are cut off; a self-hosted server has no gate.
           content:
             application/json:
               schema:
                 type: object
-                required: [hosts]
-                properties: { hosts: { type: array, items: { $ref: '#/components/schemas/SharedHost' } } }
+                required: [available, hosts]
+                properties:
+                  available: { type: boolean }
+                  hosts: { type: array, items: { $ref: '#/components/schemas/SharedHost' } }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }

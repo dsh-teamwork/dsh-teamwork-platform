@@ -53,6 +53,8 @@ OpenRouter 服务商查 OpenRouter，其他服务商查 Models.dev（Models.dev 
 
 ## 7. 运行团队 DSH
 
+在托管服务上，团队 DSH 在安全性经过实际使用验证之前，分批为部分团队开通：没开通之前，团队 DSH 页面会说明这一点，并且不提供 key，如需使用请联系客服。自部署的服务器对所有团队都开放。
+
 在**团队资产 → 团队 DSH**中为团队要给成员使用的 DSH 起个名字，复制只显示一次的命令 `/teamwork share enable <key>`，在那台 DSH 里运行。之后它以团队身份登录而不是个人，只同步这个团队，团队模型的调用计入团队。第一台使用 key 的机器会绑定它；**更换 key** 为同一台机器签发新 key，**删除**则立即切断。在**访问**中选择谁可以访问它：整个团队或指定成员。对其中每个人，在那台 DSH 里运行 `/teamwork share invite <email>`，并亲自把链接交给对方；每个成员只能访问自己发起的会话。成员在手机 App 中打开链接，或在控制台的**工作区 → 团队 DSH**中粘贴。
 
 在没有桌面的服务器上，改为在那台机器的终端里运行对应的 `dsh-teamwork share enable <key>`、`dsh-teamwork share invite <email>` 等命令（见[安装](/docs/install#linux-服务器)和[命令](/docs/commands#在服务器上-dsh-teamwork)）。
