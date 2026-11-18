@@ -10,6 +10,11 @@ export const ModelSelectionSchema = z.object({
 export type ModelSelection = z.infer<typeof ModelSelectionSchema>;
 export interface SessionOptions {
   cwd?: string;
+  /**
+   * The team a new session is started for: it lands in that team's default workspace on the computer
+   * (`teamDirectories`) unless `cwd` names another folder.
+   */
+  teamId?: string;
   agentPreset?: string;
   model?: ModelSelection;
 }
@@ -43,6 +48,8 @@ const ConfigurationSchema = z.object({
   presets: PresetSchema.array(),
   /** Where the computer lets a session start: where DSH was started, then its workspaces. Older plugins send none. */
   directories: z.string().array().default([]),
+  /** Each team's default workspace on the computer, by team id, always one of `directories`. Older plugins send none. */
+  teamDirectories: z.record(z.string(), z.string()).default({}),
   current: z
     .object({
       sessionId: z.string(),
@@ -77,6 +84,19 @@ export function startableDirectories(sessions: unknown, offered: readonly string
   const known = directoriesOf(sessions);
   const seen = new Set(known.map((item) => item.path));
   return [...known, ...offered.filter((path) => !seen.has(path)).map((path) => ({ path, name: directoryName(path) || path }))];
+}
+
+/**
+ * Where a new session starts when its member names no folder: the team's default workspace on the computer, else the
+ * folder of the reader's latest session, else the first the computer offers. `startable` is `startableDirectories`.
+ */
+export function defaultDirectory(
+  startable: readonly { path: string }[],
+  teamDirectories: Readonly<Record<string, string>>,
+  teamId?: string,
+): string | undefined {
+  const team = teamId ? teamDirectories[teamId] : undefined;
+  return team && startable.some((item) => item.path === team) ? team : startable[0]?.path;
 }
 
 export function configurationOf(sessions: unknown, models: unknown, configuration: unknown) {
