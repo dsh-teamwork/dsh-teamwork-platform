@@ -480,8 +480,10 @@
       "resources": "团队共享",
       "submissions": "我的提交",
       "teamDsh": "团队 DSH",
+      "myDsh": "我的 DSH",
       "teamDshHosts": "团队 DSH",
       "hints": {
+        "myDsh": "你登录了 Teamwork 的电脑上的 DSH，只属于你自己。每台电脑首次使用时把这个浏览器和它配对，之后就能在这里使用它的会话，端到端加密。它的模型调用算在你名下；能访问它的手机和浏览器都列在这里，可以随时移除。",
         "teamDsh": "跑在团队自己的一台机器上的 DSH，由团队管理员接入，并决定谁可以访问。它以团队身份登录，模型调用计入团队。你在浏览器或手机 App 上端到端加密地使用它，只看得到自己发起的会话；管理员可以从加密归档中查看所有会话。"
       }
     },
@@ -877,24 +879,10 @@
       "archiveDownload": "下载",
       "archiveRead": "在你自己的电脑上，用 dsh-teamwork-audit keygen 生成的密钥打开下载的文件。缺失或被改动的分段会被指出。"
     },
-    "teamDsh": {
-      "title": "团队 DSH",
+    "dsh": {
       "sessions": "我的会话",
-      "introTitle": "在团队的 DSH 上工作",
-      "disclosure": "团队 DSH 是团队的机器，与名单上的其他人共用。你只能看到自己发起的会话；团队管理员可以从加密归档中读取所有会话。",
-      "none": "这个团队还没有向你开放的 DSH。",
       "online": "在线",
       "offline": "离线",
-      "needsInvite": "请向管理员索取邀请",
-      "joinWithInvite": "用邀请加入",
-      "joinHelp": "粘贴管理员给你的邀请链接。这个浏览器只需加入一次，之后设置自己的 PIN。",
-      "invite": "邀请链接",
-      "join": "加入",
-      "joining": "正在加入…",
-      "deviceName": "网页浏览器",
-      "inviteInvalid": "这不是邀请链接。请粘贴管理员给你的完整 dshteamwork://join 链接。",
-      "inviteOtherServer": "这个邀请属于另一台服务器。",
-      "browserUnsupported": "这个浏览器无法保存团队 DSH 需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。",
       "newSession": "新会话",
       "noSessions": "还没有会话。",
       "locked": "输入 PIN 后可以看到你的会话。",
@@ -927,14 +915,66 @@
           "hint": "你为这台机器设置的四位数字。"
         },
         "locked": {
-          "title": "已锁定",
-          "hint": "PIN 错误次数过多。请让管理员在团队 DSH 上为你解锁。"
+          "title": "已锁定"
         },
         "wrong": "PIN 错误，还剩 {count} 次。",
         "mismatch": "两次输入的 PIN 不一致，请重新开始。",
         "unavailable": "机器没有响应，请重试。",
         "submit": "继续"
       }
+    },
+    "teamDsh": {
+      "title": "团队 DSH",
+      "introTitle": "在团队的 DSH 上工作",
+      "disclosure": "团队 DSH 是团队的机器，与名单上的其他人共用。你只能看到自己发起的会话；团队管理员可以从加密归档中读取所有会话。",
+      "none": "这个团队还没有向你开放的 DSH。",
+      "needsInvite": "请向管理员索取邀请",
+      "joinWithInvite": "用邀请加入",
+      "joinHelp": "粘贴管理员给你的邀请链接。这个浏览器只需加入一次，之后设置自己的 PIN。",
+      "invite": "邀请链接",
+      "join": "加入",
+      "joining": "正在加入…",
+      "deviceName": "网页浏览器",
+      "inviteInvalid": "这不是邀请链接。请粘贴管理员给你的完整 dshteamwork://join 链接。",
+      "inviteOtherServer": "这个邀请属于另一台服务器。",
+      "browserUnsupported": "这个浏览器无法保存团队 DSH 需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。",
+      "lockedHint": "PIN 错误次数过多。请让管理员在团队 DSH 上为你解锁。"
+    },
+    "myDsh": {
+      "title": "我的 DSH",
+      "none": "你还没有电脑连接过。在电脑上的 DSH 里登录 Teamwork，它就会出现在这里。",
+      "introTitle": "在浏览器里使用你自己的电脑",
+      "intro": "这里列出你登录了 Teamwork 的每台电脑上的 DSH。打开一台，先把这个浏览器和它配对，就可以在它的会话里工作；浏览器和那台电脑之间端到端加密。",
+      "lastSeen": "{time}在线",
+      "version": "DSH {version}",
+      "pairTitle": "把这个浏览器配对到 {name}",
+      "pairHelp": "在那台电脑的 DSH 里打开 Teamwork 面板，选择「手机连接」，生成配对码后输入到这里。",
+      "code": "配对码",
+      "pair": "配对",
+      "pairing": "正在配对…",
+      "invalidCode": "配对码不对、已用过或已过期。请在电脑上重新生成。",
+      "otherComputer": "这个配对码是另一台电脑生成的。",
+      "safetyTitle": "核对安全码",
+      "safetyHelp": "电脑上也会显示一个安全码。两边一致时再继续。",
+      "matches": "一致",
+      "waitingApproval": "现在请在电脑上批准这个浏览器。",
+      "refused": "电脑没有接受这个浏览器。请重新生成配对码再试。",
+      "deviceName": "网页浏览器",
+      "lockedHint": "PIN 错误次数过多。请在那台电脑的 DSH 里运行 /teamwork pin reset，然后在这里重新设置 PIN。",
+      "devices": "设备",
+      "devicesHelp": "与 {name} 配对的手机和浏览器。移除后立即断开。",
+      "noDevices": "还没有手机或浏览器与它配对。",
+      "thisBrowser": "这个浏览器",
+      "pending": "等待批准",
+      "push": "通知已开启",
+      "lastUsed": "{time}使用过",
+      "neverUsed": "尚未使用",
+      "revoke": "移除",
+      "revokeConfirm": "移除 {device}？在重新配对之前，它将无法再访问 {name}。",
+      "revoked": "已移除。",
+      "loadFailed": "读取你的电脑失败，请重试。",
+      "revokeFailed": "没能移除这个设备，请重试。",
+      "browserUnsupported": "这个浏览器无法保存配对需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。"
     }
   },
   "usage": {

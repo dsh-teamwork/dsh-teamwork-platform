@@ -7,7 +7,9 @@
 //     phone redeemed a code or a pairing ended.
 //   - POST /relay/pair, GET /relay/pairings, DELETE /relay/pairings/{id}
 //     (HTTP, with the app's Bearer and handset credential): a phone redeems a code, lists its
-//     pairings, revokes one.
+//     pairings, revokes one. The web console, by its session cookie, lists
+//     the member's own computers with every device paired to them (GET
+//     /relay/hosts) and may revoke any of those pairings (ADR 0048).
 //   - /relay/phone (WebSocket): a phone proves who it is in its first frame,
 //     then sends opaque sealed frames naming a pairing. The relay passes each
 //     to that pairing's host and the host's answers back. It reads only the
@@ -121,6 +123,7 @@ func (r *relay) routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /relay/phone", r.acceptPhone)
 	mux.HandleFunc("POST /relay/pair", r.pair)
 	mux.HandleFunc("GET /relay/pairings", r.listPairings)
+	mux.HandleFunc("GET /relay/hosts", r.listHosts)
 	mux.HandleFunc("DELETE /relay/pairings/{id}", r.revokePairing)
 	mux.HandleFunc("PUT /relay/pairings/{id}/push", r.setPush)
 }
@@ -707,14 +710,20 @@ func (r *relay) discover(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"url": url + "/relay/plugin"})
 }
 
+// bearer is a request's Bearer token, or "" when it sends none, as the web
+// console does.
+func bearer(req *http.Request) string {
+	token, _ := strings.CutPrefix(req.Header.Get("Authorization"), "Bearer ")
+	return strings.TrimSpace(token)
+}
+
 // caller is the member a request's Bearer names, or, without one, the
 // browser session's member (a write only from this site); "" after answering
 // 401.
 func (r *relay) caller(w http.ResponseWriter, req *http.Request) string {
-	token, _ := strings.CutPrefix(req.Header.Get("Authorization"), "Bearer ")
 	var userID string
 	var err error
-	if token = strings.TrimSpace(token); token != "" {
+	if token := bearer(req); token != "" {
 		userID, err = r.member(req.Context(), token)
 	} else if req.Method == http.MethodGet || r.host.SameOrigin(req) {
 		userID, err = r.browserMember(req)
@@ -807,6 +816,84 @@ func (r *relay) listPairings(w http.ResponseWriter, req *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"pairings": list})
 }
 
+// hostView is one of the member's own computers on the web console's list,
+// with every device of theirs paired to it.
+type hostView struct {
+	ID         string           `json:"id"`
+	Name       string           `json:"name"`
+	DSHVersion string           `json:"dshVersion"`
+	Online     bool             `json:"online"`
+	LastSeenAt string           `json:"lastSeenAt"`
+	Pairings   []hostDeviceView `json:"pairings"`
+}
+
+type hostDeviceView struct {
+	ID         string  `json:"id"`
+	DeviceName string  `json:"deviceName"`
+	Status     string  `json:"status"` // pending or confirmed
+	CreatedAt  string  `json:"createdAt"`
+	LastUsedAt *string `json:"lastUsedAt"`
+	Push       bool    `json:"push"`
+	// Current is the pairing of the handset asking: this browser.
+	Current bool `json:"current"`
+}
+
+// listHosts is the member's own computers, most recently seen first, each
+// with every live pairing of theirs to it (ADR 0048). Only the web console
+// asks, by its session cookie; an app's Bearer is refused, as a phone keeps
+// to its own handset (the hosted edition's ADR 0020).
+func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
+	if bearer(req) != "" {
+		errorJSON(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	userID := r.caller(w, req)
+	if userID == "" {
+		return
+	}
+	ctx := req.Context()
+	hosts, err := r.db.RelayHost.Query().Where(relayhost.UserID(userID)).
+		Order(ent.Desc(relayhost.FieldLastSeenAt), ent.Desc(relayhost.FieldID)).All(ctx)
+	if err != nil {
+		rejectedJSON(w, err)
+		return
+	}
+	ids := make([]string, len(hosts))
+	for i, h := range hosts {
+		ids[i] = h.ID
+	}
+	rows, err := r.db.RelayPairing.Query().Where(relaypairing.RevokedAtIsNil(), account{userID: userID, hostIDs: ids}.where()).
+		Order(ent.Desc(relaypairing.FieldCreatedAt), ent.Desc(relaypairing.FieldID)).All(ctx)
+	if err != nil {
+		rejectedJSON(w, err)
+		return
+	}
+	// This browser's own pairings are marked by its handset credential, when it sends one.
+	var mine string
+	if key := req.Header.Get("X-Device-Key"); validDeviceKey(key) {
+		mine = r.pairings.deviceHash(key)
+	}
+	devices := map[string][]hostDeviceView{}
+	for _, p := range rows {
+		v := view(p, "")
+		devices[p.HostID] = append(devices[p.HostID], hostDeviceView{
+			ID: v.ID, DeviceName: v.DeviceName, Status: v.Status, CreatedAt: v.CreatedAt, LastUsedAt: v.LastUsedAt,
+			Push: p.PushToken != nil, Current: mine != "" && p.DeviceKeyHash != nil && *p.DeviceKeyHash == mine,
+		})
+	}
+	out := make([]hostView, len(hosts))
+	r.mu.Lock()
+	for i, h := range hosts {
+		_, online := r.hosts[h.ID]
+		out[i] = hostView{ID: h.ID, Name: h.Name, DSHVersion: h.DshVersion, Online: online, LastSeenAt: iso(h.LastSeenAt), Pairings: devices[h.ID]}
+		if out[i].Pairings == nil {
+			out[i].Pairings = []hostDeviceView{}
+		}
+	}
+	r.mu.Unlock()
+	writeJSON(w, http.StatusOK, map[string]any{"hosts": out})
+}
+
 func (r *relay) setPush(w http.ResponseWriter, req *http.Request) {
 	ph, ok := r.callerPhone(w, req)
 	if !ok {
@@ -829,13 +916,31 @@ func (r *relay) setPush(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// revokePairing ends a pairing. An app's Bearer reaches only its own
+// handset's; the web console's session reaches every pairing of the member to
+// their own computers (ADR 0048), so a lost phone is cut off from the browser.
 func (r *relay) revokePairing(w http.ResponseWriter, req *http.Request) {
-	ph, ok := r.callerPhone(w, req)
-	if !ok {
-		return
+	var s scope
+	if bearer(req) == "" {
+		userID := r.caller(w, req)
+		if userID == "" {
+			return
+		}
+		own, err := r.db.RelayHost.Query().Where(relayhost.UserID(userID)).IDs(req.Context())
+		if err != nil {
+			rejectedJSON(w, err)
+			return
+		}
+		s = account{userID: userID, hostIDs: own}
+	} else {
+		ph, ok := r.callerPhone(w, req)
+		if !ok {
+			return
+		}
+		s = ph
 	}
 	id := req.PathValue("id")
-	hostID, err := r.pairings.revoke(req.Context(), ph, id, time.Now().UTC())
+	hostID, err := r.pairings.revoke(req.Context(), s, id, time.Now().UTC())
 	if err != nil {
 		rejectedJSON(w, err)
 		return
