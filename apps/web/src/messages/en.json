@@ -174,11 +174,26 @@
       "plugin": "Plugin",
       "approval": "Approved and published by {reviewer}",
       "workflows": {
-        "marketResearch": { "name": "Market research", "reviewer": "Alex" },
-        "surveyExport": { "name": "Survey data export", "reviewer": "Riley" },
-        "operationsBrief": { "name": "Weekly operations report", "reviewer": "Alex" },
-        "interviewNotes": { "name": "Interview notes", "reviewer": "Jordan" },
-        "spreadsheetCleanup": { "name": "Spreadsheet cleanup", "reviewer": "Riley" }
+        "marketResearch": {
+          "name": "Market research",
+          "reviewer": "Alex"
+        },
+        "surveyExport": {
+          "name": "Survey data export",
+          "reviewer": "Riley"
+        },
+        "operationsBrief": {
+          "name": "Weekly operations report",
+          "reviewer": "Alex"
+        },
+        "interviewNotes": {
+          "name": "Interview notes",
+          "reviewer": "Jordan"
+        },
+        "spreadsheetCleanup": {
+          "name": "Spreadsheet cleanup",
+          "reviewer": "Riley"
+        }
       }
     },
     "pricing": {
@@ -858,8 +873,8 @@
       "empty": "No Team DSH yet. Name one to create its key.",
       "keyTitle": "Team host key for {name}",
       "keyOnce": "Shown only now. Copy it to the DSH that will be shared; the server keeps no readable copy.",
-      "keyHelp": "Run this in that DSH. The first machine to use the key keeps it; on another machine it is refused. Anyone who can reach this DSH can use the team's models through it.",
-      "keyInstall": "No DSH there yet? <link>Install DSH and the plugin</link>, on a desktop or a Linux server. On a server, run it from a shell with dsh-teamwork in place of /teamwork.",
+      "keyHelp": "Run it on that machine, where DSH is already running with the plugin. The first machine to use the key keeps it; on another machine it is refused. Anyone who can reach this DSH can use the team's models through it.",
+      "keyInstall": "No DSH there yet? <link>Install DSH and the plugin</link>, on a desktop or a Linux server.",
       "rotateConfirm": "Issue a new key for this DSH? The old key stops working; the same machine keeps the new one.",
       "deleteConfirm": "Delete this Team DSH? Its key stops working at once, and the DSH loses team access within an hour.",
       "access": "Who may reach it",
@@ -868,17 +883,26 @@
       "accessListedOption": "Only these members",
       "editAccess": "Access",
       "accessTitle": "Who may reach {name}",
-      "accessHelp": "Each member also needs an invite from the DSH itself. Taking someone off this list ends their pairings at once.",
+      "accessHelp": "Each member also needs an invite from the machine itself: dsh-teamwork share invite <email> there. Taking someone off this list ends their pairings at once.",
       "accessSaved": "Access saved.",
       "save": "Save",
       "cancel": "Cancel",
       "archiveTitle": "Audit archive",
       "archiveHelp": "Every Team DSH seals each member's sessions to your team's audit key and keeps them here. The server cannot open them; only whoever holds the private key can.",
-      "archiveEmpty": "Nothing archived yet. A Team DSH admits no member until its audit key is set with /teamwork share audit-key.",
+      "archiveEmpty": "Nothing archived yet. A Team DSH admits no member until its audit key is set with dsh-teamwork share audit-key on that machine.",
       "archiveDeleted": "Deleted Team DSH ({id})",
       "archiveRange": "{segments, plural, one {# segment} other {# segments}} · {first} – {last}",
       "archiveDownload": "Download",
-      "archiveRead": "Open a download on your own machine, with the key dsh-teamwork-audit keygen wrote. It says if any segment is missing or altered."
+      "archiveRead": "Open a download on your own machine, with the key dsh-teamwork-audit keygen wrote. It says if any segment is missing or altered.",
+      "guide": "Setting one up? <link>The Team DSH guide</link> takes you from installing DSH on a server to a member's first session.",
+      "keyInDsh": "In DSH's command input",
+      "keyInShell": "In a shell on that machine",
+      "nextTitle": "Then",
+      "nextAudit": "On your own computer, run dsh-teamwork-audit keygen and keep the audit-key.json it writes; on the machine, run the dsh-teamwork share audit-key line it prints. No member is admitted before this.",
+      "nextAccess": "Under Access below, choose who may reach it.",
+      "nextInvite": "On the machine, run dsh-teamwork share invite <email> for each of them, and hand each link over yourself.",
+      "nextJoin": "Each member pastes their link under Workspace → Team DSH, or opens it in the phone app, and sets a PIN.",
+      "nextCheck": "dsh-teamwork status on the machine should say Relay: connected."
     },
     "dsh": {
       "sessions": "My sessions",
@@ -969,6 +993,7 @@
       "matches": "They match",
       "waitingApproval": "Now approve this browser on the computer.",
       "refused": "The computer did not accept this browser. Make a new code and try again.",
+      "pairFailed": "The connection to the computer broke before pairing finished. Make a new code on the computer and try again.",
       "deviceName": "Web browser",
       "lockedHint": "Too many wrong PINs. On that computer, run /teamwork pin reset in DSH, then set a new PIN here.",
       "devices": "Devices",

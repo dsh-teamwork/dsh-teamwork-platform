@@ -174,11 +174,26 @@
       "plugin": "插件",
       "approval": "{reviewer}批准并发布",
       "workflows": {
-        "marketResearch": { "name": "市场调研", "reviewer": "李明" },
-        "surveyExport": { "name": "问卷数据导出", "reviewer": "许然" },
-        "operationsBrief": { "name": "运营周报", "reviewer": "李明" },
-        "interviewNotes": { "name": "访谈纪要", "reviewer": "周宁" },
-        "spreadsheetCleanup": { "name": "表格数据清理", "reviewer": "许然" }
+        "marketResearch": {
+          "name": "市场调研",
+          "reviewer": "李明"
+        },
+        "surveyExport": {
+          "name": "问卷数据导出",
+          "reviewer": "许然"
+        },
+        "operationsBrief": {
+          "name": "运营周报",
+          "reviewer": "李明"
+        },
+        "interviewNotes": {
+          "name": "访谈纪要",
+          "reviewer": "周宁"
+        },
+        "spreadsheetCleanup": {
+          "name": "表格数据清理",
+          "reviewer": "许然"
+        }
       }
     },
     "pricing": {
@@ -858,8 +873,8 @@
       "empty": "还没有团队 DSH。填一个名称即可创建它的 key。",
       "keyTitle": "{name} 的团队授权 key",
       "keyOnce": "只显示这一次。请复制到要共享的那台 DSH；服务器不保留可读副本。",
-      "keyHelp": "在那台 DSH 里运行这条命令。第一台使用它的机器会绑定这个 key，换到其他机器上会被拒绝。能访问这台 DSH 的人都能通过它使用团队模型。",
-      "keyInstall": "那台机器还没装 DSH？<link>安装 DSH 和插件</link>，桌面电脑和 Linux 服务器都有说明。在服务器上，在终端里把命令开头的 /teamwork 换成 dsh-teamwork 运行。",
+      "keyHelp": "在那台已经装好插件、正在运行 DSH 的机器上运行。第一台使用这个 key 的机器会绑定它，换到其他机器上会被拒绝。能访问这台 DSH 的人都能通过它使用团队模型。",
+      "keyInstall": "那台机器还没装 DSH？<link>安装 DSH 和插件</link>，桌面电脑和 Linux 服务器都有说明。",
       "rotateConfirm": "为这台 DSH 签发新 key？旧 key 立即失效，同一台机器继续使用新 key。",
       "deleteConfirm": "删除这台团队 DSH？它的 key 立即失效，DSH 最多一小时内失去团队访问。",
       "access": "可访问的人",
@@ -868,17 +883,26 @@
       "accessListedOption": "仅以下成员",
       "editAccess": "访问",
       "accessTitle": "谁可以访问 {name}",
-      "accessHelp": "每个成员还需要这台 DSH 自己发出的邀请。把某人移出名单会立即断开他的配对。",
+      "accessHelp": "每个成员还需要那台机器自己生成的邀请：在那里运行 dsh-teamwork share invite <email>。把某人移出名单会立即断开他的配对。",
       "accessSaved": "访问设置已保存。",
       "save": "保存",
       "cancel": "取消",
       "archiveTitle": "审计归档",
       "archiveHelp": "每台团队 DSH 都把成员的会话加密到团队的审计密钥后保存在这里。服务器无法打开，只有持有私钥的人可以。",
-      "archiveEmpty": "还没有归档。团队 DSH 在用 /teamwork share audit-key 设置审计密钥之前不会接纳任何成员。",
+      "archiveEmpty": "还没有归档。团队 DSH 在那台机器上用 dsh-teamwork share audit-key 设置审计密钥之前，不会接纳任何成员。",
       "archiveDeleted": "已删除的团队 DSH（{id}）",
       "archiveRange": "{segments} 个分段 · {first} – {last}",
       "archiveDownload": "下载",
-      "archiveRead": "在你自己的电脑上，用 dsh-teamwork-audit keygen 生成的密钥打开下载的文件。缺失或被改动的分段会被指出。"
+      "archiveRead": "在你自己的电脑上，用 dsh-teamwork-audit keygen 生成的密钥打开下载的文件。缺失或被改动的分段会被指出。",
+      "guide": "第一次配置？<link>团队 DSH 指南</link>从在服务器上安装 DSH 一直讲到成员的第一个会话。",
+      "keyInDsh": "在 DSH 的命令输入框里",
+      "keyInShell": "在那台机器的终端里",
+      "nextTitle": "接下来",
+      "nextAudit": "在你自己的电脑上运行 dsh-teamwork-audit keygen，保管好它写出的 audit-key.json；再在那台机器上运行它打印的 dsh-teamwork share audit-key 那一行。在这之前不会接纳任何成员。",
+      "nextAccess": "在下方的“访问”中选择谁可以访问它。",
+      "nextInvite": "在那台机器上为每个人运行 dsh-teamwork share invite <email>，并亲自把链接交给对方。",
+      "nextJoin": "成员在“工作区 → 团队 DSH”中粘贴链接，或在手机 App 里打开它，然后设置 PIN。",
+      "nextCheck": "在那台机器上运行 dsh-teamwork status，应显示 Relay: connected。"
     },
     "dsh": {
       "sessions": "我的会话",
@@ -969,6 +993,7 @@
       "matches": "一致",
       "waitingApproval": "现在请在电脑上批准这个浏览器。",
       "refused": "电脑没有接受这个浏览器。请重新生成配对码再试。",
+      "pairFailed": "配对完成前与电脑的连接断开了。请在电脑上重新生成配对码再试一次。",
       "deviceName": "网页浏览器",
       "lockedHint": "PIN 错误次数过多。请在那台电脑的 DSH 里运行 /teamwork pin reset，然后在这里重新设置 PIN。",
       "devices": "设备",

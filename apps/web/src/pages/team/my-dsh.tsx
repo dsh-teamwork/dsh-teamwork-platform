@@ -49,7 +49,10 @@ export function MyDshPage() {
   const computerId = host?.pairings.find((p) => p.current && p.status === 'confirmed')?.id ?? '';
   const { sessions, pin, failed: unreachable, reload, locked } = useComputer(computerId);
   const session = sessions?.find((s) => s.id === sessionId);
-  const note = (h: MyComputer) => (h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }));
+  // Two records can share a name (two DSHs on one machine, or one signed in again): a short id tells them apart.
+  const twin = (h: MyComputer) => (hosts ?? []).some((o) => o.id !== h.id && o.name === h.name);
+  const note = (h: MyComputer) =>
+    [h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
   const problem = failed ?? unreachable;
 
   return (
@@ -83,7 +86,14 @@ export function MyDshPage() {
         <>
           <HostHeader host={host} note={note(host)} changed={() => void load()} />
           {!computerId ? (
-            <Pair host={host} paired={() => void load()} />
+            <Pair
+              host={host}
+              paired={(pairedHost) => {
+                void load();
+                // The code may have come from another record of the member's (one with the same name): open that one.
+                if (pairedHost && pairedHost !== host.id) navigate(`${base}/${pairedHost}`);
+              }}
+            />
           ) : locked ? (
             <PinGate computerId={computerId} state={pin} lockedHint={t('lockedHint')} />
           ) : (
@@ -175,7 +185,7 @@ function Devices({ host, changed }: { host: MyComputer; changed: () => void }) {
  * Pairs this browser with the computer as the phone app pairs (docs/tech/relay.md, "Pairing"): the code its Teamwork
  * panel shows, then the safety code both screens show, compared by the member, then the desktop's approval.
  */
-function Pair({ host, paired }: { host: MyComputer; paired: () => void }) {
+function Pair({ host, paired }: { host: MyComputer; paired: (hostId: string | undefined) => void }) {
   const { me } = useTeam();
   const t = useTranslations('team.myDsh');
   const word = useRelayError();
@@ -195,13 +205,15 @@ function Pair({ host, paired }: { host: MyComputer; paired: () => void }) {
       try {
         const next = await relay.getPairing(pending);
         if (!live) return;
-        if (!next) {
+        if (!next || next.verificationError) {
+          // Refused, or the encrypted channel to the computer failed before it accepted: start again with a new code.
           setPairing(null);
           setMatched(false);
-          setFailed(t('refused'));
+          setCode('');
+          setFailed(t(next ? 'pairFailed' : 'refused'));
         } else {
           setPairing(next);
-          if (next.status === 'confirmed') paired();
+          if (next.status === 'confirmed') paired((await relay.listComputers()).find((c) => c.id === next.id)?.hostId);
         }
       } catch (error) {
         if (live) setFailed(word(error));

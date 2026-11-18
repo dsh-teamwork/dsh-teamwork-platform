@@ -75,7 +75,8 @@ keeps its key in the browser's own storage: clearing the site's data means
 asking for a new invite. You see only the sessions you start there, and your
 team's admin can read every session from the machine's encrypted archive. The
 phone app opens the same link, or scans its QR code under **Pair a computer**;
-the Team DSH then sits in the computer list under your team's name.
+the Team DSH then sits in the computer list under your team's name. Your admin's
+side of this is [Team DSH](/docs/team-dsh).
 
 ## More than one team
 

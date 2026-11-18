@@ -34,7 +34,7 @@ description: 所有 /teamwork 命令，在 DSH 的命令输入框中使用。
 
 ## 在服务器上：dsh-teamwork
 
-在 DSH 所在的机器上，`dsh-teamwork`（`npm install -g @dsh-teamwork/dsh-teamwork` 安装）可以在终端里完成 Teamwork 面板的操作，不需要浏览器，适合运行在服务器上的 DSH，尤其是团队 DSH。DSH 必须以同一个用户在这台机器上运行；命令通过 `~/.dsh`（或 `$DSH_HOME`）中的插件目录找到它。支持 Linux 和 macOS。
+在 DSH 所在的机器上，`dsh-teamwork`（`npm install -g @dsh-teamwork/dsh-teamwork` 安装）可以在终端里完成 Teamwork 面板的操作，不需要浏览器，适合运行在服务器上的 DSH，尤其是团队 DSH。DSH 必须以同一个用户在这台机器上运行；命令通过 `~/.dsh`（或 `$DSH_HOME`）中的插件目录找到它。支持 Linux 和 macOS。[团队 DSH](/docs/team-dsh) 按配置顺序介绍了其中的 `share` 命令。
 
 | 命令 | 作用 |
 | --- | --- |

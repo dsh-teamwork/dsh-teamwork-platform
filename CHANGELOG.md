@@ -21,6 +21,30 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Release the plugin with this change; the oversized-snapshot fix lives there.
 - **Refs:** `docs/tech/relay.md`, `packages/relay-client/src/live.ts`, the plugin's `src/bridge.ts` (`fitFrame`).
 
+## 2026-11-18 — A Team DSH guide, and the console's key card says what comes next
+
+- **What:** A new `/docs/team-dsh` page, in English and Chinese, takes an admin from installing DSH on a server to a member's first session, in shell commands (`dsh-teamwork share …`), with day-to-day tasks and troubleshooting; the admins page's Team DSH section now points to it. The console's Team DSH page links to it, and the key card shows the command in both forms (DSH's command input and a shell) and the steps that follow.
+- **Why:** Admins setting up a Team DSH on a server had the commands scattered across three pages and a key card with one command.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/content/docs/{en,zh-CN}/team-dsh.md`, `apps/web/src/pages/team/team-dsh-hosts.tsx`.
+
+## 2026-11-18 — My DSH opens the computer a pairing code came from
+
+- **What:** When the code typed on one computer's page came from another of the member's computers (two records may share a name: two DSHs on one machine), My DSH now opens the computer the pairing belongs to once it confirms, instead of waiting on the first. Computers sharing a name show a short id beside it.
+- **Why:** A member with two records named alike paired one and was left waiting on the other.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`.
+
+## 2026-11-18 — My DSH says when pairing broke instead of waiting
+
+- **What:** Pairing a browser on My DSH no longer waits forever when the encrypted channel to the computer fails before it accepts: it says so and starts again with a new code. A new e2e test pairs `packages/relay-client`, as the console runs it, with the plugin's own pairing code.
+- **Why:** A member saw "approve this browser on the computer" stay on screen after approving it there.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`, `server/e2e/personal_pairing_test.go`.
+
 ## 2026-11-18 — An edition can choose which teams run a Team DSH
 
 - **What:** `edition.Host` gains `GateTeamDSH` and `TeamDSHAllowed`. Where an edition sets a gate, a team it does not admit cannot create or rotate a Team DSH key (`403 team_dsh_unavailable`), its DSH gets no host token, and its members reach none; `GET /api/teams/{teamId}/shared-hosts` adds `available`, and the console's Team DSH page says the team is not enabled and offers no key. A self-hosted server sets no gate, so nothing changes there.

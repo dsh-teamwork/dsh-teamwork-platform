@@ -11,17 +11,21 @@ async function handshake(phone: Identity, host: Identity) {
   const got: { phone: unknown[]; host: unknown[] } = { phone: [], host: [] };
   let a!: SecureChannel, b!: SecureChannel;
   let ready = 0;
+  // Resolved once each end has its one message: a fixed wait lost them when the suite ran under load.
+  let delivered!: () => void;
+  const arrived = new Promise<void>((resolve) => { delivered = resolve; });
+  const received = () => { if (got.phone.length && got.host.length) delivered(); };
   const both = new Promise<void>((resolve, reject) => {
     const common = { pairingId: 'p1', channelId: 'abcdefghijklmnopqrstuv', random, importAesKey: webAesKey, closed: (error: Error) => reject(error) };
-    a = new SecureChannel({ ...common, initiator: true, identity: phone, expectedKey: host.publicKey, send: (f: SecurePacket) => setTimeout(() => b.receive(f), 0), ready: () => { if (++ready === 2) resolve(); }, message: (v) => { got.phone.push(v); } });
-    b = new SecureChannel({ ...common, initiator: false, identity: host, expectedKey: phone.publicKey, send: (f: SecurePacket) => setTimeout(() => a.receive(f), 0), ready: () => { if (++ready === 2) resolve(); }, message: (v) => { got.host.push(v); } });
+    a = new SecureChannel({ ...common, initiator: true, identity: phone, expectedKey: host.publicKey, send: (f: SecurePacket) => setTimeout(() => b.receive(f), 0), ready: () => { if (++ready === 2) resolve(); }, message: (v) => { got.phone.push(v); received(); } });
+    b = new SecureChannel({ ...common, initiator: false, identity: host, expectedKey: phone.publicKey, send: (f: SecurePacket) => setTimeout(() => a.receive(f), 0), ready: () => { if (++ready === 2) resolve(); }, message: (v) => { got.host.push(v); received(); } });
   });
   a.start();
   b.start();
   await both;
   a.send({ hello: 'host' });
   b.send({ hello: 'phone' });
-  await new Promise((r) => setTimeout(r, 50));
+  await arrived;
   a.close();
   b.close();
   return got;

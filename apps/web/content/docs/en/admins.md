@@ -90,34 +90,10 @@ a reason.
 
 ## 7. Run a Team DSH
 
-On the hosted service, Team DSH is enabled for some teams at a time while its
-security is proven in use: until yours is, the Team DSH page says so and offers
-no key, so write to support to have it enabled. A self-hosted server enables it
-for every team.
+A Team DSH is a DSH your team runs on a machine of its own, usually a server,
+for members to work on from the browser or the phone app. It signs in with a
+key from **Team assets → Team DSH**, never as a person, and admits a member
+only with an invite made on that machine and a PIN they set. You set it up from
+the console and a shell on the machine; [Team DSH](/docs/team-dsh) walks
+through every step, in order, with each command.
 
-Under **Team assets → Team DSH**, name a DSH the team will run for its members and copy
-the command shown once: `/teamwork share enable <key>`. Run it in that DSH. It
-then signs in as the team, never as a person, syncs this team alone, and its
-team-model calls are the team's. The first machine to use a key keeps it;
-**Rotate key** issues a new one for the same machine, and **Delete** cuts it
-off. Under **Access**, choose who may reach it: the whole team or listed
-members. For each of them, run `/teamwork share invite <email>` in that DSH and
-hand the link over yourself; each member then reaches only the sessions they
-started. A member opens the link in the phone app, or pastes it under
-**Workspace → Team DSH** in the console.
-
-On a server with no desktop, run each of these from a shell on that machine
-instead, as `dsh-teamwork share enable <key>`, `dsh-teamwork share invite <email>`
-and so on ([Install](/docs/install#a-linux-server),
-[Commands](/docs/commands#on-a-server-dsh-teamwork)).
-
-Before it admits anyone, a Team DSH needs your team's **audit key**. On your
-own computer, after `npm install -g @dsh-teamwork/dsh-teamwork`, run
-`dsh-teamwork-audit keygen`: it writes `audit-key.json`, which only you keep,
-and prints `/teamwork share audit-key <public key>` to run in the Team DSH.
-From then on the Team DSH seals everything members do on it to that key and
-uploads it, and the server keeps it without being able to read it. Under
-**Audit archive** on the same page, download a Team DSH's archive and open it
-with `dsh-teamwork-audit read <file> --key audit-key.json`, which also says if
-any part is missing or altered. **A lost key cannot be recovered**, and whoever
-holds it can read every member's sessions.
