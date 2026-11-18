@@ -133,10 +133,13 @@ export function ConsoleShell({
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
-      <aside className="hidden flex-col gap-4 border-r bg-muted px-3 py-4 md:sticky md:top-0 md:flex md:h-dvh">
-        <TeamSwitcher team={team} teams={teams} section={section} />
+      {/* Its dividers run edge to edge, so the sidebar's parts pad themselves rather than the sidebar padding them. */}
+      <aside className="hidden flex-col border-r bg-muted py-4 md:sticky md:top-0 md:flex md:h-dvh">
+        <div className="px-3 pb-4">
+          <TeamSwitcher team={team} teams={teams} section={section} />
+        </div>
         <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} />
-        <div className="mt-auto flex items-center gap-1 border-t pt-3">
+        <div className="flex items-center gap-1 border-t px-3 pt-3">
           <AccountRow detail={t(`role.${team.role}`)} />
           <ThemeToggle />
         </div>
@@ -154,15 +157,15 @@ export function ConsoleShell({
         </div>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-foreground/30 md:hidden" />
-          <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-r bg-muted px-3 py-4 md:hidden" aria-describedby={undefined}>
-            <div className="flex items-center justify-between gap-2 px-1">
+          <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r bg-muted py-4 md:hidden" aria-describedby={undefined}>
+            <div className="flex items-center justify-between gap-2 px-4 pb-4">
               <Dialog.Title className="text-sm font-semibold">{team.name}</Dialog.Title>
               <Dialog.Close className="grid size-8 place-items-center rounded-md hover:bg-accent" aria-label={t('nav.close')}>
                 <X className="size-4" aria-hidden />
               </Dialog.Close>
             </div>
             <Navigation team={team} section={section} reviewsWaiting={reviewsWaiting} onNavigate={close} />
-            <div className="mt-auto flex items-center gap-1 border-t pt-3">
+            <div className="flex items-center gap-1 border-t px-3 pt-3">
               <AccountRow detail={t(`role.${team.role}`)} onNavigate={close} />
               <ThemeToggle />
             </div>
@@ -212,10 +215,11 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
   );
 
   return (
-    <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-      {group(GROUPS[0])}
+    <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="px-3 pb-4">{group(GROUPS[0])}</div>
+      {/* Team management sits apart from the workspace: its own divider and a slightly deeper ground. */}
       {team.role === 'admin' && (
-        <div className="mt-auto flex flex-col gap-4">
+        <div className="mt-auto flex flex-col gap-4 border-t bg-secondary/60 px-3 py-3">
           {open && <div id="team-management" className="flex flex-col gap-4">{GROUPS.slice(1).map(group)}</div>}
           <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'font-medium')}>
             <ShieldCheck className="size-4" aria-hidden />
