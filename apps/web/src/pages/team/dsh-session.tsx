@@ -4,8 +4,8 @@
  * composer and the PIN gate. Everything here runs over `@/lib/relay`, end to end encrypted to the DSH.
  */
 
-import { ChevronDown, Loader, MessagesSquare, Plus, Server, type LucideIcon } from 'lucide-react';
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { ChevronDown, FileText, Loader, MessagesSquare, Paperclip, Plus, Server, X, type LucideIcon } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Markdown from 'react-markdown';
 import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
@@ -13,7 +13,15 @@ import { useFormatter, useTranslations } from 'use-intl';
 
 import {
   applySessionEvent,
+  deliverFiles,
   EMPTY_SESSION,
+  ensureFileTarget,
+  fileSize,
+  newFileDraft,
+  uploadFiles,
+  validateFiles,
+  type PickedFile,
+  type UploadLimits,
   isThinking,
   directoryName,
   pinPrompt,
@@ -37,7 +45,7 @@ import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
 
-const WORDED = new Set(['offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {
@@ -187,14 +195,19 @@ export function NewSession({ computerId, name, started }: { computerId: string; 
   const [sent, setSent] = useState('');
   const [failed, setFailed] = useState<string | null>(null);
   const [options, setOptions] = useState<SessionOptions>({});
+  const files = useFiles(computerId);
 
   async function start(text: string) {
-    setSent(text);
+    setSent(text || files.files.map((file) => file.name).join(', '));
     setFailed(null);
     try {
-      const created = await relay.createSession(computerId, { cwd: options.cwd, agentPreset: options.agentPreset });
+      // Files need their session before their bytes move; a retry after a failed upload reuses it.
+      const created = files.files.length
+        ? await files.target({ cwd: options.cwd, agentPreset: options.agentPreset })
+        : await relay.createSession(computerId, { cwd: options.cwd, agentPreset: options.agentPreset });
       if (options.model) await relay.selectModel(computerId, created.id, options.model);
-      await relay.prompt(computerId, created.id, text);
+      if (files.files.length) await files.send(created.id, text);
+      else await relay.prompt(computerId, created.id, text);
       started(created.id);
       return true;
     } catch (error) {
@@ -222,8 +235,12 @@ export function NewSession({ computerId, name, started }: { computerId: string; 
         </section>
       )}
       {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
-      <Composer busy={sent !== ''} placeholder={t('firstPlaceholder')} send={start}>
-        <SessionSettings computerId={computerId} disabled={sent !== ''} value={options} onChange={setOptions} />
+      <Composer busy={sent !== ''} placeholder={t('firstPlaceholder')} send={start} files={files}>
+        <SessionSettings computerId={computerId} disabled={sent !== ''} value={options} onChange={(next) => {
+          // Another folder or preset is another session: files sent to the old one are sent again.
+          if (next.cwd !== options.cwd || next.agentPreset !== options.agentPreset) files.retarget();
+          setOptions(next);
+        }} />
       </Composer>
     </>
   );
@@ -330,10 +347,140 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
   );
 }
 
-function Composer({ busy, placeholder, send, children }: { busy: boolean; placeholder: string; send: (text: string) => Promise<boolean>; children?: ReactNode }) {
+type Files = ReturnType<typeof useFiles>;
+
+/**
+ * A message's files in this browser (docs/tech/relay.md, "File attachments"): chosen with the browser's picker and
+ * kept as the page's own `File`s, checked against the computer's limits, and sent at Send: their bytes in
+ * acknowledged chunks, then one prompt with their receipts (`attachments` of the relay client, which the phone app
+ * uses too). A computer whose plugin cannot take files offers none.
+ */
+function useFiles(computerId: string) {
+  const { me } = useTeam();
+  const t = useTranslations('team.dsh.files');
+  const word = useRelayError();
+  const relay = relayFor(me);
+  const [files, setFiles] = useState<PickedFile[]>([]);
+  const [limits, setLimits] = useState<UploadLimits | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const blobs = useRef(new Map<string, File>());
+  const draft = useRef(newFileDraft());
+
+  useEffect(() => {
+    let live = true;
+    relay.uploadCapabilities(computerId).then((read) => { if (live) setLimits(read); }, () => { if (live) setLimits(null); });
+    return () => { live = false; };
+  }, [relay, computerId]);
+
+  function choose(next: PickedFile[]) {
+    draft.current.files = next;
+    setFiles(next);
+  }
+  function add(list: FileList | null) {
+    if (!list?.length || !limits) return;
+    const picked = [...list].map((file) => {
+      const id = crypto.randomUUID();
+      blobs.current.set(id, file);
+      return { id, name: file.name, bytes: file.size, uri: id };
+    });
+    setFailed(null);
+    try {
+      validateFiles([...files, ...picked], limits);
+      choose([...files, ...picked]);
+    } catch (error) {
+      for (const file of picked) blobs.current.delete(file.id);
+      setFailed(word(error));
+    }
+  }
+  function remove(id: string) {
+    blobs.current.delete(id);
+    draft.current.uploaded.delete(id);
+    choose(files.filter((file) => file.id !== id));
+  }
+
+  return {
+    files, limits, progress, failed, add, remove,
+    /** A new session's own: made once, with the files' folder and preset, and kept for a retry. */
+    target: (options: SessionOptions) => {
+      draft.current.options = options;
+      return ensureFileTarget(relay, computerId, draft.current);
+    },
+    /** The session a new draft made is left behind when its folder or preset changes. */
+    retarget: () => {
+      draft.current.target = undefined;
+      draft.current.uploaded.clear();
+    },
+    async send(sessionId: string, text: string) {
+      setFailed(null);
+      const signal = new AbortController().signal;
+      try {
+        await uploadFiles({
+          relay, computerId, sessionId, draft: draft.current, limits, signal,
+          read: async (file, offset, length) => {
+            const blob = blobs.current.get(file.uri);
+            if (!blob) throw new RelayError('upload_expired');
+            return new Uint8Array(await blob.slice(offset, offset + length).arrayBuffer());
+          },
+          progress: (name, sent, total) => setProgress(t('progress', { name, percent: total ? Math.floor((sent / total) * 100) : 100 })),
+        });
+        await deliverFiles({ relay, computerId, sessionId, text, draft: draft.current, signal, requestId: () => crypto.randomUUID() });
+        blobs.current.clear();
+        draft.current = newFileDraft();
+        setFiles([]);
+      } finally {
+        setProgress(null);
+      }
+    },
+  };
+}
+
+function AttachButton({ files, disabled }: { files: Files; disabled: boolean }) {
+  const t = useTranslations('team.dsh.files');
+  const input = useRef<HTMLInputElement>(null);
+  if (!files.limits) return null;
+  return (
+    <>
+      <input ref={input} type="file" multiple hidden accept={files.limits.extensions.map((extension) => `.${extension}`).join(',')}
+        onChange={(event) => { files.add(event.target.files); event.target.value = ''; }} />
+      <Button type="button" variant="ghost" size="sm" aria-label={t('add')} title={t('add')} disabled={disabled || files.progress !== null} onClick={() => input.current?.click()}>
+        <Paperclip className="size-4" aria-hidden />
+      </Button>
+    </>
+  );
+}
+
+function FileCards({ files, disabled }: { files: Files; disabled: boolean }) {
+  const t = useTranslations('team.dsh.files');
+  if (!files.files.length && !files.failed && !files.progress) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      {files.files.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {files.files.map((file) => (
+            <li key={file.id} className="flex max-w-60 items-center gap-2 rounded-md border bg-background px-2 py-1 text-xs">
+              <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="truncate" title={file.name}>{file.name}</span>
+              <span className="shrink-0 text-muted-foreground">{fileSize(file.bytes)}</span>
+              <button type="button" className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground disabled:opacity-50" aria-label={t('remove', { name: file.name })}
+                disabled={disabled || files.progress !== null} onClick={() => files.remove(file.id)}>
+                <X className="size-3.5" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {files.progress && <p role="status" className="text-xs text-muted-foreground">{files.progress}</p>}
+      {files.failed && <p role="alert" className="text-xs text-destructive">{files.failed}</p>}
+    </div>
+  );
+}
+
+function Composer({ busy, placeholder, send, files, children }: { busy: boolean; placeholder: string; send: (text: string) => Promise<boolean>; files: Files; children?: ReactNode }) {
   const t = useTranslations('team.dsh');
   const [text, setText] = useState('');
-  const can = !busy && text.trim() !== '';
+  // A message may be files alone.
+  const can = !busy && files.progress === null && (text.trim() !== '' || files.files.length > 0);
   const submit = async () => {
     if (can && (await send(text.trim()))) setText('');
   };
@@ -346,6 +493,7 @@ function Composer({ busy, placeholder, send, children }: { busy: boolean; placeh
       }}
     >
       <div className="flex flex-col gap-2 rounded-2xl border bg-card p-3 shadow-sm focus-within:ring-2 focus-within:ring-ring">
+        <FileCards files={files} disabled={busy} />
         <Textarea
           value={text}
           rows={2}
@@ -361,6 +509,7 @@ function Composer({ busy, placeholder, send, children }: { busy: boolean; placeh
           }}
         />
         <div className="flex flex-wrap items-center gap-2">
+          <AttachButton files={files} disabled={busy} />
           {children}
           <Button type="submit" size="sm" className="ml-auto" disabled={!can}>{t('send')}</Button>
         </div>
@@ -376,6 +525,7 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
   const word = useRelayError();
   const relay = relayFor(me);
   const [state, setState] = useState<SessionState>(EMPTY_SESSION);
+  const files = useFiles(computerId);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
 
@@ -406,7 +556,20 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
         )}
         {rows.map((row) =>
           row.kind === 'user' ? (
-            <p key={row.id} className="ml-auto max-w-[85%] rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>
+            <div key={row.id} className="ml-auto flex max-w-[85%] flex-col items-end gap-1.5">
+              {row.attachments?.length ? (
+                <ul className="flex flex-wrap justify-end gap-2">
+                  {row.attachments.map((file) => (
+                    <li key={file.attachmentId} className="flex max-w-60 items-center gap-2 rounded-md border px-2 py-1 text-xs">
+                      <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="truncate" title={file.name}>{file.name}</span>
+                      <span className="shrink-0 text-muted-foreground">{fileSize(file.bytes)}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {row.text && <p className="rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>}
+            </div>
           ) : row.kind === 'assistant' ? (
             <div key={row.id} className="flex flex-col gap-2 leading-6 [&_code]:font-mono [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5">
               <Markdown remarkPlugins={[remarkGfm]} skipHtml>{row.text}</Markdown>
@@ -449,9 +612,14 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
       <Composer
         busy={busy || running || !!state.pending}
         placeholder={t('promptPlaceholder')}
+        files={files}
         send={async (message) => {
           let sent = false;
-          await act(async () => { await relay.prompt(computerId, sessionId, message); sent = true; });
+          await act(async () => {
+            if (files.files.length) await files.send(sessionId, message);
+            else await relay.prompt(computerId, sessionId, message);
+            sent = true;
+          });
           return sent;
         }}
       >

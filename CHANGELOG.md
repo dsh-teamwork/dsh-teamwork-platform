@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — The web console sends files
+
+- **What:** On My DSH and Team DSH, a paperclip beside the composer adds files (the plugin's own limits and kinds), cards above the message show and remove them, and Send uploads them through the plugin's upload calls and submits them with the message, or alone; a message's files show in the conversation. The transfer rules move from the phone app into `@dsh-teamwork/relay-client` (`attachments.ts`), which both use. The web console transfers at Send; the app keeps transferring on selection.
+- **Why:** Only the phone app could send a file to a computer.
+- **Breaking:** None.
+- **Upgrade:** Nothing; a plugin that takes no files shows no paperclip.
+- **Refs:** `packages/relay-client/src/attachments.ts`, `apps/web/src/pages/team/dsh-session.tsx` (`useFiles`), `docs/tech/relay.md` ("File attachments"), `docs/tech/shared-dsh.md`, the `/docs` members page.
+
 ## 2026-11-18 — The web console chooses a session's folder, preset and model
 
 - **What:** On My DSH and Team DSH, a new session offers the computer's folders, presets (one it cannot run yet shown with why, and not chosen) and models beside the composer before its first message, and a started session shows its folder and preset and changes its model while idle, for that session alone, as the phone app does. The console's `Select` gains disabled options.

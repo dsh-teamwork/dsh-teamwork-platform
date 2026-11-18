@@ -935,6 +935,11 @@
         "followPreset": "跟随预设／桌面模型",
         "noPreset": "未使用预设"
       },
+      "files": {
+        "add": "添加文件",
+        "remove": "移除 {name}",
+        "progress": "正在上传 {name} · {percent}%"
+      },
       "pin": {
         "set": {
           "title": "设置你的 PIN",
@@ -1315,6 +1320,15 @@
     "missing_plugins": "机器缺少这个预设需要的插件。",
     "preset_unavailable": "机器上没有这个预设。",
     "model_unavailable": "这个模型暂时不可用。",
-    "unavailable": "无法连接到机器，请重试。"
+    "unavailable": "无法连接到机器，请重试。",
+    "file_type": "请选择文本、代码、日志、CSV、JSON 或 PDF 文件，暂不支持图片及其他格式。",
+    "file_too_large": "每条消息最多 5 个文件：单个不超过 20 MB，合计不超过 50 MB。",
+    "invalid_upload": "文件没有完整传到电脑，请重新发送。",
+    "upload_expired": "电脑上已经没有这些文件了，重新发送会再上传一次。",
+    "upload_failed": "文件上传失败，草稿已保留，请重试或移除文件。",
+    "upload_cancelled": "已取消上传，草稿和所选文件已保留。",
+    "upload_unsupported": "请更新这台电脑上的 Teamwork 插件以发送文件。",
+    "send_uncertain": "消息可能已发送，请先确认或重试，再编辑草稿。",
+    "file_name": "文件名过长或包含不支持的字符，请重命名后重新选择。"
   }
 }
