@@ -40,7 +40,7 @@ dsh web
    sudo apt-get install -y nodejs
    ```
 
-2. 安装 DSH。它目前只发布了预发布版本，需要写明 [npm 上](https://www.npmjs.com/package/@deepseek-ai/dsh?activeTab=versions) `latest` 对应的确切版本，不写版本号时 npm 会找不到：
+2. 安装 DSH。它目前只发布了预发布版本，需要写明 [npm 上](https://www.npmjs.com/package/@deepseek-ai/dsh?activeTab=versions) `latest` 对应的确切版本，不写版本号时，部分 npm 版本会找不到：
 
    ```sh
    npm install -g @deepseek-ai/dsh@0.2.2-rc.1
@@ -56,7 +56,13 @@ dsh web
 
    按 `Ctrl+B` 再按 `D` 离开会话，`tmux attach -t dsh` 回到会话。
 
-4. 在同一台机器的另一个终端里，用随插件安装的 `dsh-teamwork` 继续：个人 DSH 运行 `dsh-teamwork login`，团队 DSH 运行 `dsh-teamwork share enable <key>`，见[命令](/docs/commands#在服务器上-dsh-teamwork)。服务器上不需要浏览器。
+4. 在同一台机器的另一个终端里，安装插件附带的命令 `dsh-teamwork` 和 `dsh-teamwork-audit`。DSH profile 里的那一份不在 `PATH` 上：
+
+   ```sh
+   npm install -g @dsh-teamwork/dsh-teamwork
+   ```
+
+5. 然后个人 DSH 运行 `dsh-teamwork login`，团队 DSH 运行 `dsh-teamwork share enable <key>`，见[命令](/docs/commands#在服务器上-dsh-teamwork)。服务器上不需要浏览器。
 
 插件把文件保存在 `~/.dsh/dsh-teamwork/`（或 `$DSH_HOME/dsh-teamwork/`）中，与从哪个目录启动 DSH 无关。
 
@@ -74,7 +80,12 @@ dsh web
 
 ## 更新
 
-用安装时的插件管理器更新：桌面版在应用的 **Plugins** 页面，CLI 使用 `dsh plugin`。
+用安装时的插件管理器更新：桌面版在应用的 **Plugins** 页面。CLI 更新 profile 时要加 `--latest`，否则 0.10 之后的 0.11 这样的新版本不会被装上。在服务器上还要更新命令，然后重启 DSH：
+
+```sh
+dsh plugin --profile web update --latest @dsh-teamwork/dsh-teamwork
+npm install -g @dsh-teamwork/dsh-teamwork
+```
 
 ## 遇到问题
 

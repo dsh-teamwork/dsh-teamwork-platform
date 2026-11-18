@@ -10,7 +10,7 @@ are in `CLAUDE.md`, "The changelog".
 - **What:** `/docs` describes installing DSH and the plugin on a Linux server (DSH needs its exact prerelease version) and the plugin's new `dsh-teamwork` command. It does what the Teamwork panel does against the DSH running on that machine, with no browser: the server, sign-in by pasted code, status, sync and sign-out, phone pairing (a QR code in the terminal, accepted after comparing the safety code), and a Team DSH's `share` actions (enable, audit-key, status, members, invite, unlock, disable). The plugin now keeps its files in `$DSH_HOME/dsh-teamwork/` (else `~/.dsh/dsh-teamwork/`) instead of the directory DSH was started from.
 - **Why:** A DSH on a server, a Team DSH above all, has no desktop: the only way in was an SSH tunnel to DSH's web UI; and a Team DSH started from another directory lost its key, roster and PIN locks.
 - **Breaking:** With the plugin release carrying this change, a signed-in DSH signs in again, and a Team DSH needs a new key (**Rotate key**) and fresh invites: files left in the old start directory are not moved.
-- **Upgrade:** Update the plugin.
+- **Upgrade:** Update the plugin (`dsh plugin --profile web update --latest @dsh-teamwork/dsh-teamwork`), and on a server install its commands with `npm install -g @dsh-teamwork/dsh-teamwork`.
 - **Refs:** the plugin's `src/teamwork-cli.ts` and `src/control-socket.ts`; `apps/web/content/docs/{en,zh-CN}/{install,commands,admins}.md`.
 
 ## 2026-11-18 — Shared DSHs are Team DSH, used in Workspace and managed under Team assets
