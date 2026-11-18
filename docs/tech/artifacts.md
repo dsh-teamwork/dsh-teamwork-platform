@@ -190,6 +190,11 @@ whole team.**
   same rule for both lists as the page says, paged by the newest version's
   time. The team's home and the teams page gain nothing.
 - **Words** (`team.nav.artifacts`, `artifacts.*`) in both locales' messages.
+  English says **Artifacts**. Chinese says **page**, the everyday word for a
+  web page, throughout (the entry, "my pages", the card, the Share dialog):
+  an artifact here is a page a teammate made to pass on a report, a deck or a
+  dashboard, and the words for "work" or "deliverable" promise something
+  finished for outside eyes; "task" is taken by the plugin's task lists.
 - **The hosted edition's clients** (its cloud sessions on the web, and the
   phone app) read the same item from the same package and mint the same view
   address.
