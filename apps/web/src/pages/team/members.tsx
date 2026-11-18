@@ -3,7 +3,7 @@
  * one of two ways, decided by the instance (ADR 0006): an invitation link where
  * it sends email, or an account with a first password, shown once, where it
  * holds passwords. The admin can hand the role to a member, which makes them a
- * member (a team keeps one admin). It is Team management's, the admin's alone
+ * member (a team keeps one admin). It is in Members and spend, the admin's alone
  * (ADR 0043); a member leaves from the team switcher.
  */
 

@@ -470,7 +470,8 @@
       "history": "版本与备份",
       "groups": {
         "work": "工作",
-        "manage": "团队管理"
+        "setup": "团队配置",
+        "people": "成员与费用"
       },
       "open": "打开导航",
       "close": "关闭导航",

@@ -3,7 +3,7 @@
  * switcher, the pages in groups and the account menu, and the page beside it.
  * The console is work first (ADR 0043): everyone sees Work — the home page,
  * what the team provides, their own submissions and an edition's work pages —
- * and the team's admin alone sees Team management below it. On a narrow screen
+ * and the team's admin alone sees Team setup and Members and spend below it. On a narrow screen
  * the sidebar becomes a top bar whose menu opens the same navigation in a
  * sheet. Which pages exist is `GROUPS`; the router sends a member who opens a
  * management page home (`AdminOnly` in pages/team/layout.tsx).
@@ -39,17 +39,19 @@ import { useLocale, useTranslations } from 'use-intl';
 import { AccountRow } from '@/components/account';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { api, type Team, type TeamSummary } from '@/lib/api';
-import { editionTeamPages, navPath, type TeamPage } from '@/lib/edition';
+import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
 type SectionKey = 'overview' | 'resources' | 'submissions' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'sharedHosts';
-type GroupKey = 'work' | 'manage';
 
-/** The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon. */
-const GROUPS: { key: GroupKey; admin: boolean; sections: { path: string; key: SectionKey; icon: LucideIcon }[] }[] = [
+/**
+ * The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon.
+ * Work is everyone's; the admin's pages split by what they look after: what the
+ * team publishes to its members' DSHs, and who is in it and what they spend.
+ */
+const GROUPS: { key: TeamGroup; sections: { path: string; key: SectionKey; icon: LucideIcon }[] }[] = [
   {
     key: 'work',
-    admin: false,
     sections: [
       { path: '', key: 'overview', icon: House },
       { path: 'resources', key: 'resources', icon: BookOpen },
@@ -58,14 +60,18 @@ const GROUPS: { key: GroupKey; admin: boolean; sections: { path: string; key: Se
     ],
   },
   {
-    key: 'manage',
-    admin: true,
+    key: 'setup',
     sections: [
       { path: 'models', key: 'models', icon: Cpu },
       { path: 'presets', key: 'presets', icon: Layers },
       { path: 'plugins', key: 'plugins', icon: Puzzle },
       { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
       { path: 'history', key: 'history', icon: History },
+    ],
+  },
+  {
+    key: 'people',
+    sections: [
       { path: 'members', key: 'members', icon: Users },
       { path: 'usage', key: 'usage', icon: ChartNoAxesCombined },
       { path: 'budgets', key: 'budgets', icon: Gauge },
@@ -75,7 +81,7 @@ const GROUPS: { key: GroupKey; admin: boolean; sections: { path: string; key: Se
 
 const PATHS = GROUPS.flatMap((g) => g.sections.map((s) => s.path));
 
-/** An edition's team pages that are not open ones it replaced, each listed in the group its audience names. */
+/** An edition's team pages that are not open ones it replaced, each listed in the group it names. */
 const extraPages = () => editionTeamPages().filter((page) => !PATHS.includes(navPath(page)));
 
 /** The extra pages this person sees in this team: an admin's need the admin, and a page with `visible` waits for its answer. */
@@ -83,7 +89,7 @@ function useTeamPages(team: Team): TeamPage[] {
   const [shown, setShown] = useState<{ teamId: string; pages: TeamPage[] }>({ teamId: '', pages: [] });
   useEffect(() => {
     let live = true;
-    const candidates = extraPages().filter((page) => page.audience === 'work' || team.role === 'admin');
+    const candidates = extraPages().filter((page) => page.group === 'work' || team.role === 'admin');
     Promise.all(candidates.map((page) => (page.visible ? page.visible(team).catch(() => false) : Promise.resolve(true)))).then((answers) => {
       if (live) setShown({ teamId: team.id, pages: candidates.filter((_, i) => answers[i]) });
     });
@@ -167,7 +173,7 @@ export function ConsoleShell({
   );
 }
 
-/** Work, then — for the team's admin — Team management; an edition's entries join the group their audience names. */
+/** Work, then — for the team's admin — Team setup and Members and spend; an edition's entries join the group they name. */
 function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team; section: string; reviewsWaiting: boolean; onNavigate?: () => void }) {
   const t = useTranslations('team');
   const locale = useLocale();
@@ -175,7 +181,7 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
   const pages = useTeamPages(team);
   return (
     <nav aria-label={t('nav.label')} className="flex flex-col gap-4">
-      {GROUPS.filter((group) => admin || !group.admin).map((group) => (
+      {GROUPS.filter((group) => admin || group.key === 'work').map((group) => (
         <div key={group.key} className="flex flex-col gap-0.5">
           <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${group.key}`)}</p>
           {group.sections.map(({ path, key, icon: Icon }) => (
@@ -187,7 +193,7 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
             </Link>
           ))}
           {pages
-            .filter((page) => (page.audience === 'admin') === group.admin)
+            .filter((page) => page.group === group.key)
             .map((page) => {
               const path = navPath(page);
               const Icon = page.icon;

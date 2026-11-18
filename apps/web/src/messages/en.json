@@ -470,7 +470,8 @@
       "history": "Versions and backups",
       "groups": {
         "work": "Work",
-        "manage": "Team management"
+        "setup": "Team setup",
+        "people": "Members and spend"
       },
       "open": "Open navigation",
       "close": "Close navigation",
