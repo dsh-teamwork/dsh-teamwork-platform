@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Everything clickable shows the hand
+
+- **What:** Buttons, menu items, options, disclosure summaries and the labels of checkboxes and file inputs show the pointer cursor from the web app's base styles; disabled ones keep the arrow. The per-component `cursor-pointer` classes are gone.
+- **Why:** Tailwind 4 leaves buttons on the arrow, so most of the console looked unclickable on hover.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/globals.css`, `docs/design.md` ("Component rules").
+
 ## 2026-11-18 — A question mark beside Team DSH says what it is
 
 - **What:** The Workspace entry Team DSH carries a question mark whose hint says where the DSH runs, who manages it and who sees what (`nav.hints.teamDsh`). An edition's team page may carry one too (`TeamPage.hints`, per language).

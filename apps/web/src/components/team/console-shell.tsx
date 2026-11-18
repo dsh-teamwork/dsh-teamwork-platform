@@ -144,7 +144,7 @@ const href = (teamId: string, path: string) => (path ? `/teams/${teamId}/${path}
 const item = 'relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
 // The selected section: a grey fill and, beside it, the navy bar that says this is the team's (docs/design.md, "Component rules").
 const selected = 'bg-secondary font-medium before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-brand';
-const menuItem = 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent';
+const menuItem = 'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent';
 
 export function ConsoleShell({
   team,

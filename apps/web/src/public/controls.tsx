@@ -48,7 +48,7 @@ export function LocaleMenu({
         aria-label={label}
         title={header ? label : undefined}
         className={cn(
-          'flex h-9 cursor-pointer list-none items-center rounded-md text-sm hover:bg-accent [&::-webkit-details-marker]:hidden',
+          'flex h-9 list-none items-center rounded-md text-sm hover:bg-accent [&::-webkit-details-marker]:hidden',
           header
             ? 'gap-1.5 px-2.5 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
             : 'gap-2 border border-input bg-background px-3 text-foreground',

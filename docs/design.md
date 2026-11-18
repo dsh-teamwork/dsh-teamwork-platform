@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-17
+> **Status:** Current · **Updated:** 2026-11-18
 
 The DSH Teamwork visual system — the whale mark, the black-and-white palette with its two accents, type, spacing and icons — and the file in code that owns each part.
 
@@ -176,6 +176,11 @@ icon set.
   or a line at most 3px thick, at most twice on one screen. It never colours
   text or fills a surface; a word that needs the same meaning uses
   `--warning`.
+- **What a click acts on shows the hand.** Buttons, menu items, options,
+  disclosure summaries and the labels of checkboxes and file inputs get
+  `cursor: pointer` from the base layer in `apps/web/src/globals.css`, as links
+  do; a disabled control keeps the arrow. A component adds no `cursor-pointer`
+  of its own.
 - **Lists are rows, not cards.** Rows are divided by `--border` hairlines; a
   card's border and fill are kept for the one block that has to stand apart.
 - **The logo keeps its plate.** Use `public/logo.svg` at its square size. The

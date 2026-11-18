@@ -158,7 +158,7 @@ function BudgetDialog({ current, policies, providers, reload, close }: {
       {scope === 'member' && <Field id="budget-member-mode" label={t('memberMode')}><Select id="budget-member-mode" label={t('memberMode')} disabled={pending} value={memberMode} options={['limited', 'unlimited', 'inherit'].map((value) => ({ value, label: t(`memberModes.${value}`) }))} change={setMemberMode} /></Field>}
       {(scope !== 'member' || memberMode === 'limited') && <>
       <Field id="budget-points" label={t('pointLimit')} hint={t('blankUnlimited')}><Input id="budget-points" inputMode="decimal" maxLength={24} disabled={pending} value={points} onChange={(e) => setPoints(e.target.value)} /></Field>
-      <details className="rounded-md border p-3 text-sm"><summary className="cursor-pointer">{t('tokenLimits')}</summary><div className="mt-3 grid grid-cols-3 gap-3">
+      <details className="rounded-md border p-3 text-sm"><summary>{t('tokenLimits')}</summary><div className="mt-3 grid grid-cols-3 gap-3">
         {([{ key: 'input', value: input, set: setInput }, { key: 'output', value: output, set: setOutput }, { key: 'total', value: total, set: setTotal }] as const).map((field) => <Field key={field.key} id={`budget-${field.key}`} label={t(`${field.key}Limit`)}><Input id={`budget-${field.key}`} type="number" min={0} max={1000000000000} step={1} disabled={pending} value={field.value} onChange={(e) => field.set(e.target.value)} /></Field>)}
       </div></details>
       </>}

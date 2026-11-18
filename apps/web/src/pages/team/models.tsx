@@ -461,7 +461,7 @@ function ConnectDialog({
             {!custom && (
               // Open for a second account, whose name is not the provider's id.
               <details open={taken.has(pick) || refusal?.field === 'url'} className="rounded-md border px-3 py-2 text-sm">
-                <summary className="cursor-pointer text-muted-foreground">{t('advanced')}</summary>
+                <summary className="text-muted-foreground">{t('advanced')}</summary>
                 <div className="mt-3 flex flex-col gap-4">
                   <Field id="provider-name" label={t('providerName')} hint={t('secondAccountHint')}>
                     <Input id="provider-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
@@ -484,7 +484,7 @@ function ConnectDialog({
             <ul className="flex max-h-80 flex-col overflow-y-auto rounded-md border">
               {listed.map((m) => (
                 <li key={m.id} className="border-b last:border-b-0">
-                  <label className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm">
+                  <label className="flex items-center gap-3 px-3 py-2.5 text-sm">
                     <input
                       type="checkbox"
                       checked={chosen.has(m.id)}

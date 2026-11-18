@@ -69,7 +69,7 @@ export function ConfigDiff({
         </dl>
       )}
       <details className="text-xs">
-        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">{t('raw')}</summary>
+        <summary className="text-muted-foreground hover:text-foreground">{t('raw')}</summary>
         <div className="mt-2 grid gap-3 md:grid-cols-2">
           {[
             [beforeLabel, before],
