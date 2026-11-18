@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — The sign-in page is redesigned
+
+- **What:** `/sign-in` is a split screen: the navy plate with the title and a layered sea beside a form that lists each OAuth door the server reports in `doors` (Google today, with its mark), then the email door. The code step becomes *Check your email* with a six-digit field and a *Send a new code* link; the password field can be shown; an instance whose first account is unclaimed points to the setup link; errors and pending buttons are visible as such.
+- **Why:** The page was a bare card that did not look like the product and gave no feedback while a request ran.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/sign-in.tsx`, `docs/design.md`.
+
 ## 2026-11-18 — An open console survives a deploy
 
 - **What:** A request under `/assets/` for a file the build does not hold is a 404 instead of the console's HTML; the console reloads itself once when a chunk fails to load (`vite:preloadError`), and a route that still throws shows a reload card in the reader's language instead of React Router's developer page.

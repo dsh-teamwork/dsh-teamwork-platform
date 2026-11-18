@@ -286,6 +286,16 @@ icon set.
   printed there and nowhere else in the chrome (`apps/web/src/components/account.tsx`). The operator
   console's rail ends the same way: the operator's initial (the address only
   on hover), the theme and signing out (`apps/manage/src/components/layout/sidebar.tsx`).
+- **Sign-in is split in two** (`apps/web/src/pages/sign-in.tsx`). From
+  `lg` up, the left side is the navy plate: the logo, the home page's title in
+  its serif and lede, and three flat bands of the plate's foreground for the
+  sea. The right side is the form on the page ground, with the way home, the
+  theme and the language at its top. The form lists every OAuth door the
+  session's `doors` reports as an outline button with its provider's
+  single-colour mark, then a divider and the one email door (a code, or a
+  password with a show toggle); a sent code turns the screen into *Check your
+  email* with a wide six-digit field, another email and a new code. Below
+  `lg` the plate is dropped and the logo sits above the title.
 - **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as
   cards (each with the team's initials on navy, and a member's home, resources
   and submissions, or an admin's overview, models and members, a click away) grouped by role, a welcome with the first steps when
