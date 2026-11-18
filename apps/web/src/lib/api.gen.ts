@@ -530,7 +530,7 @@ export interface paths {
         };
         /**
          * What the plugin syncs — every team the caller is in, with its configuration
-         * @description A computer token (ADR 0038) or a shared DSH's host token (ADR 0042) receives its one team alone; a host token's team carries role `member`.
+         * @description A computer token (ADR 0038) or a shared DSH's host token (ADR 0047) receives its one team alone; a host token's team carries role `member`.
          */
         get: {
             parameters: {
@@ -3415,7 +3415,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** A two-minute nonce for a team host key's exchange (ADR 0042) */
+        /** A two-minute nonce for a team host key's exchange (ADR 0047) */
         post: {
             parameters: {
                 query?: never;
@@ -3719,7 +3719,7 @@ export interface components {
             id: string;
             /** @description The member who made the call; empty for a shared DSH's. */
             userId: string;
-            /** @description The shared DSH that made the call (ADR 0042); empty for a member's. */
+            /** @description The shared DSH that made the call (ADR 0047); empty for a member's. */
             hostId: string;
             configId: string;
             provider: string;

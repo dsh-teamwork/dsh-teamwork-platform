@@ -102,7 +102,7 @@ Decided with this premise:
   public key and the signature. The first exchange records the public key;
   every later one must be signed by it, so a copied key fails on another
   machine. Rebinding a machine means revoking and creating a key.
-- **Exchanged for a host token** (`auth.HostBearer`, [ADR 0042](../adr/0042-host-tokens.md)): one
+- **Exchanged for a host token** (`auth.HostBearer`, [ADR 0047](../adr/0047-host-tokens.md)): one
   shared host, one team, no person, at most an hour, renewed by the plugin.
   Every route but configs and the gateway treats it as nobody, so a shared DSH
   can never act as a person.
@@ -251,7 +251,7 @@ The plugin's `src/pin-lock.ts`; the clients' gates are the app's
 
 | What | Where |
 | --- | --- |
-| The host token (`auth.HostBearer`, ADR 0042): configs and the gateway for a host caller, `requirePlugin` | `server/internal/auth/tokens.go`, `server/internal/httpapi/identity.go`, `server/internal/gateway/gateway.go` |
+| The host token (`auth.HostBearer`, ADR 0047): configs and the gateway for a host caller, `requirePlugin` | `server/internal/auth/tokens.go`, `server/internal/httpapi/identity.go`, `server/internal/gateway/gateway.go` |
 | `usage_requests.host_id`, held to team and provider budgets only; `hostId` on usage entries and `FundingAdmission`; "Shared DSH" in the usage list | `server/internal/usage`, `api/openapi.yaml`, `apps/web` |
 | The relay: sockets, pairing, handset credential, forwarding, push; shared hosts, their key exchange, the access list, joining, the archive's storage | `server/relay` (`shared.go`, `access.go`, `archive.go`), its tables in `server/internal/db/schema/relay.go` |
 

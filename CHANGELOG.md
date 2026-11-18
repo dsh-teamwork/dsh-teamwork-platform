@@ -80,10 +80,10 @@ are in `CLAUDE.md`, "The changelog".
 ## 2026-11-17 — Host tokens for a shared DSH
 
 - **What:** A fourth sealed token kind, `auth.HostBearer`, minted only by an edition through `Host.MintHostToken` for a shared DSH: one team, no person, at most an hour. `GET /api/configs` returns that team alone (role `member`) and the gateway calls its models; no other route opens it. Its calls are recorded with `usage_requests.host_id` and an empty `user_id`, held to the team's and providers' budgets and to no member's; usage entries carry `hostId`, and the console's usage list names such a row "Shared DSH". `edition.FundingAdmission` gains `HostID`, so an edition funding hosted models sees which calls are a shared DSH's.
-- **Why:** A team's shared DSH must sync its team and call its models without belonging to any member (ADR 0042).
+- **Why:** A team's shared DSH must sync its team and call its models without belonging to any member (ADR 0047).
 - **Breaking:** `gateway.Completions` takes a `gateway.Caller` instead of a user id and team.
 - **Upgrade:** One migration per dialect adds `usage_requests.host_id`; the binary applies it at start.
-- **Refs:** ADR 0042, `server/internal/httpapi/identity.go`, `server/internal/gateway/gateway.go`, `server/internal/usage/admission.go`.
+- **Refs:** ADR 0047, `server/internal/httpapi/identity.go`, `server/internal/gateway/gateway.go`, `server/internal/usage/admission.go`.
 
 ## 2026-11-17 — `apps/web`, one development address, and editions compose the web app
 

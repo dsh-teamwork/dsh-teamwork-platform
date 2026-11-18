@@ -23,7 +23,7 @@ type caller struct {
 	bearer bool // the plugin's token, rather than the browser's cookie
 	issued time.Time
 	// team is set for a computer token (ADR 0038) or a host token
-	// (ADR 0042): its caller reaches that one team, and only through
+	// (ADR 0047): its caller reaches that one team, and only through
 	// requirePlugin's routes.
 	team string
 	// host is a host token's shared DSH. Such a caller is no person: user is
@@ -100,7 +100,7 @@ func (s *Server) requireUser(r *http.Request) (*caller, error) {
 
 // requirePlugin is requireUser for the two routes a DSH plugin needs, the
 // configuration it syncs and the model gateway, which also accept a computer
-// token (ADR 0038) and a host token (ADR 0042). Every other route calls
+// token (ADR 0038) and a host token (ADR 0047). Every other route calls
 // requireUser, where neither opens.
 func (s *Server) requirePlugin(r *http.Request) (*caller, error) {
 	token := bearerToken(r.Header.Get("Authorization"))
@@ -147,7 +147,7 @@ func (s *Server) MintComputerToken(ctx context.Context, userID, teamID, host str
 	return s.Auth.Sealer.Seal(auth.ComputerBearer, auth.Claims{Sub: userID, Via: "computer", Team: teamID, Host: host}, ttl)
 }
 
-// MintHostToken seals a host token for a shared DSH of a team (ADR 0042).
+// MintHostToken seals a host token for a shared DSH of a team (ADR 0047).
 // Only an edition mints one, after checking the shared host is the team's and
 // not revoked; the team must exist.
 func (s *Server) MintHostToken(ctx context.Context, hostID, teamID string, ttl time.Duration) (string, time.Time, error) {

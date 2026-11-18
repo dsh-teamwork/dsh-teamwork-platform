@@ -32,7 +32,7 @@ func (s *Service) now() time.Time {
 }
 
 // Call is resolved by the gateway, never populated from caller identity fields.
-// A shared DSH's call (ADR 0042) has a HostID and no UserID.
+// A shared DSH's call (ADR 0047) has a HostID and no UserID.
 type Call struct {
 	TeamID, UserID, HostID, SubmittedConfigID, ConfigID, Provider, Model string
 	Stream                                                               bool

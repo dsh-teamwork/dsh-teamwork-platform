@@ -208,7 +208,7 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 	return out, nil
 }
 
-// HostSnapshot is the configuration a shared DSH syncs (ADR 0042): its one
+// HostSnapshot is the configuration a shared DSH syncs (ADR 0047): its one
 // team, as a member sees it, or no team once the team is gone.
 func (s *Service) HostSnapshot(ctx context.Context, teamID string) (Snapshot, error) {
 	t, err := s.DB.Team.Query().Where(entteam.ID(teamID)).WithConfigs().Only(ctx)

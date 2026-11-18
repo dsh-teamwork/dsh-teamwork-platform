@@ -6,7 +6,7 @@ package relay
 //   - /api/teams/{teamId}/shared-hosts (a team admin's browser session):
 //     list, create (the key is shown once), rename, rotate the key, delete.
 //   - POST /relay/shared/challenge and POST /relay/shared/token (the plugin,
-//     with the key): a nonce, then a host token (platform ADR 0042) for a
+//     with the key): a nonce, then a host token (platform ADR 0047) for a
 //     signature of the nonce by the DSH's identity key. The first exchange
 //     binds that key to the host; every later one must be signed by it, so a
 //     key copied to another machine is refused.

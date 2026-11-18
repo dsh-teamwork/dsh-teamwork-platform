@@ -12,7 +12,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
 
-// A host token (ADR 0042) is a shared DSH's: it reaches one team's
+// A host token (ADR 0047) is a shared DSH's: it reaches one team's
 // configuration and models and nothing else, it is no person, and its calls
 // are the team's, held to the team's budgets and to no member's.
 func TestHostTokenReachesOneTeamAsNoMember(t *testing.T) {

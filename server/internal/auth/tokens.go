@@ -24,7 +24,7 @@ const (
 	// (ADR 0038): one member, one team, at most ComputerTTL, and accepted only
 	// by GET /api/configs and the model gateway.
 	ComputerBearer Purpose = "dsh-teamwork.computer"
-	// HostBearer is the token a shared DSH holds (ADR 0042): one shared host,
+	// HostBearer is the token a shared DSH holds (ADR 0047): one shared host,
 	// no person, one team, at most HostTTL, and accepted only by
 	// GET /api/configs and the model gateway.
 	HostBearer Purpose = "dsh-teamwork.host"

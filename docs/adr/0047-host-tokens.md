@@ -1,4 +1,4 @@
-# 0042. A host token signs a shared DSH in for one team, as no person
+# 0047. A host token signs a shared DSH in for one team, as no person
 
 > **Status:** Accepted · **Date:** 2026-11-17
 

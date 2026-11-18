@@ -30,10 +30,10 @@ or the hosted service, kept with the closed edition rather than here.
 - [0039 — Deleting an account](0039-deleting-an-account.md) — self-service deletion, admin handover first, lone teams deleted with it.
 - [0040 — The app deletes the account](0040-the-app-deletes-the-account.md) — the phone app's token deletes the account too, with the email typed back.
 - [0041 — An edition composes the web app](0041-an-edition-composes-the-web-app.md) — `mountWeb` and `SetWebConsole`; development served through Go on :3800.
-- [0042 — Host tokens](0042-host-tokens.md) — a shared DSH's token reaches one team's configuration and models as no person.
 - [0044 — The relay and shared DSHs are open](0044-the-relay-and-shared-dshs-are-open.md) — the relay, shared DSHs and their archive join the community edition.
 - [0045 — The shared archive](0045-the-shared-archive.md) — sealed segments in a signed chain, kept in the database, opened only by the admin.
 - [0046 — Every server sends the app its code](0046-every-server-sends-the-app-its-code.md) — the app's sign-in address needs no setting; release builds choose a server.
+- [0047 — Host tokens](0047-host-tokens.md) — a shared DSH's token reaches one team's configuration and models as no person.
 
 The template:
 

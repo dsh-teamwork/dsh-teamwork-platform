@@ -248,7 +248,7 @@ paths:
     get:
       summary: What the plugin syncs — every team the caller is in, with its configuration
       description: >-
-        A computer token (ADR 0038) or a shared DSH's host token (ADR 0042)
+        A computer token (ADR 0038) or a shared DSH's host token (ADR 0047)
         receives its one team alone; a host token's team carries role `member`.
       responses:
         '200':
@@ -1422,7 +1422,7 @@ paths:
   /relay/shared/challenge:
     servers: [{ url: / }]
     post:
-      summary: A two-minute nonce for a team host key's exchange (ADR 0042)
+      summary: A two-minute nonce for a team host key's exchange (ADR 0047)
       security: []
       requestBody:
         required: true
@@ -1683,7 +1683,7 @@ components:
           description: The member who made the call; empty for a shared DSH's.
           type: string
         hostId:
-          description: The shared DSH that made the call (ADR 0042); empty for a member's.
+          description: The shared DSH that made the call (ADR 0047); empty for a member's.
           type: string
         configId: { type: string }
         provider: { type: string }

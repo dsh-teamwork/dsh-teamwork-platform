@@ -49,7 +49,7 @@ type target struct {
 }
 
 // Caller is who a call is billed to: a member (UserID), or a shared DSH
-// (HostID, ADR 0042), which has no membership and is held to Team. A
+// (HostID, ADR 0047), which has no membership and is held to Team. A
 // non-empty Team is a computer or host token's: any other team's model is
 // refused.
 type Caller struct {

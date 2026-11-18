@@ -425,7 +425,7 @@ own, so one never opens as the other. A **computer token** (ADR 0038) is a
 third kind, minted only by an edition for a cloud computer's plugin: one
 member, one team, an hour, accepted by `GET /api/configs` and the gateway
 alone (`requirePlugin` in `internal/httpapi/identity.go`). A **host token**
-(ADR 0042) is a fourth, minted only by an edition for a shared DSH: one team,
+(ADR 0047) is a fourth, minted only by an edition for a shared DSH: one team,
 no person, an hour, on the same two routes, and its calls are the team's
 (`usage_requests.host_id`), held to no member's budget.
 

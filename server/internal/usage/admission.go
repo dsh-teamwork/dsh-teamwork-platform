@@ -19,7 +19,7 @@ import (
 )
 
 // applicable is every budget a call counts against. A shared DSH's call
-// (ADR 0042) is no member's, so only the team's and the provider's apply.
+// (ADR 0047) is no member's, so only the team's and the provider's apply.
 func applicable(ctx context.Context, db *ent.Client, call Call) ([]*ent.BudgetPolicy, error) {
 	scopes := []predicate.BudgetPolicy{budgetpolicy.ScopeEQ(budgetpolicy.ScopeTeam),
 		budgetpolicy.And(budgetpolicy.ScopeEQ(budgetpolicy.ScopeProvider), budgetpolicy.SubjectID(call.Provider))}

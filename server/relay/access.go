@@ -7,7 +7,7 @@ package relay
 // it the list as `members` when it connects and whenever the list changes, so
 // the DSH can drop whoever left.
 //
-//   - The DSH's plugin connects to /relay/plugin with its host token (ADR 0042);
+//   - The DSH's plugin connects to /relay/plugin with its host token (ADR 0047);
 //     the shared host's id is its relay host id.
 //   - GET /relay/shared: the shared DSHs the caller may reach.
 //   - POST /relay/shared/{hostId}/join: a pending pairing of the caller's handset
