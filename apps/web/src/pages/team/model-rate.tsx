@@ -10,14 +10,17 @@ import { Input } from '@/components/ui/input';
 import { api, type Schemas } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 
+import { useTeam } from './layout';
+
 type Rate = Schemas['ModelRate'];
 type RateInput = Schemas['ModelRateInput'];
 
-export function ModelRateButton({ teamId, configId, name, admin, provider, model }: { teamId: string; configId: string; name: string; admin: boolean; provider: string; model: string }) {
+/** A model's rate. `missing` says no call reaches the model until one is set (ADR 0050), and makes setting it the row's lead action. */
+export function ModelRateButton({ teamId, configId, name, admin, provider, model, missing = false }: { teamId: string; configId: string; name: string; admin: boolean; provider: string; model: string; missing?: boolean }) {
   const t = useTranslations('usage');
   const [open, setOpen] = useState(false);
   return <>
-    <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>{t('rate')}</Button>
+    <Button size="sm" variant={missing ? 'outline' : 'ghost'} onClick={() => setOpen(true)}>{t(missing ? 'setRate' : 'rate')}</Button>
     {open && <RateDialog teamId={teamId} configId={configId} name={name} admin={admin} provider={provider} model={model} close={() => setOpen(false)} />}
   </>;
 }
@@ -27,11 +30,13 @@ function RateDialog({ teamId, configId, name, admin, provider, model, close }: {
   const word = useTeamError();
   const path = `teams/${teamId}/model-rates/${configId}`;
   const rate = useApi<Rate>(path);
+  // A saved rate can let calls through again, which the team's summary lists.
+  const { reloadTeamSummary } = useTeam();
   return <Dialog open onOpenChange={(open) => { if (!open) close(); }}>
     <DialogContent>
       <DialogHeader><DialogTitle>{t('rateTitle', { name })}</DialogTitle><DialogDescription>{t(rate.data?.readOnly ? 'hostedRateHint' : 'rateHint')}</DialogDescription></DialogHeader>
       {!!rate.error && <p role="alert" className="text-sm text-destructive">{word(rate.error)}</p>}
-      {rate.data && <RateForm key={rate.data.revision} value={rate.data} path={path} teamId={teamId} provider={provider} model={model} admin={admin && !rate.data.readOnly} reload={rate.reload} close={close} />}
+      {rate.data && <RateForm key={rate.data.revision} value={rate.data} path={path} teamId={teamId} provider={provider} model={model} admin={admin && !rate.data.readOnly} reload={() => Promise.all([rate.reload(), reloadTeamSummary()])} close={close} />}
     </DialogContent>
   </Dialog>;
 }

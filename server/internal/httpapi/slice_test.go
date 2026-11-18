@@ -245,6 +245,7 @@ func TestProviderAddressRule(t *testing.T) {
 		tid := must(t, ra.post("/api/teams", map[string]string{"name": "T"}), 201)["id"].(string)
 		must(t, ra.post("/api/teams/"+tid+"/providers", map[string]string{"name": "stub", "baseUrl": "https://provider.example:" + port, "apiKey": "sk-test-provider-key"}), 201)
 		mid := must(t, ra.post("/api/teams/"+tid+"/configs", map[string]any{"kind": "model", "name": "M", "data": map[string]any{"provider": "stub", "model": "m"}}), 201)["id"].(string)
+		price(t, ra, tid, mid)
 		calls.Store(0)
 		connsBefore := s.conns.Load()
 		r := rebinding.pluginFor(ra).post("/api/llm/chat/completions", map[string]any{"model": mid, "messages": []any{map[string]string{}}})

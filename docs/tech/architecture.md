@@ -51,7 +51,7 @@ the team, its role and sync state, and applies the team's presets, models and
 pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
 token never reaches the browser. Publishing and members also have pages in the web
-console, one page per task under `/teams/{teamId}`: the overview, `models`
+console, one page per task under `/teams/{teamId}`: the member's `home`, the admin's `overview`, `models`
 (providers from `apps/web/src/lib/provider-catalog.ts`, and team models), `presets` (from
 `lib/preset-templates.ts` or blank), `plugins`, `members`, `sharing` and `history`. The panel links
 there for management; separate host-approved agent tools call the same authorized server operations. Its components

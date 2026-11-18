@@ -33,12 +33,15 @@ const SignInPage = lazy(() => import('@/pages/sign-in').then((m) => ({ default: 
 const TeamLayout = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.TeamLayout })));
 const TeamMembersPage = lazy(() => import('@/pages/team/members').then((m) => ({ default: m.TeamMembersPage })));
 const TeamModelsPage = lazy(() => import('@/pages/team/models').then((m) => ({ default: m.TeamModelsPage })));
+const TeamMyUsagePage = lazy(() => import('@/pages/team/my-usage').then((m) => ({ default: m.TeamMyUsagePage })));
+const TeamHomePage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamHomePage })));
 const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamOverviewPage })));
 const TeamPluginsPage = lazy(() => import('@/pages/team/plugins').then((m) => ({ default: m.TeamPluginsPage })));
 const TeamHistoryPage = lazy(() => import('@/pages/team/history').then((m) => ({ default: m.TeamHistoryPage })));
 const TeamSharingPage = lazy(() => import('@/pages/team/sharing').then((m) => ({ default: m.TeamSharingPage })));
 const TeamResourcesPage = lazy(() => import('@/pages/team/resources').then((m) => ({ default: m.TeamResourcesPage })));
 const AdminOnly = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.AdminOnly })));
+const TeamIndex = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.TeamIndex })));
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
 const MyDshPage = lazy(() => import('@/pages/team/my-dsh').then((m) => ({ default: m.MyDshPage })));
@@ -76,15 +79,17 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
   watchSystemTheme();
   setEditionTeamPages(teamPages);
 
-  // Workspace, for everyone in the team; Team assets and Members and spend, for its
-  // admin, who alone reaches those pages: a member is sent home (ADR 0043). An
+  // Workspace, for everyone in the team; Team management, for its admin, who alone
+  // reaches those pages and lands on its overview: a member is sent home (ADR 0043, 0049). An
   // edition's team page joins the group it names, replacing an open one at its path.
   const own = (admin: boolean) => teamPages.filter((page) => (page.group !== 'work') === admin).map(({ path, element }) => ({ path, element }));
   const work = replacing(
     [
-      { index: true, element: <TeamOverviewPage /> },
+      { index: true, element: <TeamIndex /> },
+      { path: 'home', element: <TeamHomePage /> },
       { path: 'resources', element: <TeamResourcesPage /> },
       { path: 'submissions', element: <TeamSharingPage view="mine" /> },
+      { path: 'my-usage', element: <TeamMyUsagePage /> },
       { path: 'my-dsh/:hostId?/:sessionId?', element: <MyDshPage /> },
       { path: 'team-dsh/:computerId?/:sessionId?', element: <TeamDshPage /> },
     ],
@@ -92,6 +97,7 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
   );
   const manage = replacing(
     [
+      { path: 'overview', element: <TeamOverviewPage /> },
       { path: 'models', element: <TeamModelsPage /> },
       { path: 'presets', element: <TeamPresetsPage /> },
       { path: 'plugins', element: <TeamPluginsPage /> },

@@ -1,8 +1,8 @@
 /**
  * Submissions and review: members submit presets and plugin packages, and an
  * admin approves the exact contents before the team gets them. One page in two
- * places (ADR 0043): under Work, `/teams/{teamId}/submissions` is the reader's
- * own submissions and where they send new ones; under Team assets,
+ * places (ADR 0043): reached from Team resources, where new ones are sent,
+ * `/teams/{teamId}/submissions` is the reader's own submissions; under Team assets,
  * `/teams/{teamId}/sharing` is the admin's review queue, opening on what
  * waits, with the team's whole history one tab away. Submitting a preset or a
  * plugin happens in a dialog; each submission is a row that opens to show,
@@ -10,8 +10,9 @@
  * the actions its state allows.
  */
 
-import { ChevronRight, FileJson, Layers, Package, Puzzle, Upload } from 'lucide-react';
+import { ChevronRight, Layers, Package, Puzzle } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { useFormatter, useNow, useTranslations } from 'use-intl';
 
 import { Failure } from '@/components/page';
@@ -54,15 +55,15 @@ function Sharing({ team, review }: { team: Team; review: boolean }) {
   const t = useTranslations('team.sharing');
   const tn = useTranslations('team.nav');
   const word = useTeamError();
-  const { reloadSummary } = useTeam();
+  const { reloadTeamSummary } = useTeam();
   // The review queue opens on what waits; one's own submissions on everything sent.
   const [tab, setTab] = useState<'pending' | 'all'>(review ? 'pending' : 'all');
   const [offset, setOffset] = useState(0);
   const rows = useApi<Submission[]>(`teams/${team.id}/submissions?offset=${offset}${tab === 'pending' ? '&state=pending' : ''}${review ? '' : '&mine=true'}`);
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
   // A decision or a submission changes what waits for review, so the sidebar's dot reads again too.
-  const reload = () => Promise.all([rows.reload(), configs.reload(), reloadSummary()]);
-  const [dialog, setDialog] = useState<{ kind: 'preset'; proposal?: Proposal; note?: string; target?: Target } | { kind: 'plugin' } | null>(null);
+  const reload = () => Promise.all([rows.reload(), configs.reload(), reloadTeamSummary()]);
+  const [dialog, setDialog] = useState<{ kind: 'preset'; proposal?: Proposal; note?: string; target?: Target } | null>(null);
 
   const failed = (!rows.data && rows.error) || (!configs.data && configs.error);
   if (failed) return <Failure message={word(failed)} />;
@@ -75,17 +76,11 @@ function Sharing({ team, review }: { team: Team; review: boolean }) {
         title={tn(review ? 'sharing' : 'submissions')}
         description={review ? t('adminHint') : t('memberHint')}
         action={
+          // New ones are sent from Team resources, beside what they would change.
           !review && (
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => setDialog({ kind: 'plugin' })}>
-                <Upload />
-                {t('uploadPlugin')}
-              </Button>
-              <Button onClick={() => setDialog({ kind: 'preset' })}>
-                <FileJson />
-                {t('submitPreset')}
-              </Button>
-            </div>
+            <Button asChild variant="outline">
+              <Link to={`/teams/${team.id}/resources`}>{t('submitNew')}</Link>
+            </Button>
           )
         }
       />
@@ -103,7 +98,7 @@ function Sharing({ team, review }: { team: Team; review: boolean }) {
             }}
             className={cn('rounded-md px-3 py-1.5 text-sm', tab === key ? 'bg-secondary font-medium' : 'text-muted-foreground hover:text-foreground')}
           >
-            {t(key === 'pending' ? 'tabPending' : review ? 'tabAll' : 'tabMine')}
+            {t(key === 'pending' ? 'tabPending' : 'tabAll')}
           </button>
         ))}
       </div>
@@ -140,7 +135,6 @@ function Sharing({ team, review }: { team: Team; review: boolean }) {
       {dialog?.kind === 'preset' && (
         <PresetDialog teamId={team.id} initial={dialog.proposal} initialNote={dialog.note} target={dialog.target} reload={reload} onClose={() => setDialog(null)} />
       )}
-      {dialog?.kind === 'plugin' && configs.data && <PluginDialog teamId={team.id} configs={configs.data} reload={reload} onClose={() => setDialog(null)} />}
     </>
   );
 }
@@ -335,7 +329,8 @@ function DropZone({ accept, label, hint, pick, children }: { accept: string; lab
 }
 
 /** Submit a preset from a file, or revise one: the name, the role prompt and a note, then off to review. */
-function PresetDialog({
+/** Submitting a preset file for review, or revising one sent before; Team resources opens it for a new file. */
+export function PresetDialog({
   teamId,
   initial,
   initialNote,
@@ -433,7 +428,8 @@ function PresetDialog({
  * first (package, version, SHA-256, every file it holds), then uploaded and
  * checked against that digest, as a new team plugin or an update of one.
  */
-function PluginDialog({ teamId, configs, reload, onClose }: { teamId: string; configs: TeamConfig[]; reload: Reload; onClose: () => void }) {
+/** Uploading a plugin package for review; Team resources opens it too. */
+export function PluginDialog({ teamId, configs, reload, onClose }: { teamId: string; configs: TeamConfig[]; reload: Reload; onClose: () => void }) {
   const t = useTranslations('team.sharing');
   const { pending, run } = useMutation(reload);
   const [plugin, setPlugin] = useState<{ file: File; preview: PluginPreview } | null>(null);

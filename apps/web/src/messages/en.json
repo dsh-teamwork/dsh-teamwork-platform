@@ -341,8 +341,8 @@
       "step3Body": "Everyone's DSH picks the team's setup up at the next sync."
     },
     "overview": {
-      "descriptionAdmin": "Your team’s models, presets and plugins, published once and kept the same in every member’s DSH.",
-      "descriptionMember": "The models and presets your team publishes sync to your DSH by themselves.",
+      "descriptionTeam": "What waits on the team, how it used its models lately, and what it publishes to every member’s DSH.",
+      "description": "Your own use of the team, and what it changed lately. What it publishes syncs to your DSH by itself.",
       "setup": "Getting started",
       "go": "Go",
       "steps": {
@@ -351,8 +351,8 @@
           "hint": "Pick one and paste its API key"
         },
         "model": {
-          "title": "Publish team models",
-          "hint": "Members call them through the gateway; the key stays on the server"
+          "title": "Publish team models and their rates",
+          "hint": "Members call a model once it has rates, so every call’s points are known"
         },
         "preset": {
           "title": "Add a preset",
@@ -366,24 +366,29 @@
       },
       "connectAdmin": "Send this to new members",
       "connectMember": "Connect your DSH",
+      "connected": "Your DSH is connected",
+      "connectedHint": "It called a team model in the last 30 days.",
+      "showSteps": "Show the steps",
       "recent": "Recent changes",
       "recentEmpty": "No configuration yet.",
+      "resources": "Team resources",
+      "updates": "Recent team updates",
+      "allResources": "All resources",
       "kind": {
         "model": "Model",
         "preset": "Preset",
         "plugin": "Plugin"
       },
-      "presets": "Team presets",
-      "all": "See all",
-      "noPresets": "Your team has not published a preset yet.",
       "waiting": {
         "title": "Waiting on you",
         "none": "Nothing waits on you.",
+        "unpricedModels": "{count, plural, one {# model has} other {# models have}} no rates: members cannot call {count, plural, one {it} other {them}}",
         "reviews": "{count, plural, one {# submission waits} other {# submissions wait}} for your review",
         "reviewsMine": "{count, plural, one {# of your submissions is} other {# of your submissions are}} awaiting review",
         "limitNear": "{who} is {threshold}% used {period, select, day {today} other {this month}}",
         "limitReached": "{who} is used up {period, select, day {today} other {this month}}",
-        "unresolved": "{count, plural, one {# model call} other {# model calls}} to resolve",
+        "unresolved": "{count, plural, one {# call has} other {# calls have}} usage not confirmed yet",
+        "overruns": "{count, plural, one {# call} other {# calls}} went past {count, plural, one {its} other {their}} hold: budgeted calls on {count, plural, one {that model} other {those models}} are stopped until reviewed",
         "notices": "{count, plural, one {# budget email} other {# budget emails}} could not be sent",
         "scope": {
           "team": "The team budget",
@@ -391,7 +396,8 @@
           "member": "{email}'s budget",
           "provider": "The {name} provider budget"
         },
-        "titleMember": "Worth knowing"
+        "titleMember": "Worth knowing",
+        "askAdmin": "Need more? Ask your team’s admin to raise the limit."
       },
       "figures": {
         "calls": "Team calls",
@@ -408,8 +414,9 @@
         "resets": "Resets {at}",
         "budgetHint": "Points left under your limits",
         "members": "Members",
-        "membersAdmin": "In this team",
-        "membersMember": "In this team"
+        "membersNote": "In this team",
+        "resources": "Team resources",
+        "resourcesNote": "{models} models · {presets} presets · {plugins} plugins"
       },
       "connectInstall": "Install the DSH Teamwork plugin. <link>How to install</link>",
       "connectServer": "On Teamwork's sign-in screen, the server should be <code>{server}</code>.",
@@ -474,7 +481,8 @@
     },
     "nav": {
       "label": "Team console",
-      "overview": "Home",
+      "home": "Home",
+      "overview": "Team overview",
       "members": "Members",
       "models": "Models",
       "usage": "Usage",
@@ -491,8 +499,9 @@
       },
       "open": "Open navigation",
       "close": "Close navigation",
-      "waiting": "Waiting for your review",
+      "waiting": "Something waits on you",
       "resources": "Team resources",
+      "myUsage": "My usage",
       "submissions": "My submissions",
       "teamDsh": "Team DSH",
       "myDsh": "My DSH",
@@ -530,6 +539,7 @@
       "maxOutput": "Max output",
       "usedBy": "Used by presets",
       "unused": "Unused",
+      "unpriced": "No rates yet: members cannot call it",
       "edit": "Edit",
       "remove": "Remove",
       "keySaved": "Key saved",
@@ -708,12 +718,12 @@
     "sharing": {
       "title": "Sharing and review",
       "adminHint": "Members submit presets and plugin packages; you approve the exact contents before the team gets them.",
-      "memberHint": "Share a preset or a plugin with your team. An admin reviews the exact contents first.",
+      "memberHint": "What you submitted to the team, and what its admin decided.",
       "submitPreset": "Submit a preset",
       "uploadPlugin": "Upload a plugin",
+      "submitNew": "Submit something new",
       "tabPending": "Waiting for review",
       "tabAll": "All submissions",
-      "tabMine": "My submissions",
       "empty": "No submissions yet.",
       "emptyPending": "Nothing is waiting for review.",
       "new": "New",
@@ -839,7 +849,7 @@
       "no": "No"
     },
     "resources": {
-      "description": "The models, presets and plugins your team provides. They sync to your DSH; changing one is your team's admin's, and you can propose a preset, or a change to one, for their review.",
+      "description": "The models, presets and plugins your team provides, synced to your DSH. Its admin decides what changes; you can submit a new preset, a change to one, or a plugin for review.",
       "models": "Models",
       "modelsHint": "They appear among DSH's models as team models, called through the team's server; no key leaves it.",
       "noModels": "The team has not published a model yet.",
@@ -849,8 +859,54 @@
       "plugins": "Plugins",
       "pluginsHint": "Pinned at a version by the team; DSH asks you before it installs one.",
       "noPlugins": "The team has not pinned a plugin yet.",
-      "propose": "Propose a preset",
-      "proposeChange": "Propose a change"
+      "propose": "Submit a preset",
+      "proposeChange": "Propose a change",
+      "uploadPlugin": "Upload a plugin",
+      "importPreset": "Import a preset",
+      "manage": "Manage in Team assets",
+      "waiting": "{count} awaiting review"
+    },
+    "myUsage": {
+      "title": "My usage",
+      "description": "Your own use of this team: the limits that hold you, what you spent, and on which models.",
+      "period": "Period",
+      "days": "{count} days",
+      "limits": "Your limits",
+      "noLimits": "No limit applies to you in this team.",
+      "today": "today",
+      "thisMonth": "this month",
+      "resets": "Resets {at}",
+      "pointsUsed": "{used} of {limit} points used",
+      "left": "{left} left",
+      "held": "{held} held by calls in progress",
+      "tokensUsed": "{used} of {limit} tokens",
+      "calls": "Calls",
+      "callsNote": "Model calls",
+      "unpriced": "{count} without points yet",
+      "points": "Points",
+      "pointsNote": "Model calls and other metered use",
+      "input": "Input tokens",
+      "inputNote": "{cached} from cache",
+      "output": "Output tokens",
+      "outputNote": "{reasoning} reasoning",
+      "daily": "Points by day",
+      "dayPoints": "{points} points",
+      "dayCalls": "{calls, plural, one {# call} other {# calls}}",
+      "dayDetail": "{day} · {calls, plural, one {# call} other {# calls}}",
+      "peak": "Busiest day: {points} points",
+      "noUse": "Nothing used in this period.",
+      "byModel": "By model",
+      "columns": {
+        "model": "Model",
+        "calls": "Calls",
+        "points": "Points",
+        "share": "Share",
+        "input": "Input tokens",
+        "output": "Output tokens"
+      },
+      "recent": "Latest calls",
+      "recentMore": "{count} in this period, all in the CSV",
+      "tokens": "{input} in · {output} out"
     },
     "teamDshHosts": {
       "unavailable": "Team DSH is not enabled for this team yet. On the hosted service it is open to some teams at a time; contact support to have it enabled. Existing keys stay listed below, but no DSH signs in with them and no member can reach one.",
@@ -1051,10 +1107,11 @@
     "title": "Usage",
     "description": "The team's model calls, in tokens and points. Points are the team's own measure of cost: CNY 1 = 1,000 points at the reference rates, and budgets count them. With your own provider key, the provider still bills you directly.",
     "rate": "Point rates",
+    "setRate": "Set rates",
     "rateTitle": "Reference rates · {name}",
     "rateHint": "CNY per million tokens. CNY 1 = 1,000 reference points. These rates do not charge a hosted balance.",
     "hostedRateHint": "Hosted prices are published by the service. These prices also determine the points counted against your team budgets.",
-    "unpricedHint": "No current reference rate. Token usage is recorded, but points stay unpriced.",
+    "unpricedHint": "This model has no rates yet: members cannot call it until you set them.",
     "weightHint": "Use these prices as internal usage weights rather than estimated supplier costs.",
     "prices": {
       "input": "Uncached input",
@@ -1190,7 +1247,7 @@
     "notice_retry_later": "Wait before retrying this notification.",
     "budget_changed": "This budget changed. Refresh and review the current values.",
     "budget_exhausted": "A team, member or provider budget has been reached.",
-    "budget_model_unpriced": "This model needs reference rates before a points budget can be enforced. Contact your team admin.",
+    "model_unpriced": "This model has no rates yet, so it cannot be called. Ask your team admin to set them.",
     "budget_bound_unavailable": "This model does not yet support verified maximum-usage reservations. Contact your team admin.",
     "budget_request_unsupported": "This request contains features or output limits unsupported by the model's budget controls.",
     "budget_pending_usage": "Unpriced or unconfirmed usage prevents a reliable remaining allowance. Contact your team admin.",

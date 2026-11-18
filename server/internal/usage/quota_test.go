@@ -59,7 +59,7 @@ func TestQuotaSummaryIsOwnEffectiveAllowanceEvenForAdministrators(t *testing.T) 
 	})
 }
 
-func TestQuotaSummaryRetainsUnknownUsageAndTokenOnlyExhaustion(t *testing.T) {
+func TestQuotaSummaryHoldsPendingUsageAndTokenOnlyExhaustion(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		ctx := context.Background()
 		now := time.Now().UTC().Truncate(time.Second)
@@ -70,7 +70,9 @@ func TestQuotaSummaryRetainsUnknownUsageAndTokenOnlyExhaustion(t *testing.T) {
 			t.Fatal(err)
 		}
 		call := referenceCall("member", 100, 100)
-		if _, err := s.Begin(ctx, call); err != nil {
+		setTestRate(t, s, call)
+		running, err := s.Begin(ctx, call)
+		if err != nil {
 			t.Fatal(err)
 		}
 		page, err := s.Budgets(ctx, "team", "member", false)
@@ -83,9 +85,14 @@ func TestQuotaSummaryRetainsUnknownUsageAndTokenOnlyExhaustion(t *testing.T) {
 		if _, err := s.SetPolicy(ctx, "team", "admin", p); err != nil {
 			t.Fatal(err)
 		}
+		// A response cut off before its usage: the call stays pending, and its hold, priced at admission, stays
+		// counted against the cap rather than being forgotten or made up.
+		if err := s.Finish(ctx, running, Observation{}, ""); err != nil {
+			t.Fatal(err)
+		}
 		page, err = s.Budgets(ctx, "team", "member", false)
-		if err != nil || page.Summary.State != "unconfirmed" || page.Summary.Remaining != nil {
-			t.Fatalf("unpriced usage fabricated availability %+v %v", page.Summary, err)
+		if err != nil || page.Summary.State != "known" || page.Summary.Remaining == nil || *page.Summary.Remaining != "9.8" || page.Windows[0].Reserved != "0.2" {
+			t.Fatalf("a pending call's hold %+v %+v %v", page.Summary, page.Windows, err)
 		}
 		if page.Summary.ResetAt == nil || *page.Summary.ResetAt != page.Windows[0].EndsAt {
 			t.Fatal("active IANA window boundary changed")

@@ -4,13 +4,14 @@ description: Create a team, connect a provider, publish models and presets, brin
 ---
 
 A team is ready when it has a model members can call, a preset to start from,
-and its members. The team's **Home** in the console tracks these steps, and
-once the team is running it opens with what waits on you: submissions to
-review, budgets near their limit, calls to resolve and budget mail that failed.
-The pages below sit under **Team management** at the foot of the sidebar, which
-only the team's admin sees: open it for **Team assets** (models, presets,
+and its members. As the team's admin you land on its **Team overview**, which
+tracks these steps, and once the team is running opens with what waits on you:
+submissions to review, budgets near their limit, calls to resolve and budget
+mail that failed. It heads **Team management** at the foot of the sidebar,
+which only the team's admin sees, with **Team assets** (models, presets,
 plugins, review and history) and **Members and spend** (members, usage and
-budgets). Members see only the **Workspace** pages at the top.
+budgets) below it. The **Workspace** pages at the top are the same for you as
+for every member: your own **Home** shows your own calls and budget.
 
 ## 1. Create the team
 
@@ -24,7 +25,11 @@ key, or enter any OpenAI-compatible address under **Custom**. The key is checked
 with the provider before it is saved: a key the provider refuses, or an address
 this server may not call, is shown on the form with what to change. The key is
 stored encrypted and can never be read back. Then tick the models the team
-should use and publish them.
+should use and publish them, and give each one a reference rate (its **Set
+rates** button): a model without one cannot be called, and the team overview
+lists it until it has one. A rate of zero is allowed. A rate belongs to the
+upstream model it was set for, so pointing a model at another one needs a new
+rate.
 
 Members see team models only: never the address or the key.
 
@@ -73,7 +78,7 @@ beside them; you become a member.
 
 ## 5. Set budgets
 
-Under **Models**, set a reference rate for each model. Then, under **Budgets**,
+Every model has its reference rate from step 2. Under **Budgets**,
 add daily or monthly caps for the whole team, a default for each member, or a
 provider. A call reserves its largest possible cost before it runs, and one that
 would pass a cap is refused. Budgets count **points**, the team's own measure of

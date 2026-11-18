@@ -16,9 +16,9 @@ const { listenForCode } = await import(pathToFileURL(join(PLUGIN, 'lib/login-cal
 
 // The browser: the site's own Origin, and the session cookie it was given.
 let cookie = '';
-async function browser(path, body) {
+async function browser(path, body, method = body === undefined ? 'GET' : 'POST') {
   const response = await fetch(`${BASE}/api/${path}`, {
-    method: body === undefined ? 'GET' : 'POST',
+    method,
     headers: { Origin: BASE, 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -34,6 +34,8 @@ await browser('auth/setup', { token: SETUP_TOKEN, email: 'admin@example.com', pa
 const team = await browser('teams', { name: 'Core' });
 await browser(`teams/${team.id}/providers`, { name: 'stub', baseUrl: STUB_URL, apiKey: 'sk-e2e' });
 const model = await browser(`teams/${team.id}/configs`, { kind: 'model', name: 'Stub', data: { provider: 'stub', model: 'stub-model', maxTokens: 512 } });
+// Every call needs a rate (ADR 0050); zero is one.
+await browser(`teams/${team.id}/model-rates/${model.id}`, { revision: 0, basis: 'cost', input: '0', cacheRead: '0', cacheWrite: '0', output: '0' }, 'PUT');
 
 // `/teamwork login`: the plugin listens on loopback and prints /plugin?…
 const client = new TeamworkClient(BASE, join(mkdtempSync(join(tmpdir(), 'dsh-e2e-')), 'cache.json'));

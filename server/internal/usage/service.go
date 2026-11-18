@@ -2,6 +2,7 @@ package usage
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -48,6 +50,35 @@ func (s *Service) latestRate(ctx context.Context, teamID, configID string) (*ent
 		return nil, nil
 	}
 	return r, err
+}
+
+// UnpricedModels is the team's models a call is refused on for want of a rate
+// (admit, ADR 0050): those with no rate, or whose latest rate was set for a
+// provider or upstream model other than the one the model now calls. A model an
+// edition funds is priced by its quote, so it is never listed.
+func (s *Service) UnpricedModels(ctx context.Context, teamID string) ([]string, error) {
+	models, err := s.DB.TeamConfig.Query().
+		Where(teamconfig.TeamID(teamID), teamconfig.KindEQ(teamconfig.KindModel), teamconfig.RouteOwner("")).
+		Order(ent.Asc(teamconfig.FieldCreatedAt)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := []string{}
+	for _, m := range models {
+		var route struct {
+			Provider string `json:"provider"`
+			Model    string `json:"model"`
+		}
+		_ = json.Unmarshal(m.Data, &route)
+		rate, err := s.latestRate(ctx, teamID, m.ID)
+		if err != nil {
+			return nil, err
+		}
+		if rate == nil || rate.Provider != route.Provider || rate.Model != route.Model {
+			out = append(out, m.ID)
+		}
+	}
+	return out, nil
 }
 
 func ratesOf(r *ent.ModelRate) Rates {

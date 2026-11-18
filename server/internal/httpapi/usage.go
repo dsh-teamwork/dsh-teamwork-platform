@@ -138,30 +138,76 @@ func (s *Server) usageFilter(r *http.Request) (usage.Filter, error) {
 	return f, nil
 }
 
-// teamSummary is a team's overview: what waits on the caller, and recent usage
-// against the budgets that apply to them (usage.Summary).
+// teamSummary is what waits on the caller and recent usage against the budgets
+// that apply to them (usage.Summary). It is the caller's own by default, which
+// is what the workspace's home shows everyone, an admin included; scope=team is
+// the team's, for the admin's team overview (ADR 0049).
 func (s *Server) teamSummary(w http.ResponseWriter, r *http.Request) error {
 	c, err := s.requireUser(r)
 	if err != nil {
 		return err
 	}
-	m, err := s.Team.RequireMembership(r.Context(), c.user.ID, r.PathValue("teamId"), false)
+	scope := r.URL.Query().Get("scope")
+	if scope != "" && scope != "me" && scope != "team" {
+		var issues wire.Issues
+		issues.Add("me or team", "scope")
+		return issues.Err()
+	}
+	team := scope == "team"
+	m, err := s.Team.RequireMembership(r.Context(), c.user.ID, r.PathValue("teamId"), team)
 	if err != nil {
 		return err
 	}
-	admin := m.Role == membership.RoleAdmin
 	v := struct {
 		usage.Summary
 		PendingReviews int `json:"pendingReviews"`
 	}{}
-	if v.Summary, err = s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, admin); err != nil {
+	if v.Summary, err = s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, team); err != nil {
 		return err
 	}
-	if v.PendingReviews, err = s.Team.PendingSubmissions(r.Context(), m.TeamID, c.user.ID, admin); err != nil {
+	if v.PendingReviews, err = s.Team.PendingSubmissions(r.Context(), m.TeamID, c.user.ID, team); err != nil {
 		return err
 	}
 	noStore(w)
 	writeJSON(w, http.StatusOK, v)
+	return nil
+}
+
+// usageStats is a period's totals, days and models (usage.Stats), scoped as
+// listUsage is: a member reads their own, an admin the team's or one member's.
+// Without since and until it is the last 30 days; timezone (IANA, UTC by
+// default) draws the days.
+func (s *Server) usageStats(w http.ResponseWriter, r *http.Request) error {
+	f, err := s.usageFilter(r)
+	if err != nil {
+		return err
+	}
+	if f.Until.IsZero() {
+		f.Until = time.Now().UTC()
+	}
+	if f.Since.IsZero() {
+		f.Since = f.Until.Add(-usage.SummaryPeriod)
+	}
+	var issues wire.Issues
+	if f.Until.Sub(f.Since) > usage.MaxStatsSpan {
+		issues.Add("At most 92 days", "since")
+	}
+	loc := time.UTC
+	if name := r.URL.Query().Get("timezone"); name != "" {
+		if loc, err = time.LoadLocation(name); err != nil || name == "Local" {
+			loc = time.UTC
+			issues.Add("An IANA time zone", "timezone")
+		}
+	}
+	if err := issues.Err(); err != nil {
+		return err
+	}
+	stats, err := s.Usage.Stats(r.Context(), f, loc)
+	if err != nil {
+		return err
+	}
+	noStore(w)
+	writeJSON(w, http.StatusOK, stats)
 	return nil
 }
 
