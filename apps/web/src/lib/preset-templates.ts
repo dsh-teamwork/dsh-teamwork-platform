@@ -14,14 +14,16 @@
 
 export interface PresetTemplate {
   id: 'writer' | 'analyst' | 'researcher';
+  /** Its id in the avatar library (`@dsh-teamwork/shared`). */
+  avatar: string;
   requiredTools: string[];
   optionalTools: string[];
 }
 
 export const PRESET_TEMPLATES: readonly PresetTemplate[] = [
-  { id: 'writer', requiredTools: ['read', 'write', 'edit'], optionalTools: ['web_search', 'web_fetch', 'ask_user_question'] },
-  { id: 'analyst', requiredTools: ['read', 'bash', 'write'], optionalTools: ['glob', 'ask_user_question'] },
-  { id: 'researcher', requiredTools: ['web_search', 'web_fetch', 'write'], optionalTools: ['read', 'ask_user_question'] },
+  { id: 'writer', avatar: 'writer', requiredTools: ['read', 'write', 'edit'], optionalTools: ['web_search', 'web_fetch', 'ask_user_question'] },
+  { id: 'analyst', avatar: 'analyst', requiredTools: ['read', 'bash', 'write'], optionalTools: ['glob', 'ask_user_question'] },
+  { id: 'researcher', avatar: 'researcher', requiredTools: ['web_search', 'web_fetch', 'write'], optionalTools: ['read', 'ask_user_question'] },
 ];
 
 /**

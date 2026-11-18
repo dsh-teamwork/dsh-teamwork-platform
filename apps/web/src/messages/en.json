@@ -642,6 +642,26 @@
       "ask_user_question": "Ask the user",
       "skill": "Use a skill"
     },
+    "avatars": {
+      "assistant": "Team assistant",
+      "finance": "Finance",
+      "admin": "Administration",
+      "hr": "Human resources",
+      "marketing": "Marketing",
+      "sales": "Sales and business",
+      "engineer": "Engineering",
+      "product": "Product",
+      "legal": "Legal",
+      "design": "Design",
+      "support": "Customer support",
+      "operations": "Operations",
+      "project": "Project management",
+      "training": "Training",
+      "developer": "Software development",
+      "researcher": "Research",
+      "analyst": "Data analysis",
+      "writer": "Writing"
+    },
     "presets": {
       "title": "Presets",
       "description": "One-line description",
@@ -673,6 +693,7 @@
         "tools": "Tools and plugins",
         "persona": "Persona and method"
       },
+      "avatar": "Avatar",
       "name": "Name",
       "descriptionHint": "Members see this line in DSH’s preset list.",
       "model": "Model",
@@ -842,6 +863,7 @@
       "raw": "Show raw JSON",
       "fields": {
         "name": "Name",
+        "avatar": "Avatar",
         "description": "Description",
         "inheritModel": "Uses the session's model",
         "modelConfigId": "Team model",

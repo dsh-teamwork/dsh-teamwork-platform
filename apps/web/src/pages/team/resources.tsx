@@ -15,6 +15,7 @@ import { useTranslations } from 'use-intl';
 
 import { ProviderMark } from '@/components/provider-mark';
 import { Failure } from '@/components/page';
+import { PresetAvatar } from '@/components/preset-avatar';
 import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
@@ -87,7 +88,7 @@ export function TeamResourcesPage() {
       </Group>
       <Group title={t('presets')} hint={t('presetsHint')} empty={t('noPresets')}>
         {of('preset').map((p) => (
-          <Row key={p.id} name={p.name} detail={p.data.description}>
+          <Row key={p.id} name={p.name} detail={p.data.description} icon={<PresetAvatar avatar={p.data.avatar} name={p.name} />}>
             {member && (
               <Button size="sm" variant="ghost" onClick={() => setProposing({ draft: presetDraft(p), preset: p })}>
                 {t('proposeChange')}

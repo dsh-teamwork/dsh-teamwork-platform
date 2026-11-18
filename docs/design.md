@@ -79,8 +79,8 @@ by `apps/web/src/lib/theme.ts` and the instance console's own
 script sets it before the first paint. Grounds
 and text are a neutral grey (hue 286, chroma under 0.02): white grounds and
 near-black text in light, near-black grounds and white text in dark. Colour
-appears in three places only: the mark, the two accents, and the outcome
-colours.
+appears in four places only: the mark, the preset avatars (each in its own
+plate and accent), the two accents, and the outcome colours.
 
 ### Brand colours
 
@@ -168,13 +168,38 @@ line of text or in a menu, 36px heading a card), drawn by
 unknown one shows two initials on the same tile. A mark is never in its
 brand colour, and never stands without the name beside it.
 
+### Preset avatars
+
+A preset's face is one of a fixed library of avatars,
+`packages/shared/src/avatars.ts`, which the web console and the phone app both
+draw (`apps/web/src/components/preset-avatar.tsx` and the app's own), so a
+preset looks the same everywhere. **An avatar is an abstract emblem of a
+role**: two or three flat shapes — circles, arcs, rounded bars — composed to
+suggest what the role does (a balance for legal, a stack of coins for finance,
+work laid out in time for project management), in **Paper** and one accent on
+a plate with the logo's corner (22 %). It is neither a stock app glyph (a
+magnifier, a gear), which makes a preset read as a menu item, nor a drawing of
+a person or a character, which at this size reads as clip art.
+
+- **Each role has its own plate and one accent.** Plates are deep, muted
+  tones (dark enough that the paper figure always reads) and accents the
+  lighter colour of its attribute; no two neighbouring roles share a hue
+  family. The team assistant keeps the brand's navy and amber.
+- **Flat fills, rarely a stroke**, three tones per avatar (paper, plate as a
+  cut-out, accent), on a 32-unit square; shapes stay clear of the plate's
+  rounded corners, so no client clips. Each must read at 20 px, so a detail
+  smaller than about 1.5 units is left out.
+- These hexes, in that file, are an exception to "never a literal colour":
+  like the share card, the avatar is drawn outside the stylesheet and the same
+  in both themes, as the logo is.
+
 ## Component rules
 
 - **Never a literal colour.** No Tailwind palette step (`text-gray-600`,
   `text-green-600`) in a page and no hex in a component; a colour is a token.
-  Two exceptions: the share card, which renders outside the stylesheet and
-  uses the brand hexes above, and Google's four-colour G on the sign-in
-  button, whose colours Google's branding fixes.
+  Three exceptions: the share card and the preset avatars, which render
+  outside the stylesheet and use the hexes their sources name, and Google's
+  four-colour G on the sign-in button, whose colours Google's branding fixes.
 - **`--brand` is not `--accent`.** `accent` is the subtle hover surface every
   shadcn-shaped primitive uses, so a brand colour there tints every hover. Brand
   chrome opts in with `bg-brand` / `text-brand`.

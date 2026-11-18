@@ -3,18 +3,21 @@
  * whole team shares: the team model it calls, the DSH tools it needs, the
  * plugins it pins and the persona it works by. An admin starts one from a
  * template (`PRESET_TEMPLATES`, copied in the admin's language and the team's
- * own from then on) or from nothing, in an editor with three tabs. It is Team
+ * own from then on) or from nothing, in an editor with three tabs; each has
+ * an avatar from the library the phone app shares (`@dsh-teamwork/shared`). It is Team
  * management's (ADR 0043); a member reads the presets in Team resources and
  * proposes one, or a change to one, in the same editor, which sends it to
  * review instead of publishing it.
  */
 
+import { PRESET_AVATARS, presetAvatar } from '@dsh-teamwork/shared';
 import { ChevronDown, Cpu, Plus, Puzzle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 
 import { ProviderMark } from '@/components/provider-mark';
 import { Failure } from '@/components/page';
+import { PresetAvatar, PresetAvatarPicker } from '@/components/preset-avatar';
 import { PageHeader } from '@/components/team/console-shell';
 import { Field } from '@/components/team/field';
 import { useMutation, useTeamError } from '@/components/team/use-mutation';
@@ -39,6 +42,8 @@ type Reload = () => Promise<unknown>;
 /** What the editor edits; `route` keeps a preset that names its own provider and model as it is. */
 export interface Draft {
   name: string;
+  /** An id from the avatar library; the editor always saves one. */
+  avatar: string;
   description: string;
   modelConfigId: string;
   route: { provider: string; model: string; contextWindow?: number; maxTokens?: number } | null;
@@ -50,10 +55,11 @@ export interface Draft {
   plugins: string[];
 }
 
-/** An empty preset, calling the team's first model. */
+/** An empty preset, calling the team's first model, with an avatar picked at random. */
 export function blankDraft(models: Model[]): Draft {
   return {
     name: '',
+    avatar: PRESET_AVATARS[Math.floor(Math.random() * PRESET_AVATARS.length)]!.id,
     description: '',
     modelConfigId: models[0]?.id ?? '__inherit__',
     route: null,
@@ -70,6 +76,8 @@ export function blankDraft(models: Model[]): Draft {
 export function presetDraft(preset: Preset): Draft {
   return {
     name: preset.name,
+    // The one it shows, so saving a preset that predates avatars keeps the face it already had.
+    avatar: presetAvatar(preset.data.avatar, preset.name).id,
     description: preset.data.description,
     modelConfigId: preset.data.inheritModel ? '__inherit__' : preset.data.modelConfigId ?? '',
     route: preset.data.modelConfigId || !preset.data.provider || !preset.data.model
@@ -103,6 +111,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
   const fromTemplate = (template: PresetTemplate): Draft => ({
     ...blankDraft(models),
     name: tt(`${template.id}.name`),
+    avatar: template.avatar,
     description: tt(`${template.id}.description`),
     outputDescription: tt(`${template.id}.deliverable`),
     // Raw: a persona is prose with line breaks, not a message with placeholders.
@@ -156,11 +165,14 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
           <ul className="grid gap-3 md:grid-cols-3">
             {PRESET_TEMPLATES.map((template) => (
               <li key={template.id} className="flex flex-col gap-3 rounded-lg border border-dashed bg-card p-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground">{tt(`${template.id}.area`)}</span>
-                  <h3 className="font-semibold">{tt(`${template.id}.name`)}</h3>
-                  <p className="text-sm text-muted-foreground">{tt(`${template.id}.persona`)}</p>
+                <div className="flex items-start gap-3">
+                  <PresetAvatar avatar={template.avatar} name={tt(`${template.id}.name`)} className="size-10" />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-muted-foreground">{tt(`${template.id}.area`)}</span>
+                    <h3 className="font-semibold">{tt(`${template.id}.name`)}</h3>
+                  </div>
                 </div>
+                <p className="text-sm text-muted-foreground">{tt(`${template.id}.persona`)}</p>
                 <Tools required={template.requiredTools} optional={template.optionalTools} />
                 <Button
                   size="sm"
@@ -239,7 +251,10 @@ function PresetCard({
   return (
     <li className="flex flex-col gap-3 px-4 py-4">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold">{preset.name}</h3>
+        <span className="flex min-w-0 items-center gap-3">
+          <PresetAvatar avatar={preset.data.avatar} name={preset.name} />
+          <h3 className="font-semibold">{preset.name}</h3>
+        </span>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground tabular-nums">v{preset.version}</span>
       </div>
       {preset.data.description && <p className="text-sm text-muted-foreground">{preset.data.description}</p>}
@@ -332,6 +347,7 @@ export function PresetEditor({
 }) {
   const t = useTranslations('team.presets');
   const tools = useTranslations('team.tools');
+  const avatars = useTranslations('team.avatars');
   const { pending, run } = useMutation(reload);
   const [draft, setDraft] = useState(initial);
   const [tab, setTab] = useState<Tab>('basics');
@@ -360,6 +376,7 @@ export function PresetEditor({
   async function save() {
     const data = {
       ...(draft.modelConfigId === '__inherit__' ? {inheritModel:true} : draft.modelConfigId ? { modelConfigId: draft.modelConfigId } : draft.route),
+      avatar: draft.avatar,
       description: draft.description,
       outputDescription: draft.outputDescription,
       instructions: draft.instructions,
@@ -415,6 +432,10 @@ export function PresetEditor({
         >
           {tab === 'basics' && (
             <>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium">{t('avatar')}</span>
+                <PresetAvatarPicker value={draft.avatar} label={t('avatar')} nameOf={(id) => (avatars.has(id) ? avatars(id) : id)} onChange={(id) => set('avatar', id)} />
+              </div>
               <Field id="preset-name" label={t('name')}>
                 <Input id="preset-name" value={draft.name} onChange={(e) => set('name', e.target.value)} maxLength={120} required />
               </Field>

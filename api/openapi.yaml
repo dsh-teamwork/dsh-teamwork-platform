@@ -1980,6 +1980,10 @@ components:
         contextWindow: { $ref: '#/components/schemas/Tokens' }
         maxTokens: { $ref: '#/components/schemas/Tokens' }
         modelConfigId: { type: string }
+        avatar:
+          type: string
+          pattern: '^[a-z][a-z0-9-]{0,39}$'
+          description: A preset avatar's id from the clients' library (packages/shared); a client draws an id it does not know, or none, as one picked from the preset's id.
         description: { type: string }
         instructions: { type: string }
         outputDescription: { type: string }

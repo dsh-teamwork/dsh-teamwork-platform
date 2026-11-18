@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Presets have avatars
+
+- **What:** A preset carries `avatar`, the id of one of 18 vector avatars in `@dsh-teamwork/shared` (`avatars.ts`), which the web console and the phone app both draw: an abstract emblem of a role, a few flat shapes in paper and one accent on the role's own plate (team assistant, finance, administration, HR, marketing, sales, engineering, product, legal, design, support, operations, project management, training, development, research, data analysis, writing). The preset editor chooses one (a blank preset starts with a random one, a template with its role's, a new team assistant with `assistant`); the presets page, Team resources, review diffs and the DSH session bar show it. A preset with none, or one a client does not know, shows one picked from its name. The server checks only the id's shape (`^[a-z][a-z0-9-]{0,39}$`); the plugin passes it to the relay's session configuration.
+- **Why:** Presets were text-only, hard to tell apart in a list or on a phone, and a team hands work to a preset as to an expert.
+- **Breaking:** None; the field is optional and readers ignore it.
+- **Upgrade:** Nothing. Release the plugin for the avatar to reach the phone and My DSH.
+- **Refs:** `packages/shared/src/avatars.ts`, `apps/web/src/components/preset-avatar.tsx`, `docs/design.md` ("Preset avatars").
 ## 2026-11-18 — The listed providers are named as Models.dev names them
 
 - **What:** The console's provider list (`PROVIDER_CATALOG`) uses Models.dev's provider ids as each provider's id and default name in the team (`deepseek`, `openai`, `alibaba-cn`, `moonshotai-cn`, `zhipuai`, `volcengine`, `minimax-cn`, `siliconflow-cn`, `openrouter`), at the address Models.dev states (DeepSeek moves to `https://api.deepseek.com`); OpenAI, which Models.dev gives no address, and MiniMax, whose address there is its Anthropic API, keep their OpenAI-compatible ones. `modelsDevId` is gone: a provider's name is the namespace its models' limits and prices are read under, and a renamed second account is matched by address. The display names' message keys follow the ids.
