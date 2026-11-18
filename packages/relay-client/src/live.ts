@@ -463,7 +463,10 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     async sharedHosts() {
       const response = await relayHttp('/shared');
       if (!response.ok) throw new RelayError('unavailable');
-      return z.object({ hosts: z.object({ id: z.string(), name: z.string(), teamId: z.string(), teamName: z.string(), online: z.boolean() }).array() }).parse(await response.json()).hosts;
+      return z.object({
+        hosts: z.object({ id: z.string(), name: z.string(), teamId: z.string(), teamName: z.string(), online: z.boolean() }).array(),
+        unavailableTeamIds: z.string().array(),
+      }).parse(await response.json());
     },
 
     async pair(code, deviceName, expectedKey) {

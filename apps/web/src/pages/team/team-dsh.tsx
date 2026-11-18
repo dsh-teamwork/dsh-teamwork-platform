@@ -5,7 +5,8 @@
  * the invite its admin handed over; sessions are driven through the relay end to end encrypted as the phone app drives
  * them (`@dsh-teamwork/relay-client`, `@/lib/relay`). The DSH decides what this member sees: only the sessions they
  * started, and nothing until their PIN unlocks the channel. Managing the keys, access and archive is the admin's
- * page under Team assets (team-dsh-hosts.tsx).
+ * page under Team assets (team-dsh-hosts.tsx). A team the server has not enabled Team DSH for sees what it offers and
+ * who enables it instead; the entry is in every team's sidebar.
  */
 
 import { Plus, Server } from 'lucide-react';
@@ -33,6 +34,8 @@ export function TeamDshPage() {
   const relay = relayFor(me);
   const base = `/teams/${team.id}/team-dsh`;
   const [hosts, setHosts] = useState<SharedHost[] | null>(null);
+  // Whether the server lets this team run a Team DSH; one it has not enabled sees what it is and who enables it.
+  const [unavailable, setUnavailable] = useState(false);
   const [computers, setComputers] = useState<Computer[]>([]);
   const [failed, setFailed] = useState<string | null>(null);
   const { sessions, pin, failed: unreachable, reload, locked } = useComputer(computerId);
@@ -40,7 +43,8 @@ export function TeamDshPage() {
   const loadHosts = useCallback(async () => {
     try {
       const [reachable, paired] = await Promise.all([relay.sharedHosts(), relay.listComputers()]);
-      setHosts(reachable.filter((h) => h.teamId === team.id));
+      setHosts(reachable.hosts.filter((h) => h.teamId === team.id));
+      setUnavailable(reachable.unavailableTeamIds.includes(team.id));
       setComputers(paired);
     } catch (error) {
       setFailed(word(error));
@@ -53,6 +57,7 @@ export function TeamDshPage() {
   const session = sessions?.find((s) => s.id === sessionId);
   const problem = failed ?? unreachable;
 
+  if (unavailable) return <NotEnabled />;
   return (
     <DshColumns
       title={t('title')}
@@ -98,9 +103,52 @@ export function TeamDshPage() {
   );
 }
 
+const FEATURES = ['Machine', 'Models', 'Private', 'Audit'] as const;
+
+/**
+ * A team the server has not enabled Team DSH for: what it offers and who enables it, so the entry stays in the
+ * sidebar for every team rather than appearing only once it is enabled. An admin is sent to support, a member to
+ * their admin.
+ */
+function NotEnabled() {
+  const { team } = useTeam();
+  const t = useTranslations('team.teamDsh');
+  const admin = team.role === 'admin';
+  return (
+    <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-6 py-12">
+      <div className="flex flex-col gap-2">
+        <Server className="size-8 text-muted-foreground" aria-hidden />
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <p className="text-muted-foreground">{t('pitch')}</p>
+      </div>
+      <ul className="grid gap-4 sm:grid-cols-2">
+        {FEATURES.map((key) => (
+          <li key={key} className="flex flex-col gap-1 rounded-lg border p-4">
+            <span className="text-sm font-medium">{t(`feature${key}Title`)}</span>
+            <span className="text-sm text-muted-foreground">{t(`feature${key}Body`)}</span>
+          </li>
+        ))}
+      </ul>
+      <div role="status" className="flex flex-col gap-3 rounded-lg border bg-muted/50 px-4 py-3 text-sm">
+        <p>{admin ? t('notEnabledAdmin') : t('notEnabledMember')}</p>
+        <div className="flex flex-wrap gap-2">
+          {admin && (
+            <Button asChild size="sm">
+              <a href="mailto:support@dshteamwork.com">{t('contactSupport')}</a>
+            </Button>
+          )}
+          <Button asChild size="sm" variant="outline">
+            <a href="/docs/team-dsh">{t('learnMore')}</a>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /** No DSH open: what a Team DSH is, and joining one with the invite its admin handed over. */
 function Join({ joined }: { joined: (computerId: string) => void }) {
-  const { me } = useTeam();
+  const { me, team } = useTeam();
   const t = useTranslations('team.teamDsh');
   const word = useRelayError();
   const relay = relayFor(me);
@@ -143,6 +191,11 @@ function Join({ joined }: { joined: (computerId: string) => void }) {
         <p className="text-xs text-muted-foreground">{t('joinHelp')}</p>
         {failed && <p role="alert" className="text-destructive">{failed}</p>}
       </form>
+      {team.role === 'admin' && (
+        <p className="text-xs text-muted-foreground">
+          {t.rich('setUp', { link: (chunks) => <Link to={`/teams/${team.id}/team-dsh-hosts`} className="text-foreground underline underline-offset-4">{chunks}</Link> })}
+        </p>
+      )}
     </section>
   );
 }
