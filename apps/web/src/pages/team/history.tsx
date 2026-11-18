@@ -157,7 +157,7 @@ function RevisionRow({ row, team, current, names, onRestore }: { row: Revision; 
     <li className="relative pl-9">
       <span aria-hidden className={cn('absolute top-4 left-1.5 size-3 rounded-full border-2 bg-background', live ? 'border-brand' : 'border-input')} />
       <details className="group rounded-lg hover:bg-accent/50 open:bg-muted/40">
-        <summary className="flex cursor-pointer list-none items-start gap-3 px-3 py-3 [&::-webkit-details-marker]:hidden">
+        <summary className="flex list-none items-start gap-3 px-3 py-3 [&::-webkit-details-marker]:hidden">
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="truncate font-medium">{row.name}</span>

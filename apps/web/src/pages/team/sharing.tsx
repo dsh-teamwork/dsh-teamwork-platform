@@ -185,7 +185,7 @@ function SubmissionRow({
   return (
     <li className="border-t first:border-t-0">
       <details className="group">
-        <summary className="flex cursor-pointer list-none items-start gap-3 px-4 py-3.5 hover:bg-accent [&::-webkit-details-marker]:hidden">
+        <summary className="flex list-none items-start gap-3 px-4 py-3.5 hover:bg-accent [&::-webkit-details-marker]:hidden">
           <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" aria-hidden />
           <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -314,7 +314,7 @@ function DropZone({ accept, label, hint, pick, children }: { accept: string; lab
         const file = e.dataTransfer.files[0];
         if (file) pick(file);
       }}
-      className={cn('flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-8 text-center text-sm', over ? 'border-ring bg-accent' : 'hover:bg-accent')}
+      className={cn('flex flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-8 text-center text-sm', over ? 'border-ring bg-accent' : 'hover:bg-accent')}
     >
       <Package className="size-5 text-muted-foreground" aria-hidden />
       <span className="font-medium">{label}</span>
@@ -471,7 +471,7 @@ function PluginDialog({ teamId, configs, reload, onClose }: { teamId: string; co
               </p>
               <p className="mt-1 font-mono text-xs break-all text-muted-foreground">SHA-256 {plugin.preview.sha256}</p>
               <details className="mt-2">
-                <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">{t('includedFiles', { count: plugin.preview.files.length })}</summary>
+                <summary className="text-xs text-muted-foreground hover:text-foreground">{t('includedFiles', { count: plugin.preview.files.length })}</summary>
                 <pre className="mt-2 max-h-48 overflow-auto rounded-md bg-muted p-2.5 font-mono text-xs">{plugin.preview.files.join('\n')}</pre>
               </details>
             </div>

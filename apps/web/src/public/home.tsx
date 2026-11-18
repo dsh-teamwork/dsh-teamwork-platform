@@ -213,7 +213,7 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
           </Button>
           {/* Narrow screens: the sections behind a native disclosure, since this page runs no React. */}
           <details data-menu="" className="group relative lg:hidden">
-            <summary className="flex size-9 cursor-pointer list-none items-center justify-center rounded-md border border-input [&::-webkit-details-marker]:hidden" aria-label={t('nav.menu')}>
+            <summary className="flex size-9 list-none items-center justify-center rounded-md border border-input [&::-webkit-details-marker]:hidden" aria-label={t('nav.menu')}>
               <span aria-hidden="true" className="flex w-4 flex-col gap-1">
                 <span className="h-px bg-foreground" />
                 <span className="h-px bg-foreground" />
@@ -429,7 +429,7 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
             <div className="mt-10 max-w-3xl">
               {faqs.map((key) => (
                 <details key={key} open={key === 'install'} className="group border-t border-border py-5 last:border-b">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold [&::-webkit-details-marker]:hidden">
+                  <summary className="flex list-none items-center justify-between gap-4 text-lg font-bold [&::-webkit-details-marker]:hidden">
                     {t(`faq.${key}.question`)}
                     <span aria-hidden="true" className="font-mono text-xl font-normal text-muted-foreground group-open:rotate-45 transition-transform">
                       +

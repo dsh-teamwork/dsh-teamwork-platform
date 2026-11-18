@@ -454,6 +454,25 @@ body:has(.tide-story) {
   body {
     @apply bg-background text-foreground antialiased;
   }
+  /*
+   * Whatever a click acts on shows the hand, as a link does (docs/design.md,
+   * "Component rules"): Tailwind 4 leaves buttons on the arrow. A disabled
+   * control keeps the arrow, and a utility such as cursor-not-allowed still wins.
+   */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='menuitem']:not([data-disabled]),
+  [role='menuitemcheckbox']:not([data-disabled]),
+  [role='menuitemradio']:not([data-disabled]),
+  [role='option']:not([data-disabled]),
+  [role='tab']:not(:disabled),
+  [role='switch']:not(:disabled),
+  summary,
+  select:not(:disabled),
+  input:is([type='checkbox'], [type='radio'], [type='file'], [type='button'], [type='submit'], [type='reset']):not(:disabled),
+  label:has(input:is([type='checkbox'], [type='radio'], [type='file']):not(:disabled)) {
+    cursor: pointer;
+  }
 }
 
 /*
