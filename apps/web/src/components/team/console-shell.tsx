@@ -15,6 +15,7 @@ import {
   Check,
   ChevronUp,
   ChevronsUpDown,
+  CircleHelp,
   Cpu,
   Gauge,
   GitPullRequestArrow,
@@ -33,8 +34,8 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { Dialog, DropdownMenu } from 'radix-ui';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Dialog, DropdownMenu, Tooltip } from 'radix-ui';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'use-intl';
@@ -57,6 +58,8 @@ interface Section {
   icon: LucideIcon;
   fill?: boolean;
   visible?: (team: Team) => Promise<boolean>;
+  /** Whether its entry carries a hint, `nav.hints.{key}`, saying what the page is for. */
+  hint?: boolean;
 }
 
 /** Whether this person may reach one of this team's shared DSHs (docs/tech/shared-dsh.md): the relay's list, read with the session cookie. */
@@ -81,7 +84,7 @@ const GROUPS: { key: TeamGroup; sections: Section[] }[] = [
       { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'submissions', key: 'submissions', icon: Send },
       // Listed only where the team runs one this person may reach; the admin's own page is under Team assets.
-      { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true, visible: reachesTeamDsh },
+      { path: 'team-dsh', key: 'teamDsh', icon: Server, fill: true, visible: reachesTeamDsh, hint: true },
     ],
   },
   {
@@ -218,6 +221,7 @@ export function ConsoleShell({
 function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team; section: string; reviewsWaiting: boolean; onNavigate?: () => void }) {
   const t = useTranslations('team');
   const locale = useLocale();
+  const lang = locale === 'zh-CN' ? 'zh-CN' : 'en';
   const { pages, sections: answered } = useTeamPages(team);
   // A section with `visible` is listed once it says yes, or while the person is on it.
   const listed = (s: Section) => !s.visible || answered.includes(s.path) || s.path === section;
@@ -230,38 +234,71 @@ function Navigation({ team, section, reviewsWaiting, onNavigate }: { team: Team;
     if (managing) setOpen(true);
   }
 
-  const link = (path: string, label: ReactNode, Icon: LucideIcon, dot = false) => (
-    <Link key={path} to={href(team.id, path)} onClick={onNavigate} aria-current={section === path ? 'page' : undefined} className={cn(item, section === path && selected)}>
+  const link = (path: string, label: ReactNode, Icon: LucideIcon, dot = false, hint?: string) => (
+    <NavLink key={path} to={href(team.id, path)} onClick={onNavigate} current={section === path} hint={hint}>
       <Icon className="size-4" aria-hidden />
       <span className="flex-1">{label}</span>
       {/* Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules"). */}
       {dot && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
-    </Link>
+    </NavLink>
   );
   const group = ({ key, sections }: (typeof GROUPS)[number]) => (
     <div key={key} className="flex flex-col gap-0.5">
       <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>
-      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, s.key === 'sharing' && reviewsWaiting))}
-      {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[locale === 'zh-CN' ? 'zh-CN' : 'en'], page.icon))}
+      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, s.key === 'sharing' && reviewsWaiting, s.hint ? t(`nav.hints.${s.key}`) : undefined))}
+      {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, page.hints?.[lang]))}
     </div>
   );
 
   return (
-    <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <div className="px-3 pb-4">{group(GROUPS[0])}</div>
-      {/* Team management sits apart from the workspace: its own divider and a slightly deeper ground. */}
-      {team.role === 'admin' && (
-        <div className="mt-auto flex flex-col gap-4 border-t bg-secondary/60 px-3 py-3">
-          {open && <div id="team-management" className="flex flex-col gap-4">{GROUPS.slice(1).map(group)}</div>}
-          <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'font-medium')}>
-            <ShieldCheck className="size-4" aria-hidden />
-            <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
-            {!open && reviewsWaiting && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
-            <ChevronUp className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
-          </button>
-        </div>
+    <Tooltip.Provider delayDuration={200}>
+      <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="px-3 pb-4">{group(GROUPS[0])}</div>
+        {/* Team management sits apart from the workspace: its own divider and a slightly deeper ground. */}
+        {team.role === 'admin' && (
+          <div className="mt-auto flex flex-col gap-4 border-t bg-secondary/60 px-3 py-3">
+            {open && <div id="team-management" className="flex flex-col gap-4">{GROUPS.slice(1).map(group)}</div>}
+            <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'font-medium')}>
+              <ShieldCheck className="size-4" aria-hidden />
+              <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
+              {!open && reviewsWaiting && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
+              <ChevronUp className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
+            </button>
+          </div>
+        )}
+      </nav>
+    </Tooltip.Provider>
+  );
+}
+
+/**
+ * One entry in the navigation. One with a hint says what the page is for beside its label: a question mark that
+ * shows the hint on hover, and the hint describes the link to a screen reader.
+ */
+function NavLink({ to, onClick, current, hint, children }: { to: string; onClick?: () => void; current: boolean; hint?: string; children: ReactNode }) {
+  const id = useId();
+  return (
+    <Link to={to} onClick={onClick} aria-current={current ? 'page' : undefined} aria-describedby={hint ? id : undefined} className={cn(item, current && selected)}>
+      {children}
+      {hint && (
+        <>
+          <span id={id} hidden>{hint}</span>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <span className="grid size-4 shrink-0 place-items-center text-muted-foreground hover:text-foreground" aria-hidden>
+                <CircleHelp className="size-3.5" />
+              </span>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content side="right" sideOffset={10} collisionPadding={8} className="z-50 max-w-72 rounded-md border bg-card px-3 py-2 text-xs leading-relaxed text-card-foreground shadow-lg">
+                {hint}
+                <Tooltip.Arrow className="fill-card" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </>
       )}
-    </nav>
+    </Link>
   );
 }
 

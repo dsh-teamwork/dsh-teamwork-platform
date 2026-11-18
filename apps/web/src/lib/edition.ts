@@ -24,6 +24,8 @@ export interface TeamPage {
   element: ReactNode;
   /** Its entry in the team navigation, in each language. */
   labels: Record<Locale, string>;
+  /** A hint beside its entry, in each language: what the page is for, shown on hover. */
+  hints?: Record<Locale, string>;
   icon: LucideIcon;
   /**
    * The navigation group it joins: Workspace, for every member, or one of the
