@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-18 — Shared DSHs are Team DSH, used in Workspace and managed under Team assets
+
+- **What:** The console, `/docs` and every message call a shared DSH "Team DSH" in both languages. Using one and managing one are separate pages: Workspace's `/teams/{teamId}/team-dsh[/{computerId}[/{sessionId}]]`, listed in the navigation only when the team runs one the member may reach, lists the DSHs a member may reach, their sessions on the open one and the conversation in three columns, joins by invite and starts a session with its first message; Team assets' `/teams/{teamId}/team-dsh-hosts`, for the admin, keeps keys, access and the archive. `/teams/{teamId}/shared-hosts` is gone. A team page may fill the area beside the sidebar (`TeamPage.fill`, and the open pages' own `fill`), full height on a phone too.
+- **Why:** "Shared DSH" read like the Workspace's "team shared" page, and a member's page mixed in the admin's keys and archive.
+- **Breaking:** A bookmark to `/teams/{teamId}/shared-hosts[/…]` no longer opens. The API is unchanged.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/team-dsh.tsx`, `apps/web/src/pages/team/team-dsh-hosts.tsx`, `docs/tech/shared-dsh.md`.
+
 ## 2026-11-18 — Team resources has a new Chinese name
 
 - **What:** The Workspace page listing what the team provides has a new zh-CN name, "team shared" rather than "team resources" (`team.nav.resources` in `zh-CN.json`); English stays "Team resources". `/docs` (zh-CN) follows.

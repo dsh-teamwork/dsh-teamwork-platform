@@ -37,6 +37,14 @@ export interface TeamPage {
    * page itself still answers what its API allows: this is navigation only.
    */
   visible?: (team: Team) => Promise<boolean>;
+  /**
+   * Whether the page fills the whole area beside the sidebar (below the top
+   * bar on a phone), edge to edge, full height and without the console's
+   * padding, to lay out columns of its own (a list beside what is open in
+   * it); omitted, it sits in the console's centred column like every open
+   * page.
+   */
+  fill?: boolean;
 }
 
 /** The first segment a team page's navigation entry links to. */

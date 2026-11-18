@@ -127,14 +127,14 @@
       "console": {
         "title": "浏览器 · 工作与管理",
         "alt": "团队控制台概览：一条待审核提交，调用次数、积分和预算",
-        "description": "在网页里管理团队，也能通过邀请进入共享 DSH，开始或继续自己的会话。"
+        "description": "在网页里管理团队，也能通过邀请进入团队 DSH，开始或继续自己的会话。"
       },
       "phone": {
         "title": "手机 · 随时跟进",
         "platformsLabel": "支持的平台",
         "storeSearch": "应用商店搜索 <strong>{appName}</strong>",
         "alt": "手机 App 的会话列表，一个会话在等你批准",
-        "description": "在手机上连到自己的电脑，或通过邀请加入共享 DSH，查看进度、发消息和处理审批。"
+        "description": "在手机上连到自己的电脑，或通过邀请加入团队 DSH，查看进度、发消息和处理审批。"
       }
     },
     "collaborate": {
@@ -147,7 +147,7 @@
       "reviewBody": "对比新旧版本，确认新增的调研要求后发布。",
       "syncTitle": "全队同步使用",
       "syncBody": "下次同步时，更新后的调研规则就会出现在成员的 DSH 里。",
-      "sharedTitle": "团队共享 DSH",
+      "sharedTitle": "团队 DSH",
       "sharedEdition": "开源社区版",
       "sharedBody": "管理员可以把一台团队 DSH 开放给全队或指定成员。成员收到邀请后，可从网页或手机接入同一台 DSH，在各自的会话里开展任务。",
       "alt": "分享与审批界面。市场调研预设拟在 v1 基础上新增标注信息来源、区分事实与推测的要求，等待管理员批准并发布。"
@@ -479,7 +479,8 @@
       "waiting": "等待你审核",
       "resources": "团队共享",
       "submissions": "我的提交",
-      "sharedHosts": "共享 DSH"
+      "teamDsh": "团队 DSH",
+      "teamDshHosts": "团队 DSH"
     },
     "switcher": {
       "label": "切换团队",
@@ -831,13 +832,13 @@
       "propose": "提议预设",
       "proposeChange": "建议修改"
     },
-    "sharedHosts": {
-      "title": "共享 DSH",
+    "teamDshHosts": {
+      "title": "团队 DSH",
       "description": "团队为成员运行的 DSH。它用团队授权 key 登录，从不以个人身份登录，模型调用计入团队。",
       "name": "名称",
       "namePlaceholder": "例如：构建机",
       "create": "创建 key",
-      "created": "已创建共享 DSH。",
+      "created": "已创建团队 DSH。",
       "machine": "机器",
       "lastSeen": "最近换取 token",
       "actions": "操作",
@@ -848,12 +849,12 @@
       "rotated": "已签发新 key。",
       "delete": "删除",
       "deleted": "已删除。",
-      "empty": "还没有共享 DSH。填一个名称即可创建它的 key。",
+      "empty": "还没有团队 DSH。填一个名称即可创建它的 key。",
       "keyTitle": "{name} 的团队授权 key",
       "keyOnce": "只显示这一次。请复制到要共享的那台 DSH；服务器不保留可读副本。",
       "keyHelp": "在那台 DSH 里运行这条命令。第一台使用它的机器会绑定这个 key，换到其他机器上会被拒绝。能访问这台 DSH 的人都能通过它使用团队模型。",
       "rotateConfirm": "为这台 DSH 签发新 key？旧 key 立即失效，同一台机器继续使用新 key。",
-      "deleteConfirm": "删除这台共享 DSH？它的 key 立即失效，DSH 最多一小时内失去团队访问。",
+      "deleteConfirm": "删除这台团队 DSH？它的 key 立即失效，DSH 最多一小时内失去团队访问。",
       "access": "可访问的人",
       "accessTeam": "团队所有成员",
       "accessListed": "{count} 名成员",
@@ -865,37 +866,40 @@
       "save": "保存",
       "cancel": "取消",
       "archiveTitle": "审计归档",
-      "archiveHelp": "每台共享 DSH 都把成员的会话加密到团队的审计密钥后保存在这里。服务器无法打开，只有持有私钥的人可以。",
-      "archiveEmpty": "还没有归档。共享 DSH 在用 /teamwork share audit-key 设置审计密钥之前不会接纳任何成员。",
-      "archiveDeleted": "已删除的共享 DSH（{id}）",
+      "archiveHelp": "每台团队 DSH 都把成员的会话加密到团队的审计密钥后保存在这里。服务器无法打开，只有持有私钥的人可以。",
+      "archiveEmpty": "还没有归档。团队 DSH 在用 /teamwork share audit-key 设置审计密钥之前不会接纳任何成员。",
+      "archiveDeleted": "已删除的团队 DSH（{id}）",
       "archiveRange": "{segments} 个分段 · {first} – {last}",
       "archiveDownload": "下载",
       "archiveRead": "在你自己的电脑上，用 dsh-teamwork-audit keygen 生成的密钥打开下载的文件。缺失或被改动的分段会被指出。"
     },
-    "sharedDsh": {
-      "title": "共享 DSH",
-      "reachTitle": "你可以访问的共享 DSH",
-      "disclosure": "共享 DSH 是团队的机器，与名单上的其他人共用。你只能看到自己发起的会话；团队管理员可以从加密归档中读取所有会话。",
-      "none": "这个团队还没有向你开放的共享 DSH。",
+    "teamDsh": {
+      "title": "团队 DSH",
+      "sessions": "我的会话",
+      "introTitle": "在团队的 DSH 上工作",
+      "disclosure": "团队 DSH 是团队的机器，与名单上的其他人共用。你只能看到自己发起的会话；团队管理员可以从加密归档中读取所有会话。",
+      "none": "这个团队还没有向你开放的 DSH。",
       "online": "在线",
       "offline": "离线",
-      "open": "打开",
       "needsInvite": "请向管理员索取邀请",
+      "joinWithInvite": "用邀请加入",
+      "joinHelp": "粘贴管理员给你的邀请链接。这个浏览器只需加入一次，之后设置自己的 PIN。",
       "invite": "邀请链接",
       "join": "加入",
       "joining": "正在加入…",
       "deviceName": "网页浏览器",
       "inviteInvalid": "这不是邀请链接。请粘贴管理员给你的完整 dshteamwork://join 链接。",
       "inviteOtherServer": "这个邀请属于另一台服务器。",
-      "browserUnsupported": "这个浏览器无法保存共享 DSH 需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。",
-      "back": "全部共享 DSH",
-      "sessionsHelp": "你在这台共享 DSH 上的会话，在这个浏览器和那台机器之间端到端加密。",
+      "browserUnsupported": "这个浏览器无法保存团队 DSH 需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。",
       "newSession": "新会话",
       "noSessions": "还没有会话。",
+      "locked": "输入 PIN 后可以看到你的会话。",
       "waiting": "等待你处理",
       "untitled": "未命名会话",
       "running": "运行中",
-      "pick": "选择一个会话，或新建一个。",
+      "newTitle": "要它做什么？",
+      "newHint": "{name} 上的新会话，在这个浏览器和那台机器之间端到端加密。",
+      "firstPlaceholder": "描述任务。开始后还可以继续发消息。",
       "steps": "{count} 个步骤",
       "failed": "失败",
       "denied": "已拒绝",
@@ -920,7 +924,7 @@
         },
         "locked": {
           "title": "已锁定",
-          "hint": "PIN 错误次数过多。请让管理员在共享 DSH 上为你解锁。"
+          "hint": "PIN 错误次数过多。请让管理员在团队 DSH 上为你解锁。"
         },
         "wrong": "PIN 错误，还剩 {count} 次。",
         "mismatch": "两次输入的 PIN 不一致，请重新开始。",
@@ -992,7 +996,7 @@
     "count": "共 {count} 次调用",
     "previous": "上一页",
     "next": "下一页",
-    "sharedDsh": "共享 DSH"
+    "teamDsh": "团队 DSH"
   },
   "budgets": {
     "remaining": "可用积分",

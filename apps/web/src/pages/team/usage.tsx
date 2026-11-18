@@ -62,7 +62,7 @@ export function TeamUsagePage() {
         <thead className="border-b bg-muted text-xs text-muted-foreground"><tr>{(['when', 'member', 'model', 'input', 'cacheRead', 'output', 'points', 'status'] as const).map((key) => <th key={key} className="px-4 py-3 font-medium">{t(key)}</th>)}<th className="px-4 py-3">{t('manage')}</th></tr></thead>
         <tbody>{usage.data.entries.map((row) => <tr key={row.id} className="border-b last:border-0">
           <td className="whitespace-nowrap px-4 py-3">{format.dateTime(new Date(row.createdAt), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-          <td className="px-4 py-3">{row.hostId ? t('sharedDsh') : names.get(row.userId) ?? t('formerMember')}</td><td className="px-4 py-3 font-medium">{what(row)}</td>
+          <td className="px-4 py-3">{row.hostId ? t('teamDsh') : names.get(row.userId) ?? t('formerMember')}</td><td className="px-4 py-3 font-medium">{what(row)}</td>
           <td className="px-4 py-3 tabular-nums">{row.input ?? '—'}</td><td className="px-4 py-3 tabular-nums">{row.cacheRead ?? '—'}</td><td className="px-4 py-3 tabular-nums">{row.output ?? '—'}</td>
           <td className="px-4 py-3 tabular-nums">{row.points ?? '—'}</td><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{t(`states.${row.state}`)}</td>
           <td className="px-4 py-3 text-right">{!row.meter && (row.state === 'pending' || row.state === 'unpriced' || row.code === 'usage_bound_exceeded') && <Button variant="ghost" size="sm" onClick={() => setResolving(row)}>{t(row.code === 'usage_bound_exceeded' ? 'reviewRoute' : 'resolve')}</Button>}</td>
