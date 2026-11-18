@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/content/docs/{en,zh-CN}/team-dsh.md`, `apps/web/src/pages/team/team-dsh-hosts.tsx`.
 
+## 2026-11-18 — My DSH opens the computer a pairing code came from
+
+- **What:** When the code typed on one computer's page came from another of the member's computers (two records may share a name: two DSHs on one machine), My DSH now opens the computer the pairing belongs to once it confirms, instead of waiting on the first. Computers sharing a name show a short id beside it.
+- **Why:** A member with two records named alike paired one and was left waiting on the other.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`.
+
 ## 2026-11-18 — My DSH says when pairing broke instead of waiting
 
 - **What:** Pairing a browser on My DSH no longer waits forever when the encrypted channel to the computer fails before it accepts: it says so and starts again with a new code. A new e2e test pairs `packages/relay-client`, as the console runs it, with the plugin's own pairing code.
