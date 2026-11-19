@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isThinking, rowsOf, toolKey } from '../conversation';
+import { fileReference, isThinking, rowsOf, toolKey, touchedFiles } from '../conversation';
 import type { ConversationItem } from '../types';
 
 const tool = (id: string, name: string, status: 'running' | 'done' | 'failed' | 'denied' = 'done'): ConversationItem => ({ kind: 'tool', id, name, summary: '', status });
@@ -40,5 +40,38 @@ describe('a published page in the conversation', () => {
     const tool = (id: string) => ({ kind: 'tool' as const, id, name: 'bash', summary: '', status: 'done' as const });
     const page = { kind: 'page' as const, id: 'page-2', page: { teamId: 't', pageId: 'p', version: 1, title: 'Q4', kind: 'html' as const } };
     expect(rowsOf([tool('1'), tool('2'), page, tool('3')]).map((r) => r.kind)).toEqual(['steps', 'page', 'steps']);
+  });
+});
+
+describe('touchedFiles', () => {
+  it('lists the files a session wrote or edited, the latest first and each once, leaving out failed calls', () => {
+    const tool = (id: string, name: string, summary: string, status: 'done' | 'failed' | 'running' = 'done') => ({ kind: 'tool' as const, id, name, summary, status });
+    expect(touchedFiles([
+      tool('1', 'write', 'src/a.ts'),
+      tool('2', 'bash', 'npm test'),
+      tool('3', 'edit', 'src/b.ts', 'failed'),
+      tool('4', 'str_replace_editor', 'src/c.ts'),
+      tool('5', 'edit', 'src/a.ts'),
+      tool('6', 'read', 'README.md'),
+    ])).toEqual(['src/a.ts', 'src/c.ts']);
+  });
+});
+
+describe('fileReference', () => {
+  it('reads paths and file names, with a line where one is given', () => {
+    expect(fileReference('src/app.ts')).toEqual({ path: 'src/app.ts' });
+    expect(fileReference('README.md')).toEqual({ path: 'README.md' });
+    expect(fileReference(' src/app.ts:42 ')).toEqual({ path: 'src/app.ts', line: 42 });
+    expect(fileReference('server/relay/relay.go:120:7')).toEqual({ path: 'server/relay/relay.go', line: 120 });
+    expect(fileReference('/home/me/project/Makefile')).toEqual({ path: '/home/me/project/Makefile' });
+    expect(fileReference('file:///home/me/notes%20one.md')).toEqual({ path: '/home/me/notes one.md' });
+    expect(fileReference('C:\\work\\app.ts:3')).toEqual({ path: 'C:\\work\\app.ts', line: 3 });
+    expect(fileReference('.env')).toEqual({ path: '.env' });
+  });
+
+  it('leaves out what is not a file', () => {
+    for (const text of ['https://example.com/a.ts', 'mailto:a@b.c', '@dsh-teamwork/relay-client', 'npm run build', 'v1.2', '1.2.3', 'useState()',
+      'foo', 'a=b.ts', '--flag', '$HOME/x', '~/x.md', 'src/', '', 'TODO.', 'e.g.', 'a.ts, b.ts'])
+      expect(fileReference(text)).toBeNull();
   });
 });

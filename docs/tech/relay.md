@@ -302,6 +302,7 @@ use, so DSH sees each phone as a separate client.
   - calls: `session/list`, `session/create`, `session/prompt`,
     `session/state`, `session/page`, `session/cancel`, `session/modelCatalog`,
     `teamwork/configuration`, `teamwork/selectModel`, `teamwork/selectPermission`,
+    `teamwork/listFiles`, `teamwork/searchFiles`, `teamwork/readFile`,
     `userQuestions/answer`, `$events/result`, and the list's actions:
     `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
     `workspace/archiveSession`, `workspace/unarchiveSession`;
@@ -355,6 +356,25 @@ running DSH's own `/permission` command in the plugin's process, as DSH's
 picker does; a preset not allowed is `teamwork/permission_refused`. The
 picker sits at the composer's foot beside the paperclip, as in DSH's input
 bar, and a new session's choice is applied once it is created.
+
+**A session's files** are read, never written: `teamwork/listFiles`
+(`{ sessionId, path }`), `teamwork/searchFiles` (`{ sessionId, query }`, by
+file name) and `teamwork/readFile` (`{ sessionId, path }`), which the plugin
+answers itself under the session's working directory, every path resolved to
+its real path first so that neither `..`, an absolute path elsewhere nor a
+symbolic link leaves it (the plugin's `src/phone-files.ts`); DSH's own
+`workspaceFiles` reads beyond the workspace and is not passed on. A folder
+lists at most 500 entries, a search returns at most 200 names, a file its
+first 256 KiB as text, and a binary one is `teamwork/not_text`.
+`teamwork/configuration`'s `files` says the plugin answers them. The console
+opens them from a session's **Files** button as its right column (the phone as
+a full-screen sheet): the session's changes, which the client reads from its
+own write and edit tool calls (`touchedFiles`), and every folder, searchable,
+each text file shown with its line numbers. A file the conversation names
+opens there too: a read, write or edit step's file, a reply's inline code that
+reads as a path, and a reply's link to a local file (`fileReference`: a folder
+path or a file name with an extension, `file://` allowed, `:line` opening it at
+that line; a web address, a package name or a command is not a file).
 
 ## File attachments
 

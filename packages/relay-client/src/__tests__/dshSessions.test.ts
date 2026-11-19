@@ -18,6 +18,8 @@ function fakeLink() {
       if (method === '$events/result') return {};
       if (method === 'session/rename') return { title: 'Release notes', seq: 4 };
       if (method === 'teamwork/selectPermission') return { current: 'read-only' };
+      if (method === 'teamwork/listFiles') return { path: '', entries: [{ name: 'src', kind: 'directory' }], truncated: false };
+      if (method === 'teamwork/readFile') return { path: 'a.md', text: 'hi', bytes: 2, truncated: false };
       if (method.startsWith('workspace/')) return {};
       throw new RelayError('configuration_unsupported');
     },
@@ -109,6 +111,10 @@ describe('a computer\'s sessions over any link', () => {
     expect(await sessions.selectPermission('c', 's1', 'read-only')).toBe('read-only');
     expect(calls.at(-1)).toMatchObject({ method: 'teamwork/selectPermission', args: { request: { sessionId: 's1', preset: 'read-only' } } });
     expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/permission_refused' } } })).toThrow(new RelayError('permission_refused'));
+    expect((await sessions.listFiles('c', 's1', '')).entries).toEqual([{ name: 'src', kind: 'directory' }]);
+    expect(calls.at(-1)).toMatchObject({ method: 'teamwork/listFiles', args: { request: { sessionId: 's1', path: '' } } });
+    expect((await sessions.readFile('c', 's1', 'a.md')).text).toBe('hi');
+    expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/not_text' } } })).toThrow(new RelayError('not_text'));
     unwatch();
   });
 });

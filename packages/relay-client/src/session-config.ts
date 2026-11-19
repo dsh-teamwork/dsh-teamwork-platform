@@ -68,6 +68,8 @@ const ConfigurationSchema = z.object({
     })
     .nullable()
     .default(null),
+  /** Whether the plugin lets a session's files be browsed, read only (`listFiles`, `searchFiles`, `readFile`); an older one does not say. */
+  files: z.boolean().default(false),
   current: z
     .object({
       sessionId: z.string(),
