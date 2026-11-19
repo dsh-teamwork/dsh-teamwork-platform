@@ -154,10 +154,13 @@ func (s *Server) Handler() http.Handler {
 
 	}
 
-	// An /api address no route claims answers in the API's shape, not as a page.
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+	// An /api or /relay address no route claims answers in the API's shape, not
+	// as a page: a client reading JSON gets an error it can read.
+	notFound := func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not_found"})
-	})
+	}
+	mux.HandleFunc("/api/", notFound)
+	mux.HandleFunc("/relay/", notFound)
 	if s.Web != nil && !s.ManageRoot {
 		if s.Config.ServiceRole == "manage" {
 			mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -29,6 +29,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/dsh-session.tsx`, `docs/tech/relay.md` ("My DSH in the web console").
 
+## 2026-11-19 — An unknown /relay address answers JSON
+
+- **What:** A `/relay/` path no route claims answers `404 {"error":"not_found"}`, as an unknown `/api/` path does, instead of the console's page with 200. With Team DSH offline that includes `GET /relay/shared`, which the phone app read as JSON and failed on.
+- **Why:** A client reading the relay's JSON got HTML and a parse error rather than an error it could handle.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/httpapi/server.go`, `TestTeamDSHOffline` in `server/relay/relay_test.go`.
+
 ## 2026-11-19 — An admin deletes a team; a member removes an offline computer
 
 - **What:** `DELETE /api/teams/{teamId}` lets a team's admin delete it with everyone in it, the team's name typed back as `confirm`; the console offers it at the foot of Members. `DELETE /relay/hosts/{id}` lets a member forget one of their own computers, once it is offline, with its pairing codes and every pairing to it (`host_online` while it is connected); My DSH offers it on an offline computer. `confirmation_mismatch` is now worded for either confirmation.
