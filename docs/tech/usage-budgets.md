@@ -27,6 +27,15 @@ one. Settlement hands the participant the upstream's own price for the call
 (`UpstreamCost`, OpenRouter's `usage.cost`) beside the tokens, both read by the
 one observer; the participant decides what that price means.
 
+The configuration a funded route publishes carries the bounds the plugin sizes
+the model by: `PublishModel` takes an `edition.OwnedModel` and writes its
+`contextWindow` and `maxTokens` into the model's `data`, each from 1 to
+10,000,000 as every team model's are. The plugin offers no model without a
+`contextWindow`. Publishing the same configuration again with another name or
+other bounds rewrites it under a new version, so members' plugins sync the
+change; an unchanged publication is a no-op, and one into a team that no longer
+exists is `edition.ErrTeamGone`.
+
 `server/internal/usage` owns normalization, immutable model rates, usage rows,
 policy/window reservations, settlement, recovery and notification work. The
 existing authenticated team API and console expose it on SQLite, Postgres and

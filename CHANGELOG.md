@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — Hosted models reach the plugin with their context window
+
+- **What:** `edition.FundingHost.PublishModel` takes an `edition.OwnedModel` (config id, name, route reference, `ContextWindow`, `MaxTokens`) and writes `contextWindow` and `maxTokens` into the published model's `data`, each from 1 to 10,000,000. Publishing an existing owned model again with another name or other bounds updates it and bumps its version; an unchanged publication changes nothing, and one into a deleted team is `edition.ErrTeamGone`.
+- **Why:** An owned model was published as `{provider, model}` only, so `GET /api/configs` gave the plugin no `contextWindow` and the plugin refused the model as unsized; a later change to the route's name or bounds never reached teams that had it already.
+- **Breaking:** An edition calling `PublishModel` passes an `edition.OwnedModel` instead of positional strings.
+- **Upgrade:** Nothing here; an edition republishes its owned models (premium: save the hosted model again in `/manage`).
+- **Refs:** `server/edition/funding.go`, `server/internal/usage/funding.go`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-19 — `REVIEW_SIGN_IN`: a fixed sign-in code for an app store reviewer
 
 - **What:** With `REVIEW_SIGN_IN=address:123456` and `SMTP_URL` set, that one address is sent no email and is issued the fixed code instead of a random one; it then signs in through the ordinary emailed-code door, under the same limits (five checks per code, ten minutes, five sends per fifteen minutes). Every other address is unchanged. The server logs a warning at start while it is set, and refuses to start when it is malformed or set without `SMTP_URL`.

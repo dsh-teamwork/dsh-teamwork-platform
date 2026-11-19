@@ -1,11 +1,13 @@
 package usage
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"reflect"
 	"slices"
 	"strings"
 	"sync/atomic"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -91,27 +94,38 @@ func (s *Service) RegisterFunding(owner string, p edition.ModelFunding) (edition
 			}
 			return tx.Commit()
 		},
-		PublishModel: func(ctx context.Context, exec edition.SQLExecutor, teamID, configID, name, reference string) error {
+		PublishModel: func(ctx context.Context, exec edition.SQLExecutor, teamID string, m edition.OwnedModel) error {
 			tx, ok := exec.(*fundingTx)
 			if !ok || !tx.active.Load() || tx.owner != owner || tx.teamID != teamID {
 				return errors.New("model publication outside its team transaction")
 			}
-			if configID == "" || len(configID) > 32 || strings.TrimSpace(name) == "" || utf8.RuneCountInString(name) > 100 || reference == "" || len(reference) > 100 {
+			if m.ConfigID == "" || len(m.ConfigID) > 32 || strings.TrimSpace(m.Name) == "" || utf8.RuneCountInString(m.Name) > 100 ||
+				m.Reference == "" || len(m.Reference) > 100 || !teamTokens(m.ContextWindow) || !teamTokens(m.MaxTokens) {
 				return errors.New("invalid owned model")
 			}
-			old, err := tx.db.TeamConfig.Query().Where(teamconfig.ID(configID)).Only(ctx)
-			if err == nil {
-				if old.TeamID != teamID || old.RouteOwner != owner || old.RouteReference != reference {
-					return errors.New("owned model id belongs to another route")
+			want := wire.ModelData{Provider: "hosted:" + owner, Model: m.Reference, ContextWindow: &m.ContextWindow, MaxTokens: &m.MaxTokens}
+			data, _ := json.Marshal(want)
+			old, err := tx.db.TeamConfig.Query().Where(teamconfig.ID(m.ConfigID)).Only(ctx)
+			if ent.IsNotFound(err) {
+				if exists, err := tx.db.Team.Query().Where(team.ID(teamID)).Exist(ctx); err != nil || !exists {
+					return cmp.Or(err, edition.ErrTeamGone)
 				}
-				return nil
+				return tx.db.TeamConfig.Create().SetID(m.ConfigID).SetTeamID(teamID).SetKind(teamconfig.KindModel).
+					SetName(m.Name).SetData(data).SetRouteOwner(owner).SetRouteReference(m.Reference).Exec(ctx)
 			}
-			if !ent.IsNotFound(err) {
+			if err != nil {
 				return err
 			}
-			data, _ := json.Marshal(map[string]string{"provider": "hosted:" + owner, "model": reference})
-			return tx.db.TeamConfig.Create().SetID(configID).SetTeamID(teamID).SetKind(teamconfig.KindModel).
-				SetName(name).SetData(data).SetRouteOwner(owner).SetRouteReference(reference).Exec(ctx)
+			if old.TeamID != teamID || old.RouteOwner != owner || old.RouteReference != m.Reference {
+				return errors.New("owned model id belongs to another route")
+			}
+			// Compared as values: Postgres and MySQL store JSON in their own form.
+			var had wire.ModelData
+			if old.Name == m.Name && json.Unmarshal(old.Data, &had) == nil && reflect.DeepEqual(had, want) {
+				return nil
+			}
+			// A new version is what tells a member's plugin to sync it again.
+			return tx.db.TeamConfig.UpdateOne(old).SetName(m.Name).SetData(data).AddVersion(1).Exec(ctx)
 		},
 	}, nil
 }
@@ -139,3 +153,7 @@ func (s *Service) Quote(ctx context.Context, owner string, ref edition.ModelRefe
 	}
 	return q, nil
 }
+
+// teamTokens is the bound every team model's contextWindow and maxTokens keep
+// (wire.ModelData), and the plugin reads.
+func teamTokens(n int64) bool { return n >= 1 && n <= 10_000_000 }

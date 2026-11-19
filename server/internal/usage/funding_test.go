@@ -3,9 +3,13 @@ package usage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
 type quoting struct{ q edition.FundingQuote }
@@ -43,4 +47,67 @@ func TestQuoteNeedsBoundsAndCannotOverrideCheckedFields(t *testing.T) {
 			t.Errorf("%s: %v", name, err)
 		}
 	}
+}
+
+// An owned model reaches the team's configuration with the bounds the plugin
+// sizes it by, and publishing it again with other bounds or another name
+// changes it under a new version, which is what makes the plugin sync it;
+// the same publication again changes nothing.
+func TestAPublishedModelCarriesItsBoundsAndARepublicationRefreshesThem(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		ctx := context.Background()
+		team := d.Client.Team.Create().SetName("Hosted").SaveX(ctx)
+		s := &Service{DB: d.Client}
+		host, err := s.RegisterFunding("billing", quoting{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		publish := func(m edition.OwnedModel) error {
+			return host.WithTeamTx(ctx, team.ID, func(tx edition.SQLExecutor) error { return host.PublishModel(ctx, tx, team.ID, m) })
+		}
+		read := func() (*ent.TeamConfig, wire.ModelData) {
+			c := d.Client.TeamConfig.GetX(ctx, "astra")
+			var data wire.ModelData
+			if err := json.Unmarshal(c.Data, &data); err != nil {
+				t.Fatal(err)
+			}
+			return c, data
+		}
+		m := edition.OwnedModel{ConfigID: "astra", Name: "Astra", Reference: "openai/astra", ContextWindow: 1_050_000, MaxTokens: 128_000}
+		if err := publish(m); err != nil {
+			t.Fatal(err)
+		}
+		c, data := read()
+		if data.Provider != "hosted:billing" || data.Model != "openai/astra" || data.ContextWindow == nil || *data.ContextWindow != 1_050_000 || data.MaxTokens == nil || *data.MaxTokens != 128_000 || c.Version != 1 {
+			t.Fatalf("published %s at version %d", c.Data, c.Version)
+		}
+		if err := publish(m); err != nil {
+			t.Fatal(err)
+		}
+		if c, _ := read(); c.Version != 1 {
+			t.Fatalf("an unchanged publication moved the version to %d", c.Version)
+		}
+		m.Name, m.ContextWindow, m.MaxTokens = "Astra 2", 400_000, 32_000
+		if err := publish(m); err != nil {
+			t.Fatal(err)
+		}
+		if c, data := read(); c.Name != "Astra 2" || *data.ContextWindow != 400_000 || *data.MaxTokens != 32_000 || c.Version != 2 {
+			t.Fatalf("republished as %q %s at version %d", c.Name, c.Data, c.Version)
+		}
+		for _, bad := range []edition.OwnedModel{
+			{ConfigID: "astra", Name: "Astra", Reference: "openai/other", ContextWindow: 1, MaxTokens: 1},
+			{ConfigID: "astra", Name: "Astra", Reference: "openai/astra", ContextWindow: 0, MaxTokens: 1},
+			{ConfigID: "astra", Name: "Astra", Reference: "openai/astra", ContextWindow: 10_000_001, MaxTokens: 1},
+		} {
+			if err := publish(bad); err == nil {
+				t.Fatalf("published %+v", bad)
+			}
+		}
+		gone := func(tx edition.SQLExecutor) error {
+			return host.PublishModel(ctx, tx, "deleted-team", edition.OwnedModel{ConfigID: "gone", Name: "Astra", Reference: "openai/astra", ContextWindow: 1, MaxTokens: 1})
+		}
+		if err := host.WithTeamTx(ctx, "deleted-team", gone); !errors.Is(err, edition.ErrTeamGone) {
+			t.Fatalf("published into a team that does not exist: %v", err)
+		}
+	})
 }

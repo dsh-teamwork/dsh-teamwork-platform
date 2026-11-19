@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -64,11 +65,24 @@ type ModelFunding interface {
 }
 
 // FundingHost is scoped to the registering extension's name. Team callbacks
-// follow the same lock order as inference. PublishModel creates an immutable
-// owned route, unusable if its funding participant is absent.
+// follow the same lock order as inference. PublishModel creates an owned
+// route in a team, unusable if its funding participant is absent; publishing
+// it again refreshes its name and bounds, so members' plugins sync the change.
 type FundingHost struct {
 	WithTeamTx   func(context.Context, string, func(SQLExecutor) error) error
-	PublishModel func(context.Context, SQLExecutor, string, string, string, string) error
+	PublishModel func(ctx context.Context, tx SQLExecutor, teamID string, m OwnedModel) error
+}
+
+// ErrTeamGone is PublishModel refusing a team that no longer exists, whose
+// configuration went with it: an extension's own record of the team outlived it.
+var ErrTeamGone = errors.New("team no longer exists")
+
+// OwnedModel is one owned route as a team's configuration shows it. Its
+// bounds are what the plugin sizes the model by (contextWindow, maxTokens),
+// each from 1 to 10,000,000 as every team model's are.
+type OwnedModel struct {
+	ConfigID, Name, Reference string
+	ContextWindow, MaxTokens  int64
 }
 
 // FundingError carries a safe public refusal, without supplier response text.
