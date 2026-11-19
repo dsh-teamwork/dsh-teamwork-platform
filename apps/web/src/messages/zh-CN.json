@@ -1065,7 +1065,7 @@
         "preset": "预设",
         "model": "模型",
         "desktopDefault": "桌面默认预设",
-        "followPreset": "跟随预设／桌面模型",
+        "followPreset": "默认模型",
         "noPreset": "未使用预设",
         "effort": "推理强度",
         "effortDefault": "模型默认值"

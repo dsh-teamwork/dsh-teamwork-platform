@@ -1065,7 +1065,7 @@
         "preset": "Preset",
         "model": "Model",
         "desktopDefault": "Desktop default",
-        "followPreset": "Preset / desktop model",
+        "followPreset": "Default model",
         "noPreset": "No preset",
         "effort": "Reasoning",
         "effortDefault": "Model default"
