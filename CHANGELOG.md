@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — A tighter session composer, and "Default model"
+
+- **What:** The console's session composer is tighter: smaller workspace, preset, permission and model pickers, a smaller attach and send button, less padding in the card, and the workspace and preset pickers closer to it, each taking up to the whole row so the preset wraps under the workspace, left-aligned, before a name is cut short. The model choice that follows the preset is named "Default model" (`followPreset` in the messages). The My DSH hint is shorter and says only you can use it.
+- **Why:** The composer took more room than it needed, and "Preset / desktop model" read as two choices.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/dsh-session.tsx`, `apps/web/src/messages/`.
+
 ## 2026-11-19 — Browse a session's files from the console
 
 - **What:** A session's **Files** button opens its working directory as the console's right column, read only: the files the session wrote or edited (`touchedFiles`, from its own tool calls) and every folder, searchable by name, each text file with line numbers; a file the conversation names (a step's file, a path in a reply, a local link) opens there at its line, by `fileReference`. It reads through the plugin's `teamwork/listFiles`, `teamwork/searchFiles` and `teamwork/readFile`, held under that directory; `teamwork/configuration`'s `files` says the plugin answers them. `@dsh-teamwork/relay-client` adds `listFiles`, `searchFiles`, `readFile`, `touchedFiles`, `fileReference` and the `not_text` error.

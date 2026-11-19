@@ -619,7 +619,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
         </div>
       )}
       {/* One composer in both places, so what is typed survives the move from the centre to the foot. */}
-      <div className={cn('flex flex-col gap-3', hero ? 'my-auto pb-[10vh]' : 'sticky bottom-0 mt-auto bg-background pt-2 pb-4')}>
+      <div className={cn('flex flex-col gap-1', hero ? 'my-auto pb-[10vh]' : 'sticky bottom-0 mt-auto bg-background pt-2 pb-4')}>
         {hero && (
           <section className="flex flex-col items-center gap-2 pb-2 text-center">
             <Server className="size-8 text-muted-foreground" aria-hidden />
@@ -680,7 +680,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
 const modelKey = (model: ModelSelection | null | undefined) => (model ? JSON.stringify([model.provider, model.model]) : '');
 
 /** A chip on the composer: a `Select` without its outline, as DSH draws the controls in its input bar. */
-const chip = 'h-8 max-w-56 gap-1.5 border-transparent bg-transparent px-2 text-xs shadow-none hover:bg-accent';
+const chip = 'h-7 max-w-56 gap-1 border-transparent bg-transparent px-1.5 text-xs shadow-none hover:bg-accent';
 
 /**
  * A session's choices as its computer reports them (`teamwork/configuration`): a new session's read (`sessionId` ""),
@@ -713,23 +713,24 @@ function StartSettings({ config, disabled, value, onChange }: { config: SessionC
   const cwd = value.cwd ?? defaultDirectory(config.directories, config.teamDirectories, team.id) ?? '';
   const fallback = config.presets.find((item) => item.isDefault);
   const presets = [
-    { value: '', label: [t('desktopDefault'), fallback?.name].filter(Boolean).join(' · '), icon: fallback && <PresetAvatar avatar={fallback.avatar} name={fallback.name} className="size-5" /> },
+    { value: '', label: [t('desktopDefault'), fallback?.name].filter(Boolean).join(' · '), icon: fallback && <PresetAvatar avatar={fallback.avatar} name={fallback.name} className="size-4" /> },
     // A preset its computer cannot run yet (a missing tool or plugin) is shown, with why, and cannot be chosen.
     ...config.presets.map((item) => ({
       value: item.id,
       label: [item.name, item.teamName, item.blocked && word(new RelayError(item.blocked as RelayErrorCode))].filter(Boolean).join(' · '),
       disabled: !!item.blocked,
-      icon: <PresetAvatar avatar={item.avatar} name={item.name} className="size-5" />,
+      icon: <PresetAvatar avatar={item.avatar} name={item.name} className="size-4" />,
     })),
   ];
   return (
-    <div className="flex flex-wrap items-center gap-1">
+    // The preset wraps under the folder when both do not fit, and a name longer than the row is cut short.
+    <div className="flex flex-wrap items-center gap-0.5">
       {config.directories.length > 0 && (
-        <Select label={t('workspace')} value={cwd} disabled={disabled} className={cn(chip, 'font-medium')}
+        <Select label={t('workspace')} value={cwd} disabled={disabled} className={cn(chip, 'max-w-full font-medium')}
           options={config.directories.map((item) => ({ value: item.path, label: item.name, icon: <Folder className="size-4 text-muted-foreground" aria-hidden /> }))}
           change={(path) => onChange({ ...value, cwd: path })} />
       )}
-      <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className={cn(chip, 'font-medium')}
+      <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className={cn(chip, 'max-w-full font-medium')}
         change={(id) => onChange({ ...value, agentPreset: id || undefined, model: undefined })} />
     </div>
   );
@@ -956,7 +957,7 @@ function AttachButton({ files, disabled }: { files: Files; disabled: boolean }) 
     <>
       <input ref={input} type="file" multiple hidden accept={files.limits.extensions.map((extension) => `.${extension}`).join(',')}
         onChange={(event) => { files.add(event.target.files); event.target.value = ''; }} />
-      <Button type="button" variant="ghost" size="sm" aria-label={t('add')} title={t('add')} disabled={disabled || files.progress !== null} onClick={() => input.current?.click()}>
+      <Button type="button" variant="ghost" size="icon" className="size-7" aria-label={t('add')} title={t('add')} disabled={disabled || files.progress !== null} onClick={() => input.current?.click()}>
         <Paperclip className="size-4" aria-hidden />
       </Button>
     </>
@@ -1019,7 +1020,7 @@ function Composer({ busy, rows, placeholder, send, files, stop, tools, children 
         void submit();
       }}
     >
-      <div className="flex flex-col gap-2 rounded-2xl border bg-card px-3 pt-3 pb-2 shadow-sm focus-within:ring-2 focus-within:ring-ring">
+      <div className="flex flex-col gap-1.5 rounded-2xl border bg-card px-2 pt-2 pb-1.5 shadow-sm focus-within:ring-2 focus-within:ring-ring">
         <FileCards files={files} disabled={busy} />
         <Textarea
           value={text}
@@ -1035,17 +1036,17 @@ function Composer({ busy, rows, placeholder, send, files, stop, tools, children 
             }
           }}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0.5">
           <AttachButton files={files} disabled={busy} />
           {tools}
-          <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
+          <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-0.5">
             {children}
             {stop ? (
-              <Button type="button" size="icon" className="size-8 rounded-full" aria-label={t('stop')} title={t('stop')} disabled={stop.disabled} onClick={stop.run}>
+              <Button type="button" size="icon" className="size-7 rounded-full" aria-label={t('stop')} title={t('stop')} disabled={stop.disabled} onClick={stop.run}>
                 <Square className="fill-current" aria-hidden />
               </Button>
             ) : (
-              <Button type="submit" size="icon" className="size-8 rounded-full" aria-label={t('send')} title={t('send')} disabled={!can}>
+              <Button type="submit" size="icon" className="size-7 rounded-full" aria-label={t('send')} title={t('send')} disabled={!can}>
                 <ArrowUp aria-hidden />
               </Button>
             )}
