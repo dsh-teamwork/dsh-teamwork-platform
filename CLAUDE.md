@@ -419,6 +419,9 @@ Three doors, all in `server/internal/auth` (ADR 0014):
   Resend's endpoint — and stored as an HMAC under `AUTH_SECRET`: ten minutes,
   at most five checks, each spent before the comparison, and five per address
   per fifteen minutes. People join a team by single-use invitation.
+  `REVIEW_SIGN_IN=address:123456` is the one exception: that address, an app
+  store reviewer's, is sent no mail and issued that fixed code, under the same
+  limits; it is set only while a review runs.
 - **Without it, a password**, stored as scrypt with its parameters. Ten wrong
   guesses per account per fifteen minutes, each spent before the comparison. A
   team admin creates a member's account with a first password, shown once,

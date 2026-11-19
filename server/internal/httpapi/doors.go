@@ -32,6 +32,11 @@ func (s *Server) sendCode(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	if s.Auth.IsReview(email) {
+		// The reviewer was given the code; nobody reads this address's mail.
+		w.WriteHeader(http.StatusNoContent)
+		return nil
+	}
 	if err := s.Mailer.SendCode(r.Context(), email, code); err != nil {
 		// The server's reply, never the message: it carries the code.
 		slog.Error("SMTP refused a sign-in code", "error", err)

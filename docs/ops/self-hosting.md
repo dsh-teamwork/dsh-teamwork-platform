@@ -62,6 +62,7 @@ configuration file.
 | `HOST`, `PORT` | Source binary listener; Compose fixes its internal listener. |
 | `DATABASE_URL` | Optional Postgres, MySQL or SQLite URL; absent means local SQLite. |
 | `SMTP_URL`, `AUTH_EMAIL_FROM` | Email sign-in codes instead of password-only sign-in. |
+| `REVIEW_SIGN_IN` | `address:123456`: an app store reviewer's address, sent no mail, signs in with that fixed code; needs `SMTP_URL`, and is unset once review is over. |
 | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` | Optional Google sign-in client. |
 | `AUTH_SECRET` | Optional session-signing secret; otherwise retained in the data directory. |
 | `PROVIDER_KEYS_SECRET` | Optional provider-key encryption secret; otherwise retained in the data directory. |

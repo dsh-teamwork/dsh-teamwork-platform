@@ -20,6 +20,8 @@ import (
 	"strings"
 
 	"golang.org/x/net/publicsuffix"
+
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
 // MinAuthSecret is the shortest AUTH_SECRET accepted.
@@ -45,6 +47,10 @@ type Config struct {
 	AllowPrivateProviders bool
 	SMTPURL               string // set: emailed codes; unset: passwords
 	EmailFrom             string // AUTH_EMAIL_FROM
+	// ReviewEmail and ReviewCode (REVIEW_SIGN_IN=address:123456) let a store
+	// reviewer sign in to one address with a fixed code instead of one emailed
+	// to it. Every limit on codes still holds; unset after review.
+	ReviewEmail, ReviewCode string
 
 	GoogleID, GoogleSecret string // both set: the Google door
 
@@ -95,6 +101,17 @@ func Load(args []string, env func(string) string) (Config, error) {
 		GoogleSecret:          strings.TrimSpace(env("AUTH_GOOGLE_SECRET")),
 		PostHogKey:            strings.TrimSpace(env("POSTHOG_KEY")),
 		PostHogHost:           strings.TrimRight(strings.TrimSpace(env("POSTHOG_HOST")), "/"),
+	}
+	if review := strings.TrimSpace(env("REVIEW_SIGN_IN")); review != "" {
+		address, code, _ := strings.Cut(review, ":")
+		email, ok := wire.Email(address)
+		if !ok || !wire.SixDigits.MatchString(code) {
+			return Config{}, errors.New("REVIEW_SIGN_IN: an address and six digits, as review@example.com:123456")
+		}
+		if c.Passwords() {
+			return Config{}, errors.New("REVIEW_SIGN_IN needs SMTP_URL: it replaces an emailed code")
+		}
+		c.ReviewEmail, c.ReviewCode = email, code
 	}
 	if c.MigrateArtifacts && c.MigrateArtifactPaths {
 		return Config{}, errors.New("choose only one artifact migration command")

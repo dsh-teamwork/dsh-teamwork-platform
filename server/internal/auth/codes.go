@@ -58,14 +58,23 @@ func (s *Service) IssueCode(ctx context.Context, email string) (string, error) {
 			return "", refuse(wire.TooManyAttempts)
 		}
 	}
-	n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
-	if err != nil {
-		return "", err
+	code := s.ReviewCode
+	if !s.IsReview(email) {
+		n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
+		if err != nil {
+			return "", err
+		}
+		code = fmt.Sprintf("%06d", n.Int64())
 	}
-	code := fmt.Sprintf("%06d", n.Int64())
 	err = s.DB.VerificationCode.Create().SetEmail(email).SetCodeHash(s.codeHash(email, code)).
 		SetExpiresAt(now.Add(CodeTTL)).SetCreatedAt(now).Exec(ctx)
 	return code, err
+}
+
+// IsReview is whether email is the store reviewer's address, whose code is
+// fixed and never emailed.
+func (s *Service) IsReview(email string) bool {
+	return s.ReviewEmail != "" && email == s.ReviewEmail
 }
 
 // ConsumeCode checks a code against the newest one sent to the address. The

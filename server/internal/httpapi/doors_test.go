@@ -76,6 +76,43 @@ func TestEmailCodeDoor(t *testing.T) {
 	})
 }
 
+// The store reviewer's address (REVIEW_SIGN_IN) is sent no mail and signs in
+// with its fixed code, under the same limits as any code; every other address
+// is still sent a random one.
+func TestReviewAddressSignsInWithItsFixedCode(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		mail := &mailbox{}
+		e := start(t, d, options{smtp: "smtp://mail.example", mailer: mail, review: [2]string{"review@example.com", "246810"}})
+		must(t, e.browser().post("/api/auth/email/send", map[string]string{"email": "Review@Example.com"}), 204)
+		if code := mail.code("review@example.com"); code != "" {
+			t.Fatalf("the review address was emailed %q", code)
+		}
+		b := e.browser()
+		must(t, b.post("/api/auth/email/verify", map[string]string{"email": "review@example.com", "code": "246810"}), 204)
+		if user := must(t, b.get("/api/auth/session"), 200)["user"].(map[string]any); user["email"] != "review@example.com" {
+			t.Fatalf("signed in as %v", user)
+		}
+		// Without a send first there is no code to match, as for anyone.
+		if r := e.browser().post("/api/auth/email/verify", map[string]string{"email": "review@example.com", "code": "246810"}); r.code() != "invalid_code" {
+			t.Fatalf("a fixed code with no send: %s", r.body)
+		}
+		// Five wrong guesses spend the code, even though the right one is known.
+		must(t, e.browser().post("/api/auth/email/send", map[string]string{"email": "review@example.com"}), 204)
+		for i := 0; i < auth.MaxCodeChecks; i++ {
+			if r := e.browser().post("/api/auth/email/verify", map[string]string{"email": "review@example.com", "code": "135791"}); r.code() != "invalid_code" {
+				t.Fatalf("guess %d: %s", i+1, r.body)
+			}
+		}
+		if r := e.browser().post("/api/auth/email/verify", map[string]string{"email": "review@example.com", "code": "246810"}); r.code() != "too_many_attempts" {
+			t.Fatalf("the fixed code after five wrong guesses: %s", r.body)
+		}
+		must(t, e.browser().post("/api/auth/email/send", map[string]string{"email": "ada@example.com"}), 204)
+		if code := mail.code("ada@example.com"); len(code) != 6 {
+			t.Fatalf("another address was not emailed: %q", code)
+		}
+	})
+}
+
 // A code that could not be sent is given back: failed sends do not use up the
 // address's five, and leave no code that could sign in.
 func TestUnsentCodeIsGivenBack(t *testing.T) {

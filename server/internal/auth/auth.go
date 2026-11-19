@@ -40,6 +40,9 @@ type Service struct {
 	Sealer *Sealer
 	Secret string
 	Now    func() time.Time
+	// ReviewEmail is sent no code: ReviewCode is the one it is issued
+	// (REVIEW_SIGN_IN, internal/config).
+	ReviewEmail, ReviewCode string
 
 	decoyOnce sync.Once
 	decoy     string
