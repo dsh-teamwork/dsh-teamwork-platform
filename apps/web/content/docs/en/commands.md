@@ -38,11 +38,11 @@ through the plugin's directory in `~/.dsh`, or `$DSH_HOME`. Linux and macOS.
 | `dsh-teamwork server [url]` | Show the Teamwork server, or set it: a self-hosted team does this first. |
 | `dsh-teamwork login` | Print a sign-in link to open in any browser. |
 | `dsh-teamwork authorize <code>` | Finish sign-in with the code the page shows. |
-| `dsh-teamwork status` | Sign-in, teams, sync, the relay and paired phones. |
+| `dsh-teamwork status` | Sign-in, teams, sync, the relay and paired devices. |
 | `dsh-teamwork sync` | Sync the team's configuration now. |
 | `dsh-teamwork logout` | Sign out and drop the team's resources. |
-| `dsh-teamwork phone pair` | Draw the phone app's pairing QR code in the terminal. |
-| `dsh-teamwork phone list` | Paired and waiting phones, with a waiting phone's safety code. |
-| `dsh-teamwork phone accept <id>` | Accept a waiting phone once it shows the same safety code; `reject <id>` refuses it. |
-| `dsh-teamwork phone revoke <id>` | Remove a paired phone. |
+| `dsh-teamwork device pair` | Print a pairing code, and draw the phone app's QR code in the terminal; a browser types the code in My DSH. |
+| `dsh-teamwork device list` | Paired and waiting devices, with a waiting device's safety code. |
+| `dsh-teamwork device accept <id>` | Accept a waiting device once it shows the same safety code; `reject <id>` refuses it. |
+| `dsh-teamwork device revoke <id>` | Remove a paired device. |
 
