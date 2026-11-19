@@ -5,6 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
+
+	"github.com/coder/websocket"
+
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 )
 
 // console is an HTTP request from the web console: the member's session
@@ -103,6 +109,60 @@ func TestConsoleManagesTheMembersDevices(t *testing.T) {
 		_, listed = w.console(w.adaID, "GET", "/relay/hosts", keyB, false)
 		if got := listed["hosts"].([]any)[0].(obj)["pairings"].([]any); len(got) != 1 || got[0].(obj)["id"] != browserID {
 			t.Fatalf("after revoke %v", got)
+		}
+	})
+}
+
+// The web console forgets one of the member's own computers once it is
+// offline, with its pairing codes and every pairing to it; a connected one is
+// refused, since it would only be recorded again. It reaches no other
+// member's, and an app's token reaches none.
+func TestConsoleDeletesAComputer(t *testing.T) {
+	each(t, func(t *testing.T, w *world) {
+		laptop := w.host(w.ada, "ada-laptop")
+		pc := laptop.hostID()
+		laptop.ask(obj{"t": "offer"})
+		phoneID := w.paired(w.adaID, pc, true)
+		phone := w.phone(w.adaPhone)
+		bobHost := w.host(w.bob, "bob-laptop").hostID()
+		bobID := w.r.db.RelayHost.GetX(w.r.ctx, bobHost).UserID
+
+		if status, body := w.console(w.adaID, "DELETE", "/relay/hosts/"+pc, "", true); status != 409 || body["error"] != "host_online" {
+			t.Fatalf("online computer %d %v", status, body)
+		}
+		laptop.c.Close(websocket.StatusNormalClosure, "")
+		phone.send(sealed(phoneID, "open"))
+		equal(t, phone.next(is("error"))["error"], "offline")
+
+		if status, _ := w.call(w.adaPhone, "DELETE", "/relay/hosts/"+pc, nil); status != 403 {
+			t.Fatalf("app delete %d", status)
+		}
+		if status, _ := w.console(w.adaID, "DELETE", "/relay/hosts/"+pc, "", false); status != 401 {
+			t.Fatalf("cross-site delete %d", status)
+		}
+		if status, _ := w.console(bobID, "DELETE", "/relay/hosts/"+pc, "", true); status != 404 {
+			t.Fatalf("other member's computer %d", status)
+		}
+
+		if status, _ := w.console(w.adaID, "DELETE", "/relay/hosts/"+pc, "", true); status != 204 {
+			t.Fatalf("delete %d", status)
+		}
+		equal(t, phone.next(is("revoked")), obj{"t": "revoked", "pairingId": phoneID})
+		if w.r.db.RelayHost.Query().Where(relayhost.ID(pc)).ExistX(w.r.ctx) ||
+			w.r.db.RelayPairing.Query().Where(relaypairing.HostID(pc)).ExistX(w.r.ctx) ||
+			w.r.db.RelayPairingOffer.Query().Where(relaypairingoffer.HostID(pc)).ExistX(w.r.ctx) {
+			t.Fatal("rows of the deleted computer are left behind")
+		}
+		_, listed := w.console(w.adaID, "GET", "/relay/hosts", "", false)
+		equal(t, listed["hosts"], []any{})
+		if status, _ := w.console(w.adaID, "DELETE", "/relay/hosts/"+pc, "", true); status != 404 {
+			t.Fatalf("deleted twice %d", status)
+		}
+
+		// The same computer coming back is recorded anew, with nothing paired.
+		again := w.host(w.ada, "ada-laptop").hostID()
+		if again == pc {
+			t.Fatal("the computer came back under its old id")
 		}
 	})
 }

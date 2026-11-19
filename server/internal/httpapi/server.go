@@ -92,6 +92,7 @@ func (s *Server) Handler() http.Handler {
 		post("/api/teams/{teamId}/configs", s.createConfig)
 		get("/api/teams", s.listTeams)
 		get("/api/teams/{teamId}", s.getTeam)
+		write("DELETE", "/api/teams/{teamId}", s.deleteTeam)
 		write("DELETE", "/api/teams/{teamId}/membership", s.leaveTeam)
 		post("/api/teams/{teamId}/members", s.addMember)
 		write("DELETE", "/api/teams/{teamId}/members/{userId}", s.removeMember)

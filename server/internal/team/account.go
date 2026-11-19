@@ -110,17 +110,69 @@ func (s *Service) DeleteAccount(ctx context.Context, userID, confirm string) err
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	// The rows are gone, so nothing reaches these bytes any more; a file left
-	// behind by a failed delete is logged, not a failed deletion.
-	if s.Artifacts != nil {
-		for _, a := range artifacts {
-			if err := s.Artifacts.Delete(context.WithoutCancel(ctx), a.TeamID, a.ID); err != nil {
-				slog.Warn("deleted team's artifact left in storage", "team", a.TeamID, "artifact", a.ID, "error", err)
-			}
-		}
-		s.forgetPageObjects(context.WithoutCancel(ctx), objects)
-	}
+	s.forgetStored(ctx, artifacts, objects)
 	return nil
+}
+
+// DeleteTeam is its admin deleting a team, with everyone in it and everything
+// it holds (docs/adr/0056-an-admin-deletes-a-team.md). confirm must be the
+// team's name, so a stray request cannot do it. Its members lose it at their
+// next request, as a removed member does; what they did in it goes with it.
+//
+// An edition hears TeamDeleted in the same transaction and may refuse it: the
+// hosted edition refuses a team that still holds purchased credit.
+func (s *Service) DeleteTeam(ctx context.Context, userID, teamID, confirm string) error {
+	tx, err := s.DB.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	// Read inside the transaction: an admin role handed over meanwhile is not this one.
+	m, err := tx.Membership.Query().Where(membership.UserID(userID), membership.TeamID(teamID)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return wire.E(http.StatusNotFound, wire.TeamNotFound)
+	}
+	if err != nil {
+		return err
+	}
+	if m.Role != membership.RoleAdmin {
+		return wire.E(http.StatusForbidden, wire.AdminRequired)
+	}
+	t, err := tx.Team.Get(ctx, m.TeamID)
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(confirm) != strings.TrimSpace(t.Name) {
+		return wire.E(http.StatusBadRequest, "confirmation_mismatch")
+	}
+	artifacts, objects, err := deleteTeam(ctx, tx.Client(), t.ID)
+	if err != nil {
+		return err
+	}
+	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.TeamDeleted, TeamID: t.ID, UserID: userID, ActorID: userID}); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	s.forgetStored(ctx, artifacts, objects)
+	return nil
+}
+
+// forgetStored deletes the stored bytes of deleted teams' artifacts and pages.
+// The rows are gone, so nothing reaches these bytes any more; a file left
+// behind by a failed delete is logged, not a failed deletion.
+func (s *Service) forgetStored(ctx context.Context, artifacts []*ent.ResourceArtifact, objects []pageObject) {
+	if s.Artifacts == nil {
+		return
+	}
+	ctx = context.WithoutCancel(ctx)
+	for _, a := range artifacts {
+		if err := s.Artifacts.Delete(ctx, a.TeamID, a.ID); err != nil {
+			slog.Warn("deleted team's artifact left in storage", "team", a.TeamID, "artifact", a.ID, "error", err)
+		}
+	}
+	s.forgetPageObjects(ctx, objects)
 }
 
 // pageObject is a page file's object in the store: teams/{team}/pages/{digest}.

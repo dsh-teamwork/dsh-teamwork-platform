@@ -476,6 +476,16 @@
       "makeAdminConfirm": "把 {email} 设为团队管理员？你会变成成员，只有对方才能再把管理员交还给你。",
       "madeAdmin": "已转交管理员。"
     },
+    "deleteTeam": {
+      "title": "删除团队",
+      "hint": "删除团队及其所有成员关系、模型、预设、历史和用量。此操作无法撤销。",
+      "dialogTitle": "删除 {name}？",
+      "description": "{count, plural, one {你是它唯一的成员。} other {它的 # 位成员会立即失去这个团队。}}它的模型、预设、插件、版本、用量和预算会一并删除，下次同步时会从所有人的 DSH 中消失。此操作无法撤销。",
+      "confirm": "输入团队名称 {name} 以确认",
+      "submit": "删除团队",
+      "cancel": "取消",
+      "done": "团队已删除。"
+    },
     "invites": {
       "create": "生成一次性邀请",
       "created": "邀请已生成。请立即复制链接，之后不会再显示。",
@@ -1134,6 +1144,11 @@
       "revoked": "已移除。",
       "loadFailed": "读取你的电脑失败，请重试。",
       "revokeFailed": "没能移除这个设备，请重试。",
+      "removeComputer": "移除这台电脑",
+      "removeComputerConfirm": "移除 {name} 以及与它配对的所有手机和浏览器？如果它再次登录 Teamwork，会重新出现在这里，需要重新配对。",
+      "computerRemoved": "已移除这台电脑。",
+      "removeComputerOnline": "这台电脑正在连接中。请先在它的 DSH 里退出 Teamwork，再移除。",
+      "removeComputerFailed": "没能移除这台电脑，请重试。",
       "browserUnsupported": "这个浏览器无法保存配对需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。"
     },
     "pages": {
@@ -1421,7 +1436,7 @@
     "revision_not_found": "找不到历史版本。",
     "already_admin": "你已经是这个团队的管理员。",
     "member_not_found": "此人不是这个团队的成员。",
-    "confirmation_mismatch": "请按页面显示的样子输入你的邮箱。",
+    "confirmation_mismatch": "请按页面显示的内容原样输入。",
     "admin_of_shared_team": "你管理的团队里还有其他成员。请先把管理员转给其中一人。",
     "wallet_has_balance": "要删除的团队里还有已购买的额度。请先用完，或写信给客服申请退款。",
     "provider_address_private": "本服务器只调用公网地址。如需在自建服务器上使用本地或内网地址，请设置 ALLOW_PRIVATE_PROVIDERS=true。",

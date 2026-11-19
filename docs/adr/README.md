@@ -48,6 +48,8 @@ or the hosted service, kept with the closed edition rather than here.
 
 - [0054 — A funded route states its own bounds](0054-a-funded-route-states-its-bounds.md) — an edition's quote sizes the hold, adds routing fields and receives the upstream's price.
 
+- [0056 — An admin deletes a team](0056-an-admin-deletes-a-team.md) — the admin deletes a team with everyone in it, typing its name back.
+
 The template:
 
 ```markdown

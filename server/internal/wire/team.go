@@ -469,6 +469,19 @@ func (o *Optional[T]) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// DeleteTeam is DELETE /api/teams/{teamId}: confirm is the team's name.
+type DeleteTeam struct {
+	Confirm string `json:"confirm"`
+}
+
+func (d *DeleteTeam) Validate() error {
+	var is Issues
+	if length(d.Confirm) < 1 || length(d.Confirm) > 320 {
+		is.Add("The team's name", "confirm")
+	}
+	return is.Err()
+}
+
 // DeleteAccount is DELETE /api/profile: confirm is the account's email.
 type DeleteAccount struct {
 	Confirm string `json:"confirm"`

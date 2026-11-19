@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — An admin deletes a team; a member removes an offline computer
+
+- **What:** `DELETE /api/teams/{teamId}` lets a team's admin delete it with everyone in it, the team's name typed back as `confirm`; the console offers it at the foot of Members. `DELETE /relay/hosts/{id}` lets a member forget one of their own computers, once it is offline, with its pairing codes and every pairing to it (`host_online` while it is connected); My DSH offers it on an offline computer. `confirmation_mismatch` is now worded for either confirmation.
+- **Why:** A team could end only with its admin's account, and a computer's record, a stale one left by signing in again included, could not be removed at all.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0056, `docs/tech/relay.md` ("My DSH in the web console"), `server/internal/team/account.go`, `server/relay/relay.go`.
+
 ## 2026-11-19 — A session shows a turn that failed
 
 - **What:** `@dsh-teamwork/relay-client` reads DSH's `turn/end` with an error into a `failed` conversation item (`message`, and `noModel` when the session had no model to call), and the console and the phone show it in the conversation, a missing model with where to choose or add one. A prompt refused as `model_unavailable` (no model, no key on that computer, or a removed team model) now says so and where to choose another.

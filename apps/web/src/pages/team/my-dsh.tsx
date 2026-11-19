@@ -4,7 +4,8 @@
  * sessions beneath the one open once this browser is paired with it; the third pairs this browser (the code from the
  * computer's Teamwork panel, then the safety code), asks for the computer's PIN, and holds the conversation. Each
  * computer in the list counts its devices, every phone and browser of the member's paired with it; the count opens
- * them on a page of their own (`/teams/{teamId}/my-dsh/{hostId}/devices`), each removable (ADR 0048). The computer's id
+ * them on a page of their own (`/teams/{teamId}/my-dsh/{hostId}/devices`), each removable (ADR 0048). An offline
+ * computer can be removed itself, with every device paired to it. The computer's id
  * in the address is its host id; the relay is spoken to through this browser's pairing.
  *
  * The third column follows the computer's state, one at a time: offline (nothing else is possible), online but not
@@ -13,7 +14,7 @@
  * every few seconds, so a computer coming online or going away moves the page along by itself.
  */
 
-import { ArrowLeft, Check, Laptop, Loader, Monitor, RotateCw, Smartphone, WifiOff, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Check, Laptop, Loader, Monitor, RotateCw, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -22,7 +23,7 @@ import { useFormatter, useTranslations } from 'use-intl';
 import { HOST_OS_NAMES, normalizePairingCode, PAIRING_CODE_LENGTH, RelayError, type Pairing } from '@dsh-teamwork/relay-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { browserCanJoin, myComputers, relayFor, removeDevice, type MyComputer } from '@/lib/relay';
+import { browserCanJoin, myComputers, relayFor, removeComputer, removeDevice, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
@@ -132,7 +133,15 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
         <>
           <HostHeader host={host} twin={twin(host)} />
           {!host.online ? (
-            <State icon={WifiOff} title={t('offlineTitle', { name: host.name })} body={t(paired ? 'offlineHelp' : 'offlineUnpairedHelp')} />
+            <State icon={WifiOff} title={t('offlineTitle', { name: host.name })} body={t(paired ? 'offlineHelp' : 'offlineUnpairedHelp')}>
+              <RemoveComputer
+                host={host}
+                removed={() => {
+                  void load();
+                  navigate(base);
+                }}
+              />
+            </State>
           ) : !computerId ? (
             <Pair
               host={host}
@@ -174,6 +183,32 @@ function State({ icon: Icon, spin, title, body, children }: { icon: LucideIcon; 
       <p className="text-sm text-muted-foreground">{body}</p>
       {children}
     </section>
+  );
+}
+
+/** Forgets an offline computer with every device paired to it: one no longer used, or a record left by signing in again. */
+function RemoveComputer({ host, removed }: { host: MyComputer; removed: () => void }) {
+  const { me } = useTeam();
+  const t = useTranslations('team.myDsh');
+  const [busy, setBusy] = useState(false);
+  async function remove() {
+    if (!confirm(t('removeComputerConfirm', { name: host.name }))) return;
+    setBusy(true);
+    try {
+      await removeComputer(me, host);
+      toast.success(t('computerRemoved'));
+      removed();
+    } catch (error) {
+      toast.error(t(error instanceof Error && error.message === 'host_online' ? 'removeComputerOnline' : 'removeComputerFailed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Button variant="outline" className="text-destructive hover:text-destructive" disabled={busy} onClick={() => void remove()}>
+      <Trash2 className="size-4" aria-hidden />
+      {t('removeComputer')}
+    </Button>
   );
 }
 

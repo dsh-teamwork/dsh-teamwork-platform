@@ -108,3 +108,53 @@ func TestTheAppDeletesTheAccountWithItsToken(t *testing.T) {
 		refused(t, "the browser after the deletion", b.get("/api/profile"), 401, "unauthorized")
 	})
 }
+
+// An admin deletes their team with everyone in it (ADR 0056): the name typed
+// back confirms it, a member may not, and the members lose it at once while
+// their accounts and other teams stay.
+func TestDeletingATeam(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		ctx := context.Background()
+		e := start(t, d, options{})
+		admin, _ := e.person("admin@x.io")
+		member, memberID := e.person("member@x.io")
+		outsider, _ := e.person("outsider@x.io")
+		doomed := newTeam(t, admin, "Doomed")
+		kept := newTeam(t, admin, "Kept")
+		for _, id := range []string{doomed, kept} {
+			_, token := invite(t, admin, id)
+			must(t, member.post("/api/invites/redeem", map[string]string{"token": token}), 200)
+		}
+		must(t, admin.post("/api/teams/"+doomed+"/configs", map[string]any{"kind": "preset", "name": "Ours", "data": map[string]any{"inheritModel": true, "description": "Ours", "requiredTools": []string{}, "optionalTools": []string{}, "systemPrompt": "Be brief."}}), 201)
+		must(t, member.post("/api/teams/"+doomed+"/submissions", map[string]any{"config": map[string]any{"kind": "preset", "name": "Draft", "data": map[string]any{"inheritModel": true}}, "baseVersion": 0, "note": ""}), 200)
+		must(t, admin.send("PUT", "/api/teams/"+doomed+"/budgets", budgetBody("team", "", "10", 0)), 200)
+
+		path := "/api/teams/" + doomed
+		refused(t, "a member deleting it", member.send("DELETE", path, map[string]string{"confirm": "Doomed"}), 403, "admin_required")
+		refused(t, "an outsider deleting it", outsider.send("DELETE", path, map[string]string{"confirm": "Doomed"}), 404, "team_not_found")
+		refused(t, "a confirmation that is not the name", admin.send("DELETE", path, map[string]string{"confirm": "Kept"}), 400, "confirmation_mismatch")
+		refused(t, "the name in another case", admin.send("DELETE", path, map[string]string{"confirm": "doomed"}), 400, "confirmation_mismatch")
+		if !d.Client.Team.Query().Where(team.ID(doomed)).ExistX(ctx) {
+			t.Fatal("a refused deletion changed something")
+		}
+
+		must(t, admin.send("DELETE", path, map[string]string{"confirm": " Doomed "}), 204)
+		if d.Client.Team.Query().Where(team.ID(doomed)).ExistX(ctx) || d.Client.TeamConfig.Query().Where(teamconfig.TeamID(doomed)).ExistX(ctx) {
+			t.Fatal("the team is still there")
+		}
+		if d.Client.ResourceSubmission.Query().Where(resourcesubmission.TeamID(doomed)).ExistX(ctx) || d.Client.BudgetPolicy.Query().Where(budgetpolicy.TeamID(doomed)).ExistX(ctx) {
+			t.Fatal("rows of the deleted team are left behind")
+		}
+		refused(t, "the member after the deletion", member.get(path), 404, "team_not_found")
+		refused(t, "the admin after the deletion", admin.get(path), 404, "team_not_found")
+		for _, b := range []*browser{admin, member} {
+			teams := jsonArray(t, b.get("/api/teams"))
+			if len(teams) != 1 || teams[0].(map[string]any)["id"] != kept {
+				t.Fatalf("teams left: %v", teams)
+			}
+		}
+		if !d.Client.User.Query().Where(user.ID(memberID)).ExistX(ctx) {
+			t.Fatal("the member's account went with the team")
+		}
+	})
+}
