@@ -93,6 +93,8 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
   'teamwork/file_type': 'file_type', 'teamwork/file_name': 'file_name', 'teamwork/file_too_large': 'file_too_large', 'teamwork/invalid_upload': 'invalid_upload',
   'teamwork/upload_expired': 'upload_expired', 'teamwork/upload_failed': 'upload_failed', 'session/attachment-invalid': 'upload_expired',
   'teamwork/locked': 'locked', 'teamwork/preset_changed': 'preset_changed', 'teamwork/model_unavailable': 'model_unavailable', 'teamwork/invalid_request': 'invalid_request',
+  // A cloud computer's server: an answer to a question no page of that computer still holds.
+  'teamwork/stale': 'stale',
 };
 
 /**

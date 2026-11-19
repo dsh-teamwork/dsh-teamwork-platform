@@ -79,5 +79,6 @@ describe('a computer\'s sessions over any link', () => {
     expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'session/agent-busy' } } })).toThrow(new RelayError('busy'));
     expect(() => bridgeValue(403, { error: 'method_not_allowed' })).toThrow(new RelayError('configuration_unsupported'));
     expect(() => bridgeValue(502, null)).toThrow(new RelayError('unavailable'));
+    expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/stale' } } })).toThrow(new RelayError('stale'));
   });
 });
