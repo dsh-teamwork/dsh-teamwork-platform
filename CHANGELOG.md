@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-19 — A session shows a turn that failed
 
-- **What:** `@dsh-teamwork/relay-client` reads DSH's `turn/end` with an error into a `failed` conversation item (`message`, and `noModel` when the session had no model to call), and the console and the phone show it in the conversation, a missing model with where to choose or add one.
+- **What:** `@dsh-teamwork/relay-client` reads DSH's `turn/end` with an error into a `failed` conversation item (`message`, and `noModel` when the session had no model to call), and the console and the phone show it in the conversation, a missing model with where to choose or add one. A prompt refused as `model_unavailable` (no model, no key on that computer, or a removed team model) now says so and where to choose another.
 - **Why:** A turn that failed, most often a session with no model, ended with nothing on screen, so a message seemed to go unanswered.
 - **Breaking:** None.
 - **Upgrade:** Nothing.

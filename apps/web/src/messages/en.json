@@ -1498,7 +1498,7 @@
     "missing_tools": "The machine is missing tools this preset needs.",
     "missing_plugins": "The machine is missing plugins this preset needs.",
     "preset_unavailable": "That preset is not available on the machine.",
-    "model_unavailable": "That model is not available right now.",
+    "model_unavailable": "This session’s model can’t be used here: none is chosen, it has no key on this computer, or the team removed it. Choose another in the model menu below the message box.",
     "unavailable": "The machine could not be reached. Try again.",
     "file_type": "Choose a text, code, log, CSV, JSON or PDF file. Images and other formats are not supported yet.",
     "file_too_large": "Up to 5 files per message: 20 MB each, 50 MB in total.",

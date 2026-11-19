@@ -1498,7 +1498,7 @@
     "missing_tools": "机器缺少这个预设需要的工具。",
     "missing_plugins": "机器缺少这个预设需要的插件。",
     "preset_unavailable": "机器上没有这个预设。",
-    "model_unavailable": "这个模型暂时不可用。",
+    "model_unavailable": "这个会话的模型在这里用不了：可能还没选模型、这台电脑上没有它的密钥，或已被团队移除。请在输入框下方的模型菜单里换一个。",
     "unavailable": "无法连接到机器，请重试。",
     "file_type": "请选择文本、代码、日志、CSV、JSON 或 PDF 文件，暂不支持图片及其他格式。",
     "file_too_large": "每条消息最多 5 个文件：单个不超过 20 MB，合计不超过 50 MB。",
