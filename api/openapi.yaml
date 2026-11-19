@@ -351,6 +351,24 @@ paths:
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
+    delete:
+      summary: "Its admin deletes the team, with everyone in it and everything it holds (ADR 0056); an edition may refuse"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: string, minLength: 1, maxLength: 320, description: The team's name }
+      responses:
+        '204': { description: Deleted }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
   /teams/{teamId}/membership:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -1582,6 +1600,19 @@ paths:
                 properties: { hosts: { type: array, items: { $ref: '#/components/schemas/RelayHost' } } }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
+  /relay/hosts/{id}:
+    servers: [{ url: / }]
+    delete:
+      summary: "Forget one of the member's own computers with every pairing to it, once it is offline; a connected one is host_online (the web console only)"
+      security: [{ session: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
   /relay/pairings/{id}:
     servers: [{ url: / }]
     delete:

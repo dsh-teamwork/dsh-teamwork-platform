@@ -111,7 +111,8 @@ describes exact dependency pins, access checks, export and restoration.
 An account is deleted by its owner (ADR 0039): refused while it administers a
 team with others in it, until the role is handed over; a team it is alone in
 goes with it, rows and artifact bytes; elsewhere only the membership goes, and
-the team keeps its records under a former member.
+the team keeps its records under a former member. A team is deleted by its
+admin (ADR 0056), with everyone in it and the same rows.
 
 ## A request through the team API
 
@@ -133,6 +134,7 @@ the team keeps its records under a former member.
 | `GET /api/teams` | anyone signed in | The teams the caller is in, with their role in each |
 | `POST /api/teams` | anyone signed in | Create a team; the caller is its admin |
 | `GET /api/teams/:teamId` | member | The team, the caller's role, its members |
+| `DELETE /api/teams/:teamId` | admin | Delete the team with everyone in it; `confirm` is its name |
 | `DELETE /api/teams/:teamId/membership` | member | Leave (an admin cannot) |
 | `POST /api/teams/:teamId/members`; `DELETE /api/teams/:teamId/members/:userId` | admin | Add by email (passwords only), remove |
 | `GET`, `POST /api/teams/:teamId/invites`; `DELETE …/invites/:id` | admin | List, create (token shown once), revoke |

@@ -130,6 +130,7 @@ func (r *relay) routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /relay/pair", r.pair)
 	mux.HandleFunc("GET /relay/pairings", r.listPairings)
 	mux.HandleFunc("GET /relay/hosts", r.listHosts)
+	mux.HandleFunc("DELETE /relay/hosts/{id}", r.deleteHost)
 	mux.HandleFunc("DELETE /relay/pairings/{id}", r.revokePairing)
 	mux.HandleFunc("PUT /relay/pairings/{id}/push", r.setPush)
 }
@@ -899,6 +900,65 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	}
 	r.mu.Unlock()
 	writeJSON(w, http.StatusOK, map[string]any{"hosts": out})
+}
+
+// deleteHost forgets one of the member's own computers with its pairing codes
+// and every pairing to it: a computer they no longer use, or a record left by
+// signing in again. Only the web console asks, by its session cookie. A
+// computer still connected is refused, since it would only be recorded again
+// as it is; it is signed out of Teamwork on that computer first. One that
+// comes back later is recorded anew and paired again.
+func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
+	if bearer(req) != "" {
+		errorJSON(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	userID := r.caller(w, req)
+	if userID == "" {
+		return
+	}
+	id := req.PathValue("id")
+	r.mu.Lock()
+	_, online := r.hosts[id]
+	r.mu.Unlock()
+	if online {
+		errorJSON(w, http.StatusConflict, "host_online")
+		return
+	}
+	ctx := req.Context()
+	tx, err := r.db.Tx(ctx)
+	if err != nil {
+		rejectedJSON(w, err)
+		return
+	}
+	defer tx.Rollback()
+	n, err := tx.RelayHost.Delete().Where(relayhost.ID(id), relayhost.UserID(userID)).Exec(ctx)
+	if err == nil && n == 0 {
+		err = errNotFound
+	}
+	var pairings []string
+	if err == nil {
+		pairings, err = tx.RelayPairing.Query().Where(relaypairing.HostID(id)).IDs(ctx)
+	}
+	if err == nil {
+		_, err = tx.RelayPairing.Delete().Where(relaypairing.HostID(id)).Exec(ctx)
+	}
+	if err == nil {
+		_, err = tx.RelayPairingOffer.Delete().Where(relaypairingoffer.HostID(id)).Exec(ctx)
+	}
+	if err == nil {
+		err = tx.Commit()
+	}
+	if err != nil {
+		rejectedJSON(w, err)
+		return
+	}
+	// A phone still attached loses it at once, and a computer that connected in
+	// between hears each pairing end, as a revocation tells it.
+	for _, p := range pairings {
+		r.ended(id, p)
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (r *relay) setPush(w http.ResponseWriter, req *http.Request) {

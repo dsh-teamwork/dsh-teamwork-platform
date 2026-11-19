@@ -40,6 +40,22 @@ func (s *Server) getTeam(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// deleteTeam is an admin deleting their team, with everyone in it.
+func (s *Server) deleteTeam(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in wire.DeleteTeam
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Team.DeleteTeam(r.Context(), c.user.ID, r.PathValue("teamId"), in.Confirm); err != nil {
+		return err
+	}
+	return noContent(w)
+}
+
 func (s *Server) leaveTeam(w http.ResponseWriter, r *http.Request) error {
 	c, err := s.requireUser(r)
 	if err != nil {

@@ -3,11 +3,15 @@
  * one of two ways, decided by the instance (ADR 0006): an invitation link where
  * it sends email, or an account with a first password, shown once, where it
  * holds passwords. The admin can hand the role to a member, which makes them a
- * member (a team keeps one admin). It is in Members and spend, the admin's alone
- * (ADR 0043); a member leaves from the team switcher.
+ * member (a team keeps one admin). At its foot the admin deletes the team, with
+ * everyone in it, typing its name back (ADR 0056). It is in Members and spend,
+ * the admin's alone (ADR 0043); a member leaves from the team switcher.
  */
 
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import { CopyButton } from '@/components/copy-button';
@@ -16,7 +20,9 @@ import { PageHeader } from '@/components/team/console-shell';
 import { useMutation, useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { api, type Invite } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
@@ -129,7 +135,70 @@ function Members({ invites, reload }: { invites: Invite[]; reload: Reload }) {
           </table>
         </div>
       </Card>
+
+      <DeleteTeam />
     </>
+  );
+}
+
+/** Deleting the team with everyone in it and everything it holds, once its name is typed back (ADR 0056). */
+function DeleteTeam() {
+  const { team } = useTeam();
+  const t = useTranslations('team.deleteTeam');
+  const word = useTeamError();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState('');
+  const [pending, setPending] = useState(false);
+  return (
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>{t('hint')}</CardDescription>
+        </div>
+        <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setOpen(true)}>
+          <Trash2 />
+          {t('title')}
+        </Button>
+      </CardHeader>
+      <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('dialogTitle', { name: team.name })}</DialogTitle>
+            <DialogDescription>{t('description', { count: team.members.length })}</DialogDescription>
+          </DialogHeader>
+          <form
+            id="delete-team"
+            className="flex flex-col gap-2"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setPending(true);
+              try {
+                await api(`teams/${team.id}`, { method: 'DELETE', body: { confirm: typed } });
+                toast.success(t('done'));
+                navigate('/teams');
+              } catch (failure) {
+                toast.error(word(failure));
+              } finally {
+                setPending(false);
+              }
+            }}
+          >
+            <Label htmlFor="delete-team-confirm">{t('confirm', { name: team.name })}</Label>
+            <Input id="delete-team-confirm" autoComplete="off" value={typed} onChange={(e) => setTyped(e.target.value)} />
+          </form>
+          <DialogFooter>
+            <Button variant="outline" disabled={pending} onClick={() => setOpen(false)}>
+              {t('cancel')}
+            </Button>
+            <Button type="submit" form="delete-team" variant="destructive" disabled={pending || typed.trim() !== team.name.trim()}>
+              {t('submit')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
 

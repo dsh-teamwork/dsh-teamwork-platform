@@ -88,6 +88,10 @@ Send new members the [install guide](/docs/install).
 A team has one admin. To hand the role to someone else, choose **Make admin**
 beside them; you become a member.
 
+To delete the team, choose **Delete team** at the foot of **Members** and type
+the team's name. Everyone in it loses it at once, and its models, presets,
+plugins, versions, usage and budgets are deleted with it. This cannot be undone.
+
 ## 5. Set budgets
 
 Every model has its reference rate from step 2. Under **Budgets**,

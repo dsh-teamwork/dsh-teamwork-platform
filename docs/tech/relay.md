@@ -515,7 +515,8 @@ the hosted edition, Cloud DSH.
   moves the page along by itself. The open one shows its sessions beneath it
   once it is online and this browser is paired.
 - **The third column** follows the computer's state, one at a time, and only
-  the last offers a session: offline (nothing to do but open DSH on it);
+  the last offers a session: offline (open DSH on it, or remove the
+  computer);
   online but not paired with this browser (the six-letter code from the
   Teamwork panel's Phone page, the eight-digit safety code to compare, then
   approval on the desktop: "Pairing" above, unchanged); paired and connecting,
@@ -545,17 +546,22 @@ the hosted edition, Cloud DSH.
   session revokes any pairing of the account to its own computers; an app's
   Bearer stays handset-scoped. Another device's pairing is revoked through the
   relay alone, as for an offline desktop (step 6 above).
-- **Not built:** a team admin seeing a member's computers; removing a
-  computer's record, which comes back the next time its plugin connects;
-  telling a member their DSH or plugin is older than the team pins; push to a
-  browser.
+  `DELETE /relay/hosts/{id}`, from that session alone, forgets one of the
+  account's computers with its pairing codes and every pairing to it: one no
+  longer used, or a record left by signing in again (a new `clientId`). A
+  connected computer is refused with `host_online`, since its next hello would
+  only record it again; one that connects later is recorded anew, under a new
+  id, with nothing paired. Its phones hear `revoked` at once, and the desktop
+  drops their trust when it next lists its pairings, as after any revocation.
+- **Not built:** a team admin seeing a member's computers; telling a member
+  their DSH or plugin is older than the team pins; push to a browser.
 - **Verified by** `server/e2e`'s relay test, which pairs and passes encrypted
   calls once as the app and once as the console (a cookie from this site, no
   token); its personal pairing test, where `packages/relay-client`, as the
   console runs it, pairs with the plugin's own pairing code through the code,
   the safety code and the desktop's approval; and `server/relay/console_test.go`, which pins the console's reach:
-  its own computers' pairings only, from this site only, and none of an app
-  token's.
+  its own computers' pairings and records only, from this site only, and none
+  of an app token's.
 
 ## Open questions
 
