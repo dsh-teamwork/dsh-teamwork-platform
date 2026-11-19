@@ -171,18 +171,22 @@ export function SessionList({ base, locked, sessions, sessionId, onPick }: { bas
 }
 
 /**
- * A computer's row in the column: its name, a word under it, a navy dot while it is online, and `extra` at its end. The
- * row's link covers all of it, so `extra` may hold a link of its own (one link cannot hold another).
+ * A computer's row in the column: its name, and under it whether it is online (`online`, when known; green, or grey and
+ * dimmed when offline) and `note`, with `extra` at its end. The row's link covers all of it, so `extra` may hold a link
+ * of its own (one link cannot hold another).
  */
-export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra }: { icon?: LucideIcon; name: string; note: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode }) {
+export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra }: { icon?: LucideIcon; name: string; note?: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode }) {
   const inner = (
     <>
-      <Icon className="size-4 shrink-0" aria-hidden />
+      <Icon className={cn('size-4 shrink-0', online === false && 'text-muted-foreground')} aria-hidden />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate">{name}</span>
-        <span className="truncate text-xs font-normal text-muted-foreground">{note}</span>
+        <span className={cn('truncate', online === false && 'text-muted-foreground')}>{name}</span>
+        <span className="flex min-w-0 items-center gap-1 text-xs font-normal text-muted-foreground">
+          {online !== undefined && <Presence online={online} />}
+          {online !== undefined && note && <span aria-hidden>·</span>}
+          {note && <span className="truncate">{note}</span>}
+        </span>
       </span>
-      {online !== undefined && <Dot className={online ? 'bg-brand' : 'bg-muted-foreground/40'} />}
     </>
   );
   return to ? (
@@ -199,6 +203,17 @@ export function ComputerRow({ icon: Icon = Server, name, note, online, to, open,
     </div>
   ) : (
     <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}{extra}</div>
+  );
+}
+
+/** Whether a computer is online, as a dot and a word: green while it is, grey when not (docs/design.md, `--success`). */
+export function Presence({ online, label }: { online: boolean; label?: string }) {
+  const t = useTranslations('team.dsh');
+  return (
+    <span className={cn('flex shrink-0 items-center gap-1.5', online ? 'text-success' : 'text-muted-foreground')}>
+      <span className={cn('size-1.5 rounded-full', online ? 'bg-success' : 'bg-muted-foreground/50')} aria-hidden />
+      {label ?? t(online ? 'online' : 'offline')}
+    </span>
   );
 }
 

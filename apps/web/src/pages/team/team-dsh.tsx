@@ -71,7 +71,7 @@ export function TeamDshPage() {
               <div key={host.id} className="flex flex-col gap-0.5">
                 <ComputerRow
                   name={host.name}
-                  note={paired ? (host.online ? tt('online') : tt('offline')) : t('needsInvite')}
+                  note={paired ? undefined : t('needsInvite')}
                   online={paired ? host.online : undefined}
                   to={paired && `${base}/${paired.id}`}
                   open={open}

@@ -1625,13 +1625,14 @@ components:
       description: "A member's computer's operating system as its plugin reports it; null for a shared DSH or a plugin too old to report one"
     RelayPairing:
       type: object
-      required: [id, hostId, userId, hostName, hostOs, deviceName, status, createdAt, lastUsedAt]
+      required: [id, hostId, userId, hostName, hostOs, hostLastSeenAt, deviceName, status, createdAt, lastUsedAt]
       properties:
         id: { type: string }
         hostId: { type: string }
         userId: { type: string, description: The member whose handset it is }
         hostName: { type: string }
         hostOs: { $ref: '#/components/schemas/HostOs' }
+        hostLastSeenAt: { type: string, format: date-time, nullable: true, description: When its computer last connected to the relay; null for a shared DSH that never has }
         deviceName: { type: string }
         status: { type: string, enum: [pending, confirmed] }
         createdAt: { type: string, format: date-time }
