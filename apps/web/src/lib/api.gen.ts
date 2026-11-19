@@ -4160,6 +4160,11 @@ export interface components {
             userId: string;
             hostName: string;
             hostOs: components["schemas"]["HostOs"];
+            /**
+             * Format: date-time
+             * @description When its computer last connected to the relay; null for a shared DSH that never has
+             */
+            hostLastSeenAt: string | null;
             deviceName: string;
             /** @enum {string} */
             status: "pending" | "confirmed";

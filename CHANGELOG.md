@@ -29,6 +29,22 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** The migration applies at start. Optional `CONTENT_URL`: an origin on a domain of its own, pointed at the same server; the server refuses one on `APP_URL`'s registrable domain.
 - **Refs:** ADR 0052, ADR 0053, `docs/tech/pages.md`, `server/internal/pages`.
 
+## 2026-11-19 — The phone's pairings say when each computer was last seen
+
+- **What:** `GET /relay/pairings` (and every pairing the relay returns) adds `hostLastSeenAt`, the host's `last_seen_at`, null for a shared DSH that never connected; `@dsh-teamwork/relay-client`'s `Computer` adds `lastSeenAt`.
+- **Why:** The phone app says how long an offline computer has been away, as the web console does; it knew only that it was offline.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/relay/pairing.go`, `packages/relay-client/src/live.ts`, `docs/tech/relay.md`.
+
+## 2026-11-19 — My DSH follows each computer's state
+
+- **What:** My DSH's list says whether each computer is online, as a green or grey dot and word (the web app gains the `--success` token for it), and whether this browser is paired with it, and is read again every ten seconds. The open computer's header puts its name, system and DSH version on the left and its state, with when it was last seen, in a pill on the right. The open computer's page shows one state at a time: offline, not paired (pairing), connecting, unreachable (with a retry), its PIN, and only then sessions and the composer; a session's address opened while the computer is not ready shows that state instead.
+- **Why:** An offline computer this browser had paired with opened straight to the composer, with only a red "offline" line above it, and the list did not say it was offline.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-19 — The DSH plugin's panel shows preset avatars
 
 - **What:** The plugin's Teamwork panel draws each team preset's avatar, the assistant's included, in place of its generic icon. The plugin cannot import `@dsh-teamwork/shared`, so it keeps a byte-for-byte copy of `avatars.ts` (`src/web/avatars.ts` in its repository); the plugin end-to-end suite here fails when the two differ (`server/e2e/avatars_test.go`), so a change to the library is copied there in the same working session.

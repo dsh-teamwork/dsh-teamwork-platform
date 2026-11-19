@@ -6,10 +6,15 @@
  * computer in the list counts its devices, every phone and browser of the member's paired with it; the count opens
  * them on a page of their own (`/teams/{teamId}/my-dsh/{hostId}/devices`), each removable (ADR 0048). The computer's id
  * in the address is its host id; the relay is spoken to through this browser's pairing.
+ *
+ * The third column follows the computer's state, one at a time: offline (nothing else is possible), online but not
+ * paired with this browser (pair), paired and connecting (its encrypted channel and PIN state not heard yet), the
+ * channel failed (retry), its PIN asked (the gate), and only then sessions and the composer. The list is read again
+ * every few seconds, so a computer coming online or going away moves the page along by itself.
  */
 
-import { ArrowLeft, Check, Laptop, Loader, Monitor, Smartphone } from 'lucide-react';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { ArrowLeft, Check, Laptop, Loader, Monitor, RotateCw, Smartphone, WifiOff, type LucideIcon } from 'lucide-react';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
@@ -20,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { browserCanJoin, myComputers, relayFor, removeDevice, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
-import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, SessionList, useComputer, useRelayError } from './dsh-session';
+import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
 import { useTeam } from './layout';
 
 /** The member's own computers and their sessions on the one open, beside the conversation or, with `devices`, its devices. */
@@ -29,7 +34,6 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
   const { hostId = '', sessionId = '' } = useParams();
   const t = useTranslations('team.myDsh');
   const tt = useTranslations('team.dsh');
-  const format = useFormatter();
   const navigate = useNavigate();
   const base = `/teams/${team.id}/my-dsh`;
   const [hosts, setHosts] = useState<MyComputer[] | null>(null);
@@ -44,18 +48,31 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `t` is stable for a locale.
   }, [me]);
-  useEffect(() => void load(), [load]);
+  useEffect(() => {
+    void load();
+    // Whether each computer is online changes on its own: read the list again while the page is open.
+    const timer = setInterval(() => void load(), REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [load]);
 
   const host = hosts?.find((h) => h.id === hostId);
-  // The relay is spoken to through this browser's own confirmed pairing with the computer.
-  const computerId = host?.pairings.find((p) => p.current && p.status === 'confirmed')?.id ?? '';
+  // This browser's own confirmed pairing with the computer; the relay is spoken to through it, and only while the
+  // computer is online, since nothing on the other side could answer otherwise.
+  const pairingOf = (h: MyComputer) => h.pairings.find((p) => p.current && p.status === 'confirmed')?.id ?? '';
+  const paired = host ? pairingOf(host) : '';
+  const computerId = host?.online ? paired : '';
   const { sessions, pin, failed: unreachable, reload, locked } = useComputer(computerId);
+  // The relay saying the computer cannot be reached is news the list may not have yet: read it again now.
+  useEffect(() => {
+    if (unreachable) void load();
+  }, [unreachable, load]);
+  // Ready once the computer answered: its sessions read, or its PIN state says unlocked. Until then it is connecting.
+  const ready = computerId !== '' && !locked && (sessions !== null || pin?.kind === 'unlocked');
   const session = sessions?.find((s) => s.id === sessionId);
   // Two records can share a name (two DSHs on one machine, or one signed in again): a short id tells them apart.
-  const twin = (h: MyComputer) => (hosts ?? []).some((o) => o.id !== h.id && o.name === h.name);
-  const note = (h: MyComputer) =>
-    [h.os ? HOST_OS_NAMES[h.os] : null, h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
-  const problem = failed ?? unreachable;
+  const twin = (h: MyComputer) => ((hosts ?? []).some((o) => o.id !== h.id && o.name === h.name) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null);
+  // Under a computer in the list, after whether it is online: short enough to read whole.
+  const note = (h: MyComputer) => [h.os ? HOST_OS_NAMES[h.os] : null, pairingOf(h) ? null : t('notPairedShort'), twin(h)].filter(Boolean).join(' · ');
 
   return (
     <DshColumns
@@ -74,7 +91,7 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
                   online={h.online}
                   to={`${base}/${h.id}`}
                   open={open}
-                  current={open && !sessionId && !devices}
+                  current={open && !devices && !(sessionId && ready)}
                   onPick={onPick}
                   extra={
                     <Link
@@ -93,14 +110,14 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
                     </Link>
                   }
                 />
-                {open && computerId && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
+                {open && computerId && !unreachable && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
           })}
         </>
       )}
     >
-      {problem && <p role="alert" className="text-sm text-destructive">{problem}</p>}
+      {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
       {!host ? (
         <section className="m-auto flex max-w-lg flex-col items-center gap-3 py-10 text-center">
           <Laptop className="size-8 text-muted-foreground" aria-hidden />
@@ -109,12 +126,14 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
         </section>
       ) : devices ? (
         <DevicesView host={host} back={`${base}/${host.id}`} changed={() => void load()} />
-      ) : sessionId && computerId && !locked ? (
+      ) : sessionId && ready ? (
         <Conversation key={sessionId} computerId={computerId} sessionId={sessionId} title={session?.title || tt('untitled')} />
       ) : (
         <>
-          <HostHeader host={host} note={note(host)} />
-          {!computerId ? (
+          <HostHeader host={host} twin={twin(host)} />
+          {!host.online ? (
+            <State icon={WifiOff} title={t('offlineTitle', { name: host.name })} body={t(paired ? 'offlineHelp' : 'offlineUnpairedHelp')} />
+          ) : !computerId ? (
             <Pair
               host={host}
               paired={(pairedHost) => {
@@ -125,6 +144,15 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
             />
           ) : locked ? (
             <PinGate computerId={computerId} state={pin} lockedHint={t('lockedHint')} />
+          ) : unreachable ? (
+            <State icon={WifiOff} title={t('unreachableTitle', { name: host.name })} body={unreachable}>
+              <Button variant="outline" onClick={() => void reload()}>
+                <RotateCw className="size-4" aria-hidden />
+                {t('retry')}
+              </Button>
+            </State>
+          ) : !ready ? (
+            <State icon={Loader} spin title={t('connecting', { name: host.name })} body={t('connectingHelp')} />
           ) : (
             <NewSession key={computerId} computerId={computerId} name={host.name} started={(id) => { void reload(); navigate(`${base}/${host.id}/${id}`); }} />
           )}
@@ -134,15 +162,37 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
   );
 }
 
-/** The open computer: its name, operating system, state and version. */
-function HostHeader({ host, note }: { host: MyComputer; note: string }) {
-  const t = useTranslations('team.myDsh');
+/** How often the list of computers is read again, for each one's online state. */
+const REFRESH_MS = 10_000;
+
+/** A state of the open computer in which nothing can be done here but wait, or what `children` offers. */
+function State({ icon: Icon, spin, title, body, children }: { icon: LucideIcon; spin?: boolean; title: string; body: string; children?: ReactNode }) {
   return (
-    <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{host.name}</h2>
-      <span className="text-xs text-muted-foreground">
-        {note}
-        {host.dshVersion && ` · ${t('version', { version: host.dshVersion })}`}
+    <section role="status" className="m-auto flex max-w-md flex-col items-center gap-3 py-10 text-center">
+      <Icon className={cn('size-8 text-muted-foreground', spin && 'animate-spin')} aria-hidden />
+      <h3 className="text-lg font-semibold tracking-tight [overflow-wrap:anywhere]">{title}</h3>
+      <p className="text-sm text-muted-foreground">{body}</p>
+      {children}
+    </section>
+  );
+}
+
+/** The open computer: its name, and under it its system and DSH, on the left; whether it is online on the right. */
+function HostHeader({ host, twin }: { host: MyComputer; twin: string | null }) {
+  const t = useTranslations('team.myDsh');
+  const format = useFormatter();
+  const facts = [host.os ? HOST_OS_NAMES[host.os] : null, host.dshVersion ? t('version', { version: host.dshVersion }) : null, twin].filter(Boolean);
+  return (
+    <header className="flex items-start justify-between gap-4 border-b pb-4">
+      <div className="flex min-w-0 flex-col gap-1">
+        <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{host.name}</h2>
+        {facts.length > 0 && <p className="text-xs text-muted-foreground">{facts.join(' · ')}</p>}
+      </div>
+      <span className={cn('mt-0.5 shrink-0 rounded-full px-2.5 py-1 text-xs font-medium', host.online ? 'bg-success/10' : 'bg-muted')}>
+        <Presence
+          online={host.online}
+          label={host.online ? undefined : t('lastSeenShort', { time: format.relativeTime(new Date(host.lastSeenAt), new Date()) })}
+        />
       </span>
     </header>
   );

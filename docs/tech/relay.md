@@ -88,7 +88,9 @@ needing no call elsewhere on a connection.
   refused 4400, and a plugin that leaves it out (an older one, or a system the
   relay names none for) is recorded with none. The phone's list of pairings
   carries it as `hostOs` and the console's computers as `os`, for each to show
-  beside the computer's name. A shared DSH reports none.
+  beside the computer's name. A shared DSH reports none. The phone's list also
+  carries `hostLastSeenAt`, the host's `last_seen_at` (a shared host's, which
+  may be null), so it can say how long an offline computer has been away.
 - **The app** signs in through the website the way the plugin does ([ADR 0001](../adr/0001-plugin-sign-in.md)):
   PKCE and a code. It receives its own Bearer, with `via` naming the app. The
   token says who the person is. On its own it reaches no computer.
@@ -504,15 +506,22 @@ the hosted edition, Cloud DSH.
   account has at least one recorded host, in every team alike: the computers
   are the person's, not a team's.
 - **The second column lists the account's computers**: name, operating system,
-  online or when last seen, and beside each the number of devices paired with
-  it, which opens its devices page. The open one shows its sessions beneath it
-  once this browser is paired and unlocked.
-- **The third column** is, by state: pairing this browser (the six-letter code
-  from the Teamwork panel's Phone page, the eight-digit safety code to
-  compare, then approval on the desktop: "Pairing" above, unchanged); the
-  computer's PIN, `owner`'s; a session, or a new one started by its first
-  message. Above it, the computer's name, operating system, state and DSH
-  version.
+  online or offline, whether this browser is paired with it, and beside each
+  the number of devices paired with it, which opens its devices page. The list
+  is read again every ten seconds, so a computer coming online or going away
+  moves the page along by itself. The open one shows its sessions beneath it
+  once it is online and this browser is paired.
+- **The third column** follows the computer's state, one at a time, and only
+  the last offers a session: offline (nothing to do but open DSH on it);
+  online but not paired with this browser (the six-letter code from the
+  Teamwork panel's Phone page, the eight-digit safety code to compare, then
+  approval on the desktop: "Pairing" above, unchanged); paired and connecting,
+  until the computer answers over the encrypted channel with its sessions or
+  its PIN state; the channel failed, with a retry; the computer's PIN,
+  `owner`'s; and then a session, or a new one started by its first message.
+  Above it, the computer's name with its operating system and DSH version on
+  the left, and on the right whether it is online (green) or offline (grey,
+  with when it was last seen); the list marks each computer the same way.
 - **The devices page** takes the third column: every pairing of the account to
   the computer, the phone app's and every browser's, with its name, status,
   last use and whether it pushes, this browser marked, each removable.

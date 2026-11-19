@@ -33,6 +33,8 @@ export interface Computer {
   os: HostOs | null;
   /** Whether its DSH holds a connection to the relay right now. */
   online: boolean;
+  /** When its DSH last connected to the relay (ISO), to say how long it has been away; null when never known. */
+  lastSeenAt: string | null;
   /** A locally pinned desktop identity exists; routing status alone does not grant trust. */
   verified?: boolean;
   /** Whether the relay notifies this phone when the agent on it waits; the token itself never comes back. */

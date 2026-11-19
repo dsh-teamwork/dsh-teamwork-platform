@@ -76,7 +76,7 @@ const HISTORY_PAGE = 50;
 /** How long a call may wait for its result before the screen is told it failed. */
 export const CALL_TIMEOUT_MS = 20_000;
 
-const PairingSchema = z.object({ id: z.string(), hostId: z.string(), hostName: z.string(), hostOs: z.enum(HOST_OS).nullable().catch(null), status: z.enum(['pending', 'confirmed']), online: z.boolean().optional(), push: z.boolean().optional() });
+const PairingSchema = z.object({ id: z.string(), hostId: z.string(), hostName: z.string(), hostOs: z.enum(HOST_OS).nullable().catch(null), hostLastSeenAt: z.string().nullable().catch(null), status: z.enum(['pending', 'confirmed']), online: z.boolean().optional(), push: z.boolean().optional() });
 
 /** The relay's refusals, in the words the screens already have. */
 const PHONE_ERRORS: Record<string, RelayErrorCode> = { not_paired: 'not_found', offline: 'offline', rate_limited: 'unavailable' };
@@ -547,7 +547,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       const response = await relayHttp('/pairings');
       if (!response.ok) throw new RelayError('unavailable');
       const { pairings } = z.object({ pairings: PairingSchema.array() }).parse(await response.json());
-      return Promise.all(pairings.filter((p) => p.status === 'confirmed').map(async (p) => ({ id: p.id, name: p.hostName, os: p.hostOs, online: p.online === true, verified: !!await options.keys.peer(p.id), push: p.push === true, hostId: p.hostId })));
+      return Promise.all(pairings.filter((p) => p.status === 'confirmed').map(async (p) => ({ id: p.id, name: p.hostName, os: p.hostOs, lastSeenAt: p.hostLastSeenAt, online: p.online === true, verified: !!await options.keys.peer(p.id), push: p.push === true, hostId: p.hostId })));
     },
 
     async sharedHosts() {

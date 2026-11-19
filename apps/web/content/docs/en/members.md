@@ -54,7 +54,10 @@ Teamwork panel, choose **Devices** and make a code, type the code here, check
 that both screens show the same safety code, and approve on the computer. Then
 set a four-digit PIN, which the computer asks for again when you come back.
 After that you start, follow and answer sessions on it from the browser, end to
-end encrypted between the browser and the computer.
+end encrypted between the browser and the computer. Each computer says whether
+it is online and whether this browser is paired with it; one that is offline
+offers nothing until DSH runs on it again, and the page carries on by itself
+once it connects.
 
 Beside the message box, a new session offers the computer's folders, presets
 (a team preset included; one the computer cannot run yet says why) and models,
