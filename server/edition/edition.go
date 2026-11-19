@@ -123,7 +123,7 @@ type Host struct {
 	// and every route; the security headers still apply. Mount-only, once per
 	// domain, which must be neither APP_URL's host nor one of its parents: it
 	// is for pages a closed edition serves from origins of their own (the
-	// premium edition's ADR 0052).
+	// premium edition's ADR 0053).
 	ServeSubdomains func(domain string, h http.Handler) error
 	// TeamDSHAllowed asks that gate about one team: true where none is set.
 	TeamDSHAllowed func(ctx context.Context, teamID string) (bool, error)
