@@ -30,7 +30,8 @@ of its team whom its sharing admits, re-checked on every request.**
   site the console's cookies go to, and the server refuses to start on one.
   Where it is set, its host serves `/p/` and a crawler-refusing `robots.txt`
   only, and `APP_URL`'s host serves no page. The hosted service uses
-  `dshteam.work`.
+  `artifacts.dshteam.work`, a subdomain of `dshteam.work`, which is registered
+  for nothing else.
 - **No page leaves its team, in any edition**: no public link, no guest link,
   no copy to another team.
 

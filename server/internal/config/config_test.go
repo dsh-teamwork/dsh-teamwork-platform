@@ -117,6 +117,10 @@ func TestContentURLIsASiteOfItsOwn(t *testing.T) {
 	if c, err := load("https://dshteam.work/"); err != nil || c.ContentURL != "https://dshteam.work" {
 		t.Fatalf("another site: %q %v", c.ContentURL, err)
 	}
+	// A subdomain of another site is that other site, as the hosted service's is.
+	if c, err := load("https://artifacts.dshteam.work"); err != nil || c.ContentURL != "https://artifacts.dshteam.work" {
+		t.Fatalf("a subdomain of another site: %q %v", c.ContentURL, err)
+	}
 	for _, bad := range []string{"https://pages.dshteamwork.com", "https://dshteamwork.com", "http://dshteam.work", "https://dshteam.work/p", "dshteam.work"} {
 		if _, err := load(bad); err == nil {
 			t.Errorf("CONTENT_URL %q was accepted", bad)

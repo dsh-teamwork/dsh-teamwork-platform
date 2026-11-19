@@ -9,7 +9,7 @@ it is built in. The agent publishes it with the teamwork plugin's
 private to its maker until a person shares it with chosen members or the
 whole team, and never with anyone outside the team; the console shows it
 beside the conversation that made it and under **Pages** in the sidebar,
-served from an origin of its own (`CONTENT_URL`, `dshteam.work` on the hosted
+served from an origin of its own (`CONTENT_URL`, `artifacts.dshteam.work` on the hosted
 service) in a sandbox, so its scripts can never act as the person viewing it.
 Every edition has it; the hosted edition adds the phone app.
 
@@ -259,7 +259,8 @@ a 403, so its existence is not told.
     browser revalidates (and is re-checked) every time and gets a 304;
   - no `Set-Cookie`, and any cookie sent is ignored.
 - **Where `/p/` is served: `CONTENT_URL`**, else `APP_URL`'s origin. The
-  hosted service sets `https://dshteam.work`, a domain registered for nothing
+  hosted service sets `https://artifacts.dshteam.work`, on `dshteam.work`, a
+  domain registered for nothing
   else, so a page is another site as well as an opaque origin: the console's
   host-only cookies never go there, a page cannot pass for the console in the
   address bar, and a browser or WebView that ignored the sandbox still could
@@ -364,7 +365,7 @@ In the plugin repository, beside the other `teamwork_*` tools
 | `teamwork_page` | the plugin repository | Open |
 | The `page` item | `packages/relay-client` | Open |
 | The card, the viewer, Pages, Share | `apps/web` | Open |
-| The phone's viewer and Share, cloud sessions, `dshteam.work` | where `premium/` exists | Closed |
+| The phone's viewer and Share, cloud sessions, `artifacts.dshteam.work` | where `premium/` exists | Closed |
 
 ## Configuration and operations
 
@@ -375,7 +376,8 @@ In the plugin repository, beside the other `teamwork_*` tools
   advice (both stores together) covers them.
 - **Management processes** open no store and serve no page.
 - **Expensive to change**: the view address, its headers and the content
-  domain (the security boundary; `dshteam.work` stays registered while view
+  domain (the security boundary; `dshteam.work` stays registered, and
+  `artifacts.dshteam.work` pointed at the service, while view
   addresses name it); the tool's arguments and the upload's shape (installed
   plugins); the object keys (a bucket migration, ADR 0042); uploading at
   creation (clients assume a page opens anywhere).
@@ -471,11 +473,11 @@ rather than parsing text. What each spike set out to check:
 - Plugin: `open` (a view address, then each file into `directory`).
 - Console: Share, **Shared with me**, **All**, version picker, Restore, Delete.
 - Done when the Goal's four steps pass by hand with two accounts on a
-  self-hosted server, and on the hosted one with `dshteam.work`.
+  self-hosted server, and on the hosted one with `artifacts.dshteam.work`.
 
 ### Step 5 — the hosted edition (M; premium, its own plan)
 
-- `CONTENT_URL=https://dshteam.work` on the member service, its domain and
+- `CONTENT_URL=https://artifacts.dshteam.work` on the member service, its domain and
   certificate on Railway, `deployment.md`.
 - The phone app's viewer and Share; cloud sessions checked end to end.
 - The privacy policy: pages are stored on the service, and who can read them.
