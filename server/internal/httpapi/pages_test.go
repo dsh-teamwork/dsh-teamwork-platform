@@ -2,6 +2,7 @@ package httpapi_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"mime/multipart"
@@ -9,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -428,5 +430,44 @@ func TestTeamDSHOpensAPageForItsStarter(t *testing.T) {
 		must(t, host.post(view+"?starter="+aID, nil), 200)
 		refused(t, "a starter who may not read it", host.post(view+"?starter="+bID, nil), 404, "page_not_found")
 		refused(t, "no starter", host.post(view, nil), 404, "page_not_found")
+	})
+}
+
+// A deleted account takes its private pages and its own team's pages with it;
+// the pages it shared stay with their team, and lists that named it forget it.
+func TestDeletingAnAccountDeletesWhatOnlyItCouldRead(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		ctx := context.Background()
+		store := artifactstore.Local{Dir: t.TempDir()}
+		e := start(t, d, options{artifacts: store})
+		admin := e.admin("admin@x.io")
+		shared := newTeam(t, admin, "Shared")
+		leaver, leaverID := joined(t, e, admin, shared, "leaver@x.io")
+		_, otherID := joined(t, e, admin, shared, "other@x.io")
+		own := newTeam(t, leaver, "Own")
+		p := e.pluginFor(leaver)
+		svg := func(s string) map[string]string { return map[string]string{"index.svg": "<svg>" + s + "</svg>"} }
+		private := must(t, publish(t, p, "/api/teams/"+shared+"/pages", map[string]any{"title": "Private", "kind": "svg"}, svg("private")), 201)["id"].(string)
+		team := must(t, publish(t, p, "/api/teams/"+shared+"/pages", map[string]any{"title": "Team", "kind": "svg"}, svg("team")), 201)["id"].(string)
+		must(t, leaver.send("PUT", "/api/teams/"+shared+"/pages/"+team+"/sharing", map[string]any{"mode": "team"}), 204)
+		named := must(t, publish(t, e.pluginFor(admin), "/api/teams/"+shared+"/pages", map[string]any{"title": "Named", "kind": "svg"}, svg("named")), 201)["id"].(string)
+		must(t, admin.send("PUT", "/api/teams/"+shared+"/pages/"+named+"/sharing", map[string]any{"mode": "members", "members": []string{leaverID, otherID}}), 204)
+		must(t, publish(t, p, "/api/teams/"+own+"/pages", map[string]any{"title": "Mine alone", "kind": "svg"}, svg("own")), 201)
+
+		must(t, leaver.send("DELETE", "/api/profile", map[string]string{"confirm": "leaver@x.io"}), 204)
+
+		left := d.Client.Page.Query().IDsX(ctx)
+		if len(left) != 2 || !slices.Contains(left, team) || !slices.Contains(left, named) || slices.Contains(left, private) {
+			t.Fatalf("pages left %v, want the shared one and the admin's", left)
+		}
+		if n := d.Client.PageMember.Query().CountX(ctx); n != 1 {
+			t.Fatalf("%d members named, want only the other member", n)
+		}
+		for teamID, want := range map[string]int{shared: 2, own: 0} {
+			objects, _ := filepath.Glob(filepath.Join(store.Dir, "teams", teamID, "pages", "*"))
+			if len(objects) != want {
+				t.Fatalf("team %s keeps %d objects, want %d", teamID, len(objects), want)
+			}
+		}
 	})
 }

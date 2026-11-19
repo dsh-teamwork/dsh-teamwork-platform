@@ -148,6 +148,11 @@ bytes per character the API allows.
   membership. Their own pages stay the team's, owned by an id that is no
   longer a member; nobody reads a private one again, and the team's admins
   can narrow or delete them.
+- **A deleted team** takes its pages, their versions, files, members and
+  objects with it (`deleteTeam` in `internal/team/account.go`).
+- **A deleted account** takes its private pages with it, since nobody else can
+  read them, and the lists that named it forget it; the pages it shared stay
+  with their team, as its published versions do.
 
 ## Object storage
 
