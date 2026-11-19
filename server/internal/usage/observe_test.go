@@ -71,3 +71,24 @@ func TestConflictingUsageCannotReplaceTheFirstTotal(t *testing.T) {
 		t.Fatalf("conflicting totals: %+v", r)
 	}
 }
+
+func TestOpenRouterCacheWritesAndCost(t *testing.T) {
+	usage := `{"prompt_tokens":3000,"completion_tokens":100,"total_tokens":3100,"cost":1.25e-03,"prompt_tokens_details":{"cached_tokens":1000,"cache_write_tokens":1500}}`
+	body := "data: {\"id\":\"gen-1\",\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n: OPENROUTER PROCESSING\n\ndata: {\"id\":\"gen-1\",\"choices\":[],\"usage\":" + usage + "}\n\ndata: [DONE]\n\n"
+	r := observe(body, true, true, 5)
+	if !r.Known || !r.Complete || r.Invalid || r.Tokens != (Tokens{Input: 3000, CacheRead: 1000, CacheWrite: 1500, Output: 100}) || r.Cost != "1.25e-03" {
+		t.Fatalf("OpenRouter usage: %+v", r)
+	}
+	for _, bad := range []string{
+		`{"prompt_tokens":10,"completion_tokens":1,"cost":-1}`,
+		`{"prompt_tokens":10,"completion_tokens":1,"prompt_tokens_details":{"cached_tokens":6,"cache_write_tokens":5}}`,
+	} {
+		if r := observe(`{"usage":`+bad+`}`, false, true, 3); !r.Invalid || r.Known {
+			t.Errorf("accepted %s: %+v", bad, r)
+		}
+	}
+	twice := "data: {\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"cost\":0.1}}\n\ndata: {\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"cost\":0.2}}\n\ndata: [DONE]\n\n"
+	if r := observe(twice, true, true, 4096); !r.Invalid {
+		t.Fatalf("a second, different cost replaced the first: %+v", r)
+	}
+}

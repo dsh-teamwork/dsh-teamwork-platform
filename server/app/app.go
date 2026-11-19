@@ -279,6 +279,9 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	}
 	for _, e := range exts {
 		host.RegisterFunding = func(p edition.ModelFunding) (edition.FundingHost, error) { return meter.RegisterFunding(e.Name, p) }
+		// An extension's secrets are bound to its name; no team id has a colon.
+		host.Seal = func(name, secret string) string { return keys.Seal("edition:"+e.Name, name, secret) }
+		host.Unseal = func(name, sealed string) (string, error) { return keys.Open("edition:"+e.Name, name, sealed) }
 		host.RegisterMeters = func(m []edition.Meter, f edition.MeterFunding) (edition.MeterHost, error) {
 			return meter.RegisterMeters(e.Name, m, f)
 		}

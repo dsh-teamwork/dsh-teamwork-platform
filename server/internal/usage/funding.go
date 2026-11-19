@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"unicode/utf8"
@@ -124,8 +125,14 @@ func (s *Service) Quote(ctx context.Context, owner string, ref edition.ModelRefe
 	if err != nil {
 		return edition.FundingQuote{}, err
 	}
-	if q.RateID == "" || len(q.RateID) > 32 || q.Model == "" || q.APIKey == "" || q.BaseURL == "" {
+	if q.RateID == "" || len(q.RateID) > 32 || q.Model == "" || q.APIKey == "" || q.BaseURL == "" ||
+		q.MaxInput <= 0 || q.MaxInput > MaxRouteInput || q.MaxOutput <= 0 || q.MaxOutput > MaxRouteOutput {
 		return edition.FundingQuote{}, errors.New("invalid funding quote")
+	}
+	for k, v := range q.Body {
+		if k == "model" || slices.Contains(ChatFields, k) || !json.Valid(v) {
+			return edition.FundingQuote{}, errors.New("invalid funding quote")
+		}
 	}
 	if _, err := q.Rates.Bound(1, 1); err != nil {
 		return edition.FundingQuote{}, err

@@ -42,6 +42,8 @@ or the hosted service, kept with the closed edition rather than here.
 
 - [0050 — Every call needs a rate](0050-every-call-needs-a-rate.md) — a model without a reference rate cannot be called, budget or none.
 
+- [0052 — A funded route states its own bounds](0052-a-funded-route-states-its-bounds.md) — an edition's quote sizes the hold, adds routing fields and receives the upstream's price.
+
 The template:
 
 ```markdown

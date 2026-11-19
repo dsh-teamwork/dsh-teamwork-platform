@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — A funded route states its own bounds
+
+- **What:** `edition.FundingQuote` adds `MaxInput`, `MaxOutput` and `Body`: a funded call is bounded by its route's stated limits (`usage.RouteBounds`, the DeepSeek adapter's checks with those limits) instead of only direct DeepSeek, and the route adds upstream fields no caller may send. `FundingSettlement` adds `UpstreamCost`, the upstream's own `usage.cost`; the observer also reads OpenRouter's `cache_write_tokens`. `edition.Host` adds `Seal` and `Unseal` for an extension's own secrets under `PROVIDER_KEYS_SECRET`. The gateway's forwarded fields are `usage.ChatFields`.
+- **Why:** An edition could fund DeepSeek and nothing else; hosted models through OpenRouter need their own bounds, a routing object and the price OpenRouter charged.
+- **Breaking:** An edition's quote must state `MaxInput` and `MaxOutput`, or the call is refused.
+- **Upgrade:** Nothing for a community instance.
+- **Refs:** `docs/adr/0052-a-funded-route-states-its-bounds.md`, `docs/tech/usage-budgets.md`, `server/edition/funding.go`.
+
 ## 2026-11-19 — The DSH plugin's panel shows preset avatars
 
 - **What:** The plugin's Teamwork panel draws each team preset's avatar, the assistant's included, in place of its generic icon. The plugin cannot import `@dsh-teamwork/shared`, so it keeps a byte-for-byte copy of `avatars.ts` (`src/web/avatars.ts` in its repository); the plugin end-to-end suite here fails when the two differ (`server/e2e/avatars_test.go`), so a change to the library is copied there in the same working session.

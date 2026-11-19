@@ -3,6 +3,7 @@ package edition
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 )
 
@@ -18,10 +19,18 @@ type ModelReference struct{ TeamID, ConfigID, Reference string }
 
 // FundingQuote is server-only. APIKey and BaseURL are never configuration data
 // or usage facts. Rates uses the same exact units as community accounting.
+//
+// MaxInput and MaxOutput are the route's trusted bounds: the most input tokens
+// a call may carry and the most output it may ask for, which size the hold.
+// Body is merged into the upstream request after the caller's fields have been
+// checked, so no caller can set or override it (an aggregator's routing
+// object, say); it never names a field the gateway forwards.
 type FundingQuote struct {
 	RateID, Model, BaseURL, APIKey string
 	Revision                       int
 	Rates                          Rates
+	MaxInput, MaxOutput            int64
+	Body                           map[string]json.RawMessage
 }
 
 // FundingAdmission is one call to fund. A shared DSH's call (ADR 0047) has a
@@ -31,10 +40,15 @@ type FundingAdmission struct {
 	HeldUnits                                                             int64
 }
 
+// FundingSettlement is a call's observed usage. UpstreamCost is the price the
+// upstream itself reported for the call, verbatim as a decimal string in its
+// own billing currency (OpenRouter's usage.cost, in US dollars); it is empty
+// when the upstream reported none, and always empty for an estimate.
 type FundingSettlement struct {
 	RequestID, TeamID string
 	Units             int64
 	Tokens            Tokens
+	UpstreamCost      string
 	Estimated         bool
 	ActorID, Reason   string
 }

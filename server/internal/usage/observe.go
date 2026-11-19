@@ -3,14 +3,20 @@ package usage
 import (
 	"bytes"
 	"encoding/json"
+	"math"
+	"strconv"
 )
 
 // ObservationLimit bounds retained bytes independently of the amount streamed.
 // An oversized or malformed frame stays unmeasured, never a zero-token success.
 const ObservationLimit = 4 << 20
 
+// Observation is what a response said about itself. Cost is the upstream's
+// own price for the call, verbatim, when it states one (OpenRouter's
+// usage.cost, in US dollars); it is never a reason to accept the tokens.
 type Observation struct {
 	Tokens   Tokens
+	Cost     string `json:",omitempty"`
 	Known    bool
 	Complete bool
 	Invalid  bool
@@ -125,13 +131,16 @@ func (o *Observer) decode(data []byte) {
 		return
 	}
 	var raw struct {
-		Input  *int64 `json:"prompt_tokens"`
-		Output *int64 `json:"completion_tokens"`
-		Total  *int64 `json:"total_tokens"`
-		Hit    *int64 `json:"prompt_cache_hit_tokens"`
-		Miss   *int64 `json:"prompt_cache_miss_tokens"`
+		Input  *int64       `json:"prompt_tokens"`
+		Output *int64       `json:"completion_tokens"`
+		Total  *int64       `json:"total_tokens"`
+		Hit    *int64       `json:"prompt_cache_hit_tokens"`
+		Miss   *int64       `json:"prompt_cache_miss_tokens"`
+		Cost   *json.Number `json:"cost"`
 		Prompt struct {
 			Cached *int64 `json:"cached_tokens"`
+			// OpenRouter reports cache writes here, beside the reads.
+			Written *int64 `json:"cache_write_tokens"`
 		} `json:"prompt_tokens_details"`
 		Completion struct {
 			Reasoning *int64 `json:"reasoning_tokens"`
@@ -152,16 +161,28 @@ func (o *Observer) decode(data []byte) {
 		}
 		t.CacheRead = *raw.Prompt.Cached
 	}
+	if raw.Prompt.Written != nil {
+		t.CacheWrite = *raw.Prompt.Written
+	}
 	if raw.Completion.Reasoning != nil {
 		t.Reasoning = *raw.Completion.Reasoning
+	}
+	cost := ""
+	if raw.Cost != nil {
+		f, err := strconv.ParseFloat(raw.Cost.String(), 64)
+		if err != nil || f < 0 || math.IsInf(f, 0) || len(*raw.Cost) > 40 {
+			o.invalid()
+			return
+		}
+		cost = raw.Cost.String()
 	}
 	if !t.Valid() || raw.Total != nil && *raw.Total != t.Input+t.Output || raw.Miss != nil && *raw.Miss != t.Input-t.CacheRead {
 		o.invalid()
 		return
 	}
-	if o.result.Known && o.result.Tokens != t {
+	if o.result.Known && (o.result.Tokens != t || o.result.Cost != cost) {
 		o.invalid()
 		return
 	}
-	o.result.Tokens, o.result.Known = t, true
+	o.result.Tokens, o.result.Cost, o.result.Known = t, cost, true
 }
