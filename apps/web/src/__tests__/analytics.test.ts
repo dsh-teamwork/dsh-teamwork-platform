@@ -36,6 +36,13 @@ describe('the browser analytics filter', () => {
     expect(scrubEvent(pageview({ title: 'Letter to Mum', $pathname: '/d/abc' }))?.properties).toEqual({ $pathname: '/d/abc' });
   });
 
+  it('lets only a page view leave, whatever the project turns on remotely', () => {
+    for (const event of ['$web_vitals', '$$heatmap', '$dead_click', '$autocapture', '$pageleave', '$identify']) {
+      expect(scrubEvent({ uuid: 'u', event, properties: {} } as CaptureResult)).toBeNull();
+    }
+    expect(scrubEvent(null)).toBeNull();
+  });
+
   it('drops a URL it cannot parse rather than sending it whole', () => {
     expect(withoutQuery('not a url?q=secret')).toBeUndefined();
     expect(scrubEvent(pageview({ $current_url: 'not a url?q=secret' }))?.properties).toEqual({});

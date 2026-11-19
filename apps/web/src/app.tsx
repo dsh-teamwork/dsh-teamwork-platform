@@ -17,7 +17,7 @@ import { IntlProvider, useTranslations } from 'use-intl';
 import { CardPage, Loading } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { startAnalytics } from '@/lib/analytics';
-import { replacing, setEditionTeamPages, type TeamPage } from '@/lib/edition';
+import { replacing, setEditionModels, setEditionTeamPages, type EditionModels, type TeamPage } from '@/lib/edition';
 import { currentLocale } from '@/lib/locale';
 import { RequireUser, SessionProvider } from '@/lib/session';
 import { watchSystemTheme } from '@/lib/theme';
@@ -46,8 +46,6 @@ const TeamIndex = lazy(() => import('@/pages/team/layout').then((m) => ({ defaul
 const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
 const MyDshPage = lazy(() => import('@/pages/team/my-dsh').then((m) => ({ default: m.MyDshPage })));
-const TeamDshPage = lazy(() => import('@/pages/team/team-dsh').then((m) => ({ default: m.TeamDshPage })));
-const TeamDshHostsPage = lazy(() => import('@/pages/team/team-dsh-hosts').then((m) => ({ default: m.TeamDshHostsPage })));
 const TeamBudgetsPage = lazy(() => import('@/pages/team/budgets').then((m) => ({ default: m.TeamBudgetsPage })));
 const TeamsPage = lazy(() => import('@/pages/teams').then((m) => ({ default: m.TeamsPage })));
 
@@ -100,14 +98,17 @@ export interface WebExtension {
   routes?: RouteObject[];
   /** Pages inside a team's console, listed in its navigation. */
   teamPages?: TeamPage[];
+  /** Models the edition supplies, offered first on a team's models page (`EditionModels`). */
+  models?: EditionModels;
 }
 
-export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
+export function mountWeb({ routes = [], teamPages = [], models }: WebExtension = {}) {
   const locale = currentLocale();
   document.documentElement.lang = locale;
   void startAnalytics();
   watchSystemTheme();
   setEditionTeamPages(teamPages);
+  setEditionModels(models);
   window.addEventListener('vite:preloadError', reloadOnStaleChunk);
 
   // Workspace, for everyone in the team; Team management, for its admin, who alone
@@ -121,8 +122,8 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { path: 'resources', element: <TeamResourcesPage /> },
       { path: 'submissions', element: <TeamSharingPage view="mine" /> },
       { path: 'my-usage', element: <TeamMyUsagePage /> },
+      { path: 'my-dsh/:hostId/devices', element: <MyDshPage devices /> },
       { path: 'my-dsh/:hostId?/:sessionId?', element: <MyDshPage /> },
-      { path: 'team-dsh/:computerId?/:sessionId?', element: <TeamDshPage /> },
     ],
     own(false),
   );
@@ -132,7 +133,6 @@ export function mountWeb({ routes = [], teamPages = [] }: WebExtension = {}) {
       { path: 'models', element: <TeamModelsPage /> },
       { path: 'presets', element: <TeamPresetsPage /> },
       { path: 'plugins', element: <TeamPluginsPage /> },
-      { path: 'team-dsh-hosts', element: <TeamDshHostsPage /> },
       { path: 'sharing', element: <TeamSharingPage view="review" /> },
       { path: 'history', element: <TeamHistoryPage /> },
       { path: 'members', element: <TeamMembersPage /> },

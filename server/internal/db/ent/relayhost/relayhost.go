@@ -3,6 +3,7 @@
 package relayhost
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -23,6 +24,8 @@ const (
 	FieldName = "name"
 	// FieldDshVersion holds the string denoting the dsh_version field in the database.
 	FieldDshVersion = "dsh_version"
+	// FieldOs holds the string denoting the os field in the database.
+	FieldOs = "os"
 	// FieldLastSeenAt holds the string denoting the last_seen_at field in the database.
 	FieldLastSeenAt = "last_seen_at"
 	// Table holds the table name of the relayhost in the database.
@@ -37,6 +40,7 @@ var Columns = []string{
 	FieldClientID,
 	FieldName,
 	FieldDshVersion,
+	FieldOs,
 	FieldLastSeenAt,
 }
 
@@ -66,6 +70,30 @@ var (
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(string) error
 )
+
+// Os defines the type for the "os" enum field.
+type Os string
+
+// Os values.
+const (
+	OsMacos   Os = "macos"
+	OsWindows Os = "windows"
+	OsLinux   Os = "linux"
+)
+
+func (o Os) String() string {
+	return string(o)
+}
+
+// OsValidator is a validator for the "os" field enum values. It is called by the builders before save.
+func OsValidator(o Os) error {
+	switch o {
+	case OsMacos, OsWindows, OsLinux:
+		return nil
+	default:
+		return fmt.Errorf("relayhost: invalid enum value for os field: %q", o)
+	}
+}
 
 // OrderOption defines the ordering options for the RelayHost queries.
 type OrderOption func(*sql.Selector)
@@ -98,6 +126,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByDshVersion orders the results by the dsh_version field.
 func ByDshVersion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDshVersion, opts...).ToFunc()
+}
+
+// ByOs orders the results by the os field.
+func ByOs(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOs, opts...).ToFunc()
 }
 
 // ByLastSeenAt orders the results by the last_seen_at field.

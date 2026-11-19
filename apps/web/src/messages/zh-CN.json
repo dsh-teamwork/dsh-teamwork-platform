@@ -32,7 +32,6 @@
     "subtitle": "无需密码。使用 Google，或通过邮箱获取一次性验证码。",
     "subtitleEmailOnly": "无需密码。通过邮箱获取一次性验证码。",
     "google": "使用 Google 继续",
-    "or": "或",
     "email": "邮箱",
     "emailPlaceholder": "you@example.com",
     "sendCode": "发送验证码",
@@ -43,7 +42,13 @@
     "subtitlePassword": "使用邮箱和密码登录。",
     "subtitlePasswordGoogle": "使用 Google，或邮箱和密码登录。",
     "password": "密码",
-    "noAccount": "还没有账号？请团队管理员为你创建。"
+    "noAccount": "还没有账号？请团队管理员为你创建。",
+    "orEmail": "或使用邮箱继续",
+    "checkEmail": "查收邮件",
+    "resend": "重新发送验证码",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码",
+    "setupHint": "这个实例还没有账号。请打开服务器启动时打印的设置链接，创建第一个账号。"
   },
   "authErrors": {
     "invalid_email": "邮箱地址格式不正确。",
@@ -132,14 +137,14 @@
       "console": {
         "title": "浏览器 · 工作与管理",
         "alt": "团队控制台概览：一条待审核提交，调用次数、积分和预算",
-        "description": "在网页里管理团队，也能通过邀请进入团队 DSH，开始或继续自己的会话。"
+        "description": "在网页里管理团队：模型、预设、成员和用量。"
       },
       "phone": {
         "title": "手机 · 随时跟进",
         "platformsLabel": "支持的平台",
         "storeSearch": "应用商店搜索 <strong>{appName}</strong>",
         "alt": "手机 App 的会话列表，一个会话在等你批准",
-        "description": "在手机上连到自己的电脑，或通过邀请加入团队 DSH，查看进度、发消息和处理审批。"
+        "description": "在手机上连到自己的电脑，查看进度、发消息和处理审批。"
       }
     },
     "collaborate": {
@@ -152,9 +157,6 @@
       "reviewBody": "对比新旧版本，确认新增的调研要求后发布。",
       "syncTitle": "全队同步使用",
       "syncBody": "下次同步时，更新后的调研规则就会出现在成员的 DSH 里。",
-      "sharedTitle": "团队 DSH",
-      "sharedEdition": "开源社区版",
-      "sharedBody": "管理员可以把一台团队 DSH 开放给全队或指定成员。成员收到邀请后，可从网页或手机接入同一台 DSH，在各自的会话里开展任务。",
       "alt": "分享与审批界面。市场调研预设拟在 v1 基础上新增标注信息来源、区分事实与推测的要求，等待管理员批准并发布。"
     },
     "govern": {
@@ -523,12 +525,12 @@
     "catalog": {
       "deepseek": "DeepSeek",
       "openai": "OpenAI",
-      "qwen": "通义千问（阿里云百炼）",
-      "moonshot": "Kimi（月之暗面）",
-      "zhipu": "智谱 GLM",
-      "doubao": "豆包（火山方舟）",
-      "minimax": "MiniMax",
-      "siliconflow": "硅基流动",
+      "alibaba-cn": "通义千问（阿里云百炼）",
+      "moonshotai-cn": "Kimi（月之暗面）",
+      "zhipuai": "智谱 GLM",
+      "volcengine": "豆包（火山方舟）",
+      "minimax-cn": "MiniMax",
+      "siliconflow-cn": "硅基流动",
       "openrouter": "OpenRouter"
     },
     "models": {
@@ -574,14 +576,13 @@
       "providerAdded": "提供商已接入。",
       "reading": "正在读取模型列表…",
       "chooseModels": "选择要发布的模型",
-      "chooseModelsHint": "勾选的模型会发布给整个团队。上下文长度来自厂商，厂商不报的可以之后补。",
+      "chooseModelsHint": "勾选的模型会发布给整个团队，并按公开参考自动带上上下文长度和积分单价，之后都可以修改。",
       "allPublished": "这个提供商列出的模型都已发布。",
       "noList": "这个提供商没有返回模型列表，请手动填写模型 ID。",
       "listFailed": "无法读取模型列表：{reason}请检查 API 密钥，或手动填写模型 ID。",
       "modelId": "模型 ID",
       "displayName": "显示名称",
       "publish": "发布 {count} 个模型",
-      "published": "已发布 {count} 个模型。",
       "done": "完成",
       "rekeyTitle": "更换「{name}」的密钥或地址",
       "rekeyHint": "名称不变，团队模型继续指向它。",
@@ -591,7 +592,15 @@
       "editTitle": "编辑团队模型",
       "limitsHint": "厂商没说明的限制可以留空。",
       "modelSaved": "已保存，成员下次同步后生效。",
-      "checking": "正在验证密钥…"
+      "checking": "正在验证密钥…",
+      "publishedPriced": "已发布 {count} 个模型，其中 {priced} 个已按公开参考价设好单价。",
+      "referenceReading": "正在查询参考单价…",
+      "referenceNoRate": "没有公开参考价，发布后需手动设置单价。",
+      "referenceRate": "输入 {input} 元 / 输出 {output} 元每百万 Token，参考 {from}",
+      "unpricedNotice": "{count} 个模型还没有单价，成员暂时无法调用。",
+      "fillRates": "按参考价填写",
+      "fillingRates": "填写中…",
+      "ratesFilled": "已按公开参考价设好 {priced} 个；{left} 个没有参考价，需要手动设置。"
     },
     "templates": {
       "writer": {
@@ -633,6 +642,26 @@
       "ask_user_question": "向用户提问",
       "skill": "调用技能"
     },
+    "avatars": {
+      "assistant": "团队助理",
+      "finance": "财务",
+      "admin": "行政",
+      "hr": "人力资源",
+      "marketing": "市场",
+      "sales": "商务",
+      "engineer": "工程师",
+      "product": "产品",
+      "legal": "法务",
+      "design": "设计",
+      "support": "客服",
+      "operations": "运营",
+      "project": "项目管理",
+      "training": "培训",
+      "developer": "软件开发",
+      "researcher": "研究",
+      "analyst": "数据分析",
+      "writer": "写作"
+    },
     "presets": {
       "title": "预设",
       "description": "一句话说明",
@@ -664,6 +693,7 @@
         "tools": "工具与插件",
         "persona": "人设与方法"
       },
+      "avatar": "头像",
       "name": "名称",
       "descriptionHint": "成员在 DSH 的预设列表里看到这句话。",
       "model": "使用的模型",
@@ -833,6 +863,7 @@
       "raw": "查看原始 JSON",
       "fields": {
         "name": "名称",
+        "avatar": "头像",
         "description": "描述",
         "inheritModel": "使用会话模型",
         "modelConfigId": "团队模型",
@@ -1061,7 +1092,15 @@
       "none": "你还没有电脑连接过。在电脑上的 DSH 里登录 Teamwork，它就会出现在这里。",
       "introTitle": "在浏览器里使用你自己的电脑",
       "intro": "这里列出你登录了 Teamwork 的每台电脑上的 DSH。打开一台，先把这个浏览器和它配对，就可以在它的会话里工作；浏览器和那台电脑之间端到端加密。",
-      "lastSeen": "{time}在线",
+      "lastSeenShort": "离线 · {time}",
+      "notPairedShort": "未配对",
+      "offlineTitle": "{name} 离线",
+      "offlineHelp": "在那台电脑上打开 DSH 并登录 Teamwork。它连上后，这里会自动继续。",
+      "offlineUnpairedHelp": "在那台电脑上打开 DSH 并登录 Teamwork，然后在这里把这个浏览器和它配对。",
+      "connecting": "正在连接 {name}…",
+      "connectingHelp": "正在与这台电脑建立端到端加密通道。",
+      "unreachableTitle": "无法连接 {name}",
+      "retry": "重试",
       "version": "DSH {version}",
       "pairTitle": "把这个浏览器配对到 {name}",
       "pairHelp": "在那台电脑的 DSH 里打开 Teamwork 面板，选择「设备连接」，生成配对码后输入到这里。",
@@ -1078,8 +1117,9 @@
       "pairFailed": "配对完成前与电脑的连接断开了。请在电脑上重新生成配对码再试一次。",
       "deviceName": "网页浏览器",
       "lockedHint": "PIN 错误次数过多。请在那台电脑的 DSH 里运行 /teamwork pin reset，然后在这里重新设置 PIN。",
-      "devices": "设备",
-      "devicesHelp": "与 {name} 配对的手机和浏览器。移除后立即断开。",
+      "deviceCount": "{count, plural, =0 {没有设备与 {name} 配对} other {# 台设备与 {name} 配对}}",
+      "devicesOf": "与 {name} 配对的设备",
+      "devicesHelp": "移除手机或浏览器后会立即断开，直到重新配对。",
       "noDevices": "还没有手机或浏览器与它配对。",
       "thisBrowser": "这个浏览器",
       "pending": "等待批准",

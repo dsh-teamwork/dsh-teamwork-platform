@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current · **Updated:** 2026-11-19
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -79,7 +79,15 @@ needing no call elsewhere on a connection.
 - **The plugin** connects with the 30-day Bearer it already holds ([ADR 0001](../adr/0001-plugin-sign-in.md)).
   On first connection the relay records a **host**: the member's id, a stable
   `hostId` the plugin generates and keeps beside its cache, the machine's
-  name, and the DSH version it reports.
+  name, and the DSH version and operating system it reports, both refreshed on
+  every connection. Its hello is `{ t: 'hello', token, clientId, name,
+  dshVersion, os }`; `os` is `macos`, `windows` or `linux`, any other value is
+  refused 4400, and a plugin that leaves it out (an older one, or a system the
+  relay names none for) is recorded with none. The phone's list of pairings
+  carries it as `hostOs` and the console's computers as `os`, for each to show
+  beside the computer's name. A shared DSH reports none. The phone's list also
+  carries `hostLastSeenAt`, the host's `last_seen_at` (a shared host's, which
+  may be null), so it can say how long an offline computer has been away.
 - **The app** signs in through the website the way the plugin does ([ADR 0001](../adr/0001-plugin-sign-in.md)):
   PKCE and a code. It receives its own Bearer, with `via` naming the app. The
   token says who the person is. On its own it reaches no computer.
@@ -148,7 +156,7 @@ The plugin atomically writes its seed and account/server-scoped trust roster to
 
 The tables:
 
-- `relay_hosts`: `id`, `user_id`, `client_id`, `name`, `dsh_version`,
+- `relay_hosts`: `id`, `user_id`, `client_id`, `name`, `dsh_version`, `os`,
   `last_seen_at`, `created_at`.
 - `relay_pairing_offers`: `code_hash`, `host_id`, `expires_at`,
   `used_at`. Each code is stored as an HMAC, as the sign-in codes are.
@@ -299,7 +307,13 @@ use, so DSH sees each phone as a separate client.
 
 `teamwork/configuration` takes `{ args: { request: { sessionId? } } }` and returns
 the native preset roster enriched with team id/name/version, tool and plugin
-dependency states, plus the loaded session's actual directory, preset and model.
+dependency states, plus the loaded session's actual directory, preset and model,
+the folders a session may start in (`directories`), and each synced team's
+default workspace (`teamDirectories`, team id to one of `directories`). The
+member sets that default in the plugin's panel, under My teams
+(`src/team-workspaces.ts`); until then it is the folder DSH was started in. A
+client starting a session for a team and naming no folder starts it there
+(`defaultDirectory` in `packages/relay-client`).
 `teamwork/selectModel` takes `{ args: { request: { sessionId, provider, model,
 reasoningEffort? } } }` and returns `{ selected }`. The session must pass native
 admission and be idle; the desktop default is never saved. Native
@@ -483,6 +497,7 @@ way to reach a DSH, beside Team DSH ([shared-dsh.md](shared-dsh.md)) and, in
 the hosted edition, Cloud DSH.
 
 - **Workspace → My DSH**, `/teams/{teamId}/my-dsh[/{hostId}[/{sessionId}]]`
+  and `/teams/{teamId}/my-dsh/{hostId}/devices`
   (`apps/web/src/pages/team/my-dsh.tsx`), in the same three columns as Team
   DSH, whose parts it shares (`dsh-session.tsx`). Those parts speak to this
   browser's relay unless a page provides another client
@@ -490,17 +505,26 @@ the hosted edition, Cloud DSH.
   reaches itself. It is listed while the
   account has at least one recorded host, in every team alike: the computers
   are the person's, not a team's.
-- **The second column lists the account's computers**: name, online or when
-  last seen. The open one shows its sessions beneath it once this browser is
-  paired and unlocked.
-- **The third column** is, by state: pairing this browser (the six-letter code
-  from the Teamwork panel's Phone page, the eight-digit safety code to
-  compare, then approval on the desktop: "Pairing" above, unchanged); the
-  computer's PIN, `owner`'s; a session, or a new one started by its first
-  message. Above it, the computer's name, state and DSH version, and its
-  **Devices**: every pairing of the account to it, the phone app's and every
-  browser's, with its name, status, last use and whether it pushes, this
-  browser marked, each removable.
+- **The second column lists the account's computers**: name, operating system,
+  online or offline, whether this browser is paired with it, and beside each
+  the number of devices paired with it, which opens its devices page. The list
+  is read again every ten seconds, so a computer coming online or going away
+  moves the page along by itself. The open one shows its sessions beneath it
+  once it is online and this browser is paired.
+- **The third column** follows the computer's state, one at a time, and only
+  the last offers a session: offline (nothing to do but open DSH on it);
+  online but not paired with this browser (the six-letter code from the
+  Teamwork panel's Phone page, the eight-digit safety code to compare, then
+  approval on the desktop: "Pairing" above, unchanged); paired and connecting,
+  until the computer answers over the encrypted channel with its sessions or
+  its PIN state; the channel failed, with a retry; the computer's PIN,
+  `owner`'s; and then a session, or a new one started by its first message.
+  Above it, the computer's name with its operating system and DSH version on
+  the left, and on the right whether it is online (green) or offline (grey,
+  with when it was last seen); the list marks each computer the same way.
+- **The devices page** takes the third column: every pairing of the account to
+  the computer, the phone app's and every browser's, with its name, status,
+  last use and whether it pushes, this browser marked, each removable.
 - **A new session** offers the computer's folders, presets and models (with a
   model's reasoning efforts where it has them) before its first message, and a
   session's model and effort change while it is idle, through
@@ -512,12 +536,12 @@ the hosted edition, Cloud DSH.
   ("Frames" above).
 - **The server** ([ADR 0048](../adr/0048-the-console-manages-every-device.md)):
   `GET /relay/hosts` answers the console's session cookie alone, with the
-  account's hosts, whether each socket is open, `last_seen_at`, `dsh_version`
-  and every pairing of the account to each, `current` when its handset
+  account's hosts, whether each socket is open, `last_seen_at`, `dsh_version`,
+  `os` and every pairing of the account to each, `current` when its handset
   credential is this browser's. `DELETE /relay/pairings/{id}` from that
   session revokes any pairing of the account to its own computers; an app's
   Bearer stays handset-scoped. Another device's pairing is revoked through the
-  relay alone, as for an offline desktop (step 6 above). No table changed.
+  relay alone, as for an offline desktop (step 6 above).
 - **Not built:** a team admin seeing a member's computers; removing a
   computer's record, which comes back the next time its plugin connects;
   telling a member their DSH or plugin is older than the team pins; push to a

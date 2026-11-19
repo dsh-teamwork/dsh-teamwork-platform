@@ -3683,6 +3683,7 @@ export interface components {
             id: string;
             name: string;
             dshVersion: string;
+            os: components["schemas"]["HostOs"];
             online: boolean;
             /** Format: date-time */
             lastSeenAt: string;
@@ -3700,12 +3701,23 @@ export interface components {
                 current: boolean;
             }[];
         };
+        /**
+         * @description A member's computer's operating system as its plugin reports it; null for a shared DSH or a plugin too old to report one
+         * @enum {string|null}
+         */
+        HostOs: "macos" | "windows" | "linux" | null;
         RelayPairing: {
             id: string;
             hostId: string;
             /** @description The member whose handset it is */
             userId: string;
             hostName: string;
+            hostOs: components["schemas"]["HostOs"];
+            /**
+             * Format: date-time
+             * @description When its computer last connected to the relay; null for a shared DSH that never has
+             */
+            hostLastSeenAt: string | null;
             deviceName: string;
             /** @enum {string} */
             status: "pending" | "confirmed";
@@ -4029,6 +4041,8 @@ export interface components {
             contextWindow?: components["schemas"]["Tokens"];
             maxTokens?: components["schemas"]["Tokens"];
             modelConfigId?: string;
+            /** @description A preset avatar's id from the clients' library (packages/shared); a client draws an id it does not know, or none, as one picked from the preset's id. */
+            avatar?: string;
             description?: string;
             instructions?: string;
             outputDescription?: string;

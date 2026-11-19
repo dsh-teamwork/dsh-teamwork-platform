@@ -12,7 +12,6 @@ import {
   approvalResult,
   eventsOf,
   historyOf,
-  latestDirectoryOf,
   newStreams,
   pendingOf,
   questionsResult,
@@ -130,12 +129,6 @@ describe('reading DSH', () => {
       assistantStream: { revision: 3, activeAttempt: { turn: 2, step: 1, stream: [{ type: 'block-start' }, { type: 'text-delta', text: 'Half ' }, { type: 'text-delta', text: 'way' }] } },
     });
     expect(state.items).toEqual([{ kind: 'assistant', id: 'assistant-2-1', text: 'Half way' }]);
-  });
-
-  it('starts a new session in the folder of the computer’s latest one', () => {
-    expect(latestDirectoryOf(fixture.sessionList)).toBe('/home/ada/project');
-    expect(latestDirectoryOf({ items: [{ cwd: '/a', updatedAt: 1 }, { cwd: '/b', updatedAt: 9 }] })).toBe('/b');
-    expect(latestDirectoryOf({ items: [] })).toBeNull();
   });
 });
 

@@ -14,6 +14,7 @@ import { useFormatter, useTranslations } from 'use-intl';
 
 import {
   applySessionEvent,
+  defaultDirectory,
   deliverFiles,
   EMPTY_SESSION,
   ensureFileTarget,
@@ -37,6 +38,8 @@ import {
   type SessionState,
   type SessionSummary,
 } from '@dsh-teamwork/relay-client';
+import { PresetAvatar } from '@/components/preset-avatar';
+import { ProviderMark } from '@/components/provider-mark';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -184,27 +187,56 @@ export function SessionList({ base, locked, sessions, sessionId, onPick }: { bas
   );
 }
 
-/** A computer's row in the column: its name, a word under it, and a navy dot while it is online. */
-export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick }: { icon?: LucideIcon; name: string; note: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void }) {
+/**
+ * A computer's row in the column: its name, and under it whether it is online (`online`, when known; green, or grey and
+ * dimmed when offline) and `note`, with `extra` at its end. The row's link covers all of it, so `extra` may hold a link
+ * of its own (one link cannot hold another).
+ */
+export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra }: { icon?: LucideIcon; name: string; note?: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode }) {
   const inner = (
     <>
-      <Icon className="size-4 shrink-0" aria-hidden />
+      <Icon className={cn('size-4 shrink-0', online === false && 'text-muted-foreground')} aria-hidden />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate">{name}</span>
-        <span className="truncate text-xs font-normal text-muted-foreground">{note}</span>
+        <span className={cn('truncate', online === false && 'text-muted-foreground')}>{name}</span>
+        <span className="flex min-w-0 items-center gap-1 text-xs font-normal text-muted-foreground">
+          {online !== undefined && <Presence online={online} />}
+          {online !== undefined && note && <span aria-hidden>·</span>}
+          {note && <span className="truncate">{note}</span>}
+        </span>
       </span>
-      {online !== undefined && <Dot className={online ? 'bg-brand' : 'bg-muted-foreground/40'} />}
     </>
   );
   return to ? (
-    <Link to={to} onClick={onPick} className={cn(row, 'gap-2.5', current && selected, open && 'font-medium')}>{inner}</Link>
+    <div className={cn(row, 'gap-2.5', current && selected, open && 'font-medium')}>
+      <Link
+        to={to}
+        onClick={onPick}
+        aria-current={current ? 'page' : undefined}
+        className="flex min-w-0 flex-1 items-center gap-2.5 after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+      >
+        {inner}
+      </Link>
+      {extra && <span className="relative flex shrink-0">{extra}</span>}
+    </div>
   ) : (
-    <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}</div>
+    <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}{extra}</div>
+  );
+}
+
+/** Whether a computer is online, as a dot and a word: green while it is, grey when not (docs/design.md, `--success`). */
+export function Presence({ online, label }: { online: boolean; label?: string }) {
+  const t = useTranslations('team.dsh');
+  return (
+    <span className={cn('flex shrink-0 items-center gap-1.5', online ? 'text-success' : 'text-muted-foreground')}>
+      <span className={cn('size-1.5 rounded-full', online ? 'bg-success' : 'bg-muted-foreground/50')} aria-hidden />
+      {label ?? t(online ? 'online' : 'offline')}
+    </span>
   );
 }
 
 /** A new session looks like one with nothing in it yet: sending the first message starts it, then opens it. */
 export function NewSession({ computerId, name, started }: { computerId: string; name: string; started: (sessionId: string) => void }) {
+  const { team } = useTeam();
   const t = useTranslations('team.dsh');
   const word = useRelayError();
   const relay = useSessionClient();
@@ -219,8 +251,8 @@ export function NewSession({ computerId, name, started }: { computerId: string; 
     try {
       // Files need their session before their bytes move; a retry after a failed upload reuses it.
       const created = files.files.length
-        ? await files.target({ cwd: options.cwd, agentPreset: options.agentPreset })
-        : await relay.createSession(computerId, { cwd: options.cwd, agentPreset: options.agentPreset });
+        ? await files.target({ cwd: options.cwd, agentPreset: options.agentPreset, teamId: team.id })
+        : await relay.createSession(computerId, { cwd: options.cwd, agentPreset: options.agentPreset, teamId: team.id });
       if (options.model) await relay.selectModel(computerId, created.id, options.model);
       if (files.files.length) await files.send(created.id, text);
       else await relay.prompt(computerId, created.id, text);
@@ -278,6 +310,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
   value?: SessionOptions;
   onChange?: (value: SessionOptions) => void;
 }) {
+  const { team } = useTeam();
   const t = useTranslations('team.dsh.settings');
   const word = useRelayError();
   const relay = useSessionClient();
@@ -300,7 +333,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
   const current = sessionId ? data.current : null;
   const models = [
     ...(sessionId ? [] : [{ value: '', label: t('followPreset') }]),
-    ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}` })),
+    ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}`, icon: <ProviderMark hints={[model.id, model.name, model.providerName, model.provider]} name={model.name} /> })),
   ];
   const chosenModel = sessionId ? current?.model : value.model;
   // How hard the chosen model reasons, where it says it can be told: its own default, or one of its efforts.
@@ -331,6 +364,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
     const preset = data.presets.find((item) => item.id === current.agentPreset);
     return (
       <>
+        {preset && <PresetAvatar avatar={preset.avatar} name={preset.name} className="size-6" />}
         <span className="truncate text-xs text-muted-foreground" title={current.cwd}>
           {[directoryName(current.cwd) || current.cwd, preset?.name ?? current.agentPreset ?? t('noPreset')].join(' · ')}
         </span>
@@ -354,7 +388,9 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
       disabled: !!item.blocked,
     })),
   ];
-  const cwd = value.cwd ?? data.directories[0]?.path ?? '';
+  // A new session opens in this team's default workspace on the computer unless another folder is picked.
+  const cwd = value.cwd ?? defaultDirectory(data.directories, data.teamDirectories, team.id) ?? '';
+  const chosenPreset = data.presets.find((item) => (value.agentPreset ? item.id === value.agentPreset : item.isDefault));
   return (
     <>
       {data.directories.length > 0 && (
@@ -362,6 +398,7 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
           options={data.directories.map((item) => ({ value: item.path, label: item.name }))}
           change={(path) => onChange?.({ ...value, cwd: path })} />
       )}
+      {chosenPreset && <PresetAvatar avatar={chosenPreset.avatar} name={chosenPreset.name} className="size-6" />}
       <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className="h-8 max-w-48 text-xs"
         change={(id) => onChange?.({ ...value, agentPreset: id || undefined, model: undefined })} />
       <Select label={t('model')} value={modelKey(chosenModel)} options={models} disabled={disabled} className="h-8 max-w-56 text-xs"

@@ -349,8 +349,10 @@ apps/web             Vite and React: the console and the public pages,
                      prerendered at its build and embedded in the binary;
                      an edition's web app composes it (mountWeb, ADR 0041)
 api/openapi.yaml     the wire contract
-packages/shared      the languages and the rule that picks one, shared by the
-                     console and the closed mobile app
+packages/shared      the languages and the rule that picks one, the model
+                     providers' marks and the rule that picks one, and the
+                     preset avatars, shared by the console and the closed
+                     mobile app
 packages/relay-client  the relay's client: the encrypted channel (the
                      plugin's, byte for byte), the frames and DSH's Remote API
                      read into a client's shapes; the web console and the
@@ -371,7 +373,10 @@ response they see against it, and the console's types are generated from it
 (`pnpm --filter @dsh-teamwork/web api:types` writes
 `src/lib/api.gen.ts`, and a test fails when it is stale). The plugin
 repository restates the snapshot shape in `../dsh-teamwork/src/client.ts`; a
-change to `GET /api/configs` changes it in the same working session.
+change to `GET /api/configs` changes it in the same working session. It also
+keeps a byte-for-byte copy of `packages/shared/src/avatars.ts` in
+`../dsh-teamwork/src/web/avatars.ts`, which the plugin's end-to-end suite
+holds equal (`server/e2e/avatars_test.go`).
 
 ### Teams and the model gateway
 

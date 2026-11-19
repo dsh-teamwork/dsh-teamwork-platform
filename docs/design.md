@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current · **Updated:** 2026-11-19
 
 The DSH Teamwork visual system — the whale mark, the black-and-white palette with its two accents, type, spacing and icons — and the file in code that owns each part.
 
@@ -79,8 +79,8 @@ by `apps/web/src/lib/theme.ts` and the instance console's own
 script sets it before the first paint. Grounds
 and text are a neutral grey (hue 286, chroma under 0.02): white grounds and
 near-black text in light, near-black grounds and white text in dark. Colour
-appears in three places only: the mark, the two accents, and the outcome
-colours.
+appears in four places only: the mark, the preset avatars (each in its own
+plate and accent), the two accents, and the outcome colours.
 
 ### Brand colours
 
@@ -117,15 +117,17 @@ Both declare the same scale; the console adds three outcome colours.
 | `--brand` | `oklch(0.33 0.11 268)` | `oklch(0.452 0.124 270)` | Navy: team identity (below); in dark a lighter navy, still a fill under white text |
 | `--brand-foreground` | `oklch(1 0 0)` | `oklch(1 0 0)` | Text on brand |
 | `--signal` | `oklch(0.765 0.14 73)` | `oklch(0.807 0.137 78)` | Amber: attention, as a dot or a line, never text |
+| `--success` | `oklch(0.527 0.137 150)` | `oklch(0.84 0.149 155)` | Green: a computer is online, as a dot and the word beside it |
+| `--mark-plate` | `oklch(0.953 0.003 286)` | `oklch(0.92 0.003 286)` | The tile under a provider's mark: light in both themes |
 | `--border` | `oklch(0.932 0.003 286)` | `oklch(0.287 0.007 286)` | Hairlines |
 | `--input` | `oklch(0.887 0.007 286)` | `oklch(0.351 0.01 286)` | Field and outline-button border |
 | `--ring` | `oklch(0.452 0.124 270)` | `oklch(0.766 0.095 271)` | Focus ring (`outline-ring/50` on everything): navy |
 
-Console only:
+The operator console (`apps/manage`) also has these, `--success` with the
+same values as above:
 
 | Token | Light | Dark |
 | --- | --- | --- |
-| `--success` | `oklch(0.527 0.137 150)` | `oklch(0.84 0.149 155)` |
 | `--warning` | `oklch(0.554 0.121 66)` | `oklch(0.807 0.137 78)` |
 | `--info` | `oklch(0.55 0.12 245)` | `oklch(0.72 0.12 245)` |
 
@@ -157,12 +159,55 @@ Lucide (`lucide-react`) on web and console, sized and coloured through
 `className` from tokens (e.g. `text-muted-foreground`). There is no product
 icon set.
 
+**Model providers are shown by their makers' marks, in their own colours.**
+`PROVIDER_MARKS` in `packages/shared/src/providers.ts` holds them, copied from
+LobeHub's icons (the colour version where one exists; OpenAI, Anthropic, xAI,
+Ollama and OpenRouter are black, as their makers draw them on light), and
+`providerMark` picks one from what names a model (its id and name first, then
+its provider's name and address), so a model resold by OpenRouter shows its
+maker. Every place that names a model or a provider draws one on a
+`--mark-plate` tile (20px beside a line of text or in a menu, 36px heading a
+card), drawn by `apps/web/src/components/provider-mark.tsx` and the phone
+app's own. The plate stays light in dark mode, since a maker's colours are
+chosen for light. A mark's colours are the one exception to "never a literal
+colour": they are the maker's artwork, kept as data, never a token and never
+used for anything else. An unknown provider shows two initials on a
+`--secondary` tile. A mark never stands without the name beside it.
+
+### Preset avatars
+
+A preset's face is one of a fixed library of avatars,
+`packages/shared/src/avatars.ts`, which the web console, the phone app and the
+DSH plugin's panel all draw (`apps/web/src/components/preset-avatar.tsx`, the
+app's own, and the plugin's from a byte-for-byte copy that
+`server/e2e/avatars_test.go` holds equal), so a preset looks the same
+everywhere. **An avatar is an abstract emblem of a
+role**: two or three flat shapes — circles, arcs, rounded bars — composed to
+suggest what the role does (a balance for legal, a stack of coins for finance,
+work laid out in time for project management), in **Paper** and one accent on
+a plate with the logo's corner (22 %). It is neither a stock app glyph (a
+magnifier, a gear), which makes a preset read as a menu item, nor a drawing of
+a person or a character, which at this size reads as clip art.
+
+- **Each role has its own plate and one accent.** Plates are deep, muted
+  tones (dark enough that the paper figure always reads) and accents the
+  lighter colour of its attribute; no two neighbouring roles share a hue
+  family. The team assistant keeps the brand's navy and amber.
+- **Flat fills, rarely a stroke**, three tones per avatar (paper, plate as a
+  cut-out, accent), on a 32-unit square; shapes stay clear of the plate's
+  rounded corners, so no client clips. Each must read at 20 px, so a detail
+  smaller than about 1.5 units is left out.
+- These hexes, in that file, are an exception to "never a literal colour":
+  like the share card, the avatar is drawn outside the stylesheet and the same
+  in both themes, as the logo is.
+
 ## Component rules
 
 - **Never a literal colour.** No Tailwind palette step (`text-gray-600`,
   `text-green-600`) in a page and no hex in a component; a colour is a token.
-  The share card, which renders outside the stylesheet, is the one exception
-  and uses the brand hexes above.
+  Three exceptions: the share card and the preset avatars, which render
+  outside the stylesheet and use the hexes their sources name, and Google's
+  four-colour G on the sign-in button, whose colours Google's branding fixes.
 - **`--brand` is not `--accent`.** `accent` is the subtle hover surface every
   shadcn-shaped primitive uses, so a brand colour there tints every hover. Brand
   chrome opts in with `bg-brand` / `text-brand`.
@@ -181,6 +226,11 @@ icon set.
   `cursor: pointer` from the base layer in `apps/web/src/globals.css` and
   `apps/manage/src/globals.css`, as links do; a disabled control keeps the
   arrow. A component adds no `cursor-pointer` of its own.
+- **A sidebar scrolls quietly.** A scroll area inside a sidebar or its drawer
+  takes `scrollbar-quiet` (`apps/web/src/globals.css`): no track and no arrows,
+  only a 4px rounded thumb in `--muted-foreground` at 25%, darker while the area
+  is hovered or the thumb dragged, so the bar reads as part of the surface in
+  both themes rather than the operating system's grey.
 - **Lists are rows, not cards.** Rows are divided by `--border` hairlines; a
   card's border and fill are kept for the one block that has to stand apart.
 - **The logo keeps its plate.** Use `public/logo.svg` at its square size. The
@@ -222,7 +272,7 @@ icon set.
   each with an icon for where they work (DSH Desktop, a terminal, the phone,
   the admin's web console), curved arrows into DSH Teamwork in the middle, and
   on the right the mainstream upstream providers, each by its own logo
-  (`provider-logos.ts`, from LobeHub's icons; the console keeps letter tiles),
+  (`PROVIDER_MARKS`, the same marks the console draws, each on its plate),
   as well as a custom provider. Cloud DSH sits below them as a separate
   workspace in limited trial on the hosted edition. The phone's icon carries `public/logo.svg` on its
   screen, since the app is ours. The hub lists the page's sections, each with
@@ -286,6 +336,17 @@ icon set.
   printed there and nowhere else in the chrome (`apps/web/src/components/account.tsx`). The operator
   console's rail ends the same way: the operator's initial (the address only
   on hover), the theme and signing out (`apps/manage/src/components/layout/sidebar.tsx`).
+- **Sign-in is split in two** (`apps/web/src/pages/sign-in.tsx`). From
+  `lg` up, the left side is the navy plate: the logo, the home page's title in
+  its serif and lede, and three flat bands of the plate's foreground for the
+  sea. The right side is the form on the page ground, with the way home at
+  its top left and, at its top right, the language and the theme drawn as
+  the home page's header draws them (`HeaderLocaleMenu`). The form lists every OAuth door the
+  session's `doors` reports as an outline button with its provider's
+  mark (Google's in its own four colours), then a divider and the one email door (a code, or a
+  password with a show toggle); a sent code turns the screen into *Check your
+  email* with a wide six-digit field, another email and a new code. Below
+  `lg` the plate is dropped and the logo sits above the title.
 - **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as
   cards (each with the team's initials on navy, and a member's home, resources
   and submissions, or an admin's overview, models and members, a click away) grouped by role, a welcome with the first steps when

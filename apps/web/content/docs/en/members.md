@@ -47,42 +47,33 @@ Anything it would change still asks for your approval.
 ## Work on your own DSH from the browser
 
 **My DSH** appears under Workspace once a computer of yours, with DSH signed in
-to Teamwork, has connected. It lists those computers, the same in every team.
-Open one and pair this browser with it once: in DSH on that computer, open the
+to Teamwork, has connected. It lists those computers, the same in every team,
+each with its operating system and the number of devices paired with it. Open
+one and pair this browser with it once: in DSH on that computer, open the
 Teamwork panel, choose **Devices** and make a code, type the code here, check
 that both screens show the same safety code, and approve on the computer. Then
 set a four-digit PIN, which the computer asks for again when you come back.
 After that you start, follow and answer sessions on it from the browser, end to
-end encrypted between the browser and the computer.
+end encrypted between the browser and the computer. Each computer says whether
+it is online and whether this browser is paired with it; one that is offline
+offers nothing until DSH runs on it again, and the page carries on by itself
+once it connects.
 
 Beside the message box, a new session offers the computer's folders, presets
 (a team preset included; one the computer cannot run yet says why) and models,
 before its first message; leave them as they are for the computer's defaults.
+The folder starts as this team's default workspace on that computer, which
+you set in DSH's Teamwork panel under **My teams**.
 A model that can reason harder offers its efforts beside it. In a session that
 has started, the folder and preset stay as they are, and you can change its
 model and effort while it is not working, for that session alone. The
 paperclip beside them adds files (text, code, logs, CSV, JSON or PDF; up to
-five, 20 MB each), sent with the message, or on their own. The same choices are
-there on a Team DSH.
+five, 20 MB each), sent with the message, or on their own.
 
-Under **Devices** you see every phone and browser paired with that computer,
-and **Remove** cuts any of them off at once, a lost phone included. If you
-enter the wrong PIN too often, run `/teamwork pin reset` in DSH on that
-computer.
-
-## Work on a Team DSH
-
-If your team runs a Team DSH, its admin hands you an invite link
-(`dshteamwork://join?…`). Open **Team DSH** under Workspace in the team console,
-choose **Join with an invite**, paste it and choose **Join**, then set a four-digit PIN; the
-machine asks for it again when you come back. Each browser joins once, and
-keeps its key in the browser's own storage: clearing the site's data means
-asking for a new invite. Where your team does not have Team DSH yet, the page
-says what it offers and who enables it. You see only the sessions you start there, and your
-team's admin can read every session from the machine's encrypted archive. The
-phone app opens the same link, or scans its QR code under **Pair a computer**;
-the Team DSH then sits in the computer list under your team's name. Your admin's
-side of this is [Team DSH](/docs/team-dsh).
+The device count beside a computer opens its devices: every phone and browser
+paired with it, where **Remove** cuts any of them off at once, a lost phone
+included. If you enter the wrong PIN too often, run `/teamwork pin reset` in
+DSH on that computer.
 
 ## More than one team
 

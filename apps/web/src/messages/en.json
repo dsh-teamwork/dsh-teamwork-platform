@@ -29,10 +29,9 @@
   },
   "signIn": {
     "title": "Sign in",
-    "subtitle": "No password. Use Google, or get a one-time code by email.",
+    "subtitle": "Continue with Google, or get a one-time code by email. No password needed.",
     "subtitleEmailOnly": "No password. Get a one-time code by email.",
     "google": "Continue with Google",
-    "or": "or",
     "email": "Email",
     "emailPlaceholder": "you@example.com",
     "sendCode": "Email me a code",
@@ -43,7 +42,13 @@
     "subtitlePassword": "Sign in with your email and password.",
     "subtitlePasswordGoogle": "Use Google, or your email and password.",
     "password": "Password",
-    "noAccount": "No account yet? Your team admin creates one for you."
+    "noAccount": "No account yet? Your team admin creates one for you.",
+    "orEmail": "or continue with email",
+    "checkEmail": "Check your email",
+    "resend": "Send a new code",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "setupHint": "This instance has no account yet. Open the setup link the server printed when it started to create the first one."
   },
   "authErrors": {
     "invalid_email": "That doesn't look like an email address.",
@@ -132,14 +137,14 @@
       "console": {
         "title": "Web console",
         "alt": "The team console's overview: a submission waiting for review, calls, points and budget",
-        "description": "Manage the team or use an invitation to start or resume your own session on a Team DSH in the browser."
+        "description": "Manage the team in the browser: models, presets, members and usage."
       },
       "phone": {
         "title": "Mobile app",
         "platformsLabel": "Supported platforms",
         "storeSearch": "Search your app store for <strong>{appName}</strong>",
         "alt": "The phone app's session list, one session waiting for an approval",
-        "description": "Connect to your computer or an invited Team DSH to check progress, send messages, and handle approvals."
+        "description": "Connect to your computer to check progress, send messages, and handle approvals."
       }
     },
     "collaborate": {
@@ -152,9 +157,6 @@
       "reviewBody": "Compare the two versions and publish after checking the new research guidelines.",
       "syncTitle": "The whole team syncs the update",
       "syncBody": "The updated research guidelines appear in each teammate's DSH at the next sync.",
-      "sharedTitle": "Team DSH",
-      "sharedEdition": "Community Edition",
-      "sharedBody": "An admin can share a team DSH with everyone or selected members. Invited members can connect from a browser or phone and run their own sessions on the same machine.",
       "alt": "The Sharing and review screen compares the market research preset at v1 with a proposed update that adds source citations and separates facts from assumptions."
     },
     "govern": {
@@ -523,12 +525,12 @@
     "catalog": {
       "deepseek": "DeepSeek",
       "openai": "OpenAI",
-      "qwen": "Qwen (Alibaba Cloud Model Studio)",
-      "moonshot": "Kimi (Moonshot AI)",
-      "zhipu": "Zhipu GLM",
-      "doubao": "Doubao (Volcano Engine Ark)",
-      "minimax": "MiniMax",
-      "siliconflow": "SiliconFlow",
+      "alibaba-cn": "Qwen (Alibaba Cloud Model Studio)",
+      "moonshotai-cn": "Kimi (Moonshot AI)",
+      "zhipuai": "Zhipu GLM",
+      "volcengine": "Doubao (Volcano Engine Ark)",
+      "minimax-cn": "MiniMax",
+      "siliconflow-cn": "SiliconFlow",
       "openrouter": "OpenRouter"
     },
     "models": {
@@ -574,14 +576,13 @@
       "providerAdded": "Provider connected.",
       "reading": "Reading the model list…",
       "chooseModels": "Choose models to publish",
-      "chooseModelsHint": "The models you tick are published to the whole team. Context sizes come from the provider; add any it does not report later.",
+      "chooseModelsHint": "The models you tick are published to the whole team, each with the context size and reference rate its public reference states. Change either later.",
       "allPublished": "Every model this provider lists is already published.",
       "noList": "This provider returned no model list. Type the model id instead.",
       "listFailed": "The model list could not be read: {reason} Check the key, or type the model id instead.",
       "modelId": "Model id",
       "displayName": "Display name",
       "publish": "{count, plural, one {Publish # model} other {Publish # models}}",
-      "published": "{count, plural, one {Published # model.} other {Published # models.}}",
       "done": "Done",
       "rekeyTitle": "Replace the key or address of “{name}”",
       "rekeyHint": "The name stays, so team models keep pointing at it.",
@@ -591,7 +592,15 @@
       "editTitle": "Edit team model",
       "limitsHint": "Leave a limit empty when the provider does not state it.",
       "modelSaved": "Saved. Members get it at their next sync.",
-      "checking": "Checking the key…"
+      "checking": "Checking the key…",
+      "publishedPriced": "{count, plural, one {Published # model} other {Published # models}}, {priced} priced from public reference prices.",
+      "referenceReading": "Looking up its reference rate…",
+      "referenceNoRate": "No public reference rate: set one after publishing.",
+      "referenceRate": "CNY {input} in / {output} out per million tokens, from {from}",
+      "unpricedNotice": "{count, plural, one {# model has} other {# models have}} no rate yet, so members cannot call {count, plural, one {it} other {them}}.",
+      "fillRates": "Fill from reference prices",
+      "fillingRates": "Filling…",
+      "ratesFilled": "{priced} priced from public reference prices; {left} without a reference need a rate set by hand."
     },
     "templates": {
       "writer": {
@@ -633,6 +642,26 @@
       "ask_user_question": "Ask the user",
       "skill": "Use a skill"
     },
+    "avatars": {
+      "assistant": "Team assistant",
+      "finance": "Finance",
+      "admin": "Administration",
+      "hr": "Human resources",
+      "marketing": "Marketing",
+      "sales": "Sales and business",
+      "engineer": "Engineering",
+      "product": "Product",
+      "legal": "Legal",
+      "design": "Design",
+      "support": "Customer support",
+      "operations": "Operations",
+      "project": "Project management",
+      "training": "Training",
+      "developer": "Software development",
+      "researcher": "Research",
+      "analyst": "Data analysis",
+      "writer": "Writing"
+    },
     "presets": {
       "title": "Presets",
       "description": "One-line description",
@@ -664,6 +693,7 @@
         "tools": "Tools and plugins",
         "persona": "Persona and method"
       },
+      "avatar": "Avatar",
       "name": "Name",
       "descriptionHint": "Members see this line in DSH’s preset list.",
       "model": "Model",
@@ -833,6 +863,7 @@
       "raw": "Show raw JSON",
       "fields": {
         "name": "Name",
+        "avatar": "Avatar",
         "description": "Description",
         "inheritModel": "Uses the session's model",
         "modelConfigId": "Team model",
@@ -1061,7 +1092,15 @@
       "none": "None of your computers has connected yet. Sign in to Teamwork in DSH on a computer, and it appears here.",
       "introTitle": "Use your own computers from the browser",
       "intro": "The DSH on each computer you signed in to Teamwork. Open one to pair this browser with it, then work in its sessions, end-to-end encrypted between this browser and that computer.",
-      "lastSeen": "Last seen {time}",
+      "lastSeenShort": "Offline · {time}",
+      "notPairedShort": "Not paired",
+      "offlineTitle": "{name} is offline",
+      "offlineHelp": "Open DSH on that computer, signed in to Teamwork. This page carries on by itself once it connects.",
+      "offlineUnpairedHelp": "Open DSH on that computer, signed in to Teamwork, then pair this browser with it here.",
+      "connecting": "Connecting to {name}…",
+      "connectingHelp": "Opening an end-to-end encrypted channel to the computer.",
+      "unreachableTitle": "Cannot reach {name}",
+      "retry": "Try again",
       "version": "DSH {version}",
       "pairTitle": "Pair this browser with {name}",
       "pairHelp": "On that computer, open the Teamwork panel in DSH and choose Devices, then make a pairing code and type it here.",
@@ -1078,8 +1117,9 @@
       "pairFailed": "The connection to the computer broke before pairing finished. Make a new code on the computer and try again.",
       "deviceName": "Web browser",
       "lockedHint": "Too many wrong PINs. On that computer, run /teamwork pin reset in DSH, then set a new PIN here.",
-      "devices": "Devices",
-      "devicesHelp": "Phones and browsers paired with {name}. Removing one cuts it off at once.",
+      "deviceCount": "{count, plural, =0 {No devices paired with {name}} one {# device paired with {name}} other {# devices paired with {name}}}",
+      "devicesOf": "Devices paired with {name}",
+      "devicesHelp": "Removing a phone or browser cuts it off at once, until it is paired again.",
       "noDevices": "No phone or browser is paired with it.",
       "thisBrowser": "This browser",
       "pending": "Waiting for approval",

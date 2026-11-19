@@ -17,13 +17,24 @@ export interface DeviceKeys {
   forget(id: string): Promise<void>;
 }
 
+/** A member's computer's operating system, as its plugin reports it to the relay. */
+export const HOST_OS = ['macos', 'windows', 'linux'] as const;
+export type HostOs = (typeof HOST_OS)[number];
+
+/** How a client names an operating system: a product name, the same in every language. */
+export const HOST_OS_NAMES: Record<HostOs, string> = { macos: 'macOS', windows: 'Windows', linux: 'Linux' };
+
 export interface Computer {
   /** The pairing's id: every frame for this computer names it. */
   id: string;
   /** The machine's name, as its DSH reported it. */
   name: string;
+  /** Its operating system; null for a team's shared DSH, or a plugin too old to report one. */
+  os: HostOs | null;
   /** Whether its DSH holds a connection to the relay right now. */
   online: boolean;
+  /** When its DSH last connected to the relay (ISO), to say how long it has been away; null when never known. */
+  lastSeenAt: string | null;
   /** A locally pinned desktop identity exists; routing status alone does not grant trust. */
   verified?: boolean;
   /** Whether the relay notifies this phone when the agent on it waits; the token itself never comes back. */
@@ -201,13 +212,14 @@ export interface RelayClient {
   /** A computer's sessions, newest change first. Rejects `offline` when its DSH is not connected. */
   listSessions(computerId: string): Promise<SessionSummary[]>;
   /**
-   * Creates with an exact known directory and native preset; omitted choices
-   * use the latest directory and desktop default preset. Model changes are a
-   * separate acknowledged session-only operation.
+   * Creates with an exact known directory and native preset; an omitted folder
+   * is the team's default workspace on the computer (`defaultDirectory`), and an
+   * omitted preset the desktop default. Model changes are a separate
+   * acknowledged session-only operation.
    */
   createSession(
     computerId: string,
-    options?: Pick<import('./session-config').SessionOptions, 'cwd' | 'agentPreset'>,
+    options?: Pick<import('./session-config').SessionOptions, 'cwd' | 'agentPreset' | 'teamId'>,
   ): Promise<{ id: string; directory: string }>;
   configuration(computerId: string, sessionId?: string): Promise<import('./session-config').SessionConfiguration>;
   selectModel(

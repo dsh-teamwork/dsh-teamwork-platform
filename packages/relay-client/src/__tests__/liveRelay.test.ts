@@ -68,11 +68,11 @@ const until = async (check: () => boolean) => {
 };
 
 /** Answers a computer's `teamwork/configuration` with the directories it offers; `nth` picks a later call. */
-async function answerDirectories(s: FakeSocket, pairingId: string, directories: string[], nth = 0) {
+async function answerDirectories(s: FakeSocket, pairingId: string, directories: string[], nth = 0, teamDirectories: Record<string, string> = {}) {
   const asked = () => s.sent.filter((f) => f.method === 'teamwork/configuration' && f.pairingId === pairingId);
   await until(() => asked().length > nth);
   const call = asked()[nth];
-  s.push({ t: 'result', pairingId, id: call.id, status: 200, body: { result: { ok: true, value: { presets: [], current: null, directories } } } });
+  s.push({ t: 'result', pairingId, id: call.id, status: 200, body: { result: { ok: true, value: { presets: [], current: null, directories, teamDirectories } } } });
 }
 
 function setup() {
@@ -87,8 +87,8 @@ function setup() {
       return new Response(
         JSON.stringify({
           pairings: [
-            { id: 'p1', hostName: 'laptop', status: 'confirmed', online: true, push: true, hostId: 'h', deviceName: 'd', createdAt: '', lastUsedAt: null },
-            { id: 'p2', hostName: 'desk', status: 'pending', online: true, hostId: 'h2', deviceName: 'd', createdAt: '', lastUsedAt: null },
+            { id: 'p1', hostName: 'laptop', hostOs: 'macos', hostLastSeenAt: '2026-11-19T08:00:00.000Z', status: 'confirmed', online: true, push: true, hostId: 'h', deviceName: 'd', createdAt: '', lastUsedAt: null },
+            { id: 'p2', hostName: 'desk', hostOs: null, status: 'pending', online: true, hostId: 'h2', deviceName: 'd', createdAt: '', lastUsedAt: null },
           ],
         }),
       );
@@ -216,7 +216,7 @@ describe('the live relay client', () => {
 
   it('lists confirmed pairings as computers, from the relay the server names', async () => {
     const { relay, asked } = setup();
-    expect(await relay.listComputers()).toEqual([{ id: 'p1', name: 'laptop', online: true, verified: true, push: true, hostId: 'h' }]);
+    expect(await relay.listComputers()).toEqual([{ id: 'p1', name: 'laptop', os: 'macos', lastSeenAt: '2026-11-19T08:00:00.000Z', online: true, verified: true, push: true, hostId: 'h' }]);
     const pairings = asked.find((a) => a.url.endsWith('/pairings'))!;
     expect(pairings.url).toBe('https://relay.example.test/pairings');
     expect(pairings.init!.headers).toMatchObject({ authorization: 'Bearer bearer-1', 'x-device-key': 'phone-key' });
@@ -464,6 +464,22 @@ describe('the live relay client', () => {
     s.push({ t: 'result', pairingId: 'p1', id: again.id, status: 200, body: { result: { ok: true, value: { items: [] } } } });
     await answerDirectories(s, 'p1', ['/srv/project'], 1);
     await expect(elsewhere).rejects.toMatchObject({ code: 'invalid_directory' });
+  });
+
+  it('starts a session for a team in that team’s default workspace, ahead of the latest folder', async () => {
+    const { relay, socket } = setup();
+    const created = relay.createSession('p1', { teamId: 't' });
+    const s = await socket();
+    await until(() => s.sent.some((f) => f.method === 'session/list'));
+    const list = s.sent.find((f) => f.method === 'session/list');
+    s.push({ t: 'result', pairingId: 'p1', id: list.id, status: 200, body: { result: { ok: true, value: { items: [{ sessionId: 'old', cwd: '/home/ada/app', updatedAt: 5 }] } } } });
+    await answerDirectories(s, 'p1', ['/home/ada', '/srv/team'], 0, { t: '/srv/team', other: '/home/ada' });
+    await until(() => s.sent.some((f) => f.method === 'session/create'));
+    const create = s.sent.find((f) => f.method === 'session/create');
+    expect(create.body.args).toEqual({ request: { cwd: '/srv/team' } });
+    s.push({ t: 'result', pairingId: 'p1', id: create.id, status: 200, body: { result: { ok: true, value: { sessionId: 'new-t' } } } });
+    expect(await created).toEqual({ id: 'new-t', directory: 'team' });
+    relay.reset();
   });
 
   it('creates in the exact known folder and native preset selected on the phone', async () => {

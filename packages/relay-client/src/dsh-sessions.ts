@@ -15,13 +15,12 @@
 
 import { z } from 'zod';
 import { UploadLimitsSchema } from './uploads';
-import { configurationOf, ModelSelectionSchema, startableDirectories } from './session-config';
+import { configurationOf, defaultDirectory, ModelSelectionSchema, startableDirectories } from './session-config';
 import {
   approvalResult,
   directoryName,
   eventsOf,
   historyOf,
-  latestDirectoryOf,
   newStreams,
   pendingOf,
   questionsResult,
@@ -342,9 +341,10 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
 
     async createSession(computerId, choice = {}) {
       const sessions = await call(computerId, 'session/list', { _request: {} });
-      const offered = ((await call(computerId, 'teamwork/configuration', { request: {} }).catch(() => null)) as { directories?: unknown } | null)?.directories;
-      const directories = startableDirectories(sessions, Array.isArray(offered) ? offered.filter((path): path is string => typeof path === 'string') : []);
-      const cwd = choice.cwd ?? latestDirectoryOf(sessions) ?? directories[0]?.path;
+      const offered = (await call(computerId, 'teamwork/configuration', { request: {} }).catch(() => null)) as { directories?: unknown; teamDirectories?: unknown } | null;
+      const directories = startableDirectories(sessions, Array.isArray(offered?.directories) ? offered.directories.filter((path): path is string => typeof path === 'string') : []);
+      const teams = z.record(z.string(), z.string()).catch({}).parse(offered?.teamDirectories ?? {});
+      const cwd = choice.cwd ?? defaultDirectory(directories, teams, choice.teamId);
       if (!cwd) throw new RelayError('no_directory');
       if (!directories.some(directory => directory.path === cwd)) throw new RelayError('invalid_directory');
       const created = (await call(computerId, 'session/create', { request: { cwd, ...(choice.agentPreset ? { agentPreset: choice.agentPreset } : {}) } })) as { sessionId?: unknown } | null;

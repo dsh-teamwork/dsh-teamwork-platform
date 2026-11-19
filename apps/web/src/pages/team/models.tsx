@@ -2,15 +2,19 @@
  * A team's models page (`/teams/{teamId}/models`). An admin connects a
  * provider by picking it from `PROVIDER_CATALOG` and pasting its key, or by
  * entering an OpenAI-compatible address by hand, then reads the provider's
- * model list and publishes the ones the team should use. It is Team
+ * model list and publishes the ones the team should use: each with the limits
+ * and reference rate its public reference states (`lookupReference`), so a
+ * published model is ready to call without a second form. It is Team
  * management's (ADR 0043); a member reads the team's models, never an address
  * or a key, in Team resources.
  */
 
-import { KeyRound, Plus } from 'lucide-react';
-import { useEffect, useId, useState } from 'react';
+import { KeyRound, Plus, Tag } from 'lucide-react';
+import { createElement, useEffect, useId, useState } from 'react';
+import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
 
+import { ProviderMark } from '@/components/provider-mark';
 import { ModelMetadataLookup } from '@/components/team/model-metadata';
 import { Select } from '@/components/ui/select';
 import { Failure } from '@/components/page';
@@ -21,12 +25,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { editionModels } from '@/lib/edition';
 import { api, ApiError, type ConfigOf, type Provider, type Team, type TeamConfig } from '@/lib/api';
+import { lookupReference, type Reference } from '@/lib/model-metadata';
 import { catalogEntry, PROVIDER_CATALOG } from '@/lib/provider-catalog';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
-import { ModelRateButton } from './model-rate';
+import { ModelRateButton, saveReferenceRates } from './model-rate';
 
 type ModelConfig = ConfigOf<'model'>;
 /** One model a provider lists at `/models`, with only the limits it states. */
@@ -86,7 +92,11 @@ interface Props {
 
 function Models({ team, configs, providers, reload }: Props) {
   const t = useTranslations('team.models');
+  // Set once before the first render (mountWeb), so it is the same component on every render.
+  const editionSection = editionModels();
   const models = configs.filter((c): c is ModelConfig => c.kind === 'model');
+  const providerOf = (m: ModelConfig) => providers.find((p) => p.name === m.data.provider);
+  const referenceOf = (m: ModelConfig) => catalogEntry(providerOf(m)?.baseUrl ?? '')?.id ?? m.data.provider;
   const usedBy = (id: string) => configs.filter((c) => c.kind === 'preset' && c.data.modelConfigId === id);
   // Which provider the dialog connects or adds models to: `true` for a new one.
   const [adding, setAdding] = useState<Provider | true | null>(null);
@@ -103,6 +113,10 @@ function Models({ team, configs, providers, reload }: Props) {
           </Button>
         }
       />
+
+      {editionSection && createElement(editionSection, { teamId: team.id, reload })}
+
+      <UnpricedNotice teamId={team.id} models={models} referenceOf={referenceOf} reload={reload} />
 
       {providers.length > 0 && (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -140,7 +154,7 @@ function Models({ team, configs, providers, reload }: Props) {
               </thead>
               <tbody>
                 {models.map((m) => (
-                  <ModelRow key={m.id} teamId={team.id} reload={reload} model={m} referenceProvider={catalogEntry(providers.find((p) => p.name === m.data.provider)?.baseUrl ?? '')?.modelsDevId ?? m.data.provider} usedBy={usedBy(m.id).map((p) => p.name)} />
+                  <ModelRow key={m.id} teamId={team.id} reload={reload} model={m} baseUrl={providerOf(m)?.baseUrl} referenceProvider={referenceOf(m)} usedBy={usedBy(m.id).map((p) => p.name)} />
                 ))}
               </tbody>
             </table>
@@ -171,7 +185,7 @@ function ProviderCard({ teamId, reload, provider, count, onAddModels }: { teamId
   return (
     <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
       <div className="flex items-center gap-3">
-        <Mark text={entry?.mark ?? provider.name.slice(0, 2).toUpperCase()} />
+        <ProviderMark hints={[entry?.id, provider.name, provider.baseUrl]} name={provider.name} size="md" />
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{entry && entry.id === provider.name ? tc(entry.id) : provider.name}</span>
           <span className="truncate font-mono text-xs text-muted-foreground" title={provider.baseUrl}>
@@ -209,11 +223,40 @@ function ProviderCard({ teamId, reload, provider, count, onAddModels }: { teamId
   );
 }
 
-function Mark({ text }: { text: string }) {
-  return <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-bold text-muted-foreground">{text}</span>;
+/**
+ * The team's models no member can call yet for want of a rate (ADR 0050), and
+ * one click that sets each from its public reference, as publishing does. A
+ * model with no agreeing reference keeps waiting for its admin's rate.
+ */
+function UnpricedNotice({ teamId, models, referenceOf, reload }: { teamId: string; models: ModelConfig[]; referenceOf: (m: ModelConfig) => string; reload: Reload }) {
+  const t = useTranslations('team.models');
+  const { teamSummary } = useTeam();
+  const { pending, run } = useMutation(reload);
+  const unpriced = models.filter((m) => !m.owner && teamSummary?.unpricedModels.includes(m.id));
+  if (unpriced.length === 0) return null;
+  async function fill() {
+    let priced = 0;
+    const ok = await run(async () => {
+      for (const m of unpriced) {
+        const reference = await lookupReference(teamId, referenceOf(m), m.data.model);
+        if (reference?.rates && (await saveReferenceRates(teamId, m.id, reference.rates))) priced++;
+      }
+    });
+    if (ok) toast[priced === unpriced.length ? 'success' : 'warning'](t('ratesFilled', { priced, left: unpriced.length - priced }));
+  }
+  return (
+    <div role="status" className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-4 py-3 text-sm">
+      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-signal" />
+      <span className="min-w-0 flex-1">{t('unpricedNotice', { count: unpriced.length })}</span>
+      <Button size="sm" variant="outline" disabled={pending} onClick={() => void fill()}>
+        <Tag />
+        {t(pending ? 'fillingRates' : 'fillRates')}
+      </Button>
+    </div>
+  );
 }
 
-function ModelRow({ teamId, reload, model, usedBy, referenceProvider }: { teamId: string; reload: Reload; model: ModelConfig; usedBy: string[]; referenceProvider: string }) {
+function ModelRow({ teamId, reload, model, usedBy, referenceProvider, baseUrl }: { teamId: string; reload: Reload; model: ModelConfig; usedBy: string[]; referenceProvider: string; baseUrl?: string }) {
   const t = useTranslations('team.models');
   const { teamSummary } = useTeam();
   const { pending, run } = useMutation(reload);
@@ -222,7 +265,10 @@ function ModelRow({ teamId, reload, model, usedBy, referenceProvider }: { teamId
   return (
     <tr className="border-b last:border-b-0">
       <td className="px-4 py-3">
-        <span className="font-medium">{model.name}</span>
+        <span className="flex items-center gap-2 font-medium">
+          <ProviderMark hints={[model.data.model, model.name, model.data.provider, baseUrl]} name={model.name} />
+          {model.name}
+        </span>
         {unpriced && (
           <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
             {/* Amber, as a dot: no member's call reaches this model until its admin sets a rate (docs/design.md). */}
@@ -276,10 +322,13 @@ function ModelRow({ teamId, reload, model, usedBy, referenceProvider }: { teamId
 
 /**
  * Connect a provider and publish some of its models: pick from the catalog or
- * enter an address, paste the key, read the provider's `/models`, tick. With
- * `existing`, the provider is already connected and the dialog starts at the
- * model list. A provider that does not list its models takes a model id typed
- * by hand.
+ * enter an address, paste the key, read the provider's `/models`, tick. Each
+ * ticked model's public reference is read at once and shown beside it; it is
+ * published with the limits the provider or the reference states and, when the
+ * reference prices it, with that reference rate, so no second form is needed.
+ * With `existing`, the provider is already connected and the dialog starts at
+ * the model list. A provider that does not list its models takes a model id
+ * typed by hand.
  */
 function ConnectDialog({
   teamId,
@@ -315,12 +364,11 @@ function ConnectDialog({
   const [checking, setChecking] = useState(false);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [typed, setTyped] = useState({ id: '', name: '' });
-  const [details, setDetails] = useState<Record<string, Partial<ModelConfig['data']>>>({});
-  const [focus, setFocus] = useState('');
-  const activeModel = manual ? typed.id.trim() : chosen.has(focus) ? focus : [...chosen][0] ?? '';
-  const listedModel = listed?.find((m) => m.id === activeModel);
-  const activeDetails = details[activeModel] ?? { contextWindow: listedModel?.contextWindow, maxTokens: listedModel?.maxTokens };
-  const referenceProvider = catalogEntry(baseUrl)?.modelsDevId ?? connected ?? '';
+  // A typed model's limits, as the admin fills them; a listed model's come from the provider and its reference.
+  const [typedDetails, setTypedDetails] = useState<Partial<ModelConfig['data']>>({});
+  // Each ticked model's public reference: undefined while it is read, null when there is none.
+  const [references, setReferences] = useState<Record<string, Reference | null | undefined>>({});
+  const referenceProvider = catalogEntry(baseUrl)?.id ?? connected ?? '';
   const taken = new Set(providers.map((p) => p.name));
   const custom = pick === 'custom';
 
@@ -380,6 +428,17 @@ function ConnectDialog({
     else unlisted(unread);
   }
 
+  function tick(id: string, on: boolean) {
+    const next = new Set(chosen);
+    if (on) next.add(id);
+    else next.delete(id);
+    setChosen(next);
+    if (on && !(id in references)) {
+      setReferences((all) => ({ ...all, [id]: undefined }));
+      void lookupReference(teamId, referenceProvider, id).then((found) => setReferences((all) => ({ ...all, [id]: found })));
+    }
+  }
+
   async function publish() {
     const provider = connected!;
     const items: { id: string; name: string; contextWindow?: number; maxTokens?: number }[] = manual
@@ -387,16 +446,23 @@ function ConnectDialog({
       : (listed ?? []).filter((m) => chosen.has(m.id));
     const names = new Set(published.map((m) => m.name));
     const sent = new Set<string>();
+    let priced = 0;
     const ok = await run(async () => {
       for (const item of items) {
         const label = freeModelName(item.name.trim() || item.id, provider, names);
         names.add(label);
-        await api(`teams/${teamId}/configs`, {
-          body: { kind: 'model', name: label, data: { provider, model: item.id, contextWindow: item.contextWindow, maxTokens: item.maxTokens, ...details[item.id] } },
-        });
+        // A reference still being read, or never read (a typed model), is read now.
+        const reference = references[item.id] ?? (await lookupReference(teamId, referenceProvider, item.id));
+        const known = reference?.details ?? {};
+        const data = manual
+          ? { provider, model: item.id, ...typedDetails }
+          : { provider, model: item.id, contextWindow: item.contextWindow ?? known.contextWindow, maxTokens: item.maxTokens ?? known.maxTokens, vision: known.vision };
+        const created = await api<TeamConfig>(`teams/${teamId}/configs`, { body: { kind: 'model', name: label, data } });
         sent.add(item.id);
+        if (reference?.rates && (await saveReferenceRates(teamId, created.id, reference.rates))) priced++;
       }
-    }, t('published', { count: items.length }));
+    });
+    if (ok) toast.success(t('publishedPriced', { count: items.length, priced }));
     if (ok) return onClose();
     // A failure part-way leaves the earlier models published: drop them, so a retry sends only the rest.
     setListed((list) => list && list.filter((m) => !sent.has(m.id)));
@@ -424,7 +490,7 @@ function ConnectDialog({
                   }}
                   className="flex w-full flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm hover:border-ring"
                 >
-                  <Mark text={p.mark} />
+                  <ProviderMark hints={[p.id, p.baseUrl]} name={p.id} size="md" />
                   <span className="font-medium">{tc(p.id)}</span>
                   {taken.has(p.id) && <span className="text-xs text-muted-foreground">{t('connected')}</span>}
                 </button>
@@ -440,7 +506,9 @@ function ConnectDialog({
                 }}
                 className="flex w-full flex-col items-start gap-2 rounded-lg border border-dashed p-3 text-left text-sm hover:border-ring"
               >
-                <Mark text="+" />
+                <span aria-hidden className="grid size-9 place-items-center rounded-lg bg-secondary text-muted-foreground">
+                  <Plus className="size-4" />
+                </span>
                 <span className="font-medium">{t('custom')}</span>
                 <span className="text-xs text-muted-foreground">{t('customShort')}</span>
               </button>
@@ -497,21 +565,14 @@ function ConnectDialog({
               {listed.map((m) => (
                 <li key={m.id} className="border-b last:border-b-0">
                   <label className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={chosen.has(m.id)}
-                      onChange={(e) => {
-                        const next = new Set(chosen);
-                        if (e.target.checked) next.add(m.id);
-                        else next.delete(m.id);
-                        setChosen(next);
-                      }}
-                    />
+                    <input type="checkbox" checked={chosen.has(m.id)} onChange={(e) => tick(m.id, e.target.checked)} />
+                    <ProviderMark hints={[m.id, m.name, connected, baseUrl]} name={m.name} />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="font-medium">{m.name}</span>
                       {m.name !== m.id && <span className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">{m.id}</span>}
+                      {chosen.has(m.id) && <ReferenceLine reference={references[m.id]} />}
                     </span>
-                    <span className="text-xs text-muted-foreground tabular-nums">{tokens(m.contextWindow)}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{tokens(m.contextWindow ?? references[m.id]?.details.contextWindow)}</span>
                   </label>
                 </li>
               ))}
@@ -533,10 +594,9 @@ function ConnectDialog({
           </div>
         )}
 
-        {connected && activeModel && <div className="flex flex-col gap-3">
-          {!manual && chosen.size > 1 && <Select label={t('modelId')} value={activeModel} options={[...chosen].map((id) => ({ value: id, label: id }))} change={setFocus} />}
-          <ModelFields value={activeDetails} disabled={pending} change={(value) => setDetails((all) => ({ ...all, [activeModel]: value }))} />
-          <ModelMetadataLookup key={activeModel} teamId={teamId} provider={referenceProvider} model={activeModel} current={{ contextWindow: activeDetails.contextWindow, maxTokens: activeDetails.maxTokens, vision: activeDetails.vision }} disabled={pending} apply={(values) => setDetails((all) => ({ ...all, [activeModel]: { ...all[activeModel], ...values } }))} />
+        {connected && manual && typed.id.trim() && <div className="flex flex-col gap-3">
+          <ModelFields value={typedDetails} disabled={pending} change={setTypedDetails} />
+          <ModelMetadataLookup key={typed.id.trim()} teamId={teamId} provider={referenceProvider} model={typed.id.trim()} current={{ contextWindow: typedDetails.contextWindow, maxTokens: typedDetails.maxTokens, vision: typedDetails.vision }} disabled={pending} apply={(values) => setTypedDetails((current) => ({ ...current, ...values }))} />
         </div>}
 
         <DialogFooter>
@@ -560,6 +620,14 @@ function ConnectDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+/** What a ticked model's public reference says it will be published with: its context and reference rate, or that it has none. */
+function ReferenceLine({ reference }: { reference: Reference | null | undefined }) {
+  const t = useTranslations('team.models');
+  if (reference === undefined) return <span className="text-xs text-muted-foreground">{t('referenceReading')}</span>;
+  if (!reference?.rates) return <span className="text-xs text-muted-foreground">{t('referenceNoRate')}</span>;
+  return <span className="text-xs text-muted-foreground">{t('referenceRate', { input: reference.rates.input, output: reference.rates.output, from: reference.from })}</span>;
 }
 
 /** Move a provider or replace its key; the name stays, since team models refer to it. */

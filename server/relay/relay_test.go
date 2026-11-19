@@ -22,6 +22,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition/editiontest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 )
 
 type obj = map[string]any
@@ -55,7 +56,7 @@ func each(t *testing.T, f func(t *testing.T, w *world)) {
 				w.pushed = append(w.pushed, m)
 				w.mu.Unlock()
 				return nil
-			}, 200*time.Millisecond)
+			}, 200*time.Millisecond, false)
 			if err := h.SubscribeTeams(w.r.accountDeleted); err != nil {
 				return nil, err
 			}
@@ -146,7 +147,7 @@ func (w *world) openWith(path string, header http.Header, hello obj) *peer {
 
 func (w *world) host(token, clientID string) *peer {
 	w.t.Helper()
-	return w.open("/relay/plugin", obj{"t": "hello", "token": token, "clientId": clientID, "name": "laptop", "dshVersion": "0.2.2-rc.1"})
+	return w.open("/relay/plugin", obj{"t": "hello", "token": token, "clientId": clientID, "name": "laptop", "dshVersion": "0.2.2-rc.1", "os": "macos"})
 }
 
 func (w *world) phone(h handset) *peer {
@@ -265,7 +266,8 @@ func TestPluginSocket(t *testing.T) {
 		// A team member is welcomed, and the computer recorded as a host.
 		p := w.host(w.ada, "client-one")
 		host, err := w.r.db.RelayHost.Get(context.Background(), p.hostID())
-		if err != nil || host.ClientID != "client-one" || host.DshVersion != "0.2.2-rc.1" || host.UserID != w.adaID {
+		if err != nil || host.ClientID != "client-one" || host.DshVersion != "0.2.2-rc.1" || host.UserID != w.adaID ||
+			host.Os == nil || *host.Os != relayhost.OsMacos {
 			t.Fatalf("host %+v %v", host, err)
 		}
 		w.r.mu.Lock()
@@ -288,6 +290,16 @@ func TestPluginSocket(t *testing.T) {
 		}
 		if code := w.host(w.ada, "bad id!").code; code != closeBadHello {
 			t.Fatalf("bad client id: %d", code)
+		}
+		// An operating system the relay does not name is refused; a plugin too old to report one is not.
+		hello := obj{"t": "hello", "token": w.ada, "clientId": "client-three", "name": "box", "dshVersion": "0.2.2-rc.1", "os": "darwin"}
+		if code := w.open("/relay/plugin", hello).code; code != closeBadHello {
+			t.Fatalf("unknown os: %d", code)
+		}
+		delete(hello, "os")
+		old := w.open("/relay/plugin", hello)
+		if h := w.r.db.RelayHost.GetX(context.Background(), old.hostID()); h.Os != nil {
+			t.Fatalf("an old plugin's os %v", *h.Os)
 		}
 		// No hello at all: 4400 when the time is up, not a dropped connection.
 		helloTimeout = 300 * time.Millisecond
@@ -365,8 +377,12 @@ func TestPairing(t *testing.T) {
 		equal(t, host.ask(obj{"t": "decide", "pairingId": id, "accept": true})["value"], nil)
 		_, listed := w.call(w.adaPhone, "GET", "/relay/pairings", nil)
 		got := listed["pairings"].([]any)[0].(obj)
-		if got["id"] != id || got["status"] != "confirmed" || got["online"] != true || got["hostName"] != "laptop" {
+		if got["id"] != id || got["status"] != "confirmed" || got["online"] != true || got["hostName"] != "laptop" || got["hostOs"] != "macos" {
 			t.Fatalf("listed %v", got)
+		}
+		// When the computer was last seen is its host's own record, for the phone to say how long it has been away.
+		if seen := w.r.db.RelayHost.GetX(context.Background(), host.hostID()).LastSeenAt; got["hostLastSeenAt"] != iso(seen) {
+			t.Fatalf("host last seen %v, want %s", got["hostLastSeenAt"], iso(seen))
 		}
 		if list := host.ask(obj{"t": "pairings"})["value"].([]any); len(list) != 1 || list[0].(obj)["status"] != "confirmed" {
 			t.Fatalf("host's list %v", list)
@@ -818,6 +834,47 @@ func TestSetPush(t *testing.T) {
 		}
 		if s, _ := w.call(w.adaPhone, "PUT", path, obj{"pushToken": "ExponentPushToken[late]"}); s != 404 {
 			t.Fatalf("revoked %d", s)
+		}
+	})
+}
+
+// Team DSH is offline (docs/tech/shared-dsh.md): the relay a binary registers
+// mounts none of its routes, so a team admin cannot make a key, a DSH cannot
+// trade one for a host token, and a member cannot list or join one. Each
+// route answers as a path that never existed does: a 404 under /api, and
+// whatever the site serves elsewhere.
+func TestTeamDSHOffline(t *testing.T) {
+	editiontest.Each(t, []edition.Extension{Extension(nil, time.Second, false)}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
+		ada := in.Account("ada@example.test")
+		team := in.Team(ada)
+		cookie := in.Session(ada, "password")
+		do := func(method, path string) (int, string) {
+			req, _ := http.NewRequest(method, in.URL+path, strings.NewReader("{}"))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Origin", in.URL)
+			req.Header.Set("Authorization", "Bearer "+in.Bearer(ada))
+			req.AddCookie(cookie)
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer res.Body.Close()
+			return res.StatusCode, res.Header.Get("Content-Type")
+		}
+		for _, route := range []struct{ method, path, never string }{
+			{"GET", "/api/teams/" + team + "/shared-hosts", "/api/teams/" + team + "/never-existed"},
+			{"POST", "/api/teams/" + team + "/shared-hosts", "/api/teams/" + team + "/never-existed"},
+			{"GET", "/api/teams/" + team + "/shared-archive", "/api/teams/" + team + "/never-existed"},
+			{"POST", "/relay/shared/challenge", "/relay/never-existed"},
+			{"POST", "/relay/shared/token", "/relay/never-existed"},
+			{"POST", "/relay/shared/archive", "/relay/never-existed"},
+			{"GET", "/relay/shared", "/relay/never-existed"},
+		} {
+			status, kind := do(route.method, route.path)
+			wantStatus, wantKind := do(route.method, route.never)
+			if status != wantStatus || kind != wantKind || strings.HasPrefix(route.path, "/api/") && status != http.StatusNotFound {
+				t.Errorf("%s %s = %d %s, want %d %s as a path that never existed", route.method, route.path, status, kind, wantStatus, wantKind)
+			}
 		}
 	})
 }
