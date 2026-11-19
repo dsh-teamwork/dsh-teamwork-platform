@@ -117,16 +117,17 @@ Both declare the same scale; the console adds three outcome colours.
 | `--brand` | `oklch(0.33 0.11 268)` | `oklch(0.452 0.124 270)` | Navy: team identity (below); in dark a lighter navy, still a fill under white text |
 | `--brand-foreground` | `oklch(1 0 0)` | `oklch(1 0 0)` | Text on brand |
 | `--signal` | `oklch(0.765 0.14 73)` | `oklch(0.807 0.137 78)` | Amber: attention, as a dot or a line, never text |
+| `--success` | `oklch(0.527 0.137 150)` | `oklch(0.84 0.149 155)` | Green: a computer is online, as a dot and the word beside it |
 | `--mark-plate` | `oklch(0.953 0.003 286)` | `oklch(0.92 0.003 286)` | The tile under a provider's mark: light in both themes |
 | `--border` | `oklch(0.932 0.003 286)` | `oklch(0.287 0.007 286)` | Hairlines |
 | `--input` | `oklch(0.887 0.007 286)` | `oklch(0.351 0.01 286)` | Field and outline-button border |
 | `--ring` | `oklch(0.452 0.124 270)` | `oklch(0.766 0.095 271)` | Focus ring (`outline-ring/50` on everything): navy |
 
-Console only:
+The operator console (`apps/manage`) also has these, `--success` with the
+same values as above:
 
 | Token | Light | Dark |
 | --- | --- | --- |
-| `--success` | `oklch(0.527 0.137 150)` | `oklch(0.84 0.149 155)` |
 | `--warning` | `oklch(0.554 0.121 66)` | `oklch(0.807 0.137 78)` |
 | `--info` | `oklch(0.55 0.12 245)` | `oklch(0.72 0.12 245)` |
 

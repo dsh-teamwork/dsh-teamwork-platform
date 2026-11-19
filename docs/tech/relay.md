@@ -514,8 +514,9 @@ the hosted edition, Cloud DSH.
   until the computer answers over the encrypted channel with its sessions or
   its PIN state; the channel failed, with a retry; the computer's PIN,
   `owner`'s; and then a session, or a new one started by its first message.
-  Above it, the computer's name, operating system, state with when it was last
-  seen, and DSH version.
+  Above it, the computer's name with its operating system and DSH version on
+  the left, and on the right whether it is online (green) or offline (grey,
+  with when it was last seen); the list marks each computer the same way.
 - **The devices page** takes the third column: every pairing of the account to
   the computer, the phone app's and every browser's, with its name, status,
   last use and whether it pushes, this browser marked, each removable.
