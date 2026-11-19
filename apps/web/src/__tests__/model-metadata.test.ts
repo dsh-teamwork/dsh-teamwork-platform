@@ -1,7 +1,6 @@
-import { providerMark } from '@dsh-teamwork/shared';
+import { catalogEntry, PROVIDER_CATALOG, providerMark } from '@dsh-teamwork/shared';
 import { expect, it } from 'vitest';
 
-import { catalogEntry, PROVIDER_CATALOG } from '@/lib/provider-catalog';
 import { agreedValues, changedValues, completeRates, exactMatches, referenceFrom, suggestedRates, type ModelMetadata } from '@/lib/model-metadata';
 
 it('converts automatically supplied FX to simple rates without floating point drift', () => {

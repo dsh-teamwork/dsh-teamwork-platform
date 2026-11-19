@@ -58,7 +58,7 @@ pinned plugins to a session. It calls the plugin's own host routes
 (`api/teamwork/*`), which run the same functions as the command, so the Bearer
 token never reaches the browser. Publishing and members also have pages in the web
 console, one page per task under `/teams/{teamId}`: the member's `home`, the admin's `overview`, `models`
-(providers from `apps/web/src/lib/provider-catalog.ts`, and team models), `presets` (from
+(providers from `packages/shared/src/provider-catalog.ts`, and team models), `presets` (from
 `lib/preset-templates.ts` or blank), `plugins`, `members`, `sharing` and `history`. The panel links
 there for management; separate host-approved agent tools call the same authorized server operations. Its components
 come from `@dsh-teamwork/ui`, the shared component library kept in the plugin
@@ -155,7 +155,7 @@ Frankfurter. There is no local catalog, cache, scheduled sync or saved mapping.
 The reading is `server/modelmeta`, exported so an edition's own forms read the
 same catalogues the same way; it also lists the upstreams OpenRouter routes a
 model to, each with its own price (`Endpoints`), which no open form uses yet.
-A provider the console lists (`apps/web/src/lib/provider-catalog.ts`) is named
+A provider the console lists (`packages/shared/src/provider-catalog.ts`) is named
 by its Models.dev provider id and sits at the address Models.dev states for it,
 except where an entry says why not, so a team's provider is read there under
 its own name; a renamed second account is matched to its entry by address.
