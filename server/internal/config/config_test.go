@@ -84,6 +84,28 @@ func TestProviderKeysSecretEncodings(t *testing.T) {
 	}
 }
 
+// REVIEW_SIGN_IN is an address and six digits, and only where codes are
+// emailed: without SMTP_URL there is no code for it to replace.
+func TestReviewSignIn(t *testing.T) {
+	c, err := Load([]string{"--data", t.TempDir()}, env(map[string]string{"SMTP_URL": "smtp://mail.example", "REVIEW_SIGN_IN": " Review@Example.com:246810 "}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.ReviewEmail != "review@example.com" || c.ReviewCode != "246810" {
+		t.Fatalf("review %q %q", c.ReviewEmail, c.ReviewCode)
+	}
+	for _, bad := range []map[string]string{
+		{"SMTP_URL": "smtp://mail.example", "REVIEW_SIGN_IN": "review@example.com"},
+		{"SMTP_URL": "smtp://mail.example", "REVIEW_SIGN_IN": "review@example.com:12345"},
+		{"SMTP_URL": "smtp://mail.example", "REVIEW_SIGN_IN": "not an address:246810"},
+		{"REVIEW_SIGN_IN": "review@example.com:246810"},
+	} {
+		if _, err := Load([]string{"--data", t.TempDir()}, env(bad)); err == nil {
+			t.Fatalf("accepted %v", bad)
+		}
+	}
+}
+
 func TestServiceRoleValidation(t *testing.T) {
 	for _, role := range []string{"", "combined", "user", "manage", "manager"} {
 		c, err := Load([]string{"--data", t.TempDir()}, env(map[string]string{"SERVICE_ROLE": role}))

@@ -47,6 +47,7 @@ type options struct {
 	artifacts     artifactstore.Store
 	contentURL    string // CONTENT_URL; APP_URL's own origin when empty
 	subdomains    map[string]http.Handler
+	review        [2]string // REVIEW_SIGN_IN's address and code
 }
 
 func start(t *testing.T, d *testdb.DB, o options) *env {
@@ -56,7 +57,8 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 		t.Fatal(err)
 	}
 	network := &team.Network{AllowPrivate: o.allowPrivate, Lookup: o.lookup}
-	authn := &auth.Service{DB: d.Client, Sealer: auth.NewSealer(secret, nil), Secret: secret}
+	authn := &auth.Service{DB: d.Client, Sealer: auth.NewSealer(secret, nil), Secret: secret,
+		ReviewEmail: o.review[0], ReviewCode: o.review[1]}
 	teams := &team.Service{DB: d.Client, Keys: keys, Network: network, Auth: authn, Passwords: o.smtp == ""}
 	teams.Artifacts = o.artifacts
 	if teams.Artifacts == nil {

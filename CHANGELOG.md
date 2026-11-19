@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — `REVIEW_SIGN_IN`: a fixed sign-in code for an app store reviewer
+
+- **What:** With `REVIEW_SIGN_IN=address:123456` and `SMTP_URL` set, that one address is sent no email and is issued the fixed code instead of a random one; it then signs in through the ordinary emailed-code door, under the same limits (five checks per code, ten minutes, five sends per fifteen minutes). Every other address is unchanged. The server logs a warning at start while it is set, and refuses to start when it is malformed or set without `SMTP_URL`.
+- **Why:** App Store and Google Play reviewers need an account to sign in to, and cannot read the inbox an emailed code goes to.
+- **Breaking:** None.
+- **Upgrade:** Nothing; set it only for the length of a review.
+- **Refs:** `server/internal/auth/codes.go`, `server/internal/config/config.go`, `docs/ops/self-hosting.md`.
+
 ## 2026-11-19 — A tighter session composer, and "Default model"
 
 - **What:** The console's session composer is tighter: smaller workspace, preset, permission and model pickers, a smaller attach and send button, less padding in the card, and the workspace and preset pickers closer to it, each taking up to the whole row so the preset wraps under the workspace, left-aligned, before a name is cut short. The model choice that follows the preset is named "Default model" (`followPreset` in the messages). The My DSH hint is shorter and says only you can use it.

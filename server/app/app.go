@@ -182,7 +182,11 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		return nil, nil, nil, err
 	}
 	network := &team.Network{AllowPrivate: cfg.AllowPrivateProviders}
-	authn := &auth.Service{DB: client, Sealer: auth.NewSealer(cfg.AuthSecret, nil), Secret: cfg.AuthSecret}
+	authn := &auth.Service{DB: client, Sealer: auth.NewSealer(cfg.AuthSecret, nil), Secret: cfg.AuthSecret,
+		ReviewEmail: cfg.ReviewEmail, ReviewCode: cfg.ReviewCode}
+	if cfg.ReviewEmail != "" {
+		slog.Warn("REVIEW_SIGN_IN: this address signs in with a fixed code; unset it once store review is over", "email", cfg.ReviewEmail)
+	}
 	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords()}
 	if cfg.ServiceRole != "manage" {
 		teams.Artifacts, err = artifactstore.FromEnv(cfg.DataDir, env)
