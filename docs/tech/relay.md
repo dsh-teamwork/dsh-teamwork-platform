@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current · **Updated:** 2026-11-19
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -46,7 +46,10 @@ The hosted edition's smallest useful version works end to end:
   the phone-to-computer channel. Team-model context still passes through the
   hosted gateway; local and enterprise-direct models have their own routes.
 - **Storing session content on the service.** The relay keeps only
-  connection and pairing metadata.
+  connection and pairing metadata. The one exception is a page an agent
+  publishes with the plugin's `teamwork_page` tool, which the plugin uploads
+  to the server itself, outside the relay ([pages.md](pages.md),
+  [ADR 0052](../adr/0052-pages-are-uploaded-when-made.md)).
 - **More than one relay instance.** Routing a phone to the instance that holds
   its DSH's socket is deferred until one instance is not enough. A single
   instance on Railway is the starting point.

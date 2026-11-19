@@ -356,6 +356,117 @@ var (
 			},
 		},
 	}
+	// PagesColumns holds the columns for the "pages" table.
+	PagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "owner_id", Type: field.TypeString, Size: 32},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"html", "markdown", "svg"}},
+		{Name: "title", Type: field.TypeString, Size: 480},
+		{Name: "sharing", Type: field.TypeEnum, Enums: []string{"private", "members", "team"}, Default: "private"},
+		{Name: "current_version", Type: field.TypeInt},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// PagesTable holds the schema information for the "pages" table.
+	PagesTable = &schema.Table{
+		Name:       "pages",
+		Columns:    PagesColumns,
+		PrimaryKey: []*schema.Column{PagesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "page_team_id_owner_id_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{PagesColumns[2], PagesColumns[3], PagesColumns[8]},
+			},
+			{
+				Name:    "page_team_id_sharing_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{PagesColumns[2], PagesColumns[6], PagesColumns[8]},
+			},
+		},
+	}
+	// PageFilesColumns holds the columns for the "page_files" table.
+	PageFilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "version_id", Type: field.TypeString, Size: 32},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "path", Type: field.TypeString, Size: 255},
+		{Name: "content_type", Type: field.TypeString, Size: 100},
+		{Name: "size", Type: field.TypeInt64},
+		{Name: "digest", Type: field.TypeString, Size: 32},
+	}
+	// PageFilesTable holds the schema information for the "page_files" table.
+	PageFilesTable = &schema.Table{
+		Name:       "page_files",
+		Columns:    PageFilesColumns,
+		PrimaryKey: []*schema.Column{PageFilesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pagefile_version_id_path",
+				Unique:  true,
+				Columns: []*schema.Column{PageFilesColumns[2], PageFilesColumns[4]},
+			},
+			{
+				Name:    "pagefile_team_id_digest",
+				Unique:  false,
+				Columns: []*schema.Column{PageFilesColumns[3], PageFilesColumns[7]},
+			},
+		},
+	}
+	// PageMembersColumns holds the columns for the "page_members" table.
+	PageMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "page_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "added_by", Type: field.TypeString, Size: 32},
+	}
+	// PageMembersTable holds the schema information for the "page_members" table.
+	PageMembersTable = &schema.Table{
+		Name:       "page_members",
+		Columns:    PageMembersColumns,
+		PrimaryKey: []*schema.Column{PageMembersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pagemember_page_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{PageMembersColumns[2], PageMembersColumns[3]},
+			},
+			{
+				Name:    "pagemember_user_id_page_id",
+				Unique:  false,
+				Columns: []*schema.Column{PageMembersColumns[3], PageMembersColumns[2]},
+			},
+		},
+	}
+	// PageVersionsColumns holds the columns for the "page_versions" table.
+	PageVersionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "page_id", Type: field.TypeString, Size: 32},
+		{Name: "number", Type: field.TypeInt},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "host_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "computer", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "session_id", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
+		{Name: "size", Type: field.TypeInt64},
+	}
+	// PageVersionsTable holds the schema information for the "page_versions" table.
+	PageVersionsTable = &schema.Table{
+		Name:       "page_versions",
+		Columns:    PageVersionsColumns,
+		PrimaryKey: []*schema.Column{PageVersionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pageversion_page_id_number",
+				Unique:  true,
+				Columns: []*schema.Column{PageVersionsColumns[2], PageVersionsColumns[3]},
+			},
+		},
+	}
 	// PasswordsColumns holds the columns for the "passwords" table.
 	PasswordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -807,6 +918,10 @@ var (
 		InvitesTable,
 		MembershipsTable,
 		ModelRatesTable,
+		PagesTable,
+		PageFilesTable,
+		PageMembersTable,
+		PageVersionsTable,
 		PasswordsTable,
 		RateWindowsTable,
 		RelayHostsTable,
@@ -872,6 +987,22 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	ModelRatesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	PagesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	PageFilesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	PageMembersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	PageVersionsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

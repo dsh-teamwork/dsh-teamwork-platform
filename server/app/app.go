@@ -28,6 +28,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/pages"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
@@ -195,6 +196,9 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		Team:    teams,
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client(), Usage: meter},
 		Usage:   meter,
+	}
+	if cfg.ServiceRole != "manage" {
+		srv.Pages = &pages.Service{DB: client, Store: teams.Artifacts, Team: teams, Sealer: authn.Sealer, ContentURL: cfg.ContentURL}
 	}
 	if !cfg.Passwords() {
 		mail := auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}

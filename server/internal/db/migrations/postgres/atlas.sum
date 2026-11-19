@@ -1,4 +1,4 @@
-h1:Q7ZFz6kfLg6W1n3wBRABIxhnVrgUCaV9F126Lrv9NgE=
+h1:tw5JZsXmWpv9ZH6hJOGpSe0UMIlUs6h1S+lYWuefS9M=
 20261114012021_init.sql h1:iMOUyNDjsoN2pj1dEAgWtcpU2a5fByVlZgoCXiaOC0s=
 20261115041609_usage_metering.sql h1:hmiNJMr1kxsgtgVBku/vxrvrU1Hqyzw2Q0wEosNSm30=
 20261115044856_budget_reservations.sql h1:4ZPHNOx9bCw/rSuKnOs0NRy2fMJfOBPyohDlmcPtQUI=
@@ -17,3 +17,4 @@ h1:Q7ZFz6kfLg6W1n3wBRABIxhnVrgUCaV9F126Lrv9NgE=
 20261117150740_shared_host_access.sql h1:e6XLT8FaM4gcPknp/zemLb2vnpHjIxOxglpVmQMsIJk=
 20261118003546_shared_archive.sql h1:3mTPir4iMOJTrESxu5zNm/zY0JIR/x0yt678UjxOi5g=
 20261118135115_relay_host_os.sql h1:nhoZt6IUcfCfafvteqxOkE0L4UHbNWdOFxP/OYZJ3gg=
+20261119011929_pages.sql h1:petT1rwPYVr4riD8xjw5CoXAN08A9gqcK6MI8scJyFU=

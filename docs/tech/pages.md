@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Plan · **Updated:** 2026-11-19
+> **Status:** Plan — steps 0 and 1 built · **Updated:** 2026-11-19
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -208,7 +208,7 @@ a 403, so its existence is not told.
   who must be a member of that team now. `requirePlugin`
   (`internal/httpapi/identity.go`) gains the two upload routes and `view`,
   and its comment its list.
-- **Errors**: `page_not_found` 404, `page_stale` 409 (with `currentVersion`),
+- **Errors**: `page_not_found` 404, `page_stale` 409 (the client re-reads the page),
   `page_too_large` 413, `page_team_full` 413, `page_invalid` 400, `page_member_not_in_team` 400,
   `page_not_owner` 403 (a reader or admin asking for the owner's change),
   `page_sharing_widened` 403 (an admin's change that would admit anyone not
@@ -284,10 +284,11 @@ In the plugin repository, beside the other `teamwork_*` tools
 - **Reading files**: only inside the session's folder, after resolving
   symbolic links; hidden files and anything over the limits refused before
   any upload, with the rule named so the agent can fix it.
-- **The result** is one line for the agent and a JSON object for clients:
-  `{"teamworkPage":{"teamId","pageId","version","title","kind"}}`. It holds
-  no content: the relay's `fitFrame` would cut it, and the card needs only
-  the id.
+- **The result** renders one line for the agent, and its output's
+  `presentationMeta` is `{"teamworkPage":{"teamId","pageId","version","title","kind"}}`,
+  which DSH stores in the session's `tool/result` event as `meta`, outside
+  what the model reads. It holds no content: the relay's `fitFrame` would cut
+  it, and the card needs only the id.
 - **Conflicts**: on `page_stale` the tool answers the agent with the current
   version and tells it to `open` and reapply. Two agents never overwrite each
   other silently.
@@ -300,7 +301,7 @@ In the plugin repository, beside the other `teamwork_*` tools
 ## The clients
 
 - **`packages/relay-client`** (`dsh.ts`, `conversation.ts`): a `tool/result`
-  of `teamwork_page` that is not an error, carrying `teamworkPage`, becomes a
+  of `teamwork_page` that is not an error, whose `meta` carries `teamworkPage`, becomes a
   `page` conversation item `{ kind: 'page', id, teamId, pageId, version,
   title, pageKind }` after its tool item, live and from history. Every client
   that follows a session (the console's My DSH and Team DSH, the hosted
@@ -382,7 +383,19 @@ Each step is one pull request per repository it touches, through the gate,
 with its `CHANGELOG.md` entry; the plugin is released before the console
 depends on its result. Sizes are rough: S a day or two, M a week, L two.
 
-### Step 0 — two spikes, thrown away (S each; gate everything)
+### Step 0 — two spikes, thrown away (done 2026-11-19)
+
+Found: in Chromium, framed and opened alike, on `APP_URL`'s origin and on a
+second site, the page's origin is `null`; `document.cookie`, `localStorage`
+and `indexedDB` throw; there is no service worker; `fetch` to the API is
+refused by `connect-src` before it leaves the browser; a relative image, a
+CDN script and inline script work; a reload revalidates with a 304; a
+foreign site cannot frame it. Safari, Firefox, Android's WebView and iOS's
+WKWebView were not reachable and are checked on devices before step 5. DSH's
+tool contract gives a tool `presentationMeta`, stored in the `tool/result`
+event as `meta` beside the model's text, and the tool's agent carries the
+session's id and folder (`session.header.id`, `.cwd`); the card reads `meta`
+rather than parsing text. What each spike set out to check:
 
 1. **Isolation.** A scratch Go handler serving a fixture page with the
    headers above, at `/p/{token}/`, both on `APP_URL`'s origin and on a
@@ -407,7 +420,8 @@ depends on its result. Sizes are rough: S a day or two, M a week, L two.
 - Schema, ent generation and the migration (`pages`, `page_versions`,
   `page_files`, `page_members`).
 - `internal/pages`: create, add a version, the conditional update, limits,
-  digests and object writes, the team's 2 GiB, the view token purpose, `/p/` serving with the
+  digests and object writes, the team's 2 GiB, the view token purpose,
+  `/p/` serving with the
   headers, Markdown rendering, `CONTENT_URL` (config, host routing, start-up
   checks, `robots.txt`).
 - Routes: the two uploads (plugin, computer and host tokens), `GET …/pages`

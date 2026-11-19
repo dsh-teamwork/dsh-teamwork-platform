@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — The server keeps pages agents publish, private to their maker
+
+- **What:** A new `internal/pages` and four tables (`pages`, `page_versions`, `page_files`, `page_members`): a DSH plugin, computer or host token publishes a page (an HTML page and its files, a Markdown document or an SVG) with `POST /api/teams/{teamId}/pages` and adds versions on top of the current one (`…/{id}/versions`, `409 page_stale` otherwise); a member lists their own (`GET …/pages`), reads one (`GET …/pages/{id}`) and gets a one-hour view address (`POST …/versions/{n}/view`). Files are stored once per team by digest under `teams/{teamId}/pages/` in the existing object store, 16 MiB a version and 2 GiB a team. `/p/{token}/` serves them under a CSP sandbox without `allow-same-origin`, re-checking the reader on every request, from `CONTENT_URL` when set. Pages are private; sharing, the console and the plugin's tool follow.
+- **Why:** Step 1 of `docs/tech/pages.md`: what agents make in sessions becomes the team's, viewable on any device without the page acting as its viewer.
+- **Breaking:** None. The relay's "no session content on the server" now excepts published pages (ADR 0052).
+- **Upgrade:** The migration applies at start. Optional `CONTENT_URL`: an origin on a domain of its own, pointed at the same server; the server refuses one on `APP_URL`'s registrable domain.
+- **Refs:** ADR 0052, ADR 0053, `docs/tech/pages.md`, `server/internal/pages`.
+
 ## 2026-11-19 — The DSH plugin's panel shows preset avatars
 
 - **What:** The plugin's Teamwork panel draws each team preset's avatar, the assistant's included, in place of its generic icon. The plugin cannot import `@dsh-teamwork/shared`, so it keeps a byte-for-byte copy of `avatars.ts` (`src/web/avatars.ts` in its repository); the plugin end-to-end suite here fails when the two differ (`server/e2e/avatars_test.go`), so a change to the library is copied there in the same working session.

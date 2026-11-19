@@ -21,6 +21,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/pages"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
@@ -44,6 +45,7 @@ type options struct {
 	web           fs.FS        // a console build to serve, as web.New takes it
 	gatewayClient *http.Client // deterministic protocol replay, never a paid upstream
 	artifacts     artifactstore.Store
+	contentURL    string // CONTENT_URL; APP_URL's own origin when empty
 }
 
 func start(t *testing.T, d *testdb.DB, o options) *env {
@@ -61,13 +63,18 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	}
 	ts := httptest.NewUnstartedServer(nil)
 	appURL := "http://" + ts.Listener.Addr().String()
+	contentURL := o.contentURL
+	if contentURL == "" {
+		contentURL = appURL
+	}
 	srv := &httpapi.Server{
-		Config:  config.Config{DataDir: t.TempDir(), AppURL: appURL, AuthSecret: secret, SMTPURL: o.smtp},
+		Config:  config.Config{DataDir: t.TempDir(), AppURL: appURL, ContentURL: contentURL, AuthSecret: secret, SMTPURL: o.smtp},
 		Auth:    authn,
 		Team:    teams,
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client()},
 	}
 	srv.Mailer = o.mailer
+	srv.Pages = &pages.Service{DB: d.Client, Store: teams.Artifacts, Team: teams, Sealer: authn.Sealer, ContentURL: contentURL}
 	if o.gatewayClient != nil {
 		srv.Gateway.Client = o.gatewayClient
 	}

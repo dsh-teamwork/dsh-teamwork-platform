@@ -1,6 +1,6 @@
 # Self-hosting the community server
 
-> **Status:** Current · **Updated:** 2026-11-17
+> **Status:** Current · **Updated:** 2026-11-19
 
 Run a community instance, connect a member's DSH, and retain the database,
 private plugin bytes and secrets across upgrades.
@@ -58,6 +58,7 @@ configuration file.
 | Setting | Purpose |
 | --- | --- |
 | `APP_URL` | The exact origin members open and browsers use for authorization. |
+| `CONTENT_URL` | Optional origin agents' pages are served from, on a domain of its own pointed at this server; absent means `APP_URL`, sandboxed. |
 | `HOST`, `PORT` | Source binary listener; Compose fixes its internal listener. |
 | `DATABASE_URL` | Optional Postgres, MySQL or SQLite URL; absent means local SQLite. |
 | `SMTP_URL`, `AUTH_EMAIL_FROM` | Email sign-in codes instead of password-only sign-in. |

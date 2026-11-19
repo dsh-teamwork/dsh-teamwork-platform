@@ -10,6 +10,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/pages"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
@@ -24,6 +25,7 @@ type Server struct {
 	Team       *team.Service
 	Gateway    *gateway.Gateway
 	Usage      *usage.Service
+	Pages      *pages.Service
 	Mailer     auth.Mailer  // where SMTP_URL is set
 	Google     *auth.Google // where the Google door is configured
 	Web        http.Handler
@@ -131,6 +133,14 @@ func (s *Server) Handler() http.Handler {
 		post("/api/locale", s.chooseLocale)
 		get("/api/configs", s.configs)
 		post("/api/llm/chat/completions", s.completions)
+		if s.Pages != nil {
+			post("/api/teams/{teamId}/pages", s.createPage)
+			post("/api/teams/{teamId}/pages/{id}/versions", s.addPageVersion)
+			get("/api/teams/{teamId}/pages", s.listPages)
+			get("/api/teams/{teamId}/pages/{id}", s.getPage)
+			post("/api/teams/{teamId}/pages/{id}/versions/{n}/view", s.viewPage)
+			mux.HandleFunc("GET /p/", s.sitePages)
+		}
 
 	}
 
@@ -160,7 +170,7 @@ func (s *Server) Handler() http.Handler {
 	}
 	// Security headers go on everything, the www/apex redirect included, so the
 	// twin host records HSTS too.
-	return recoverer(headers(s.secure(), web.CanonicalHost(s.Config.AppURL, mux)))
+	return recoverer(headers(s.secure(), s.contentHost(web.CanonicalHost(s.Config.AppURL, mux))))
 }
 
 // headers are the ones every answer carries. HSTS only where APP_URL is
