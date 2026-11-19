@@ -524,7 +524,7 @@
       "myDsh": "My DSH",
       "teamDshHosts": "Team DSH",
       "hints": {
-        "myDsh": "DSH on your own computer, listed here once you sign in to Teamwork on it. Pair this browser with each computer once, then carry on its sessions from here, end-to-end encrypted. Its model usage counts as yours. Only you can use it; the phones and browsers that reach it are listed here, and you can remove any of them.",
+        "myDsh": "DSH on your own computer, listed here once it signs in to Teamwork. Pair this browser with it once to carry on its sessions here, end-to-end encrypted. Its model usage counts as yours. Only you can use it; the phones and browsers that reach it are listed here, and you can remove any of them.",
         "teamDsh": "DSH on a machine your team runs, connected by your team's admin, who also decides who may reach it. It signs in as the team, and its model calls are the team's. You use it from the browser or the phone app, end-to-end encrypted, and see only the sessions you start; the admin can read every session from its encrypted archive."
       },
       "pages": "Pages"
