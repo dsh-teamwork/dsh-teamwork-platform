@@ -1,10 +1,11 @@
 # Shared DSH
 
-> **Status:** Current — offline: the code is kept, nothing mounts it · **Updated:** 2026-11-18
+> **Status:** Current — offline: the code is kept, nothing mounts it · **Updated:** 2026-11-19
 
 How a team shares one DSH that it runs itself: members reach it from the app
 or the web through the relay, end to end encrypted, and the server can route
-their traffic but never read it. It is part of the community edition
+their traffic but never read it, except the pages an agent publishes, which
+the plugin uploads for the session's starter ([pages.md](pages.md)). It is part of the community edition
 ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md)), on a
 self-hosted server as on the hosted one. This file is how it works, where
 each part lives, the decisions it rests on, and how it is tested.

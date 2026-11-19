@@ -28,6 +28,10 @@ const (
 	// no person, one team, at most HostTTL, and accepted only by
 	// GET /api/configs and the model gateway.
 	HostBearer Purpose = "dsh-teamwork.host"
+	// PageView is a page's view address (docs/tech/pages.md, "The view
+	// address"): one reader, one version of one page, at most PageViewTTL. It
+	// opens nothing but the files that version serves under /p/.
+	PageView Purpose = "dsh-teamwork.page-view"
 )
 
 // ComputerTTL is the longest a computer token lives; its host renews it.
@@ -35,6 +39,9 @@ const ComputerTTL = time.Hour
 
 // HostTTL is the longest a host token lives; the shared DSH renews it.
 const HostTTL = time.Hour
+
+// PageViewTTL is how long a page's view address lives.
+const PageViewTTL = time.Hour
 
 // SessionTTL is how long a browser session and a plugin token last. Neither
 // can be revoked before it expires — the price of having no session table;
@@ -52,6 +59,8 @@ type Claims struct {
 	Next      string `json:"next,omitempty"`      // an OAuth round trip's return path
 	Team      string `json:"team,omitempty"`      // a computer or host token's one team
 	Host      string `json:"host,omitempty"`      // a computer token's computer or session, for the record
+	Page      string `json:"page,omitempty"`      // a view address's page
+	Version   int    `json:"ver,omitempty"`       // a view address's version of it
 	Iat       int64  `json:"iat"`
 	Exp       int64  `json:"exp"`
 }

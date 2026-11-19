@@ -81,7 +81,18 @@ export type ToolStatus = 'running' | 'done' | 'failed' | 'denied';
 export type ConversationItem =
   | { kind: 'user'; id: string; text: string; attachments?: { attachmentId: string; name: string; bytes: number }[] }
   | { kind: 'assistant'; id: string; text: string }
-  | { kind: 'tool'; id: string; name: string; summary: string; status: ToolStatus };
+  | { kind: 'tool'; id: string; name: string; summary: string; status: ToolStatus }
+  /** A page the agent published with `teamwork_page` (the platform's docs/tech/pages.md), after the tool that did. */
+  | { kind: 'page'; id: string; page: PublishedPage };
+
+/** What `teamwork_page` reports, in its result's `meta.teamworkPage`. */
+export interface PublishedPage {
+  teamId: string;
+  pageId: string;
+  version: number;
+  title: string;
+  kind: 'html' | 'markdown' | 'svg';
+}
 
 /** Something the agent is waiting on the member for. At most one at a time. */
 export type Pending =

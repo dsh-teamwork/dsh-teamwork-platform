@@ -26,6 +26,10 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/page"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagefile"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
@@ -73,6 +77,14 @@ type Client struct {
 	Membership *MembershipClient
 	// ModelRate is the client for interacting with the ModelRate builders.
 	ModelRate *ModelRateClient
+	// Page is the client for interacting with the Page builders.
+	Page *PageClient
+	// PageFile is the client for interacting with the PageFile builders.
+	PageFile *PageFileClient
+	// PageMember is the client for interacting with the PageMember builders.
+	PageMember *PageMemberClient
+	// PageVersion is the client for interacting with the PageVersion builders.
+	PageVersion *PageVersionClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
@@ -127,6 +139,10 @@ func (c *Client) init() {
 	c.Invite = NewInviteClient(c.config)
 	c.Membership = NewMembershipClient(c.config)
 	c.ModelRate = NewModelRateClient(c.config)
+	c.Page = NewPageClient(c.config)
+	c.PageFile = NewPageFileClient(c.config)
+	c.PageMember = NewPageMemberClient(c.config)
+	c.PageVersion = NewPageVersionClient(c.config)
 	c.Password = NewPasswordClient(c.config)
 	c.RateWindow = NewRateWindowClient(c.config)
 	c.RelayHost = NewRelayHostClient(c.config)
@@ -246,6 +262,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Invite:               NewInviteClient(cfg),
 		Membership:           NewMembershipClient(cfg),
 		ModelRate:            NewModelRateClient(cfg),
+		Page:                 NewPageClient(cfg),
+		PageFile:             NewPageFileClient(cfg),
+		PageMember:           NewPageMemberClient(cfg),
+		PageVersion:          NewPageVersionClient(cfg),
 		Password:             NewPasswordClient(cfg),
 		RateWindow:           NewRateWindowClient(cfg),
 		RelayHost:            NewRelayHostClient(cfg),
@@ -292,6 +312,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Invite:               NewInviteClient(cfg),
 		Membership:           NewMembershipClient(cfg),
 		ModelRate:            NewModelRateClient(cfg),
+		Page:                 NewPageClient(cfg),
+		PageFile:             NewPageFileClient(cfg),
+		PageMember:           NewPageMemberClient(cfg),
+		PageVersion:          NewPageVersionClient(cfg),
 		Password:             NewPasswordClient(cfg),
 		RateWindow:           NewRateWindowClient(cfg),
 		RelayHost:            NewRelayHostClient(cfg),
@@ -339,10 +363,11 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
-		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.RelayHost,
-		c.RelayPairing, c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
-		c.SharedArchiveSegment, c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig,
-		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
+		c.Membership, c.ModelRate, c.Page, c.PageFile, c.PageMember, c.PageVersion,
+		c.Password, c.RateWindow, c.RelayHost, c.RelayPairing, c.RelayPairingOffer,
+		c.ResourceArtifact, c.ResourceSubmission, c.SharedArchiveSegment, c.SharedHost,
+		c.SharedHostMember, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest,
+		c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -354,10 +379,11 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
-		c.Membership, c.ModelRate, c.Password, c.RateWindow, c.RelayHost,
-		c.RelayPairing, c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
-		c.SharedArchiveSegment, c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig,
-		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
+		c.Membership, c.ModelRate, c.Page, c.PageFile, c.PageMember, c.PageVersion,
+		c.Password, c.RateWindow, c.RelayHost, c.RelayPairing, c.RelayPairingOffer,
+		c.ResourceArtifact, c.ResourceSubmission, c.SharedArchiveSegment, c.SharedHost,
+		c.SharedHostMember, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest,
+		c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -388,6 +414,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Membership.mutate(ctx, m)
 	case *ModelRateMutation:
 		return c.ModelRate.mutate(ctx, m)
+	case *PageMutation:
+		return c.Page.mutate(ctx, m)
+	case *PageFileMutation:
+		return c.PageFile.mutate(ctx, m)
+	case *PageMemberMutation:
+		return c.PageMember.mutate(ctx, m)
+	case *PageVersionMutation:
+		return c.PageVersion.mutate(ctx, m)
 	case *PasswordMutation:
 		return c.Password.mutate(ctx, m)
 	case *RateWindowMutation:
@@ -1949,6 +1983,538 @@ func (c *ModelRateClient) mutate(ctx context.Context, m *ModelRateMutation) (Val
 		return (&ModelRateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ModelRate mutation op: %q", m.Op())
+	}
+}
+
+// PageClient is a client for the Page schema.
+type PageClient struct {
+	config
+}
+
+// NewPageClient returns a client for the Page from the given config.
+func NewPageClient(c config) *PageClient {
+	return &PageClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `page.Hooks(f(g(h())))`.
+func (c *PageClient) Use(hooks ...Hook) {
+	c.hooks.Page = append(c.hooks.Page, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `page.Intercept(f(g(h())))`.
+func (c *PageClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Page = append(c.inters.Page, interceptors...)
+}
+
+// Create returns a builder for creating a Page entity.
+func (c *PageClient) Create() *PageCreate {
+	mutation := newPageMutation(c.config, OpCreate)
+	return &PageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Page entities.
+func (c *PageClient) CreateBulk(builders ...*PageCreate) *PageCreateBulk {
+	return &PageCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PageClient) MapCreateBulk(slice any, setFunc func(*PageCreate, int)) *PageCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PageCreateBulk{err: fmt.Errorf("calling to PageClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PageCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PageCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Page.
+func (c *PageClient) Update() *PageUpdate {
+	mutation := newPageMutation(c.config, OpUpdate)
+	return &PageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PageClient) UpdateOne(_m *Page) *PageUpdateOne {
+	mutation := newPageMutation(c.config, OpUpdateOne, withPage(_m))
+	return &PageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PageClient) UpdateOneID(id string) *PageUpdateOne {
+	mutation := newPageMutation(c.config, OpUpdateOne, withPageID(id))
+	return &PageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Page.
+func (c *PageClient) Delete() *PageDelete {
+	mutation := newPageMutation(c.config, OpDelete)
+	return &PageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PageClient) DeleteOne(_m *Page) *PageDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PageClient) DeleteOneID(id string) *PageDeleteOne {
+	builder := c.Delete().Where(page.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PageDeleteOne{builder}
+}
+
+// Query returns a query builder for Page.
+func (c *PageClient) Query() *PageQuery {
+	return &PageQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePage},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Page entity by its id.
+func (c *PageClient) Get(ctx context.Context, id string) (*Page, error) {
+	return c.Query().Where(page.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PageClient) GetX(ctx context.Context, id string) *Page {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PageClient) Hooks() []Hook {
+	return c.hooks.Page
+}
+
+// Interceptors returns the client interceptors.
+func (c *PageClient) Interceptors() []Interceptor {
+	return c.inters.Page
+}
+
+func (c *PageClient) mutate(ctx context.Context, m *PageMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Page mutation op: %q", m.Op())
+	}
+}
+
+// PageFileClient is a client for the PageFile schema.
+type PageFileClient struct {
+	config
+}
+
+// NewPageFileClient returns a client for the PageFile from the given config.
+func NewPageFileClient(c config) *PageFileClient {
+	return &PageFileClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pagefile.Hooks(f(g(h())))`.
+func (c *PageFileClient) Use(hooks ...Hook) {
+	c.hooks.PageFile = append(c.hooks.PageFile, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `pagefile.Intercept(f(g(h())))`.
+func (c *PageFileClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PageFile = append(c.inters.PageFile, interceptors...)
+}
+
+// Create returns a builder for creating a PageFile entity.
+func (c *PageFileClient) Create() *PageFileCreate {
+	mutation := newPageFileMutation(c.config, OpCreate)
+	return &PageFileCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PageFile entities.
+func (c *PageFileClient) CreateBulk(builders ...*PageFileCreate) *PageFileCreateBulk {
+	return &PageFileCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PageFileClient) MapCreateBulk(slice any, setFunc func(*PageFileCreate, int)) *PageFileCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PageFileCreateBulk{err: fmt.Errorf("calling to PageFileClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PageFileCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PageFileCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PageFile.
+func (c *PageFileClient) Update() *PageFileUpdate {
+	mutation := newPageFileMutation(c.config, OpUpdate)
+	return &PageFileUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PageFileClient) UpdateOne(_m *PageFile) *PageFileUpdateOne {
+	mutation := newPageFileMutation(c.config, OpUpdateOne, withPageFile(_m))
+	return &PageFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PageFileClient) UpdateOneID(id string) *PageFileUpdateOne {
+	mutation := newPageFileMutation(c.config, OpUpdateOne, withPageFileID(id))
+	return &PageFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PageFile.
+func (c *PageFileClient) Delete() *PageFileDelete {
+	mutation := newPageFileMutation(c.config, OpDelete)
+	return &PageFileDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PageFileClient) DeleteOne(_m *PageFile) *PageFileDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PageFileClient) DeleteOneID(id string) *PageFileDeleteOne {
+	builder := c.Delete().Where(pagefile.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PageFileDeleteOne{builder}
+}
+
+// Query returns a query builder for PageFile.
+func (c *PageFileClient) Query() *PageFileQuery {
+	return &PageFileQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePageFile},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PageFile entity by its id.
+func (c *PageFileClient) Get(ctx context.Context, id string) (*PageFile, error) {
+	return c.Query().Where(pagefile.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PageFileClient) GetX(ctx context.Context, id string) *PageFile {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PageFileClient) Hooks() []Hook {
+	return c.hooks.PageFile
+}
+
+// Interceptors returns the client interceptors.
+func (c *PageFileClient) Interceptors() []Interceptor {
+	return c.inters.PageFile
+}
+
+func (c *PageFileClient) mutate(ctx context.Context, m *PageFileMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PageFileCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PageFileUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PageFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PageFileDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PageFile mutation op: %q", m.Op())
+	}
+}
+
+// PageMemberClient is a client for the PageMember schema.
+type PageMemberClient struct {
+	config
+}
+
+// NewPageMemberClient returns a client for the PageMember from the given config.
+func NewPageMemberClient(c config) *PageMemberClient {
+	return &PageMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pagemember.Hooks(f(g(h())))`.
+func (c *PageMemberClient) Use(hooks ...Hook) {
+	c.hooks.PageMember = append(c.hooks.PageMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `pagemember.Intercept(f(g(h())))`.
+func (c *PageMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PageMember = append(c.inters.PageMember, interceptors...)
+}
+
+// Create returns a builder for creating a PageMember entity.
+func (c *PageMemberClient) Create() *PageMemberCreate {
+	mutation := newPageMemberMutation(c.config, OpCreate)
+	return &PageMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PageMember entities.
+func (c *PageMemberClient) CreateBulk(builders ...*PageMemberCreate) *PageMemberCreateBulk {
+	return &PageMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PageMemberClient) MapCreateBulk(slice any, setFunc func(*PageMemberCreate, int)) *PageMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PageMemberCreateBulk{err: fmt.Errorf("calling to PageMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PageMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PageMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PageMember.
+func (c *PageMemberClient) Update() *PageMemberUpdate {
+	mutation := newPageMemberMutation(c.config, OpUpdate)
+	return &PageMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PageMemberClient) UpdateOne(_m *PageMember) *PageMemberUpdateOne {
+	mutation := newPageMemberMutation(c.config, OpUpdateOne, withPageMember(_m))
+	return &PageMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PageMemberClient) UpdateOneID(id string) *PageMemberUpdateOne {
+	mutation := newPageMemberMutation(c.config, OpUpdateOne, withPageMemberID(id))
+	return &PageMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PageMember.
+func (c *PageMemberClient) Delete() *PageMemberDelete {
+	mutation := newPageMemberMutation(c.config, OpDelete)
+	return &PageMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PageMemberClient) DeleteOne(_m *PageMember) *PageMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PageMemberClient) DeleteOneID(id string) *PageMemberDeleteOne {
+	builder := c.Delete().Where(pagemember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PageMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for PageMember.
+func (c *PageMemberClient) Query() *PageMemberQuery {
+	return &PageMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePageMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PageMember entity by its id.
+func (c *PageMemberClient) Get(ctx context.Context, id string) (*PageMember, error) {
+	return c.Query().Where(pagemember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PageMemberClient) GetX(ctx context.Context, id string) *PageMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PageMemberClient) Hooks() []Hook {
+	return c.hooks.PageMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *PageMemberClient) Interceptors() []Interceptor {
+	return c.inters.PageMember
+}
+
+func (c *PageMemberClient) mutate(ctx context.Context, m *PageMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PageMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PageMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PageMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PageMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PageMember mutation op: %q", m.Op())
+	}
+}
+
+// PageVersionClient is a client for the PageVersion schema.
+type PageVersionClient struct {
+	config
+}
+
+// NewPageVersionClient returns a client for the PageVersion from the given config.
+func NewPageVersionClient(c config) *PageVersionClient {
+	return &PageVersionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pageversion.Hooks(f(g(h())))`.
+func (c *PageVersionClient) Use(hooks ...Hook) {
+	c.hooks.PageVersion = append(c.hooks.PageVersion, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `pageversion.Intercept(f(g(h())))`.
+func (c *PageVersionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PageVersion = append(c.inters.PageVersion, interceptors...)
+}
+
+// Create returns a builder for creating a PageVersion entity.
+func (c *PageVersionClient) Create() *PageVersionCreate {
+	mutation := newPageVersionMutation(c.config, OpCreate)
+	return &PageVersionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PageVersion entities.
+func (c *PageVersionClient) CreateBulk(builders ...*PageVersionCreate) *PageVersionCreateBulk {
+	return &PageVersionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PageVersionClient) MapCreateBulk(slice any, setFunc func(*PageVersionCreate, int)) *PageVersionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PageVersionCreateBulk{err: fmt.Errorf("calling to PageVersionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PageVersionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PageVersionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PageVersion.
+func (c *PageVersionClient) Update() *PageVersionUpdate {
+	mutation := newPageVersionMutation(c.config, OpUpdate)
+	return &PageVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PageVersionClient) UpdateOne(_m *PageVersion) *PageVersionUpdateOne {
+	mutation := newPageVersionMutation(c.config, OpUpdateOne, withPageVersion(_m))
+	return &PageVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PageVersionClient) UpdateOneID(id string) *PageVersionUpdateOne {
+	mutation := newPageVersionMutation(c.config, OpUpdateOne, withPageVersionID(id))
+	return &PageVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PageVersion.
+func (c *PageVersionClient) Delete() *PageVersionDelete {
+	mutation := newPageVersionMutation(c.config, OpDelete)
+	return &PageVersionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PageVersionClient) DeleteOne(_m *PageVersion) *PageVersionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PageVersionClient) DeleteOneID(id string) *PageVersionDeleteOne {
+	builder := c.Delete().Where(pageversion.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PageVersionDeleteOne{builder}
+}
+
+// Query returns a query builder for PageVersion.
+func (c *PageVersionClient) Query() *PageVersionQuery {
+	return &PageVersionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePageVersion},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PageVersion entity by its id.
+func (c *PageVersionClient) Get(ctx context.Context, id string) (*PageVersion, error) {
+	return c.Query().Where(pageversion.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PageVersionClient) GetX(ctx context.Context, id string) *PageVersion {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PageVersionClient) Hooks() []Hook {
+	return c.hooks.PageVersion
+}
+
+// Interceptors returns the client interceptors.
+func (c *PageVersionClient) Interceptors() []Interceptor {
+	return c.inters.PageVersion
+}
+
+func (c *PageVersionClient) mutate(ctx context.Context, m *PageVersionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PageVersionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PageVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PageVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PageVersionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PageVersion mutation op: %q", m.Op())
 	}
 }
 
@@ -4244,19 +4810,19 @@ func (c *VerificationCodeClient) mutate(ctx context.Context, m *VerificationCode
 type (
 	hooks struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
-		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
-		Password, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
-		ResourceArtifact, ResourceSubmission, SharedArchiveSegment, SharedHost,
-		SharedHostMember, Team, TeamConfig, TeamProvider, UsageRequest, User,
-		VerificationCode []ent.Hook
+		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate, Page,
+		PageFile, PageMember, PageVersion, Password, RateWindow, RelayHost,
+		RelayPairing, RelayPairingOffer, ResourceArtifact, ResourceSubmission,
+		SharedArchiveSegment, SharedHost, SharedHostMember, Team, TeamConfig,
+		TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
-		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate,
-		Password, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
-		ResourceArtifact, ResourceSubmission, SharedArchiveSegment, SharedHost,
-		SharedHostMember, Team, TeamConfig, TeamProvider, UsageRequest, User,
-		VerificationCode []ent.Interceptor
+		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate, Page,
+		PageFile, PageMember, PageVersion, Password, RateWindow, RelayHost,
+		RelayPairing, RelayPairingOffer, ResourceArtifact, ResourceSubmission,
+		SharedArchiveSegment, SharedHost, SharedHostMember, Team, TeamConfig,
+		TeamProvider, UsageRequest, User, VerificationCode []ent.Interceptor
 	}
 )
 

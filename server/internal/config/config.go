@@ -13,10 +13,13 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/publicsuffix"
 )
 
 // MinAuthSecret is the shortest AUTH_SECRET accepted.
@@ -24,11 +27,14 @@ const MinAuthSecret = 32
 
 // Config is everything the server reads at start.
 type Config struct {
-	ServiceRole          string // combined (default), user, or manage
-	DataDir              string
-	Host                 string
-	Port                 int
-	AppURL               string // the public origin, without a trailing slash
+	ServiceRole string // combined (default), user, or manage
+	DataDir     string
+	Host        string
+	Port        int
+	AppURL      string // the public origin, without a trailing slash
+	// ContentURL (CONTENT_URL) is the origin pages are served from
+	// (docs/tech/pages.md): another site than AppURL's, or AppURL itself.
+	ContentURL           string
 	DatabaseURL          string
 	MigrateArtifacts     bool // copy and verify local archives into configured S3, then exit
 	MigrateArtifactPaths bool // copy flat keys to team-scoped paths in the current store, then exit
@@ -114,6 +120,12 @@ func Load(args []string, env func(string) string) (Config, error) {
 	c.AppURL = strings.TrimRight(strings.TrimSpace(env("APP_URL")), "/")
 	if c.AppURL == "" {
 		c.AppURL = "http://" + net.JoinHostPort(displayHost(c.Host), strconv.Itoa(c.Port))
+	}
+	c.ContentURL = strings.TrimRight(strings.TrimSpace(env("CONTENT_URL")), "/")
+	if c.ContentURL == "" {
+		c.ContentURL = c.AppURL
+	} else if err := contentOrigin(c.ContentURL, c.AppURL); err != nil {
+		return Config{}, fmt.Errorf("CONTENT_URL: %w", err)
 	}
 	if err := os.MkdirAll(c.DataDir, 0o700); err != nil {
 		return Config{}, fmt.Errorf("data directory: %w", err)
@@ -214,4 +226,46 @@ func displayHost(h string) string {
 		return "localhost"
 	}
 	return h
+}
+
+// contentOrigin is why content cannot be served from origin, or nil: it is
+// an origin (no path), https unless on loopback, and on a registrable domain
+// of its own, since a subdomain of APP_URL's shares the site its cookies are
+// sent to (docs/tech/pages.md, "The view address").
+func contentOrigin(origin, appURL string) error {
+	u, err := url.Parse(origin)
+	if err != nil || u.Host == "" || (u.Path != "" && u.Path != "/") || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
+		return errors.New("an origin such as https://pages.example")
+	}
+	if u.Scheme != "https" && !(u.Scheme == "http" && loopbackHost(u.Hostname())) {
+		return errors.New("https, unless on loopback")
+	}
+	app, err := url.Parse(appURL)
+	if err != nil {
+		return err
+	}
+	if site(u.Hostname()) == site(app.Hostname()) {
+		return fmt.Errorf("%s shares a site with APP_URL; use a domain of its own, or leave it unset", u.Hostname())
+	}
+	return nil
+}
+
+// site is a host's registrable domain, or the host itself for an IP address
+// or a name with none.
+func site(host string) string {
+	if net.ParseIP(host) != nil {
+		return host
+	}
+	if d, err := publicsuffix.EffectiveTLDPlusOne(host); err == nil {
+		return d
+	}
+	return host
+}
+
+func loopbackHost(h string) bool {
+	if h == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(h)
+	return ip != nil && ip.IsLoopback()
 }

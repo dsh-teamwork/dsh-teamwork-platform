@@ -34,3 +34,11 @@ describe('laying out a conversation', () => {
     expect(toolKey('jira_search')).toBeNull();
   });
 });
+
+describe('a published page in the conversation', () => {
+  it('is a row of its own, between the steps before and after it', () => {
+    const tool = (id: string) => ({ kind: 'tool' as const, id, name: 'bash', summary: '', status: 'done' as const });
+    const page = { kind: 'page' as const, id: 'page-2', page: { teamId: 't', pageId: 'p', version: 1, title: 'Q4', kind: 'html' as const } };
+    expect(rowsOf([tool('1'), tool('2'), page, tool('3')]).map((r) => r.kind)).toEqual(['steps', 'page', 'steps']);
+  });
+});

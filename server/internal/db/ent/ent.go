@@ -23,6 +23,10 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/page"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagefile"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
@@ -110,6 +114,10 @@ func checkColumn(t, c string) error {
 			invite.Table:               invite.ValidColumn,
 			membership.Table:           membership.ValidColumn,
 			modelrate.Table:            modelrate.ValidColumn,
+			page.Table:                 page.ValidColumn,
+			pagefile.Table:             pagefile.ValidColumn,
+			pagemember.Table:           pagemember.ValidColumn,
+			pageversion.Table:          pageversion.ValidColumn,
 			password.Table:             password.ValidColumn,
 			ratewindow.Table:           ratewindow.ValidColumn,
 			relayhost.Table:            relayhost.ValidColumn,

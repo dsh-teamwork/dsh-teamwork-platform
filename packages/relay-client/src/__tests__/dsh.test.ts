@@ -156,3 +156,32 @@ it('keeps file-only desktop messages visible in history', () => {
     },
   ]);
 });
+
+describe('a page the agent published', () => {
+  const call = { type: 'tool/call', seq: 1, data: { callId: 'c1', name: 'teamwork_page', arguments: '{"action":"create"}' } };
+  const page = { teamId: 't1', pageId: 'p1', version: 2, title: 'Q4', kind: 'html' };
+  const result = (meta: unknown, isError = false, name = 'teamwork_page') => ({
+    type: 'tool/result',
+    seq: 2,
+    data: { message: { role: 'tool', toolCallId: 'c1', isError, content: [] }, meta, name },
+  });
+  const run = (events: unknown[]) => {
+    let state: SessionState = { status: 'idle', items: [], pending: null, closed: null, earlier: null };
+    for (const event of events) for (const change of eventsOf(event, state)) state = applyChange(state, change);
+    return state.items;
+  };
+
+  it('follows the tool that published it, from the result’s meta', () => {
+    expect(run([call, result({ teamworkPage: page })])).toEqual([
+      expect.objectContaining({ kind: 'tool', id: 'c1', status: 'done' }),
+      { kind: 'page', id: 'page-c1', page },
+    ]);
+  });
+
+  it('is nothing when the call failed, another tool reported it, or the meta is incomplete', () => {
+    expect(run([call, result({ teamworkPage: page }, true)]).map((i) => i.kind)).toEqual(['tool']);
+    expect(run([{ ...call, data: { ...call.data, name: 'bash' } }, result({ teamworkPage: page })]).map((i) => i.kind)).toEqual(['tool']);
+    expect(run([call, result({ teamworkPage: { ...page, version: '2' } })]).map((i) => i.kind)).toEqual(['tool']);
+    expect(run([call, result({ teamworkPage: { ...page, kind: 'pdf' } })]).map((i) => i.kind)).toEqual(['tool']);
+  });
+});

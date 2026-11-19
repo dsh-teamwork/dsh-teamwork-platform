@@ -516,7 +516,8 @@
       "hints": {
         "myDsh": "DSH on the computers you signed in to Teamwork, yours alone. Pair this browser once with each, then work in its sessions from here, end-to-end encrypted. Its model calls are yours, and the phones and browsers that reach it are listed here, where you can remove any of them.",
         "teamDsh": "DSH on a machine your team runs, connected by your team's admin, who also decides who may reach it. It signs in as the team, and its model calls are the team's. You use it from the browser or the phone app, end-to-end encrypted, and see only the sessions you start; the admin can read every session from its encrypted archive."
-      }
+      },
+      "pages": "Pages"
     },
     "switcher": {
       "label": "Switch team",
@@ -1132,6 +1133,78 @@
       "loadFailed": "Your computers could not be read. Try again.",
       "revokeFailed": "The device was not removed. Try again.",
       "browserUnsupported": "This browser cannot keep the key pairing needs. Use a current Chrome, Edge, Firefox or Safari, outside private browsing."
+    },
+    "pages": {
+      "title": "Pages",
+      "loading": "Loading…",
+      "loadFailed": "Could not load this.",
+      "unavailable": "This page is not available to you: it is private, was deleted, or you left its team.",
+      "emptyTitle": "Pages agents publish appear here",
+      "emptyHow": "In a session on My DSH or a Team DSH, ask the agent to make a report, a deck or a dashboard and publish it as a page. It stays private to you until you share it.",
+      "owner": "Owner: {name}",
+      "version": "Version",
+      "versionN": "Version {n}",
+      "latest": "Version {n} (latest)",
+      "openTab": "Open in a new tab",
+      "copyLink": "Copy link",
+      "copied": "Link copied",
+      "close": "Close",
+      "versions": "Versions",
+      "showing": "Showing",
+      "fromTeamDsh": "Team DSH",
+      "cardNote": "Page · version {n} · open",
+      "sharing": {
+        "private": "Private",
+        "members": "Some members",
+        "team": "Team"
+      },
+      "lists": {
+        "mine": "Mine",
+        "shared": "Shared with me",
+        "all": "All"
+      },
+      "empty": {
+        "mine": "No pages yet.",
+        "shared": "Nobody has shared a page with you yet.",
+        "all": "No pages in this team yet."
+      },
+      "via": {
+        "you": "{name} · with you",
+        "team": "{name} · with the team"
+      },
+      "readers": "Readable by {names}",
+      "share": "Share",
+      "restrict": "Restrict",
+      "governOnly": "You manage this page as the team's admin, but it is not shared with you, so its content stays hidden. You can restrict who reads it or delete it.",
+      "restore": "Restore version {n}",
+      "delete": "Delete page",
+      "deleteConfirm": "Delete \"{title}\" and every version of it? This cannot be undone.",
+      "actionFailed": "That did not work. Try again.",
+      "shareDialog": {
+        "title": "Share \"{title}\"",
+        "restrictTitle": "Restrict \"{title}\"",
+        "note": "Pages stay inside the team; nobody outside it can open one.",
+        "restrictNote": "As the team's admin you can narrow who reads this page, never widen it.",
+        "private": {
+          "label": "Only me",
+          "note": "Only the owner can open it."
+        },
+        "members": {
+          "label": "Specific members",
+          "note": "The members you choose can open it and add versions."
+        },
+        "team": {
+          "label": "Everyone in the team",
+          "note": "Every member of the team can open it and add versions."
+        },
+        "find": "Find a member by email",
+        "remove": "Remove {name}",
+        "cancel": "Cancel",
+        "save": "Save",
+        "failed": "Could not save. Try again.",
+        "page_sharing_widened": "An admin can only narrow who reads a page.",
+        "page_member_not_in_team": "Someone you chose is no longer in the team."
+      }
     }
   },
   "usage": {

@@ -39,6 +39,18 @@ type Membership func(*sql.Selector)
 // ModelRate is the predicate function for modelrate builders.
 type ModelRate func(*sql.Selector)
 
+// Page is the predicate function for page builders.
+type Page func(*sql.Selector)
+
+// PageFile is the predicate function for pagefile builders.
+type PageFile func(*sql.Selector)
+
+// PageMember is the predicate function for pagemember builders.
+type PageMember func(*sql.Selector)
+
+// PageVersion is the predicate function for pageversion builders.
+type PageVersion func(*sql.Selector)
+
 // Password is the predicate function for password builders.
 type Password func(*sql.Selector)
 

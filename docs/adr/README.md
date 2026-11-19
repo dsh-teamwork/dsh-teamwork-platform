@@ -42,6 +42,10 @@ or the hosted service, kept with the closed edition rather than here.
 
 - [0050 — Every call needs a rate](0050-every-call-needs-a-rate.md) — a model without a reference rate cannot be called, budget or none.
 
+- [0052 — Pages are uploaded when made](0052-pages-are-uploaded-when-made.md) — the one session content the server stores, private until a person shares it.
+
+- [0053 — Pages are served sandboxed from their own origin](0053-pages-are-served-sandboxed-from-their-own-origin.md) — a view token, a CSP sandbox, `CONTENT_URL`, and never outside the team.
+
 The template:
 
 ```markdown

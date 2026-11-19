@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Plan · **Updated:** 2026-11-19
+> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-19
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -9,17 +9,17 @@ it is built in. The agent publishes it with the teamwork plugin's
 private to its maker until a person shares it with chosen members or the
 whole team, and never with anyone outside the team; the console shows it
 beside the conversation that made it and under **Pages** in the sidebar,
-served from an origin of its own (`CONTENT_URL`, `artifacts.dshteam.work` on the
-hosted service) in a sandbox, so its scripts can never act as the person viewing it.
+served from an origin of its own (`CONTENT_URL`, `artifacts.dshteam.work` on the hosted
+service) in a sandbox, so its scripts can never act as the person viewing it.
 Every edition has it; the hosted edition adds the phone app.
 
 ## Contents
 
-The plan answers, in order: what it is and is not (Goal, Non-goals, Terms);
-how it works (Architecture, Data model, Object storage, API, The view
-address, The plugin tool, The clients, Security); how it is run (Editions,
-Configuration and operations); and how it is built (Order of work, Open
-questions, How done is verified).
+In order: what it is and is not (Goal, Non-goals, Terms); how it works
+(Architecture, Data model, Object storage, API, The view address, The plugin
+tool, The clients, Security); how it is run (Editions, Configuration and
+operations); and how it was built (How it was built, and what remains; Open
+questions; How done is verified).
 
 ## Goal
 
@@ -148,6 +148,11 @@ bytes per character the API allows.
   membership. Their own pages stay the team's, owned by an id that is no
   longer a member; nobody reads a private one again, and the team's admins
   can narrow or delete them.
+- **A deleted team** takes its pages, their versions, files, members and
+  objects with it (`deleteTeam` in `internal/team/account.go`).
+- **A deleted account** takes its private pages with it, since nobody else can
+  read them, and the lists that named it forget it; the pages it shared stay
+  with their team, as its published versions do.
 
 ## Object storage
 
@@ -208,7 +213,7 @@ a 403, so its existence is not told.
   who must be a member of that team now. `requirePlugin`
   (`internal/httpapi/identity.go`) gains the two upload routes and `view`,
   and its comment its list.
-- **Errors**: `page_not_found` 404, `page_stale` 409 (with `currentVersion`),
+- **Errors**: `page_not_found` 404, `page_stale` 409 (the client re-reads the page),
   `page_too_large` 413, `page_team_full` 413, `page_invalid` 400, `page_member_not_in_team` 400,
   `page_not_owner` 403 (a reader or admin asking for the owner's change),
   `page_sharing_widened` 403 (an admin's change that would admit anyone not
@@ -255,7 +260,7 @@ a 403, so its existence is not told.
   - no `Set-Cookie`, and any cookie sent is ignored.
 - **Where `/p/` is served: `CONTENT_URL`**, else `APP_URL`'s origin. The
   hosted service sets `https://artifacts.dshteam.work`, on a domain registered
-  for untrusted content alone (its other subtree serves the hosted edition's
+  for untrusted content alone (its other subdomains serve the hosted edition's
   cloud computers to their owners, each behind a `__Host-` cookie no page can
   set or replace, and pages ignore cookies), so a page is another site from
   the console as well as an opaque origin: the console's
@@ -264,7 +269,8 @@ a 403, so its existence is not told.
   not reach the console. A self-hosted server needs no second domain and
   relies on the sandbox alone. When the two differ, `CONTENT_URL`'s host
   answers `/p/` and a `robots.txt` that refuses every crawler, and 404 to
-  everything else; `APP_URL`'s host answers `/p/` with 404. The server
+  everything else, matched as an exact host ahead of any subdomains an edition
+  serves (`contentHost` in `internal/httpapi/pages_routes.go`); `APP_URL`'s host answers `/p/` with 404. The server
   refuses to start when `CONTENT_URL` is on `APP_URL`'s registrable domain
   (a subdomain would share its cookies' site) or is not https off loopback.
 
@@ -287,10 +293,11 @@ In the plugin repository, beside the other `teamwork_*` tools
 - **Reading files**: only inside the session's folder, after resolving
   symbolic links; hidden files and anything over the limits refused before
   any upload, with the rule named so the agent can fix it.
-- **The result** is one line for the agent and a JSON object for clients:
-  `{"teamworkPage":{"teamId","pageId","version","title","kind"}}`. It holds
-  no content: the relay's `fitFrame` would cut it, and the card needs only
-  the id.
+- **The result** renders one line for the agent, and its output's
+  `presentationMeta` is `{"teamworkPage":{"teamId","pageId","version","title","kind"}}`,
+  which DSH stores in the session's `tool/result` event as `meta`, outside
+  what the model reads. It holds no content: the relay's `fitFrame` would cut
+  it, and the card needs only the id.
 - **Conflicts**: on `page_stale` the tool answers the agent with the current
   version and tells it to `open` and reapply. Two agents never overwrite each
   other silently.
@@ -303,15 +310,16 @@ In the plugin repository, beside the other `teamwork_*` tools
 ## The clients
 
 - **`packages/relay-client`** (`dsh.ts`, `conversation.ts`): a `tool/result`
-  of `teamwork_page` that is not an error, carrying `teamworkPage`, becomes a
-  `page` conversation item `{ kind: 'page', id, teamId, pageId, version,
-  title, pageKind }` after its tool item, live and from history. Every client
-  that follows a session (the console's My DSH and Team DSH, the hosted
-  edition's cloud sessions and phone app) gets it with no change of its own.
+  of `teamwork_page` that is not an error, whose `meta` carries `teamworkPage`, becomes a
+  `page` conversation item `{ kind: 'page', id, page: { teamId, pageId,
+  version, title, kind } }` after its tool item, live and from history, and
+  `rowsOf` makes it a row of its own between steps. Every client that follows
+  a session reads it from the package; each draws the row (the console's
+  sessions here, the hosted edition's cloud sessions and phone app there).
 - **The card** (`apps/web/src/pages/team/dsh-session.tsx`): the kind's icon,
   the title, "version N"; clicking it opens the viewer. On a wide screen
-  (`xl`) the viewer is a column beside the conversation; narrower, it covers
-  the conversation with a way back. A page of another team, or one the
+  (`xl`) the viewer is a panel beside the conversation; narrower, it covers
+  the conversation, with a close button. A page of another team, or one the
   member can no longer read, says so instead of opening.
 - **The viewer** (`apps/web/src/components/page-viewer.tsx`, shared by the
   column and the Pages page): mints a view address, frames it
@@ -322,7 +330,7 @@ In the plugin repository, beside the other `teamwork_*` tools
   **Open in a new tab** and **Copy link** (to the console's page for it,
   never the view address).
 - **Pages in the sidebar**: `GROUPS`' `work` group in
-  `apps/web/src/components/team/console-shell.tsx`, after Team DSH, for
+  `apps/web/src/components/team/console-shell.tsx`, after My DSH, for
   everyone in every team, always listed; `/teams/{teamId}/pages` (**Mine**),
   `?list=shared` (**Shared with me**), `?list=all` (**All**, a third tab an
   admin alone sees: rows they cannot read show no viewer, only **Restrict**
@@ -371,7 +379,8 @@ In the plugin repository, beside the other `teamwork_*` tools
   advice (both stores together) covers them.
 - **Management processes** open no store and serve no page.
 - **Expensive to change**: the view address, its headers and the content
-  domain (the security boundary; `artifacts.dshteam.work` stays served while view
+  domain (the security boundary; `dshteam.work` stays registered, and
+  `artifacts.dshteam.work` pointed at the service, while view
   addresses name it); the tool's arguments and the upload's shape (installed
   plugins); the object keys (a bucket migration, ADR 0042); uploading at
   creation (clients assume a page opens anywhere).
@@ -379,13 +388,31 @@ In the plugin repository, beside the other `teamwork_*` tools
   exception to "storing session content"; the view address, its content
   origin and that no page leaves its team.
 
-## Order of work, and what gates what
+## How it was built, and what remains
+
+Every step below is built. What remains is step 0's isolation check on the
+browsers and WebViews this repository's machines could not reach (Safari,
+Firefox, Android's WebView, iOS's WKWebView), on devices, before the phone app
+ships with pages.
+
 
 Each step is one pull request per repository it touches, through the gate,
 with its `CHANGELOG.md` entry; the plugin is released before the console
 depends on its result. Sizes are rough: S a day or two, M a week, L two.
 
-### Step 0 — two spikes, thrown away (S each; gate everything)
+### Step 0 — two spikes, thrown away (done 2026-11-19)
+
+Found: in Chromium, framed and opened alike, on `APP_URL`'s origin and on a
+second site, the page's origin is `null`; `document.cookie`, `localStorage`
+and `indexedDB` throw; there is no service worker; `fetch` to the API is
+refused by `connect-src` before it leaves the browser; a relative image, a
+CDN script and inline script work; a reload revalidates with a 304; a
+foreign site cannot frame it. Safari, Firefox, Android's WebView and iOS's
+WKWebView were not reachable and are checked on devices before step 5. DSH's
+tool contract gives a tool `presentationMeta`, stored in the `tool/result`
+event as `meta` beside the model's text, and the tool's agent carries the
+session's id and folder (`session.header.id`, `.cwd`); the card reads `meta`
+rather than parsing text. What each spike set out to check:
 
 1. **Isolation.** A scratch Go handler serving a fixture page with the
    headers above, at `/p/{token}/`, both on `APP_URL`'s origin and on a
@@ -410,7 +437,8 @@ depends on its result. Sizes are rough: S a day or two, M a week, L two.
 - Schema, ent generation and the migration (`pages`, `page_versions`,
   `page_files`, `page_members`).
 - `internal/pages`: create, add a version, the conditional update, limits,
-  digests and object writes, the team's 2 GiB, the view token purpose, `/p/` serving with the
+  digests and object writes, the team's 2 GiB, the view token purpose,
+  `/p/` serving with the
   headers, Markdown rendering, `CONTENT_URL` (config, host routing, start-up
   checks, `robots.txt`).
 - Routes: the two uploads (plugin, computer and host tokens), `GET …/pages`

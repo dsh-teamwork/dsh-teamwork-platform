@@ -36,6 +36,14 @@ type Tx struct {
 	Membership *MembershipClient
 	// ModelRate is the client for interacting with the ModelRate builders.
 	ModelRate *ModelRateClient
+	// Page is the client for interacting with the Page builders.
+	Page *PageClient
+	// PageFile is the client for interacting with the PageFile builders.
+	PageFile *PageFileClient
+	// PageMember is the client for interacting with the PageMember builders.
+	PageMember *PageMemberClient
+	// PageVersion is the client for interacting with the PageVersion builders.
+	PageVersion *PageVersionClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
 	// RateWindow is the client for interacting with the RateWindow builders.
@@ -210,6 +218,10 @@ func (tx *Tx) init() {
 	tx.Invite = NewInviteClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
 	tx.ModelRate = NewModelRateClient(tx.config)
+	tx.Page = NewPageClient(tx.config)
+	tx.PageFile = NewPageFileClient(tx.config)
+	tx.PageMember = NewPageMemberClient(tx.config)
+	tx.PageVersion = NewPageVersionClient(tx.config)
 	tx.Password = NewPasswordClient(tx.config)
 	tx.RateWindow = NewRateWindowClient(tx.config)
 	tx.RelayHost = NewRelayHostClient(tx.config)
