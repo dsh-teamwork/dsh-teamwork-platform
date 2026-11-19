@@ -1,6 +1,6 @@
 # Go server
 
-> **Status:** Plan — phases 0 to 6 done; Feishu waits · **Updated:** 2026-11-15
+> **Status:** Plan — phases 0 to 6 done; Feishu waits · **Updated:** 2026-11-19
 
 How the Node server becomes the one Go binary of
 [ADR 0014](../adr/0014-one-go-binary.md): the experiments that gate it, what
@@ -306,7 +306,7 @@ closed binary (the developer's choice on 2026-11-14).
   the host's services it may use (the database connection, Bearer and session
   verification, `AUTH_SECRET`, `APP_URL`). The open binary registers nothing,
   and `server/edition/editiontest` gives a closed package the open suites'
-  three databases.
+  three databases, less any its migrations leave out.
 - **The closed module, `premium/server/`:** its own `go.mod`, requiring the
   open module from `../../server`; its `cmd/dsh-teamwork` blank-imports the
   closed packages and calls `app.Main`. Its tables are an `ent` schema of its

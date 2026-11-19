@@ -271,7 +271,9 @@ SQLite, and on Postgres and MySQL when `TEST_POSTGRES_URL` and
 (`server/internal/testdb`); `db:drift` needs `MIGRATE_DEV_POSTGRES` and
 `MIGRATE_DEV_MYSQL`, databases it may empty, and skips without them. `pnpm
 dev:setup` starts both servers and prints the four variables. CI sets them
-all, so skipped locally never means skipped everywhere. The plugin's
+all, so skipped locally never means skipped everywhere. A closed edition's
+own suites skip a database its migrations leave out
+(`server/edition/editiontest`). The plugin's
 end-to-end test is `go test -tags e2e ./e2e` in `server/`, against
 `../dsh-teamwork` or `DSH_TEAMWORK_PLUGIN`.
 
@@ -280,8 +282,10 @@ by hand from the Actions tab: the gate above, the plugin's end-to-end test in
 every Go module that has one. A private edition such as premium, whose Actions
 minutes are billed, skips pull requests and runs only on a merge into `main` and
 by hand; its pull requests rely on the pre-push gate, which there refuses to
-push unless the four database variables are set and the plugin's checkout is
-built, so nothing in it can skip. All jobs use Linux, and a newer run cancels an
+push unless `TEST_POSTGRES_URL` and `MIGRATE_DEV_POSTGRES` are set and the
+plugin's checkout is built, so nothing in it can skip. An edition's gate leaves
+out the open server's own Go tests, drift check and end-to-end test: its open
+files equal the community edition's, whose CI ran them on all three databases. All jobs use Linux, and a newer run cancels an
 older run for the same pull request or branch. The Platform repository also
 packs the release and runs it with `npx` in the same job, and has a `self-host`
 job that builds `server/Dockerfile` and starts `compose.yaml`; downstream
