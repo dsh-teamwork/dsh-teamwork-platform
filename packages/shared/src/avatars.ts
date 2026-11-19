@@ -1,6 +1,10 @@
 /**
- * The preset avatars: one vector library the web console and the phone app
- * both draw, so a preset looks the same wherever a member meets it.
+ * The preset avatars: one vector library the web console, the phone app and
+ * the DSH plugin's panel all draw, so a preset looks the same wherever a
+ * member meets it. The plugin cannot import this package, so it keeps a
+ * byte-for-byte copy (`src/web/avatars.ts` in its repository), and the
+ * end-to-end suite fails when the two differ (`server/e2e/avatars_test.go`):
+ * change this file, then copy it there.
  *
  * An avatar is an abstract emblem of a role, not a pictogram of a tool or a
  * drawing of a person: two or three flat shapes (circles, arcs, rounded bars)
@@ -12,15 +16,14 @@
  * logo's corner, then each layer in order, filled and/or stroked in one of
  * three tones — paper, the avatar's plate (a cut-out) or its accent — with
  * round caps and joins. Shapes stay clear of the plate's rounded corners, so
- * no client needs a clip. Nothing here knows
- * the DOM or React Native.
+ * no client needs a clip. Nothing here knows the DOM or React Native.
  *
  * A preset stores the avatar's id (`PresetData.avatar`). The id is the stored
  * contract: an avatar may be redrawn freely, but an id once published is never
  * renamed or reused. The console's editor always stores one; a preset with
  * none (written before avatars, imported from a file, or a DSH's own) or with
  * one this client does not know gets one picked from its name, the one thing
- * every surface shows of it, so the console and the phone draw the same.
+ * every surface shows of it, so every client draws the same.
  */
 
 export type PresetAvatarTone = 'figure' | 'plate' | 'accent';

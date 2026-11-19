@@ -373,7 +373,10 @@ response they see against it, and the console's types are generated from it
 (`pnpm --filter @dsh-teamwork/web api:types` writes
 `src/lib/api.gen.ts`, and a test fails when it is stale). The plugin
 repository restates the snapshot shape in `../dsh-teamwork/src/client.ts`; a
-change to `GET /api/configs` changes it in the same working session.
+change to `GET /api/configs` changes it in the same working session. It also
+keeps a byte-for-byte copy of `packages/shared/src/avatars.ts` in
+`../dsh-teamwork/src/web/avatars.ts`, which the plugin's end-to-end suite
+holds equal (`server/e2e/avatars_test.go`).
 
 ### Teams and the model gateway
 
