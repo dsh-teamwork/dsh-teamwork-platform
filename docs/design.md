@@ -336,8 +336,9 @@ a person or a character, which at this size reads as clip art.
 - **Sign-in is split in two** (`apps/web/src/pages/sign-in.tsx`). From
   `lg` up, the left side is the navy plate: the logo, the home page's title in
   its serif and lede, and three flat bands of the plate's foreground for the
-  sea. The right side is the form on the page ground, with the way home, the
-  theme and the language at its top. The form lists every OAuth door the
+  sea. The right side is the form on the page ground, with the way home at
+  its top left and, at its top right, the language and the theme drawn as
+  the home page's header draws them (`HeaderLocaleMenu`). The form lists every OAuth door the
   session's `doors` reports as an outline button with its provider's
   mark (Google's in its own four colours), then a divider and the one email door (a code, or a
   password with a show toggle); a sent code turns the screen into *Check your
