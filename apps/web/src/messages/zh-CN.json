@@ -1015,6 +1015,8 @@
       "failed": "失败",
       "denied": "已拒绝",
       "thinking": "思考中…",
+      "turnFailed": "这一轮因出错而停止：{message}",
+      "noModel": "这个会话还没有可用的模型。请在输入框下方的模型菜单中选一个；如果菜单是空的，请团队管理员在团队的“模型”页面添加。",
       "allow": "允许",
       "deny": "拒绝",
       "promptPlaceholder": "给智能体发消息",

@@ -157,6 +157,21 @@ it('keeps file-only desktop messages visible in history', () => {
   ]);
 });
 
+it('shows a turn that failed, and says when it had no model', () => {
+  const end = (seq: number, reason: unknown) => eventsOf({ type: 'turn/end', seq, data: { turn: 1, reason } }, { items: [] });
+  expect(end(4, { kind: 'completed' })).toEqual([{ type: 'status', status: 'idle' }]);
+  expect(end(5, { kind: 'aborted', reason: { kind: 'user' } })).toEqual([{ type: 'status', status: 'idle' }]);
+  expect(end(6, { kind: 'error', error: { message: 'Out of credit', code: 'UNKNOWN' } })).toEqual([
+    { type: 'item', item: { kind: 'failed', id: 'seq-6', message: 'Out of credit', noModel: false } },
+    { type: 'status', status: 'idle' },
+  ]);
+  const message = 'agent "a1" has no provider/model: set AgentOptions.provider and AgentOptions.model or record a model selection';
+  expect(end(7, { kind: 'error', error: { message, code: 'UNKNOWN' } })[0]).toEqual({
+    type: 'item',
+    item: { kind: 'failed', id: 'seq-7', message, noModel: true },
+  });
+});
+
 describe('a page the agent published', () => {
   const call = { type: 'tool/call', seq: 1, data: { callId: 'c1', name: 'teamwork_page', arguments: '{"action":"create"}' } };
   const page = { teamId: 't1', pageId: 'p1', version: 2, title: 'Q4', kind: 'html' };

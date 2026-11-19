@@ -13,6 +13,7 @@ export type Row =
   | Extract<ConversationItem, { kind: 'user' }>
   | { kind: 'assistant'; id: string; text: string }
   | Extract<ConversationItem, { kind: 'page' }>
+  | Extract<ConversationItem, { kind: 'failed' }>
   | { kind: 'steps'; id: string; tools: Tool[]; status: ToolStatus };
 
 /** Tools whose work the member answers on a card instead of reading about. */

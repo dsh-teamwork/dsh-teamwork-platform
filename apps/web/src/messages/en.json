@@ -1015,6 +1015,8 @@
       "failed": "failed",
       "denied": "denied",
       "thinking": "Thinking…",
+      "turnFailed": "This turn stopped with an error: {message}",
+      "noModel": "This session has no model to answer with. Choose one in the model menu below the message box; if the menu is empty, a team admin adds one on the team's Models page.",
       "allow": "Allow",
       "deny": "Deny",
       "promptPlaceholder": "Message the agent",
