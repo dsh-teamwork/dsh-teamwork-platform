@@ -229,7 +229,10 @@ func TestMarkdownPagesAreRendered(t *testing.T) {
 func TestPagesHaveAHostOfTheirOwn(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		const content = "pages.test"
-		e := start(t, d, options{contentURL: "http://" + content})
+		// An edition that serves every subdomain of the content host's domain
+		// (as the hosted one serves cloud computers) still never gets it.
+		edition := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusTeapot) })
+		e := start(t, d, options{contentURL: "http://" + content, subdomains: map[string]http.Handler{"test": edition}})
 		admin := e.admin("admin@x.io")
 		teamID := newTeam(t, admin, "Pages")
 		base := "/api/teams/" + teamID + "/pages"
@@ -250,6 +253,9 @@ func TestPagesHaveAHostOfTheirOwn(t *testing.T) {
 		}
 		if res, body := fetch(t, e.url+"/robots.txt", content, nil); res.StatusCode != 200 || !strings.Contains(body, "Disallow: /") {
 			t.Fatalf("robots: %d %s", res.StatusCode, body)
+		}
+		if res, _ := fetch(t, e.url+"/", "computer.test", nil); res.StatusCode != http.StatusTeapot {
+			t.Fatalf("the edition's other subdomains: %d", res.StatusCode)
 		}
 	})
 }

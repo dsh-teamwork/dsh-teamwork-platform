@@ -46,6 +46,7 @@ type options struct {
 	gatewayClient *http.Client // deterministic protocol replay, never a paid upstream
 	artifacts     artifactstore.Store
 	contentURL    string // CONTENT_URL; APP_URL's own origin when empty
+	subdomains    map[string]http.Handler
 }
 
 func start(t *testing.T, d *testdb.DB, o options) *env {
@@ -74,6 +75,7 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 		Gateway: &gateway.Gateway{Team: teams, Client: network.Client()},
 	}
 	srv.Mailer = o.mailer
+	srv.Subdomains = o.subdomains
 	srv.Pages = &pages.Service{DB: d.Client, Store: teams.Artifacts, Team: teams, Sealer: authn.Sealer, ContentURL: contentURL}
 	if o.gatewayClient != nil {
 		srv.Gateway.Client = o.gatewayClient
