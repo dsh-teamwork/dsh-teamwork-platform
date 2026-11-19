@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
@@ -37,7 +38,8 @@ func (s *Service) UpdateConfig(ctx context.Context, userID, teamID, configID str
 
 // DeleteConfig removes a configuration no preset of the team still uses: a
 // model a preset references, or a plugin a preset pins, stays until those
-// presets change, as a provider stays while a model calls it.
+// presets change, as a provider stays while a model calls it. An owned model
+// goes the same way, and its edition hears ModelRemoved.
 func (s *Service) DeleteConfig(ctx context.Context, userID, teamID, configID string) error {
 	tx, err := s.DB.Tx(ctx)
 	if err != nil {
@@ -59,9 +61,6 @@ func (s *Service) deleteConfig(ctx context.Context, userID, teamID, configID str
 	target, err := s.DB.TeamConfig.Query().Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID)).Only(ctx)
 	if err != nil && !ent.IsNotFound(err) {
 		return err
-	}
-	if target != nil && target.RouteOwner != "" {
-		return wire.E(http.StatusForbidden, "config_owned")
 	}
 	if target != nil && target.Kind != teamconfig.KindPreset {
 		presets, err := s.DB.TeamConfig.Query().Where(teamconfig.TeamID(admin.TeamID), teamconfig.KindEQ(teamconfig.KindPreset)).All(ctx)
@@ -94,6 +93,12 @@ func (s *Service) deleteConfig(ctx context.Context, userID, teamID, configID str
 			}
 		}
 	}
-	_, err = s.DB.TeamConfig.Delete().Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID)).Exec(ctx)
-	return err
+	if _, err := s.DB.TeamConfig.Delete().Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID)).Exec(ctx); err != nil {
+		return err
+	}
+	// An owned model's route is its edition's: it forgets it, in this transaction.
+	if target != nil && target.RouteOwner != "" {
+		return s.changed(ctx, s.DB, edition.TeamChange{Kind: edition.ModelRemoved, TeamID: admin.TeamID, UserID: userID, ActorID: userID, ConfigID: configID})
+	}
+	return nil
 }

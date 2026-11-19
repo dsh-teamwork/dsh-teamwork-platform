@@ -153,7 +153,7 @@ type Host struct {
 	ResolveFundingUsage func(context.Context, string, string, string, string, string, Tokens) error
 	WithTeamTx          func(context.Context, string, func(SQLExecutor) error) error
 	// SubscribeTeams runs inside a team creation, a member join, a team's
-	// deletion or an account's (TeamChange). Handlers access only their own tables, perform no
+	// deletion, an account's, or an admin removing an owned model (TeamChange). Handlers access only their own tables, perform no
 	// network I/O, and return errors to roll back the change and theirs.
 	// Mount-only.
 	SubscribeTeams func(TeamChangeHandler) error
@@ -165,9 +165,14 @@ type Host struct {
 // AccountDeleted with no TeamID; an admin deleting a team emits TeamDeleted
 // alone, its members still in it until the transaction commits. A handler
 // that returns an error refuses the deletion, and one that hears
-// AccountDeleted removes what it keeps for that account.
+// AccountDeleted removes what it keeps for that account. An admin removing an
+// owned model (FundingHost.PublishModel) from a team emits ModelRemoved with
+// its ConfigID, after the configuration is gone; its owner forgets the route,
+// and publishing it again adds it back.
 type TeamChange struct {
 	Kind, TeamID, UserID, ActorID string
+	// ConfigID is the removed configuration, for ModelRemoved only.
+	ConfigID string
 }
 
 const (
@@ -175,6 +180,7 @@ const (
 	MemberJoined   = "joined"
 	TeamDeleted    = "deleted"
 	AccountDeleted = "account_deleted"
+	ModelRemoved   = "model_removed"
 )
 
 type TeamChangeHandler func(context.Context, SQLExecutor, TeamChange) error

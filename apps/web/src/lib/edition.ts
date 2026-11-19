@@ -72,7 +72,8 @@ export function replacing(routes: RouteObject[], added: RouteObject[]): RouteObj
  * Models an edition supplies and funds itself, which a team admin turns on
  * without a provider or a key: a section shown first on the team's models
  * page, for the admin. `reload` refreshes the page once the section has
- * published one. The open edition has none.
+ * published one; the section mounts again whenever the team's models change.
+ * The open edition has none.
  */
 export type EditionModels = ComponentType<{ teamId: string; reload: () => Promise<unknown> }>;
 

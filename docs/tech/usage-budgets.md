@@ -34,7 +34,11 @@ the model by: `PublishModel` takes an `edition.OwnedModel` and writes its
 `contextWindow`. Publishing the same configuration again with another name or
 other bounds rewrites it under a new version, so members' plugins sync the
 change; an unchanged publication is a no-op, and one into a team that no longer
-exists is `edition.ErrTeamGone`.
+exists is `edition.ErrTeamGone`. A team's admin removes an owned model as any
+other (`DELETE /api/teams/{teamId}/configs/{configId}`, refused while a preset
+calls it); its edition hears `edition.ModelRemoved` with the `ConfigID` in the
+same transaction and forgets the route, so publishing it again adds it back.
+Its name, bounds and rate stay the edition's to change.
 
 `server/internal/usage` owns normalization, immutable model rates, usage rows,
 policy/window reservations, settlement, recovery and notification work. The
