@@ -47,6 +47,7 @@ export function summaryOf(item: unknown): SessionSummary | null {
     updatedAt: new Date(typeof item.updatedAt === 'number' ? item.updatedAt : 0).toISOString(),
     directory: typeof item.cwd === 'string' ? directoryName(item.cwd) : '',
     pending: null,
+    marks: isObject(item.teamwork) ? { pinned: item.teamwork.pinned === true, archived: item.teamwork.archived === true } : null,
     // An older plugin reports no step, and an idle session's step is cleared.
     step:
       item.running === true && typeof step.count === 'number' && step.count > 0
@@ -57,12 +58,13 @@ export function summaryOf(item: unknown): SessionSummary | null {
 
 /**
  * `session/list`'s value as the app lists it: no blank sessions; those waiting
- * on the member first, then those running, then the rest, newest change first
- * within each.
+ * on the member first, then those pinned, then those running, then the rest,
+ * newest change first within each. Archived ones stay in it, marked: a screen
+ * hides them until asked.
  */
 export function sessionsOf(value: unknown, pending: ReadonlyMap<string, Pending> = new Map()): SessionSummary[] {
   const items = isObject(value) && Array.isArray(value.items) ? value.items : [];
-  const rank = (s: SessionSummary) => (s.pending ? 0 : s.status === 'running' ? 1 : 2);
+  const rank = (s: SessionSummary) => (s.pending ? 0 : s.marks?.pinned ? 1 : s.status === 'running' ? 2 : 3);
   return items
     .map(summaryOf)
     .filter((s): s is SessionSummary => s !== null)

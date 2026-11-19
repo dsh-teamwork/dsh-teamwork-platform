@@ -59,16 +59,31 @@ it is online and whether this browser is paired with it; one that is offline
 offers nothing until DSH runs on it again, and the page carries on by itself
 once it connects.
 
-Beside the message box, a new session offers the computer's folders, presets
-(a team preset included; one the computer cannot run yet says why) and models,
-before its first message; leave them as they are for the computer's defaults.
+A new session waits in the middle of the page, laid out as in DSH: above the
+message box, the computer's folders and presets (a team preset included; one
+the computer cannot run yet says why), and in its bottom row the model, before
+its first message; leave them as they are for the computer's defaults. Once
+the first message is sent, the session opens in place.
 The folder starts as this team's default workspace on that computer, which
 you set in DSH's Teamwork panel under **My teams**.
+Beside the paperclip, the permission menu sets what the agent may do on that
+computer: **Read only**, **Workspace write** or **Full access**, as in DSH;
+full access asks you to confirm first. On a Team DSH only the first two can be
+picked; anything wider is set on the machine itself.
 A model that can reason harder offers its efforts beside it. In a session that
 has started, the folder and preset stay as they are, and you can change its
 model and effort while it is not working, for that session alone. The
-paperclip beside them adds files (text, code, logs, CSV, JSON or PDF; up to
+paperclip at the left of the box adds files (text, code, logs, CSV, JSON or PDF; up to
 five, 20 MB each), sent with the message, or on their own.
+
+The open computer lists its latest sessions under it, pinned ones first, with
+**Show all** for the rest; the arrow at the end of its row folds them away, so
+the other computers stay in reach. The **⋯** at the end of a session pins it,
+renames it, copies its ID or archives it, as in DSH's own sidebar, and both
+show the change. Archived sessions are hidden until you open **Archived**; a
+running session can be archived once it stops. The menu needs a current
+DSH Teamwork plugin on that computer; with an older one it offers only the
+copy. In the phone app, press and hold a session for the same menu.
 
 The device count beside a computer opens its devices: every phone and browser
 paired with it, where **Remove** cuts any of them off at once, a lost phone

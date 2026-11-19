@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { browserCanJoin, relayFor } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
-import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, row, selected, SessionList, useComputer, useRelayError } from './dsh-session';
+import { ComputerRow, Conversation, DshColumns, PinGate, row, selected, SessionList, useComputer, useRelayError } from './dsh-session';
 import { useTeam } from './layout';
 
 /** The team's DSHs this member may reach and their sessions on the one open, beside the conversation. */
@@ -78,7 +78,7 @@ export function TeamDshPage() {
                   current={open && !sessionId}
                   onPick={onPick}
                 />
-                {open && <SessionList base={`${base}/${paired.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
+                {open && <SessionList computerId={paired.id} base={`${base}/${paired.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
           })}
@@ -94,10 +94,15 @@ export function TeamDshPage() {
         <Join joined={(id) => { void loadHosts(); navigate(`${base}/${id}`); }} />
       ) : locked ? (
         <PinGate computerId={computerId} state={pin} lockedHint={t('lockedHint')} />
-      ) : sessionId ? (
-        <Conversation key={sessionId} computerId={computerId} sessionId={sessionId} title={session?.title || tt('untitled')} />
       ) : (
-        <NewSession key={computerId} computerId={computerId} name={computer?.name ?? ''} started={(id) => { void reload(); navigate(`${base}/${computerId}/${id}`); }} />
+        <Conversation
+          key={computerId}
+          computerId={computerId}
+          sessionId={sessionId}
+          title={session?.title || tt('untitled')}
+          name={computer?.name ?? ''}
+          started={(id) => { void reload(); navigate(`${base}/${computerId}/${id}`); }}
+        />
       )}
     </DshColumns>
   );

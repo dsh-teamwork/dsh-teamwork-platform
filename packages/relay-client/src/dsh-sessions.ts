@@ -54,12 +54,16 @@ export type DshSessions = Pick<
   | 'createSession'
   | 'configuration'
   | 'selectModel'
+  | 'selectPermission'
   | 'uploadCapabilities'
   | 'startUpload'
   | 'uploadChunk'
   | 'finishUpload'
   | 'cancelUpload'
   | 'cancel'
+  | 'renameSession'
+  | 'pinSession'
+  | 'archiveSession'
   | 'prompt'
   | 'answer'
 > & {
@@ -93,6 +97,7 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
   'teamwork/file_type': 'file_type', 'teamwork/file_name': 'file_name', 'teamwork/file_too_large': 'file_too_large', 'teamwork/invalid_upload': 'invalid_upload',
   'teamwork/upload_expired': 'upload_expired', 'teamwork/upload_failed': 'upload_failed', 'session/attachment-invalid': 'upload_expired',
   'teamwork/locked': 'locked', 'teamwork/preset_changed': 'preset_changed', 'teamwork/model_unavailable': 'model_unavailable', 'teamwork/invalid_request': 'invalid_request',
+  'teamwork/permission_refused': 'permission_refused', 'session/title-invalid': 'invalid_request', 'workspace/session-active': 'busy', 'workspace/not-found': 'not_found',
   // A cloud computer's server: an answer to a question no page of that computer still holds.
   'teamwork/stale': 'stale',
 };
@@ -362,6 +367,10 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
       return configurationOf(sessions, models, configuration);
     },
 
+    async selectPermission(computerId, sessionId, preset) {
+      return z.object({ current: z.string() }).parse(await call(computerId, 'teamwork/selectPermission', { request: { sessionId, preset } })).current;
+    },
+
     async selectModel(computerId, sessionId, selection) {
       return z.object({ selected: ModelSelectionSchema }).parse(await call(computerId, 'teamwork/selectModel', { request: { sessionId, ...selection } })).selected;
     },
@@ -404,6 +413,23 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
     },
     async cancel(computerId, sessionId) {
       await call(computerId, 'session/cancel', { request: { sessionId } });
+    },
+
+    // Pins and archives change no session, so nothing of DSH's says so: the lists watching read themselves again.
+    async renameSession(computerId, sessionId, title) {
+      const renamed = z.object({ title: z.string() }).parse(await call(computerId, 'session/rename', { request: { sessionId, title } }));
+      sessionsChanged(computerId);
+      return renamed.title;
+    },
+
+    async pinSession(computerId, sessionId, pinned) {
+      await call(computerId, pinned ? 'workspace/pinSession' : 'workspace/unpinSession', { request: { sessionId } });
+      sessionsChanged(computerId);
+    },
+
+    async archiveSession(computerId, sessionId, archived) {
+      await call(computerId, archived ? 'workspace/archiveSession' : 'workspace/unarchiveSession', { request: { sessionId } });
+      sessionsChanged(computerId);
     },
 
     async prompt(computerId, sessionId, text, attachments) {

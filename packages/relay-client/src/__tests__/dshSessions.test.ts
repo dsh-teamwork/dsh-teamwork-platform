@@ -16,6 +16,9 @@ function fakeLink() {
       calls.push({ computerId, method, args });
       if (method === 'session/list') return { items: [{ sessionId: 's1', cwd: '/home/user/work', running: false, updatedAt: 1, projections: { values: { title: 'Fix it' } } }] };
       if (method === '$events/result') return {};
+      if (method === 'session/rename') return { title: 'Release notes', seq: 4 };
+      if (method === 'teamwork/selectPermission') return { current: 'read-only' };
+      if (method.startsWith('workspace/')) return {};
       throw new RelayError('configuration_unsupported');
     },
     async open(computerId, endpoint, _args, onBody) {
@@ -80,5 +83,32 @@ describe('a computer\'s sessions over any link', () => {
     expect(() => bridgeValue(403, { error: 'method_not_allowed' })).toThrow(new RelayError('configuration_unsupported'));
     expect(() => bridgeValue(502, null)).toThrow(new RelayError('unavailable'));
     expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/stale' } } })).toThrow(new RelayError('stale'));
+    expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'workspace/session-active' } } })).toThrow(new RelayError('busy'));
+  });
+
+  it('renames, pins and archives through DSH\'s own calls, and tells the lists watching to read themselves again', async () => {
+    const { link, calls } = fakeLink();
+    const sessions = createDshSessions(link, { locale: () => 'en', nextId: () => 'id' });
+    let changed = 0;
+    const unwatch = sessions.watchSessions('c', () => changed++);
+    await tick();
+    const before = changed;
+    expect(await sessions.renameSession('c', 's1', '  Release notes ')).toBe('Release notes');
+    await sessions.pinSession('c', 's1', true);
+    await sessions.pinSession('c', 's1', false);
+    await sessions.archiveSession('c', 's1', true);
+    await sessions.archiveSession('c', 's1', false);
+    expect(calls.slice(-5).map((c) => [c.method, c.args])).toEqual([
+      ['session/rename', { request: { sessionId: 's1', title: '  Release notes ' } }],
+      ['workspace/pinSession', { request: { sessionId: 's1' } }],
+      ['workspace/unpinSession', { request: { sessionId: 's1' } }],
+      ['workspace/archiveSession', { request: { sessionId: 's1' } }],
+      ['workspace/unarchiveSession', { request: { sessionId: 's1' } }],
+    ]);
+    expect(changed - before).toBe(5);
+    expect(await sessions.selectPermission('c', 's1', 'read-only')).toBe('read-only');
+    expect(calls.at(-1)).toMatchObject({ method: 'teamwork/selectPermission', args: { request: { sessionId: 's1', preset: 'read-only' } } });
+    expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/permission_refused' } } })).toThrow(new RelayError('permission_refused'));
+    unwatch();
   });
 });

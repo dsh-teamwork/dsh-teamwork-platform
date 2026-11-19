@@ -40,6 +40,18 @@ describe('reading DSH', () => {
     expect(sessionsOf({ items: [item(true)] })[0]!.step).toBeNull();
   });
 
+  it('puts pinned sessions after those waiting on the member and keeps archived ones, marked, for the screen to hide', () => {
+    const item = (sessionId: string, updatedAt: number, teamwork?: unknown, running = false) => ({ sessionId, updatedAt, running, cwd: '/a/app', projections: { values: { title: sessionId } }, teamwork });
+    const sessions = sessionsOf(
+      { items: [item('new', 5, { pinned: false, archived: false }), item('pinned', 1, { pinned: true, archived: false }), item('running', 2, { pinned: false, archived: false }, true), item('archived', 9, { pinned: false, archived: true }), item('waiting', 0)] },
+      new Map([['waiting', { kind: 'question', id: 'q', question: '?', options: [] }]]),
+    );
+    expect(sessions.map((s) => s.id)).toEqual(['waiting', 'pinned', 'running', 'archived', 'new']);
+    expect(sessions.find((s) => s.id === 'archived')!.marks).toEqual({ pinned: false, archived: true });
+    // An older plugin marks nothing, and the screens offer no action on it.
+    expect(sessions.find((s) => s.id === 'waiting')!.marks).toBeNull();
+  });
+
   it('shows what was said and done, and none of DSH’s own messages', () => {
     const state = snapshotOf(fixture.followSnapshot);
     expect(state.items.map((i) => i.kind)).toEqual(['user', 'tool', 'assistant']);

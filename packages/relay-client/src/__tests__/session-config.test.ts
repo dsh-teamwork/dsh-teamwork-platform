@@ -46,6 +46,13 @@ it('reads native model capabilities and the desktop-confirmed session selection'
   expect(value.modelFailures).toEqual(['Offline provider']);
 });
 
+it('reads the session\'s permission preset, and none from an older plugin', () => {
+  const catalog = { default: { provider: 'p', model: 'm' }, groups: [] };
+  const permissions = { current: 'read-only', defaultPreset: 'workspace-write', options: [{ id: 'danger-full-access', name: 'Full access', risky: true, allowed: false }] };
+  expect(configurationOf({ items: [] }, catalog, { presets: [], current: null, permissions }).permissions).toEqual(permissions);
+  expect(configurationOf({ items: [] }, catalog, { presets: [], current: null }).permissions).toBeNull();
+});
+
 it('starts a new session in the team’s default workspace, else in the folder of the latest session', () => {
   const startable = startableDirectories({ items: [{ cwd: '/a', updatedAt: 1 }, { cwd: '/b', updatedAt: 9 }] }, ['/srv/team']);
   expect(defaultDirectory(startable, { t: '/srv/team' }, 't')).toBe('/srv/team');

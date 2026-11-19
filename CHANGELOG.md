@@ -5,6 +5,30 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — Switch a session's permission preset from the console
+
+- **What:** The composer's foot has DSH's permission menu beside the paperclip (read only, workspace write, full access, or the presets that DSH composes). `teamwork/configuration` carries `permissions` (the options, the session's current one, the default; each `risky` and `allowed`), and `teamwork/selectPermission` switches an idle session through DSH's own `/permission` command. A risky preset is confirmed once; on a Team DSH it is shown and cannot be picked (`teamwork/permission_refused`). `@dsh-teamwork/relay-client` adds `selectPermission` and the `permission_refused` error.
+- **Why:** A session could be steered remotely but not told how far it may go, and DSH's own input bar has the choice beside the paperclip.
+- **Breaking:** None. A plugin that reports no `permissions` shows no menu.
+- **Upgrade:** Update the DSH Teamwork plugin on each computer for the menu.
+- **Refs:** `docs/tech/relay.md` ("The allow-list"), `apps/web/src/pages/team/dsh-session.tsx`.
+
+## 2026-11-19 — Rename, pin and archive a session from the console
+
+- **What:** Each session in My DSH and Team DSH has a menu that pins it, renames it, copies its ID and archives or restores it, through DSH's own `session/rename` and `workspace/pinSession`, `unpinSession`, `archiveSession` and `unarchiveSession`, which the plugin's allow-list now passes with exactly their fields. `session/list` items carry the plugin's `teamwork: { pinned, archived }`, read into `SessionSummary.marks`: pinned sessions list after those waiting on the member, archived ones hide under "Archived". `@dsh-teamwork/relay-client` adds `renameSession`, `pinSession` and `archiveSession`.
+- **Why:** The console could not tell its sessions apart ("Greeting" after "Greeting") or clear old ones away, and its list disagreed with DSH's sidebar, which hides archived sessions.
+- **Breaking:** None. A computer whose plugin predates the mark offers only the copy.
+- **Upgrade:** Update the DSH Teamwork plugin on each computer for the menu.
+- **Refs:** `docs/tech/relay.md` ("The allow-list"), `packages/relay-client/src/dsh-sessions.ts`, `apps/web/src/pages/team/dsh-session.tsx`.
+
+## 2026-11-19 — My DSH and Team DSH: a foldable session list, DSH's composer layout
+
+- **What:** The open computer lists its newest six sessions on one line each, with **Show all** for the rest, and folds them away from the arrow on its row. A new session waits in the middle of the column with its folder and preset above the message box; the box's bottom row holds the paperclip on the left and the model, effort and a round Send or Stop on the right, as DSH's own input bar does, and moves to the foot once the session starts. A new session and the session it becomes are one view, so the address taking its id no longer redraws the conversation. The column is wider (`max-w-4xl`).
+- **Why:** A long session list pushed the other computers out of reach, the new-session screen left most of the column empty, the composer's controls did not follow DSH's, and starting a session flashed its first message twice.
+- **Breaking:** None. `NewSession` is gone from `dsh-session.tsx`: `Conversation` takes `sessionId` "" for a new session, with `name` and `started`, and a caller keys it by computer.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/dsh-session.tsx`, `docs/tech/relay.md` ("My DSH in the web console").
+
 ## 2026-11-19 — An unknown /relay address answers JSON
 
 - **What:** A `/relay/` path no route claims answers `404 {"error":"not_found"}`, as an unknown `/api/` path does, instead of the console's page with 200. With Team DSH offline that includes `GET /relay/shared`, which the phone app read as JSON and failed on.

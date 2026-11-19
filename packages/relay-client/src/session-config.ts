@@ -17,6 +17,8 @@ export interface SessionOptions {
   teamId?: string;
   agentPreset?: string;
   model?: ModelSelection;
+  /** A permission preset other than DSH's default (`SessionConfiguration.permissions`), applied once the session exists. */
+  permission?: string;
 }
 const PresetSchema = z.object({
   id: z.string(),
@@ -52,6 +54,20 @@ const ConfigurationSchema = z.object({
   directories: z.string().array().default([]),
   /** Each team's default workspace on the computer, by team id, always one of `directories`. Older plugins send none. */
   teamDirectories: z.record(z.string(), z.string()).default({}),
+  /**
+   * DSH's permission presets (read-only, workspace write, full access…), the session's current one and the default
+   * (the plugin's `src/phone-permission.ts`). A `risky` one leaves the workspace's sandbox or skips approval, and a
+   * client confirms it once; one not `allowed` (risky, on a shared DSH) is shown and cannot be picked. Null where DSH
+   * composes no presets, or from an older plugin.
+   */
+  permissions: z
+    .object({
+      current: z.string().nullable(),
+      defaultPreset: z.string(),
+      options: z.array(z.object({ id: z.string(), name: z.string(), description: z.string().optional(), risky: z.boolean(), allowed: z.boolean() })),
+    })
+    .nullable()
+    .default(null),
   current: z
     .object({
       sessionId: z.string(),

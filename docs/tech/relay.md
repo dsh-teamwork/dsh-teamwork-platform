@@ -301,8 +301,10 @@ use, so DSH sees each phone as a separate client.
 - **The list:**
   - calls: `session/list`, `session/create`, `session/prompt`,
     `session/state`, `session/page`, `session/cancel`, `session/modelCatalog`,
-    `teamwork/configuration`, `teamwork/selectModel`,
-    `userQuestions/answer`, `$events/result`;
+    `teamwork/configuration`, `teamwork/selectModel`, `teamwork/selectPermission`,
+    `userQuestions/answer`, `$events/result`, and the list's actions:
+    `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
+    `workspace/archiveSession`, `workspace/unarchiveSession`;
   - streams: `session/follow`, `$events`.
 - **Tests:** `tests/bridge.test.ts` in the plugin holds the list, and drives
   the bridge with a method off it, a stream off it, and frames for a stream
@@ -324,6 +326,35 @@ admission and be idle; the desktop default is never saved. Native
 `session/prompt`, the plugin uses the same readiness checks as its local actions.
 A refusal is a native-shaped `result: { ok: false, error: { code } }`, with a
 bounded `teamwork/` code that the app localizes (the hosted edition's ADR 0015).
+
+**A session's list row** offers what DSH's own sidebar does that fits a phone
+or a browser: pin, rename, copy its id, archive. The plugin passes DSH's own
+`session/rename` (`{ sessionId, title }`) and `workspace/pinSession`,
+`unpinSession`, `archiveSession` and `unarchiveSession` (`{ sessionId }`) on
+with exactly those fields, so a client never sends `stopActivity`: a running
+session's archive is refused (`workspace/session-active`, read as `busy`), and
+the client offers it only while idle. `session/list` marks each item
+`teamwork: { pinned, archived }` from DSH's workspace registry, which the
+relay client reads into `SessionSummary.marks`: pinned sessions follow those
+waiting on the member, archived ones are hidden until asked for, and an older
+plugin's list, unmarked, offers only the copy. On a Team DSH each action is
+held to the member's own sessions like any call that names one, though the
+pin and archive land in that DSH's one registry, seen at its keyboard too.
+Forking a session and opening it in another app stay on the desktop.
+
+**A session's permission preset** (DSH's read-only, workspace write and full
+access, or whatever presets that DSH composes) is `teamwork/configuration`'s
+`permissions`: the offered presets, the session's current one (null before it
+starts) and the default. A preset is `risky` when it leaves the workspace's
+sandbox or skips approval, and the client confirms it once; it is `allowed`
+unless the DSH is shared and the preset risky, so a Team DSH's members pick
+read-only or workspace write and anything wider is set at its keyboard, which
+the client shows and does not offer. `teamwork/selectPermission`
+(`{ sessionId, preset }`, the preset one word) switches an idle session by
+running DSH's own `/permission` command in the plugin's process, as DSH's
+picker does; a preset not allowed is `teamwork/permission_refused`. The
+picker sits at the composer's foot beside the paperclip, as in DSH's input
+bar, and a new session's choice is applied once it is created.
 
 ## File attachments
 
@@ -513,7 +544,11 @@ the hosted edition, Cloud DSH.
   the number of devices paired with it, which opens its devices page. The list
   is read again every ten seconds, so a computer coming online or going away
   moves the page along by itself. The open one shows its sessions beneath it
-  once it is online and this browser is paired.
+  once it is online and this browser is paired, one line each, the newest six
+  until "Show all", pinned ones first and archived ones under "Archived"; the
+  arrow at the end of its row folds them away, so the computers below stay in
+  reach. Each session's menu pins, renames, copies its id and archives it
+  ("The allow-list" above).
 - **The third column** follows the computer's state, one at a time, and only
   the last offers a session: offline (open DSH on it, or remove the
   computer);
@@ -523,12 +558,20 @@ the hosted edition, Cloud DSH.
   until the computer answers over the encrypted channel with its sessions or
   its PIN state; the channel failed, with a retry; the computer's PIN,
   `owner`'s; and then a session, or a new one started by its first message.
-  Above it, the computer's name with its operating system and DSH version on
+  A new session and the session it becomes are one view (`Conversation`), so
+  the address taking the new id draws nothing twice. Above the states before
+  it, the computer's name with its operating system and DSH version on
   the left, and on the right whether it is online (green) or offline (grey,
   with when it was last seen); the list marks each computer the same way.
 - **The devices page** takes the third column: every pairing of the account to
   the computer, the phone app's and every browser's, with its name, status,
   last use and whether it pushes, this browser marked, each removable.
+- **The composer is laid out as DSH's own input bar**: a new session waits in
+  the middle of the column, its folder and preset above the box; the box's
+  bottom row holds the attachment control on the left and the model, its
+  effort and the round Send (Stop while it runs) on the right, and moves to
+  the foot once the session starts; a started session's folder and preset
+  sit under its title.
 - **A new session** offers the computer's folders, presets and models (with a
   model's reasoning efforts where it has them) before its first message, and a
   session's model and effort change while it is idle, through

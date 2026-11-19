@@ -1,15 +1,17 @@
 /**
  * What the console's pages for reaching a DSH share (Team DSH, team-dsh.tsx; My DSH, my-dsh.tsx): the three columns
- * beside the sidebar, a computer's sessions and PIN as its DSH reports them through the relay, the conversation, the
- * composer and the PIN gate. Everything here runs over `@/lib/relay`, end to end encrypted to the DSH, unless the page
+ * beside the sidebar, a computer's sessions and PIN as its DSH reports them through the relay, the conversation (a new
+ * session included, which keeps its view as it starts), the composer laid out as DSH's own input bar, and the PIN gate. Everything here runs over `@/lib/relay`, end to end encrypted to the DSH, unless the page
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { ChevronDown, FileText, Loader, MessagesSquare, Paperclip, Plus, Server, X, type LucideIcon } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { DropdownMenu } from 'radix-ui';
 import Markdown from 'react-markdown';
 import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
+import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import {
@@ -43,9 +45,9 @@ import { KIND_ICON, PageViewer } from '@/components/page-viewer';
 import { PresetAvatar } from '@/components/preset-avatar';
 import { ProviderMark } from '@/components/provider-mark';
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { relayFor } from '@/lib/relay';
 import { cn } from '@/lib/utils';
@@ -57,6 +59,7 @@ export type SessionClient = Pick<
   RelayClient,
   | 'listSessions' | 'watchSessions' | 'follow' | 'older' | 'createSession' | 'configuration' | 'selectModel'
   | 'uploadCapabilities' | 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'cancel' | 'prompt' | 'answer'
+  | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission'
   | 'watchPin' | 'unlock' | 'setPin'
 >;
 
@@ -68,7 +71,7 @@ function useSessionClient(): SessionClient {
   return useContext(SessionClientContext) ?? relayFor(me);
 }
 
-const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {
@@ -106,7 +109,7 @@ export function DshColumns({ title, list, children }: { title: string; list: (on
           {list(() => setMenu(false))}
         </nav>
       </aside>
-      <section className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col gap-6 px-4 pt-6 md:px-8 md:pt-8">{children}</section>
+      <section className="mx-auto flex w-full max-w-4xl min-w-0 flex-1 flex-col gap-5 px-4 pt-6 md:px-8 md:pt-6">{children}</section>
     </div>
   );
 }
@@ -151,38 +154,50 @@ export function useComputer(computerId: string) {
   return { sessions, pin, failed, reload, locked: computerId !== '' && pinPrompt(pin, false) !== null };
 }
 
-/** Beneath the open computer in the column: a new session, then the member's sessions on it, or a word that it is locked. */
-export function SessionList({ base, locked, sessions, sessionId, onPick }: { base: string; locked: boolean; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void }) {
+/** How many sessions the open computer lists before "Show all", so the computers below it stay in reach. */
+const SESSIONS_SHOWN = 6;
+
+/**
+ * Beneath the open computer in the column: a new session, then the member's sessions on it, one line each, pinned
+ * ones first and the newest `SESSIONS_SHOWN` until the rest are asked for, or a word that it is locked. Archived
+ * sessions are hidden until "Archived" opens them, as in DSH's sidebar; the open one stays listed either way. Each row
+ * has DSH's own actions that fit a browser (pin, rename, copy its id, archive), once the computer's plugin marks its
+ * list (`SessionSummary.marks`); an older one offers only the copy.
+ */
+export function SessionList({ computerId, base, locked, sessions, sessionId, onPick }: { computerId: string; base: string; locked: boolean; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void }) {
   const t = useTranslations('team.dsh');
-  const format = useFormatter();
+  const [all, setAll] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const list = sessions ?? [];
+  const live = list.filter((s) => !s.marks?.archived);
+  const archived = list.filter((s) => s.marks?.archived);
+  const shown = all ? live : live.filter((s, index) => index < SESSIONS_SHOWN || s.id === sessionId);
+  const shownArchived = showArchived ? archived : archived.filter((s) => s.id === sessionId);
+  const item = (s: SessionSummary) => <SessionRow key={s.id} computerId={computerId} base={base} session={s} open={s.id === sessionId} onPick={onPick} />;
   return (
     <div className="ml-4 flex flex-col gap-0.5 border-l pl-2">
       {locked ? (
         <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('locked')}</p>
       ) : (
         <>
-          <Link to={base} onClick={onPick} className={cn(row, 'gap-2 text-muted-foreground')}>
+          <Link to={base} onClick={onPick} className={cn(row, 'gap-2 text-muted-foreground', !sessionId && 'text-foreground')}>
             <Plus className="size-4" aria-hidden />
             {t('newSession')}
           </Link>
-          {sessions?.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noSessions')}</p>}
-          {sessions?.map((s) => (
-            <Link
-              key={s.id}
-              to={`${base}/${s.id}`}
-              onClick={onPick}
-              aria-current={s.id === sessionId ? 'page' : undefined}
-              className={cn(row, 'flex-col items-stretch gap-0.5', s.id === sessionId && cn(selected, 'font-medium'))}
-            >
-              <span className="flex items-center gap-2">
-                {s.pending && <Dot className="bg-signal" label={t('waiting')} />}
-                <span className="truncate">{s.title || t('untitled')}</span>
-              </span>
-              <span className="truncate text-xs font-normal text-muted-foreground">
-                {s.status === 'running' ? t('running') : format.relativeTime(new Date(s.updatedAt), new Date())} · {s.directory}
-              </span>
-            </Link>
-          ))}
+          {sessions !== null && live.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noSessions')}</p>}
+          {shown.map(item)}
+          {live.length > SESSIONS_SHOWN && (
+            <button type="button" onClick={() => setAll(!all)} className={cn(row, 'text-xs text-muted-foreground')}>
+              {all ? t('showFewer') : t('showAll', { count: live.length })}
+            </button>
+          )}
+          {archived.length > 0 && (
+            <button type="button" aria-expanded={showArchived} onClick={() => setShowArchived(!showArchived)} className={cn(row, 'gap-2 text-xs text-muted-foreground')}>
+              <Archive className="size-3.5" aria-hidden />
+              {t(showArchived ? 'hideArchived' : 'showArchived', { count: archived.length })}
+            </button>
+          )}
+          {shownArchived.map(item)}
         </>
       )}
     </div>
@@ -190,11 +205,134 @@ export function SessionList({ base, locked, sessions, sessionId, onPick }: { bas
 }
 
 /**
+ * One session in the column: its title, a pin when pinned, and when it last changed, or "Running"; the menu at its
+ * end, and in place of the title a box to rename it. Each action goes to the computer, whose list is read again.
+ */
+function SessionRow({ computerId, base, session: s, open, onPick }: { computerId: string; base: string; session: SessionSummary; open: boolean; onPick: () => void }) {
+  const t = useTranslations('team.dsh');
+  const tc = useTranslations('common');
+  const format = useFormatter();
+  const word = useRelayError();
+  const relay = useSessionClient();
+  const [renaming, setRenaming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const title = s.title || t('untitled');
+
+  async function act(run: () => Promise<unknown>) {
+    setBusy(true);
+    try {
+      await run();
+      return true;
+    } catch (error) {
+      toast.error(word(error));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function copyId() {
+    try {
+      await navigator.clipboard.writeText(s.id);
+      toast.success(tc('copied'));
+    } catch {
+      toast.error(tc('copyFailed'));
+    }
+  }
+
+  if (renaming) {
+    const save = async (value: string) => {
+      const next = value.trim();
+      if (!next || next === s.title) return setRenaming(false);
+      if (await act(() => relay.renameSession(computerId, s.id, next))) setRenaming(false);
+    };
+    return (
+      <form className="px-1 py-0.5" onSubmit={(event) => { event.preventDefault(); void save(new FormData(event.currentTarget).get('title') as string); }}>
+        <Input
+          name="title"
+          aria-label={t('actions.title')}
+          defaultValue={s.title}
+          autoFocus
+          maxLength={500}
+          disabled={busy}
+          className="h-8 text-sm"
+          onFocus={(event) => event.currentTarget.select()}
+          onKeyDown={(event) => { if (event.key === 'Escape') setRenaming(false); }}
+          onBlur={(event) => void save(event.currentTarget.value)}
+        />
+      </form>
+    );
+  }
+
+  const item = 'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm outline-none data-[disabled]:text-muted-foreground data-[highlighted]:bg-accent [&_svg]:size-4 [&_svg]:text-muted-foreground';
+  return (
+    <div className={cn(row, 'group gap-2', open && cn(selected, 'font-medium'), s.marks?.archived && 'text-muted-foreground')}>
+      <Link
+        to={`${base}/${s.id}`}
+        onClick={onPick}
+        title={s.directory}
+        aria-current={open ? 'page' : undefined}
+        className="flex min-w-0 flex-1 items-center gap-2 after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+      >
+        {s.pending && <Dot className="bg-signal" label={t('waiting')} />}
+        {s.marks?.pinned && <Pin className="size-3.5 shrink-0 text-muted-foreground" aria-label={t('actions.pinned')} />}
+        <span className="min-w-0 flex-1 truncate">{title}</span>
+        <span className="shrink-0 text-xs font-normal text-muted-foreground">
+          {s.status === 'running' ? t('running') : format.relativeTime(new Date(s.updatedAt), new Date())}
+        </span>
+      </Link>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger
+          disabled={busy}
+          aria-label={t('actions.menu', { title })}
+          title={t('actions.menu', { title })}
+          className="relative -mr-1 flex shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-background md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 md:data-[state=open]:opacity-100"
+        >
+          <Ellipsis className="size-4" aria-hidden />
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content align="start" sideOffset={4} className="z-50 min-w-44 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+            {s.marks && !s.marks.archived && (
+              <DropdownMenu.Item className={item} onSelect={() => void act(() => relay.pinSession(computerId, s.id, !s.marks!.pinned))}>
+                {s.marks.pinned ? <PinOff aria-hidden /> : <Pin aria-hidden />}
+                {t(s.marks.pinned ? 'actions.unpin' : 'actions.pin')}
+              </DropdownMenu.Item>
+            )}
+            {s.marks && (
+              <DropdownMenu.Item className={item} onSelect={() => setRenaming(true)}>
+                <PencilLine aria-hidden />
+                {t('actions.rename')}
+              </DropdownMenu.Item>
+            )}
+            <DropdownMenu.Item className={item} onSelect={() => void copyId()}>
+              <Copy aria-hidden />
+              {t('actions.copyId')}
+            </DropdownMenu.Item>
+            {s.marks && (
+              <>
+                <DropdownMenu.Separator className="-mx-1 my-1 h-px bg-border" />
+                {/* DSH refuses to archive a running session, as its own sidebar asks first: stop it, then archive it. */}
+                <DropdownMenu.Item className={item} disabled={s.status === 'running' && !s.marks.archived}
+                  onSelect={() => void act(() => relay.archiveSession(computerId, s.id, !s.marks!.archived))}>
+                  {s.marks.archived ? <ArchiveRestore aria-hidden /> : <Archive aria-hidden />}
+                  {t(s.marks.archived ? 'actions.unarchive' : 'actions.archive')}
+                </DropdownMenu.Item>
+              </>
+            )}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+    </div>
+  );
+}
+
+/**
  * A computer's row in the column: its name, and under it whether it is online (`online`, when known; green, or grey and
  * dimmed when offline) and `note`, with `extra` at its end. The row's link covers all of it, so `extra` may hold a link
- * of its own (one link cannot hold another).
+ * of its own (one link cannot hold another). `onToggle`, on the open computer, folds its sessions away and back
+ * (`expanded`), so the computers below it can be reached without scrolling past them.
  */
-export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra }: { icon?: LucideIcon; name: string; note?: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode }) {
+export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra, expanded, onToggle }: { icon?: LucideIcon; name: string; note?: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode; expanded?: boolean; onToggle?: () => void }) {
+  const t = useTranslations('team.dsh');
   const inner = (
     <>
       <Icon className={cn('size-4 shrink-0', online === false && 'text-muted-foreground')} aria-hidden />
@@ -219,6 +357,18 @@ export function ComputerRow({ icon: Icon = Server, name, note, online, to, open,
         {inner}
       </Link>
       {extra && <span className="relative flex shrink-0">{extra}</span>}
+      {onToggle && (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-label={t(expanded ? 'collapse' : 'expand', { name })}
+          title={t(expanded ? 'collapse' : 'expand', { name })}
+          className="relative -mr-1 flex shrink-0 rounded-md p-1 text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <ChevronRight className={cn('size-4 transition-transform', expanded && 'rotate-90')} aria-hidden />
+        </button>
+      )}
     </div>
   ) : (
     <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}{extra}</div>
@@ -236,124 +386,373 @@ export function Presence({ online, label }: { online: boolean; label?: string })
   );
 }
 
-/** A new session looks like one with nothing in it yet: sending the first message starts it, then opens it. */
-export function NewSession({ computerId, name, started }: { computerId: string; name: string; started: (sessionId: string) => void }) {
+/**
+ * A session, or with `sessionId` "" a new one, which looks like one with nothing in it yet: its first message starts
+ * it, and `started` hands the page its id to put in the address. The session started here keeps its view when the
+ * address catches up with it, so its first message is not drawn a second time; any other change of `sessionId`
+ * (another session, or a new one again) opens a fresh view.
+ */
+export function Conversation({ computerId, sessionId, title, name, started }: { computerId: string; sessionId: string; title: string; name: string; started: (sessionId: string) => void }) {
+  const [born, setBorn] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
+  const [last, setLast] = useState(sessionId);
+  if (sessionId !== last) {
+    setLast(sessionId);
+    if (sessionId !== born) {
+      setBorn(null);
+      setRound(round + 1);
+    }
+  }
+  const fresh = sessionId === '' || sessionId === born;
+  return (
+    <SessionView
+      key={fresh ? `new:${round}` : sessionId}
+      computerId={computerId}
+      sessionId={sessionId}
+      title={title}
+      name={name}
+      started={(id) => {
+        setBorn(id);
+        started(id);
+      }}
+    />
+  );
+}
+
+/** One session's view: its conversation, what it waits on the member for, and the composer, centred until it starts. */
+function SessionView({ computerId, sessionId, title, name, started }: { computerId: string; sessionId: string; title: string; name: string; started: (sessionId: string) => void }) {
   const { team } = useTeam();
   const t = useTranslations('team.dsh');
   const word = useRelayError();
   const relay = useSessionClient();
-  const [sent, setSent] = useState('');
-  const [failed, setFailed] = useState<string | null>(null);
+  // The session's id, from the address, or once its first message started it.
+  const [id, setId] = useState(sessionId);
+  const [state, setState] = useState<SessionState>(EMPTY_SESSION);
   const [options, setOptions] = useState<SessionOptions>({});
+  const [config, setConfig] = useConfiguration(computerId, id);
   const files = useFiles(computerId);
+  // The first message, shown until the session's own copy of it arrives.
+  const [sent, setSent] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [openPage, setOpenPage] = useState<PublishedPage | null>(null);
 
-  async function start(text: string) {
-    setSent(text || files.files.map((file) => file.name).join(', '));
+  useEffect(() => (id ? relay.follow(computerId, id, (event) => setState((s) => applySessionEvent(s, event))) : undefined), [relay, computerId, id]);
+
+  const rows = rowsOf(state.items);
+  const running = state.status === 'running';
+  const hero = !id && !sent;
+
+  async function act(run: () => Promise<void>) {
+    setBusy(true);
     setFailed(null);
     try {
-      // Files need their session before their bytes move; a retry after a failed upload reuses it.
-      const created = files.files.length
-        ? await files.target({ cwd: options.cwd, agentPreset: options.agentPreset, teamId: team.id })
-        : await relay.createSession(computerId, { cwd: options.cwd, agentPreset: options.agentPreset, teamId: team.id });
-      if (options.model) await relay.selectModel(computerId, created.id, options.model);
-      if (files.files.length) await files.send(created.id, text);
-      else await relay.prompt(computerId, created.id, text);
-      started(created.id);
+      await run();
       return true;
     } catch (error) {
       setFailed(word(error));
-      setSent('');
       return false;
+    } finally {
+      setBusy(false);
     }
   }
 
+  async function start(text: string) {
+    setSent(text || files.files.map((file) => file.name).join(', '));
+    const ok = await act(async () => {
+      const chosen = { cwd: options.cwd, agentPreset: options.agentPreset, teamId: team.id };
+      // Files need their session before their bytes move; a retry after a failed upload reuses it.
+      const created = files.files.length ? await files.target(chosen) : await relay.createSession(computerId, chosen);
+      if (options.model) await relay.selectModel(computerId, created.id, options.model);
+      if (options.permission) await relay.selectPermission(computerId, created.id, options.permission);
+      // What was chosen stands for the session until the computer's own read of it arrives.
+      setConfig((read) => read && {
+        ...read,
+        permissions: read.permissions && { ...read.permissions, current: options.permission ?? read.permissions.defaultPreset },
+        current: {
+          sessionId: created.id,
+          cwd: options.cwd ?? defaultDirectory(read.directories, read.teamDirectories, team.id) ?? '',
+          agentPreset: options.agentPreset ?? read.presets.find((item) => item.isDefault)?.id ?? null,
+          model: options.model ?? null,
+          started: true,
+          running: true,
+        },
+      });
+      // The session exists from here: it is followed and in the address, and a failed send is retried in it.
+      setId(created.id);
+      started(created.id);
+      if (files.files.length) await files.send(created.id, text);
+      else await relay.prompt(computerId, created.id, text);
+    });
+    if (!ok) setSent('');
+    return ok;
+  }
+
+  const current = id ? config?.current : null;
+  const preset = current ? config?.presets.find((item) => item.id === current.agentPreset) : undefined;
+
   return (
     <>
-      {sent ? (
-        <ol className="flex flex-col gap-4 text-sm">
-          <li className="ml-auto max-w-[85%] rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{sent}</li>
-          <li role="status" className="flex items-center gap-2 text-muted-foreground">
-            <Loader className="size-4 animate-spin" aria-hidden />
-            {t('thinking')}
-          </li>
-        </ol>
-      ) : (
-        <section className="m-auto flex max-w-lg flex-col items-center gap-3 py-10 text-center">
-          <Server className="size-8 text-muted-foreground" aria-hidden />
-          <h2 className="text-xl font-semibold tracking-tight">{t('newTitle')}</h2>
-          <p className="text-sm text-muted-foreground">{t('newHint', { name })}</p>
-        </section>
+      {!hero && (
+        <header className="flex flex-col gap-1">
+          <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{id ? title : t('newTitle')}</h2>
+          {current && (
+            <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground" title={current.cwd}>
+              <Folder className="size-3.5 shrink-0" aria-hidden />
+              <span className="truncate">{directoryName(current.cwd) || current.cwd}</span>
+              <span aria-hidden>·</span>
+              {preset && <PresetAvatar avatar={preset.avatar} name={preset.name} className="size-4" />}
+              <span className="truncate">{preset?.name ?? current.agentPreset ?? t('settings.noPreset')}</span>
+            </p>
+          )}
+        </header>
       )}
-      {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
-      <Composer busy={sent !== ''} placeholder={t('firstPlaceholder')} send={start} files={files}>
-        <SessionSettings computerId={computerId} disabled={sent !== ''} value={options} onChange={(next) => {
-          // Another folder or preset is another session: files sent to the old one are sent again.
-          if (next.cwd !== options.cwd || next.agentPreset !== options.agentPreset) files.retarget();
-          setOptions(next);
-        }} />
-      </Composer>
+      {!hero && (
+        <div className="flex flex-col gap-4 text-sm">
+          {state.earlier !== null && (
+            <Button type="button" variant="ghost" size="sm" className="self-center" disabled={busy} onClick={() => void act(() => relay.older(computerId, id))}>
+              {t('earlier')}
+            </Button>
+          )}
+          {rows.length === 0 && sent && (
+            <p className="ml-auto max-w-[85%] rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{sent}</p>
+          )}
+          {rows.map((row) =>
+            row.kind === 'user' ? (
+              <div key={row.id} className="ml-auto flex max-w-[85%] flex-col items-end gap-1.5">
+                {row.attachments?.length ? (
+                  <ul className="flex flex-wrap justify-end gap-2">
+                    {row.attachments.map((file) => (
+                      <li key={file.attachmentId} className="flex max-w-60 items-center gap-2 rounded-md border px-2 py-1 text-xs">
+                        <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="truncate" title={file.name}>{file.name}</span>
+                        <span className="shrink-0 text-muted-foreground">{fileSize(file.bytes)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {row.text && <p className="rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>}
+              </div>
+            ) : row.kind === 'page' ? (
+              <PageCard key={row.id} page={row.page} onOpen={() => setOpenPage(row.page)} />
+            ) : row.kind === 'assistant' ? (
+              <div key={row.id} className="flex flex-col gap-2 leading-6 [&_code]:font-mono [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5">
+                <Markdown remarkPlugins={[remarkGfm]} skipHtml>{row.text}</Markdown>
+              </div>
+            ) : row.kind === 'failed' ? (
+              <p key={row.id} role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-destructive [overflow-wrap:anywhere]">
+                {row.noModel ? t('noModel') : t('turnFailed', { message: row.message })}
+              </p>
+            ) : (
+              <details key={row.id} className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
+                <summary>{t('steps', { count: row.tools.length })}{row.status === 'running' ? ` · ${t('running')}` : row.status === 'done' ? '' : ` · ${t(row.status)}`}</summary>
+                <ul className="mt-2 flex flex-col gap-1">
+                  {row.tools.map((tool) => <li key={tool.id} className="truncate font-mono">{tool.name} {tool.summary}</li>)}
+                </ul>
+              </details>
+            ),
+          )}
+          {(isThinking(rows, running) || (rows.length === 0 && sent && !failed)) && (
+            <p role="status" className="flex items-center gap-2 text-muted-foreground">
+              <Loader className="size-4 animate-spin" aria-hidden />
+              {t('thinking')}
+            </p>
+          )}
+          {state.pending?.kind === 'question' && (
+            <div className="flex flex-col gap-2 border-l-[3px] border-signal pl-3">
+              <p className="font-medium">{state.pending.question}</p>
+              <div className="flex flex-wrap gap-2">
+                {state.pending.options.map((option) => (
+                  <Button key={option.id} size="sm" variant="outline" disabled={busy} onClick={() => void act(() => relay.answer(computerId, id, state.pending!.id, { kind: 'question', optionId: option.id }))}>
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          {state.pending?.kind === 'approval' && (
+            <div className="flex flex-col gap-2 border-l-[3px] border-signal pl-3">
+              <p className="font-medium">{state.pending.title}</p>
+              {state.pending.detail && <pre className="overflow-x-auto text-xs whitespace-pre-wrap">{state.pending.detail}</pre>}
+              <div className="flex gap-2">
+                <Button size="sm" disabled={busy} onClick={() => void act(() => relay.answer(computerId, id, state.pending!.id, { kind: 'approval', approve: true }))}>{t('allow')}</Button>
+                <Button size="sm" variant="outline" disabled={busy} onClick={() => void act(() => relay.answer(computerId, id, state.pending!.id, { kind: 'approval', approve: false }))}>{t('deny')}</Button>
+              </div>
+            </div>
+          )}
+          {state.closed && <p role="alert" className="text-destructive">{word(new RelayError(state.closed))}</p>}
+          {openPage && (
+            // Beside the conversation on a wide screen, over it on a narrow one (docs/tech/pages.md, "The clients").
+            <aside className="fixed inset-y-0 right-0 z-40 flex w-full flex-col overflow-y-auto border-l bg-background p-4 shadow-xl xl:w-[min(60rem,55vw)]">
+              <PageViewer key={`${openPage.pageId}-${openPage.version}`} teamId={openPage.teamId} pageId={openPage.pageId} version={openPage.version} onClose={() => setOpenPage(null)} />
+            </aside>
+          )}
+        </div>
+      )}
+      {/* One composer in both places, so what is typed survives the move from the centre to the foot. */}
+      <div className={cn('flex flex-col gap-3', hero ? 'my-auto pb-[10vh]' : 'sticky bottom-0 mt-auto bg-background pt-2 pb-4')}>
+        {hero && (
+          <section className="flex flex-col items-center gap-2 pb-2 text-center">
+            <Server className="size-8 text-muted-foreground" aria-hidden />
+            <h2 className="text-2xl font-semibold tracking-tight">{t('newTitle')}</h2>
+            <p className="text-sm text-muted-foreground">{t('newHint', { name })}</p>
+          </section>
+        )}
+        {!id && config && (
+          <StartSettings config={config} disabled={sent !== ''} value={options} onChange={(next) => {
+            // Another folder or preset is another session: files sent to the old one are sent again.
+            if (next.cwd !== options.cwd || next.agentPreset !== options.agentPreset) files.retarget();
+            setOptions(next);
+          }} />
+        )}
+        {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
+        <Composer
+          busy={busy || running || !!state.pending || (!id && sent !== '')}
+          rows={hero ? 3 : 2}
+          placeholder={t(id ? 'promptPlaceholder' : 'firstPlaceholder')}
+          files={files}
+          stop={running ? { run: () => void act(() => relay.cancel(computerId, id)), disabled: busy } : undefined}
+          tools={config && (
+            <PermissionSettings
+              computerId={computerId}
+              sessionId={id}
+              config={config}
+              setConfig={setConfig}
+              disabled={busy || running || !!state.pending || (!id && sent !== '')}
+              value={options.permission}
+              onChange={(preset) => setOptions({ ...options, permission: preset })}
+            />
+          )}
+          send={(message) => {
+            if (!id) return start(message);
+            return act(async () => {
+              if (files.files.length) await files.send(id, message);
+              else await relay.prompt(computerId, id, message);
+            });
+          }}
+        >
+          {config && (
+            <ModelSettings
+              computerId={computerId}
+              sessionId={id}
+              config={config}
+              setConfig={setConfig}
+              disabled={busy || running || !!state.pending || (!id && sent !== '')}
+              value={options}
+              onChange={setOptions}
+            />
+          )}
+        </Composer>
+      </div>
     </>
   );
 }
 
-/** The message box at a conversation's foot: Enter sends, Shift+Enter breaks the line; `send` says whether to clear it. */
 const modelKey = (model: ModelSelection | null | undefined) => (model ? JSON.stringify([model.provider, model.model]) : '');
 
+/** A chip on the composer: a `Select` without its outline, as DSH draws the controls in its input bar. */
+const chip = 'h-8 max-w-56 gap-1.5 border-transparent bg-transparent px-2 text-xs shadow-none hover:bg-accent';
+
 /**
- * The workspace, preset and model a session runs with, as its computer reports them (`configuration`), beside the
- * composer. A new session's are chosen before its first message (`value`, given back through `onChange`); an existing
- * session shows its folder and preset, which stay as they are, and changes its model while it is idle, for that session
- * alone (`teamwork/selectModel`); whether it is idle is the conversation's, which follows it, not the read's. A computer whose plugin reports none shows nothing, and its defaults hold.
+ * A session's choices as its computer reports them (`teamwork/configuration`): a new session's read (`sessionId` ""),
+ * or that session's, which adds its `current`. The previous read stays while the next one comes, so the controls do
+ * not blink when a new session gets its id. A computer whose plugin reports none leaves it null, and its defaults hold.
  */
-function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange }: {
-  computerId: string;
-  sessionId?: string;
-  disabled: boolean;
-  value?: SessionOptions;
-  onChange?: (value: SessionOptions) => void;
-}) {
-  const { team } = useTeam();
-  const t = useTranslations('team.dsh.settings');
-  const word = useRelayError();
+function useConfiguration(computerId: string, sessionId: string) {
   const relay = useSessionClient();
   const [data, setData] = useState<SessionConfiguration | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [failed, setFailed] = useState<string | null>(null);
-
   useEffect(() => {
     let live = true;
-    setData(null);
-    relay.configuration(computerId, sessionId).then(
+    relay.configuration(computerId, sessionId || undefined).then(
       (read) => { if (live) setData(read); },
       // An older plugin, or a computer that went away: the defaults hold, as before there were choices.
       () => {},
     );
     return () => { live = false; };
   }, [relay, computerId, sessionId]);
+  return [data, setData] as const;
+}
 
-  if (!data) return null;
-  const current = sessionId ? data.current : null;
-  const models = [
-    ...(sessionId ? [] : [{ value: '', label: t('followPreset') }]),
-    ...data.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: `${model.name} · ${model.providerName}`, icon: <ProviderMark hints={[model.id, model.name, model.providerName, model.provider]} name={model.name} /> })),
+/**
+ * Above a new session's composer, as DSH places them: the folder it starts in (this team's default workspace on the
+ * computer unless another is picked) and its preset, both fixed once it starts.
+ */
+function StartSettings({ config, disabled, value, onChange }: { config: SessionConfiguration; disabled: boolean; value: SessionOptions; onChange: (value: SessionOptions) => void }) {
+  const { team } = useTeam();
+  const t = useTranslations('team.dsh.settings');
+  const word = useRelayError();
+  const cwd = value.cwd ?? defaultDirectory(config.directories, config.teamDirectories, team.id) ?? '';
+  const fallback = config.presets.find((item) => item.isDefault);
+  const presets = [
+    { value: '', label: [t('desktopDefault'), fallback?.name].filter(Boolean).join(' · '), icon: fallback && <PresetAvatar avatar={fallback.avatar} name={fallback.name} className="size-5" /> },
+    // A preset its computer cannot run yet (a missing tool or plugin) is shown, with why, and cannot be chosen.
+    ...config.presets.map((item) => ({
+      value: item.id,
+      label: [item.name, item.teamName, item.blocked && word(new RelayError(item.blocked as RelayErrorCode))].filter(Boolean).join(' · '),
+      disabled: !!item.blocked,
+      icon: <PresetAvatar avatar={item.avatar} name={item.name} className="size-5" />,
+    })),
   ];
-  const chosenModel = sessionId ? current?.model : value.model;
-  // How hard the chosen model reasons, where it says it can be told: its own default, or one of its efforts.
-  const reasoning = data.models.find((model) => model.provider === chosenModel?.provider && model.id === chosenModel?.model)?.reasoning;
-  const efforts = reasoning ? [{ value: '', label: t('effortDefault') }, ...reasoning.efforts.map((effort) => ({ value: effort.id, label: effort.name }))] : [];
-  const withEffort = (effort: string): ModelSelection => ({ provider: chosenModel!.provider, model: chosenModel!.model, ...(effort ? { reasoningEffort: effort } : {}) });
-  const toModel = (key: string): ModelSelection | undefined => {
-    if (!key) return undefined;
-    const [provider, model] = JSON.parse(key) as [string, string];
-    return { provider, model };
-  };
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {config.directories.length > 0 && (
+        <Select label={t('workspace')} value={cwd} disabled={disabled} className={cn(chip, 'font-medium')}
+          options={config.directories.map((item) => ({ value: item.path, label: item.name, icon: <Folder className="size-4 text-muted-foreground" aria-hidden /> }))}
+          change={(path) => onChange({ ...value, cwd: path })} />
+      )}
+      <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className={cn(chip, 'font-medium')}
+        change={(id) => onChange({ ...value, agentPreset: id || undefined, model: undefined })} />
+    </div>
+  );
+}
 
-  async function changeModel(next: ModelSelection) {
+/** DSH's own permission presets, worded as its picker words them; any other keeps the name DSH gives it. */
+const PRESET_WORDS: Record<string, string> = { 'read-only': 'readOnly', 'workspace-write': 'workspaceWrite', 'danger-full-access': 'fullAccess' };
+
+/**
+ * The session's permission preset, at the composer's foot beside the paperclip, as in DSH's own input bar. A new
+ * session's is chosen before its first message (`value`); an existing session switches while idle. A risky preset
+ * (one that leaves the workspace's sandbox or skips approval) is confirmed once; one its computer keeps to its own
+ * keyboard (a Team DSH's risky ones) is shown and cannot be picked.
+ */
+function PermissionSettings({ computerId, sessionId, config, setConfig, disabled, value, onChange }: {
+  computerId: string;
+  sessionId: string;
+  config: SessionConfiguration;
+  setConfig: (update: (read: SessionConfiguration | null) => SessionConfiguration | null) => void;
+  disabled: boolean;
+  value: string | undefined;
+  onChange: (preset: string) => void;
+}) {
+  const t = useTranslations('team.dsh.permission');
+  const word = useRelayError();
+  const relay = useSessionClient();
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  const permissions = config.permissions;
+  if (!permissions || (sessionId && permissions.current === null)) return null;
+  const current = sessionId ? permissions.current! : (value ?? permissions.defaultPreset);
+  const nameOf = (option: { id: string; name: string }) => (PRESET_WORDS[option.id] ? t(`preset.${PRESET_WORDS[option.id]}`) : option.name);
+  const icon = (risky: boolean) => { const Icon = risky ? ShieldAlert : ShieldCheck; return <Icon className="size-4 text-muted-foreground" aria-hidden />; };
+  const options = permissions.options.map((option) => ({
+    value: option.id,
+    label: option.allowed ? nameOf(option) : t('keyboardOnly', { name: nameOf(option) }),
+    disabled: !option.allowed,
+    icon: icon(option.risky),
+  }));
+  // Settings that match no preset (set by hand on the desktop) show as such, and are left by picking one.
+  if (!options.some((option) => option.value === current)) options.unshift({ value: current, label: t('custom'), disabled: true, icon: icon(true) });
+
+  async function choose(id: string) {
+    const option = permissions!.options.find((item) => item.id === id);
+    if (!option || id === current) return;
+    if (option.risky && !confirm(t('confirm', { name: nameOf(option) }))) return;
+    if (!sessionId) return onChange(id);
     setSaving(true);
     setFailed(null);
     try {
-      const selected = await relay.selectModel(computerId, sessionId!, next);
-      setData((read) => (read?.current ? { ...read, current: { ...read.current, model: selected } } : read));
+      const now = await relay.selectPermission(computerId, sessionId, id);
+      setConfig((read) => (read?.permissions ? { ...read, permissions: { ...read.permissions, current: now } } : read));
     } catch (error) {
       setFailed(word(error));
     } finally {
@@ -361,53 +760,73 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
     }
   }
 
-  if (sessionId) {
-    if (!current) return null;
-    const preset = data.presets.find((item) => item.id === current.agentPreset);
-    return (
-      <>
-        {preset && <PresetAvatar avatar={preset.avatar} name={preset.name} className="size-6" />}
-        <span className="truncate text-xs text-muted-foreground" title={current.cwd}>
-          {[directoryName(current.cwd) || current.cwd, preset?.name ?? current.agentPreset ?? t('noPreset')].join(' · ')}
-        </span>
-        <Select label={t('model')} value={modelKey(current.model)} options={models} disabled={disabled || saving}
-          change={(key) => { const next = toModel(key); if (next) void changeModel(next); }} className="h-8 max-w-56 text-xs" />
-        {reasoning && (
-          <Select label={t('effort')} value={current.model?.reasoningEffort ?? ''} options={efforts} disabled={disabled || saving}
-            change={(effort) => void changeModel(withEffort(effort))} className="h-8 max-w-40 text-xs" />
-        )}
-        {failed && <span role="alert" className="text-xs text-destructive">{failed}</span>}
-      </>
-    );
-  }
-
-  const presets = [
-    { value: '', label: [t('desktopDefault'), data.presets.find((item) => item.isDefault)?.name].filter(Boolean).join(' · ') },
-    // A preset its computer cannot run yet (a missing tool or plugin) is shown, with why, and cannot be chosen.
-    ...data.presets.map((item) => ({
-      value: item.id,
-      label: [item.name, item.teamName, item.blocked && word(new RelayError(item.blocked as RelayErrorCode))].filter(Boolean).join(' · '),
-      disabled: !!item.blocked,
-    })),
-  ];
-  // A new session opens in this team's default workspace on the computer unless another folder is picked.
-  const cwd = value.cwd ?? defaultDirectory(data.directories, data.teamDirectories, team.id) ?? '';
-  const chosenPreset = data.presets.find((item) => (value.agentPreset ? item.id === value.agentPreset : item.isDefault));
   return (
     <>
-      {data.directories.length > 0 && (
-        <Select label={t('workspace')} value={cwd} disabled={disabled} className="h-8 max-w-48 text-xs"
-          options={data.directories.map((item) => ({ value: item.path, label: item.name }))}
-          change={(path) => onChange?.({ ...value, cwd: path })} />
-      )}
-      {chosenPreset && <PresetAvatar avatar={chosenPreset.avatar} name={chosenPreset.name} className="size-6" />}
-      <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className="h-8 max-w-48 text-xs"
-        change={(id) => onChange?.({ ...value, agentPreset: id || undefined, model: undefined })} />
-      <Select label={t('model')} value={modelKey(chosenModel)} options={models} disabled={disabled} className="h-8 max-w-56 text-xs"
-        change={(key) => onChange?.({ ...value, model: toModel(key) })} />
+      <Select label={t('label')} value={current} options={options} disabled={disabled || saving} className={cn(chip, 'max-w-48')} change={(id) => void choose(id)} />
+      {failed && <span role="alert" className="text-xs text-destructive">{failed}</span>}
+    </>
+  );
+}
+
+/**
+ * The model and its reasoning effort, at the composer's foot beside Send, as in DSH's own input bar. A new session's
+ * are chosen before its first message (`value`, given back through `onChange`); an existing session changes its model
+ * while it is idle, for that session alone (`teamwork/selectModel`).
+ */
+function ModelSettings({ computerId, sessionId, config, setConfig, disabled, value, onChange }: {
+  computerId: string;
+  sessionId: string;
+  config: SessionConfiguration;
+  setConfig: (update: (read: SessionConfiguration | null) => SessionConfiguration | null) => void;
+  disabled: boolean;
+  value: SessionOptions;
+  onChange: (value: SessionOptions) => void;
+}) {
+  const t = useTranslations('team.dsh.settings');
+  const word = useRelayError();
+  const relay = useSessionClient();
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  if (sessionId && !config.current) return null;
+  const models = [
+    ...(sessionId ? [] : [{ value: '', label: t('followPreset') }]),
+    ...config.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: model.name, icon: <ProviderMark hints={[model.id, model.name, model.providerName, model.provider]} name={model.name} /> })),
+  ];
+  const chosen = sessionId ? config.current?.model : value.model;
+  // How hard the chosen model reasons, where it says it can be told: its own default, or one of its efforts.
+  const reasoning = config.models.find((model) => model.provider === chosen?.provider && model.id === chosen?.model)?.reasoning;
+  const efforts = reasoning ? [{ value: '', label: t('effortDefault') }, ...reasoning.efforts.map((effort) => ({ value: effort.id, label: effort.name }))] : [];
+  const withEffort = (effort: string): ModelSelection => ({ provider: chosen!.provider, model: chosen!.model, ...(effort ? { reasoningEffort: effort } : {}) });
+  const toModel = (key: string): ModelSelection | undefined => {
+    if (!key) return undefined;
+    const [provider, model] = JSON.parse(key) as [string, string];
+    return { provider, model };
+  };
+
+  async function choose(next: ModelSelection | undefined) {
+    if (!sessionId) return onChange({ ...value, model: next });
+    if (!next) return;
+    setSaving(true);
+    setFailed(null);
+    try {
+      const selected = await relay.selectModel(computerId, sessionId, next);
+      setConfig((read) => (read?.current ? { ...read, current: { ...read.current, model: selected } } : read));
+    } catch (error) {
+      setFailed(word(error));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      {failed && <span role="alert" className="text-xs text-destructive">{failed}</span>}
+      <Select label={t('model')} value={modelKey(chosen)} options={models} disabled={disabled || saving} className={chip}
+        change={(key) => void choose(toModel(key))} />
       {reasoning && (
-        <Select label={t('effort')} value={value.model?.reasoningEffort ?? ''} options={efforts} disabled={disabled} className="h-8 max-w-40 text-xs"
-          change={(effort) => onChange?.({ ...value, model: withEffort(effort) })} />
+        <Select label={t('effort')} value={chosen?.reasoningEffort ?? ''} options={efforts} disabled={disabled || saving} className={cn(chip, 'max-w-36')}
+          change={(effort) => void choose(withEffort(effort))} />
       )}
     </>
   );
@@ -541,7 +960,22 @@ function FileCards({ files, disabled }: { files: Files; disabled: boolean }) {
   );
 }
 
-function Composer({ busy, placeholder, send, files, children }: { busy: boolean; placeholder: string; send: (text: string) => Promise<boolean>; files: Files; children?: ReactNode }) {
+/**
+ * The message box, laid out as DSH's own input bar: the files and the text, then a row with the attachment control on
+ * the left with `tools` (the permission preset) and `children` (the model) with the round Send, or Stop while `stop` is offered, on the right. Enter sends,
+ * Shift+Enter breaks the line; `send` says whether to clear it.
+ */
+function Composer({ busy, rows, placeholder, send, files, stop, tools, children }: {
+  busy: boolean;
+  rows: number;
+  placeholder: string;
+  send: (text: string) => Promise<boolean>;
+  files: Files;
+  stop?: { run: () => void; disabled: boolean };
+  /** Beside the paperclip on the left: the permission preset. */
+  tools?: ReactNode;
+  children?: ReactNode;
+}) {
   const t = useTranslations('team.dsh');
   const [text, setText] = useState('');
   // A message may be files alone.
@@ -551,17 +985,16 @@ function Composer({ busy, placeholder, send, files, children }: { busy: boolean;
   };
   return (
     <form
-      className="sticky bottom-0 mt-auto bg-background pt-2 pb-4"
       onSubmit={(event) => {
         event.preventDefault();
         void submit();
       }}
     >
-      <div className="flex flex-col gap-2 rounded-2xl border bg-card p-3 shadow-sm focus-within:ring-2 focus-within:ring-ring">
+      <div className="flex flex-col gap-2 rounded-2xl border bg-card px-3 pt-3 pb-2 shadow-sm focus-within:ring-2 focus-within:ring-ring">
         <FileCards files={files} disabled={busy} />
         <Textarea
           value={text}
-          rows={2}
+          rows={rows}
           aria-label={placeholder}
           placeholder={placeholder}
           className="min-h-0 resize-none border-0 p-1 shadow-none focus-visible:ring-0"
@@ -573,137 +1006,24 @@ function Composer({ busy, placeholder, send, files, children }: { busy: boolean;
             }
           }}
         />
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <AttachButton files={files} disabled={busy} />
-          {children}
-          <Button type="submit" size="sm" className="ml-auto" disabled={!can}>{t('send')}</Button>
+          {tools}
+          <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
+            {children}
+            {stop ? (
+              <Button type="button" size="icon" className="size-8 rounded-full" aria-label={t('stop')} title={t('stop')} disabled={stop.disabled} onClick={stop.run}>
+                <Square className="fill-current" aria-hidden />
+              </Button>
+            ) : (
+              <Button type="submit" size="icon" className="size-8 rounded-full" aria-label={t('send')} title={t('send')} disabled={!can}>
+                <ArrowUp aria-hidden />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </form>
-  );
-}
-
-/** One session: its conversation, what it waits on the member for, and the composer at its foot. */
-export function Conversation({ computerId, sessionId, title }: { computerId: string; sessionId: string; title: string }) {
-  const t = useTranslations('team.dsh');
-  const word = useRelayError();
-  const relay = useSessionClient();
-  const [state, setState] = useState<SessionState>(EMPTY_SESSION);
-  const files = useFiles(computerId);
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState<string | null>(null);
-  const [openPage, setOpenPage] = useState<PublishedPage | null>(null);
-
-  useEffect(() => relay.follow(computerId, sessionId, (event) => setState((s) => applySessionEvent(s, event))), [relay, computerId, sessionId]);
-
-  const rows = rowsOf(state.items);
-  const running = state.status === 'running';
-  async function act(run: () => Promise<void>) {
-    setBusy(true);
-    setFailed(null);
-    try {
-      await run();
-    } catch (error) {
-      setFailed(word(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <>
-      <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{title}</h2>
-      <div className="flex flex-col gap-4 text-sm">
-        {state.earlier !== null && (
-          <Button type="button" variant="ghost" size="sm" className="self-center" disabled={busy} onClick={() => void act(() => relay.older(computerId, sessionId))}>
-            {t('earlier')}
-          </Button>
-        )}
-        {rows.map((row) =>
-          row.kind === 'user' ? (
-            <div key={row.id} className="ml-auto flex max-w-[85%] flex-col items-end gap-1.5">
-              {row.attachments?.length ? (
-                <ul className="flex flex-wrap justify-end gap-2">
-                  {row.attachments.map((file) => (
-                    <li key={file.attachmentId} className="flex max-w-60 items-center gap-2 rounded-md border px-2 py-1 text-xs">
-                      <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                      <span className="truncate" title={file.name}>{file.name}</span>
-                      <span className="shrink-0 text-muted-foreground">{fileSize(file.bytes)}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {row.text && <p className="rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>}
-            </div>
-          ) : row.kind === 'page' ? (
-            <PageCard key={row.id} page={row.page} onOpen={() => setOpenPage(row.page)} />
-          ) : row.kind === 'assistant' ? (
-            <div key={row.id} className="flex flex-col gap-2 leading-6 [&_code]:font-mono [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5">
-              <Markdown remarkPlugins={[remarkGfm]} skipHtml>{row.text}</Markdown>
-            </div>
-          ) : row.kind === 'failed' ? (
-            <p key={row.id} role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-destructive [overflow-wrap:anywhere]">
-              {row.noModel ? t('noModel') : t('turnFailed', { message: row.message })}
-            </p>
-          ) : (
-            <details key={row.id} className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
-              <summary>{t('steps', { count: row.tools.length })}{row.status === 'running' ? ` · ${t('running')}` : row.status === 'done' ? '' : ` · ${t(row.status)}`}</summary>
-              <ul className="mt-2 flex flex-col gap-1">
-                {row.tools.map((tool) => <li key={tool.id} className="truncate font-mono">{tool.name} {tool.summary}</li>)}
-              </ul>
-            </details>
-          ),
-        )}
-        {isThinking(rows, running) && <p className="text-muted-foreground">{t('thinking')}</p>}
-        {state.pending?.kind === 'question' && (
-          <div className="flex flex-col gap-2 border-l-[3px] border-signal pl-3">
-            <p className="font-medium">{state.pending.question}</p>
-            <div className="flex flex-wrap gap-2">
-              {state.pending.options.map((option) => (
-                <Button key={option.id} size="sm" variant="outline" disabled={busy} onClick={() => void act(() => relay.answer(computerId, sessionId, state.pending!.id, { kind: 'question', optionId: option.id }))}>
-                  {option.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-        {state.pending?.kind === 'approval' && (
-          <div className="flex flex-col gap-2 border-l-[3px] border-signal pl-3">
-            <p className="font-medium">{state.pending.title}</p>
-            {state.pending.detail && <pre className="overflow-x-auto text-xs whitespace-pre-wrap">{state.pending.detail}</pre>}
-            <div className="flex gap-2">
-              <Button size="sm" disabled={busy} onClick={() => void act(() => relay.answer(computerId, sessionId, state.pending!.id, { kind: 'approval', approve: true }))}>{t('allow')}</Button>
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => void act(() => relay.answer(computerId, sessionId, state.pending!.id, { kind: 'approval', approve: false }))}>{t('deny')}</Button>
-            </div>
-          </div>
-        )}
-        {state.closed && <p role="alert" className="text-destructive">{word(new RelayError(state.closed))}</p>}
-        {openPage && (
-          // Beside the conversation on a wide screen, over it on a narrow one (docs/tech/pages.md, "The clients").
-          <aside className="fixed inset-y-0 right-0 z-40 flex w-full flex-col overflow-y-auto border-l bg-background p-4 shadow-xl xl:w-[min(60rem,55vw)]">
-            <PageViewer key={`${openPage.pageId}-${openPage.version}`} teamId={openPage.teamId} pageId={openPage.pageId} version={openPage.version} onClose={() => setOpenPage(null)} />
-          </aside>
-        )}
-        {failed && <p role="alert" className="text-destructive">{failed}</p>}
-      </div>
-      <Composer
-        busy={busy || running || !!state.pending}
-        placeholder={t('promptPlaceholder')}
-        files={files}
-        send={async (message) => {
-          let sent = false;
-          await act(async () => {
-            if (files.files.length) await files.send(sessionId, message);
-            else await relay.prompt(computerId, sessionId, message);
-            sent = true;
-          });
-          return sent;
-        }}
-      >
-        <SessionSettings computerId={computerId} sessionId={sessionId} disabled={busy || running || !!state.pending} />
-        {running && <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void act(() => relay.cancel(computerId, sessionId))}>{t('stop')}</Button>}
-      </Composer>
-    </>
   );
 }
 
