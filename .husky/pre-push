@@ -6,10 +6,14 @@
 #
 # In the closed edition (where premium/ exists) it is the only check a pull
 # request gets: its repository is private, so CI skips pull requests and runs
-# only after a merge into main. There nothing may skip — the databases the
-# suites need and the plugin's checkout are required, and a push without them
-# is refused. Here, in the open edition, CI runs on every pull request, so a
-# laptop without them may push and CI covers what it skipped.
+# only after a merge into main. There nothing may skip — the Postgres the
+# closed suites need and the plugin's checkout are required, and a push
+# without them is refused. The closed edition runs on SQLite and Postgres
+# only, and the open server's own suites are not run there: its
+# files equal the community edition's (the edition boundary below), whose CI
+# ran them on all three databases. Here, in the open edition, CI runs on every
+# pull request, so a laptop without the databases may push and CI covers what
+# it skipped.
 #
 # To skip it on a work-in-progress branch: `git push --no-verify`. That is an
 # escape hatch for a branch nobody will merge yet, not a way to land a red main.
@@ -33,16 +37,19 @@ run() {
 printf '\033[1mRunning CI locally before pushing…\033[0m\n'
 
 plugin=${DSH_TEAMWORK_PLUGIN:-../dsh-teamwork}
+# What leaves out the open server's suites in an edition; empty here.
+open=''
 if [ -d premium ]; then
+  open='--filter=!@dsh-teamwork/go-server'
   missing=''
-  for var in TEST_POSTGRES_URL TEST_MYSQL_URL MIGRATE_DEV_POSTGRES MIGRATE_DEV_MYSQL; do
+  for var in TEST_POSTGRES_URL MIGRATE_DEV_POSTGRES; do
     eval "value=\${$var:-}"
     [ -n "$value" ] || missing="$missing $var"
   done
   if [ -n "$missing" ] || [ ! -f "$plugin/lib/client.js" ]; then
     printf '\n'
     red '✗ pre-push refused: the closed edition runs all of CI here, and nothing may skip'
-    [ -z "$missing" ] || printf '  Not set:%s\n  Run pnpm dev:setup and export the four variables it prints.\n' "$missing"
+    [ -z "$missing" ] || printf '  Not set:%s\n  Run pnpm dev:setup and export the variables it prints.\n' "$missing"
     [ -f "$plugin/lib/client.js" ] || printf '  No built DSH plugin at %s: clone dsh-teamwork beside this checkout and run pnpm build there, or set DSH_TEAMWORK_PLUGIN.\n' "$plugin"
     printf '  For a work-in-progress branch nobody will merge yet: git push --no-verify\n\n'
     exit 1
@@ -62,12 +69,12 @@ run 'Lint            (pnpm lint)' pnpm lint
 # Skips with a warning without MIGRATE_DEV_POSTGRES and MIGRATE_DEV_MYSQL (see
 # server/scripts/drift.mjs), so a laptop without those databases can still push
 # the open edition; the closed one was refused above.
-run 'Migration drift (pnpm db:drift)' pnpm db:drift
+run 'Migration drift (pnpm db:drift)' pnpm db:drift $open
 
 # The Go suites run every database case on SQLite, and on Postgres and MySQL
 # where TEST_POSTGRES_URL and TEST_MYSQL_URL name a server; CI sets both, and
-# the closed edition requires both above.
-run 'Test            (pnpm test)' pnpm test
+# the closed edition requires Postgres above.
+run 'Test            (pnpm test)' pnpm test $open
 
 run 'Build           (pnpm build)' pnpm build
 
@@ -78,9 +85,10 @@ if [ -f "$plugin/lib/client.js" ]; then
   # Absolute, since the test resolves it from server/e2e.
   DSH_TEAMWORK_PLUGIN=$(cd "$plugin" && pwd)
   export DSH_TEAMWORK_PLUGIN
-  # Every Go module with an e2e directory: the open server's, and the closed
+  # Every Go module with an e2e directory: the open server's, or the closed
   # one's where this tree has it.
   for dir in $(git ls-files '*e2e/*_test.go' | xargs -n1 dirname | sort -u); do
+    [ -z "$open" ] || [ "$dir" != server/e2e ] || continue
     run "Plugin e2e      ($dir)" sh -c "cd '$dir/..' && go test -tags e2e ./e2e"
   done
 else
