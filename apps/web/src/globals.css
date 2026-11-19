@@ -574,3 +574,35 @@ body:has(.tide-story) {
   color: var(--foreground);
   font-weight: 600;
 }
+
+/*
+ * A scroll area inside the sidebar (docs/design.md, "Component rules"): no track
+ * and no arrows, a 4px rounded thumb in the muted ink that darkens while the area
+ * is hovered or dragged. Firefox takes the standard properties; WebKit and
+ * Chromium take the pseudo-elements, which they ignore once scrollbar-color is set.
+ */
+@utility scrollbar-quiet {
+  @supports not selector(::-webkit-scrollbar) {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent) transparent;
+  }
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  &::-webkit-scrollbar-track,
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--muted-foreground) 25%, transparent) padding-box;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+  }
+  &::-webkit-scrollbar-thumb:active {
+    background-color: color-mix(in oklab, var(--muted-foreground) 65%, transparent);
+  }
+}

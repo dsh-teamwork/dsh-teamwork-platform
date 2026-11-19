@@ -202,7 +202,7 @@ export function ConsoleShell({
         </div>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-foreground/30 md:hidden" />
-          <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r bg-muted py-4 md:hidden" aria-describedby={undefined}>
+          <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto scrollbar-quiet border-r bg-muted py-4 md:hidden" aria-describedby={undefined}>
             <div className="flex items-center justify-between gap-2 px-4 pb-4">
               <Dialog.Title className="text-sm font-semibold">{team.name}</Dialog.Title>
               <Dialog.Close className="grid size-8 place-items-center rounded-md hover:bg-accent" aria-label={t('nav.close')}>
@@ -265,12 +265,12 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   return (
     <Tooltip.Provider delayDuration={200}>
       <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 overflow-y-auto px-3 pb-4">{group(GROUPS[0])}</div>
+        <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4">{group(GROUPS[0])}</div>
         {/* Team management sits apart from the workspace: its own divider and a slightly deeper ground.
             Open, it takes at most half the sidebar's height and scrolls inside, so the workspace stays in view. */}
         {team.role === 'admin' && (
           <div className="mt-auto flex max-h-[50dvh] shrink-0 flex-col gap-4 border-t bg-secondary/60 py-3">
-            {open && <div id="team-management" className="flex min-h-0 flex-col gap-4 overflow-y-auto px-3">{GROUPS.slice(1).map(group)}</div>}
+            {open && <div id="team-management" className="scrollbar-quiet flex min-h-0 flex-col gap-4 overflow-y-auto px-3">{GROUPS.slice(1).map(group)}</div>}
             <div className="px-3">
               <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'w-full font-medium')}>
                 <ShieldCheck className="size-4" aria-hidden />
