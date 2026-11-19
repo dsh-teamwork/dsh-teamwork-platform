@@ -293,8 +293,11 @@ In the plugin repository, beside the other `teamwork_*` tools
 - **Reading files**: only inside the session's folder, after resolving
   symbolic links; hidden files and anything over the limits refused before
   any upload, with the rule named so the agent can fix it.
-- **The result** renders one line for the agent, and its output's
-  `presentationMeta` is `{"teamworkPage":{"teamId","pageId","version","title","kind"}}`,
+- **The result** renders one line for the agent with the page's console link,
+  `{server}/teams/{teamId}/pages/{pageId}`, for it to hand the member (a
+  signed-out browser returns there after sign-in; only who may read the page
+  sees it). Its output's `presentationMeta` is
+  `{"teamworkPage":{"teamId","pageId","version","title","kind","url"}}`,
   which DSH stores in the session's `tool/result` event as `meta`, outside
   what the model reads. It holds no content: the relay's `fitFrame` would cut
   it, and the card needs only the id.
