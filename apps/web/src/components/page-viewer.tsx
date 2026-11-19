@@ -4,11 +4,12 @@
  * is minted again before it ends. Used beside a conversation and on Pages.
  */
 
-import { Copy, ExternalLink, FileCode2, FileText, Image, Lock, Users, UsersRound, X } from 'lucide-react';
+import { Copy, ExternalLink, FileCode2, FileText, Image, Lock, Share2, Trash2, Users, UsersRound, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
+import { ShareDialog } from '@/components/page-share';
 import { Button } from '@/components/ui/button';
 import { api, ApiError, type Schemas } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
@@ -38,7 +39,7 @@ export function SharingBadge({ sharing }: { sharing: Detail['sharing'] }) {
 /** Renews a view address this long before it expires. */
 const RENEW_BEFORE = 5 * 60_000;
 
-export function PageViewer({ teamId, pageId, version, versions = false, onClose }: {
+export function PageViewer({ teamId, pageId, version, versions = false, onClose, onChanged }: {
   teamId: string;
   pageId: string;
   /** The version to open first; the newest when unset. */
@@ -46,18 +47,23 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose 
   /** Whether to list the versions below the page. */
   versions?: boolean;
   onClose?: () => void;
+  /** Called after a change a list would show: sharing, a restore, a deletion. */
+  onChanged?: (deleted: boolean) => void;
 }) {
   const t = useTranslations('team.pages');
   const format = useFormatter();
   const base = `teams/${encodeURIComponent(teamId)}/pages/${encodeURIComponent(pageId)}`;
-  const { data: page, error } = useApi<Detail>(base);
+  const { data: page, error, reload } = useApi<Detail>(base);
+  const [sharing, setSharing] = useState(false);
+  const [acting, setActing] = useState(false);
   const [chosen, setChosen] = useState<number | undefined>(version);
   const [view, setView] = useState<{ n: number; data: View } | null>(null);
   const [failed, setFailed] = useState(false);
   const shown = chosen ?? page?.currentVersion;
 
+  const reads = page ? page.access !== 'admin' || page.versions.length > 0 : false;
   useEffect(() => {
-    if (!shown) return;
+    if (!shown || !reads) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let live = true;
     const mint = async () => {
@@ -76,7 +82,20 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose 
       live = false;
       clearTimeout(timer);
     };
-  }, [base, shown]);
+  }, [base, shown, reads]);
+
+  async function act(run: () => Promise<unknown>, deleted = false) {
+    setActing(true);
+    try {
+      await run();
+      if (!deleted) await reload();
+      onChanged?.(deleted);
+    } catch {
+      toast.error(t('actionFailed'));
+    } finally {
+      setActing(false);
+    }
+  }
 
   if (error) {
     const gone = error instanceof ApiError && error.status === 404;
@@ -98,10 +117,19 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose 
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <SharingBadge sharing={page.sharing} />
             <span>{t('owner', { name: personName(page.owner) })}</span>
+            {page.sharing === 'members' && page.members.length > 0 && (
+              <span>· {t('readers', { names: page.members.map(personName).join(', ') })}</span>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          {page.access !== 'reader' && (
+            <Button size="sm" variant={page.access === 'owner' ? 'default' : 'outline'} disabled={acting} onClick={() => setSharing(true)}>
+              <Share2 className="size-4" aria-hidden />
+              {page.access === 'owner' ? t('share') : t('restrict')}
+            </Button>
+          )}
+          {reads && <select
             aria-label={t('version')}
             className="h-8 rounded-md border bg-background px-2 text-sm"
             value={shown}
@@ -112,10 +140,12 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose 
                 {v.number === page.currentVersion ? t('latest', { n: v.number }) : t('versionN', { n: v.number })}
               </option>
             ))}
-          </select>
-          <Button variant="outline" size="sm" aria-label={t('openTab')} title={t('openTab')} disabled={!view} onClick={() => view && window.open(view.data.url, '_blank', 'noopener,noreferrer')}>
-            <ExternalLink className="size-4" aria-hidden />
-          </Button>
+          </select>}
+          {reads && (
+            <Button variant="outline" size="sm" aria-label={t('openTab')} title={t('openTab')} disabled={!view} onClick={() => view && window.open(view.data.url, '_blank', 'noopener,noreferrer')}>
+              <ExternalLink className="size-4" aria-hidden />
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -128,7 +158,9 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose 
           {onClose && <CloseButton onClose={onClose} />}
         </div>
       </header>
-      {failed ? (
+      {!reads ? (
+        <p className="rounded-lg border p-4 text-sm text-muted-foreground">{t('governOnly')}</p>
+      ) : failed ? (
         <p role="alert" className="text-sm text-destructive">{t('loadFailed')}</p>
       ) : view && view.n === shown ? (
         <iframe
@@ -142,7 +174,7 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose 
       ) : (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       )}
-      {versions && (
+      {versions && reads && (
         <section className="flex flex-col gap-2">
           <h3 className="text-sm font-medium">{t('versions')}</h3>
           <ul className="divide-y rounded-lg border text-sm">
@@ -158,11 +190,33 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose 
                   </span>
                   {v.number === shown && <span className="text-xs text-muted-foreground">{t('showing')}</span>}
                 </button>
+                {page.access === 'owner' && v.number !== page.currentVersion && (
+                  <div className="flex justify-end px-3 pb-2">
+                    <Button size="sm" variant="ghost" disabled={acting} onClick={() => void act(() => api(`${base}/versions/${v.number}/restore`, { method: 'POST' }).then(() => setChosen(undefined)))}>
+                      {t('restore', { n: v.number })}
+                    </Button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
         </section>
       )}
+      {versions && page.access !== 'reader' && (
+        <div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive"
+            disabled={acting}
+            onClick={() => window.confirm(t('deleteConfirm', { title: page.title })) && void act(() => api(base, { method: 'DELETE' }), true)}
+          >
+            <Trash2 className="size-4" aria-hidden />
+            {t('delete')}
+          </Button>
+        </div>
+      )}
+      {sharing && <ShareDialog teamId={teamId} page={page} open={sharing} onOpenChange={setSharing} onSaved={() => void reload().then(() => onChanged?.(false))} />}
     </div>
   );
 }

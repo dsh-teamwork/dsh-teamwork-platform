@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — Pages are shared with chosen members or the team
+
+- **What:** A page's owner shares it with **Only me**, **Specific members** of the team or **Everyone in the team** (`PUT /api/teams/{teamId}/pages/{id}/sharing`), renames it (`PATCH …/{id}`), restores an old version as a new one (`POST …/versions/{n}/restore`) and deletes it (`DELETE …/{id}`, collecting objects no other page names). Readers find pages under **Shared with me** (`?list=shared`) and add versions. The team's admin lists every page under **All** (`?list=all`), narrows its sharing (`403 page_sharing_widened` for anything that admits someone new) and deletes it, but reads its content only where it is shared with them. `GET …/pages/{id}` adds `access`, `members` and `via`. A Team DSH opens a page for the session's starter (`…/view?starter=`). The plugin's `teamwork_page` gains `open`.
+- **Why:** Step 4 of `docs/tech/pages.md`: a team's pages are shared within it and never outside it.
+- **Breaking:** None.
+- **Upgrade:** Nothing; `page_members` came with the first migration.
+- **Refs:** `server/internal/pages/sharing.go`, `apps/web/src/components/page-share.tsx`, `docs/tech/pages.md`.
+
 ## 2026-11-19 — The console shows pages agents publish
 
 - **What:** A conversation on My DSH shows a card for each page the agent published with the plugin's `teamwork_page` tool; the card opens the page in a panel beside the conversation. **Pages** under Workspace lists the reader's own pages of the team, newest first, and shows one with its versions, each served sandboxed from its view address. `@dsh-teamwork/relay-client` reads the tool's `meta.teamworkPage` into a `page` conversation item and row.

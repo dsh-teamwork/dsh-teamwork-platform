@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Plan — steps 0 to 3 built · **Updated:** 2026-11-19
+> **Status:** Plan — steps 0 to 4 built; step 5 is the hosted edition's · **Updated:** 2026-11-19
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order

@@ -1128,8 +1128,6 @@
     },
     "pages": {
       "title": "页面",
-      "mine": "我的",
-      "none": "还没有页面。",
       "loading": "加载中…",
       "loadFailed": "加载失败。",
       "unavailable": "你无法查看这个页面：它是私有的、已被删除，或你已离开它所在的团队。",
@@ -1151,6 +1149,53 @@
         "private": "私有",
         "members": "部分成员",
         "team": "全队"
+      },
+      "lists": {
+        "mine": "我的",
+        "shared": "共享给我的",
+        "all": "全部"
+      },
+      "empty": {
+        "mine": "还没有页面。",
+        "shared": "还没有人和你共享页面。",
+        "all": "本团队还没有页面。"
+      },
+      "via": {
+        "you": "{name} · 共享给你",
+        "team": "{name} · 全队"
+      },
+      "readers": "可读：{names}",
+      "share": "共享",
+      "restrict": "限制",
+      "governOnly": "你以团队管理员身份管理这个页面，但它没有共享给你，所以看不到内容。你可以收紧它的共享范围或删除它。",
+      "restore": "恢复版本 {n}",
+      "delete": "删除页面",
+      "deleteConfirm": "删除“{title}”及其所有版本？此操作无法撤销。",
+      "actionFailed": "操作没有成功，请重试。",
+      "shareDialog": {
+        "title": "共享“{title}”",
+        "restrictTitle": "限制“{title}”",
+        "note": "页面只在团队内共享，团队以外的人无法打开。",
+        "restrictNote": "作为团队管理员，你只能收紧这个页面的读者范围，不能放宽。",
+        "private": {
+          "label": "仅自己",
+          "note": "只有所有者能打开。"
+        },
+        "members": {
+          "label": "指定成员",
+          "note": "你选择的成员可以打开，并能加新版本。"
+        },
+        "team": {
+          "label": "全队开放",
+          "note": "本团队所有成员可以打开，并能加新版本。"
+        },
+        "find": "按邮箱查找成员",
+        "remove": "移除 {name}",
+        "cancel": "取消",
+        "save": "保存",
+        "failed": "保存失败，请重试。",
+        "page_sharing_widened": "管理员只能收紧页面的读者范围。",
+        "page_member_not_in_team": "你选择的成员已不在团队中。"
       }
     }
   },

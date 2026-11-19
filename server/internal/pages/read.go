@@ -2,14 +2,18 @@ package pages
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/page"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
 // Person is someone a page names: its owner or a version's author.
@@ -29,6 +33,9 @@ type Summary struct {
 	CurrentVersion int       `json:"currentVersion"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	UpdatedBy      Person    `json:"updatedBy"`
+	// Via is how a page shared with the reader reached them: "you" by name,
+	// "team" with everyone; null on their own and on an admin's All.
+	Via *string `json:"via"`
 }
 
 // VersionView is one version as a page's detail lists it.
@@ -43,9 +50,15 @@ type VersionView struct {
 	Size      int64     `json:"size"`
 }
 
-// Detail is one page and its versions, newest first.
+// Detail is one page: how the caller stands to it, and for a reader its
+// versions, newest first. Its members are listed for those who may see them:
+// its owner, its readers and the team's admins.
 type Detail struct {
 	Summary
+	// Access is "owner", "reader" or "admin" (an admin who may not read it,
+	// who sees no version and no content).
+	Access   string        `json:"access"`
+	Members  []Person      `json:"members"`
 	Versions []VersionView `json:"versions"`
 }
 
@@ -57,16 +70,33 @@ type List struct {
 
 const listSize = 50
 
-// List is the member's own pages of the team, newest version first, 50 at a
-// time from before (a previous answer's next).
+// List is a list of the team's pages, newest version first, 50 at a time from
+// before (a previous answer's next): the member's own ("mine"), those shared
+// with them by name or with the team ("shared"), or, for an admin, every page
+// of the team ("all"), which lists a page without opening it.
 func (s *Service) List(ctx context.Context, c Caller, teamID, which, before string) (List, error) {
-	if _, err := s.member(ctx, c, teamID); err != nil {
+	m, err := s.member(ctx, c, teamID)
+	if err != nil {
 		return List{}, err
 	}
-	if which != "" && which != "mine" {
-		return List{}, invalid("mine", "list")
+	q := s.DB.Page.Query().Where(page.TeamID(teamID))
+	switch which {
+	case "", "mine":
+		q = q.Where(page.OwnerID(c.UserID))
+	case "shared":
+		named, err := s.DB.PageMember.Query().Where(pagemember.UserID(c.UserID)).Select(pagemember.FieldPageID).Strings(ctx)
+		if err != nil {
+			return List{}, err
+		}
+		q = q.Where(page.OwnerIDNEQ(c.UserID), page.Or(page.SharingEQ(page.SharingTeam),
+			page.And(page.SharingEQ(page.SharingMembers), page.IDIn(named...))))
+	case "all":
+		if m.Role != membership.RoleAdmin {
+			return List{}, wire.E(http.StatusForbidden, wire.AdminRequired)
+		}
+	default:
+		return List{}, invalid("mine, shared or all", "list")
 	}
-	q := s.DB.Page.Query().Where(page.TeamID(teamID), page.OwnerID(c.UserID))
 	if before != "" {
 		at, id, err := cursor(before)
 		if err != nil {
@@ -86,6 +116,15 @@ func (s *Service) List(ctx context.Context, c Caller, teamID, which, before stri
 		out.Next = &next
 	}
 	out.Pages, err = s.summaries(ctx, rows)
+	if which == "shared" {
+		for i := range out.Pages {
+			via := "you"
+			if out.Pages[i].Sharing == string(page.SharingTeam) {
+				via = "team"
+			}
+			out.Pages[i].Via = &via
+		}
+	}
 	return out, err
 }
 
@@ -98,18 +137,40 @@ func cursor(before string) (time.Time, string, error) {
 	return time.UnixMicro(us).UTC(), id, nil
 }
 
-// Get is one page the member may read, with its versions.
+// Get is one page the member may read or, as the team's admin, govern.
 func (s *Service) Get(ctx context.Context, c Caller, teamID, pageID string) (Detail, error) {
-	if _, err := s.member(ctx, c, teamID); err != nil {
-		return Detail{}, err
-	}
-	p, err := s.readable(ctx, c.UserID, teamID, pageID)
+	p, r, err := s.governed(ctx, c, teamID, pageID)
 	if err != nil {
 		return Detail{}, err
 	}
 	sums, err := s.summaries(ctx, []*ent.Page{p})
 	if err != nil {
 		return Detail{}, err
+	}
+	reads := r != admin
+	if r == admin {
+		if reads, err = s.reads(ctx, c.UserID, p); err != nil {
+			return Detail{}, err
+		}
+	}
+	d := Detail{Summary: sums[0], Access: map[role]string{owner: "owner", admin: "admin", other: "reader"}[r], Members: []Person{}, Versions: []VersionView{}}
+	named, err := s.DB.PageMember.Query().Where(pagemember.PageID(p.ID)).Select(pagemember.FieldUserID).Strings(ctx)
+	if err != nil {
+		return Detail{}, err
+	}
+	members, err := s.people(ctx, func(add func(string)) {
+		for _, id := range named {
+			add(id)
+		}
+	})
+	if err != nil {
+		return Detail{}, err
+	}
+	for _, id := range named {
+		d.Members = append(d.Members, members(id))
+	}
+	if !reads {
+		return d, nil
 	}
 	versions, err := s.DB.PageVersion.Query().Where(pageversion.PageID(p.ID)).Order(ent.Desc(pageversion.FieldNumber)).All(ctx)
 	if err != nil {
@@ -123,7 +184,7 @@ func (s *Service) Get(ctx context.Context, c Caller, teamID, pageID string) (Det
 	if err != nil {
 		return Detail{}, err
 	}
-	d := Detail{Summary: sums[0], Versions: make([]VersionView, len(versions))}
+	d.Versions = make([]VersionView, len(versions))
 	for i, v := range versions {
 		d.Versions[i] = VersionView{Number: v.Number, Author: people(v.AuthorID), CreatedAt: v.CreatedAt.UTC(), Note: v.Note,
 			Computer: v.Computer, SessionID: v.SessionID, TeamDSH: v.HostID != "", Size: v.Size}

@@ -80,8 +80,8 @@ func TestPagesArePrivateToTheirOwner(t *testing.T) {
 			t.Fatalf("created %v", created)
 		}
 
-		// Its owner lists and reads it; a teammate, the team's admin included,
-		// neither lists, reads, views nor adds to it.
+		// Its owner lists and reads it; a teammate neither lists, reads, views
+		// nor adds to it, and the team's admin sees it without its content.
 		mine := must(t, a.get(base), 200)["pages"].([]any)
 		if len(mine) != 1 || mine[0].(map[string]any)["sharing"] != "private" {
 			t.Fatalf("mine %v", mine)
@@ -90,8 +90,11 @@ func TestPagesArePrivateToTheirOwner(t *testing.T) {
 			if got := must(t, c.get(base), 200)["pages"].([]any); len(got) != 0 {
 				t.Fatalf("%s lists %v", who, got)
 			}
-			refused(t, who+" reads", c.get(base+"/"+id), 404, "page_not_found")
 			refused(t, who+" views", c.post(base+"/"+id+"/versions/1/view", nil), 404, "page_not_found")
+		}
+		refused(t, "teammate reads", b.get(base+"/"+id), 404, "page_not_found")
+		if gov := must(t, admin.get(base+"/"+id), 200); gov["access"] != "admin" || len(gov["versions"].([]any)) != 0 {
+			t.Fatalf("admin's view %v", gov)
 		}
 		refused(t, "teammate adds a version", publish(t, pb, base+"/"+id+"/versions", map[string]any{"kind": "html", "baseVersion": 1}, files), 404, "page_not_found")
 
@@ -277,5 +280,153 @@ func TestTeamDSHPublishesForItsStarter(t *testing.T) {
 			t.Fatalf("detail %v", detail)
 		}
 		refused(t, "a host token views", host.post("/api/teams/"+teamID+"/pages/"+id+"/versions/1/view", nil), 404, "page_not_found")
+	})
+}
+
+// joined is a person who joined the team, with their id.
+func joined(t *testing.T, e *env, admin *browser, teamID, email string) (*browser, string) {
+	t.Helper()
+	b, id := e.person(email)
+	_, token := invite(t, admin, teamID)
+	must(t, b.post("/api/invites/redeem", map[string]string{"token": token}), 200)
+	return b, id
+}
+
+func listed(t *testing.T, b *browser, path string) []string {
+	t.Helper()
+	var ids []string
+	for _, p := range must(t, b.get(path), 200)["pages"].([]any) {
+		ids = append(ids, p.(map[string]any)["id"].(string))
+	}
+	return ids
+}
+
+func TestPageSharingAdmitsOnlyWhomItNames(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		store := artifactstore.Local{Dir: t.TempDir()}
+		e := start(t, d, options{artifacts: store})
+		admin := e.admin("admin@x.io")
+		teamID := newTeam(t, admin, "Pages")
+		a, _ := joined(t, e, admin, teamID, "a@x.io")
+		b, bID := joined(t, e, admin, teamID, "b@x.io")
+		c, cID := joined(t, e, admin, teamID, "c@x.io")
+		_, outsiderID := e.person("out@x.io")
+		pa, pb := e.pluginFor(a), e.pluginFor(b)
+		base := "/api/teams/" + teamID + "/pages"
+		shared := map[string]string{"index.html": "<h1>v1</h1>", "logo.svg": "<svg/>"}
+		id := must(t, publish(t, pa, base, map[string]any{"title": "Plan", "kind": "html"}, shared), 201)["id"].(string)
+		page := base + "/" + id
+		share := func(who *browser, mode string, members ...string) response {
+			body := map[string]any{"mode": mode}
+			if members != nil {
+				body["members"] = members
+			}
+			return who.send("PUT", page+"/sharing", body)
+		}
+		reads := func(who *browser) bool {
+			r := who.get(page)
+			return r.status == 200 && len(r.json(t)["versions"].([]any)) > 0
+		}
+
+		// Chosen members read it and add to it; nobody else does.
+		must(t, share(a, "members", bID), 204)
+		if !reads(b) || reads(c) {
+			t.Fatal("members: b should read and c should not")
+		}
+		if got := listed(t, b, base+"?list=shared"); len(got) != 1 || got[0] != id {
+			t.Fatalf("b's shared %v", got)
+		}
+		if via := must(t, b.get(base+"?list=shared"), 200)["pages"].([]any)[0].(map[string]any)["via"]; via != "you" {
+			t.Fatalf("via %v", via)
+		}
+		refused(t, "c views", c.post(page+"/versions/1/view", nil), 404, "page_not_found")
+		must(t, publish(t, pb, page+"/versions", map[string]any{"kind": "html", "baseVersion": 1}, map[string]string{"index.html": "<h1>v2</h1>", "logo.svg": "<svg/>"}), 201)
+
+		// The team's admin governs it without reading it.
+		gov := must(t, admin.get(page), 200)
+		if gov["access"] != "admin" || len(gov["versions"].([]any)) != 0 || len(gov["members"].([]any)) != 1 {
+			t.Fatalf("admin's view %v", gov)
+		}
+		refused(t, "admin views", admin.post(page+"/versions/1/view", nil), 404, "page_not_found")
+		if got := listed(t, admin, base+"?list=all"); len(got) != 1 {
+			t.Fatalf("all %v", got)
+		}
+		refused(t, "a member lists all", b.get(base+"?list=all"), 403, "admin_required")
+		refused(t, "admin widens to the team", share(admin, "team"), 403, "page_sharing_widened")
+		refused(t, "admin adds a member", share(admin, "members", bID, cID), 403, "page_sharing_widened")
+
+		// Only the owner widens, renames and restores; a reader cannot, and
+		// someone it does not admit learns nothing.
+		refused(t, "a reader shares", share(b, "team"), 403, "page_not_owner")
+		refused(t, "a reader renames", b.send("PATCH", page, map[string]string{"title": "Mine now"}), 403, "page_not_owner")
+		refused(t, "a reader restores", b.post(page+"/versions/1/restore", nil), 403, "page_not_owner")
+		refused(t, "a reader deletes", b.send("DELETE", page, nil), 403, "page_not_owner")
+		refused(t, "an outsider shares", share(c, "team"), 404, "page_not_found")
+		refused(t, "someone outside the team", share(a, "members", outsiderID), 400, "page_member_not_in_team")
+		refused(t, "the owner as a member", share(a, "members", bID, mustID(t, a)), 400, "invalid_request")
+
+		// Everyone in the team, then a narrower list that starts afresh.
+		must(t, share(a, "team"), 204)
+		if !reads(c) {
+			t.Fatal("team: c should read")
+		}
+		if via := must(t, c.get(base+"?list=shared"), 200)["pages"].([]any)[0].(map[string]any)["via"]; via != "team" {
+			t.Fatalf("via %v", via)
+		}
+		must(t, share(admin, "members", cID), 204) // narrowing from the team is an admin's to do
+		if reads(b) || !reads(c) {
+			t.Fatal("narrowed to c: b should not read")
+		}
+		must(t, share(admin, "private"), 204)
+		refused(t, "admin widens from private", share(admin, "members", cID), 403, "page_sharing_widened")
+		must(t, share(a, "team"), 204)
+		must(t, share(a, "private"), 204)
+		if n := len(must(t, a.get(page), 200)["members"].([]any)); n != 0 {
+			t.Fatalf("private keeps %d members", n)
+		}
+
+		// The owner renames and restores; a restored version is the old files.
+		must(t, a.send("PATCH", page, map[string]string{"title": "Plan B"}), 204)
+		restored := must(t, a.post(page+"/versions/1/restore", nil), 201)
+		if restored["version"].(float64) != 3 || restored["title"] != "Plan B" {
+			t.Fatalf("restored %v", restored)
+		}
+		address := must(t, a.post(page+"/versions/3/view", nil), 200)["url"].(string)
+		if _, body := fetch(t, address, "", nil); body != "<h1>v1</h1>" {
+			t.Fatalf("restored page %q", body)
+		}
+
+		// Deleting keeps a file another page still names.
+		other := must(t, publish(t, pa, base, map[string]any{"title": "Other", "kind": "svg"}, map[string]string{"index.svg": "<svg/>"}), 201)["id"].(string)
+		must(t, admin.send("DELETE", page, nil), 204)
+		refused(t, "a deleted page", a.get(page), 404, "page_not_found")
+		objects, _ := filepath.Glob(filepath.Join(store.Dir, "teams", teamID, "pages", "*"))
+		if len(objects) != 1 {
+			t.Fatalf("%d objects left, want the one page %s still names", len(objects), other)
+		}
+	})
+}
+
+// mustID is a signed-in person's own id.
+func mustID(t *testing.T, b *browser) string {
+	t.Helper()
+	return must(t, b.get("/api/profile"), 200)["id"].(string)
+}
+
+func TestTeamDSHOpensAPageForItsStarter(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{})
+		admin := e.admin("admin@x.io")
+		teamID := newTeam(t, admin, "Pages")
+		a, aID := joined(t, e, admin, teamID, "a@x.io")
+		_, bID := joined(t, e, admin, teamID, "b@x.io")
+		base := "/api/teams/" + teamID + "/pages"
+		id := must(t, publish(t, e.pluginFor(a), base, map[string]any{"title": "T", "kind": "svg"}, map[string]string{"index.svg": "<svg/>"}), 201)["id"].(string)
+		token, _, _ := auth.NewSealer(secret, nil).Seal(auth.HostBearer, auth.Claims{Sub: "host-1", Via: "host", Team: teamID}, time.Hour)
+		host := &plugin{e: e, token: token}
+		view := base + "/" + id + "/versions/1/view"
+		must(t, host.post(view+"?starter="+aID, nil), 200)
+		refused(t, "a starter who may not read it", host.post(view+"?starter="+bID, nil), 404, "page_not_found")
+		refused(t, "no starter", host.post(view, nil), 404, "page_not_found")
 	})
 }

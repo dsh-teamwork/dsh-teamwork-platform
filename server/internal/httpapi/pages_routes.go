@@ -77,21 +77,28 @@ func (s *Server) getPage(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// viewPage mints a view address for a person: the console, the app, or a
-// member's plugin; a Team DSH, which is no person, gets none.
+// viewPage mints a view address for a person: the console, the app, a
+// member's plugin, or a Team DSH acting for its session's starter.
 func (s *Server) viewPage(w http.ResponseWriter, r *http.Request) error {
 	c, err := s.requirePlugin(r)
 	if err != nil {
 		return err
 	}
+	who := pageCaller(c)
 	if c.user == nil {
-		return wire.E(http.StatusNotFound, "page_not_found")
+		// A Team DSH opens a page for the session's starter, who must be a
+		// member of its team now, and reads only what they may.
+		starter := r.URL.Query().Get("starter")
+		if starter == "" || len(starter) > 32 {
+			return wire.E(http.StatusNotFound, "page_not_found")
+		}
+		who = pages.Caller{UserID: starter, TeamID: c.team}
 	}
 	n, err := strconv.Atoi(r.PathValue("n"))
 	if err != nil || n < 1 {
 		return wire.E(http.StatusNotFound, "page_not_found")
 	}
-	out, err := s.Pages.View(r.Context(), pageCaller(c), r.PathValue("teamId"), r.PathValue("id"), n)
+	out, err := s.Pages.View(r.Context(), who, r.PathValue("teamId"), r.PathValue("id"), n)
 	if err != nil {
 		return err
 	}
@@ -141,4 +148,68 @@ func (s *Server) sitePages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.Pages.Serve(w, r, s.Config.AppURL)
+}
+
+func (s *Server) renamePage(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in struct {
+		Title string `json:"title"`
+	}
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Pages.Rename(r.Context(), pageCaller(c), r.PathValue("teamId"), r.PathValue("id"), in.Title); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (s *Server) sharePage(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in pages.Sharing
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Pages.SetSharing(r.Context(), pageCaller(c), r.PathValue("teamId"), r.PathValue("id"), in); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (s *Server) restorePage(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	n, err := strconv.Atoi(r.PathValue("n"))
+	if err != nil || n < 1 {
+		return wire.E(http.StatusNotFound, "page_not_found")
+	}
+	out, err := s.Pages.Restore(r.Context(), pageCaller(c), r.PathValue("teamId"), r.PathValue("id"), n)
+	if err != nil {
+		return err
+	}
+	noStore(w)
+	writeJSON(w, http.StatusCreated, out)
+	return nil
+}
+
+func (s *Server) deletePage(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	if err := s.Pages.Delete(r.Context(), pageCaller(c), r.PathValue("teamId"), r.PathValue("id")); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }

@@ -2523,11 +2523,11 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** The caller's own pages of the team, newest version first, 50 at a time */
+        /** The caller's own pages (mine), pages shared with them (shared), or every page of the team for an admin (all); newest version first, 50 at a time */
         get: {
             parameters: {
                 query?: {
-                    list?: "mine";
+                    list?: "mine" | "shared" | "all";
                     before?: string;
                 };
                 header?: never;
@@ -2602,7 +2602,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** A page the caller may read, and its versions */
+        /** A page the caller may read, with its versions; or, for the team's admin, the page without its content */
         get: {
             parameters: {
                 query?: never;
@@ -2629,6 +2629,150 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        /** Delete a page and every version; its owner or the team's admin */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Rename a page; its owner's alone */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        title: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Renamed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        trace?: never;
+    };
+    "/teams/{teamId}/pages/{id}/sharing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Set who may read a page; the owner sets any, the team's admin only narrows (page_sharing_widened otherwise) */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        mode: "private" | "members" | "team";
+                        members?: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Shared */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/pages/{id}/versions/{n}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+                n: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a version copying version n; the owner's alone */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                    n: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The new version */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagePublished"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2699,10 +2843,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** A view address for one version, an hour, for the caller alone */
+        /** A view address for one version, an hour, for the caller alone (a Team DSH names the session's starter) */
         post: {
             parameters: {
-                query?: never;
+                query?: {
+                    starter?: string;
+                };
                 header?: never;
                 path: {
                     teamId: string;
@@ -3875,6 +4021,8 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             updatedBy: components["schemas"]["PagePerson"];
+            /** @enum {string|null} */
+            via: "you" | "team" | null;
         };
         PageList: {
             pages: components["schemas"]["PageSummary"][];
@@ -3892,6 +4040,11 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             updatedBy: components["schemas"]["PagePerson"];
+            /** @enum {string|null} */
+            via: "you" | "team" | null;
+            /** @enum {string} */
+            access: "owner" | "reader" | "admin";
+            members: components["schemas"]["PagePerson"][];
             versions: components["schemas"]["PageVersion"][];
         };
         PageVersion: {

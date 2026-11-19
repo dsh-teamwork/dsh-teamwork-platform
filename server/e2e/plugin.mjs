@@ -127,7 +127,10 @@ try {
   assert.ok((await page.text()).includes(`<h1>${heading}</h1>`));
   assert.equal(await (await fetch(view.url+'style.css')).text(),'h1{color:red}');
  }
- console.log('page e2e ok: published, versioned, refused a stale base, and viewed both versions');
+ // open: the plugin reads a version back, file for file, to change it.
+ const opened=await client.readPage(team.id,first.id,1,undefined,new AbortController().signal);
+ assert.deepEqual(opened.map(f=>[f.path,new TextDecoder().decode(f.bytes)]).sort(),[['index.html','<link rel="stylesheet" href="style.css"><h1>v1</h1>'],['style.css','h1{color:red}']]);
+ console.log('page e2e ok: published, versioned, refused a stale base, viewed both versions and opened one');
 } finally {await rm(pageSpace,{recursive:true,force:true});}
 
 callback.close();

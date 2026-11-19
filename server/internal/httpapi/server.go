@@ -139,6 +139,10 @@ func (s *Server) Handler() http.Handler {
 			get("/api/teams/{teamId}/pages", s.listPages)
 			get("/api/teams/{teamId}/pages/{id}", s.getPage)
 			post("/api/teams/{teamId}/pages/{id}/versions/{n}/view", s.viewPage)
+			write("PATCH", "/api/teams/{teamId}/pages/{id}", s.renamePage)
+			write("PUT", "/api/teams/{teamId}/pages/{id}/sharing", s.sharePage)
+			post("/api/teams/{teamId}/pages/{id}/versions/{n}/restore", s.restorePage)
+			write("DELETE", "/api/teams/{teamId}/pages/{id}", s.deletePage)
 			mux.HandleFunc("GET /p/", s.sitePages)
 		}
 
