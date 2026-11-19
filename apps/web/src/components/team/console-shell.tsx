@@ -91,11 +91,11 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
     sections: [
       { path: 'home', key: 'home', icon: House },
       { path: 'resources', key: 'resources', icon: BookOpen, within: ['submissions'] },
+      // What agents published, the team's pages beside its resources (docs/tech/pages.md); in every team, always listed.
+      { path: 'pages', key: 'pages', icon: Shapes, fill: true },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
       // Listed only once one of this person's computers connected; the same computers in every team.
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true },
-      // What agents published from the reader's sessions (docs/tech/pages.md); in every team, always listed.
-      { path: 'pages', key: 'pages', icon: Shapes, fill: true },
     ],
   },
   // The team overview heads Team management on its own; the toggle below it names the group.

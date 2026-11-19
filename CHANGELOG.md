@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `server/modelmeta`, `docs/tech/architecture.md` ("Live model form suggestions").
 
+## 2026-11-19 — Pages sit under Team resources, called "shared pages" in Chinese
+
+- **What:** The console's Pages entry moves from after My DSH to right under Team resources in Workspace, and its Chinese name becomes "shared pages" (the entry and the page's heading); English keeps "Pages".
+- **Why:** Pages are the team's own assets, beside its resources, and a member who reads teammates' pages without running a DSH finds them near the top; "page" alone said nothing in a console of pages.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/console-shell.tsx`, `docs/tech/pages.md`.
+
 ## 2026-11-19 — A funded route states its own bounds
 
 - **What:** `edition.FundingQuote` adds `MaxInput`, `MaxOutput` and `Body`: a funded call is bounded by its route's stated limits (`usage.RouteBounds`, the DeepSeek adapter's checks with those limits) instead of only direct DeepSeek, and the route adds upstream fields no caller may send. `FundingSettlement` adds `UpstreamCost`, the upstream's own `usage.cost`; the observer also reads OpenRouter's `cache_write_tokens`. `edition.Host` adds `Seal` and `Unseal` for an extension's own secrets under `PROVIDER_KEYS_SECRET`. The gateway's forwarded fields are `usage.ChatFields`.
