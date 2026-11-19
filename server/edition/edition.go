@@ -206,7 +206,9 @@ type Extension struct {
 	// Name prefixes its migrations' versions; short, lower-case, unique.
 	Name string
 	// Migrations holds a directory of .sql files per dialect, named sqlite,
-	// postgres and mysql; nil for none.
+	// postgres and mysql; nil for none. A dialect without its directory is
+	// one the edition does not run on: the binary refuses to start there,
+	// and editiontest skips it.
 	Migrations fs.FS
 	// Mount adds the extension's routes once the server is ready to serve. It
 	// returns stop, called once the server has stopped taking requests and

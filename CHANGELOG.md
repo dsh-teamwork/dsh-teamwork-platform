@@ -12,6 +12,13 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None; a team change handler ignores a kind it does not know.
 - **Upgrade:** Nothing.
 - **Refs:** `server/internal/team/configs.go`, `server/edition/edition.go`, `docs/tech/usage-budgets.md`; the models page remounts an edition's models section when the team's models change (`apps/web/src/pages/team/models.tsx`).
+## 2026-11-19 — An edition's gate runs only its own database suites
+
+- **What:** `editiontest.Each` skips a database an extension has no migrations for, as the binary already refuses to start on one. In a checkout with `premium/`, CI and `.husky/pre-push` leave out the open server's Go tests, drift check and plugin end-to-end test (`--filter=!@dsh-teamwork/go-server`), and the pre-push hook there requires only `TEST_POSTGRES_URL` and `MIGRATE_DEV_POSTGRES`.
+- **Why:** An edition's open files equal the community edition's, whose CI already ran those suites on all three databases; an edition that runs on fewer databases needs its own suites to skip the rest instead of failing.
+- **Breaking:** None. The open edition's gate is unchanged.
+- **Upgrade:** Nothing.
+- **Refs:** `server/edition/editiontest/editiontest.go`, `.github/workflows/ci.yaml`, `.husky/pre-push`, `CLAUDE.md` ("Commands").
 
 ## 2026-11-19 — Hosted models reach the plugin with their context window
 

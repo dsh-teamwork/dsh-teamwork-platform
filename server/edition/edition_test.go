@@ -317,3 +317,29 @@ func TestEditionSecretsAreBoundToTheirName(t *testing.T) {
 		}
 	})
 }
+
+// An extension without a dialect's migrations is never run on it, even where
+// that dialect's server is reachable: the binary would refuse to start there.
+func TestEachSkipsADialectWithoutMigrations(t *testing.T) {
+	table := "CREATE TABLE partial_notes (id VARCHAR(21) NOT NULL PRIMARY KEY);\n"
+	partial := edition.Extension{
+		Name: "partial",
+		Migrations: fstest.MapFS{
+			"sqlite/20260101000000_init.sql":   {Data: []byte(table)},
+			"postgres/20260101000000_init.sql": {Data: []byte(table)},
+		},
+		Mount: func(edition.Host) (func(), error) { return nil, nil },
+	}
+	var ran []string
+	editiontest.Each(t, []edition.Extension{partial}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
+		ran = append(ran, in.Dialect)
+	})
+	if len(ran) == 0 || ran[0] != "sqlite" {
+		t.Fatalf("ran on %v, want sqlite first", ran)
+	}
+	for _, d := range ran {
+		if d == "mysql" {
+			t.Fatalf("ran on mysql, which the extension has no migrations for")
+		}
+	}
+}

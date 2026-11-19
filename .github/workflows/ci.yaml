@@ -77,6 +77,14 @@ jobs:
       - name: Install node modules
         run: pnpm install --frozen-lockfile
 
+      # A closed edition (where premium/ exists) leaves out the open server's
+      # suites: its open files equal the community edition's (the edition
+      # boundary below), whose CI ran them on all three databases. It runs
+      # its own, on SQLite and Postgres only. OPEN_SUITES is empty here.
+      - name: Edition
+        run: |
+          if [ -d premium ]; then echo 'OPEN_SUITES=--filter=!@dsh-teamwork/go-server' >> "$GITHUB_ENV"; fi
+
       # Turbo's own cache, carried between runs. The key is unique per run on
       # purpose: a hit on the primary key skips the post-job save and freezes
       # the cache at whichever run wrote it first; `restore-keys` is what
@@ -110,10 +118,10 @@ jobs:
         run: |
           PGPASSWORD=postgres_password psql -h localhost -U postgres -c 'CREATE DATABASE go_drift'
           mysql -h 127.0.0.1 -uroot -pmysql_password -e 'CREATE DATABASE go_drift'
-          pnpm db:drift
+          pnpm db:drift $OPEN_SUITES
 
       - name: Test
-        run: pnpm test
+        run: pnpm test $OPEN_SUITES
 
       - name: Build
         run: pnpm build
@@ -126,12 +134,13 @@ jobs:
           repository: dsh-teamwork/dsh-teamwork
           path: _plugin
 
-      # Every Go module with an e2e directory runs it: the open server's, and
+      # Every Go module with an e2e directory runs it: the open server's, or
       # the closed one's where this tree has it.
       - name: Plugin end to end
         run: |
           (cd _plugin && pnpm install --frozen-lockfile --ignore-scripts)
           for dir in $(git ls-files '*e2e/*_test.go' | xargs -n1 dirname | sort -u); do
+            [ -z "$OPEN_SUITES" ] || [ "$dir" != server/e2e ] || continue
             (cd "$dir/.." && go test -tags e2e ./e2e)
           done
         env:

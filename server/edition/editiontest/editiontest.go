@@ -1,13 +1,15 @@
 // Package editiontest runs a closed edition's tests against the real server:
 // the open server with the extensions under test mounted, over a fresh
 // database of each dialect the open suites reach (SQLite always; Postgres and
-// MySQL when TEST_POSTGRES_URL and TEST_MYSQL_URL are set).
+// MySQL when TEST_POSTGRES_URL and TEST_MYSQL_URL are set) that every
+// extension under test has migrations for.
 package editiontest
 
 import (
 	"bytes"
 	"context"
 	"database/sql"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -49,7 +51,9 @@ type Options struct {
 }
 
 // Each runs f once per reachable dialect, as a subtest named after it, on a
-// server with exts mounted and their migrations applied.
+// server with exts mounted and their migrations applied. A dialect one of the
+// extensions has no migrations for is skipped: the binary refuses to start on
+// it (db.Migrate), so there is nothing to test.
 func Each(t *testing.T, exts []edition.Extension, o Options, f func(t *testing.T, in *Instance)) {
 	t.Helper()
 	var sets []db.Set
@@ -60,6 +64,11 @@ func Each(t *testing.T, exts []edition.Extension, o Options, f func(t *testing.T
 	}
 	for _, name := range []string{"sqlite", "postgres", "mysql"} {
 		t.Run(name, func(t *testing.T) {
+			for _, set := range sets {
+				if _, err := fs.Stat(set.FS, name); err != nil {
+					t.Skipf("%s: %s has no migrations for it", name, set.Name)
+				}
+			}
 			d := testdb.New(t, name, sets...)
 			if d == nil {
 				t.Skipf("%s: TEST_%s_URL is not set", name, strings.ToUpper(name))
