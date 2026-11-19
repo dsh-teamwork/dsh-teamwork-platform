@@ -259,15 +259,18 @@ a 403, so its existence is not told.
     browser revalidates (and is re-checked) every time and gets a 304;
   - no `Set-Cookie`, and any cookie sent is ignored.
 - **Where `/p/` is served: `CONTENT_URL`**, else `APP_URL`'s origin. The
-  hosted service sets `https://artifacts.dshteam.work`, on `dshteam.work`, a
-  domain registered for nothing
-  else, so a page is another site as well as an opaque origin: the console's
+  hosted service sets `https://artifacts.dshteam.work`, on a domain registered
+  for untrusted content alone (its other subdomains serve the hosted edition's
+  cloud computers to their owners, each behind a `__Host-` cookie no page can
+  set or replace, and pages ignore cookies), so a page is another site from
+  the console as well as an opaque origin: the console's
   host-only cookies never go there, a page cannot pass for the console in the
   address bar, and a browser or WebView that ignored the sandbox still could
   not reach the console. A self-hosted server needs no second domain and
   relies on the sandbox alone. When the two differ, `CONTENT_URL`'s host
   answers `/p/` and a `robots.txt` that refuses every crawler, and 404 to
-  everything else; `APP_URL`'s host answers `/p/` with 404. The server
+  everything else, matched as an exact host ahead of any subdomains an edition
+  serves (`contentHost` in `internal/httpapi/pages_routes.go`); `APP_URL`'s host answers `/p/` with 404. The server
   refuses to start when `CONTENT_URL` is on `APP_URL`'s registrable domain
   (a subdomain would share its cookies' site) or is not https off loopback.
 
@@ -365,7 +368,7 @@ In the plugin repository, beside the other `teamwork_*` tools
 | `teamwork_page` | the plugin repository | Open |
 | The `page` item | `packages/relay-client` | Open |
 | The card, the viewer, Pages, Share | `apps/web` | Open |
-| The phone's viewer and Share, cloud sessions, `artifacts.dshteam.work` | where `premium/` exists | Closed |
+| The phone's viewer and Share, cloud computers, `artifacts.dshteam.work` | where `premium/` exists | Closed |
 
 ## Configuration and operations
 
