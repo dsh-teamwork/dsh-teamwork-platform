@@ -872,7 +872,8 @@ func TestTeamDSHOffline(t *testing.T) {
 		} {
 			status, kind := do(route.method, route.path)
 			wantStatus, wantKind := do(route.method, route.never)
-			if status != wantStatus || kind != wantKind || strings.HasPrefix(route.path, "/api/") && status != http.StatusNotFound {
+			// A client reads a JSON error, never the console's page served in its place.
+			if status != wantStatus || kind != wantKind || status != http.StatusNotFound || !strings.HasPrefix(kind, "application/json") {
 				t.Errorf("%s %s = %d %s, want %d %s as a path that never existed", route.method, route.path, status, kind, wantStatus, wantKind)
 			}
 		}
