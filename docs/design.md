@@ -176,9 +176,11 @@ used for anything else. An unknown provider shows two initials on a
 ### Preset avatars
 
 A preset's face is one of a fixed library of avatars,
-`packages/shared/src/avatars.ts`, which the web console and the phone app both
-draw (`apps/web/src/components/preset-avatar.tsx` and the app's own), so a
-preset looks the same everywhere. **An avatar is an abstract emblem of a
+`packages/shared/src/avatars.ts`, which the web console, the phone app and the
+DSH plugin's panel all draw (`apps/web/src/components/preset-avatar.tsx`, the
+app's own, and the plugin's from a byte-for-byte copy that
+`server/e2e/avatars_test.go` holds equal), so a preset looks the same
+everywhere. **An avatar is an abstract emblem of a
 role**: two or three flat shapes — circles, arcs, rounded bars — composed to
 suggest what the role does (a balance for legal, a stack of coins for finance,
 work laid out in time for project management), in **Paper** and one accent on
