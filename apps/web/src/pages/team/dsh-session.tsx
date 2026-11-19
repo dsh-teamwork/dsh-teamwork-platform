@@ -694,13 +694,14 @@ function StartSettings({ config, disabled, value, onChange }: { config: SessionC
     })),
   ];
   return (
+    // The preset wraps under the folder when both do not fit, and a name longer than the row is cut short.
     <div className="flex flex-wrap items-center gap-0.5">
       {config.directories.length > 0 && (
-        <Select label={t('workspace')} value={cwd} disabled={disabled} className={cn(chip, 'font-medium')}
+        <Select label={t('workspace')} value={cwd} disabled={disabled} className={cn(chip, 'max-w-full font-medium')}
           options={config.directories.map((item) => ({ value: item.path, label: item.name, icon: <Folder className="size-4 text-muted-foreground" aria-hidden /> }))}
           change={(path) => onChange({ ...value, cwd: path })} />
       )}
-      <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className={cn(chip, 'font-medium')}
+      <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className={cn(chip, 'max-w-full font-medium')}
         change={(id) => onChange({ ...value, agentPreset: id || undefined, model: undefined })} />
     </div>
   );
