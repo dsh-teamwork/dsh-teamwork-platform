@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — The model catalogue lookup is a package an edition can call
+
+- **What:** The Models.dev and OpenRouter lookup and the USD/CNY rate behind `POST /api/teams/{teamId}/model-metadata/lookup` move from `internal/httpapi` to the exported `server/modelmeta` (`Search`, `ExchangeRate`), which adds `Endpoints`: the upstreams OpenRouter routes a model to, each with its own price. The route and its answers are unchanged.
+- **Why:** The hosted edition's operator console fills its catalogue from the same sources, and should not keep a second parser of them.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/modelmeta`, `docs/tech/architecture.md` ("Live model form suggestions").
+
 ## 2026-11-19 — Pages sit under Team resources, called "shared pages" in Chinese
 
 - **What:** The console's Pages entry moves from after My DSH to right under Team resources in Workspace, and its Chinese name becomes "shared pages" (the entry and the page's heading); English keeps "Pages".

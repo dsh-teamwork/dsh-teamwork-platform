@@ -345,7 +345,9 @@ server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
                      publish, docs/tech/pages.md), web (the embedded
                      console and public pages), wire (request shapes and
                      error codes); relay/ is the relay and shared DSHs
-                     (docs/tech/relay.md), an extension every main imports
+                     (docs/tech/relay.md), an extension every main imports;
+                     modelmeta/ reads the public model catalogues into form
+                     suggestions, for the console and an edition alike
 apps/web             Vite and React: the console and the public pages,
                      prerendered at its build and embedded in the binary;
                      an edition's web app composes it (mountWeb, ADR 0041)

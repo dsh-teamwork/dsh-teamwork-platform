@@ -1,4 +1,4 @@
-package httpapi
+package modelmeta
 
 import (
 	"context"
@@ -57,7 +57,7 @@ func TestMetadataAlwaysQueriesFixedUpstream(t *testing.T) {
 		return metadataResponse(`{"p":{"models":{"m":{"name":"Model"},"m-large":{"name":"Model large"}}}}`), nil
 	})}
 	for range 2 {
-		models, err := readMetadata(context.Background(), client, metadataLookup{Source: "models_dev", Provider: "p", Query: "m"})
+		models, err := Search(context.Background(), client, Query{Source: "models_dev", Provider: "p", Query: "m"})
 		if err != nil || len(models) != 2 || models[0].ID != "m" {
 			t.Fatalf("lookup: %+v %v", models, err)
 		}
@@ -68,7 +68,7 @@ func TestMetadataAlwaysQueriesFixedUpstream(t *testing.T) {
 	client.Transport = metadataTransport(func(r *http.Request) (*http.Response, error) {
 		return metadataResponse(`<html>Unavailable</html>`), nil
 	})
-	if _, err := readMetadata(context.Background(), client, metadataLookup{Source: "models_dev", Provider: "p", Query: "m"}); err == nil {
+	if _, err := Search(context.Background(), client, Query{Source: "models_dev", Provider: "p", Query: "m"}); err == nil {
 		t.Fatal("invalid upstream accepted")
 	}
 }
@@ -80,12 +80,12 @@ func TestMetadataUnknownProviderSearchesEveryProviderByExactID(t *testing.T) {
 		return metadataResponse(`{"a":{"models":{"Deepseek-Chat":{"limit":{"context":64000}},"deepseek-chat-v2":{}}},"b":{"models":{"deepseek-chat":{"limit":{"context":128000}}}},"c":{"models":{"other":{}}}}`), nil
 	})}
 	for _, provider := range []string{"my-proxy", ""} {
-		models, err := readMetadata(context.Background(), client, metadataLookup{Source: "models_dev", Provider: provider, Query: "deepseek-chat"})
+		models, err := Search(context.Background(), client, Query{Source: "models_dev", Provider: provider, Query: "deepseek-chat"})
 		if err != nil || len(models) != 2 || models[0].Provider != "a" || models[1].Provider != "b" {
 			t.Fatalf("provider %q: %+v %v", provider, models, err)
 		}
 	}
-	models, err := readMetadata(context.Background(), client, metadataLookup{Source: "models_dev", Provider: "a", Query: "deepseek"})
+	models, err := Search(context.Background(), client, Query{Source: "models_dev", Provider: "a", Query: "deepseek"})
 	if err != nil || len(models) != 2 {
 		t.Fatalf("a known provider still matches substrings: %+v %v", models, err)
 	}
@@ -98,19 +98,42 @@ func TestMetadataLiveExchangeRate(t *testing.T) {
 		}
 		return metadataResponse(`{"base":"USD","date":"` + time.Now().UTC().Format("2006-01-02") + `","rates":{"CNY":6.6665}}`), nil
 	})}
-	rate, date := metadataExchangeRate(context.Background(), client)
+	rate, date := ExchangeRate(context.Background(), client)
 	if rate != "6.666500000000" || date == "" {
 		t.Fatalf("bad FX: %q %q", rate, date)
 	}
 	for _, raw := range []string{`{"base":"EUR","rates":{"CNY":7}}`, `{"base":"USD","date":"2020-01-01","rates":{"CNY":7}}`, `{"base":"USD","rates":{"CNY":0}}`} {
 		client.Transport = metadataTransport(func(r *http.Request) (*http.Response, error) { return metadataResponse(raw), nil })
-		if rate, _ := metadataExchangeRate(context.Background(), client); rate != "" {
+		if rate, _ := ExchangeRate(context.Background(), client); rate != "" {
 			t.Fatal("guessed FX", rate)
 		}
 	}
 	for _, raw := range []string{`null`, `"-1"`, `"invalid"`} {
-		if metadataPrice(json.RawMessage(raw), 1000000) != "" {
+		if price(json.RawMessage(raw), 1000000) != "" {
 			t.Fatal(raw)
+		}
+	}
+}
+
+func TestEndpointsAreEachUpstreamsOwnPrice(t *testing.T) {
+	client := &http.Client{Transport: metadataTransport(func(r *http.Request) (*http.Response, error) {
+		if r.URL.String() != "https://openrouter.ai/api/v1/models/deepseek/deepseek-v3.2:free/endpoints" {
+			t.Fatalf("unexpected request: %v", r.URL)
+		}
+		return metadataResponse(`{"data":{"id":"deepseek/deepseek-v3.2:free","endpoints":[{"tag":"deepinfra/fp8","provider_name":"DeepInfra","quantization":"fp8","context_length":163840,"max_completion_tokens":16384,"pricing":{"prompt":"0.00000027","completion":"0.0000004","input_cache_read":"0.000000216"}},{"provider_name":"No tag"}]}}`), nil
+	})}
+	endpoints, err := Endpoints(context.Background(), client, "deepseek/deepseek-v3.2:free")
+	if err != nil || len(endpoints) != 1 {
+		t.Fatalf("endpoints: %+v %v", endpoints, err)
+	}
+	e := endpoints[0]
+	if e.Tag != "deepinfra/fp8" || e.Provider != "DeepInfra" || *e.ContextWindow != 163840 || *e.MaxTokens != 16384 ||
+		e.Prices["input"] != "0.270000000000" || e.Prices["output"] != "0.400000000000" || e.Prices["cacheRead"] != "0.216000000000" || e.Prices["cacheWrite"] != "" {
+		t.Fatalf("endpoint: %+v", e)
+	}
+	for _, id := range []string{"../../keys", "no-author", "a/b/c", "A/b"} {
+		if _, err := Endpoints(context.Background(), client, id); err == nil {
+			t.Errorf("accepted model id %q", id)
 		}
 	}
 }
