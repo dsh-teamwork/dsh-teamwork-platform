@@ -54,7 +54,7 @@ export function checkCancelled(signal: AbortSignal) {
 
 /** Coalesce provisional-session creation across drawer mounts; stale resolutions cannot retarget the draft. */
 export async function ensureFileTarget(
-  relay: RelayClient,
+  relay: Pick<RelayClient, 'createSession'>,
   computerId: string,
   draft: FileDraft,
   sessionId?: string,
@@ -75,7 +75,7 @@ export async function ensureFileTarget(
 
 /** Transfer selected bytes without submitting any prompt. */
 export async function uploadFiles(options: {
-  relay: RelayClient;
+  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload'>;
   computerId: string;
   sessionId: string;
   draft: FileDraft;
@@ -136,7 +136,7 @@ export async function uploadFiles(options: {
 
 /** One immutable outgoing message keeps its id after a lost acknowledgement. */
 export async function deliverFiles(options: {
-  relay: RelayClient;
+  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'prompt'>;
   computerId: string;
   sessionId: string;
   text: string;

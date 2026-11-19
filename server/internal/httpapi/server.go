@@ -5,7 +5,9 @@ package httpapi
 
 import (
 	"log/slog"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
@@ -32,6 +34,9 @@ type Server struct {
 	// Mux, when set, is the router Handler adds its routes to: one a closed
 	// edition has already added its own to (server/edition).
 	Mux *http.ServeMux
+	// Subdomains are the handlers of whole domains' subdomains, by domain
+	// (edition.Host.ServeSubdomains).
+	Subdomains map[string]http.Handler
 }
 
 // handler is a route that answers with an error instead of writing one.
@@ -174,7 +179,29 @@ func (s *Server) Handler() http.Handler {
 	}
 	// Security headers go on everything, the www/apex redirect included, so the
 	// twin host records HSTS too.
-	return recoverer(headers(s.secure(), s.contentHost(web.CanonicalHost(s.Config.AppURL, mux))))
+	// The content host is an exact host, ahead of any edition's subdomains.
+	return recoverer(headers(s.secure(), s.contentHost(subdomains(s.Subdomains, web.CanonicalHost(s.Config.AppURL, mux)))))
+}
+
+// subdomains sends a request for a subdomain of one of domains' keys to its
+// handler, and every other request to next.
+func subdomains(domains map[string]http.Handler, next http.Handler) http.Handler {
+	if len(domains) == 0 {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		host := strings.ToLower(r.Host)
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+		for domain, h := range domains {
+			if label, ok := strings.CutSuffix(host, "."+domain); ok && label != "" {
+				h.ServeHTTP(w, r)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // headers are the ones every answer carries. HSTS only where APP_URL is
