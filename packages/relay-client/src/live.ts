@@ -466,6 +466,9 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     finishUpload: sessions.finishUpload,
     cancelUpload: sessions.cancelUpload,
     cancel: sessions.cancel,
+    renameSession: sessions.renameSession,
+    pinSession: sessions.pinSession,
+    archiveSession: sessions.archiveSession,
     prompt: sessions.prompt,
     answer: sessions.answer,
   };

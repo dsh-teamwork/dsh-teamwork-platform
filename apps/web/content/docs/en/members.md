@@ -72,9 +72,14 @@ model and effort while it is not working, for that session alone. The
 paperclip at the left of the box adds files (text, code, logs, CSV, JSON or PDF; up to
 five, 20 MB each), sent with the message, or on their own.
 
-The open computer lists its latest sessions under it, with **Show all** for
-the rest; the arrow at the end of its row folds them away, so the other
-computers stay in reach.
+The open computer lists its latest sessions under it, pinned ones first, with
+**Show all** for the rest; the arrow at the end of its row folds them away, so
+the other computers stay in reach. The **⋯** at the end of a session pins it,
+renames it, copies its ID or archives it, as in DSH's own sidebar, and both
+show the change. Archived sessions are hidden until you open **Archived**; a
+running session can be archived once it stops. The menu needs a current
+DSH Teamwork plugin on that computer; with an older one it offers only the
+copy. In the phone app, press and hold a session for the same menu.
 
 The device count beside a computer opens its devices: every phone and browser
 paired with it, where **Remove** cuts any of them off at once, a lost phone

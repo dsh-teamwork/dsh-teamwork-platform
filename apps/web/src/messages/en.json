@@ -1016,6 +1016,19 @@
       "showFewer": "Show fewer",
       "expand": "Show the sessions on {name}",
       "collapse": "Hide the sessions on {name}",
+      "showArchived": "Archived ({count})",
+      "hideArchived": "Hide archived",
+      "actions": {
+        "menu": "Actions for {title}",
+        "pin": "Pin",
+        "unpin": "Unpin",
+        "pinned": "Pinned",
+        "rename": "Rename",
+        "title": "Session title",
+        "copyId": "Copy session ID",
+        "archive": "Archive",
+        "unarchive": "Unarchive"
+      },
       "noSessions": "No sessions yet.",
       "locked": "Enter your PIN to see your sessions.",
       "waiting": "Waiting on you",
@@ -1504,6 +1517,7 @@
     "cacheWrite": "Cache write (if supported)"
   },
   "relayErrors": {
+    "invalid_request": "The machine did not accept that. Check what you entered and try again.",
     "offline": "The machine is offline.",
     "not_found": "You cannot reach that machine or session any more.",
     "busy": "The agent is busy. Wait for it to finish.",

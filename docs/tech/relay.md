@@ -302,7 +302,9 @@ use, so DSH sees each phone as a separate client.
   - calls: `session/list`, `session/create`, `session/prompt`,
     `session/state`, `session/page`, `session/cancel`, `session/modelCatalog`,
     `teamwork/configuration`, `teamwork/selectModel`,
-    `userQuestions/answer`, `$events/result`;
+    `userQuestions/answer`, `$events/result`, and the list's actions:
+    `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
+    `workspace/archiveSession`, `workspace/unarchiveSession`;
   - streams: `session/follow`, `$events`.
 - **Tests:** `tests/bridge.test.ts` in the plugin holds the list, and drives
   the bridge with a method off it, a stream off it, and frames for a stream
@@ -324,6 +326,21 @@ admission and be idle; the desktop default is never saved. Native
 `session/prompt`, the plugin uses the same readiness checks as its local actions.
 A refusal is a native-shaped `result: { ok: false, error: { code } }`, with a
 bounded `teamwork/` code that the app localizes (the hosted edition's ADR 0015).
+
+**A session's list row** offers what DSH's own sidebar does that fits a phone
+or a browser: pin, rename, copy its id, archive. The plugin passes DSH's own
+`session/rename` (`{ sessionId, title }`) and `workspace/pinSession`,
+`unpinSession`, `archiveSession` and `unarchiveSession` (`{ sessionId }`) on
+with exactly those fields, so a client never sends `stopActivity`: a running
+session's archive is refused (`workspace/session-active`, read as `busy`), and
+the client offers it only while idle. `session/list` marks each item
+`teamwork: { pinned, archived }` from DSH's workspace registry, which the
+relay client reads into `SessionSummary.marks`: pinned sessions follow those
+waiting on the member, archived ones are hidden until asked for, and an older
+plugin's list, unmarked, offers only the copy. On a Team DSH each action is
+held to the member's own sessions like any call that names one, though the
+pin and archive land in that DSH's one registry, seen at its keyboard too.
+Forking a session and opening it in another app stay on the desktop.
 
 ## File attachments
 
@@ -514,8 +531,10 @@ the hosted edition, Cloud DSH.
   is read again every ten seconds, so a computer coming online or going away
   moves the page along by itself. The open one shows its sessions beneath it
   once it is online and this browser is paired, one line each, the newest six
-  until "Show all"; the arrow at the end of its row folds them away, so the
-  computers below stay in reach.
+  until "Show all", pinned ones first and archived ones under "Archived"; the
+  arrow at the end of its row folds them away, so the computers below stay in
+  reach. Each session's menu pins, renames, copies its id and archives it
+  ("The allow-list" above).
 - **The third column** follows the computer's state, one at a time, and only
   the last offers a session: offline (open DSH on it, or remove the
   computer);

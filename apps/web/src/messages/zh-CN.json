@@ -1016,6 +1016,19 @@
       "showFewer": "收起",
       "expand": "展开 {name} 上的会话",
       "collapse": "收起 {name} 上的会话",
+      "showArchived": "已归档（{count}）",
+      "hideArchived": "收起已归档",
+      "actions": {
+        "menu": "{title} 的操作",
+        "pin": "置顶",
+        "unpin": "取消置顶",
+        "pinned": "已置顶",
+        "rename": "重命名",
+        "title": "会话标题",
+        "copyId": "复制会话 ID",
+        "archive": "归档",
+        "unarchive": "取消归档"
+      },
       "noSessions": "还没有会话。",
       "locked": "输入 PIN 后可以看到你的会话。",
       "waiting": "等待你处理",
@@ -1504,6 +1517,7 @@
     "cacheWrite": "缓存写入（如支持）"
   },
   "relayErrors": {
+    "invalid_request": "那台电脑没有接受这个操作。请检查输入后重试。",
     "offline": "机器离线。",
     "not_found": "你已无法访问这台机器或这个会话。",
     "busy": "智能体正忙，请等它完成。",

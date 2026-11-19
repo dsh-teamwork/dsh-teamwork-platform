@@ -78,7 +78,7 @@ export function TeamDshPage() {
                   current={open && !sessionId}
                   onPick={onPick}
                 />
-                {open && <SessionList base={`${base}/${paired.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
+                {open && <SessionList computerId={paired.id} base={`${base}/${paired.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
           })}

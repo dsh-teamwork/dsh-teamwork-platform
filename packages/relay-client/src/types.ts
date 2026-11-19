@@ -74,6 +74,11 @@ export interface SessionSummary {
   pending: Pending | null;
   /** A running turn's progress (the plugin's `teamworkStep`): its tool calls so far and what the latest works on; null when idle or not reported. */
   step: { count: number; tool: string; target: string } | null;
+  /**
+   * Whether DSH's sidebar pins or archives it (the plugin's `teamwork` mark on `session/list`). Null from a plugin too
+   * old to mark its list, which cannot rename, pin or archive either.
+   */
+  marks: { pinned: boolean; archived: boolean } | null;
 }
 
 export type ToolStatus = 'running' | 'done' | 'failed' | 'denied';
@@ -259,6 +264,12 @@ export interface RelayClient {
   cancelUpload(computerId: string, sessionId: string, uploadId: string): Promise<void>;
   /** Stops the agent's current turn; what it already did stays. */
   cancel(computerId: string, sessionId: string): Promise<void>;
+  /** Gives a session the title the member typed (DSH's `session/rename`), and returns it as DSH settled it. */
+  renameSession(computerId: string, sessionId: string, title: string): Promise<string>;
+  /** Pins a session ahead of the others, or unpins it, in DSH's sidebar as in every list. */
+  pinSession(computerId: string, sessionId: string, pinned: boolean): Promise<void>;
+  /** Archives a session, hidden from the lists until shown, or restores it; a running one is refused as `busy`. */
+  archiveSession(computerId: string, sessionId: string, archived: boolean): Promise<void>;
   /**
    * Called whenever a session of the computer starts or stops running, or
    * starts or stops waiting on the member, so a list can read itself again.

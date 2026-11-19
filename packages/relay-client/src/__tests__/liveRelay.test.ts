@@ -254,8 +254,8 @@ describe('the live relay client', () => {
       },
     });
     expect(await listed).toEqual([
-      { id: 's2', title: '', status: 'idle', updatedAt: new Date(1).toISOString(), directory: 'site', pending: { kind: 'question', id: 'q-1#0', question: 'Deploy?', options: [{ id: 'Yes', label: 'Yes' }] }, step: null },
-      { id: 's1', title: '', status: 'running', updatedAt: new Date(2).toISOString(), directory: 'app', pending: null, step: null },
+      { id: 's2', title: '', status: 'idle', updatedAt: new Date(1).toISOString(), directory: 'site', pending: { kind: 'question', id: 'q-1#0', question: 'Deploy?', options: [{ id: 'Yes', label: 'Yes' }] }, step: null, marks: null },
+      { id: 's1', title: '', status: 'running', updatedAt: new Date(2).toISOString(), directory: 'app', pending: null, step: null, marks: null },
     ]);
   });
 

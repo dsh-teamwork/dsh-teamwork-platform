@@ -118,7 +118,7 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
                     </Link>
                   }
                 />
-                {expanded && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
+                {expanded && <SessionList computerId={computerId} base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
           })}

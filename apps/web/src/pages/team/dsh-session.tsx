@@ -5,11 +5,13 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { ArrowUp, ChevronDown, ChevronRight, FileText, Folder, Loader, MessagesSquare, Paperclip, Plus, Server, Square, X, type LucideIcon } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Server, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { DropdownMenu } from 'radix-ui';
 import Markdown from 'react-markdown';
 import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
+import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import {
@@ -57,6 +59,7 @@ export type SessionClient = Pick<
   RelayClient,
   | 'listSessions' | 'watchSessions' | 'follow' | 'older' | 'createSession' | 'configuration' | 'selectModel'
   | 'uploadCapabilities' | 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'cancel' | 'prompt' | 'answer'
+  | 'renameSession' | 'pinSession' | 'archiveSession'
   | 'watchPin' | 'unlock' | 'setPin'
 >;
 
@@ -68,7 +71,7 @@ function useSessionClient(): SessionClient {
   return useContext(SessionClientContext) ?? relayFor(me);
 }
 
-const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {
@@ -155,16 +158,22 @@ export function useComputer(computerId: string) {
 const SESSIONS_SHOWN = 6;
 
 /**
- * Beneath the open computer in the column: a new session, then the member's sessions on it, one line each and the
- * newest `SESSIONS_SHOWN` until the rest are asked for, or a word that it is locked.
+ * Beneath the open computer in the column: a new session, then the member's sessions on it, one line each, pinned
+ * ones first and the newest `SESSIONS_SHOWN` until the rest are asked for, or a word that it is locked. Archived
+ * sessions are hidden until "Archived" opens them, as in DSH's sidebar; the open one stays listed either way. Each row
+ * has DSH's own actions that fit a browser (pin, rename, copy its id, archive), once the computer's plugin marks its
+ * list (`SessionSummary.marks`); an older one offers only the copy.
  */
-export function SessionList({ base, locked, sessions, sessionId, onPick }: { base: string; locked: boolean; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void }) {
+export function SessionList({ computerId, base, locked, sessions, sessionId, onPick }: { computerId: string; base: string; locked: boolean; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void }) {
   const t = useTranslations('team.dsh');
-  const format = useFormatter();
   const [all, setAll] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const list = sessions ?? [];
-  // The open session stays listed when it is older than the ones shown.
-  const shown = all ? list : list.filter((s, index) => index < SESSIONS_SHOWN || s.id === sessionId);
+  const live = list.filter((s) => !s.marks?.archived);
+  const archived = list.filter((s) => s.marks?.archived);
+  const shown = all ? live : live.filter((s, index) => index < SESSIONS_SHOWN || s.id === sessionId);
+  const shownArchived = showArchived ? archived : archived.filter((s) => s.id === sessionId);
+  const item = (s: SessionSummary) => <SessionRow key={s.id} computerId={computerId} base={base} session={s} open={s.id === sessionId} onPick={onPick} />;
   return (
     <div className="ml-4 flex flex-col gap-0.5 border-l pl-2">
       {locked ? (
@@ -175,30 +184,143 @@ export function SessionList({ base, locked, sessions, sessionId, onPick }: { bas
             <Plus className="size-4" aria-hidden />
             {t('newSession')}
           </Link>
-          {sessions?.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noSessions')}</p>}
-          {shown.map((s) => (
-            <Link
-              key={s.id}
-              to={`${base}/${s.id}`}
-              onClick={onPick}
-              title={s.directory}
-              aria-current={s.id === sessionId ? 'page' : undefined}
-              className={cn(row, 'gap-2', s.id === sessionId && cn(selected, 'font-medium'))}
-            >
-              {s.pending && <Dot className="bg-signal" label={t('waiting')} />}
-              <span className="min-w-0 flex-1 truncate">{s.title || t('untitled')}</span>
-              <span className="shrink-0 text-xs font-normal text-muted-foreground">
-                {s.status === 'running' ? t('running') : format.relativeTime(new Date(s.updatedAt), new Date())}
-              </span>
-            </Link>
-          ))}
-          {list.length > SESSIONS_SHOWN && (
+          {sessions !== null && live.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noSessions')}</p>}
+          {shown.map(item)}
+          {live.length > SESSIONS_SHOWN && (
             <button type="button" onClick={() => setAll(!all)} className={cn(row, 'text-xs text-muted-foreground')}>
-              {all ? t('showFewer') : t('showAll', { count: list.length })}
+              {all ? t('showFewer') : t('showAll', { count: live.length })}
             </button>
           )}
+          {archived.length > 0 && (
+            <button type="button" aria-expanded={showArchived} onClick={() => setShowArchived(!showArchived)} className={cn(row, 'gap-2 text-xs text-muted-foreground')}>
+              <Archive className="size-3.5" aria-hidden />
+              {t(showArchived ? 'hideArchived' : 'showArchived', { count: archived.length })}
+            </button>
+          )}
+          {shownArchived.map(item)}
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * One session in the column: its title, a pin when pinned, and when it last changed, or "Running"; the menu at its
+ * end, and in place of the title a box to rename it. Each action goes to the computer, whose list is read again.
+ */
+function SessionRow({ computerId, base, session: s, open, onPick }: { computerId: string; base: string; session: SessionSummary; open: boolean; onPick: () => void }) {
+  const t = useTranslations('team.dsh');
+  const tc = useTranslations('common');
+  const format = useFormatter();
+  const word = useRelayError();
+  const relay = useSessionClient();
+  const [renaming, setRenaming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const title = s.title || t('untitled');
+
+  async function act(run: () => Promise<unknown>) {
+    setBusy(true);
+    try {
+      await run();
+      return true;
+    } catch (error) {
+      toast.error(word(error));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function copyId() {
+    try {
+      await navigator.clipboard.writeText(s.id);
+      toast.success(tc('copied'));
+    } catch {
+      toast.error(tc('copyFailed'));
+    }
+  }
+
+  if (renaming) {
+    const save = async (value: string) => {
+      const next = value.trim();
+      if (!next || next === s.title) return setRenaming(false);
+      if (await act(() => relay.renameSession(computerId, s.id, next))) setRenaming(false);
+    };
+    return (
+      <form className="px-1 py-0.5" onSubmit={(event) => { event.preventDefault(); void save(new FormData(event.currentTarget).get('title') as string); }}>
+        <Input
+          name="title"
+          aria-label={t('actions.title')}
+          defaultValue={s.title}
+          autoFocus
+          maxLength={500}
+          disabled={busy}
+          className="h-8 text-sm"
+          onFocus={(event) => event.currentTarget.select()}
+          onKeyDown={(event) => { if (event.key === 'Escape') setRenaming(false); }}
+          onBlur={(event) => void save(event.currentTarget.value)}
+        />
+      </form>
+    );
+  }
+
+  const item = 'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm outline-none data-[disabled]:text-muted-foreground data-[highlighted]:bg-accent [&_svg]:size-4 [&_svg]:text-muted-foreground';
+  return (
+    <div className={cn(row, 'group gap-2', open && cn(selected, 'font-medium'), s.marks?.archived && 'text-muted-foreground')}>
+      <Link
+        to={`${base}/${s.id}`}
+        onClick={onPick}
+        title={s.directory}
+        aria-current={open ? 'page' : undefined}
+        className="flex min-w-0 flex-1 items-center gap-2 after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+      >
+        {s.pending && <Dot className="bg-signal" label={t('waiting')} />}
+        {s.marks?.pinned && <Pin className="size-3.5 shrink-0 text-muted-foreground" aria-label={t('actions.pinned')} />}
+        <span className="min-w-0 flex-1 truncate">{title}</span>
+        <span className="shrink-0 text-xs font-normal text-muted-foreground">
+          {s.status === 'running' ? t('running') : format.relativeTime(new Date(s.updatedAt), new Date())}
+        </span>
+      </Link>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger
+          disabled={busy}
+          aria-label={t('actions.menu', { title })}
+          title={t('actions.menu', { title })}
+          className="relative -mr-1 flex shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-background md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 md:data-[state=open]:opacity-100"
+        >
+          <Ellipsis className="size-4" aria-hidden />
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content align="start" sideOffset={4} className="z-50 min-w-44 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+            {s.marks && !s.marks.archived && (
+              <DropdownMenu.Item className={item} onSelect={() => void act(() => relay.pinSession(computerId, s.id, !s.marks!.pinned))}>
+                {s.marks.pinned ? <PinOff aria-hidden /> : <Pin aria-hidden />}
+                {t(s.marks.pinned ? 'actions.unpin' : 'actions.pin')}
+              </DropdownMenu.Item>
+            )}
+            {s.marks && (
+              <DropdownMenu.Item className={item} onSelect={() => setRenaming(true)}>
+                <PencilLine aria-hidden />
+                {t('actions.rename')}
+              </DropdownMenu.Item>
+            )}
+            <DropdownMenu.Item className={item} onSelect={() => void copyId()}>
+              <Copy aria-hidden />
+              {t('actions.copyId')}
+            </DropdownMenu.Item>
+            {s.marks && (
+              <>
+                <DropdownMenu.Separator className="-mx-1 my-1 h-px bg-border" />
+                {/* DSH refuses to archive a running session, as its own sidebar asks first: stop it, then archive it. */}
+                <DropdownMenu.Item className={item} disabled={s.status === 'running' && !s.marks.archived}
+                  onSelect={() => void act(() => relay.archiveSession(computerId, s.id, !s.marks!.archived))}>
+                  {s.marks.archived ? <ArchiveRestore aria-hidden /> : <Archive aria-hidden />}
+                  {t(s.marks.archived ? 'actions.unarchive' : 'actions.archive')}
+                </DropdownMenu.Item>
+              </>
+            )}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
     </div>
   );
 }

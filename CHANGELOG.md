@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — Rename, pin and archive a session from the console
+
+- **What:** Each session in My DSH and Team DSH has a menu that pins it, renames it, copies its ID and archives or restores it, through DSH's own `session/rename` and `workspace/pinSession`, `unpinSession`, `archiveSession` and `unarchiveSession`, which the plugin's allow-list now passes with exactly their fields. `session/list` items carry the plugin's `teamwork: { pinned, archived }`, read into `SessionSummary.marks`: pinned sessions list after those waiting on the member, archived ones hide under "Archived". `@dsh-teamwork/relay-client` adds `renameSession`, `pinSession` and `archiveSession`.
+- **Why:** The console could not tell its sessions apart ("Greeting" after "Greeting") or clear old ones away, and its list disagreed with DSH's sidebar, which hides archived sessions.
+- **Breaking:** None. A computer whose plugin predates the mark offers only the copy.
+- **Upgrade:** Update the DSH Teamwork plugin on each computer for the menu.
+- **Refs:** `docs/tech/relay.md` ("The allow-list"), `packages/relay-client/src/dsh-sessions.ts`, `apps/web/src/pages/team/dsh-session.tsx`.
+
 ## 2026-11-19 — My DSH and Team DSH: a foldable session list, DSH's composer layout
 
 - **What:** The open computer lists its newest six sessions on one line each, with **Show all** for the rest, and folds them away from the arrow on its row. A new session waits in the middle of the column with its folder and preset above the message box; the box's bottom row holds the paperclip on the left and the model, effort and a round Send or Stop on the right, as DSH's own input bar does, and moves to the foot once the session starts. A new session and the session it becomes are one view, so the address taking its id no longer redraws the conversation. The column is wider (`max-w-4xl`).
