@@ -18,9 +18,11 @@
  * Anthropic and Gemini are left out on purpose: their OpenAI-compatible layers
  * are partial. A team reaches them through OpenRouter or a custom address.
  *
- * Each entry's display name is `team.catalog.<id>` in the messages, since some
- * are written differently in Chinese; its tile is its mark (`providerMark` of
- * its id, in @dsh-teamwork/shared).
+ * In the team console each entry's display name is `team.catalog.<id>` in its
+ * messages, since some are written differently in Chinese; its tile is its
+ * mark (`providerMark` of its id). It lives here so that every console which
+ * adds a provider (the team's, and an edition's own) offers the same list and
+ * reads Models.dev under the same names.
  */
 
 export interface CatalogProvider {

@@ -21,7 +21,7 @@ import zhCN from '@/messages/zh-CN.json';
  * involve (`data-f` names the features each part belongs to). Both are CSS,
  * since this page runs no React, and motion stops under reduced motion. Anthropic is
  * reached through OpenRouter or a custom address, as the console's catalogue
- * says (lib/provider-catalog.ts). Inline SVG drawn from the theme's tokens, so
+ * says (`@dsh-teamwork/shared`'s provider-catalog.ts). Inline SVG drawn from the theme's tokens, so
  * it follows light and dark; the other icons are lucide's, at their 24-unit
  * size.
  */

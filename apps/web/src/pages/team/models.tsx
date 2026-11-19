@@ -9,6 +9,7 @@
  * or a key, in Team resources.
  */
 
+import { catalogEntry, PROVIDER_CATALOG } from '@dsh-teamwork/shared';
 import { KeyRound, Plus, Tag } from 'lucide-react';
 import { createElement, useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
@@ -28,7 +29,6 @@ import { Input } from '@/components/ui/input';
 import { editionModels } from '@/lib/edition';
 import { api, ApiError, type ConfigOf, type Provider, type Team, type TeamConfig } from '@/lib/api';
 import { lookupReference, type Reference } from '@/lib/model-metadata';
-import { catalogEntry, PROVIDER_CATALOG } from '@/lib/provider-catalog';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
