@@ -152,6 +152,9 @@ the team keeps its records under a former member.
 lookup against fixed Models.dev or OpenRouter URLs, with a request deadline
 and bounded responses. Pricing lookups also obtain live USD/CNY FX from
 Frankfurter. There is no local catalog, cache, scheduled sync or saved mapping.
+The reading is `server/modelmeta`, exported so an edition's own forms read the
+same catalogues the same way; it also lists the upstreams OpenRouter routes a
+model to, each with its own price (`Endpoints`), which no open form uses yet.
 A provider the console lists (`apps/web/src/lib/provider-catalog.ts`) is named
 by its Models.dev provider id and sits at the address Models.dev states for it,
 except where an entry says why not, so a team's provider is read there under
