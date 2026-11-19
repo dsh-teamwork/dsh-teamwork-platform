@@ -85,7 +85,9 @@ needing no call elsewhere on a connection.
   refused 4400, and a plugin that leaves it out (an older one, or a system the
   relay names none for) is recorded with none. The phone's list of pairings
   carries it as `hostOs` and the console's computers as `os`, for each to show
-  beside the computer's name. A shared DSH reports none.
+  beside the computer's name. A shared DSH reports none. The phone's list also
+  carries `hostLastSeenAt`, the host's `last_seen_at` (a shared host's, which
+  may be null), so it can say how long an offline computer has been away.
 - **The app** signs in through the website the way the plugin does ([ADR 0001](../adr/0001-plugin-sign-in.md)):
   PKCE and a code. It receives its own Bearer, with `via` naming the app. The
   token says who the person is. On its own it reaches no computer.

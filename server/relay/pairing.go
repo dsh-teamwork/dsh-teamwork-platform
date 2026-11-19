@@ -52,11 +52,14 @@ type pairingView struct {
 	HostName string `json:"hostName"`
 	// HostOS is the operating system of the member's own computer as its plugin
 	// reports it; null for a shared DSH or a plugin too old to report one.
-	HostOS     *relayhost.Os `json:"hostOs"`
-	DeviceName string        `json:"deviceName"`
-	Status     string        `json:"status"` // pending or confirmed
-	CreatedAt  string        `json:"createdAt"`
-	LastUsedAt *string       `json:"lastUsedAt"`
+	HostOS *relayhost.Os `json:"hostOs"`
+	// HostLastSeenAt is when its computer last connected to the relay (it may be
+	// connected now); null for a shared DSH that never has.
+	HostLastSeenAt *string `json:"hostLastSeenAt"`
+	DeviceName     string  `json:"deviceName"`
+	Status         string  `json:"status"` // pending or confirmed
+	CreatedAt      string  `json:"createdAt"`
+	LastUsedAt     *string `json:"lastUsedAt"`
 	// Online is set only on a phone's list: whether its computer is connected.
 	Online *bool `json:"online,omitempty"`
 	// Push is set only on a phone's list: whether this pairing notifies it. The token never leaves the relay.
@@ -66,14 +69,31 @@ type pairingView struct {
 // iso is a time as JavaScript's toISOString writes it.
 func iso(t time.Time) string { return t.UTC().Format("2006-01-02T15:04:05.000Z") }
 
-func view(p *ent.RelayPairing, hostName string, hostOS *relayhost.Os) pairingView {
-	v := pairingView{ID: p.ID, HostID: p.HostID, UserID: p.UserID, HostName: hostName, HostOS: hostOS, DeviceName: p.DeviceName, Status: "pending", CreatedAt: iso(p.CreatedAt)}
+// pairedHost is what a pairing says of the computer it reaches.
+type pairedHost struct {
+	name     string
+	os       *relayhost.Os
+	lastSeen *time.Time
+}
+
+func ofHost(h *ent.RelayHost) pairedHost {
+	return pairedHost{name: h.Name, os: h.Os, lastSeen: &h.LastSeenAt}
+}
+
+func ofShared(h *ent.SharedHost) pairedHost { return pairedHost{name: h.Name, lastSeen: h.LastSeenAt} }
+
+func view(p *ent.RelayPairing, host pairedHost) pairingView {
+	v := pairingView{ID: p.ID, HostID: p.HostID, UserID: p.UserID, HostName: host.name, HostOS: host.os, DeviceName: p.DeviceName, Status: "pending", CreatedAt: iso(p.CreatedAt)}
 	if p.ConfirmedAt != nil {
 		v.Status = "confirmed"
 	}
 	if p.LastUsedAt != nil {
 		s := iso(*p.LastUsedAt)
 		v.LastUsedAt = &s
+	}
+	if host.lastSeen != nil {
+		s := iso(*host.lastSeen)
+		v.HostLastSeenAt = &s
 	}
 	return v
 }
@@ -180,7 +200,7 @@ func (p *pairings) redeem(ctx context.Context, ph phone, in redeem, now time.Tim
 		if err != nil {
 			return err
 		}
-		out = view(pairing, host.Name, host.Os)
+		out = view(pairing, ofHost(host))
 		return nil
 	})
 	return out, err
@@ -279,23 +299,21 @@ func (p *pairings) list(ctx context.Context, s scope) ([]pairingView, error) {
 	if err != nil {
 		return nil, err
 	}
-	names := map[string]string{}
-	systems := map[string]*relayhost.Os{}
+	known := map[string]pairedHost{}
 	for _, h := range hosts {
-		names[h.ID] = h.Name
-		systems[h.ID] = h.Os
+		known[h.ID] = ofHost(h)
 	}
 	shared, err := p.db.SharedHost.Query().Where(sharedhost.IDIn(hostIDs...)).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	for _, h := range shared {
-		names[h.ID] = h.Name
+		known[h.ID] = ofShared(h)
 	}
 	_, toPhone := s.(phone)
 	out := make([]pairingView, len(rows))
 	for i, r := range rows {
-		out[i] = view(r, names[r.HostID], systems[r.HostID])
+		out[i] = view(r, known[r.HostID])
 		if toPhone {
 			push := r.PushToken != nil
 			out[i].Push = &push
