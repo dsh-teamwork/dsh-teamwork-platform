@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { markInitials, PROVIDER_MARKS, providerMark } from '../providers';
+import { markGradient, markInitials, PROVIDER_MARKS, providerMark, type MarkArt } from '../providers';
 
 describe('providerMark', () => {
   it.each([
@@ -46,8 +46,16 @@ describe('providerMark', () => {
     expect(providerMark(undefined, '', null)).toBeUndefined();
   });
 
-  it('has a mark for every rule', () => {
-    for (const paths of Object.values(PROVIDER_MARKS)) expect(paths.length).toBeGreaterThan(0);
+  it('draws every mark, each gradient fill naming one of its own gradients', () => {
+    for (const art of Object.values(PROVIDER_MARKS) as MarkArt[]) {
+      expect(art.shapes.length).toBeGreaterThan(0);
+      for (const shape of art.shapes) {
+        expect(shape.d ?? shape.circle).toBeDefined();
+        const gradient = markGradient(shape.fill);
+        if (gradient !== undefined) expect(art.gradients?.[gradient]).toBeDefined();
+        else expect(shape.fill).toMatch(/^(#[0-9a-f]{6}|gold)$/i);
+      }
+    }
   });
 });
 

@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — Provider marks in their makers' colours
+
+- **What:** Each provider's mark is drawn in its maker's own colours and gradients (LobeHub's colour icons; OpenAI, Anthropic, xAI, Ollama and OpenRouter stay black) on a new `--mark-plate` tile, light in both themes, in the console, on the home page's diagram and in the phone app. `PROVIDER_MARKS` now holds shapes and gradients instead of single-colour paths, and the web app's `MarkSvg` draws one.
+- **Why:** Single-colour marks were hard to tell apart; a maker is recognised by its colours.
+- **Breaking:** `PROVIDER_MARKS` entries change shape (`MarkArt`), so every client drawing one changes with it.
+- **Upgrade:** Nothing; the phone app's colours ship with its next build.
+- **Refs:** `packages/shared/src/providers.ts`, `apps/web/src/components/provider-mark.tsx`, `docs/design.md` ("Icons").
+
 ## 2026-11-18 — A computer's operating system, and My DSH's devices page
 
 - **What:** The plugin's relay hello adds `os` (`macos`, `windows` or `linux`; any other value is refused 4400, none is allowed), stored in the new nullable `relay_hosts.os` and refreshed on every connection. `GET /relay/pairings` adds `hostOs` and `GET /relay/hosts` adds `os`; `@dsh-teamwork/relay-client`'s `Computer` adds `os`. My DSH shows each computer's operating system and, beside it, the number of devices paired with it, which opens a devices page of its own (`/teams/{teamId}/my-dsh/{hostId}/devices`) where each is removed; the computer's page no longer lists them.
