@@ -8,7 +8,7 @@
 import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
-import Markdown from 'react-markdown';
+import Markdown, { type Components } from 'react-markdown';
 import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
@@ -19,6 +19,8 @@ import {
   defaultDirectory,
   deliverFiles,
   EMPTY_SESSION,
+  fileReference,
+  toolKey,
   ensureFileTarget,
   fileSize,
   newFileDraft,
@@ -53,7 +55,7 @@ import { relayFor } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
-import { SessionFiles } from './session-files';
+import { SessionFiles, type FileTarget } from './session-files';
 
 /** What the session parts speak to: a computer's sessions and its PIN. */
 export type SessionClient = Pick<
@@ -439,6 +441,9 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
   const [failed, setFailed] = useState<string | null>(null);
   const [openPage, setOpenPage] = useState<PublishedPage | null>(null);
   const [filesOpen, setFilesOpen] = useState(false);
+  const [fileOpened, setFileOpened] = useState<FileTarget | null>(null);
+  // A file the conversation names opens in the files column, where the computer's plugin can read it.
+  const openFile = config?.files && id ? (target: FileTarget) => { setFileOpened(target); setFilesOpen(true); } : undefined;
 
   useEffect(() => (id ? relay.follow(computerId, id, (event) => setState((s) => applySessionEvent(s, event))) : undefined), [relay, computerId, id]);
 
@@ -548,7 +553,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
               <PageCard key={row.id} page={row.page} onOpen={() => setOpenPage(row.page)} />
             ) : row.kind === 'assistant' ? (
               <div key={row.id} className="flex flex-col gap-2 leading-6 [&_code]:font-mono [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5">
-                <Markdown remarkPlugins={[remarkGfm]} skipHtml>{row.text}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]} skipHtml components={openFile && fileLinks(openFile)}>{row.text}</Markdown>
               </div>
             ) : row.kind === 'failed' ? (
               <p key={row.id} role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-destructive [overflow-wrap:anywhere]">
@@ -558,7 +563,16 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
               <details key={row.id} className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
                 <summary>{t('steps', { count: row.tools.length })}{row.status === 'running' ? ` · ${t('running')}` : row.status === 'done' ? '' : ` · ${t(row.status)}`}</summary>
                 <ul className="mt-2 flex flex-col gap-1">
-                  {row.tools.map((tool) => <li key={tool.id} className="truncate font-mono">{tool.name} {tool.summary}</li>)}
+                  {row.tools.map((tool) => {
+                    // A step that read, wrote or edited a file opens it.
+                    const file = openFile && ['tools.read', 'tools.write', 'tools.edit'].includes(toolKey(tool.name) ?? '') ? fileReference(tool.summary) : null;
+                    return (
+                      <li key={tool.id} className="truncate font-mono">
+                        {tool.name}{' '}
+                        {file ? <button type="button" className={fileLink} onClick={() => openFile!(file)}>{tool.summary}</button> : tool.summary}
+                      </li>
+                    );
+                  })}
                 </ul>
               </details>
             ),
@@ -593,7 +607,8 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
           )}
           {state.closed && <p role="alert" className="text-destructive">{word(new RelayError(state.closed))}</p>}
           {filesOpen && id && (
-            <SessionFiles client={relay} computerId={computerId} sessionId={id} items={state.items} word={word} onClose={() => setFilesOpen(false)} />
+            <SessionFiles client={relay} computerId={computerId} sessionId={id} items={state.items} word={word}
+              opened={fileOpened} onOpen={setFileOpened} onClose={() => { setFilesOpen(false); setFileOpened(null); }} />
           )}
           {openPage && (
             // Beside the conversation on a wide screen, over it on a narrow one (docs/tech/pages.md, "The clients").
@@ -1099,6 +1114,28 @@ export function PinGate({ computerId, state, lockedHint }: { computerId: string;
       )}
     </Card>
   );
+}
+
+const fileLink = 'cursor-pointer underline decoration-dotted underline-offset-2 hover:text-foreground hover:decoration-solid';
+
+/**
+ * A reply's file names as links to the files column: inline code that reads as a path (`src/app.ts:42`), and a link
+ * to a local file. A web address stays a link that opens in a new tab.
+ */
+function fileLinks(openFile: (target: FileTarget) => void): Components {
+  return {
+    code({ className, children, ...props }) {
+      const text = typeof children === 'string' ? children : '';
+      const file = !className && !text.includes('\n') ? fileReference(text) : null;
+      if (!file) return <code className={className} {...props}>{children}</code>;
+      return <button type="button" className={cn('font-mono', fileLink)} onClick={() => openFile(file)}>{children}</button>;
+    },
+    a({ href = '', children, node: _node, ...props }) {
+      const file = fileReference(href);
+      if (file) return <button type="button" className={fileLink} onClick={() => openFile(file)}>{children}</button>;
+      return <a href={href} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2" {...props}>{children}</a>;
+    },
+  };
 }
 
 /** A page the agent published in this conversation: a card that opens it. */

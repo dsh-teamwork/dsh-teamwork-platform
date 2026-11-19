@@ -1,13 +1,14 @@
 /**
  * A session's files, beside its conversation (docs/tech/relay.md, "The allow-list"): what the session wrote or
  * edited, taken from its own tool calls (`touchedFiles`), and every folder and file under its working directory,
- * searchable by name, each text file opened read only. The plugin reads them under that directory alone; nothing here
+ * searchable by name, each text file opened read only. A file the conversation names opens here too (`opened`, from
+ * `fileReference`), at its line when one is given. The plugin reads them under that directory alone; nothing here
  * writes. The panel is the right column of a wide screen, the conversation moving over for it (`DshColumns`), and
  * covers a narrow one.
  */
 
 import { ArrowLeft, FileText, Folder, Loader, Search, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
 import { fileSize, type ConversationItem, type FileText as Text, type FolderListing, touchedFiles } from '@dsh-teamwork/relay-client';
@@ -22,20 +23,26 @@ export interface FilesClient {
   readFile(computerId: string, sessionId: string, path: string): Promise<Text>;
 }
 
+/** A file to show, from a list here or from the conversation; `line` is where to open it. */
+export interface FileTarget { path: string; line?: number }
+
 const item = 'flex w-full min-w-0 items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
 
-export function SessionFiles({ client, computerId, sessionId, items, word, onClose }: {
+export function SessionFiles({ client, computerId, sessionId, items, word, opened, onOpen, onClose }: {
   client: FilesClient;
   computerId: string;
   sessionId: string;
   items: readonly ConversationItem[];
   word: (error: unknown) => string;
+  /** The file shown, or null for the lists. */
+  opened: FileTarget | null;
+  onOpen: (target: FileTarget | null) => void;
   onClose: () => void;
 }) {
   const t = useTranslations('team.dsh.browse');
   const changed = touchedFiles(items);
   const [tab, setTab] = useState<'changes' | 'all'>(changed.length ? 'changes' : 'all');
-  const [opened, setOpened] = useState<string | null>(null);
+  const setOpened = (path: string | null) => onOpen(path === null ? null : { path });
 
   return (
     <aside data-files-panel aria-label={t('title')} className="fixed inset-y-0 right-0 z-40 flex w-full flex-col border-l bg-background shadow-xl md:w-[min(36rem,45vw)]">
@@ -46,7 +53,7 @@ export function SessionFiles({ client, computerId, sessionId, items, word, onClo
         </Button>
       </header>
       {opened !== null ? (
-        <Viewer client={client} computerId={computerId} sessionId={sessionId} path={opened} word={word} onBack={() => setOpened(null)} />
+        <Viewer key={`${opened.path}:${opened.line ?? ''}`} client={client} computerId={computerId} sessionId={sessionId} path={opened.path} line={opened.line} word={word} onBack={() => setOpened(null)} />
       ) : (
         <>
           <nav className="flex gap-1 border-b px-3 py-2 text-sm" aria-label={t('title')}>
@@ -163,11 +170,15 @@ function Browser({ client, computerId, sessionId, word, onOpen }: { client: File
   );
 }
 
-/** One text file, read only, with its line numbers. */
-function Viewer({ client, computerId, sessionId, path, word, onBack }: { client: FilesClient; computerId: string; sessionId: string; path: string; word: (error: unknown) => string; onBack: () => void }) {
+/** One text file, read only, with its line numbers; `line`, when given, is scrolled to and marked. */
+function Viewer({ client, computerId, sessionId, path, line, word, onBack }: { client: FilesClient; computerId: string; sessionId: string; path: string; line?: number; word: (error: unknown) => string; onBack: () => void }) {
   const t = useTranslations('team.dsh.browse');
   const [file, setFile] = useState<Text | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  const marked = useRef<HTMLTableRowElement>(null);
+  useEffect(() => {
+    marked.current?.scrollIntoView({ block: 'center' });
+  }, [file]);
   useEffect(() => {
     let live = true;
     client.readFile(computerId, sessionId, path).then((read) => { if (live) setFile(read); }, (error) => { if (live) setFailed(word(error)); });
@@ -189,12 +200,12 @@ function Viewer({ client, computerId, sessionId, path, word, onBack }: { client:
       {!file && !failed && <Loader className="m-4 size-4 animate-spin text-muted-foreground" aria-hidden />}
       {file && (
         <div className="min-h-0 flex-1 overflow-auto">
-          <table className="font-mono text-xs leading-5">
+          <table className="min-w-full font-mono text-xs leading-5">
             <tbody>
-              {lines.map((line, index) => (
-                <tr key={index}>
+              {lines.map((content, index) => (
+                <tr key={index} ref={index + 1 === line ? marked : undefined} className={cn(index + 1 === line && 'bg-signal/15')}>
                   <td className="select-none border-r px-3 text-right align-top text-muted-foreground tabular-nums">{index + 1}</td>
-                  <td className="px-3 whitespace-pre">{line}</td>
+                  <td className="w-full px-3 whitespace-pre">{content}</td>
                 </tr>
               ))}
             </tbody>

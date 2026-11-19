@@ -75,6 +75,30 @@ export function touchedFiles(items: readonly ConversationItem[]): string[] {
   return files;
 }
 
+/**
+ * A file a reply or a step names, when a text reads as one: a path with a folder (`src/app.ts`, `/home/me/x`) or a
+ * file name with an extension (`README.md`), optionally `file://`, and optionally ending in `:line` or `:line:column`,
+ * which opens the file at that line. A web address, a package name (`@scope/name`), a command line, a version number
+ * and anything with a space or punctuation a path rarely holds are not files. The computer decides whether it exists.
+ */
+export function fileReference(text: string): { path: string; line?: number } | null {
+  let value = text.trim();
+  if (!value || value.length > 300 || /\s/.test(value)) return null;
+  if (value.startsWith('file://')) value = decodeURI(value.slice('file://'.length));
+  else if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value) || /^(mailto|tel|data|javascript):/i.test(value)) return null;
+  if (/^[@\-$#~]/.test(value) || /[()<>{}'"`,;=|*?!&^%[\]]/.test(value)) return null;
+  const located = /^(.*?):(\d+)(?::\d+)?$/.exec(value);
+  const path = located ? located[1]! : value;
+  const line = located ? Number(located[2]) : undefined;
+  // A Windows drive letter is a path's start, not a line number.
+  if (!path || /:/.test(path.replace(/^[A-Za-z]:(?=[\\/])/, ''))) return null;
+  const name = path.split(/[\\/]/).pop() ?? '';
+  const folder = /[\\/]/.test(path) && name !== '' && !path.endsWith('/');
+  const named = /^[^.].*\.[A-Za-z][A-Za-z0-9]{0,7}$/.test(name) || /^\.[A-Za-z]/.test(name);
+  if (!folder && !named) return null;
+  return line ? { path, line } : { path };
+}
+
 /** The locale key for a tool's friendly name, when one exists; otherwise the screen shows the tool's own name. */
 export function toolKey(name: string): string | null {
   const known: Record<string, string> = {

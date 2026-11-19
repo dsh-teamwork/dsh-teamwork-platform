@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-19 — Browse a session's files from the console
 
-- **What:** A session's **Files** button opens its working directory as the console's right column, read only: the files the session wrote or edited (`touchedFiles`, from its own tool calls) and every folder, searchable by name, each text file with line numbers. It reads through the plugin's `teamwork/listFiles`, `teamwork/searchFiles` and `teamwork/readFile`, held under that directory; `teamwork/configuration`'s `files` says the plugin answers them. `@dsh-teamwork/relay-client` adds `listFiles`, `searchFiles`, `readFile`, `touchedFiles` and the `not_text` error.
+- **What:** A session's **Files** button opens its working directory as the console's right column, read only: the files the session wrote or edited (`touchedFiles`, from its own tool calls) and every folder, searchable by name, each text file with line numbers; a file the conversation names (a step's file, a path in a reply, a local link) opens there at its line, by `fileReference`. It reads through the plugin's `teamwork/listFiles`, `teamwork/searchFiles` and `teamwork/readFile`, held under that directory; `teamwork/configuration`'s `files` says the plugin answers them. `@dsh-teamwork/relay-client` adds `listFiles`, `searchFiles`, `readFile`, `touchedFiles`, `fileReference` and the `not_text` error.
 - **Why:** What an agent made could be seen only on the computer itself, as DSH's own right column shows it.
 - **Breaking:** None. A plugin without `files` shows no button.
 - **Upgrade:** Update the DSH Teamwork plugin on each computer (0.16.0) for the button.

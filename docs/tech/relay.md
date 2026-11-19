@@ -370,7 +370,11 @@ first 256 KiB as text, and a binary one is `teamwork/not_text`.
 opens them from a session's **Files** button as its right column (the phone as
 a full-screen sheet): the session's changes, which the client reads from its
 own write and edit tool calls (`touchedFiles`), and every folder, searchable,
-each text file shown with its line numbers.
+each text file shown with its line numbers. A file the conversation names
+opens there too: a read, write or edit step's file, a reply's inline code that
+reads as a path, and a reply's link to a local file (`fileReference`: a folder
+path or a file name with an extension, `file://` allowed, `:line` opening it at
+that line; a web address, a package name or a command is not a file).
 
 ## File attachments
 
