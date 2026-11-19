@@ -134,6 +134,12 @@ type Host struct {
 	SameOrigin func(r *http.Request) bool
 	Users      Users
 	Env        func(string) string
+	// Seal keeps one of this extension's own secrets (a supplier's key) at
+	// rest under PROVIDER_KEYS_SECRET, bound to the extension and the name it
+	// gives, so a sealed value stored under another name no longer opens.
+	// Unseal is its inverse, provider_keys_unavailable under another secret.
+	Seal   func(name, secret string) string
+	Unseal func(name, sealed string) (string, error)
 	// TeamRole re-reads one membership. An outsider gets the public 404 error.
 	TeamRole   func(context.Context, string, string, bool) (string, error)
 	TeamExists func(context.Context, string) (bool, error)

@@ -45,3 +45,23 @@ func TestProviderBoundsRejectNonTokenBillableInputs(t *testing.T) {
 		}
 	}
 }
+
+func TestRouteBoundsComeFromTheRoute(t *testing.T) {
+	payload := map[string]json.RawMessage{"messages": json.RawMessage(`[{"role":"user","content":"hi"}]`)}
+	bound, err := RouteBounds(payload, 200_000, 4096)
+	if err != nil || bound != (Tokens{Input: 200_000, Output: 4096}) || string(payload["max_tokens"]) != "4096" {
+		t.Fatalf("an unasked output must default within the route: %+v %v %s", bound, err, payload["max_tokens"])
+	}
+	payload["max_tokens"] = json.RawMessage(`4097`)
+	if _, err := RouteBounds(payload, 200_000, 4096); err == nil {
+		t.Fatal("an output past the route's bound was admitted")
+	}
+	payload["max_tokens"] = json.RawMessage(`100`)
+	if bound, err := RouteBounds(payload, 200_000, 4096); err != nil || bound.Output != 100 {
+		t.Fatalf("asked output: %+v %v", bound, err)
+	}
+	payload["provider"] = json.RawMessage(`{"order":["x"]}`)
+	if _, err := RouteBounds(payload, 200_000, 4096); err == nil {
+		t.Fatal("a caller's routing field was admitted")
+	}
+}

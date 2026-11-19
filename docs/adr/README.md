@@ -46,6 +46,8 @@ or the hosted service, kept with the closed edition rather than here.
 
 - [0053 — Pages are served sandboxed from their own origin](0053-pages-are-served-sandboxed-from-their-own-origin.md) — a view token, a CSP sandbox, `CONTENT_URL`, and never outside the team.
 
+- [0054 — A funded route states its own bounds](0054-a-funded-route-states-its-bounds.md) — an edition's quote sizes the hold, adds routing fields and receives the upstream's price.
+
 The template:
 
 ```markdown
