@@ -1049,6 +1049,17 @@
       "promptPlaceholder": "给智能体发消息",
       "send": "发送",
       "stop": "停止",
+      "permission": {
+        "label": "授权模式",
+        "preset": {
+          "readOnly": "只读",
+          "workspaceWrite": "可写工作区",
+          "fullAccess": "完全访问"
+        },
+        "custom": "自定义",
+        "keyboardOnly": "{name}（只能在那台机器上设置）",
+        "confirm": "切换到「{name}」？之后 agent 可以修改那台电脑上工作区以外的文件，或不经你确认就执行操作。"
+      },
       "settings": {
         "workspace": "工作区",
         "preset": "预设",
@@ -1517,6 +1528,7 @@
     "cacheWrite": "缓存写入（如支持）"
   },
   "relayErrors": {
+    "permission_refused": "在团队 DSH 上，这个授权模式只能在那台机器上设置。",
     "invalid_request": "那台电脑没有接受这个操作。请检查输入后重试。",
     "offline": "机器离线。",
     "not_found": "你已无法访问这台机器或这个会话。",

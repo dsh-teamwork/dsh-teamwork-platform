@@ -66,6 +66,10 @@ its first message; leave them as they are for the computer's defaults. Once
 the first message is sent, the session opens in place.
 The folder starts as this team's default workspace on that computer, which
 you set in DSH's Teamwork panel under **My teams**.
+Beside the paperclip, the permission menu sets what the agent may do on that
+computer: **Read only**, **Workspace write** or **Full access**, as in DSH;
+full access asks you to confirm first. On a Team DSH only the first two can be
+picked; anything wider is set on the machine itself.
 A model that can reason harder offers its efforts beside it. In a session that
 has started, the folder and preset stay as they are, and you can change its
 model and effort while it is not working, for that session alone. The

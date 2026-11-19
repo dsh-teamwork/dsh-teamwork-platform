@@ -159,6 +159,7 @@ export type RelayErrorCode =
   | 'preset_changed'
   | 'preset_unavailable'
   | 'invalid_request'
+  | 'permission_refused'
   | 'file_type'
   | 'file_name'
   | 'file_too_large'
@@ -262,6 +263,8 @@ export interface RelayClient {
     uploadId: string,
   ): Promise<Omit<import('./uploads').UploadedFile, 'uploadId'>>;
   cancelUpload(computerId: string, sessionId: string, uploadId: string): Promise<void>;
+  /** Switches an idle session's permission preset (one of `configuration`'s `permissions`), and returns the one now in force. */
+  selectPermission(computerId: string, sessionId: string, preset: string): Promise<string>;
   /** Stops the agent's current turn; what it already did stays. */
   cancel(computerId: string, sessionId: string): Promise<void>;
   /** Gives a session the title the member typed (DSH's `session/rename`), and returns it as DSH settled it. */

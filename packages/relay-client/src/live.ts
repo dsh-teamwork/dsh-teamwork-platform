@@ -460,6 +460,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     createSession: sessions.createSession,
     configuration: sessions.configuration,
     selectModel: sessions.selectModel,
+    selectPermission: sessions.selectPermission,
     uploadCapabilities: sessions.uploadCapabilities,
     startUpload: sessions.startUpload,
     uploadChunk: sessions.uploadChunk,

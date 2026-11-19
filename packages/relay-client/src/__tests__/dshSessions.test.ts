@@ -17,6 +17,7 @@ function fakeLink() {
       if (method === 'session/list') return { items: [{ sessionId: 's1', cwd: '/home/user/work', running: false, updatedAt: 1, projections: { values: { title: 'Fix it' } } }] };
       if (method === '$events/result') return {};
       if (method === 'session/rename') return { title: 'Release notes', seq: 4 };
+      if (method === 'teamwork/selectPermission') return { current: 'read-only' };
       if (method.startsWith('workspace/')) return {};
       throw new RelayError('configuration_unsupported');
     },
@@ -105,6 +106,9 @@ describe('a computer\'s sessions over any link', () => {
       ['workspace/unarchiveSession', { request: { sessionId: 's1' } }],
     ]);
     expect(changed - before).toBe(5);
+    expect(await sessions.selectPermission('c', 's1', 'read-only')).toBe('read-only');
+    expect(calls.at(-1)).toMatchObject({ method: 'teamwork/selectPermission', args: { request: { sessionId: 's1', preset: 'read-only' } } });
+    expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/permission_refused' } } })).toThrow(new RelayError('permission_refused'));
     unwatch();
   });
 });

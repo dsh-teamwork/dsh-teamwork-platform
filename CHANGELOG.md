@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — Switch a session's permission preset from the console
+
+- **What:** The composer's foot has DSH's permission menu beside the paperclip (read only, workspace write, full access, or the presets that DSH composes). `teamwork/configuration` carries `permissions` (the options, the session's current one, the default; each `risky` and `allowed`), and `teamwork/selectPermission` switches an idle session through DSH's own `/permission` command. A risky preset is confirmed once; on a Team DSH it is shown and cannot be picked (`teamwork/permission_refused`). `@dsh-teamwork/relay-client` adds `selectPermission` and the `permission_refused` error.
+- **Why:** A session could be steered remotely but not told how far it may go, and DSH's own input bar has the choice beside the paperclip.
+- **Breaking:** None. A plugin that reports no `permissions` shows no menu.
+- **Upgrade:** Update the DSH Teamwork plugin on each computer for the menu.
+- **Refs:** `docs/tech/relay.md` ("The allow-list"), `apps/web/src/pages/team/dsh-session.tsx`.
+
 ## 2026-11-19 — Rename, pin and archive a session from the console
 
 - **What:** Each session in My DSH and Team DSH has a menu that pins it, renames it, copies its ID and archives or restores it, through DSH's own `session/rename` and `workspace/pinSession`, `unpinSession`, `archiveSession` and `unarchiveSession`, which the plugin's allow-list now passes with exactly their fields. `session/list` items carry the plugin's `teamwork: { pinned, archived }`, read into `SessionSummary.marks`: pinned sessions list after those waiting on the member, archived ones hide under "Archived". `@dsh-teamwork/relay-client` adds `renameSession`, `pinSession` and `archiveSession`.

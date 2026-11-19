@@ -5,7 +5,7 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Server, Square, X, type LucideIcon } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import Markdown from 'react-markdown';
@@ -59,7 +59,7 @@ export type SessionClient = Pick<
   RelayClient,
   | 'listSessions' | 'watchSessions' | 'follow' | 'older' | 'createSession' | 'configuration' | 'selectModel'
   | 'uploadCapabilities' | 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'cancel' | 'prompt' | 'answer'
-  | 'renameSession' | 'pinSession' | 'archiveSession'
+  | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission'
   | 'watchPin' | 'unlock' | 'setPin'
 >;
 
@@ -71,7 +71,7 @@ function useSessionClient(): SessionClient {
   return useContext(SessionClientContext) ?? relayFor(me);
 }
 
-const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {
@@ -429,6 +429,8 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
   const [id, setId] = useState(sessionId);
   const [state, setState] = useState<SessionState>(EMPTY_SESSION);
   const [options, setOptions] = useState<SessionOptions>({});
+  // A new session's permission preset, when the member picked one other than DSH's default.
+  const [permission, setPermission] = useState<string | undefined>();
   const [config, setConfig] = useConfiguration(computerId, id);
   const files = useFiles(computerId);
   // The first message, shown until the session's own copy of it arrives.
@@ -464,9 +466,11 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
       // Files need their session before their bytes move; a retry after a failed upload reuses it.
       const created = files.files.length ? await files.target(chosen) : await relay.createSession(computerId, chosen);
       if (options.model) await relay.selectModel(computerId, created.id, options.model);
+      if (permission) await relay.selectPermission(computerId, created.id, permission);
       // What was chosen stands for the session until the computer's own read of it arrives.
       setConfig((read) => read && {
         ...read,
+        permissions: read.permissions && { ...read.permissions, current: permission ?? read.permissions.defaultPreset },
         current: {
           sessionId: created.id,
           cwd: options.cwd ?? defaultDirectory(read.directories, read.teamDirectories, team.id) ?? '',
@@ -610,6 +614,17 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
           placeholder={t(id ? 'promptPlaceholder' : 'firstPlaceholder')}
           files={files}
           stop={running ? { run: () => void act(() => relay.cancel(computerId, id)), disabled: busy } : undefined}
+          tools={config && (
+            <PermissionSettings
+              computerId={computerId}
+              sessionId={id}
+              config={config}
+              setConfig={setConfig}
+              disabled={busy || running || !!state.pending || (!id && sent !== '')}
+              value={permission}
+              onChange={setPermission}
+            />
+          )}
           send={(message) => {
             if (!id) return start(message);
             return act(async () => {
@@ -690,6 +705,68 @@ function StartSettings({ config, disabled, value, onChange }: { config: SessionC
       <Select label={t('preset')} value={value.agentPreset ?? ''} options={presets} disabled={disabled} className={cn(chip, 'font-medium')}
         change={(id) => onChange({ ...value, agentPreset: id || undefined, model: undefined })} />
     </div>
+  );
+}
+
+/** DSH's own permission presets, worded as its picker words them; any other keeps the name DSH gives it. */
+const PRESET_WORDS: Record<string, string> = { 'read-only': 'readOnly', 'workspace-write': 'workspaceWrite', 'danger-full-access': 'fullAccess' };
+
+/**
+ * The session's permission preset, at the composer's foot beside the paperclip, as in DSH's own input bar. A new
+ * session's is chosen before its first message (`value`); an existing session switches while idle. A risky preset
+ * (one that leaves the workspace's sandbox or skips approval) is confirmed once; one its computer keeps to its own
+ * keyboard (a Team DSH's risky ones) is shown and cannot be picked.
+ */
+function PermissionSettings({ computerId, sessionId, config, setConfig, disabled, value, onChange }: {
+  computerId: string;
+  sessionId: string;
+  config: SessionConfiguration;
+  setConfig: (update: (read: SessionConfiguration | null) => SessionConfiguration | null) => void;
+  disabled: boolean;
+  value: string | undefined;
+  onChange: (preset: string) => void;
+}) {
+  const t = useTranslations('team.dsh.permission');
+  const word = useRelayError();
+  const relay = useSessionClient();
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  const permissions = config.permissions;
+  if (!permissions || (sessionId && permissions.current === null)) return null;
+  const current = sessionId ? permissions.current! : (value ?? permissions.defaultPreset);
+  const nameOf = (option: { id: string; name: string }) => (PRESET_WORDS[option.id] ? t(`preset.${PRESET_WORDS[option.id]}`) : option.name);
+  const icon = (risky: boolean) => { const Icon = risky ? ShieldAlert : ShieldCheck; return <Icon className="size-4 text-muted-foreground" aria-hidden />; };
+  const options = permissions.options.map((option) => ({
+    value: option.id,
+    label: option.allowed ? nameOf(option) : t('keyboardOnly', { name: nameOf(option) }),
+    disabled: !option.allowed,
+    icon: icon(option.risky),
+  }));
+  // Settings that match no preset (set by hand on the desktop) show as such, and are left by picking one.
+  if (!options.some((option) => option.value === current)) options.unshift({ value: current, label: t('custom'), disabled: true, icon: icon(true) });
+
+  async function choose(id: string) {
+    const option = permissions!.options.find((item) => item.id === id);
+    if (!option || id === current) return;
+    if (option.risky && !confirm(t('confirm', { name: nameOf(option) }))) return;
+    if (!sessionId) return onChange(id);
+    setSaving(true);
+    setFailed(null);
+    try {
+      const now = await relay.selectPermission(computerId, sessionId, id);
+      setConfig((read) => (read?.permissions ? { ...read, permissions: { ...read.permissions, current: now } } : read));
+    } catch (error) {
+      setFailed(word(error));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <Select label={t('label')} value={current} options={options} disabled={disabled || saving} className={cn(chip, 'max-w-48')} change={(id) => void choose(id)} />
+      {failed && <span role="alert" className="text-xs text-destructive">{failed}</span>}
+    </>
   );
 }
 
@@ -887,16 +964,18 @@ function FileCards({ files, disabled }: { files: Files; disabled: boolean }) {
 
 /**
  * The message box, laid out as DSH's own input bar: the files and the text, then a row with the attachment control on
- * the left and `children` (the model) with the round Send, or Stop while `stop` is offered, on the right. Enter sends,
+ * the left with `tools` (the permission preset) and `children` (the model) with the round Send, or Stop while `stop` is offered, on the right. Enter sends,
  * Shift+Enter breaks the line; `send` says whether to clear it.
  */
-function Composer({ busy, rows, placeholder, send, files, stop, children }: {
+function Composer({ busy, rows, placeholder, send, files, stop, tools, children }: {
   busy: boolean;
   rows: number;
   placeholder: string;
   send: (text: string) => Promise<boolean>;
   files: Files;
   stop?: { run: () => void; disabled: boolean };
+  /** Beside the paperclip on the left: the permission preset. */
+  tools?: ReactNode;
   children?: ReactNode;
 }) {
   const t = useTranslations('team.dsh');
@@ -931,6 +1010,7 @@ function Composer({ busy, rows, placeholder, send, files, stop, children }: {
         />
         <div className="flex items-center gap-2">
           <AttachButton files={files} disabled={busy} />
+          {tools}
           <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
             {children}
             {stop ? (

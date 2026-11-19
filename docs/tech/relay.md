@@ -301,7 +301,7 @@ use, so DSH sees each phone as a separate client.
 - **The list:**
   - calls: `session/list`, `session/create`, `session/prompt`,
     `session/state`, `session/page`, `session/cancel`, `session/modelCatalog`,
-    `teamwork/configuration`, `teamwork/selectModel`,
+    `teamwork/configuration`, `teamwork/selectModel`, `teamwork/selectPermission`,
     `userQuestions/answer`, `$events/result`, and the list's actions:
     `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
     `workspace/archiveSession`, `workspace/unarchiveSession`;
@@ -341,6 +341,20 @@ plugin's list, unmarked, offers only the copy. On a Team DSH each action is
 held to the member's own sessions like any call that names one, though the
 pin and archive land in that DSH's one registry, seen at its keyboard too.
 Forking a session and opening it in another app stay on the desktop.
+
+**A session's permission preset** (DSH's read-only, workspace write and full
+access, or whatever presets that DSH composes) is `teamwork/configuration`'s
+`permissions`: the offered presets, the session's current one (null before it
+starts) and the default. A preset is `risky` when it leaves the workspace's
+sandbox or skips approval, and the client confirms it once; it is `allowed`
+unless the DSH is shared and the preset risky, so a Team DSH's members pick
+read-only or workspace write and anything wider is set at its keyboard, which
+the client shows and does not offer. `teamwork/selectPermission`
+(`{ sessionId, preset }`, the preset one word) switches an idle session by
+running DSH's own `/permission` command in the plugin's process, as DSH's
+picker does; a preset not allowed is `teamwork/permission_refused`. The
+picker sits at the composer's foot beside the paperclip, as in DSH's input
+bar, and a new session's choice is applied once it is created.
 
 ## File attachments
 
