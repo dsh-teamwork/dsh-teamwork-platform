@@ -17,6 +17,8 @@ export interface SessionOptions {
   teamId?: string;
   agentPreset?: string;
   model?: ModelSelection;
+  /** A permission preset other than DSH's default (`SessionConfiguration.permissions`), applied once the session exists. */
+  permission?: string;
 }
 const PresetSchema = z.object({
   id: z.string(),

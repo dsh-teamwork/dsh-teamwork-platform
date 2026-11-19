@@ -429,8 +429,6 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
   const [id, setId] = useState(sessionId);
   const [state, setState] = useState<SessionState>(EMPTY_SESSION);
   const [options, setOptions] = useState<SessionOptions>({});
-  // A new session's permission preset, when the member picked one other than DSH's default.
-  const [permission, setPermission] = useState<string | undefined>();
   const [config, setConfig] = useConfiguration(computerId, id);
   const files = useFiles(computerId);
   // The first message, shown until the session's own copy of it arrives.
@@ -466,11 +464,11 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
       // Files need their session before their bytes move; a retry after a failed upload reuses it.
       const created = files.files.length ? await files.target(chosen) : await relay.createSession(computerId, chosen);
       if (options.model) await relay.selectModel(computerId, created.id, options.model);
-      if (permission) await relay.selectPermission(computerId, created.id, permission);
+      if (options.permission) await relay.selectPermission(computerId, created.id, options.permission);
       // What was chosen stands for the session until the computer's own read of it arrives.
       setConfig((read) => read && {
         ...read,
-        permissions: read.permissions && { ...read.permissions, current: permission ?? read.permissions.defaultPreset },
+        permissions: read.permissions && { ...read.permissions, current: options.permission ?? read.permissions.defaultPreset },
         current: {
           sessionId: created.id,
           cwd: options.cwd ?? defaultDirectory(read.directories, read.teamDirectories, team.id) ?? '',
@@ -621,8 +619,8 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
               config={config}
               setConfig={setConfig}
               disabled={busy || running || !!state.pending || (!id && sent !== '')}
-              value={permission}
-              onChange={setPermission}
+              value={options.permission}
+              onChange={(preset) => setOptions({ ...options, permission: preset })}
             />
           )}
           send={(message) => {
