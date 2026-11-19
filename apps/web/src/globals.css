@@ -235,14 +235,29 @@ body:has(.tide-story) {
   height: min(14%, calc((100% - var(--waterline)) * .85));
   background: linear-gradient(transparent, var(--shallows));
 }
-.tide-fluke {
+.breach-lane {
   position: absolute;
-  width: var(--fluke-size);
+  top: var(--waterline);
+  left: var(--start);
+  width: var(--travel);
+  height: 0;
+  color: var(--whale-grain);
+}
+.breach-scout { --start: 79%; --travel: 13%; --size: .34; opacity: .49; }
+.breach-follower { --start: 43.5%; --travel: 14%; --size: .58; opacity: .76; }
+.breach-leader { --start: 60%; --travel: 23%; --size: 1; }
+.breach-lane svg {
+  position: absolute;
+  width: calc(var(--fluke-size) * .84 * var(--size));
   height: auto;
-  left: 73%;
-  /* Anchor the stalk beneath the lowest swell at every fluke size. */
-  top: calc(var(--waterline) + 1rem);
-  transform: translate(-50%, calc(-72% + var(--fluke-drop, 0%)));
+  overflow: visible;
+  left: 50%;
+  transform: translate(-50%, -145%) rotate(-6deg);
+}
+.breach-lane .breach-wake {
+  width: calc(var(--fluke-size) * .46 * var(--size));
+  top: .75rem;
+  opacity: 0;
 }
 .tide-water {
   position: absolute;
@@ -382,8 +397,9 @@ body:has(.tide-story) {
   .tide-clouds { top: auto; bottom: 25%; right: 3%; width: 62%; }
   .tide-surface { --waterline: calc(100% - clamp(4.5rem, 13svh, 8rem)); }
   .tide-story { --fluke-size: clamp(10rem, 48vw, 17rem); }
-  .tide-fluke { left: 71%; }
-  #fluke-hatching { transform: rotate(76deg) scale(1.65); }
+  .breach-scout { --start: 72%; --travel: 17%; }
+  .breach-follower { --start: 17%; --travel: 22%; }
+  .breach-leader { --start: 40%; --travel: 27%; }
   .tide-arrival { padding-bottom: clamp(7rem, 31vw, 13rem); }
   .tide-pod { right: 1%; bottom: 2.75rem; width: 96%; height: clamp(8rem, 33vw, 14rem); }
 }
@@ -391,7 +407,6 @@ body:has(.tide-story) {
   .tide-intro { --intro-copy-space: 25rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tide-fluke { transform: translate(-50%, -72%); }
   .tide-water { translate: none; }
   .whale-in-water .tide-passage { transition: none; }
   .whale-traveller { transform: translateX(30vw) rotate(-3deg); }

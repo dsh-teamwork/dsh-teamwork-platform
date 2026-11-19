@@ -234,21 +234,20 @@ a person or a character, which at this size reads as clip art.
 - **Lists are rows, not cards.** Rows are divided by `--border` hairlines; a
   card's border and fill are kept for the one block that has to stand apart.
 - **The logo keeps its plate.** Use `public/logo.svg` at its square size. The
-  landing illustration in `apps/web/src/public/sea.tsx` uses the fluke shape
-  as a woodcut, with hatching on the tail and engraved lines in the water.
+  landing illustration in `apps/web/src/public/sea.tsx` uses woodcut whales
+  with hatching on their bodies and engraved lines in the water.
 - **The landing page follows the dive.** A full-width woodcut forms the
   horizon beneath the opening copy, at the same height in both languages.
-  The fluke takes its indigo from the logo plate.
+  The surface pod takes its indigo from the logo plate.
   White paper behind the text opens into a pale sky with two low cloud banks.
   The engraving uses several sea-blue ink values, with near-white upper chapters
   and a navy seabed. Dark mode carries the same shapes into a dusk sky.
   Two overlapping swells travel along
-  the engraved water, bending the waterline and its ink strokes every frame. Both fluke tips stay inside the artwork
-  and the stalk ends below the water throughout the cycle. Native scroll carries the tail
-  under the water. A large humpback passes behind the middle chapters. Its
-  length scales with the opening fluke, and its low contrast keeps the text
-  legible. Diagonal cuts follow the opening fluke down to the right. Horizontal cuts follow
-  the solitary swimmer’s body. A slow bend travels down the lone
+  the engraved water, bending the waterline and its ink strokes every frame. Three humpbacks breach in a staggered,
+  seven-second cycle. The small distant whale leads, the large foreground whale
+  follows, and the third whale trails behind. Each flexes its tail stock and
+  folds its pectoral fin on entry. On phones the pod spreads across the water
+  below the copy. A large, low-contrast humpback passes behind the middle chapters. A slow bend travels down the lone
   whale’s back and grows into a broader tail stroke. A viewport of open water separates the lone whale from both
   the surface and the closing pod, even during fast scrolls and anchor jumps.
   At Assets the text turns light. The closing pod uses three solid silhouettes,
