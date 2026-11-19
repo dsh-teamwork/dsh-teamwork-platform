@@ -83,7 +83,12 @@ export type ConversationItem =
   | { kind: 'assistant'; id: string; text: string }
   | { kind: 'tool'; id: string; name: string; summary: string; status: ToolStatus }
   /** A page the agent published with `teamwork_page` (the platform's docs/tech/pages.md), after the tool that did. */
-  | { kind: 'page'; id: string; page: PublishedPage };
+  | { kind: 'page'; id: string; page: PublishedPage }
+  /**
+   * A turn that ended in an error: DSH's own message, which the screen shows,
+   * and `noModel` when the session had no model to call, which it explains.
+   */
+  | { kind: 'failed'; id: string; message: string; noModel: boolean };
 
 /** What `teamwork_page` reports, in its result's `meta.teamworkPage`. */
 export interface PublishedPage {

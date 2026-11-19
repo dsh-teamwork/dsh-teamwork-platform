@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — A session shows a turn that failed
+
+- **What:** `@dsh-teamwork/relay-client` reads DSH's `turn/end` with an error into a `failed` conversation item (`message`, and `noModel` when the session had no model to call), and the console and the phone show it in the conversation, a missing model with where to choose or add one.
+- **Why:** A turn that failed, most often a session with no model, ended with nothing on screen, so a message seemed to go unanswered.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/relay-client/src/dsh.ts`, `apps/web/src/pages/team/dsh-session.tsx`.
+
 ## 2026-11-19 — The model catalogue lookup is a package an edition can call
 
 - **What:** The Models.dev and OpenRouter lookup and the USD/CNY rate behind `POST /api/teams/{teamId}/model-metadata/lookup` move from `internal/httpapi` to the exported `server/modelmeta` (`Search`, `ExchangeRate`), which adds `Endpoints`: the upstreams OpenRouter routes a model to, each with its own price. The route and its answers are unchanged.

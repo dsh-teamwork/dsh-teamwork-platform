@@ -151,8 +151,18 @@ export function eventsOf(event: unknown, state: Pick<SessionState, 'items'>): Se
     }
     case 'turn/start':
       return [{ type: 'status', status: 'running' }];
-    case 'turn/end':
-      return [{ type: 'status', status: 'idle' }];
+    case 'turn/end': {
+      const reason = isObject(data.reason) ? data.reason : {};
+      const failure = reason.kind === 'error' && isObject(reason.error) ? reason.error : null;
+      if (!failure) return [{ type: 'status', status: 'idle' }];
+      const message = typeof failure.message === 'string' ? failure.message : '';
+      // DSH's words when a turn starts with no model selected (dsh-agent-loop's preStep).
+      const noModel = message.includes('has no provider/model');
+      return [
+        { type: 'item', item: { kind: 'failed', id, message, noModel } },
+        { type: 'status', status: 'idle' },
+      ];
+    }
     default:
       return [];
   }

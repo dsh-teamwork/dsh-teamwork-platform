@@ -641,6 +641,10 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
             <div key={row.id} className="flex flex-col gap-2 leading-6 [&_code]:font-mono [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5">
               <Markdown remarkPlugins={[remarkGfm]} skipHtml>{row.text}</Markdown>
             </div>
+          ) : row.kind === 'failed' ? (
+            <p key={row.id} role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-destructive [overflow-wrap:anywhere]">
+              {row.noModel ? t('noModel') : t('turnFailed', { message: row.message })}
+            </p>
           ) : (
             <details key={row.id} className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
               <summary>{t('steps', { count: row.tools.length })}{row.status === 'running' ? ` · ${t('running')}` : row.status === 'done' ? '' : ` · ${t(row.status)}`}</summary>
