@@ -176,9 +176,11 @@ used for anything else. An unknown provider shows two initials on a
 ### Preset avatars
 
 A preset's face is one of a fixed library of avatars,
-`packages/shared/src/avatars.ts`, which the web console and the phone app both
-draw (`apps/web/src/components/preset-avatar.tsx` and the app's own), so a
-preset looks the same everywhere. **An avatar is an abstract emblem of a
+`packages/shared/src/avatars.ts`, which the web console, the phone app and the
+DSH plugin's panel all draw (`apps/web/src/components/preset-avatar.tsx`, the
+app's own, and the plugin's from a byte-for-byte copy that
+`server/e2e/avatars_test.go` holds equal), so a preset looks the same
+everywhere. **An avatar is an abstract emblem of a
 role**: two or three flat shapes — circles, arcs, rounded bars — composed to
 suggest what the role does (a balance for legal, a stack of coins for finance,
 work laid out in time for project management), in **Paper** and one accent on
@@ -336,8 +338,9 @@ a person or a character, which at this size reads as clip art.
 - **Sign-in is split in two** (`apps/web/src/pages/sign-in.tsx`). From
   `lg` up, the left side is the navy plate: the logo, the home page's title in
   its serif and lede, and three flat bands of the plate's foreground for the
-  sea. The right side is the form on the page ground, with the way home, the
-  theme and the language at its top. The form lists every OAuth door the
+  sea. The right side is the form on the page ground, with the way home at
+  its top left and, at its top right, the language and the theme drawn as
+  the home page's header draws them (`HeaderLocaleMenu`). The form lists every OAuth door the
   session's `doors` reports as an outline button with its provider's
   mark (Google's in its own four colours), then a divider and the one email door (a code, or a
   password with a show toggle); a sent code turns the screen into *Check your

@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — The DSH plugin's panel shows preset avatars
+
+- **What:** The plugin's Teamwork panel draws each team preset's avatar, the assistant's included, in place of its generic icon. The plugin cannot import `@dsh-teamwork/shared`, so it keeps a byte-for-byte copy of `avatars.ts` (`src/web/avatars.ts` in its repository); the plugin end-to-end suite here fails when the two differ (`server/e2e/avatars_test.go`), so a change to the library is copied there in the same working session.
+- **Why:** The console and the phone showed a preset's avatar; the panel in DSH, where most sessions start, did not.
+- **Breaking:** None.
+- **Upgrade:** Release the plugin.
+- **Refs:** `server/e2e/avatars_test.go`, `docs/design.md` ("Preset avatars").
+
 ## 2026-11-19 — Provider marks in their makers' colours
 
 - **What:** Each provider's mark is drawn in its maker's own colours and gradients (LobeHub's colour icons; OpenAI, Anthropic, xAI, Ollama and OpenRouter stay black) on a new `--mark-plate` tile, light in both themes, in the console, on the home page's diagram and in the phone app. `PROVIDER_MARKS` now holds shapes and gradients instead of single-colour paths, and the web app's `MarkSvg` draws one.
