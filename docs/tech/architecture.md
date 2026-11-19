@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current · **Updated:** 2026-11-19
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -20,6 +20,12 @@ borrow the creation/join transaction and return errors before either side
 commits. Creation carries the true creator once; accepted invitations and
 password-admin additions emit only actual joins. No subscriber means no
 extension work or historical replay.
+
+An edition may serve a domain's subdomains of its own (`Host.ServeSubdomains`):
+every request whose Host is under that domain reaches the edition's handler
+before the canonical-host redirect and every route, keeping the security
+headers. APP_URL's host and its parents are refused, so it never shadows the
+site; the premium edition serves its cloud computers' DSH web there.
 
 ## Data flow
 

@@ -118,6 +118,13 @@ type Host struct {
 	// team, read on every request that needs it. Mount-only, at most once;
 	// without a gate every team may, as on a self-hosted server.
 	GateTeamDSH func(allowed func(ctx context.Context, teamID string) (bool, error)) error
+	// ServeSubdomains sends every request whose Host is a subdomain of domain
+	// (one label or more before it) to h, ahead of the canonical-host redirect
+	// and every route; the security headers still apply. Mount-only, once per
+	// domain, which must be neither APP_URL's host nor one of its parents: it
+	// is for pages a closed edition serves from origins of their own (the
+	// premium edition's ADR 0052).
+	ServeSubdomains func(domain string, h http.Handler) error
 	// TeamDSHAllowed asks that gate about one team: true where none is set.
 	TeamDSHAllowed func(ctx context.Context, teamID string) (bool, error)
 	// Objects keeps an extension's bytes under a team, in the server's own
