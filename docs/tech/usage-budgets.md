@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-18
+> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-19
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -18,6 +18,14 @@ An absent participant refuses the owned route. BYOK never falls back to funded
 capacity. Funding owners implement their own monetary records and do not parse
 provider responses independently. Operator-only recovery records estimates and
 settles both resource sets together; the team API remains limited to BYOK.
+
+A funded route states its own bounds ([ADR 0054](../adr/0054-a-funded-route-states-its-bounds.md)):
+the quote's `MaxInput` and `MaxOutput` size the hold through `usage.RouteBounds`,
+which keeps the request checks below for every route, and its `Body` adds
+fields no caller may send (an aggregator's routing object), never a forwarded
+one. Settlement hands the participant the upstream's own price for the call
+(`UpstreamCost`, OpenRouter's `usage.cost`) beside the tokens, both read by the
+one observer; the participant decides what that price means.
 
 `server/internal/usage` owns normalization, immutable model rates, usage rows,
 policy/window reservations, settlement, recovery and notification work. The
@@ -76,12 +84,13 @@ implemented in this slice.
 
 ## Supported hard-limit routes
 
-The initial bound adapter supports direct `https://api.deepseek.com` (optionally
+For a team's own (BYOK) budget, the initial bound adapter supports direct `https://api.deepseek.com` (optionally
 `/v1`) text/local-function calls to `deepseek-flash`, `deepseek-v4-pro` and
 known Flash aliases. Use the documented full 1M-token context as the conservative
 input bound; forward an explicit `max_tokens` output bound, translating the
 client alias when necessary. The adapter defaults output to 8,192 and rejects
-more than 393,216 output tokens. Custom proxy URLs, images/files, server tools
+more than 393,216 output tokens. A funded route uses the same checks with the
+bounds its quote states. Custom proxy URLs, images/files, server tools
 and unknown billable fields cannot inherit this contract. See the upstream
 [completion contract](https://api-docs.deepseek.com/api/create-chat-completion/)
 and [model limits](https://api-docs.deepseek.com/quick_start/pricing/).

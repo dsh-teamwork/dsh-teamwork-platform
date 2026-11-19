@@ -4,8 +4,22 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
+)
+
+// ChatFields are the request fields the gateway sends upstream besides the
+// model; everything else a caller sends is dropped. RouteBounds refuses any
+// other key, so a field added here must first be priced into the bounds.
+var ChatFields = []string{"messages", "stream", "stream_options", "temperature", "top_p", "max_tokens",
+	"max_completion_tokens", "stop", "tools", "tool_choice", "parallel_tool_calls", "response_format", "reasoning_effort"}
+
+// The largest bounds a route may state: they keep a hold within int64 at any
+// valid rate, and are past every context window offered today.
+const (
+	MaxRouteInput  = 16 << 20
+	MaxRouteOutput = 1 << 20
 )
 
 // DeepSeekBounds uses the upstream's maximum context as a conservative input
@@ -18,14 +32,19 @@ func DeepSeekBounds(base, model string, payload map[string]json.RawMessage) (Tok
 		model != "deepseek-flash" && model != "deepseek-v4-pro" && model != "deepseek-v4-flash" && model != "deepseek-v4-flash-vision-exp" {
 		return Tokens{}, wire.E(http.StatusForbidden, "budget_bound_unavailable")
 	}
+	return RouteBounds(payload, 1<<20, 384<<10)
+}
+
+// RouteBounds holds a text and function-call request to a route's trusted
+// bounds: maxInput tokens in, and the output it asks for, at most maxOutput
+// and 8,192 when it asks for none. It rewrites the request to send that output
+// bound, and refuses anything it could not price.
+func RouteBounds(payload map[string]json.RawMessage, maxInput, maxOutput int64) (Tokens, error) {
 	unsupported := func() (Tokens, error) { return Tokens{}, wire.E(http.StatusBadRequest, "budget_request_unsupported") }
 	// Fail closed if a future gateway starts forwarding another billable
 	// feature (multiple completions, web search, audio, etc.).
 	for key := range payload {
-		switch key {
-		case "model", "messages", "stream", "stream_options", "temperature", "top_p", "max_tokens", "max_completion_tokens",
-			"stop", "tools", "tool_choice", "parallel_tool_calls", "response_format", "reasoning_effort":
-		default:
+		if key != "model" && !slices.Contains(ChatFields, key) {
 			return unsupported()
 		}
 	}
@@ -34,10 +53,10 @@ func DeepSeekBounds(base, model string, payload map[string]json.RawMessage) (Tok
 			return unsupported()
 		}
 	}
-	output := int64(8192)
+	output := min(8192, maxOutput)
 	for _, key := range []string{"max_tokens", "max_completion_tokens"} {
 		if raw, ok := payload[key]; ok {
-			if json.Unmarshal(raw, &output) != nil || output < 1 || output > 384<<10 {
+			if json.Unmarshal(raw, &output) != nil || output < 1 || output > maxOutput {
 				return unsupported()
 			}
 		}
@@ -93,5 +112,5 @@ func DeepSeekBounds(base, model string, payload map[string]json.RawMessage) (Tok
 	// alias. An ignored max_completion_tokens must not leave output unbounded.
 	payload["max_tokens"], _ = json.Marshal(output)
 	delete(payload, "max_completion_tokens")
-	return Tokens{Input: 1 << 20, Output: output}, nil
+	return Tokens{Input: maxInput, Output: output}, nil
 }

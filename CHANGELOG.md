@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — A funded route states its own bounds
+
+- **What:** `edition.FundingQuote` adds `MaxInput`, `MaxOutput` and `Body`: a funded call is bounded by its route's stated limits (`usage.RouteBounds`, the DeepSeek adapter's checks with those limits) instead of only direct DeepSeek, and the route adds upstream fields no caller may send. `FundingSettlement` adds `UpstreamCost`, the upstream's own `usage.cost`; the observer also reads OpenRouter's `cache_write_tokens`. `edition.Host` adds `Seal` and `Unseal` for an extension's own secrets under `PROVIDER_KEYS_SECRET`. The gateway's forwarded fields are `usage.ChatFields`.
+- **Why:** An edition could fund DeepSeek and nothing else; hosted models through OpenRouter need their own bounds, a routing object and the price OpenRouter charged.
+- **Breaking:** An edition's quote must state `MaxInput` and `MaxOutput`, or the call is refused.
+- **Upgrade:** Nothing for a community instance.
+- **Refs:** `docs/adr/0054-a-funded-route-states-its-bounds.md`, `docs/tech/usage-budgets.md`, `server/edition/funding.go`.
+
 ## 2026-11-19 — Pages are shared with chosen members or the team
 
 - **What:** A page's owner shares it with **Only me**, **Specific members** of the team or **Everyone in the team** (`PUT /api/teams/{teamId}/pages/{id}/sharing`), renames it (`PATCH …/{id}`), restores an old version as a new one (`POST …/versions/{n}/restore`) and deletes it (`DELETE …/{id}`, collecting objects no other page names). Readers find pages under **Shared with me** (`?list=shared`) and add versions. The team's admin lists every page under **All** (`?list=all`), narrows its sharing (`403 page_sharing_widened` for anything that admits someone new) and deletes it, but reads its content only where it is shared with them. `GET …/pages/{id}` adds `access`, `members` and `via`. A Team DSH opens a page for the session's starter (`…/view?starter=`). The plugin's `teamwork_page` gains `open`.

@@ -30,11 +30,6 @@ import (
 // far larger than an ordinary JSON body.
 const MaxBody = 4 << 20
 
-// forwarded are the request fields sent upstream; everything else a caller
-// sends is dropped.
-var forwarded = []string{"messages", "stream", "stream_options", "temperature", "top_p", "max_tokens",
-	"max_completion_tokens", "stop", "tools", "tool_choice", "parallel_tool_calls", "response_format", "reasoning_effort"}
-
 // Gateway calls providers for the team rules in Team.
 type Gateway struct {
 	Team   *team.Service
@@ -204,7 +199,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 		}
 	}
 	payload := map[string]json.RawMessage{}
-	for _, f := range forwarded {
+	for _, f := range usage.ChatFields {
 		if v, ok := fields[f]; ok {
 			payload[f] = v
 		}
@@ -214,7 +209,12 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 	tracked, err := meter.Begin(ctx, usage.Call{TeamID: t.teamID, UserID: who.UserID, HostID: who.HostID,
 		SubmittedConfigID: model, ConfigID: t.configID, Provider: t.provider, Model: t.model, Stream: stream,
 		Owner: t.owner, Reference: t.reference, Quote: quote,
-		Bounds: func() (usage.Tokens, error) { return usage.DeepSeekBounds(base, t.model, payload) }})
+		Bounds: func() (usage.Tokens, error) {
+			if quote != nil {
+				return usage.RouteBounds(payload, quote.MaxInput, quote.MaxOutput)
+			}
+			return usage.DeepSeekBounds(base, t.model, payload)
+		}})
 	if err != nil {
 		var refusal *wire.Error
 		var funding *edition.FundingError
@@ -236,6 +236,12 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 		}
 	}()
 
+	// The route's own fields go in after the caller's were checked and priced.
+	if quote != nil {
+		for k, v := range quote.Body {
+			payload[k] = v
+		}
+	}
 	out, _ := json.Marshal(payload)
 	upstreamCtx, cancelUpstream := context.WithDeadline(ctx, *tracked.DeadlineAt)
 	defer cancelUpstream()

@@ -301,3 +301,19 @@ func TestEditionStoresObjectsInTheServersStore(t *testing.T) {
 		}
 	})
 }
+
+func TestEditionSecretsAreBoundToTheirName(t *testing.T) {
+	var host edition.Host
+	editiontest.Each(t, []edition.Extension{probe(&host)}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
+		sealed := host.Seal("provider:a", "sk-secret")
+		if strings.Contains(sealed, "sk-secret") {
+			t.Fatal("a sealed secret is readable")
+		}
+		if got, err := host.Unseal("provider:a", sealed); err != nil || got != "sk-secret" {
+			t.Fatalf("unseal: %q %v", got, err)
+		}
+		if _, err := host.Unseal("provider:b", sealed); err == nil {
+			t.Fatal("a secret opened under another name")
+		}
+	})
+}
