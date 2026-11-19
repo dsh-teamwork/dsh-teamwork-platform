@@ -1039,6 +1039,147 @@ paths:
             application/octet-stream:
               schema: { type: string, format: binary }
         default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/pages:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Publish a new page from a DSH session, private to its author (docs/tech/pages.md)
+      description: Plugin, computer or host token. A host token names the session's starter in meta.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [meta]
+              properties:
+                meta: { $ref: '#/components/schemas/PageUploadMeta' }
+              additionalProperties: { type: string, format: binary }
+      responses:
+        '201':
+          description: The page at version 1
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PagePublished' }
+        default: { $ref: '#/components/responses/Error' }
+    get:
+      summary: The caller's own pages (mine), pages shared with them (shared), or every page of the team for an admin (all); newest version first, 50 at a time
+      parameters:
+        - { name: list, in: query, schema: { type: string, enum: [mine, shared, all] } }
+        - { name: before, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: One page of the list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PageList' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/pages/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: A page the caller may read, with its versions; or, for the team's admin, the page without its content
+      responses:
+        '200':
+          description: The page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PageDetail' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      summary: Rename a page; its owner's alone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              additionalProperties: false
+              properties:
+                title: { type: string, minLength: 1, maxLength: 120 }
+      responses:
+        '204': { description: Renamed }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      summary: Delete a page and every version; its owner or the team's admin
+      responses:
+        '204': { description: Deleted }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/pages/{id}/sharing:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: Set who may read a page; the owner sets any, the team's admin only narrows (page_sharing_widened otherwise)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode]
+              additionalProperties: false
+              properties:
+                mode: { type: string, enum: [private, members, team] }
+                members: { type: array, items: { type: string }, maxItems: 500 }
+      responses:
+        '204': { description: Shared }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/pages/{id}/versions/{n}/restore:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: n, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    post:
+      summary: Add a version copying version n; the owner's alone
+      responses:
+        '201':
+          description: The new version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PagePublished' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/pages/{id}/versions:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Add a version on top of meta.baseVersion; page_stale when it is no longer current
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [meta]
+              properties:
+                meta: { $ref: '#/components/schemas/PageUploadMeta' }
+              additionalProperties: { type: string, format: binary }
+      responses:
+        '201':
+          description: The new version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PagePublished' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/pages/{id}/versions/{n}/view:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: n, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    post:
+      summary: A view address for one version, an hour, for the caller alone (a Team DSH names the session's starter)
+      parameters:
+        - { name: starter, in: query, schema: { type: string, maxLength: 32 } }
+      responses:
+        '200':
+          description: The address and the version's files
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PageView' }
+        default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/history:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -1547,6 +1688,104 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
   schemas:
+    PageUploadMeta:
+      type: object
+      required: [kind]
+      additionalProperties: false
+      properties:
+        title: { type: string, maxLength: 120 }
+        kind: { type: string, enum: [html, markdown, svg] }
+        note: { type: string, maxLength: 200 }
+        sessionId: { type: string, maxLength: 128 }
+        computer: { type: string, maxLength: 64 }
+        baseVersion: { type: integer, minimum: 0 }
+        starter: { type: string, maxLength: 32 }
+    PagePublished:
+      type: object
+      required: [id, teamId, version, title, kind]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        teamId: { type: string }
+        version: { type: integer }
+        title: { type: string }
+        kind: { type: string, enum: [html, markdown, svg] }
+    PagePerson:
+      type: object
+      required: [id, name, email]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        name: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+    PageSummary:
+      type: object
+      required: [id, title, kind, sharing, owner, currentVersion, updatedAt, updatedBy, via]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        title: { type: string }
+        kind: { type: string, enum: [html, markdown, svg] }
+        sharing: { type: string, enum: [private, members, team] }
+        owner: { $ref: '#/components/schemas/PagePerson' }
+        currentVersion: { type: integer }
+        updatedAt: { type: string, format: date-time }
+        updatedBy: { $ref: '#/components/schemas/PagePerson' }
+        via: { type: string, enum: [you, team], nullable: true }
+    PageList:
+      type: object
+      required: [pages, next]
+      additionalProperties: false
+      properties:
+        pages: { type: array, items: { $ref: '#/components/schemas/PageSummary' } }
+        next: { type: string, nullable: true }
+    PageDetail:
+      type: object
+      required: [id, title, kind, sharing, owner, currentVersion, updatedAt, updatedBy, via, access, members, versions]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        title: { type: string }
+        kind: { type: string, enum: [html, markdown, svg] }
+        sharing: { type: string, enum: [private, members, team] }
+        owner: { $ref: '#/components/schemas/PagePerson' }
+        currentVersion: { type: integer }
+        updatedAt: { type: string, format: date-time }
+        updatedBy: { $ref: '#/components/schemas/PagePerson' }
+        via: { type: string, enum: [you, team], nullable: true }
+        access: { type: string, enum: [owner, reader, admin] }
+        members: { type: array, items: { $ref: '#/components/schemas/PagePerson' } }
+        versions: { type: array, items: { $ref: '#/components/schemas/PageVersion' } }
+    PageVersion:
+      type: object
+      required: [number, author, createdAt, note, computer, sessionId, teamDsh, size]
+      additionalProperties: false
+      properties:
+        number: { type: integer }
+        author: { $ref: '#/components/schemas/PagePerson' }
+        createdAt: { type: string, format: date-time }
+        note: { type: string }
+        computer: { type: string }
+        sessionId: { type: string }
+        teamDsh: { type: boolean }
+        size: { type: integer, format: int64 }
+    PageView:
+      type: object
+      required: [url, expiresAt, files]
+      additionalProperties: false
+      properties:
+        url: { type: string }
+        expiresAt: { type: string, format: date-time }
+        files:
+          type: array
+          items:
+            type: object
+            required: [path, contentType, size]
+            additionalProperties: false
+            properties:
+              path: { type: string }
+              contentType: { type: string }
+              size: { type: integer, format: int64 }
     SharedHost:
       type: object
       required: [id, name, bound, boundAt, lastSeenAt, createdAt, access, memberIds]

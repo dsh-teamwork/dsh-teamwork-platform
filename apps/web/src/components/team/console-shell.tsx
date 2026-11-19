@@ -24,6 +24,7 @@ import {
   House,
   Laptop,
   Layers,
+  Shapes,
   LayoutDashboard,
   LayoutGrid,
   LogOut,
@@ -46,7 +47,7 @@ import { api, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh';
+type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'pages';
 
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
@@ -93,6 +94,8 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
       // Listed only once one of this person's computers connected; the same computers in every team.
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true },
+      // What agents published from the reader's sessions (docs/tech/pages.md); in every team, always listed.
+      { path: 'pages', key: 'pages', icon: Shapes, fill: true },
     ],
   },
   // The team overview heads Team management on its own; the toggle below it names the group.

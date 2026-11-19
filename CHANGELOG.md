@@ -13,6 +13,30 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing for a community instance.
 - **Refs:** `docs/adr/0054-a-funded-route-states-its-bounds.md`, `docs/tech/usage-budgets.md`, `server/edition/funding.go`.
 
+## 2026-11-19 — Pages are shared with chosen members or the team
+
+- **What:** A page's owner shares it with **Only me**, **Specific members** of the team or **Everyone in the team** (`PUT /api/teams/{teamId}/pages/{id}/sharing`), renames it (`PATCH …/{id}`), restores an old version as a new one (`POST …/versions/{n}/restore`) and deletes it (`DELETE …/{id}`, collecting objects no other page names). Readers find pages under **Shared with me** (`?list=shared`) and add versions. The team's admin lists every page under **All** (`?list=all`), narrows its sharing (`403 page_sharing_widened` for anything that admits someone new) and deletes it, but reads its content only where it is shared with them. `GET …/pages/{id}` adds `access`, `members` and `via`. A Team DSH opens a page for the session's starter (`…/view?starter=`). The plugin's `teamwork_page` gains `open`.
+- **Why:** Step 4 of `docs/tech/pages.md`: a team's pages are shared within it and never outside it.
+- **Breaking:** None.
+- **Upgrade:** Nothing; `page_members` came with the first migration.
+- **Refs:** `server/internal/pages/sharing.go`, `apps/web/src/components/page-share.tsx`, `docs/tech/pages.md`.
+
+## 2026-11-19 — The console shows pages agents publish
+
+- **What:** A conversation on My DSH shows a card for each page the agent published with the plugin's `teamwork_page` tool; the card opens the page in a panel beside the conversation. **Pages** under Workspace lists the reader's own pages of the team, newest first, and shows one with its versions, each served sandboxed from its view address. `@dsh-teamwork/relay-client` reads the tool's `meta.teamworkPage` into a `page` conversation item and row.
+- **Why:** Step 3 of `docs/tech/pages.md`.
+- **Breaking:** A client that switches over `ConversationItem` or `Row` kinds meets a new `page` kind (the hosted edition's cloud sessions and phone app draw it in their own change).
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/page-viewer.tsx`, `apps/web/src/pages/team/team-pages.tsx`, `packages/relay-client/src/dsh.ts`.
+
+## 2026-11-19 — The server keeps pages agents publish, private to their maker
+
+- **What:** A new `internal/pages` and four tables (`pages`, `page_versions`, `page_files`, `page_members`): a DSH plugin, computer or host token publishes a page (an HTML page and its files, a Markdown document or an SVG) with `POST /api/teams/{teamId}/pages` and adds versions on top of the current one (`…/{id}/versions`, `409 page_stale` otherwise); a member lists their own (`GET …/pages`), reads one (`GET …/pages/{id}`) and gets a one-hour view address (`POST …/versions/{n}/view`). Files are stored once per team by digest under `teams/{teamId}/pages/` in the existing object store, 16 MiB a version and 2 GiB a team. `/p/{token}/` serves them under a CSP sandbox without `allow-same-origin`, re-checking the reader on every request, from `CONTENT_URL` when set. Pages are private; sharing, the console and the plugin's tool follow.
+- **Why:** Step 1 of `docs/tech/pages.md`: what agents make in sessions becomes the team's, viewable on any device without the page acting as its viewer.
+- **Breaking:** None. The relay's "no session content on the server" now excepts published pages (ADR 0052).
+- **Upgrade:** The migration applies at start. Optional `CONTENT_URL`: an origin on a domain of its own, pointed at the same server; the server refuses one on `APP_URL`'s registrable domain.
+- **Refs:** ADR 0052, ADR 0053, `docs/tech/pages.md`, `server/internal/pages`.
+
 ## 2026-11-19 — The phone's pairings say when each computer was last seen
 
 - **What:** `GET /relay/pairings` (and every pairing the relay returns) adds `hostLastSeenAt`, the host's `last_seen_at`, null for a shared DSH that never connected; `@dsh-teamwork/relay-client`'s `Computer` adds `lastSeenAt`.
