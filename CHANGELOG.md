@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — Pages sit under Team resources, called "shared pages" in Chinese
+
+- **What:** The console's Pages entry moves from after My DSH to right under Team resources in Workspace, and its Chinese name becomes "shared pages" (the entry and the page's heading); English keeps "Pages".
+- **Why:** Pages are the team's own assets, beside its resources, and a member who reads teammates' pages without running a DSH finds them near the top; "page" alone said nothing in a console of pages.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/console-shell.tsx`, `docs/tech/pages.md`.
+
 ## 2026-11-19 — Pages are shared with chosen members or the team
 
 - **What:** A page's owner shares it with **Only me**, **Specific members** of the team or **Everyone in the team** (`PUT /api/teams/{teamId}/pages/{id}/sharing`), renames it (`PATCH …/{id}`), restores an old version as a new one (`POST …/versions/{n}/restore`) and deletes it (`DELETE …/{id}`, collecting objects no other page names). Readers find pages under **Shared with me** (`?list=shared`) and add versions. The team's admin lists every page under **All** (`?list=all`), narrows its sharing (`403 page_sharing_widened` for anything that admits someone new) and deletes it, but reads its content only where it is shared with them. `GET …/pages/{id}` adds `access`, `members` and `via`. A Team DSH opens a page for the session's starter (`…/view?starter=`). The plugin's `teamwork_page` gains `open`.
