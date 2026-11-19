@@ -104,5 +104,31 @@ try {
  console.log('private plugin e2e ok: prepared, submitted, approved, synced and downloaded exact bytes');
 } finally {if(prepared)await rm(prepared.directory,{recursive:true,force:true});await rm(workspace,{recursive:true,force:true});}
 
+// A page, as the plugin's teamwork_page tool publishes one (docs/tech/pages.md): its own file collection and upload,
+// then the browser opens both versions through view addresses, and finds the first unchanged.
+const pageSpace=mkdtempSync(join(tmpdir(),'teamwork-page-e2e-'));
+try {
+ const {pageFiles}=await import(pathToFileURL(join(PLUGIN,'lib/page-tool.js')).href);
+ await mkdir(join(pageSpace,'report'));
+ await writeFile(join(pageSpace,'report','index.html'),'<link rel="stylesheet" href="style.css"><h1>v1</h1>');
+ await writeFile(join(pageSpace,'report','style.css'),'h1{color:red}');
+ const meta={kind:'html',note:'first',sessionId:'session-e2e',computer:'e2e'};
+ const first=await client.publishPage(team.id,{...meta,title:'Q4 report'},await pageFiles(pageSpace,'html',undefined,'report'),new AbortController().signal);
+ assert.equal(first.version,1);
+ await writeFile(join(pageSpace,'report','index.html'),'<link rel="stylesheet" href="style.css"><h1>v2</h1>');
+ const second=await client.publishPage(team.id,{...meta,pageId:first.id,baseVersion:1,note:'second'},await pageFiles(pageSpace,'html',undefined,'report'),new AbortController().signal);
+ assert.equal(second.version,2);
+ await assert.rejects(client.publishPage(team.id,{...meta,pageId:first.id,baseVersion:1},await pageFiles(pageSpace,'html',undefined,'report'),new AbortController().signal),e=>e.code==='page_stale');
+ for (const [n,heading] of [[1,'v1'],[2,'v2']]) {
+  const view=await browser(`teams/${team.id}/pages/${first.id}/versions/${n}/view`,{});
+  const page=await fetch(view.url);
+  assert.equal(page.status,200);
+  assert.match(page.headers.get('content-security-policy'),/^sandbox allow-scripts /);
+  assert.ok((await page.text()).includes(`<h1>${heading}</h1>`));
+  assert.equal(await (await fetch(view.url+'style.css')).text(),'h1{color:red}');
+ }
+ console.log('page e2e ok: published, versioned, refused a stale base, and viewed both versions');
+} finally {await rm(pageSpace,{recursive:true,force:true});}
+
 callback.close();
 console.log(`plugin e2e ok: signed in, synced ${snapshot.teams[0].configs.length} configuration, two calls through the gateway`);
