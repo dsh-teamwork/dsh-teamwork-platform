@@ -59,16 +59,22 @@ it is online and whether this browser is paired with it; one that is offline
 offers nothing until DSH runs on it again, and the page carries on by itself
 once it connects.
 
-Beside the message box, a new session offers the computer's folders, presets
-(a team preset included; one the computer cannot run yet says why) and models,
-before its first message; leave them as they are for the computer's defaults.
+A new session waits in the middle of the page, laid out as in DSH: above the
+message box, the computer's folders and presets (a team preset included; one
+the computer cannot run yet says why), and in its bottom row the model, before
+its first message; leave them as they are for the computer's defaults. Once
+the first message is sent, the session opens in place.
 The folder starts as this team's default workspace on that computer, which
 you set in DSH's Teamwork panel under **My teams**.
 A model that can reason harder offers its efforts beside it. In a session that
 has started, the folder and preset stay as they are, and you can change its
 model and effort while it is not working, for that session alone. The
-paperclip beside them adds files (text, code, logs, CSV, JSON or PDF; up to
+paperclip at the left of the box adds files (text, code, logs, CSV, JSON or PDF; up to
 five, 20 MB each), sent with the message, or on their own.
+
+The open computer lists its latest sessions under it, with **Show all** for
+the rest; the arrow at the end of its row folds them away, so the other
+computers stay in reach.
 
 The device count beside a computer opens its devices: every phone and browser
 paired with it, where **Remove** cuts any of them off at once, a lost phone

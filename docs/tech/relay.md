@@ -513,7 +513,9 @@ the hosted edition, Cloud DSH.
   the number of devices paired with it, which opens its devices page. The list
   is read again every ten seconds, so a computer coming online or going away
   moves the page along by itself. The open one shows its sessions beneath it
-  once it is online and this browser is paired.
+  once it is online and this browser is paired, one line each, the newest six
+  until "Show all"; the arrow at the end of its row folds them away, so the
+  computers below stay in reach.
 - **The third column** follows the computer's state, one at a time, and only
   the last offers a session: offline (open DSH on it, or remove the
   computer);
@@ -523,12 +525,20 @@ the hosted edition, Cloud DSH.
   until the computer answers over the encrypted channel with its sessions or
   its PIN state; the channel failed, with a retry; the computer's PIN,
   `owner`'s; and then a session, or a new one started by its first message.
-  Above it, the computer's name with its operating system and DSH version on
+  A new session and the session it becomes are one view (`Conversation`), so
+  the address taking the new id draws nothing twice. Above the states before
+  it, the computer's name with its operating system and DSH version on
   the left, and on the right whether it is online (green) or offline (grey,
   with when it was last seen); the list marks each computer the same way.
 - **The devices page** takes the third column: every pairing of the account to
   the computer, the phone app's and every browser's, with its name, status,
   last use and whether it pushes, this browser marked, each removable.
+- **The composer is laid out as DSH's own input bar**: a new session waits in
+  the middle of the column, its folder and preset above the box; the box's
+  bottom row holds the attachment control on the left and the model, its
+  effort and the round Send (Stop while it runs) on the right, and moves to
+  the foot once the session starts; a started session's folder and preset
+  sit under its title.
 - **A new session** offers the computer's folders, presets and models (with a
   model's reasoning efforts where it has them) before its first message, and a
   session's model and effort change while it is idle, through

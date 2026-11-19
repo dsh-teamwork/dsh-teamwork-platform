@@ -10,7 +10,8 @@
  *
  * The third column follows the computer's state, one at a time: offline (nothing else is possible), online but not
  * paired with this browser (pair), paired and connecting (its encrypted channel and PIN state not heard yet), the
- * channel failed (retry), its PIN asked (the gate), and only then sessions and the composer. The list is read again
+ * channel failed (retry), its PIN asked (the gate), and only then a session, or a new one with the composer centred.
+ * The open computer's sessions fold away under its row, so the computers below stay in reach. The list is read again
  * every few seconds, so a computer coming online or going away moves the page along by itself.
  */
 
@@ -26,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { browserCanJoin, myComputers, relayFor, removeComputer, removeDevice, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
-import { ComputerRow, Conversation, DshColumns, NewSession, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
+import { ComputerRow, Conversation, DshColumns, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
 import { useTeam } from './layout';
 
 /** The member's own computers and their sessions on the one open, beside the conversation or, with `devices`, its devices. */
@@ -39,6 +40,8 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
   const base = `/teams/${team.id}/my-dsh`;
   const [hosts, setHosts] = useState<MyComputer[] | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  // The open computer whose sessions are folded away in the column, if any.
+  const [folded, setFolded] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -83,6 +86,8 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
           {hosts?.length === 0 && <p className="px-2.5 text-muted-foreground">{t('none')}</p>}
           {hosts?.map((h) => {
             const open = h.id === hostId;
+            const listed = open && computerId !== '' && !unreachable;
+            const expanded = listed && folded !== h.id;
             return (
               <div key={h.id} className="flex flex-col gap-0.5">
                 <ComputerRow
@@ -94,6 +99,8 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
                   open={open}
                   current={open && !devices && !(sessionId && ready)}
                   onPick={onPick}
+                  expanded={expanded}
+                  onToggle={listed ? () => setFolded(expanded ? h.id : null) : undefined}
                   extra={
                     <Link
                       to={`${base}/${h.id}/devices`}
@@ -111,7 +118,7 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
                     </Link>
                   }
                 />
-                {open && computerId && !unreachable && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
+                {expanded && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
           })}
@@ -127,8 +134,15 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
         </section>
       ) : devices ? (
         <DevicesView host={host} back={`${base}/${host.id}`} changed={() => void load()} />
-      ) : sessionId && ready ? (
-        <Conversation key={sessionId} computerId={computerId} sessionId={sessionId} title={session?.title || tt('untitled')} />
+      ) : ready && !unreachable ? (
+        <Conversation
+          key={computerId}
+          computerId={computerId}
+          sessionId={sessionId}
+          title={session?.title || tt('untitled')}
+          name={host.name}
+          started={(id) => { void reload(); navigate(`${base}/${host.id}/${id}`); }}
+        />
       ) : (
         <>
           <HostHeader host={host} twin={twin(host)} />
@@ -160,10 +174,8 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
                 {t('retry')}
               </Button>
             </State>
-          ) : !ready ? (
-            <State icon={Loader} spin title={t('connecting', { name: host.name })} body={t('connectingHelp')} />
           ) : (
-            <NewSession key={computerId} computerId={computerId} name={host.name} started={(id) => { void reload(); navigate(`${base}/${host.id}/${id}`); }} />
+            <State icon={Loader} spin title={t('connecting', { name: host.name })} body={t('connectingHelp')} />
           )}
         </>
       )}
