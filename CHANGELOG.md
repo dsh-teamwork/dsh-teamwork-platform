@@ -7,11 +7,19 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-19 — A tighter session composer, and "Default model"
 
-- **What:** The console's session composer is tighter: smaller workspace, preset, permission and model pickers, a smaller attach and send button, less padding in the card, and the workspace and preset pickers closer to it, each taking up to the whole row so the preset wraps under the workspace, left-aligned, before a name is cut short. The model choice that follows the preset is named "Default model" (`followPreset` in the messages).
+- **What:** The console's session composer is tighter: smaller workspace, preset, permission and model pickers, a smaller attach and send button, less padding in the card, and the workspace and preset pickers closer to it, each taking up to the whole row so the preset wraps under the workspace, left-aligned, before a name is cut short. The model choice that follows the preset is named "Default model" (`followPreset` in the messages). The My DSH hint is shorter and says only you can use it.
 - **Why:** The composer took more room than it needed, and "Preset / desktop model" read as two choices.
 - **Breaking:** None.
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/dsh-session.tsx`, `apps/web/src/messages/`.
+
+## 2026-11-19 — The install, self-hosting and commands pages match a clean run
+
+- **What:** The `/docs` install page installs pnpm, which DSH needs to add any plugin, puts `sudo` on the global npm installs, drops the pinned DSH prerelease, and says the pnpm profile settings must come before the first plugin add. The self-hosting page sets `APP_URL` in `.env` before the first start, warns that Compose publishes port 3000 in plain HTTP and that `ALLOW_PRIVATE_PROVIDERS` is on, and gives the backup and upgrade commands. The commands page names the CLI's `device` subcommands, not `phone`.
+- **Why:** Followed on a fresh Ubuntu 24.04 as a non-root user, the Linux steps stopped at `EACCES` and `pnpm ENOENT`, the pinned DSH was four prereleases behind, and `dsh-teamwork phone …` does not exist.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/content/docs/{en,zh-CN}/{install,self-hosting,commands}.md`.
 
 ## 2026-11-19 — Switch a session's permission preset from the console
 

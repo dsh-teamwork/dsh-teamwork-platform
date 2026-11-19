@@ -20,6 +20,8 @@ description: 在 DSH 桌面版或 DSH CLI 中添加 Teamwork 插件、登录，�
 
 ## DSH CLI 与 Web
 
+DSH 用 pnpm 安装插件，所以在运行 DSH 的终端里 `pnpm --version` 必须能用；如果不能，用 `npm install -g pnpm` 安装。pnpm 是 11 或更高版本时，先按 [Linux 服务器](#linux-服务器)第 3 步加上 profile 的两项设置。
+
 安装到你运行的 profile（下例为 `web`，如果名称不同请替换）：
 
 ```sh
@@ -40,20 +42,20 @@ DSH 也可以运行在没有桌面的服务器上。在 Ubuntu 或 Debian 上，
    sudo apt-get install -y nodejs
    ```
 
-2. 安装 DSH。它目前只发布了预发布版本，需要写明 [npm 上](https://www.npmjs.com/package/@deepseek-ai/dsh?activeTab=versions) `latest` 对应的确切版本，不写版本号时，部分 npm 版本会找不到：
+2. 安装 DSH，以及 DSH 用来安装插件的 pnpm。NodeSource 的 Node.js 把全局包装在系统目录里，所以需要 `sudo`，否则 npm 会以 `EACCES` 中断：
 
    ```sh
-   npm install -g @deepseek-ai/dsh@0.2.2-rc.1
+   sudo npm install -g @deepseek-ai/dsh pnpm
    ```
 
-3. 如果 `pnpm --version` 显示 11 或更高，先让 DSH 的 profile 接受当天发布的版本，并跳过它用不到的依赖构建脚本；否则 pnpm 11 会装上旧版本，或者以 `ERR_PNPM_IGNORED_BUILDS` 中断：
+3. 在添加任何插件之前，先让 DSH 的 profile 接受当天发布的版本，并跳过它用不到的依赖构建脚本；否则第 2 步装上的 pnpm（11 或更高版本）会装上旧版本，或者以 `ERR_PNPM_IGNORED_BUILDS` 中断：
 
    ```sh
    dsh plugin --profile web list
    printf 'minimumReleaseAge: 0\nstrictDepBuilds: false\n' >> ~/.dsh/profiles/web/pnpm-workspace.yaml
    ```
 
-   第一行只是让 DSH 先建好 profile，这样它自己的设置会写在这两行之前。
+   第一行只是让 DSH 先建好 profile，这样它自己的设置会写在这两行之前。请在第 4 步之前执行：已经尝试添加过插件的 profile 会一直停在它记下的旧版本，直到运行 `dsh plugin --profile web update --latest @dsh-teamwork/dsh-teamwork`。
 
 4. 安装插件，并在 `tmux` 会话中启动 DSH，退出登录后它会继续运行。请在会话要工作的项目目录里启动：会话会在这个目录、或 DSH 已有的工作区里开始。
 
@@ -69,7 +71,7 @@ DSH 也可以运行在没有桌面的服务器上。在 Ubuntu 或 Debian 上，
 5. 在同一台机器的另一个终端里，安装插件附带的命令 `dsh-teamwork` 和 `dsh-teamwork-audit`。DSH profile 里的那一份不在 `PATH` 上：
 
    ```sh
-   npm install -g @dsh-teamwork/dsh-teamwork
+   sudo npm install -g @dsh-teamwork/dsh-teamwork
    ```
 
 6. 然后运行 `dsh-teamwork login`，见[命令](/docs/commands#在服务器上-dsh-teamwork)。服务器上不需要浏览器。
@@ -94,7 +96,7 @@ DSH 也可以运行在没有桌面的服务器上。在 Ubuntu 或 Debian 上，
 
 ```sh
 dsh plugin --profile web update --latest @dsh-teamwork/dsh-teamwork
-npm install -g @dsh-teamwork/dsh-teamwork
+sudo npm install -g @dsh-teamwork/dsh-teamwork
 ```
 
 ## 遇到问题
