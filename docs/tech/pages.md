@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Plan — steps 0 to 4 built; step 5 is the hosted edition's · **Updated:** 2026-11-19
+> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-19
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -15,11 +15,11 @@ Every edition has it; the hosted edition adds the phone app.
 
 ## Contents
 
-The plan answers, in order: what it is and is not (Goal, Non-goals, Terms);
-how it works (Architecture, Data model, Object storage, API, The view
-address, The plugin tool, The clients, Security); how it is run (Editions,
-Configuration and operations); and how it is built (Order of work, Open
-questions, How done is verified).
+In order: what it is and is not (Goal, Non-goals, Terms); how it works
+(Architecture, Data model, Object storage, API, The view address, The plugin
+tool, The clients, Security); how it is run (Editions, Configuration and
+operations); and how it was built (How it was built, and what remains; Open
+questions; How done is verified).
 
 ## Goal
 
@@ -383,7 +383,13 @@ In the plugin repository, beside the other `teamwork_*` tools
   exception to "storing session content"; the view address, its content
   origin and that no page leaves its team.
 
-## Order of work, and what gates what
+## How it was built, and what remains
+
+Every step below is built. What remains is step 0's isolation check on the
+browsers and WebViews this repository's machines could not reach (Safari,
+Firefox, Android's WebView, iOS's WKWebView), on devices, before the phone app
+ships with pages.
+
 
 Each step is one pull request per repository it touches, through the gate,
 with its `CHANGELOG.md` entry; the plugin is released before the console
