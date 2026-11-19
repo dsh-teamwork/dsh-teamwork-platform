@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — A tighter session composer, and "Default model"
+
+- **What:** The console's session composer is tighter: smaller workspace, preset, permission and model pickers, a smaller attach and send button, less padding in the card, and the workspace and preset pickers closer to it, each taking up to the whole row so the preset wraps under the workspace, left-aligned, before a name is cut short. The model choice that follows the preset is named "Default model" (`followPreset` in the messages).
+- **Why:** The composer took more room than it needed, and "Preset / desktop model" read as two choices.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/dsh-session.tsx`, `apps/web/src/messages/`.
+
 ## 2026-11-19 — Switch a session's permission preset from the console
 
 - **What:** The composer's foot has DSH's permission menu beside the paperclip (read only, workspace write, full access, or the presets that DSH composes). `teamwork/configuration` carries `permissions` (the options, the session's current one, the default; each `risky` and `allowed`), and `teamwork/selectPermission` switches an idle session through DSH's own `/permission` command. A risky preset is confirmed once; on a Team DSH it is shown and cannot be picked (`teamwork/permission_refused`). `@dsh-teamwork/relay-client` adds `selectPermission` and the `permission_refused` error.
