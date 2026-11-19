@@ -16,7 +16,7 @@
  *   `approval/request`, answered through `$events/result`.
  */
 
-import type { ConversationItem, Pending, SessionChange, SessionState, SessionStatus, SessionSummary } from './types';
+import type { ConversationItem, Pending, PublishedPage, SessionChange, SessionState, SessionStatus, SessionSummary } from './types';
 
 type Json = Record<string, unknown>;
 const isObject = (value: unknown): value is Json => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -85,6 +85,17 @@ function summarize(args: unknown): string {
   return args;
 }
 
+/** The page a `teamwork_page` result's `meta` names, when it names one completely. */
+function publishedPage(tool: string, meta: unknown): PublishedPage | null {
+  if (tool !== 'teamwork_page' || !isObject(meta) || !isObject(meta.teamworkPage)) return null;
+  const p = meta.teamworkPage;
+  const kinds = ['html', 'markdown', 'svg'];
+  return typeof p.teamId === 'string' && typeof p.pageId === 'string' && typeof p.version === 'number' &&
+    typeof p.title === 'string' && typeof p.kind === 'string' && kinds.includes(p.kind)
+    ? { teamId: p.teamId, pageId: p.pageId, version: p.version, title: p.title, kind: p.kind as PublishedPage['kind'] }
+    : null;
+}
+
 /**
  * What one committed session event means to the screen, given the state so
  * far (a tool result needs the call it answers). Most events mean nothing.
@@ -134,7 +145,9 @@ export function eventsOf(event: unknown, state: Pick<SessionState, 'items'>): Se
       const callId = message.toolCallId;
       const call = state.items.find((i) => i.kind === 'tool' && i.id === callId);
       if (!call || call.kind !== 'tool') return [];
-      return [{ type: 'item', item: { ...call, status: message.isError === true ? 'failed' : 'done' } }];
+      const done: SessionChange[] = [{ type: 'item', item: { ...call, status: message.isError === true ? 'failed' : 'done' } }];
+      const page = message.isError === true ? null : publishedPage(call.name, data.meta);
+      return page ? [...done, { type: 'item', item: { kind: 'page', id: `page-${call.id}`, page } }] : done;
     }
     case 'turn/start':
       return [{ type: 'status', status: 'running' }];

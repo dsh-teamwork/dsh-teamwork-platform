@@ -36,6 +36,8 @@ import {
   type SessionState,
   type SessionSummary,
 } from '@dsh-teamwork/relay-client';
+import type { PublishedPage } from '@dsh-teamwork/relay-client';
+import { KIND_ICON, PageViewer } from '@/components/page-viewer';
 import { PresetAvatar } from '@/components/preset-avatar';
 import { ProviderMark } from '@/components/provider-mark';
 import { Button } from '@/components/ui/button';
@@ -560,6 +562,7 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
   const files = useFiles(computerId);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
+  const [openPage, setOpenPage] = useState<PublishedPage | null>(null);
 
   useEffect(() => relay.follow(computerId, sessionId, (event) => setState((s) => applySessionEvent(s, event))), [relay, computerId, sessionId]);
 
@@ -602,6 +605,8 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
               ) : null}
               {row.text && <p className="rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>}
             </div>
+          ) : row.kind === 'page' ? (
+            <PageCard key={row.id} page={row.page} onOpen={() => setOpenPage(row.page)} />
           ) : row.kind === 'assistant' ? (
             <div key={row.id} className="flex flex-col gap-2 leading-6 [&_code]:font-mono [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5">
               <Markdown remarkPlugins={[remarkGfm]} skipHtml>{row.text}</Markdown>
@@ -639,6 +644,12 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
           </div>
         )}
         {state.closed && <p role="alert" className="text-destructive">{word(new RelayError(state.closed))}</p>}
+        {openPage && (
+          // Beside the conversation on a wide screen, over it on a narrow one (docs/tech/pages.md, "The clients").
+          <aside className="fixed inset-y-0 right-0 z-40 flex w-full flex-col overflow-y-auto border-l bg-background p-4 shadow-xl xl:w-[min(60rem,55vw)]">
+            <PageViewer key={`${openPage.pageId}-${openPage.version}`} teamId={openPage.teamId} pageId={openPage.pageId} version={openPage.version} onClose={() => setOpenPage(null)} />
+          </aside>
+        )}
         {failed && <p role="alert" className="text-destructive">{failed}</p>}
       </div>
       <Composer
@@ -720,5 +731,20 @@ export function PinGate({ computerId, state, lockedHint }: { computerId: string;
         </CardContent>
       )}
     </Card>
+  );
+}
+
+/** A page the agent published in this conversation: a card that opens it. */
+function PageCard({ page, onOpen }: { page: PublishedPage; onOpen: () => void }) {
+  const t = useTranslations('team.pages');
+  const Icon = KIND_ICON[page.kind];
+  return (
+    <button type="button" onClick={onOpen} className="flex max-w-md items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors hover:border-ring">
+      <Icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate font-medium">{page.title}</span>
+        <span className="text-xs text-muted-foreground">{t('cardNote', { n: page.version })}</span>
+      </span>
+    </button>
   );
 }

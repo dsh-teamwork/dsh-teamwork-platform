@@ -72,6 +72,16 @@ paired with it, where **Remove** cuts any of them off at once, a lost phone
 included. If you enter the wrong PIN too often, run `/teamwork pin reset` in
 DSH on that computer.
 
+## Pages your agent publishes
+
+Ask the agent in a session for a report, a deck, a dashboard or a diagram, and
+to publish it. It appears as a card in the conversation; the card opens the
+page beside the conversation, and **Pages** under Workspace lists every page
+you published in this team, newest first, with its versions. Asking the agent
+for a change adds a version; the earlier ones stay. A page is private to you:
+the agent cannot share it. Pages run in a sandbox on their own address, so a
+page cannot act as you in Teamwork.
+
 ## More than one team
 
 You can be in several teams. The plugin syncs all of them; the team selector in

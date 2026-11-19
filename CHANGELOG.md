@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — The console shows pages agents publish
+
+- **What:** A conversation on My DSH shows a card for each page the agent published with the plugin's `teamwork_page` tool; the card opens the page in a panel beside the conversation. **Pages** under Workspace lists the reader's own pages of the team, newest first, and shows one with its versions, each served sandboxed from its view address. `@dsh-teamwork/relay-client` reads the tool's `meta.teamworkPage` into a `page` conversation item and row.
+- **Why:** Step 3 of `docs/tech/pages.md`.
+- **Breaking:** A client that switches over `ConversationItem` or `Row` kinds meets a new `page` kind (the hosted edition's cloud sessions and phone app draw it in their own change).
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/page-viewer.tsx`, `apps/web/src/pages/team/team-pages.tsx`, `packages/relay-client/src/dsh.ts`.
+
 ## 2026-11-19 — The server keeps pages agents publish, private to their maker
 
 - **What:** A new `internal/pages` and four tables (`pages`, `page_versions`, `page_files`, `page_members`): a DSH plugin, computer or host token publishes a page (an HTML page and its files, a Markdown document or an SVG) with `POST /api/teams/{teamId}/pages` and adds versions on top of the current one (`…/{id}/versions`, `409 page_stale` otherwise); a member lists their own (`GET …/pages`), reads one (`GET …/pages/{id}`) and gets a one-hour view address (`POST …/versions/{n}/view`). Files are stored once per team by digest under `teams/{teamId}/pages/` in the existing object store, 16 MiB a version and 2 GiB a team. `/p/{token}/` serves them under a CSP sandbox without `allow-same-origin`, re-checking the reader on every request, from `CONTENT_URL` when set. Pages are private; sharing, the console and the plugin's tool follow.

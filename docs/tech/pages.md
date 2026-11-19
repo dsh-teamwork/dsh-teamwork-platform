@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Plan — steps 0 and 1 built · **Updated:** 2026-11-19
+> **Status:** Plan — steps 0 to 3 built · **Updated:** 2026-11-19
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -302,14 +302,15 @@ In the plugin repository, beside the other `teamwork_*` tools
 
 - **`packages/relay-client`** (`dsh.ts`, `conversation.ts`): a `tool/result`
   of `teamwork_page` that is not an error, whose `meta` carries `teamworkPage`, becomes a
-  `page` conversation item `{ kind: 'page', id, teamId, pageId, version,
-  title, pageKind }` after its tool item, live and from history. Every client
-  that follows a session (the console's My DSH and Team DSH, the hosted
-  edition's cloud sessions and phone app) gets it with no change of its own.
+  `page` conversation item `{ kind: 'page', id, page: { teamId, pageId,
+  version, title, kind } }` after its tool item, live and from history, and
+  `rowsOf` makes it a row of its own between steps. Every client that follows
+  a session reads it from the package; each draws the row (the console's
+  sessions here, the hosted edition's cloud sessions and phone app there).
 - **The card** (`apps/web/src/pages/team/dsh-session.tsx`): the kind's icon,
   the title, "version N"; clicking it opens the viewer. On a wide screen
-  (`xl`) the viewer is a column beside the conversation; narrower, it covers
-  the conversation with a way back. A page of another team, or one the
+  (`xl`) the viewer is a panel beside the conversation; narrower, it covers
+  the conversation, with a close button. A page of another team, or one the
   member can no longer read, says so instead of opening.
 - **The viewer** (`apps/web/src/components/page-viewer.tsx`, shared by the
   column and the Pages page): mints a view address, frames it
@@ -320,7 +321,7 @@ In the plugin repository, beside the other `teamwork_*` tools
   **Open in a new tab** and **Copy link** (to the console's page for it,
   never the view address).
 - **Pages in the sidebar**: `GROUPS`' `work` group in
-  `apps/web/src/components/team/console-shell.tsx`, after Team DSH, for
+  `apps/web/src/components/team/console-shell.tsx`, after My DSH, for
   everyone in every team, always listed; `/teams/{teamId}/pages` (**Mine**),
   `?list=shared` (**Shared with me**), `?list=all` (**All**, a third tab an
   admin alone sees: rows they cannot read show no viewer, only **Restrict**

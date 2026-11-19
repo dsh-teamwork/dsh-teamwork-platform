@@ -32,7 +32,7 @@ describe('a session a server relays', () => {
     ]);
     expect(followed.session).toBe(S);
     expect(followed.state.status).toBe('running');
-    expect(followed.state.items.map((i) => (i.kind === 'tool' ? i.name : i.text))).toEqual(['Deploy it', 'Deploying']);
+    expect(followed.state.items.map((i) => (i.kind === 'tool' ? i.name : i.kind === 'page' ? i.page.title : i.text))).toEqual(['Deploy it', 'Deploying']);
   });
 
   it('asks a batch one question at a time, and answers it under the stream’s client id', () => {
