@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current · **Updated:** 2026-11-19
 
 The DSH Teamwork visual system — the whale mark, the black-and-white palette with its two accents, type, spacing and icons — and the file in code that owns each part.
 
@@ -218,6 +218,11 @@ a person or a character, which at this size reads as clip art.
   `cursor: pointer` from the base layer in `apps/web/src/globals.css` and
   `apps/manage/src/globals.css`, as links do; a disabled control keeps the
   arrow. A component adds no `cursor-pointer` of its own.
+- **A sidebar scrolls quietly.** A scroll area inside a sidebar or its drawer
+  takes `scrollbar-quiet` (`apps/web/src/globals.css`): no track and no arrows,
+  only a 4px rounded thumb in `--muted-foreground` at 25%, darker while the area
+  is hovered or the thumb dragged, so the bar reads as part of the surface in
+  both themes rather than the operating system's grey.
 - **Lists are rows, not cards.** Rows are divided by `--border` hairlines; a
   card's border and fill are kept for the one block that has to stand apart.
 - **The logo keeps its plate.** Use `public/logo.svg` at its square size. The
