@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — An admin can remove an owned model from a team
+
+- **What:** `DELETE /api/teams/{teamId}/configs/{configId}` removes an owned (hosted) model as any other model, still refused while a preset calls it (`model_in_use`); it no longer answers `config_owned`. The removal emits a new `edition.TeamChange` kind, `edition.ModelRemoved`, carrying the new `ConfigID` field, in the same transaction, so the owning edition forgets the route. Editing an owned model or its rate is still `config_owned`.
+- **Why:** Teams receive hosted models without asking, and need to be able to take away the ones they do not want.
+- **Breaking:** None; a team change handler ignores a kind it does not know.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/team/configs.go`, `server/edition/edition.go`, `docs/tech/usage-budgets.md`; the models page remounts an edition's models section when the team's models change (`apps/web/src/pages/team/models.tsx`).
+
 ## 2026-11-19 — Hosted models reach the plugin with their context window
 
 - **What:** `edition.FundingHost.PublishModel` takes an `edition.OwnedModel` (config id, name, route reference, `ContextWindow`, `MaxTokens`) and writes `contextWindow` and `maxTokens` into the published model's `data`, each from 1 to 10,000,000. Publishing an existing owned model again with another name or other bounds updates it and bumps its version; an unchanged publication changes nothing, and one into a deleted team is `edition.ErrTeamGone`.

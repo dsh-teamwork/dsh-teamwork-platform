@@ -114,7 +114,8 @@ function Models({ team, configs, providers, reload }: Props) {
         }
       />
 
-      {editionSection && createElement(editionSection, { teamId: team.id, reload })}
+      {/* Keyed by the team's models, so the section reads its own list again when one is added or removed here. */}
+      {editionSection && createElement(editionSection, { key: models.map((m) => m.id).join(), teamId: team.id, reload })}
 
       <UnpricedNotice teamId={team.id} models={models} referenceOf={referenceOf} reload={reload} />
 
