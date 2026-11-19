@@ -1,6 +1,6 @@
-import { PROVIDER_MARKS } from '@dsh-teamwork/shared';
 import { createTranslator } from 'use-intl';
 
+import { MarkSvg } from '@/components/provider-mark';
 import type { Locale } from '@/lib/locale';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
@@ -12,7 +12,7 @@ import zhCN from '@/messages/zh-CN.json';
  * admin's web console); in the middle, the one place that governs and syncs,
  * its name over the page's sections ticked off as what it does;
  * on the right, the mainstream providers it forwards calls to, each by its
- * logo (`PROVIDER_MARKS` in @dsh-teamwork/shared), and Cloud DSH as a separate workspace.
+ * logo on its plate (`MarkSvg`), and Cloud DSH as a separate workspace.
  *
  * The value is shown rather than labelled. A pulse plays the story on a loop
  * (globals.css, "topology"): the admin publishes, the hub syncs it to every
@@ -198,11 +198,10 @@ export function Topology({ locale }: { locale: Locale }) {
                   <path d={`M${x + 9} ${y + 5}v8M${x + 5} ${y + 9}h8`} className="fill-none stroke-foreground" strokeWidth={1.5} strokeLinecap="round" />
                 </>
               ) : (
-                <svg x={x} y={y} width={18} height={18} viewBox="0 0 24 24" className="fill-foreground">
-                  {PROVIDER_MARKS[id].map(({ d }) => (
-                    <path key={d} d={d} fillRule="evenodd" />
-                  ))}
-                </svg>
+                <>
+                  <rect x={x - 1} y={y - 1} width={20} height={20} rx={5} className="fill-mark-plate" />
+                  <MarkSvg mark={id} x={x + 2} y={y + 2} width={14} height={14} />
+                </>
               )}
               <text x={x + 28} y={y + 13.5} className="fill-foreground text-[12px]">{t(`providers.${id}`)}</text>
             </g>

@@ -117,6 +117,7 @@ Both declare the same scale; the console adds three outcome colours.
 | `--brand` | `oklch(0.33 0.11 268)` | `oklch(0.452 0.124 270)` | Navy: team identity (below); in dark a lighter navy, still a fill under white text |
 | `--brand-foreground` | `oklch(1 0 0)` | `oklch(1 0 0)` | Text on brand |
 | `--signal` | `oklch(0.765 0.14 73)` | `oklch(0.807 0.137 78)` | Amber: attention, as a dot or a line, never text |
+| `--mark-plate` | `oklch(0.953 0.003 286)` | `oklch(0.92 0.003 286)` | The tile under a provider's mark: light in both themes |
 | `--border` | `oklch(0.932 0.003 286)` | `oklch(0.287 0.007 286)` | Hairlines |
 | `--input` | `oklch(0.887 0.007 286)` | `oklch(0.351 0.01 286)` | Field and outline-button border |
 | `--ring` | `oklch(0.452 0.124 270)` | `oklch(0.766 0.095 271)` | Focus ring (`outline-ring/50` on everything): navy |
@@ -157,16 +158,20 @@ Lucide (`lucide-react`) on web and console, sized and coloured through
 `className` from tokens (e.g. `text-muted-foreground`). There is no product
 icon set.
 
-**Model providers are shown by their makers' marks.** `PROVIDER_MARKS` in
-`packages/shared/src/providers.ts` holds them, single-colour paths copied from
-LobeHub's icons, and `providerMark` picks one from what names a model (its
-id and name first, then its provider's name and address), so a model resold
-by OpenRouter shows its maker. Every place that names a model or a provider
-draws one: a mark in `--foreground` on a `--secondary` tile (20px beside a
-line of text or in a menu, 36px heading a card), drawn by
-`apps/web/src/components/provider-mark.tsx` and the phone app's own; an
-unknown one shows two initials on the same tile. A mark is never in its
-brand colour, and never stands without the name beside it.
+**Model providers are shown by their makers' marks, in their own colours.**
+`PROVIDER_MARKS` in `packages/shared/src/providers.ts` holds them, copied from
+LobeHub's icons (the colour version where one exists; OpenAI, Anthropic, xAI,
+Ollama and OpenRouter are black, as their makers draw them on light), and
+`providerMark` picks one from what names a model (its id and name first, then
+its provider's name and address), so a model resold by OpenRouter shows its
+maker. Every place that names a model or a provider draws one on a
+`--mark-plate` tile (20px beside a line of text or in a menu, 36px heading a
+card), drawn by `apps/web/src/components/provider-mark.tsx` and the phone
+app's own. The plate stays light in dark mode, since a maker's colours are
+chosen for light. A mark's colours are the one exception to "never a literal
+colour": they are the maker's artwork, kept as data, never a token and never
+used for anything else. An unknown provider shows two initials on a
+`--secondary` tile. A mark never stands without the name beside it.
 
 ### Preset avatars
 
@@ -264,7 +269,7 @@ a person or a character, which at this size reads as clip art.
   each with an icon for where they work (DSH Desktop, a terminal, the phone,
   the admin's web console), curved arrows into DSH Teamwork in the middle, and
   on the right the mainstream upstream providers, each by its own logo
-  (`PROVIDER_MARKS`, the same marks the console draws),
+  (`PROVIDER_MARKS`, the same marks the console draws, each on its plate),
   as well as a custom provider. Cloud DSH sits below them as a separate
   workspace in limited trial on the hosted edition. The phone's icon carries `public/logo.svg` on its
   screen, since the app is ours. The hub lists the page's sections, each with
