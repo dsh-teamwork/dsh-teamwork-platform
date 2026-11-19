@@ -590,7 +590,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
         </div>
       )}
       {/* One composer in both places, so what is typed survives the move from the centre to the foot. */}
-      <div className={cn('flex flex-col gap-2', hero ? 'my-auto pb-[10vh]' : 'sticky bottom-0 mt-auto bg-background pt-2 pb-4')}>
+      <div className={cn('flex flex-col gap-1', hero ? 'my-auto pb-[10vh]' : 'sticky bottom-0 mt-auto bg-background pt-2 pb-4')}>
         {hero && (
           <section className="flex flex-col items-center gap-2 pb-2 text-center">
             <Server className="size-8 text-muted-foreground" aria-hidden />
