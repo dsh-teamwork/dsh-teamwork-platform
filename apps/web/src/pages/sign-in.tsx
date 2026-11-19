@@ -4,7 +4,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { useTitle } from '@/components/page';
-import { LocalePicker } from '@/components/locale-picker';
+import { HeaderLocaleMenu } from '@/components/locale-picker';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -136,8 +136,8 @@ export function SignInPage() {
             <ArrowLeft className="size-4" aria-hidden />
             {tc('backHome')}
           </a>
+          <HeaderLocaleMenu />
           <ThemeToggle />
-          <LocalePicker className="h-9" />
         </header>
 
         <main className="flex flex-1 items-center justify-center px-6 pb-16">

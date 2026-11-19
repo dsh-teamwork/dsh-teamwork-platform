@@ -18,7 +18,7 @@ How documents are laid out, named and kept is the "Documentation" section of
 - [Team assistant](tech/team-assistant.md) — default assistant, reviewed plugin/preset sharing, publication history and recovery.
 - [Relay and pairing](tech/relay.md) — how a phone or browser reaches a DSH: pairing, frames, encryption, push.
 - [Shared DSH](tech/shared-dsh.md) — a team's own DSH reached by members through the relay, end to end encrypted.
-- [Artifacts](tech/artifacts.md) — pages agents publish from sessions: storage, versions, team sharing, sandboxed viewing.
+- [Pages](tech/pages.md) — pages agents publish from sessions: storage, sharing, sandboxed viewing and the order of work.
 - [Usage points and budgets](tech/usage-budgets.md) — community metering, model prices, team/member limits, reservations, reports and implementation acceptance.
 - [Community edition split](tech/community-edition.md) — how the open part becomes its own repository, runs from `npx`, and stays in step.
 - [Go server](tech/go-server.md) — how the server becomes one Go binary, and what each experiment found.
