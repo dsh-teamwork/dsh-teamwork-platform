@@ -76,12 +76,14 @@ the hosted one:
 - **Version**: an immutable set of files, numbered from 1, with its author,
   the session it came from and a one-line note.
 - **Sharing**: one of three, set on the page by a person:
-  - `private`, **the default** for every page however it is made: its owner;
+  - `private`, **the default** for every page however it is made: its owner
+    and the team's admins;
   - `members`: its owner and the members of its team the owner chose;
   - `team`: every member of its team.
-- **Reader**: anyone the sharing admits who is a member of the team now.
-- **Manager**: the owner, and the team's admins (see "Open questions" on what
-  an admin may read).
+- **Reader**: anyone the sharing admits who is a member of the team now. The
+  team's admins read every page of their team, whatever its sharing: a page
+  is the team's asset, and an admin answers for what the team keeps.
+- **Manager**: the owner, and the team's admins.
 - **View address**: an absolute URL on `CONTENT_URL` that serves one
   version's files to one reader for an hour.
 
@@ -160,7 +162,14 @@ bytes per character the API allows.
   logged and leaves bytes behind; nothing else lists the store.
 - **Limits**: 16 MiB a version, 255 files, 5 MiB a file; paths are relative,
   `/`-separated, without `.`/`..` segments, backslashes or control
-  characters, at most 255 bytes. A team's total is an open question.
+  characters, at most 255 bytes.
+- **A team holds at most 2 GiB of pages**, counted as the sizes of its
+  distinct digests, on every edition alike. An upload that would pass it is
+  `413 page_team_full` before any object is written. The sum is read before
+  the write rather than held under a lock, so two uploads at once can pass it
+  by at most one version.
+- **Versions are kept for as long as their page.** There is no deleting one
+  version and no expiry; deleting the page deletes them all.
 
 ## API
 
@@ -172,7 +181,7 @@ a 403, so its existence is not told.
 | --- | --- | --- |
 | `POST /api/teams/{teamId}/pages` | plugin, computer or host token | Creates a page at version 1, `private` |
 | `POST /api/teams/{teamId}/pages/{id}/versions` | the same | Adds a version on top of `baseVersion`, if the author may read the page |
-| `GET /api/teams/{teamId}/pages?list=mine\|shared&before=` | session or Bearer | The reader's own, or those shared with them; 50 at a time, newest version first |
+| `GET /api/teams/{teamId}/pages?list=mine\|shared\|all&before=` | session or Bearer | The reader's own, those shared with them, or (admins) every page of the team; 50 at a time, newest version first |
 | `GET /api/teams/{teamId}/pages/{id}` | session or Bearer | The page, its versions (author, time, note, where made) and, for a manager, its members |
 | `PATCH /api/teams/{teamId}/pages/{id}` | manager | `{ title }` |
 | `PUT /api/teams/{teamId}/pages/{id}/sharing` | manager | `{ mode, members? }`, the whole list at once |
@@ -194,12 +203,13 @@ a 403, so its existence is not told.
   (`internal/httpapi/identity.go`) gains the two upload routes and `view`,
   and its comment its list.
 - **Errors**: `page_not_found` 404, `page_stale` 409 (with `currentVersion`),
-  `page_too_large` 413, `page_invalid` 400, `page_member_not_in_team` 400,
+  `page_too_large` 413, `page_team_full` 413, `page_invalid` 400, `page_member_not_in_team` 400,
   `page_not_manager` 403 (only for a page the caller can read).
 - **The lists**: **Mine** is `owner_id = caller`; **Shared with me** is
   `owner_id ≠ caller AND (sharing = team OR (sharing = members AND a
-  page_members row names the caller))`, both within the team and paged by
-  `(updated_at, id)`. Each row: id, title, kind, sharing, member count (for
+  page_members row names the caller))`; **All**, for an admin alone, is every
+  page of the team, so a private page can be found as well as opened. Each is
+  within the team and paged by `(updated_at, id)`. Each row: id, title, kind, sharing, member count (for
   the owner), owner, current version, its author and time, and how the reader
   got it (`you` or `team`).
 
@@ -301,13 +311,14 @@ In the plugin repository, beside the other `teamwork_*` tools
 - **Pages in the sidebar**: `GROUPS`' `work` group in
   `apps/web/src/components/team/console-shell.tsx`, after Team DSH, for
   everyone in every team, always listed; `/teams/{teamId}/pages` (**Mine**),
-  `?list=shared` (**Shared with me**), `/teams/{teamId}/pages/{id}` (one
-  page), in `apps/web/src/pages/team/team-pages.tsx`, laid out as My DSH: the
+  `?list=shared` (**Shared with me**), `?list=all` (**All**, a third tab an
+  admin alone sees), `/teams/{teamId}/pages/{id}` (one page), in `apps/web/src/pages/team/team-pages.tsx`, laid out as My DSH: the
   list with a title filter, and the viewer with the versions (author, time,
   note, where made, with a link to the session where the reader can open
   it), **Restore** and **Delete** for managers. Empty, it says how to make
   one.
-- **Share** is one dialog: **Only me**, **Specific members** (a picker over
+- **Share** is one dialog: **Only me** (said as "you and the team's admins"),
+  **Specific members** (a picker over
   this team's members by name or email, the chosen listed with a way to
   remove each) and **Everyone in the team**; readers see who can read.
 - **Words**: `team.nav.pages` and `pages.*` in both locales' messages; the
@@ -323,7 +334,7 @@ In the plugin repository, beside the other `teamwork_*` tools
 | Revocation lags | Every file request re-checks |
 | An agent is told to share | The tool cannot share |
 | A teammate's upload overwrites another's | `baseVersion` and the conditional update |
-| Disk filled | Per-version limits now; a team total (open question) |
+| Disk filled | Per-version limits and 2 GiB a team |
 | A page leaks data | It can only read itself; `allow-popups` lets it open a URL carrying what it shows, which its readers could already copy |
 | Content sniffing, SVG script | `nosniff`; SVG is served under the same sandbox as HTML |
 | Another site frames a page | `frame-ancestors` is `APP_URL` alone |
@@ -386,7 +397,7 @@ depends on its result. Sizes are rough: S a day or two, M a week, L two.
 - Schema, ent generation and the migration (`pages`, `page_versions`,
   `page_files`, `page_members`).
 - `internal/pages`: create, add a version, the conditional update, limits,
-  digests and object writes, the view token purpose, `/p/` serving with the
+  digests and object writes, the team's 2 GiB, the view token purpose, `/p/` serving with the
   headers, Markdown rendering, `CONTENT_URL` (config, host routing, start-up
   checks, `robots.txt`).
 - Routes: the two uploads (plugin, computer and host tokens), `GET …/pages`
@@ -416,11 +427,12 @@ depends on its result. Sizes are rough: S a day or two, M a week, L two.
 
 ### Step 4 — sharing (L; platform and plugin)
 
-- Server: `PUT …/sharing`, `page_members`, **Shared with me**, readers adding
+- Server: `PUT …/sharing`, `page_members`, **Shared with me**, **All** for
+  admins, readers adding
   versions, `PATCH`, restore, delete and collection, managers' rights, the
   host token's starter path.
 - Plugin: `open` (a view address, then each file into `directory`).
-- Console: Share, **Shared with me**, version picker, Restore, Delete.
+- Console: Share, **Shared with me**, **All**, version picker, Restore, Delete.
 - Done when the Goal's four steps pass by hand with two accounts on a
   self-hosted server, and on the hosted one with `dshteam.work`.
 
@@ -438,32 +450,24 @@ step 0 ─┬─▶ step 1 ─▶ step 2 ─▶ step 3 ─▶ step 4 ─▶ step
 
 ## Open questions
 
-- **What an admin may read.** Recommended: an admin manages (shares, deletes)
-  every page of their team, but reads a private one only by deleting it, so
-  `private` means the owner alone; the other reading is that admins read
-  everything of their team.
-- **A team's storage limit.** Recommended: 2 GiB of distinct objects per team,
-  refused at upload with `page_too_large`, the same on every edition; the
-  hosted edition may sell more later.
-- **Old versions.** Recommended: kept for as long as the page; a manager
-  deletes the page, not a version.
 - **Read-only readers.** Every reader may add a version here; a per-member
   "can view" against "can edit" comes if a team asks.
 
 ## How done is verified
 
 - **Go tests on every dialect** (`internal/pages`, `internal/httpapi`):
-  - a teammate cannot see a private page; under `members` a chosen member
-    reads and adds a version and an unchosen one gets 404; under `team`
-    everyone does;
+  - a teammate cannot see a private page and an admin of its team can, and
+    finds it under **All**, which a member cannot list; under `members` a
+    chosen member reads and adds a version and an unchosen one gets 404;
+    under `team` everyone does;
   - a member who left the team reads nothing; a host token's starter who is
     not a member is refused;
   - changing to `team` and back starts from an empty list; only managers
     share, restore and delete;
   - a stale `baseVersion` is a 409 and leaves the page as it was; two
     concurrent versions on the same base produce exactly one;
-  - limits, paths and content types are refused before any object is
-    written; a refused commit leaves no new object;
+  - limits, the team's 2 GiB, paths and content types are refused before any
+    object is written; a refused commit leaves no new object;
   - deleting a page removes the objects no other page of the team names, and
     keeps those another page does;
   - every response is valid against `api/openapi.yaml`.
