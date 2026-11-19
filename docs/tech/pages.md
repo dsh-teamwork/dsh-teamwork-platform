@@ -77,13 +77,18 @@ the hosted one:
   the session it came from and a one-line note.
 - **Sharing**: one of three, set on the page by a person:
   - `private`, **the default** for every page however it is made: its owner
-    and the team's admins;
+    alone;
   - `members`: its owner and the members of its team the owner chose;
   - `team`: every member of its team.
-- **Reader**: anyone the sharing admits who is a member of the team now. The
-  team's admins read every page of their team, whatever its sharing: a page
-  is the team's asset, and an admin answers for what the team keeps.
-- **Manager**: the owner, and the team's admins.
+- **Reader**: anyone the sharing admits who is a member of the team now. An
+  admin is a reader only where the sharing admits them like anyone else.
+- **Owner**: renames, shares, restores and deletes their page.
+- **Admin of the team**: governs every page of the team without reading it:
+  lists them all (title, owner, sharing, size, newest version's time),
+  **narrows** a page's sharing (to `private`, or removes members), and
+  deletes it. An admin never widens a page's sharing, so they cannot share a
+  page with themselves or the team to read it; widening is the owner's
+  alone.
 - **View address**: an absolute URL on `CONTENT_URL` that serves one
   version's files to one reader for an hour.
 
@@ -141,7 +146,8 @@ bytes per character the API allows.
 - **A member who leaves the team** keeps their `page_members` rows until the
   list next changes, and reads nothing meanwhile, because every read checks
   membership. Their own pages stay the team's, owned by an id that is no
-  longer a member; managing them falls to the team's admins.
+  longer a member; nobody reads a private one again, and the team's admins
+  can narrow or delete them.
 
 ## Object storage
 
@@ -181,12 +187,12 @@ a 403, so its existence is not told.
 | --- | --- | --- |
 | `POST /api/teams/{teamId}/pages` | plugin, computer or host token | Creates a page at version 1, `private` |
 | `POST /api/teams/{teamId}/pages/{id}/versions` | the same | Adds a version on top of `baseVersion`, if the author may read the page |
-| `GET /api/teams/{teamId}/pages?list=mine\|shared\|all&before=` | session or Bearer | The reader's own, those shared with them, or (admins) every page of the team; 50 at a time, newest version first |
-| `GET /api/teams/{teamId}/pages/{id}` | session or Bearer | The page, its versions (author, time, note, where made) and, for a manager, its members |
-| `PATCH /api/teams/{teamId}/pages/{id}` | manager | `{ title }` |
-| `PUT /api/teams/{teamId}/pages/{id}/sharing` | manager | `{ mode, members? }`, the whole list at once |
-| `POST /api/teams/{teamId}/pages/{id}/versions/{n}/restore` | manager | A new version copying version `n`'s files |
-| `DELETE /api/teams/{teamId}/pages/{id}` | manager | Deletes the page and collects its objects |
+| `GET /api/teams/{teamId}/pages?list=mine\|shared\|all&before=` | session or Bearer | The reader's own, those shared with them, or (admins) every page of the team without its content; 50 at a time, newest version first |
+| `GET /api/teams/{teamId}/pages/{id}` | session or Bearer | For a reader: the page, its versions (author, time, note, where made), and for its owner its members. For an admin who is not a reader: the same fields as the list, and its members |
+| `PATCH /api/teams/{teamId}/pages/{id}` | owner | `{ title }` |
+| `PUT /api/teams/{teamId}/pages/{id}/sharing` | owner, or an admin narrowing | `{ mode, members? }`, the whole list at once |
+| `POST /api/teams/{teamId}/pages/{id}/versions/{n}/restore` | owner | A new version copying version `n`'s files |
+| `DELETE /api/teams/{teamId}/pages/{id}` | owner or admin | Deletes the page and collects its objects |
 | `POST /api/teams/{teamId}/pages/{id}/versions/{n}/view` | session, Bearer, or plugin tokens | `{ url, files, expiresAt }`: a view address and the version's file list |
 | `GET <CONTENT_URL>/p/{token}/{path}` | whoever holds the address | One file, re-checked and sandboxed |
 
@@ -204,11 +210,14 @@ a 403, so its existence is not told.
   and its comment its list.
 - **Errors**: `page_not_found` 404, `page_stale` 409 (with `currentVersion`),
   `page_too_large` 413, `page_team_full` 413, `page_invalid` 400, `page_member_not_in_team` 400,
-  `page_not_manager` 403 (only for a page the caller can read).
+  `page_not_owner` 403 (a reader or admin asking for the owner's change),
+  `page_sharing_widened` 403 (an admin's change that would admit anyone not
+  already admitted). A page an admin cannot read still answers its view
+  address with 404.
 - **The lists**: **Mine** is `owner_id = caller`; **Shared with me** is
   `owner_id ≠ caller AND (sharing = team OR (sharing = members AND a
   page_members row names the caller))`; **All**, for an admin alone, is every
-  page of the team, so a private page can be found as well as opened. Each is
+  page of the team, so one can be narrowed or deleted without being read. Each is
   within the team and paged by `(updated_at, id)`. Each row: id, title, kind, sharing, member count (for
   the owner), owner, current version, its author and time, and how the reader
   got it (`you` or `team`).
@@ -305,20 +314,21 @@ In the plugin repository, beside the other `teamwork_*` tools
   column and the Pages page): mints a view address, frames it
   (`<iframe sandbox="allow-scripts allow-popups allow-forms allow-modals">`,
   matching the header), renews it before its hour runs out by reloading, and
-  shows the title, the sharing, the version picker, **Share** (managers),
+  shows the title, the sharing, the version picker, **Share** (the owner; an admin sees **Restrict** instead, offering only
+  narrower choices),
   **Open in a new tab** and **Copy link** (to the console's page for it,
   never the view address).
 - **Pages in the sidebar**: `GROUPS`' `work` group in
   `apps/web/src/components/team/console-shell.tsx`, after Team DSH, for
   everyone in every team, always listed; `/teams/{teamId}/pages` (**Mine**),
   `?list=shared` (**Shared with me**), `?list=all` (**All**, a third tab an
-  admin alone sees), `/teams/{teamId}/pages/{id}` (one page), in `apps/web/src/pages/team/team-pages.tsx`, laid out as My DSH: the
+  admin alone sees: rows they cannot read show no viewer, only **Restrict**
+  and **Delete**), `/teams/{teamId}/pages/{id}` (one page), in `apps/web/src/pages/team/team-pages.tsx`, laid out as My DSH: the
   list with a title filter, and the viewer with the versions (author, time,
   note, where made, with a link to the session where the reader can open
-  it), **Restore** and **Delete** for managers. Empty, it says how to make
+  it), **Restore** for the owner and **Delete** for the owner and admins. Empty, it says how to make
   one.
-- **Share** is one dialog: **Only me** (said as "you and the team's admins"),
-  **Specific members** (a picker over
+- **Share** is one dialog: **Only me**, **Specific members** (a picker over
   this team's members by name or email, the chosen listed with a way to
   remove each) and **Everyone in the team**; readers see who can read.
 - **Words**: `team.nav.pages` and `pages.*` in both locales' messages; the
@@ -429,7 +439,8 @@ depends on its result. Sizes are rough: S a day or two, M a week, L two.
 
 - Server: `PUT …/sharing`, `page_members`, **Shared with me**, **All** for
   admins, readers adding
-  versions, `PATCH`, restore, delete and collection, managers' rights, the
+  versions, `PATCH`, restore, delete and collection, the owner's and admins'
+  rights (an admin narrows, never widens), the
   host token's starter path.
 - Plugin: `open` (a view address, then each file into `directory`).
 - Console: Share, **Shared with me**, **All**, version picker, Restore, Delete.
@@ -456,14 +467,18 @@ step 0 ─┬─▶ step 1 ─▶ step 2 ─▶ step 3 ─▶ step 4 ─▶ step
 ## How done is verified
 
 - **Go tests on every dialect** (`internal/pages`, `internal/httpapi`):
-  - a teammate cannot see a private page and an admin of its team can, and
-    finds it under **All**, which a member cannot list; under `members` a
+  - neither a teammate nor an admin can read a private page (view address
+    and content 404); an admin lists it under **All**, which a member cannot
+    list, and can make it narrower or delete it;
+  - an admin's change that would admit anyone new (to `team`, to `members`
+    from `private`, or adding a member) is `page_sharing_widened`, and leaves
+    the page as it was; under `members` a
     chosen member reads and adds a version and an unchosen one gets 404;
     under `team` everyone does;
   - a member who left the team reads nothing; a host token's starter who is
     not a member is refused;
-  - changing to `team` and back starts from an empty list; only managers
-    share, restore and delete;
+  - changing to `team` and back starts from an empty list; only the owner
+    widens, renames and restores, and the owner or an admin deletes;
   - a stale `baseVersion` is a 409 and leaves the page as it was; two
     concurrent versions on the same base produce exactly one;
   - limits, the team's 2 GiB, paths and content types are refused before any
