@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current · **Updated:** 2026-11-19
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -60,7 +60,7 @@ The hosted edition's smallest useful version works end to end:
 | The relay: WebSocket endpoints for plugins and phones, pairing checks, envelopes, push, and `GET /api/relay` | `server/relay`, an extension every binary's main imports, served under `/relay` on the server's own port | Open |
 | Pairing and device tables | `server/internal/db/schema/relay.go`, migrated with the rest of the open schema | Open |
 | The plugin's outbound connection, pairing panel and allow-list | `dsh-teamwork/dsh-teamwork` (`src/relay.ts`, the Teamwork panel) | Open |
-| The client: the encrypted channel, the frames, the live client and DSH's Remote API read into a client's shapes, and a session whose streams a server relays (`src/relayed.ts`, which the hosted cloud's stream uses) | `packages/relay-client`, imported by the web console and the app; its tests run on Node, and `server/e2e` drives it against the real plugin | Open |
+| The client: the encrypted channel, the frames, the live client, a computer's sessions over any link to its DSH (`src/dsh-sessions.ts`: the relay's channel is one, a server that reaches a computer itself another) and DSH's Remote API read into a client's shapes | `packages/relay-client`, imported by the web console and the app; its tests run on Node, and `server/e2e` drives it against the real plugin | Open |
 | The app | `premium/apps/mobile` where that directory exists, from seed's Expo app | Closed; it reaches any server |
 
 The relay mounts through `server/edition` like a closed extension, so it reads
@@ -85,7 +85,9 @@ needing no call elsewhere on a connection.
   refused 4400, and a plugin that leaves it out (an older one, or a system the
   relay names none for) is recorded with none. The phone's list of pairings
   carries it as `hostOs` and the console's computers as `os`, for each to show
-  beside the computer's name. A shared DSH reports none.
+  beside the computer's name. A shared DSH reports none. The phone's list also
+  carries `hostLastSeenAt`, the host's `last_seen_at` (a shared host's, which
+  may be null), so it can say how long an offline computer has been away.
 - **The app** signs in through the website the way the plugin does ([ADR 0001](../adr/0001-plugin-sign-in.md)):
   PKCE and a code. It receives its own Bearer, with `via` naming the app. The
   token says who the person is. On its own it reaches no computer.
@@ -257,7 +259,7 @@ touching the channel. The clients read the history before a snapshot with
 the member's "Show earlier messages".
 
 A client keeps its follows when its socket, the channel or the computer goes
-away for now (`packages/relay-client`, `live.ts`): each says it is closed,
+away for now (`packages/relay-client`, `dsh-sessions.ts`): each says it is closed,
 tries again after 1, 2, 4, 8 and 15 seconds and then every 30, and opens with
 a fresh snapshot, which clears what it said. DSH's `session/follow` takes no
 cursor, so a follow never resumes part-way; the bounded snapshot is what makes
@@ -497,19 +499,29 @@ the hosted edition, Cloud DSH.
 - **Workspace → My DSH**, `/teams/{teamId}/my-dsh[/{hostId}[/{sessionId}]]`
   and `/teams/{teamId}/my-dsh/{hostId}/devices`
   (`apps/web/src/pages/team/my-dsh.tsx`), in the same three columns as Team
-  DSH, whose parts it shares (`dsh-session.tsx`). It is listed while the
+  DSH, whose parts it shares (`dsh-session.tsx`). Those parts speak to this
+  browser's relay unless a page provides another client
+  (`SessionClientContext`), as an edition does for a computer its server
+  reaches itself. It is listed while the
   account has at least one recorded host, in every team alike: the computers
   are the person's, not a team's.
 - **The second column lists the account's computers**: name, operating system,
-  online or when last seen, and beside each the number of devices paired with
-  it, which opens its devices page. The open one shows its sessions beneath it
-  once this browser is paired and unlocked.
-- **The third column** is, by state: pairing this browser (the six-letter code
-  from the Teamwork panel's Phone page, the eight-digit safety code to
-  compare, then approval on the desktop: "Pairing" above, unchanged); the
-  computer's PIN, `owner`'s; a session, or a new one started by its first
-  message. Above it, the computer's name, operating system, state and DSH
-  version.
+  online or offline, whether this browser is paired with it, and beside each
+  the number of devices paired with it, which opens its devices page. The list
+  is read again every ten seconds, so a computer coming online or going away
+  moves the page along by itself. The open one shows its sessions beneath it
+  once it is online and this browser is paired.
+- **The third column** follows the computer's state, one at a time, and only
+  the last offers a session: offline (nothing to do but open DSH on it);
+  online but not paired with this browser (the six-letter code from the
+  Teamwork panel's Phone page, the eight-digit safety code to compare, then
+  approval on the desktop: "Pairing" above, unchanged); paired and connecting,
+  until the computer answers over the encrypted channel with its sessions or
+  its PIN state; the channel failed, with a retry; the computer's PIN,
+  `owner`'s; and then a session, or a new one started by its first message.
+  Above it, the computer's name with its operating system and DSH version on
+  the left, and on the right whether it is online (green) or offline (grey,
+  with when it was last seen); the list marks each computer the same way.
 - **The devices page** takes the third column: every pairing of the account to
   the computer, the phone app's and every browser's, with its name, status,
   last use and whether it pushes, this browser marked, each removable.

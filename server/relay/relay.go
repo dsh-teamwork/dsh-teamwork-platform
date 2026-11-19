@@ -882,7 +882,7 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	}
 	devices := map[string][]hostDeviceView{}
 	for _, p := range rows {
-		v := view(p, "", nil)
+		v := view(p, pairedHost{})
 		devices[p.HostID] = append(devices[p.HostID], hostDeviceView{
 			ID: v.ID, DeviceName: v.DeviceName, Status: v.Status, CreatedAt: v.CreatedAt, LastUsedAt: v.LastUsedAt,
 			Push: p.PushToken != nil, Current: mine != "" && p.DeviceKeyHash != nil && *p.DeviceKeyHash == mine,

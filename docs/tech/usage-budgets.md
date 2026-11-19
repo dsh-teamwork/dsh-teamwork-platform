@@ -19,7 +19,7 @@ capacity. Funding owners implement their own monetary records and do not parse
 provider responses independently. Operator-only recovery records estimates and
 settles both resource sets together; the team API remains limited to BYOK.
 
-A funded route states its own bounds ([ADR 0052](../adr/0052-a-funded-route-states-its-bounds.md)):
+A funded route states its own bounds ([ADR 0054](../adr/0054-a-funded-route-states-its-bounds.md)):
 the quote's `MaxInput` and `MaxOutput` size the hold through `usage.RouteBounds`,
 which keeps the request checks below for every route, and its `Body` adds
 fields no caller may send (an aggregator's routing object), never a forwarded

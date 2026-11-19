@@ -1,4 +1,4 @@
-# 0052. A funded route states its own bounds
+# 0054. A funded route states its own bounds
 
 > **Status:** Accepted · **Date:** 2026-11-19
 

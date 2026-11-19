@@ -101,16 +101,17 @@ assert.deepEqual(await bob.setPin(bobPairing, '2468'), { kind: 'unlocked' });
 assert.deepEqual(await bob.listSessions(bobPairing), [{ id: 'session-1', title: 'Bob\'s', status: 'idle', updatedAt: new Date(1).toISOString(), directory: 'work', pending: null, step: null }]);
 assert.ok(!forwarded.some((f) => f.t === 'call' && f.pairingId === bobPairing && f.method !== 'session/list'));
 
-// The call is archived: sealed here, kept by the server unopened, and read back with the admin's key alone.
+// What Bob sent is archived, the $events stream the listing opens and then the call: sealed here, kept by the server
+// unopened, and read back with the admin's key alone.
 await new Promise((r) => setTimeout(r, 20));
 await archive.flush();
 const exported = await fetch(`${BASE}/api/teams/${TEAM}/shared-archive/${mode.status().hostId}`, { headers: { cookie: ADMIN_COOKIE } });
 assert.equal(exported.status, 200);
 const text = await exported.text();
-assert.ok(!text.includes('session/list'));
+assert.ok(!text.includes('session/list') && !text.includes('$events'));
 const { records, problems } = await read(text, JSON.parse(await readFile(auditKeyFile, 'utf8')));
 assert.deepEqual(problems, []);
-assert.deepEqual(records.map((r) => [r.member, r.frame.method]), [[BOB, 'session/list']]);
+assert.deepEqual(records.map((r) => [r.member, r.frame.method ?? r.frame.body?.endpoint]), [[BOB, '$events'], [BOB, 'session/list']]);
 assert.equal(await roster.memberOf(bobPairing), BOB);
 
 // Eve is listed but has no invite of her own: Bob's, already spent, admits nobody.

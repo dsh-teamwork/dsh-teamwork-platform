@@ -15,7 +15,8 @@
  * `--brand` (navy) marks what belongs to the team, and `--signal` (amber) marks
  * what needs attention, only as a dot or a thin line. Neither is `--accent`,
  * the subtle hover surface every shadcn-shaped primitive uses, and neither is a
- * button: `--primary` is black in light and white in dark.
+ * button: `--primary` is black in light and white in dark. `--success` (green)
+ * says a computer is online, as a dot and a word.
  */
 :root {
   --background: oklch(1 0 0);
@@ -35,6 +36,7 @@
   --brand: oklch(0.33 0.11 268);
   --brand-foreground: oklch(1 0 0);
   --signal: oklch(0.765 0.14 73);
+  --success: oklch(0.527 0.137 150);
   --mark-plate: oklch(0.953 0.003 286);
   --border: oklch(0.932 0.003 286);
   --input: oklch(0.887 0.007 286);
@@ -60,6 +62,7 @@
   --brand: oklch(0.452 0.124 270);
   --brand-foreground: oklch(1 0 0);
   --signal: oklch(0.807 0.137 78);
+  --success: oklch(0.84 0.149 155);
   --mark-plate: oklch(0.92 0.003 286);
   --border: oklch(0.287 0.007 286);
   --input: oklch(0.351 0.01 286);
@@ -87,6 +90,7 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-signal: var(--signal);
+  --color-success: var(--success);
   --color-mark-plate: var(--mark-plate);
   --color-border: var(--border);
   --color-input: var(--input);

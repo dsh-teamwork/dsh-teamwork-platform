@@ -380,6 +380,10 @@ func TestPairing(t *testing.T) {
 		if got["id"] != id || got["status"] != "confirmed" || got["online"] != true || got["hostName"] != "laptop" || got["hostOs"] != "macos" {
 			t.Fatalf("listed %v", got)
 		}
+		// When the computer was last seen is its host's own record, for the phone to say how long it has been away.
+		if seen := w.r.db.RelayHost.GetX(context.Background(), host.hostID()).LastSeenAt; got["hostLastSeenAt"] != iso(seen) {
+			t.Fatalf("host last seen %v, want %s", got["hostLastSeenAt"], iso(seen))
+		}
 		if list := host.ask(obj{"t": "pairings"})["value"].([]any); len(list) != 1 || list[0].(obj)["status"] != "confirmed" {
 			t.Fatalf("host's list %v", list)
 		}

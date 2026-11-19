@@ -1,11 +1,12 @@
 /**
  * What the console's pages for reaching a DSH share (Team DSH, team-dsh.tsx; My DSH, my-dsh.tsx): the three columns
  * beside the sidebar, a computer's sessions and PIN as its DSH reports them through the relay, the conversation, the
- * composer and the PIN gate. Everything here runs over `@/lib/relay`, end to end encrypted to the DSH.
+ * composer and the PIN gate. Everything here runs over `@/lib/relay`, end to end encrypted to the DSH, unless the page
+ * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
 import { ChevronDown, FileText, Loader, MessagesSquare, Paperclip, Plus, Server, X, type LucideIcon } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Markdown from 'react-markdown';
 import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
@@ -30,6 +31,7 @@ import {
   rowsOf,
   type ModelSelection,
   type PinState,
+  type RelayClient,
   type RelayErrorCode,
   type SessionConfiguration,
   type SessionOptions,
@@ -47,6 +49,22 @@ import { relayFor } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
+
+/** What the session parts speak to: a computer's sessions and its PIN. */
+export type SessionClient = Pick<
+  RelayClient,
+  | 'listSessions' | 'watchSessions' | 'follow' | 'older' | 'createSession' | 'configuration' | 'selectModel'
+  | 'uploadCapabilities' | 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'cancel' | 'prompt' | 'answer'
+  | 'watchPin' | 'unlock' | 'setPin'
+>;
+
+/** A client a page provides in place of this browser's relay, for computers it reaches another way. */
+export const SessionClientContext = createContext<SessionClient | null>(null);
+
+function useSessionClient(): SessionClient {
+  const { me } = useTeam();
+  return useContext(SessionClientContext) ?? relayFor(me);
+}
 
 const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable']);
 
@@ -96,9 +114,8 @@ export function DshColumns({ title, list, children }: { title: string; list: (on
  * none is "", and then nothing is read). `locked` is whether the PIN gate stands before everything else.
  */
 export function useComputer(computerId: string) {
-  const { me } = useTeam();
   const word = useRelayError();
-  const relay = relayFor(me);
+  const relay = useSessionClient();
   const [sessions, setSessions] = useState<SessionSummary[] | null>(null);
   const [pin, setPin] = useState<PinState | undefined>();
   const [failed, setFailed] = useState<string | null>(null);
@@ -171,18 +188,22 @@ export function SessionList({ base, locked, sessions, sessionId, onPick }: { bas
 }
 
 /**
- * A computer's row in the column: its name, a word under it, a navy dot while it is online, and `extra` at its end. The
- * row's link covers all of it, so `extra` may hold a link of its own (one link cannot hold another).
+ * A computer's row in the column: its name, and under it whether it is online (`online`, when known; green, or grey and
+ * dimmed when offline) and `note`, with `extra` at its end. The row's link covers all of it, so `extra` may hold a link
+ * of its own (one link cannot hold another).
  */
-export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra }: { icon?: LucideIcon; name: string; note: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode }) {
+export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra }: { icon?: LucideIcon; name: string; note?: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode }) {
   const inner = (
     <>
-      <Icon className="size-4 shrink-0" aria-hidden />
+      <Icon className={cn('size-4 shrink-0', online === false && 'text-muted-foreground')} aria-hidden />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate">{name}</span>
-        <span className="truncate text-xs font-normal text-muted-foreground">{note}</span>
+        <span className={cn('truncate', online === false && 'text-muted-foreground')}>{name}</span>
+        <span className="flex min-w-0 items-center gap-1 text-xs font-normal text-muted-foreground">
+          {online !== undefined && <Presence online={online} />}
+          {online !== undefined && note && <span aria-hidden>·</span>}
+          {note && <span className="truncate">{note}</span>}
+        </span>
       </span>
-      {online !== undefined && <Dot className={online ? 'bg-brand' : 'bg-muted-foreground/40'} />}
     </>
   );
   return to ? (
@@ -202,12 +223,23 @@ export function ComputerRow({ icon: Icon = Server, name, note, online, to, open,
   );
 }
 
+/** Whether a computer is online, as a dot and a word: green while it is, grey when not (docs/design.md, `--success`). */
+export function Presence({ online, label }: { online: boolean; label?: string }) {
+  const t = useTranslations('team.dsh');
+  return (
+    <span className={cn('flex shrink-0 items-center gap-1.5', online ? 'text-success' : 'text-muted-foreground')}>
+      <span className={cn('size-1.5 rounded-full', online ? 'bg-success' : 'bg-muted-foreground/50')} aria-hidden />
+      {label ?? t(online ? 'online' : 'offline')}
+    </span>
+  );
+}
+
 /** A new session looks like one with nothing in it yet: sending the first message starts it, then opens it. */
 export function NewSession({ computerId, name, started }: { computerId: string; name: string; started: (sessionId: string) => void }) {
-  const { me, team } = useTeam();
+  const { team } = useTeam();
   const t = useTranslations('team.dsh');
   const word = useRelayError();
-  const relay = relayFor(me);
+  const relay = useSessionClient();
   const [sent, setSent] = useState('');
   const [failed, setFailed] = useState<string | null>(null);
   const [options, setOptions] = useState<SessionOptions>({});
@@ -278,10 +310,10 @@ function SessionSettings({ computerId, sessionId, disabled, value = {}, onChange
   value?: SessionOptions;
   onChange?: (value: SessionOptions) => void;
 }) {
-  const { me, team } = useTeam();
+  const { team } = useTeam();
   const t = useTranslations('team.dsh.settings');
   const word = useRelayError();
-  const relay = relayFor(me);
+  const relay = useSessionClient();
   const [data, setData] = useState<SessionConfiguration | null>(null);
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
@@ -388,10 +420,9 @@ type Files = ReturnType<typeof useFiles>;
  * uses too). A computer whose plugin cannot take files offers none.
  */
 function useFiles(computerId: string) {
-  const { me } = useTeam();
   const t = useTranslations('team.dsh.files');
   const word = useRelayError();
-  const relay = relayFor(me);
+  const relay = useSessionClient();
   const [files, setFiles] = useState<PickedFile[]>([]);
   const [limits, setLimits] = useState<UploadLimits | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
@@ -552,10 +583,9 @@ function Composer({ busy, placeholder, send, files, children }: { busy: boolean;
 
 /** One session: its conversation, what it waits on the member for, and the composer at its foot. */
 export function Conversation({ computerId, sessionId, title }: { computerId: string; sessionId: string; title: string }) {
-  const { me } = useTeam();
   const t = useTranslations('team.dsh');
   const word = useRelayError();
-  const relay = relayFor(me);
+  const relay = useSessionClient();
   const [state, setState] = useState<SessionState>(EMPTY_SESSION);
   const files = useFiles(computerId);
   const [busy, setBusy] = useState(false);
@@ -664,9 +694,8 @@ export function Conversation({ computerId, sessionId, title }: { computerId: str
 
 /** The DSH asks for this member's PIN: set a first one, typed twice, or give it. Only the DSH checks it. */
 export function PinGate({ computerId, state, lockedHint }: { computerId: string; state: PinState | undefined; lockedHint: string }) {
-  const { me } = useTeam();
   const t = useTranslations('team.dsh.pin');
-  const relay = relayFor(me);
+  const relay = useSessionClient();
   const [value, setValue] = useState('');
   const [first, setFirst] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

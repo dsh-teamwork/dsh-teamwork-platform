@@ -19,7 +19,8 @@ vi.mock('../secure-channel', () => ({
   },
 }));
 import { describe, expect, it, vi } from 'vitest';
-import { createLiveRelay, RETRY_MS } from '../live';
+import { createLiveRelay } from '../live';
+import { RETRY_MS } from '../dsh-sessions';
 import { RelayError, type SessionEvent } from '../types';
 
 class FakeSocket {
@@ -86,7 +87,7 @@ function setup() {
       return new Response(
         JSON.stringify({
           pairings: [
-            { id: 'p1', hostName: 'laptop', hostOs: 'macos', status: 'confirmed', online: true, push: true, hostId: 'h', deviceName: 'd', createdAt: '', lastUsedAt: null },
+            { id: 'p1', hostName: 'laptop', hostOs: 'macos', hostLastSeenAt: '2026-11-19T08:00:00.000Z', status: 'confirmed', online: true, push: true, hostId: 'h', deviceName: 'd', createdAt: '', lastUsedAt: null },
             { id: 'p2', hostName: 'desk', hostOs: null, status: 'pending', online: true, hostId: 'h2', deviceName: 'd', createdAt: '', lastUsedAt: null },
           ],
         }),
@@ -215,7 +216,7 @@ describe('the live relay client', () => {
 
   it('lists confirmed pairings as computers, from the relay the server names', async () => {
     const { relay, asked } = setup();
-    expect(await relay.listComputers()).toEqual([{ id: 'p1', name: 'laptop', os: 'macos', online: true, verified: true, push: true, hostId: 'h' }]);
+    expect(await relay.listComputers()).toEqual([{ id: 'p1', name: 'laptop', os: 'macos', lastSeenAt: '2026-11-19T08:00:00.000Z', online: true, verified: true, push: true, hostId: 'h' }]);
     const pairings = asked.find((a) => a.url.endsWith('/pairings'))!;
     expect(pairings.url).toBe('https://relay.example.test/pairings');
     expect(pairings.init!.headers).toMatchObject({ authorization: 'Bearer bearer-1', 'x-device-key': 'phone-key' });

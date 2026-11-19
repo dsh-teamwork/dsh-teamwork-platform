@@ -11,7 +11,23 @@ are in `CLAUDE.md`, "The changelog".
 - **Why:** An edition could fund DeepSeek and nothing else; hosted models through OpenRouter need their own bounds, a routing object and the price OpenRouter charged.
 - **Breaking:** An edition's quote must state `MaxInput` and `MaxOutput`, or the call is refused.
 - **Upgrade:** Nothing for a community instance.
-- **Refs:** `docs/adr/0052-a-funded-route-states-its-bounds.md`, `docs/tech/usage-budgets.md`, `server/edition/funding.go`.
+- **Refs:** `docs/adr/0054-a-funded-route-states-its-bounds.md`, `docs/tech/usage-budgets.md`, `server/edition/funding.go`.
+
+## 2026-11-19 — The phone's pairings say when each computer was last seen
+
+- **What:** `GET /relay/pairings` (and every pairing the relay returns) adds `hostLastSeenAt`, the host's `last_seen_at`, null for a shared DSH that never connected; `@dsh-teamwork/relay-client`'s `Computer` adds `lastSeenAt`.
+- **Why:** The phone app says how long an offline computer has been away, as the web console does; it knew only that it was offline.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/relay/pairing.go`, `packages/relay-client/src/live.ts`, `docs/tech/relay.md`.
+
+## 2026-11-19 — My DSH follows each computer's state
+
+- **What:** My DSH's list says whether each computer is online, as a green or grey dot and word (the web app gains the `--success` token for it), and whether this browser is paired with it, and is read again every ten seconds. The open computer's header puts its name, system and DSH version on the left and its state, with when it was last seen, in a pill on the right. The open computer's page shows one state at a time: offline, not paired (pairing), connecting, unreachable (with a retry), its PIN, and only then sessions and the composer; a session's address opened while the computer is not ready shows that state instead.
+- **Why:** An offline computer this browser had paired with opened straight to the composer, with only a red "offline" line above it, and the list did not say it was offline.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`, `docs/tech/relay.md`.
 
 ## 2026-11-19 — The DSH plugin's panel shows preset avatars
 
@@ -28,6 +44,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** `PROVIDER_MARKS` entries change shape (`MarkArt`), so every client drawing one changes with it.
 - **Upgrade:** Nothing; the phone app's colours ship with its next build.
 - **Refs:** `packages/shared/src/providers.ts`, `apps/web/src/components/provider-mark.tsx`, `docs/design.md` ("Icons").
+
+## 2026-11-18 — A computer's sessions run over any link; the console's session parts take their client
+
+- **What:** `@dsh-teamwork/relay-client` splits a computer's sessions (list, follow, start, prompt, answer, configure, upload) from the relay into `dsh-sessions.ts`: `createDshSessions` runs them over any `DshLink` (a unary call, a stream, a close), and the live relay is one such link. `bridgeValue` reads a plugin bridge's `{ status, body }` answer. The web console's session parts (`dsh-session.tsx`) speak to `SessionClientContext`'s client when a page provides one, and to this browser's relay otherwise. `relayed.ts` (`receiveRelayed`, `relayedPending`, `answerRelayed`), which only the hosted edition's cloud sessions used, is removed.
+- **Why:** The hosted edition's Cloud DSH, a member's own computer its server reaches without the relay, uses the same screens as My DSH instead of a thinner copy.
+- **Breaking:** An edition importing `relayed.ts` moves to `createDshSessions` over its own link.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/relay-client/src/dsh-sessions.ts`, `apps/web/src/pages/team/dsh-session.tsx`, `docs/tech/relay.md`.
 
 ## 2026-11-18 — A computer's operating system, and My DSH's devices page
 
