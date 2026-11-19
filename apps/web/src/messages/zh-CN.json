@@ -1049,6 +1049,23 @@
       "promptPlaceholder": "给智能体发消息",
       "send": "发送",
       "stop": "停止",
+      "browse": {
+        "open": "文件",
+        "title": "文件",
+        "close": "关闭文件",
+        "changes": "本会话改动（{count}）",
+        "all": "全部文件",
+        "noChanges": "这个会话还没有写入或修改文件。",
+        "search": "按文件名搜索",
+        "noMatches": "没有匹配的文件名。",
+        "moreMatches": "只显示前 200 个结果。",
+        "empty": "这个文件夹是空的。",
+        "moreEntries": "只显示前 500 项。",
+        "path": "文件夹",
+        "root": "工作区",
+        "back": "返回",
+        "truncated": "文件较大，只显示前 256 KB。"
+      },
       "permission": {
         "label": "授权模式",
         "preset": {
@@ -1528,6 +1545,7 @@
     "cacheWrite": "缓存写入（如支持）"
   },
   "relayErrors": {
+    "not_text": "这不是文本文件，无法在这里显示。",
     "permission_refused": "在团队 DSH 上，这个授权模式只能在那台机器上设置。",
     "invalid_request": "那台电脑没有接受这个操作。请检查输入后重试。",
     "offline": "机器离线。",

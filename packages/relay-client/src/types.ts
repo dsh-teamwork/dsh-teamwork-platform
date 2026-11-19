@@ -81,6 +81,21 @@ export interface SessionSummary {
   marks: { pinned: boolean; archived: boolean } | null;
 }
 
+/** A folder of a session's working directory (the plugin's `src/phone-files.ts`); paths are relative, with `/`. */
+export interface FolderListing {
+  path: string;
+  entries: { name: string; kind: 'file' | 'directory'; bytes?: number }[];
+  truncated: boolean;
+}
+
+/** A text file of a session's working directory, cut at 256 KiB (`truncated`); `bytes` is its whole size. */
+export interface FileText {
+  path: string;
+  text: string;
+  bytes: number;
+  truncated: boolean;
+}
+
 export type ToolStatus = 'running' | 'done' | 'failed' | 'denied';
 
 export type ConversationItem =
@@ -160,6 +175,7 @@ export type RelayErrorCode =
   | 'preset_unavailable'
   | 'invalid_request'
   | 'permission_refused'
+  | 'not_text'
   | 'file_type'
   | 'file_name'
   | 'file_too_large'
@@ -263,6 +279,12 @@ export interface RelayClient {
     uploadId: string,
   ): Promise<Omit<import('./uploads').UploadedFile, 'uploadId'>>;
   cancelUpload(computerId: string, sessionId: string, uploadId: string): Promise<void>;
+  /** One folder of a session's working directory ("" is the directory itself), folders first; read only. */
+  listFiles(computerId: string, sessionId: string, path: string): Promise<FolderListing>;
+  /** Files under a session's working directory whose name holds `query`, nearest first. */
+  searchFiles(computerId: string, sessionId: string, query: string): Promise<{ matches: string[]; truncated: boolean }>;
+  /** A text file under a session's working directory: its first 256 KiB; a binary one is refused as `not_text`. */
+  readFile(computerId: string, sessionId: string, path: string): Promise<FileText>;
   /** Switches an idle session's permission preset (one of `configuration`'s `permissions`), and returns the one now in force. */
   selectPermission(computerId: string, sessionId: string, preset: string): Promise<string>;
   /** Stops the agent's current turn; what it already did stays. */

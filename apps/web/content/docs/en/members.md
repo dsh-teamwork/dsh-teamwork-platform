@@ -66,6 +66,13 @@ its first message; leave them as they are for the computer's defaults. Once
 the first message is sent, the session opens in place.
 The folder starts as this team's default workspace on that computer, which
 you set in DSH's Teamwork panel under **My teams**.
+**Files**, beside a session's title, opens its working directory at the
+right, read only: the files the session wrote or edited, and every folder,
+searchable by file name, each text file shown with its line numbers. A file
+the conversation names opens there when you click it: a step's file, a path in
+a reply (at its line, for `src/app.ts:42`) or a link to a local file. It
+reaches nothing outside that directory, and needs DSH Teamwork 0.16.0 or later
+on the computer.
 Beside the paperclip, the permission menu sets what the agent may do on that
 computer: **Read only**, **Workspace write** or **Full access**, as in DSH;
 full access asks you to confirm first. On a Team DSH only the first two can be

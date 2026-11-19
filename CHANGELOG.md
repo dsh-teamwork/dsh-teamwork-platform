@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/dsh-session.tsx`, `apps/web/src/messages/`.
 
+## 2026-11-19 — Browse a session's files from the console
+
+- **What:** A session's **Files** button opens its working directory as the console's right column, read only: the files the session wrote or edited (`touchedFiles`, from its own tool calls) and every folder, searchable by name, each text file with line numbers; a file the conversation names (a step's file, a path in a reply, a local link) opens there at its line, by `fileReference`. It reads through the plugin's `teamwork/listFiles`, `teamwork/searchFiles` and `teamwork/readFile`, held under that directory; `teamwork/configuration`'s `files` says the plugin answers them. `@dsh-teamwork/relay-client` adds `listFiles`, `searchFiles`, `readFile`, `touchedFiles`, `fileReference` and the `not_text` error.
+- **Why:** What an agent made could be seen only on the computer itself, as DSH's own right column shows it.
+- **Breaking:** None. A plugin without `files` shows no button.
+- **Upgrade:** Update the DSH Teamwork plugin on each computer (0.16.0) for the button.
+- **Refs:** `docs/tech/relay.md` ("The allow-list"), `apps/web/src/pages/team/session-files.tsx`.
+
 ## 2026-11-19 — The install, self-hosting and commands pages match a clean run
 
 - **What:** The `/docs` install page installs pnpm, which DSH needs to add any plugin, puts `sudo` on the global npm installs, drops the pinned DSH prerelease, and says the pnpm profile settings must come before the first plugin add. The self-hosting page sets `APP_URL` in `.env` before the first start, warns that Compose publishes port 3000 in plain HTTP and that `ALLOW_PRIVATE_PROVIDERS` is on, and gives the backup and upgrade commands. The commands page names the CLI's `device` subcommands, not `phone`.
