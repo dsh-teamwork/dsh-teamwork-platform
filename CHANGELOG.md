@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — The install, self-hosting and commands pages match a clean run
+
+- **What:** The `/docs` install page installs pnpm, which DSH needs to add any plugin, puts `sudo` on the global npm installs, drops the pinned DSH prerelease, and says the pnpm profile settings must come before the first plugin add. The self-hosting page sets `APP_URL` in `.env` before the first start, warns that Compose publishes port 3000 in plain HTTP and that `ALLOW_PRIVATE_PROVIDERS` is on, and gives the backup and upgrade commands. The commands page names the CLI's `device` subcommands, not `phone`.
+- **Why:** Followed on a fresh Ubuntu 24.04 as a non-root user, the Linux steps stopped at `EACCES` and `pnpm ENOENT`, the pinned DSH was four prereleases behind, and `dsh-teamwork phone …` does not exist.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/content/docs/{en,zh-CN}/{install,self-hosting,commands}.md`.
+
 ## 2026-11-19 — Switch a session's permission preset from the console
 
 - **What:** The composer's foot has DSH's permission menu beside the paperclip (read only, workspace write, full access, or the presets that DSH composes). `teamwork/configuration` carries `permissions` (the options, the session's current one, the default; each `risky` and `allowed`), and `teamwork/selectPermission` switches an idle session through DSH's own `/permission` command. A risky preset is confirmed once; on a Team DSH it is shown and cannot be picked (`teamwork/permission_refused`). `@dsh-teamwork/relay-client` adds `selectPermission` and the `permission_refused` error.

@@ -501,10 +501,11 @@ What a crawler or a link preview reads: an instance's own `robots.txt`,
 
 ## Deployment
 
-A self-hosted instance runs the Go server (`README.md`, "Self-hosting"): with
-`npx @dsh-teamwork/server`, a release binary, or `compose.yaml` over
-`server/Dockerfile`, which keeps the SQLite file and the generated secrets in a
-volume. The binary applies its migrations before it serves, and listens on
+A self-hosted instance runs the Go server (`README.md`, "Self-hosting"): built
+from source, or with `compose.yaml` over `server/Dockerfile`, which keeps the
+SQLite file and the generated secrets in a volume. The release workflow packs
+`npx @dsh-teamwork/server` and release binaries, but none is published yet, so
+no user-facing page offers them. The binary applies its migrations before it serves, and listens on
 the host's `PORT` where one is set. The hosted service's deployment is in
 `premium/CLAUDE.md`, where that directory exists.
 

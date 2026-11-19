@@ -22,6 +22,11 @@ install does not reach Desktop.
 
 ## DSH CLI and web
 
+DSH installs plugins with pnpm, so `pnpm --version` must work in the shell you
+run DSH from; if it does not, install it with `npm install -g pnpm`. With
+pnpm 11 or later, first add the two profile settings in step 3 of
+[A Linux server](#a-linux-server).
+
 Install into the profile you run (`web` below; use your own profile name if it
 differs):
 
@@ -45,17 +50,17 @@ the user DSH will run as:
    sudo apt-get install -y nodejs
    ```
 
-2. Install DSH. It is published as prereleases for now, so name the exact
-   version [npm lists](https://www.npmjs.com/package/@deepseek-ai/dsh?activeTab=versions)
-   as `latest`; without one, some npm versions find none:
+2. Install DSH, and pnpm, which DSH installs plugins with. Node.js from
+   NodeSource installs global packages into a system folder, so this needs
+   `sudo`; without it npm stops with `EACCES`:
 
    ```sh
-   npm install -g @deepseek-ai/dsh@0.2.2-rc.1
+   sudo npm install -g @deepseek-ai/dsh pnpm
    ```
 
-3. If `pnpm --version` says 11 or later, first let DSH's profile take a
-   release from today and skip dependencies' build scripts it does not need;
-   otherwise pnpm 11 installs an older version, or stops with
+3. Before adding any plugin, let DSH's profile take a release from today and
+   skip dependencies' build scripts it does not need. pnpm 11 and later, which
+   step 2 installs, otherwise installs an older version, or stops with
    `ERR_PNPM_IGNORED_BUILDS`:
 
    ```sh
@@ -64,7 +69,9 @@ the user DSH will run as:
    ```
 
    The first line only makes DSH create the profile, so its own settings are
-   written before these two.
+   written before these two. Run them before step 4: a profile that already
+   tried to add the plugin keeps the older version it recorded, until
+   `dsh plugin --profile web update --latest @dsh-teamwork/dsh-teamwork`.
 
 4. Install the plugin, then start DSH in a `tmux` session, so it keeps running
    after you log out. Start it in the project folder sessions should work in:
@@ -84,7 +91,7 @@ the user DSH will run as:
    on your `PATH`:
 
    ```sh
-   npm install -g @dsh-teamwork/dsh-teamwork
+   sudo npm install -g @dsh-teamwork/dsh-teamwork
    ```
 
 6. Then run `dsh-teamwork login`. See
@@ -121,7 +128,7 @@ update the commands, then restart DSH:
 
 ```sh
 dsh plugin --profile web update --latest @dsh-teamwork/dsh-teamwork
-npm install -g @dsh-teamwork/dsh-teamwork
+sudo npm install -g @dsh-teamwork/dsh-teamwork
 ```
 
 ## If something goes wrong

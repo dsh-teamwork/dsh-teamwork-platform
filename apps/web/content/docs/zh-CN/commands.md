@@ -34,11 +34,11 @@ description: 所有 /teamwork 命令，在 DSH 的命令输入框中使用。
 | `dsh-teamwork server [url]` | 查看或设置 Teamwork 服务器；自托管团队先设置这一项。 |
 | `dsh-teamwork login` | 打印登录链接，在任意浏览器中打开。 |
 | `dsh-teamwork authorize <code>` | 用页面上显示的授权码完成登录。 |
-| `dsh-teamwork status` | 查看登录、团队、同步、中继和已配对的手机。 |
+| `dsh-teamwork status` | 查看登录、团队、同步、中继和已配对的设备。 |
 | `dsh-teamwork sync` | 立即同步团队配置。 |
 | `dsh-teamwork logout` | 退出登录，并移除团队资源。 |
-| `dsh-teamwork phone pair` | 在终端里画出手机 App 的配对二维码。 |
-| `dsh-teamwork phone list` | 查看已配对和等待中的手机，以及等待中手机的安全码。 |
-| `dsh-teamwork phone accept <id>` | 手机显示相同的安全码后确认它；`reject <id>` 拒绝。 |
-| `dsh-teamwork phone revoke <id>` | 移除一台已配对的手机。 |
+| `dsh-teamwork device pair` | 打印配对码，并在终端里画出手机 App 的配对二维码；浏览器在 My DSH 里输入这个配对码。 |
+| `dsh-teamwork device list` | 查看已配对和等待中的设备，以及等待中设备的安全码。 |
+| `dsh-teamwork device accept <id>` | 设备显示相同的安全码后确认它；`reject <id>` 拒绝。 |
+| `dsh-teamwork device revoke <id>` | 移除一台已配对的设备。 |
 
