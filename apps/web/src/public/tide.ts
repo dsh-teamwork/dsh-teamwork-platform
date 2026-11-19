@@ -3,6 +3,8 @@
  * travel through the engraved water independently of the reader's scroll.
  */
 
+import { surfaceBreaches } from './breach';
+
 export function followTide(story: HTMLElement) {
   const surface = story.querySelector<HTMLElement>('.tide-surface')!;
   const swimZone = story.querySelector<HTMLElement>('.tide-swim-zone')!;
@@ -34,7 +36,6 @@ export function followTide(story: HTMLElement) {
     swimZone.classList.toggle('whale-in-deep', y > assetStart + innerHeight * .5);
     if (reduced.matches) return;
     const dive = unit(y / surfaceHeight);
-    surface.style.setProperty('--fluke-drop', dive * 95 + '%');
     surface.style.setProperty('--wave-lift', -dive * 22 + '%');
   }
   function schedule() {
@@ -51,7 +52,7 @@ export function followTide(story: HTMLElement) {
     assetStart = deep.getBoundingClientRect().top + scrollY - innerHeight;
     schedule();
   }
-  animateWater(surface.querySelector<HTMLElement>('.tide-water')!, reduced);
+  animateWater(surface, reduced);
   measure();
   new ResizeObserver(measure).observe(story);
   window.addEventListener('resize', measure);
@@ -83,7 +84,10 @@ function addSwimStroke(whale: SVGSVGElement) {
   }
 }
 
-function animateWater(water: HTMLElement, reduced: MediaQueryList) {
+function animateWater(surface: HTMLElement, reduced: MediaQueryList) {
+  const water = surface.querySelector<HTMLElement>('.tide-water')!;
+  const drawPod = surfaceBreaches(surface);
+  drawPod(0);
   const image = water.querySelector('img')!;
   const canvas = water.querySelector('canvas')!;
   const brush = canvas.getContext('2d');
@@ -100,6 +104,7 @@ function animateWater(water: HTMLElement, reduced: MediaQueryList) {
   const draw = (now: number) => {
     if (previous) time += (now - previous) / 1000;
     previous = now;
+    drawPod(time);
     const length = Math.min(410, width * .8);
     const amplitude = Math.min(10, length * .024);
     // Different wavelengths and speeds make each crest grow, travel and
@@ -134,6 +139,7 @@ function animateWater(water: HTMLElement, reduced: MediaQueryList) {
       cancelAnimationFrame(frame);
       frame = 0;
       previous = 0;
+      if (reduced.matches) drawPod(0);
       canvas.hidden = true;
       image.hidden = false;
       return;
@@ -155,7 +161,7 @@ function animateWater(water: HTMLElement, reduced: MediaQueryList) {
   new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
     sync();
-  }).observe(water);
+  }).observe(surface);
   image.addEventListener('load', sync);
   reduced.addEventListener('change', sync);
   document.addEventListener('visibilitychange', sync);
