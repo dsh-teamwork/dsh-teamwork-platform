@@ -55,6 +55,9 @@ export type DshSessions = Pick<
   | 'configuration'
   | 'selectModel'
   | 'selectPermission'
+  | 'listFiles'
+  | 'searchFiles'
+  | 'readFile'
   | 'uploadCapabilities'
   | 'startUpload'
   | 'uploadChunk'
@@ -81,6 +84,12 @@ export const RETRY_MS = [1_000, 2_000, 4_000, 8_000, 15_000, 30_000];
 /** Why a follow may end and come back: the socket, the channel or the computer went away for now. */
 const RETRIED: ReadonlySet<RelayErrorCode> = new Set(['unavailable', 'offline']);
 
+const FolderSchema = z.object({
+  path: z.string(),
+  entries: z.object({ name: z.string(), kind: z.enum(['file', 'directory']), bytes: z.number().optional() }).array(),
+  truncated: z.boolean(),
+});
+
 /** How many messages one read of older history asks for, as many as DSH's own opening window. */
 const HISTORY_PAGE = 50;
 
@@ -97,7 +106,7 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
   'teamwork/file_type': 'file_type', 'teamwork/file_name': 'file_name', 'teamwork/file_too_large': 'file_too_large', 'teamwork/invalid_upload': 'invalid_upload',
   'teamwork/upload_expired': 'upload_expired', 'teamwork/upload_failed': 'upload_failed', 'session/attachment-invalid': 'upload_expired',
   'teamwork/locked': 'locked', 'teamwork/preset_changed': 'preset_changed', 'teamwork/model_unavailable': 'model_unavailable', 'teamwork/invalid_request': 'invalid_request',
-  'teamwork/permission_refused': 'permission_refused', 'session/title-invalid': 'invalid_request', 'workspace/session-active': 'busy', 'workspace/not-found': 'not_found',
+  'teamwork/permission_refused': 'permission_refused', 'teamwork/not_text': 'not_text', 'session/title-invalid': 'invalid_request', 'workspace/session-active': 'busy', 'workspace/not-found': 'not_found',
   // A cloud computer's server: an answer to a question no page of that computer still holds.
   'teamwork/stale': 'stale',
 };
@@ -365,6 +374,18 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
         call(computerId, 'teamwork/configuration', { request: { ...(sessionId ? { sessionId } : {}) } }),
       ]);
       return configurationOf(sessions, models, configuration);
+    },
+
+    async listFiles(computerId, sessionId, path) {
+      return FolderSchema.parse(await call(computerId, 'teamwork/listFiles', { request: { sessionId, path } }));
+    },
+
+    async searchFiles(computerId, sessionId, query) {
+      return z.object({ matches: z.string().array(), truncated: z.boolean() }).parse(await call(computerId, 'teamwork/searchFiles', { request: { sessionId, query } }));
+    },
+
+    async readFile(computerId, sessionId, path) {
+      return z.object({ path: z.string(), text: z.string(), bytes: z.number(), truncated: z.boolean() }).parse(await call(computerId, 'teamwork/readFile', { request: { sessionId, path } }));
     },
 
     async selectPermission(computerId, sessionId, preset) {

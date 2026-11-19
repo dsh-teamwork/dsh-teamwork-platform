@@ -5,7 +5,7 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import Markdown from 'react-markdown';
@@ -53,13 +53,14 @@ import { relayFor } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
+import { SessionFiles } from './session-files';
 
 /** What the session parts speak to: a computer's sessions and its PIN. */
 export type SessionClient = Pick<
   RelayClient,
   | 'listSessions' | 'watchSessions' | 'follow' | 'older' | 'createSession' | 'configuration' | 'selectModel'
   | 'uploadCapabilities' | 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'cancel' | 'prompt' | 'answer'
-  | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission'
+  | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission' | 'listFiles' | 'searchFiles' | 'readFile'
   | 'watchPin' | 'unlock' | 'setPin'
 >;
 
@@ -71,7 +72,7 @@ function useSessionClient(): SessionClient {
   return useContext(SessionClientContext) ?? relayFor(me);
 }
 
-const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused', 'not_text']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {
@@ -109,7 +110,8 @@ export function DshColumns({ title, list, children }: { title: string; list: (on
           {list(() => setMenu(false))}
         </nav>
       </aside>
-      <section className="mx-auto flex w-full max-w-4xl min-w-0 flex-1 flex-col gap-5 px-4 pt-6 md:px-8 md:pt-6">{children}</section>
+      {/* A session's files panel (session-files.tsx) takes the right of a wide screen: the conversation moves over for it. */}
+      <section className="mx-auto flex w-full max-w-4xl min-w-0 flex-1 flex-col gap-5 px-4 pt-6 md:px-8 md:pt-6 md:has-[[data-files-panel]]:mr-[min(36rem,45vw)]">{children}</section>
     </div>
   );
 }
@@ -436,6 +438,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const [openPage, setOpenPage] = useState<PublishedPage | null>(null);
+  const [filesOpen, setFilesOpen] = useState(false);
 
   useEffect(() => (id ? relay.follow(computerId, id, (event) => setState((s) => applySessionEvent(s, event))) : undefined), [relay, computerId, id]);
 
@@ -495,7 +498,15 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
     <>
       {!hero && (
         <header className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{id ? title : t('newTitle')}</h2>
+          <div className="flex items-start gap-2">
+            <h2 className="min-w-0 flex-1 text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{id ? title : t('newTitle')}</h2>
+            {id && config?.files && (
+              <Button type="button" variant="outline" size="sm" aria-expanded={filesOpen} onClick={() => setFilesOpen(!filesOpen)}>
+                <FolderOpen aria-hidden />
+                {t('browse.open')}
+              </Button>
+            )}
+          </div>
           {current && (
             <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground" title={current.cwd}>
               <Folder className="size-3.5 shrink-0" aria-hidden />
@@ -581,6 +592,9 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
             </div>
           )}
           {state.closed && <p role="alert" className="text-destructive">{word(new RelayError(state.closed))}</p>}
+          {filesOpen && id && (
+            <SessionFiles client={relay} computerId={computerId} sessionId={id} items={state.items} word={word} onClose={() => setFilesOpen(false)} />
+          )}
           {openPage && (
             // Beside the conversation on a wide screen, over it on a narrow one (docs/tech/pages.md, "The clients").
             <aside className="fixed inset-y-0 right-0 z-40 flex w-full flex-col overflow-y-auto border-l bg-background p-4 shadow-xl xl:w-[min(60rem,55vw)]">

@@ -56,6 +56,25 @@ export function isThinking(rows: readonly Row[], running: boolean): boolean {
   return !last || last.kind === 'user' || (last.kind === 'steps' && last.status !== 'running');
 }
 
+/**
+ * The files a session wrote or edited, as its tool calls name them, the latest change first and each once: what a
+ * screen lists as the session's changes. A failed or refused call changed nothing and is left out.
+ */
+export function touchedFiles(items: readonly ConversationItem[]): string[] {
+  const seen = new Set<string>();
+  const files: string[] = [];
+  for (let i = items.length - 1; i >= 0; i--) {
+    const item = items[i]!;
+    if (item.kind !== 'tool' || (item.status !== 'done' && item.status !== 'running')) continue;
+    const key = toolKey(item.name);
+    if ((key === 'tools.write' || key === 'tools.edit') && item.summary && !seen.has(item.summary)) {
+      seen.add(item.summary);
+      files.push(item.summary);
+    }
+  }
+  return files;
+}
+
 /** The locale key for a tool's friendly name, when one exists; otherwise the screen shows the tool's own name. */
 export function toolKey(name: string): string | null {
   const known: Record<string, string> = {

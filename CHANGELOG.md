@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — Browse a session's files from the console
+
+- **What:** A session's **Files** button opens its working directory as the console's right column, read only: the files the session wrote or edited (`touchedFiles`, from its own tool calls) and every folder, searchable by name, each text file with line numbers. It reads through the plugin's `teamwork/listFiles`, `teamwork/searchFiles` and `teamwork/readFile`, held under that directory; `teamwork/configuration`'s `files` says the plugin answers them. `@dsh-teamwork/relay-client` adds `listFiles`, `searchFiles`, `readFile`, `touchedFiles` and the `not_text` error.
+- **Why:** What an agent made could be seen only on the computer itself, as DSH's own right column shows it.
+- **Breaking:** None. A plugin without `files` shows no button.
+- **Upgrade:** Update the DSH Teamwork plugin on each computer (0.16.0) for the button.
+- **Refs:** `docs/tech/relay.md` ("The allow-list"), `apps/web/src/pages/team/session-files.tsx`.
+
 ## 2026-11-19 — Switch a session's permission preset from the console
 
 - **What:** The composer's foot has DSH's permission menu beside the paperclip (read only, workspace write, full access, or the presets that DSH composes). `teamwork/configuration` carries `permissions` (the options, the session's current one, the default; each `risky` and `allowed`), and `teamwork/selectPermission` switches an idle session through DSH's own `/permission` command. A risky preset is confirmed once; on a Team DSH it is shown and cannot be picked (`teamwork/permission_refused`). `@dsh-teamwork/relay-client` adds `selectPermission` and the `permission_refused` error.
