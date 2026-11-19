@@ -69,7 +69,7 @@ the hosted one:
 - **Page**: a titled, versioned thing one team owns, of one kind: `html` (an
   entry `index.html` and the files it loads), `markdown` (one `index.md`) or
   `svg` (one `index.svg`). The console calls it a page in both languages
-  ("Pages"; in Chinese the everyday word for a web page), and so does the
+  ("Pages"; in Chinese "shared pages", the entry's purpose), and so does the
   code. "Artifact" already names plugin archives here
   (`server/internal/artifactstore`, `/api/teams/{teamId}/artifacts`, which
   installed plugins call), so pages never use it.
@@ -330,7 +330,7 @@ In the plugin repository, beside the other `teamwork_*` tools
   **Open in a new tab** and **Copy link** (to the console's page for it,
   never the view address).
 - **Pages in the sidebar**: `GROUPS`' `work` group in
-  `apps/web/src/components/team/console-shell.tsx`, after My DSH, for
+  `apps/web/src/components/team/console-shell.tsx`, after Team resources, for
   everyone in every team, always listed; `/teams/{teamId}/pages` (**Mine**),
   `?list=shared` (**Shared with me**), `?list=all` (**All**, a third tab an
   admin alone sees: rows they cannot read show no viewer, only **Restrict**
