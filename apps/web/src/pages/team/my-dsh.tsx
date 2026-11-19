@@ -6,10 +6,15 @@
  * computer in the list counts its devices, every phone and browser of the member's paired with it; the count opens
  * them on a page of their own (`/teams/{teamId}/my-dsh/{hostId}/devices`), each removable (ADR 0048). The computer's id
  * in the address is its host id; the relay is spoken to through this browser's pairing.
+ *
+ * The third column follows the computer's state, one at a time: offline (nothing else is possible), online but not
+ * paired with this browser (pair), paired and connecting (its encrypted channel and PIN state not heard yet), the
+ * channel failed (retry), its PIN asked (the gate), and only then sessions and the composer. The list is read again
+ * every few seconds, so a computer coming online or going away moves the page along by itself.
  */
 
-import { ArrowLeft, Check, Laptop, Loader, Monitor, Smartphone } from 'lucide-react';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { ArrowLeft, Check, Laptop, Loader, Monitor, RotateCw, Smartphone, WifiOff, type LucideIcon } from 'lucide-react';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
@@ -44,18 +49,37 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `t` is stable for a locale.
   }, [me]);
-  useEffect(() => void load(), [load]);
+  useEffect(() => {
+    void load();
+    // Whether each computer is online changes on its own: read the list again while the page is open.
+    const timer = setInterval(() => void load(), REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [load]);
 
   const host = hosts?.find((h) => h.id === hostId);
-  // The relay is spoken to through this browser's own confirmed pairing with the computer.
-  const computerId = host?.pairings.find((p) => p.current && p.status === 'confirmed')?.id ?? '';
+  // This browser's own confirmed pairing with the computer; the relay is spoken to through it, and only while the
+  // computer is online, since nothing on the other side could answer otherwise.
+  const pairingOf = (h: MyComputer) => h.pairings.find((p) => p.current && p.status === 'confirmed')?.id ?? '';
+  const paired = host ? pairingOf(host) : '';
+  const computerId = host?.online ? paired : '';
   const { sessions, pin, failed: unreachable, reload, locked } = useComputer(computerId);
+  // The relay saying the computer cannot be reached is news the list may not have yet: read it again now.
+  useEffect(() => {
+    if (unreachable) void load();
+  }, [unreachable, load]);
+  // Ready once the computer answered: its sessions read, or its PIN state says unlocked. Until then it is connecting.
+  const ready = computerId !== '' && !locked && (sessions !== null || pin?.kind === 'unlocked');
   const session = sessions?.find((s) => s.id === sessionId);
   // Two records can share a name (two DSHs on one machine, or one signed in again): a short id tells them apart.
   const twin = (h: MyComputer) => (hosts ?? []).some((o) => o.id !== h.id && o.name === h.name);
-  const note = (h: MyComputer) =>
-    [h.os ? HOST_OS_NAMES[h.os] : null, h.online ? tt('online') : t('lastSeen', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }), twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null].filter(Boolean).join(' · ');
-  const problem = failed ?? unreachable;
+  // The list's word under a computer is short enough to read whole; its header says when it was last seen.
+  const note = (h: MyComputer, full = false) =>
+    [
+      h.os ? HOST_OS_NAMES[h.os] : null,
+      h.online ? tt('online') : full ? t('offlineSince', { time: format.relativeTime(new Date(h.lastSeenAt), new Date()) }) : tt('offline'),
+      pairingOf(h) ? null : t(full ? 'notPaired' : 'notPairedShort'),
+      twin(h) ? `#${h.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null,
+    ].filter(Boolean).join(' · ');
 
   return (
     <DshColumns
@@ -74,7 +98,7 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
                   online={h.online}
                   to={`${base}/${h.id}`}
                   open={open}
-                  current={open && !sessionId && !devices}
+                  current={open && !devices && !(sessionId && ready)}
                   onPick={onPick}
                   extra={
                     <Link
@@ -93,14 +117,14 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
                     </Link>
                   }
                 />
-                {open && computerId && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
+                {open && computerId && !unreachable && <SessionList base={`${base}/${h.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
           })}
         </>
       )}
     >
-      {problem && <p role="alert" className="text-sm text-destructive">{problem}</p>}
+      {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
       {!host ? (
         <section className="m-auto flex max-w-lg flex-col items-center gap-3 py-10 text-center">
           <Laptop className="size-8 text-muted-foreground" aria-hidden />
@@ -109,12 +133,14 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
         </section>
       ) : devices ? (
         <DevicesView host={host} back={`${base}/${host.id}`} changed={() => void load()} />
-      ) : sessionId && computerId && !locked ? (
+      ) : sessionId && ready ? (
         <Conversation key={sessionId} computerId={computerId} sessionId={sessionId} title={session?.title || tt('untitled')} />
       ) : (
         <>
-          <HostHeader host={host} note={note(host)} />
-          {!computerId ? (
+          <HostHeader host={host} note={note(host, true)} />
+          {!host.online ? (
+            <State icon={WifiOff} title={t('offlineTitle', { name: host.name })} body={t(paired ? 'offlineHelp' : 'offlineUnpairedHelp')} />
+          ) : !computerId ? (
             <Pair
               host={host}
               paired={(pairedHost) => {
@@ -125,12 +151,36 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
             />
           ) : locked ? (
             <PinGate computerId={computerId} state={pin} lockedHint={t('lockedHint')} />
+          ) : unreachable ? (
+            <State icon={WifiOff} title={t('unreachableTitle', { name: host.name })} body={unreachable}>
+              <Button variant="outline" onClick={() => void reload()}>
+                <RotateCw className="size-4" aria-hidden />
+                {t('retry')}
+              </Button>
+            </State>
+          ) : !ready ? (
+            <State icon={Loader} spin title={t('connecting', { name: host.name })} body={t('connectingHelp')} />
           ) : (
             <NewSession key={computerId} computerId={computerId} name={host.name} started={(id) => { void reload(); navigate(`${base}/${host.id}/${id}`); }} />
           )}
         </>
       )}
     </DshColumns>
+  );
+}
+
+/** How often the list of computers is read again, for each one's online state. */
+const REFRESH_MS = 10_000;
+
+/** A state of the open computer in which nothing can be done here but wait, or what `children` offers. */
+function State({ icon: Icon, spin, title, body, children }: { icon: LucideIcon; spin?: boolean; title: string; body: string; children?: ReactNode }) {
+  return (
+    <section role="status" className="m-auto flex max-w-md flex-col items-center gap-3 py-10 text-center">
+      <Icon className={cn('size-8 text-muted-foreground', spin && 'animate-spin')} aria-hidden />
+      <h3 className="text-lg font-semibold tracking-tight [overflow-wrap:anywhere]">{title}</h3>
+      <p className="text-sm text-muted-foreground">{body}</p>
+      {children}
+    </section>
   );
 }
 

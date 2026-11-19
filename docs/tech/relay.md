@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-18
+> **Status:** Current · **Updated:** 2026-11-19
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -501,15 +501,21 @@ the hosted edition, Cloud DSH.
   account has at least one recorded host, in every team alike: the computers
   are the person's, not a team's.
 - **The second column lists the account's computers**: name, operating system,
-  online or when last seen, and beside each the number of devices paired with
-  it, which opens its devices page. The open one shows its sessions beneath it
-  once this browser is paired and unlocked.
-- **The third column** is, by state: pairing this browser (the six-letter code
-  from the Teamwork panel's Phone page, the eight-digit safety code to
-  compare, then approval on the desktop: "Pairing" above, unchanged); the
-  computer's PIN, `owner`'s; a session, or a new one started by its first
-  message. Above it, the computer's name, operating system, state and DSH
-  version.
+  online or offline, whether this browser is paired with it, and beside each
+  the number of devices paired with it, which opens its devices page. The list
+  is read again every ten seconds, so a computer coming online or going away
+  moves the page along by itself. The open one shows its sessions beneath it
+  once it is online and this browser is paired.
+- **The third column** follows the computer's state, one at a time, and only
+  the last offers a session: offline (nothing to do but open DSH on it);
+  online but not paired with this browser (the six-letter code from the
+  Teamwork panel's Phone page, the eight-digit safety code to compare, then
+  approval on the desktop: "Pairing" above, unchanged); paired and connecting,
+  until the computer answers over the encrypted channel with its sessions or
+  its PIN state; the channel failed, with a retry; the computer's PIN,
+  `owner`'s; and then a session, or a new one started by its first message.
+  Above it, the computer's name, operating system, state with when it was last
+  seen, and DSH version.
 - **The devices page** takes the third column: every pairing of the account to
   the computer, the phone app's and every browser's, with its name, status,
   last use and whether it pushes, this browser marked, each removable.

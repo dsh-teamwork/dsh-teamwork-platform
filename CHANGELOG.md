@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-19 — My DSH follows each computer's state
+
+- **What:** My DSH's list says whether each computer is online and whether this browser is paired with it, and is read again every ten seconds. The open computer's page shows one state at a time: offline, not paired (pairing), connecting, unreachable (with a retry), its PIN, and only then sessions and the composer; a session's address opened while the computer is not ready shows that state instead.
+- **Why:** An offline computer this browser had paired with opened straight to the composer, with only a red "offline" line above it, and the list did not say it was offline.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-19 — Provider marks in their makers' colours
 
 - **What:** Each provider's mark is drawn in its maker's own colours and gradients (LobeHub's colour icons; OpenAI, Anthropic, xAI, Ollama and OpenRouter stay black) on a new `--mark-plate` tile, light in both themes, in the console, on the home page's diagram and in the phone app. `PROVIDER_MARKS` now holds shapes and gradients instead of single-colour paths, and the web app's `MarkSvg` draws one.
