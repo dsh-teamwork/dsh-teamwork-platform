@@ -37,6 +37,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing; the phone app's colours ship with its next build.
 - **Refs:** `packages/shared/src/providers.ts`, `apps/web/src/components/provider-mark.tsx`, `docs/design.md` ("Icons").
 
+## 2026-11-18 — A computer's sessions run over any link; the console's session parts take their client
+
+- **What:** `@dsh-teamwork/relay-client` splits a computer's sessions (list, follow, start, prompt, answer, configure, upload) from the relay into `dsh-sessions.ts`: `createDshSessions` runs them over any `DshLink` (a unary call, a stream, a close), and the live relay is one such link. `bridgeValue` reads a plugin bridge's `{ status, body }` answer. The web console's session parts (`dsh-session.tsx`) speak to `SessionClientContext`'s client when a page provides one, and to this browser's relay otherwise. `relayed.ts` (`receiveRelayed`, `relayedPending`, `answerRelayed`), which only the hosted edition's cloud sessions used, is removed.
+- **Why:** The hosted edition's Cloud DSH, a member's own computer its server reaches without the relay, uses the same screens as My DSH instead of a thinner copy.
+- **Breaking:** An edition importing `relayed.ts` moves to `createDshSessions` over its own link.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/relay-client/src/dsh-sessions.ts`, `apps/web/src/pages/team/dsh-session.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-18 — A computer's operating system, and My DSH's devices page
 
 - **What:** The plugin's relay hello adds `os` (`macos`, `windows` or `linux`; any other value is refused 4400, none is allowed), stored in the new nullable `relay_hosts.os` and refreshed on every connection. `GET /relay/pairings` adds `hostOs` and `GET /relay/hosts` adds `os`; `@dsh-teamwork/relay-client`'s `Computer` adds `os`. My DSH shows each computer's operating system and, beside it, the number of devices paired with it, which opens a devices page of its own (`/teams/{teamId}/my-dsh/{hostId}/devices`) where each is removed; the computer's page no longer lists them.

@@ -13,10 +13,12 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -241,6 +243,24 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 				return errors.New("invalid or duplicate Team DSH gate")
 			}
 			teamDSHGate = allowed
+			return nil
+		},
+		ServeSubdomains: func(domain string, h http.Handler) error {
+			domain = strings.ToLower(strings.Trim(domain, "."))
+			app, err := url.Parse(cfg.AppURL)
+			if err != nil {
+				return err
+			}
+			if site := strings.ToLower(app.Hostname()); domain == "" || h == nil || domain == site || strings.HasSuffix(site, "."+domain) {
+				return fmt.Errorf("invalid subdomains of %q", domain)
+			}
+			if srv.Subdomains == nil {
+				srv.Subdomains = map[string]http.Handler{}
+			}
+			if srv.Subdomains[domain] != nil {
+				return fmt.Errorf("duplicate subdomains of %q", domain)
+			}
+			srv.Subdomains[domain] = h
 			return nil
 		},
 		TeamDSHAllowed: func(ctx context.Context, teamID string) (bool, error) {
