@@ -97,7 +97,10 @@ plugins, versions, usage and budgets are deleted with it. This cannot be undone.
 Every model has its reference rate from step 2. Under **Budgets**,
 add daily or monthly caps for the whole team, a default for each member, or a
 provider. A call reserves its largest possible cost before it runs, and one that
-would pass a cap is refused. Budgets count **points**, the team's own measure of
+would pass a cap is refused. Only models whose largest cost the server can work
+out run under an enabled budget: today the official DeepSeek API and the
+service's hosted models. Calls to any other provider of your own are refused
+while a budget is on. Budgets count **points**, the team's own measure of
 cost: CNY 1 is 1,000 points at the reference rates. With your own provider key,
 the provider still bills you directly. Where the server sends email, a budget
 can also warn admins or the member as it nears its cap. **Usage** lists every

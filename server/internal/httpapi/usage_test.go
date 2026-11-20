@@ -31,9 +31,12 @@ func TestUsagePricesJSONStreamsAndUncertainResponses(t *testing.T) {
 			}
 			w.Header().Set("Content-Type", "text/event-stream")
 			fmt.Fprint(w, "data: {\"id\":\"provider-call\",\"choices\":[],\"usage\":"+usageFixture+"}\n\n")
-			if mode.Load() == 1 {
+			switch mode.Load() {
+			case 1:
 				io.WriteString(w, "data: [DONE]\n\n")
-			}
+			case 3: // cut off after the usage, before the stream said it was done
+				io.WriteString(w, "data: {\"id\":\"provider-call\",\"choices\":[{\"delta\":{\"content\":\"more\"}}]}\n\n")
+			} // 2 ends on its usage frame with no [DONE], as MiniMax's streams do
 		})
 		admin := e.admin("admin@usage.test")
 		teamID, modelID := stubTeam(t, admin, u, "sk-test")
@@ -46,6 +49,10 @@ func TestUsagePricesJSONStreamsAndUncertainResponses(t *testing.T) {
 			t.Fatalf("stream failed: %d %s", r.status, r.body)
 		}
 		mode.Store(2)
+		if r := call(p, modelID, true); r.status != 200 {
+			t.Fatalf("stream without [DONE] failed: %d %s", r.status, r.body)
+		}
+		mode.Store(3)
 		if r := call(p, modelID, true); r.status != 200 {
 			t.Fatalf("truncated stream failed: %d %s", r.status, r.body)
 		}
@@ -68,7 +75,7 @@ func TestUsagePricesJSONStreamsAndUncertainResponses(t *testing.T) {
 				t.Fatalf("a priced model's call left %s: %+v", entry["state"], entry)
 			}
 		}
-		if measured != 2 || pending != 1 {
+		if measured != 3 || pending != 1 {
 			t.Fatalf("measured=%d pending=%d: %+v", measured, pending, v)
 		}
 		refused(t, "stale rate form", admin.send("PUT", ratePath, rateBody(0, "99")), 409, "rate_changed")

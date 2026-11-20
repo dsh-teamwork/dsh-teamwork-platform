@@ -1,6 +1,6 @@
 # Team assistant and shared resources
 
-> **Status:** Current · **Updated:** 2026-11-17
+> **Status:** Current · **Updated:** 2026-11-20
 
 New teams receive a Teamwork assistant. Members submit presets and private
 plugin packages, administrators approve their exact contents, and every
@@ -34,7 +34,12 @@ may inherit that selection. With no available model the host reports setup
 guidance. An inherited preset is not a configured gateway route.
 
 The assistant is first in the Teamwork preset list. Its prompt is editable,
-but permissions and approvals are enforced outside the prompt. Every tool
+but permissions and approvals are enforced outside the prompt. The plugin adds
+its own guide ahead of that prompt (`ASSISTANT_GUIDE` in the plugin's
+`src/preset-context.ts`): proactive, within the member's role, a complete
+preset drafted before it is proposed or changed, and the Teamwork tools as the
+only way to act on the team. It ships with the plugin, so a team created
+before it gets it as well. Every tool
 invocation derives its destination from the active preset's team, not a
 model-supplied team id. Changing a panel filter does not retarget a conversation.
 Started conversations keep the existing preset-generation protections.
@@ -42,8 +47,9 @@ Started conversations keep the existing preset-generation protections.
 ## Assistant operations
 
 `teamwork_query` reads status, configuration, membership, providers, usage,
-budgets, submissions and history, or syncs configuration. Optional filters
-support the underlying usage/history pages. Server authorization determines
+budgets, submissions and history, or syncs configuration. Filters take each
+route's own query names (`since`/`until` for usage and its export, `state`
+for submissions), and one a route would ignore is refused. Server authorization determines
 whether usage is personal or team-wide; reference points, settled amounts,
 reservations, token limits and unknown usage retain their existing meanings
 ([usage and budgets](usage-budgets.md)).

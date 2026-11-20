@@ -135,7 +135,9 @@ require a new review before continuing to claim a hard bound.
 ## Settlement and recovery
 
 The gateway forwards provider bytes while a bounded observer extracts usage.
-Trust final JSON or complete SSE ending with `[DONE]` and transport EOF. Settle
+Trust final JSON, or SSE with transport EOF that ends with `[DONE]` or on its
+usage frame (MiniMax sends no `[DONE]`); a frame after the usage leaves it
+incomplete. Settle
 once in a short transaction and release unused reservations. Duplicate final
 reports cannot spend twice. Invalid, incomplete, cancelled, missing or
 unpriceable-overflow results remain pending with their holds retained.
