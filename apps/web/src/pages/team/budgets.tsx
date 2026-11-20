@@ -1,6 +1,7 @@
+import { formatPoints } from '@dsh-teamwork/shared';
 import { Plus, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import { useFormatter, useTranslations } from 'use-intl';
+import { useFormatter, useLocale, useTranslations } from 'use-intl';
 
 import { Select } from '@/components/ui/select';
 import { PageHeader } from '@/components/team/console-shell';
@@ -26,6 +27,7 @@ export function TeamBudgetsPage() {
   const t = useTranslations('budgets');
   const word = useTeamError();
   const format = useFormatter();
+  const locale = useLocale();
   const data = useApi<Budgets>(`teams/${team.id}/budgets`);
   const providers = useApi<Provider[]>(`teams/${team.id}/providers`);
   const notices = useApi<Schemas['BudgetNotice'][]>(`teams/${team.id}/budgets/notices`);
@@ -61,9 +63,9 @@ export function TeamBudgetsPage() {
               </div>
               {policy.inheritsDefault ? <p className="text-sm text-muted-foreground">{t('inherits')}</p> : !policy.enabled ? <p className="text-sm text-muted-foreground">{t('disabled')}</p> : (
                 <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                  <div><dt className="text-muted-foreground">{t('pointLimit')}</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{policy.points ?? t('notLimited')}</dd></div>
-                  <div><dt className="text-muted-foreground">{t('usedAndReserved')}</dt><dd className="mt-1 tabular-nums">{defaultForAll ? t('perMember') : `${window?.spent ?? '0'} / ${window?.reserved ?? '0'}`}</dd></div>
-                  {!defaultForAll && policy.points !== null && <div><dt className="text-muted-foreground">{t('remaining')}</dt><dd className="mt-1 font-semibold tabular-nums">{window ? window.remaining ?? '—' : policy.points}</dd></div>}
+                  <div><dt className="text-muted-foreground">{t('pointLimit')}</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{policy.points !== null ? formatPoints(policy.points, locale) : t('notLimited')}</dd></div>
+                  <div><dt className="text-muted-foreground">{t('usedAndReserved')}</dt><dd className="mt-1 tabular-nums">{defaultForAll ? t('perMember') : `${formatPoints(window?.spent ?? '0', locale)} / ${formatPoints(window?.reserved ?? '0', locale)}`}</dd></div>
+                  {!defaultForAll && policy.points !== null && <div><dt className="text-muted-foreground">{t('remaining')}</dt><dd className="mt-1 font-semibold tabular-nums">{window ? (window.remaining !== null ? formatPoints(window.remaining, locale) : '—') : formatPoints(policy.points, locale)}</dd></div>}
                   {policy.input !== null && <div><dt className="text-muted-foreground">{t('inputLimit')}</dt><dd>{policy.input.toLocaleString()}</dd></div>}
                   {policy.output !== null && <div><dt className="text-muted-foreground">{t('outputLimit')}</dt><dd>{policy.output.toLocaleString()}</dd></div>}
                   {policy.total !== null && <div><dt className="text-muted-foreground">{t('totalLimit')}</dt><dd>{policy.total.toLocaleString()}</dd></div>}
@@ -82,7 +84,7 @@ export function TeamBudgetsPage() {
           <thead className="bg-muted text-xs text-muted-foreground"><tr>{(['member', 'period', 'spent', 'reserved', 'remaining', 'resetColumn'] as const).map((key) => <th key={key} className="px-4 py-3 font-medium">{t(key)}</th>)}</tr></thead>
           <tbody>{windows.filter((w) => w.scope === 'member').map((w) => <tr key={w.id} className="border-t">
             <td className="px-4 py-3">{names.get(w.subjectId) ?? t('formerMember')}</td><td className="px-4 py-3">{t(`periods.${w.period}`)}</td>
-            <td className="px-4 py-3 tabular-nums">{w.spent}</td><td className="px-4 py-3 tabular-nums">{w.reserved}</td><td className="px-4 py-3 tabular-nums">{w.pointLimit === null ? t('notLimited') : w.remaining ?? '—'}</td>
+            <td className="px-4 py-3 tabular-nums">{formatPoints(w.spent, locale)}</td><td className="px-4 py-3 tabular-nums">{formatPoints(w.reserved, locale)}</td><td className="px-4 py-3 tabular-nums">{w.pointLimit === null ? t('notLimited') : w.remaining !== null ? formatPoints(w.remaining, locale) : '—'}</td>
             <td className="px-4 py-3 text-muted-foreground">{format.dateTime(new Date(w.endsAt), { dateStyle: 'medium', timeStyle: 'short' })}</td>
           </tr>)}</tbody>
         </table></div>

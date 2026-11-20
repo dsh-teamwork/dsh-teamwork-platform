@@ -7,6 +7,7 @@
  * read names the reader, since an admin's unnamed read is the team's.
  */
 
+import { formatPoints } from '@dsh-teamwork/shared';
 import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -110,6 +111,7 @@ function Limits({ budgets }: { budgets: Budgets }) {
   const t = useTranslations('team.myUsage');
   const tw = useTranslations('team.overview.waiting.scope');
   const format = useFormatter();
+  const locale = useLocale();
   // A member window follows the member's own policy, or the default one when they have none.
   const policyOf = (w: Schemas['BudgetWindow']) => {
     const enabled = budgets.policies.filter((p) => p.enabled && p.period === w.period);
@@ -157,9 +159,9 @@ function Limits({ budgets }: { budgets: Budgets }) {
                     <div className="h-full rounded-full bg-primary" style={{ width: `${share * 100}%` }} />
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground tabular-nums">
-                    {w.pointLimit !== null && <span>{t('pointsUsed', { used: w.spent, limit: w.pointLimit })}</span>}
-                    {w.remaining !== null && <span>{t('left', { left: w.remaining })}</span>}
-                    {Number(w.reserved) > 0 && <span>{t('held', { held: w.reserved })}</span>}
+                    {w.pointLimit !== null && <span>{t('pointsUsed', { used: formatPoints(w.spent, locale), limit: formatPoints(w.pointLimit, locale) })}</span>}
+                    {w.remaining !== null && <span>{t('left', { left: formatPoints(w.remaining, locale) })}</span>}
+                    {Number(w.reserved) > 0 && <span>{t('held', { held: formatPoints(w.reserved, locale) })}</span>}
                     {tokens !== null && <span>{t('tokensUsed', { used: format.number(usedTokens), limit: format.number(tokens) })}</span>}
                   </div>
                 </li>
@@ -176,10 +178,11 @@ function Limits({ budgets }: { budgets: Budgets }) {
 function Totals({ stats }: { stats: Stats }) {
   const t = useTranslations('team.myUsage');
   const format = useFormatter();
+  const locale = useLocale();
   const { totals } = stats;
   const cells = [
     { label: t('calls'), value: format.number(totals.calls), note: totals.unpriced > 0 ? t('unpriced', { count: totals.unpriced }) : t('callsNote') },
-    { label: t('points'), value: totals.points, note: t('pointsNote') },
+    { label: t('points'), value: formatPoints(totals.points, locale), note: t('pointsNote') },
     { label: t('input'), value: format.number(totals.input), note: t('inputNote', { cached: format.number(totals.cacheRead) }) },
     { label: t('output'), value: format.number(totals.output), note: t('outputNote', { reasoning: format.number(totals.reasoning) }) },
   ];
@@ -203,6 +206,7 @@ function Totals({ stats }: { stats: Stats }) {
 function Daily({ stats }: { stats: Stats }) {
   const t = useTranslations('team.myUsage');
   const format = useFormatter();
+  const locale = useLocale();
   const [active, setActive] = useState<number | null>(null);
   const values = stats.days.map((d) => Number(d.points));
   const max = Math.max(0, ...values);
@@ -216,11 +220,11 @@ function Daily({ stats }: { stats: Stats }) {
         <p aria-live="polite" className="text-sm tabular-nums">
           {shown ? (
             <>
-              <span className="font-semibold">{t('dayPoints', { points: shown.points })}</span>{' '}
+              <span className="font-semibold">{t('dayPoints', { points: formatPoints(shown.points, locale) })}</span>{' '}
               <span className="text-muted-foreground">{t('dayDetail', { day: label(shown.day), calls: shown.calls })}</span>
             </>
           ) : (
-            <span className="text-muted-foreground">{t('peak', { points: format.number(max) })}</span>
+            <span className="text-muted-foreground">{t('peak', { points: formatPoints(max, locale) })}</span>
           )}
         </p>
       </CardHeader>
@@ -234,7 +238,7 @@ function Daily({ stats }: { stats: Stats }) {
                 <button
                   key={d.day}
                   type="button"
-                  aria-label={`${label(d.day)}: ${t('dayPoints', { points: d.points })}, ${t('dayCalls', { calls: d.calls })}`}
+                  aria-label={`${label(d.day)}: ${t('dayPoints', { points: formatPoints(d.points, locale) })}, ${t('dayCalls', { calls: d.calls })}`}
                   onPointerEnter={() => setActive(i)}
                   onFocus={() => setActive(i)}
                   onBlur={() => setActive(null)}
@@ -296,7 +300,7 @@ function Sources({ stats }: { stats: Stats }) {
                     {s.kind === 'meter' ? (s.labels[locale] ?? s.name) : <span className="flex items-center gap-2"><ProviderMark hints={[s.name]} name={s.name} />{s.name}</span>}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{s.kind === 'meter' ? '—' : format.number(s.calls)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{s.points}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{formatPoints(s.points, locale)}</td>
                   <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">{total > 0 ? format.number(Number(s.points) / total, { style: 'percent', maximumFractionDigits: 1 }) : '—'}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{s.kind === 'meter' ? '—' : format.number(s.input)}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{s.kind === 'meter' ? '—' : format.number(s.output)}</td>
@@ -345,7 +349,7 @@ function Recent({ page, stats }: { page?: Page; stats?: Stats }) {
                   {t('tokens', { input: format.number(row.input ?? 0), output: format.number(row.output ?? 0) })}
                 </span>
               )}
-              <span className="w-24 shrink-0 text-right tabular-nums">{row.points ?? <span className="text-xs text-muted-foreground">{tu(`states.${row.state}`)}</span>}</span>
+              <span className="w-24 shrink-0 text-right tabular-nums">{row.points !== null ? formatPoints(row.points, locale) : <span className="text-xs text-muted-foreground">{tu(`states.${row.state}`)}</span>}</span>
             </li>
           ))}
         </ul>
