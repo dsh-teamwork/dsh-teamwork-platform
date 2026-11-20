@@ -16,16 +16,23 @@ export function pinPrompt(state: PinState | undefined, confirming: boolean): Pin
 /** A host reached over HTTP reports its current PIN state to all open views. */
 export function createPinClient(request: (body: Record<string, string>) => Promise<PinState>) {
   let state: PinState | undefined;
-  let revision = 0;
+  let queue: Promise<unknown> = Promise.resolve();
+  let refresh: Promise<PinState> | undefined;
   const listeners = new Set<(value: PinState | undefined) => void>();
-  async function send(body: Record<string, string>) {
-    const current = ++revision;
-    const result = await request(body);
-    if (current === revision) {
-      state = result;
+  function send(body: Record<string, string>): Promise<PinState> {
+    if (body.action === 'status' && refresh) return refresh;
+    // A status read after an unlock observes the committed grant, even if multiple
+    // views subscribe at once or a stream is reconnecting.
+    const task = queue.then(async () => {
+      state = await request(body);
       for (const listener of listeners) listener(state);
-    }
-    return result;
+      return state;
+    });
+    queue = task.catch(() => {});
+    refresh = body.action === 'status' ? task : undefined;
+    const finished = () => { if (refresh === task) refresh = undefined; };
+    void task.then(finished, finished);
+    return task;
   }
   return {
     watchPin(_id: string, listener: (value: PinState | undefined) => void) {
