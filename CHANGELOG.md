@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — A presentation template, and pages that save the files they make
+
+- **What:** The console's preset templates gain a fourth, the presentation master (`presenter`: read, write, skill and `teamwork_page`), which plans a talk with the member, writes the slides and their speaker notes with the DSH plugin's `teamwork-slides` skill, and publishes the deck as a page that presents full screen and exports to PDF and an editable PowerPoint file. The page sandbox adds `allow-downloads` (the CSP on `/p/` and the console's viewer, which also allows full screen), so a page can save a file it makes. `teamwork_page` joins the tools the preset editor offers.
+- **Why:** Teams asked for decks they can preview, share and hand over as PowerPoint; without `allow-downloads` a published deck could not save its export.
+- **Breaking:** None.
+- **Upgrade:** Members update the DSH plugin for the skill. A phone app WebView does not save a page's files yet.
+- **Refs:** `apps/web/src/lib/preset-templates.ts`, `server/internal/pages/view.go`, `apps/web/src/components/page-viewer.tsx`, `docs/tech/pages.md`, plugin `skills/teamwork-slides/`.
+
 ## 2026-11-20 — The team assistant carries Teamwork tasks through
 
 - **What:** The plugin's team assistant drafts and proposes presets, changes them as an admin, reviews submissions, sets budgets and publishes usage pages itself, then suggests a next step. Its tools now type a preset's and a budget's fields and each read's filters (`since`/`until` for usage), and a refused change reports the server's field issues. The member docs say what it does; the admin docs say an enabled budget refuses calls to providers other than DeepSeek's own API and hosted models.

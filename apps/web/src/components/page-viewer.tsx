@@ -167,7 +167,8 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose,
           key={view.data.url}
           title={page.title}
           src={view.data.url}
-          sandbox="allow-scripts allow-popups allow-forms allow-modals"
+          sandbox="allow-scripts allow-popups allow-forms allow-modals allow-downloads"
+          allow="fullscreen"
           referrerPolicy="no-referrer"
           className="min-h-[60vh] w-full flex-1 rounded-lg border bg-white"
         />

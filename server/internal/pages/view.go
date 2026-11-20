@@ -76,7 +76,7 @@ const cdns = "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpk
 // "The view address"): an opaque origin, nothing but its own files and the
 // allowed CDNs, framed by the console alone, and never cached unchecked.
 func Headers(h http.Header, appURL string) {
-	h.Set("Content-Security-Policy", "sandbox allow-scripts allow-popups allow-forms allow-modals; default-src 'none'; "+
+	h.Set("Content-Security-Policy", "sandbox allow-scripts allow-popups allow-forms allow-modals allow-downloads; default-src 'none'; "+
 		"script-src 'self' 'unsafe-inline' 'unsafe-eval' "+cdns+"; style-src 'self' 'unsafe-inline' "+cdns+
 		"; img-src 'self' data: blob: "+cdns+"; font-src 'self' data: "+cdns+"; connect-src "+cdns+
 		"; media-src 'self' data: blob:; frame-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors "+appURL)

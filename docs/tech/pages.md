@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-19
+> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-20
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -247,7 +247,7 @@ a 403, so its existence is not told.
   built-in stylesheet. One dependency, no stored derived file.
 - **Headers on every response under `/p/`**:
   - `Content-Security-Policy: sandbox allow-scripts allow-popups allow-forms
-    allow-modals; default-src 'none'; script-src 'self' 'unsafe-inline'
+    allow-modals allow-downloads; default-src 'none'; script-src 'self' 'unsafe-inline'
     'unsafe-eval' <cdns>; style-src 'self' 'unsafe-inline' <cdns>; img-src
     'self' data: blob: <cdns>; font-src 'self' data: <cdns>; connect-src
     <cdns>; media-src 'self' data: blob:; frame-src 'none'; form-action 'none';
@@ -326,8 +326,9 @@ In the plugin repository, beside the other `teamwork_*` tools
   member can no longer read, says so instead of opening.
 - **The viewer** (`apps/web/src/components/page-viewer.tsx`, shared by the
   column and the Pages page): mints a view address, frames it
-  (`<iframe sandbox="allow-scripts allow-popups allow-forms allow-modals">`,
-  matching the header), renews it before its hour runs out by reloading, and
+  (`<iframe sandbox="allow-scripts allow-popups allow-forms allow-modals
+  allow-downloads" allow="fullscreen">`, matching the header, so a deck can
+  present full screen and save the files it makes), renews it before its hour runs out by reloading, and
   shows the title, the sharing, the version picker, **Share** (the owner; an admin sees **Restrict** instead, offering only
   narrower choices),
   **Open in a new tab** and **Copy link** (to the console's page for it,
@@ -361,6 +362,7 @@ In the plugin repository, beside the other `teamwork_*` tools
 | Disk filled | Per-version limits and 2 GiB a team |
 | A page leaks data | It can only read itself; `allow-popups` lets it open a URL carrying what it shows, which its readers could already copy |
 | Content sniffing, SVG script | `nosniff`; SVG is served under the same sandbox as HTML |
+| A page saves a harmful file | `allow-downloads` lets a page save what it makes, such as a deck's PowerPoint export; the browser shows every download, and the file is no more trusted than one a teammate sends. Nothing else of the sandbox is lifted: no `allow-same-origin`, top navigation or popup outside the sandbox |
 | Another site frames a page | `frame-ancestors` is `APP_URL` alone |
 
 ## Editions

@@ -8,12 +8,12 @@
  * the preset in the admin's language at the time. Its shape is here.
  *
  * Each template is a persona with a method, a tool chain and a deliverable,
- * after the "expert" idea in WorkBuddy, and covers one of the three things
- * teams most often hand to AI beyond code: writing, data and research.
+ * after the "expert" idea in WorkBuddy, and covers one of the things teams
+ * most often hand to AI beyond code: writing, data, research and presentations.
  */
 
 export interface PresetTemplate {
-  id: 'writer' | 'analyst' | 'researcher';
+  id: 'writer' | 'analyst' | 'researcher' | 'presenter';
   /** Its id in the avatar library (`@dsh-teamwork/shared`). */
   avatar: string;
   requiredTools: string[];
@@ -24,13 +24,16 @@ export const PRESET_TEMPLATES: readonly PresetTemplate[] = [
   { id: 'writer', avatar: 'writer', requiredTools: ['read', 'write', 'edit'], optionalTools: ['web_search', 'web_fetch', 'ask_user_question'] },
   { id: 'analyst', avatar: 'analyst', requiredTools: ['read', 'bash', 'write'], optionalTools: ['glob', 'ask_user_question'] },
   { id: 'researcher', avatar: 'researcher', requiredTools: ['web_search', 'web_fetch', 'write'], optionalTools: ['read', 'ask_user_question'] },
+  // Its method is the plugin's teamwork-slides skill, which every member's plugin carries (dsh-teamwork's skills/).
+  { id: 'presenter', avatar: 'training', requiredTools: ['read', 'write', 'skill', 'teamwork_page'], optionalTools: ['bash', 'web_search', 'web_fetch', 'ask_user_question'] },
 ];
 
 /**
  * The tools DSH registers under these names (DSH 0.2.2: `dsh-tool-fs`,
- * `-fs-search`, `-bash`, `-web`, `-todo`, `-ask-user`, `-skill`). A preset may
- * name others, such as a plugin's; the editor keeps those as they are. Each
- * one's description is `team.tools.<name>`.
+ * `-fs-search`, `-bash`, `-web`, `-todo`, `-ask-user`, `-skill`), and the
+ * Teamwork plugin's `teamwork_page`, which every member has. A preset may name
+ * others, such as a plugin's; the editor keeps those as they are. Each one's
+ * description is `team.tools.<name>`.
  */
 export const DSH_TOOLS = [
   'read',
@@ -45,4 +48,5 @@ export const DSH_TOOLS = [
   'todo_write',
   'ask_user_question',
   'skill',
+  'teamwork_page',
 ] as const;
