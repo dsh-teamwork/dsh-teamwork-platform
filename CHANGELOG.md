@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — Points are shown as whole numbers
+
+- **What:** Every point amount the console shows (My usage, Usage, Budgets and the overview's figures) is rounded half up to a whole number and grouped by locale, through `formatPoints` in `@dsh-teamwork/shared`. Rates per million tokens and the budget form's inputs keep their decimals, and the API still returns exact decimal strings.
+- **Why:** Amounts like `194.916349266` were read as noise; a whole point is the unit people reason in.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/shared/src/points.ts`, `apps/web/src/pages/team/`.
+
 ## 2026-11-20 — The team assistant carries Teamwork tasks through
 
 - **What:** The plugin's team assistant drafts and proposes presets, changes them as an admin, reviews submissions, sets budgets and publishes usage pages itself, then suggests a next step. Its tools now type a preset's and a budget's fields and each read's filters (`since`/`until` for usage), and a refused change reports the server's field issues. The member docs say what it does; the admin docs say an enabled budget refuses calls to providers other than DeepSeek's own API and hosted models.

@@ -9,10 +9,11 @@
  * scope, the caller's own, and the overview with `scope=team`.
  */
 
+import { formatPoints } from '@dsh-teamwork/shared';
 import { ArrowRight, Check, CircleCheck, CircleSlash, Gauge, GitPullRequestArrow, MailWarning, ReceiptText, Tag } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import { useFormatter, useNow, useTranslations } from 'use-intl';
+import { useFormatter, useLocale, useNow, useTranslations } from 'use-intl';
 
 import { CopyButton } from '@/components/copy-button';
 import { Failure } from '@/components/page';
@@ -226,6 +227,7 @@ interface Figure {
 function Figures({ scope, summary, last }: { scope: Scope; summary?: Summary; last: Figure }) {
   const t = useTranslations('team.overview.figures');
   const format = useFormatter();
+  const locale = useLocale();
   const budget = summary?.budget;
   const cells: { label: string; value: ReactNode; note: string; href?: string }[] = [
     {
@@ -235,12 +237,12 @@ function Figures({ scope, summary, last }: { scope: Scope; summary?: Summary; la
     },
     {
       label: t(scope === 'team' ? 'points' : 'myPoints'),
-      value: summary ? summary.points : '—',
+      value: summary ? formatPoints(summary.points, locale) : '—',
       note: summary && summary.unpriced > 0 ? t('unpriced', { count: summary.unpriced }) : t('period'),
     },
     {
       label: t('budget'),
-      value: !budget ? '—' : budget.state === 'known' ? (budget.remaining ?? '—') : t(`budgetState.${budget.state}`),
+      value: !budget ? '—' : budget.state === 'known' ? (budget.remaining !== null ? formatPoints(budget.remaining, locale) : '—') : t(`budgetState.${budget.state}`),
       note: budget?.resetAt ? t('resets', { at: format.dateTime(new Date(budget.resetAt), { dateStyle: 'medium' }) }) : t('budgetHint'),
     },
     { ...last, value: format.number(last.value) },

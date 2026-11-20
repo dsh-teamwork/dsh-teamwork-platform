@@ -1,3 +1,4 @@
+import { formatPoints } from '@dsh-teamwork/shared';
 import { Download, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -65,7 +66,7 @@ export function TeamUsagePage() {
           <td className="whitespace-nowrap px-4 py-3">{format.dateTime(new Date(row.createdAt), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
           <td className="px-4 py-3">{row.hostId ? t('teamDsh') : names.get(row.userId) ?? t('formerMember')}</td><td className="px-4 py-3 font-medium"><span className="flex items-center gap-2">{!row.meter && <ProviderMark hints={[row.model, row.provider]} name={row.model} />}{what(row)}</span></td>
           <td className="px-4 py-3 tabular-nums">{row.input ?? '—'}</td><td className="px-4 py-3 tabular-nums">{row.cacheRead ?? '—'}</td><td className="px-4 py-3 tabular-nums">{row.output ?? '—'}</td>
-          <td className="px-4 py-3 tabular-nums">{row.points ?? '—'}</td><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{t(`states.${row.state}`)}</td>
+          <td className="px-4 py-3 tabular-nums">{row.points !== null ? formatPoints(row.points, locale) : '—'}</td><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{t(`states.${row.state}`)}</td>
           <td className="px-4 py-3 text-right">{!row.meter && (row.state === 'pending' || row.state === 'unpriced' || row.code === 'usage_bound_exceeded') && <Button variant="ghost" size="sm" onClick={() => setResolving(row)}>{t(row.code === 'usage_bound_exceeded' ? 'reviewRoute' : 'resolve')}</Button>}</td>
         </tr>)}</tbody>
       </table></div>}
