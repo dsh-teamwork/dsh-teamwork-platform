@@ -5,6 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — Optional verification before web sessions and phone handoffs
+
+- **What:** Editions can require user verification on a new browser login or a phone's PKCE handoff. A pending phone login is scoped to its challenge. Edition identities include a per-login identifier and expiry, and extensions can revoke grants when the user signs out.
+- **Why:** A phone and a browser signed into the same account need independent grants for protected computers.
+- **Upgrade:** Existing credentials remain readable. Community deployments keep their existing login flow.
+- **Refs:** `server/edition/edition.go`, `server/internal/httpapi/identity.go`, `packages/relay-client/src/pin.ts`.
+
 ## 2026-11-19 — An admin can remove an owned model from a team
 
 - **What:** `DELETE /api/teams/{teamId}/configs/{configId}` removes an owned (hosted) model as any other model, still refused while a preset calls it (`model_in_use`); it no longer answers `config_owned`. The removal emits a new `edition.TeamChange` kind, `edition.ModelRemoved`, carrying the new `ConfigID` field, in the same transaction, so the owning edition forgets the route. Editing an owned model or its rate is still `config_owned`.
