@@ -12,4 +12,27 @@ An edition may require one account-wide verification step for personal access. A
 
 ## Consequences
 
-A new conversation can reuse the authenticated login. Host PIN settings remain independent per computer.
+- There is one switch per account, not one per client. A preference per entry
+  point was tried and rejected: the browser and the phone both end in
+  credentials that reach the same routes (a session, or a plugin Bearer that
+  `requireUser` accepts everywhere), so verification on one entry was bypassed
+  through the other with the first factor alone.
+- The DSH plugin's loopback handoff needs a full browser session, so it is
+  verified whenever the browser is. Only the phone's handoff has a pending
+  credential of its own, and it can mint a code for its one challenge, nothing
+  else.
+- A first factor alone no longer yields a session on a gated account, so an
+  edition must serve the step that completes it (`Host.CompleteLogin`) and the
+  proof the phone's handoff consumes (`SignInGate.ConsumeAppProof`); the
+  community edition registers no gate and keeps its single step.
+- Sign-out ends the browser's login before an edition's cleanup runs, and a
+  cleanup failure is logged rather than returned: a grant that outlives its
+  login still expires with it.
+- Verification happens at sign-in only. A session or token issued before the
+  switch was turned on keeps working until it expires, as ADR 0014's
+  stateless tokens already imply.
+- A management process (`SERVICE_ROLE=manage`) applies the gate only where an
+  edition registers it there. The hosted edition does not: its operator
+  console admits only allowlisted Google sessions on an origin of its own.
+- Host PIN settings remain independent per computer. A new conversation reuses
+  the authenticated login.
