@@ -42,7 +42,12 @@ the exact contents; once approved, everyone gets it at their next sync.
 
 Every team has an assistant preset. Start a session with it and ask about the
 team's resources, your usage, budgets, members, or what is waiting for review.
-Anything it would change still asks for your approval.
+Describe a preset you want and it drafts the whole thing (persona, method,
+model and tools), shows it to you, and submits it for review once you agree.
+An admin can have it create or change presets, review submissions, or turn a
+month's usage into a page. It suggests what to do next from what it finds.
+Anything it would change still asks for your approval, and a page it publishes
+stays yours until you share it.
 
 ## Work on your own DSH from the browser
 

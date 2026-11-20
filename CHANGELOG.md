@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — The team assistant carries Teamwork tasks through
+
+- **What:** The plugin's team assistant drafts and proposes presets, changes them as an admin, reviews submissions, sets budgets and publishes usage pages itself, then suggests a next step. Its tools now type a preset's and a budget's fields and each read's filters (`since`/`until` for usage), and a refused change reports the server's field issues. The member docs say what it does; the admin docs say an enabled budget refuses calls to providers other than DeepSeek's own API and hosted models.
+- **Why:** Tested against MiniMax-M3, it could not submit or change a preset at all, read "this month" as all usage, and created test presets in the team while guessing.
+- **Breaking:** None.
+- **Upgrade:** Members update the DSH plugin; every team's assistant, older ones included, gets the new behaviour.
+- **Refs:** plugin `src/assistant-tools.ts`, `src/preset-context.ts`; `docs/tech/team-assistant.md`, `apps/web/content/docs/*/members.md`, `apps/web/content/docs/*/admins.md`.
+
 ## 2026-11-20 — A MiniMax stream settles without `[DONE]`
 
 - **What:** The gateway's usage observer counts a streamed response as complete when transport EOF follows its usage frame, as well as when it ends with `[DONE]`. A frame after the usage without `[DONE]` still leaves the call pending.
