@@ -431,13 +431,13 @@ func (r *relay) recordHost(ctx context.Context, userID, grant string, h hello) (
 	for try := 0; ; try++ {
 		existing, err := r.db.RelayHost.Query().Where(relayhost.UserID(userID), relayhost.ClientID(h.clientID)).Only(ctx)
 		if err == nil {
-			return existing.ID, r.db.RelayHost.UpdateOne(existing).SetName(h.name).SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).Exec(ctx)
+			return existing.ID, r.db.RelayHost.UpdateOne(existing).SetName(h.name).SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetNillablePluginVersion(h.pluginVersion).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).Exec(ctx)
 		}
 		if !ent.IsNotFound(err) {
 			return "", err
 		}
 		created, err := r.db.RelayHost.Create().SetUserID(userID).SetClientID(h.clientID).SetName(h.name).
-			SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).SetCreatedAt(now).Save(ctx)
+			SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetNillablePluginVersion(h.pluginVersion).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).SetCreatedAt(now).Save(ctx)
 		// Two sockets of one computer racing: the loser reads the winner's row.
 		if ent.IsConstraintError(err) && try == 0 {
 			continue
@@ -841,13 +841,14 @@ func (r *relay) listPairings(w http.ResponseWriter, req *http.Request) {
 // hostView is one of the member's own computers on the web console's list,
 // with every device of theirs paired to it.
 type hostView struct {
-	ID         string           `json:"id"`
-	Name       string           `json:"name"`
-	DSHVersion string           `json:"dshVersion"`
-	OS         *relayhost.Os    `json:"os"`
-	Online     bool             `json:"online"`
-	LastSeenAt string           `json:"lastSeenAt"`
-	Pairings   []hostDeviceView `json:"pairings"`
+	ID            string           `json:"id"`
+	Name          string           `json:"name"`
+	DSHVersion    string           `json:"dshVersion"`
+	PluginVersion *string          `json:"pluginVersion"`
+	OS            *relayhost.Os    `json:"os"`
+	Online        bool             `json:"online"`
+	LastSeenAt    string           `json:"lastSeenAt"`
+	Pairings      []hostDeviceView `json:"pairings"`
 }
 
 type hostDeviceView struct {
@@ -861,17 +862,21 @@ type hostDeviceView struct {
 	Current bool `json:"current"`
 }
 
-// listHosts is the member's own computers, most recently seen first, each
-// with every live pairing of theirs to it (ADR 0048). Only the web console
-// asks, by its session cookie; an app's Bearer is refused, as a phone keeps
-// to its own handset (the hosted edition's ADR 0020).
+// listHosts is the member's own computers, most recently seen first. The web
+// console, by its session cookie, gets each with every live pairing of the
+// member's to it (ADR 0048). The app, by its Bearer and handset credential,
+// gets the same computers with its own handset's pairings only, so a phone
+// learns which of them it can pair with and nothing of another device (the
+// hosted edition's ADR 0020).
 func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
+	var userID, handset string
 	if bearer(req) != "" {
-		errorJSON(w, http.StatusForbidden, "forbidden")
-		return
-	}
-	userID := r.caller(w, req)
-	if userID == "" {
+		ph, ok := r.callerPhone(w, req)
+		if !ok {
+			return
+		}
+		userID, handset = ph.userID, ph.deviceHash
+	} else if userID = r.caller(w, req); userID == "" {
 		return
 	}
 	ctx := req.Context()
@@ -885,15 +890,19 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	for i, h := range hosts {
 		ids[i] = h.ID
 	}
-	rows, err := r.db.RelayPairing.Query().Where(relaypairing.RevokedAtIsNil(), account{userID: userID, hostIDs: ids}.where()).
+	reach := account{userID: userID, hostIDs: ids}.where()
+	if handset != "" {
+		reach = relaypairing.And(reach, relaypairing.DeviceKeyHash(handset))
+	}
+	rows, err := r.db.RelayPairing.Query().Where(relaypairing.RevokedAtIsNil(), reach).
 		Order(ent.Desc(relaypairing.FieldCreatedAt), ent.Desc(relaypairing.FieldID)).All(ctx)
 	if err != nil {
 		rejectedJSON(w, err)
 		return
 	}
-	// This browser's own pairings are marked by its handset credential, when it sends one.
-	var mine string
-	if key := req.Header.Get("X-Device-Key"); validDeviceKey(key) {
+	// The caller's own pairings are marked by its handset credential, when it sends one.
+	mine := handset
+	if key := req.Header.Get("X-Device-Key"); mine == "" && validDeviceKey(key) {
 		mine = r.pairings.deviceHash(key)
 	}
 	devices := map[string][]hostDeviceView{}
@@ -908,7 +917,7 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	for i, h := range hosts {
 		_, online := r.hosts[h.ID]
-		out[i] = hostView{ID: h.ID, Name: h.Name, DSHVersion: h.DshVersion, OS: h.Os, Online: online, LastSeenAt: iso(h.LastSeenAt), Pairings: devices[h.ID]}
+		out[i] = hostView{ID: h.ID, Name: h.Name, DSHVersion: h.DshVersion, PluginVersion: h.PluginVersion, OS: h.Os, Online: online, LastSeenAt: iso(h.LastSeenAt), Pairings: devices[h.ID]}
 		if out[i].Pairings == nil {
 			out[i].Pairings = []hostDeviceView{}
 		}

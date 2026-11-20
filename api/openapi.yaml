@@ -1601,10 +1601,10 @@ paths:
   /relay/hosts:
     servers: [{ url: / }]
     get:
-      summary: The member's own computers, each with every device of theirs paired to it (the web console only, ADR 0048)
-      security: [{ session: [] }]
+      summary: "The member's own computers: the web console sees each with every device of theirs paired to it (ADR 0048), the app the same computers with its own pairings only"
+      security: [{ session: [] }, { bearer: [] }]
       parameters:
-        - { name: X-Device-Key, in: header, required: false, schema: { type: string }, description: "This browser's handset credential, to mark its own pairings" }
+        - { name: X-Device-Key, in: header, required: false, schema: { type: string }, description: "The caller's handset credential, to mark its own pairings; required with a Bearer" }
       responses:
         '200':
           description: The computers, most recently seen first
@@ -1614,6 +1614,7 @@ paths:
                 type: object
                 required: [hosts]
                 properties: { hosts: { type: array, items: { $ref: '#/components/schemas/RelayHost' } } }
+        '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
   /relay/hosts/{id}:
@@ -1882,11 +1883,12 @@ components:
         key: { type: string, description: 'The team host key, shown this once' }
     RelayHost:
       type: object
-      required: [id, name, dshVersion, os, online, lastSeenAt, pairings]
+      required: [id, name, dshVersion, pluginVersion, os, online, lastSeenAt, pairings]
       properties:
         id: { type: string }
         name: { type: string }
         dshVersion: { type: string }
+        pluginVersion: { type: string, nullable: true, description: "The Teamwork plugin's version; null from a plugin too old to report it" }
         os: { $ref: '#/components/schemas/HostOs' }
         online: { type: boolean }
         lastSeenAt: { type: string, format: date-time }
@@ -1902,7 +1904,7 @@ components:
               createdAt: { type: string, format: date-time }
               lastUsedAt: { type: string, format: date-time, nullable: true }
               push: { type: boolean }
-              current: { type: boolean, description: The pairing of the browser asking }
+              current: { type: boolean, description: The pairing of the browser or phone asking }
     HostOs:
       type: string
       enum: [macos, windows, linux, null]

@@ -92,6 +92,17 @@ function setup() {
           ],
         }),
       );
+    if (url.endsWith('/hosts'))
+      return token === 'old-server'
+        ? new Response(JSON.stringify({ error: 'forbidden' }), { status: 403 })
+        : new Response(
+            JSON.stringify({
+              hosts: [
+                { id: 'h', name: 'laptop', dshVersion: '0.9.0', pluginVersion: '0.18.0', os: 'macos', online: true, lastSeenAt: '2026-11-19T08:00:00.000Z', pairings: [{ id: 'p1', status: 'confirmed', current: true, deviceName: 'd', createdAt: '', lastUsedAt: null, push: true }] },
+                { id: 'h2', name: 'desk', dshVersion: '0.8.0', pluginVersion: null, os: null, online: false, lastSeenAt: '2026-11-18T08:00:00.000Z', pairings: [{ id: 'p2', status: 'pending', current: true, deviceName: 'd', createdAt: '', lastUsedAt: null, push: false }] },
+              ],
+            }),
+          );
     if (url.endsWith('/pair')) return new Response(JSON.stringify({ error: 'invalid_code' }), { status: 400 });
     if (url.endsWith('/push')) return new Response(null, { status: url.includes('/gone/') ? 404 : 204 });
     return new Response('{}', { status: 404 });
@@ -222,6 +233,19 @@ describe('the live relay client', () => {
     expect(pairings.init!.headers).toMatchObject({ authorization: 'Bearer bearer-1', 'x-device-key': 'phone-key' });
     await expect(relay.pair('ABCD2345', 'phone')).rejects.toMatchObject({ code: 'not_found' });
     expect(asked.find(a => a.url.endsWith('/pair'))!.init!.headers).toMatchObject({ 'x-device-key': 'phone-key' });
+  });
+
+  it('lists the member’s own computers, paired or not, with the plugin’s version', async () => {
+    const { relay, asked, setToken } = setup();
+    expect(await relay.listHosts()).toEqual([
+      { hostId: 'h', name: 'laptop', os: 'macos', online: true, lastSeenAt: '2026-11-19T08:00:00.000Z', dshVersion: '0.9.0', pluginVersion: '0.18.0', paired: true },
+      // A pairing still waiting on the computer's approval is not one yet.
+      { hostId: 'h2', name: 'desk', os: null, online: false, lastSeenAt: '2026-11-18T08:00:00.000Z', dshVersion: '0.8.0', pluginVersion: null, paired: false },
+    ]);
+    expect(asked.find((a) => a.url.endsWith('/hosts'))!.init!.headers).toMatchObject({ authorization: 'Bearer bearer-1', 'x-device-key': 'phone-key' });
+    // A server from before the app could list computers refuses its Bearer: none, rather than a failure.
+    setToken('old-server');
+    expect(await relay.listHosts()).toEqual([]);
   });
 
   it('opens one socket to /phone, introduces the member, and lists sessions with those waiting on the member first', async () => {

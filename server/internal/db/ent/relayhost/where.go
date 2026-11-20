@@ -89,6 +89,11 @@ func DshVersion(v string) predicate.RelayHost {
 	return predicate.RelayHost(sql.FieldEQ(FieldDshVersion, v))
 }
 
+// PluginVersion applies equality check predicate on the "plugin_version" field. It's identical to PluginVersionEQ.
+func PluginVersion(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldEQ(FieldPluginVersion, v))
+}
+
 // LastSeenAt applies equality check predicate on the "last_seen_at" field. It's identical to LastSeenAtEQ.
 func LastSeenAt(v time.Time) predicate.RelayHost {
 	return predicate.RelayHost(sql.FieldEQ(FieldLastSeenAt, v))
@@ -427,6 +432,81 @@ func OsIsNil() predicate.RelayHost {
 // OsNotNil applies the NotNil predicate on the "os" field.
 func OsNotNil() predicate.RelayHost {
 	return predicate.RelayHost(sql.FieldNotNull(FieldOs))
+}
+
+// PluginVersionEQ applies the EQ predicate on the "plugin_version" field.
+func PluginVersionEQ(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldEQ(FieldPluginVersion, v))
+}
+
+// PluginVersionNEQ applies the NEQ predicate on the "plugin_version" field.
+func PluginVersionNEQ(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNEQ(FieldPluginVersion, v))
+}
+
+// PluginVersionIn applies the In predicate on the "plugin_version" field.
+func PluginVersionIn(vs ...string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldIn(FieldPluginVersion, vs...))
+}
+
+// PluginVersionNotIn applies the NotIn predicate on the "plugin_version" field.
+func PluginVersionNotIn(vs ...string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNotIn(FieldPluginVersion, vs...))
+}
+
+// PluginVersionGT applies the GT predicate on the "plugin_version" field.
+func PluginVersionGT(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldGT(FieldPluginVersion, v))
+}
+
+// PluginVersionGTE applies the GTE predicate on the "plugin_version" field.
+func PluginVersionGTE(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldGTE(FieldPluginVersion, v))
+}
+
+// PluginVersionLT applies the LT predicate on the "plugin_version" field.
+func PluginVersionLT(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldLT(FieldPluginVersion, v))
+}
+
+// PluginVersionLTE applies the LTE predicate on the "plugin_version" field.
+func PluginVersionLTE(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldLTE(FieldPluginVersion, v))
+}
+
+// PluginVersionContains applies the Contains predicate on the "plugin_version" field.
+func PluginVersionContains(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldContains(FieldPluginVersion, v))
+}
+
+// PluginVersionHasPrefix applies the HasPrefix predicate on the "plugin_version" field.
+func PluginVersionHasPrefix(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldHasPrefix(FieldPluginVersion, v))
+}
+
+// PluginVersionHasSuffix applies the HasSuffix predicate on the "plugin_version" field.
+func PluginVersionHasSuffix(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldHasSuffix(FieldPluginVersion, v))
+}
+
+// PluginVersionIsNil applies the IsNil predicate on the "plugin_version" field.
+func PluginVersionIsNil() predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldIsNull(FieldPluginVersion))
+}
+
+// PluginVersionNotNil applies the NotNil predicate on the "plugin_version" field.
+func PluginVersionNotNil() predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNotNull(FieldPluginVersion))
+}
+
+// PluginVersionEqualFold applies the EqualFold predicate on the "plugin_version" field.
+func PluginVersionEqualFold(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldEqualFold(FieldPluginVersion, v))
+}
+
+// PluginVersionContainsFold applies the ContainsFold predicate on the "plugin_version" field.
+func PluginVersionContainsFold(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldContainsFold(FieldPluginVersion, v))
 }
 
 // LastSeenAtEQ applies the EQ predicate on the "last_seen_at" field.

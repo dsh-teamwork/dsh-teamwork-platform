@@ -147,7 +147,7 @@ func (w *world) openWith(path string, header http.Header, hello obj) *peer {
 
 func (w *world) host(token, clientID string) *peer {
 	w.t.Helper()
-	return w.open("/relay/plugin", obj{"t": "hello", "token": token, "clientId": clientID, "name": "laptop", "dshVersion": "0.2.2-rc.1", "os": "macos"})
+	return w.open("/relay/plugin", obj{"t": "hello", "token": token, "clientId": clientID, "name": "laptop", "dshVersion": "0.2.2-rc.1", "pluginVersion": "0.18.0", "os": "macos"})
 }
 
 func (w *world) phone(h handset) *peer {
@@ -297,9 +297,15 @@ func TestPluginSocket(t *testing.T) {
 			t.Fatalf("unknown os: %d", code)
 		}
 		delete(hello, "os")
+		// A plugin version, when sent, is not empty.
+		hello["pluginVersion"] = "  "
+		if code := w.open("/relay/plugin", hello).code; code != closeBadHello {
+			t.Fatalf("empty plugin version: %d", code)
+		}
+		delete(hello, "pluginVersion")
 		old := w.open("/relay/plugin", hello)
-		if h := w.r.db.RelayHost.GetX(context.Background(), old.hostID()); h.Os != nil {
-			t.Fatalf("an old plugin's os %v", *h.Os)
+		if h := w.r.db.RelayHost.GetX(context.Background(), old.hostID()); h.Os != nil || h.PluginVersion != nil {
+			t.Fatalf("an old plugin's os %v, plugin version %v", h.Os, h.PluginVersion)
 		}
 		// No hello at all: 4400 when the time is up, not a dropped connection.
 		helloTimeout = 300 * time.Millisecond

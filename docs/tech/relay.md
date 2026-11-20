@@ -82,11 +82,14 @@ needing no call elsewhere on a connection.
 - **The plugin** connects with the Bearer it already holds ([ADR 0001](../adr/0001-plugin-sign-in.md), [ADR 0060](../adr/0060-plugin-tokens-are-revocable-grants.md)), kept across restarts, so a computer is back online as soon as DSH starts.
   On first connection the relay records a **host**: the member's id, a stable
   `hostId` the plugin generates and keeps beside its cache, the machine's
-  name, and the DSH version and operating system it reports, both refreshed on
-  every connection. Its hello is `{ t: 'hello', token, clientId, name,
-  dshVersion, os }`; `os` is `macos`, `windows` or `linux`, any other value is
-  refused 4400, and a plugin that leaves it out (an older one, or a system the
-  relay names none for) is recorded with none. The phone's list of pairings
+  name, and the DSH version, plugin version and operating system it reports,
+  each refreshed on every connection. Its hello is `{ t: 'hello', token,
+  clientId, name, dshVersion, pluginVersion, os }`; `os` is `macos`,
+  `windows` or `linux`, any other value is refused 4400, and a plugin that
+  leaves it out (an older one, or a system the relay names none for) is
+  recorded with none. `pluginVersion` is the Teamwork plugin's own version
+  ([ADR 0061](../adr/0061-the-app-lists-the-members-computers.md)); one too old
+  to send it is recorded with none, an empty one refused 4400. The phone's list of pairings
   carries it as `hostOs` and the console's computers as `os`, for each to show
   beside the computer's name. A shared DSH reports none. The phone's list also
   carries `hostLastSeenAt`, the host's `last_seen_at` (a shared host's, which
@@ -602,10 +605,12 @@ the hosted edition, Cloud DSH.
   comes back by itself after the socket, the channel or the computer drops
   ("Frames" above).
 - **The server** ([ADR 0048](../adr/0048-the-console-manages-every-device.md)):
-  `GET /relay/hosts` answers the console's session cookie alone, with the
-  account's hosts, whether each socket is open, `last_seen_at`, `dsh_version`,
-  `os` and every pairing of the account to each, `current` when its handset
-  credential is this browser's. `DELETE /relay/pairings/{id}` from that
+  `GET /relay/hosts` answers the console's session cookie with the account's
+  hosts, whether each socket is open, `last_seen_at`, `dsh_version`,
+  `plugin_version`, `os` and every pairing of the account to each, `current`
+  when its handset credential is this browser's. It answers the app's Bearer
+  too, with its handset credential, listing the same hosts with that
+  handset's own pairings only ([ADR 0061](../adr/0061-the-app-lists-the-members-computers.md)). `DELETE /relay/pairings/{id}` from that
   session revokes any pairing of the account to its own computers; an app's
   Bearer stays handset-scoped. Another device's pairing is revoked through the
   relay alone, as for an offline desktop (step 6 above).

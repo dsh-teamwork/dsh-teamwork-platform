@@ -1161,6 +1161,7 @@
       "unreachableTitle": "无法连接 {name}",
       "retry": "重试",
       "version": "DSH {version}",
+      "pluginVersion": "Teamwork {version}",
       "pairTitle": "把这个浏览器配对到 {name}",
       "pairHelp": "在那台电脑的 DSH 里打开 Teamwork 面板，选择「设备连接」，生成配对码后输入到这里。",
       "code": "配对码",

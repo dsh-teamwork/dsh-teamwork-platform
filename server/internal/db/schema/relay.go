@@ -37,7 +37,8 @@ func (created) Annotations() []schema.Annotation {
 // connecting to the relay. client_id is the id the plugin generated and keeps
 // beside its cache, so one computer stays one host across restarts; it is
 // unique per member only, since a plugin chooses it. os is the computer's
-// operating system as its plugin reports it; null from a plugin too old to.
+// operating system and plugin_version the Teamwork plugin's own version, as
+// its plugin reports them; null from a plugin too old to.
 // grant_id is the sign-in it last connected with (ADR 0060), so removing the
 // computer from the console signs it out; null for one not seen since.
 type RelayHost struct{ ent.Schema }
@@ -50,6 +51,7 @@ func (RelayHost) Fields() []ent.Field {
 		field.String("name").MaxLen(runes(100)),
 		field.String("dsh_version").MaxLen(runes(40)),
 		field.Enum("os").Values("macos", "windows", "linux").Optional().Nillable(),
+		field.String("plugin_version").Optional().Nillable().MaxLen(runes(40)),
 		field.Time("last_seen_at").SchemaType(mysqlTime),
 		field.String("grant_id").Optional().Nillable().MaxLen(32),
 	}

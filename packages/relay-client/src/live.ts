@@ -23,7 +23,7 @@ import { webAesKey } from './aes-gcm';
 import { SecureChannel, securePacket, newChannelId, type AesKey, type RandomBytes } from './secure-channel';
 import { z } from 'zod';
 import { bridgeValue, createDshSessions } from './dsh-sessions';
-import { HOST_OS, RelayError, type DeviceKeys, type Computer, type RelayClient, type RelayErrorCode } from './types';
+import { HOST_OS, RelayError, type DeviceKeys, type Computer, type OwnComputer, type RelayClient, type RelayErrorCode } from './types';
 
 export interface LiveRelayOptions {
   keys: DeviceKeys;
@@ -50,6 +50,12 @@ export interface LiveRelayOptions {
 export const CALL_TIMEOUT_MS = 20_000;
 
 const PairingSchema = z.object({ id: z.string(), hostId: z.string(), hostName: z.string(), hostOs: z.enum(HOST_OS).nullable().catch(null), hostLastSeenAt: z.string().nullable().catch(null), status: z.enum(['pending', 'confirmed']), online: z.boolean().optional(), push: z.boolean().optional() });
+
+const OwnHostSchema = z.object({
+  id: z.string(), name: z.string(), dshVersion: z.string(), pluginVersion: z.string().nullable().catch(null),
+  os: z.enum(HOST_OS).nullable().catch(null), online: z.boolean(), lastSeenAt: z.string(),
+  pairings: z.object({ status: z.enum(['pending', 'confirmed']), current: z.boolean() }).array(),
+});
 
 /** The relay's refusals, in the words the screens already have. */
 const PHONE_ERRORS: Record<string, RelayErrorCode> = { not_paired: 'not_found', offline: 'offline', rate_limited: 'unavailable' };
@@ -359,6 +365,18 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       if (!response.ok) throw new RelayError('unavailable');
       const { pairings } = z.object({ pairings: PairingSchema.array() }).parse(await response.json());
       return Promise.all(pairings.filter((p) => p.status === 'confirmed').map(async (p) => ({ id: p.id, name: p.hostName, os: p.hostOs, lastSeenAt: p.hostLastSeenAt, online: p.online === true, verified: !!await options.keys.peer(p.id), push: p.push === true, hostId: p.hostId })));
+    },
+
+    async listHosts(): Promise<OwnComputer[]> {
+      const response = await relayHttp('/hosts');
+      // A server from before the app could list computers refuses its Bearer.
+      if (response.status === 403) return [];
+      if (!response.ok) throw new RelayError('unavailable');
+      const { hosts } = z.object({ hosts: OwnHostSchema.array() }).parse(await response.json());
+      return hosts.map((h) => ({
+        hostId: h.id, name: h.name, os: h.os, online: h.online, lastSeenAt: h.lastSeenAt, dshVersion: h.dshVersion,
+        pluginVersion: h.pluginVersion, paired: h.pairings.some((p) => p.current && p.status === 'confirmed'),
+      }));
     },
 
     async sharedHosts() {

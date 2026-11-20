@@ -75,6 +75,20 @@ func (_c *RelayHostCreate) SetNillableOs(v *relayhost.Os) *RelayHostCreate {
 	return _c
 }
 
+// SetPluginVersion sets the "plugin_version" field.
+func (_c *RelayHostCreate) SetPluginVersion(v string) *RelayHostCreate {
+	_c.mutation.SetPluginVersion(v)
+	return _c
+}
+
+// SetNillablePluginVersion sets the "plugin_version" field if the given value is not nil.
+func (_c *RelayHostCreate) SetNillablePluginVersion(v *string) *RelayHostCreate {
+	if v != nil {
+		_c.SetPluginVersion(*v)
+	}
+	return _c
+}
+
 // SetLastSeenAt sets the "last_seen_at" field.
 func (_c *RelayHostCreate) SetLastSeenAt(v time.Time) *RelayHostCreate {
 	_c.mutation.SetLastSeenAt(v)
@@ -196,6 +210,11 @@ func (_c *RelayHostCreate) check() error {
 			return &ValidationError{Name: "os", err: fmt.Errorf(`ent: validator failed for field "RelayHost.os": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.PluginVersion(); ok {
+		if err := relayhost.PluginVersionValidator(v); err != nil {
+			return &ValidationError{Name: "plugin_version", err: fmt.Errorf(`ent: validator failed for field "RelayHost.plugin_version": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.LastSeenAt(); !ok {
 		return &ValidationError{Name: "last_seen_at", err: errors.New(`ent: missing required field "RelayHost.last_seen_at"`)}
 	}
@@ -268,6 +287,10 @@ func (_c *RelayHostCreate) createSpec() (*RelayHost, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Os(); ok {
 		_spec.SetField(relayhost.FieldOs, field.TypeEnum, value)
 		_node.Os = &value
+	}
+	if value, ok := _c.mutation.PluginVersion(); ok {
+		_spec.SetField(relayhost.FieldPluginVersion, field.TypeString, value)
+		_node.PluginVersion = &value
 	}
 	if value, ok := _c.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)
@@ -392,6 +415,24 @@ func (u *RelayHostUpsert) UpdateOs() *RelayHostUpsert {
 // ClearOs clears the value of the "os" field.
 func (u *RelayHostUpsert) ClearOs() *RelayHostUpsert {
 	u.SetNull(relayhost.FieldOs)
+	return u
+}
+
+// SetPluginVersion sets the "plugin_version" field.
+func (u *RelayHostUpsert) SetPluginVersion(v string) *RelayHostUpsert {
+	u.Set(relayhost.FieldPluginVersion, v)
+	return u
+}
+
+// UpdatePluginVersion sets the "plugin_version" field to the value that was provided on create.
+func (u *RelayHostUpsert) UpdatePluginVersion() *RelayHostUpsert {
+	u.SetExcluded(relayhost.FieldPluginVersion)
+	return u
+}
+
+// ClearPluginVersion clears the value of the "plugin_version" field.
+func (u *RelayHostUpsert) ClearPluginVersion() *RelayHostUpsert {
+	u.SetNull(relayhost.FieldPluginVersion)
 	return u
 }
 
@@ -550,6 +591,27 @@ func (u *RelayHostUpsertOne) UpdateOs() *RelayHostUpsertOne {
 func (u *RelayHostUpsertOne) ClearOs() *RelayHostUpsertOne {
 	return u.Update(func(s *RelayHostUpsert) {
 		s.ClearOs()
+	})
+}
+
+// SetPluginVersion sets the "plugin_version" field.
+func (u *RelayHostUpsertOne) SetPluginVersion(v string) *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.SetPluginVersion(v)
+	})
+}
+
+// UpdatePluginVersion sets the "plugin_version" field to the value that was provided on create.
+func (u *RelayHostUpsertOne) UpdatePluginVersion() *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.UpdatePluginVersion()
+	})
+}
+
+// ClearPluginVersion clears the value of the "plugin_version" field.
+func (u *RelayHostUpsertOne) ClearPluginVersion() *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.ClearPluginVersion()
 	})
 }
 
@@ -880,6 +942,27 @@ func (u *RelayHostUpsertBulk) UpdateOs() *RelayHostUpsertBulk {
 func (u *RelayHostUpsertBulk) ClearOs() *RelayHostUpsertBulk {
 	return u.Update(func(s *RelayHostUpsert) {
 		s.ClearOs()
+	})
+}
+
+// SetPluginVersion sets the "plugin_version" field.
+func (u *RelayHostUpsertBulk) SetPluginVersion(v string) *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.SetPluginVersion(v)
+	})
+}
+
+// UpdatePluginVersion sets the "plugin_version" field to the value that was provided on create.
+func (u *RelayHostUpsertBulk) UpdatePluginVersion() *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.UpdatePluginVersion()
+	})
+}
+
+// ClearPluginVersion clears the value of the "plugin_version" field.
+func (u *RelayHostUpsertBulk) ClearPluginVersion() *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.ClearPluginVersion()
 	})
 }
 

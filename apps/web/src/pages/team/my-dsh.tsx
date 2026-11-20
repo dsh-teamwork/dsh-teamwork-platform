@@ -239,7 +239,12 @@ function RemoveComputer({ host, removed }: { host: MyComputer; removed: () => vo
 function HostHeader({ host, twin }: { host: MyComputer; twin: string | null }) {
   const t = useTranslations('team.myDsh');
   const format = useFormatter();
-  const facts = [host.os ? HOST_OS_NAMES[host.os] : null, host.dshVersion ? t('version', { version: host.dshVersion }) : null, twin].filter(Boolean);
+  const facts = [
+    host.os ? HOST_OS_NAMES[host.os] : null,
+    host.dshVersion ? t('version', { version: host.dshVersion }) : null,
+    host.pluginVersion ? t('pluginVersion', { version: host.pluginVersion }) : null,
+    twin,
+  ].filter(Boolean);
   return (
     <header className="flex items-start justify-between gap-4 border-b pb-4">
       <div className="flex min-w-0 flex-col gap-1">

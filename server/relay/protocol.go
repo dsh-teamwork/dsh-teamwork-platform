@@ -73,6 +73,7 @@ type frame struct {
 	ClientID   *string `json:"clientId"`
 	Name       *string `json:"name"`
 	DSHVersion *string `json:"dshVersion"`
+	Plugin     *string `json:"pluginVersion"`
 	OS         *string `json:"os"`
 	ID         *string `json:"id"`
 	PairingID  *string `json:"pairingId"`
@@ -103,9 +104,10 @@ func trimmed(p *string, min, max int) (string, bool) {
 }
 
 // hello is the first frame on a plugin socket: who is connecting, from which
-// computer. os is nil from a plugin too old to report its operating system.
+// computer. os and pluginVersion are nil from a plugin too old to report them.
 type hello struct {
 	token, clientID, name, dshVersion string
+	pluginVersion                     *string
 	os                                *relayhost.Os
 }
 
@@ -120,6 +122,13 @@ func parseHello(data []byte) (hello, bool) {
 		return hello{}, false
 	}
 	h := hello{token: *f.Token, clientID: *f.ClientID, name: name, dshVersion: version}
+	if f.Plugin != nil {
+		plugin, ok := trimmed(f.Plugin, 1, 40)
+		if !ok {
+			return hello{}, false
+		}
+		h.pluginVersion = &plugin
+	}
 	if f.OS != nil {
 		os := relayhost.Os(*f.OS)
 		if relayhost.OsValidator(os) != nil {

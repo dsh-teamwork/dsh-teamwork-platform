@@ -105,6 +105,26 @@ func (_u *RelayHostUpdate) ClearOs() *RelayHostUpdate {
 	return _u
 }
 
+// SetPluginVersion sets the "plugin_version" field.
+func (_u *RelayHostUpdate) SetPluginVersion(v string) *RelayHostUpdate {
+	_u.mutation.SetPluginVersion(v)
+	return _u
+}
+
+// SetNillablePluginVersion sets the "plugin_version" field if the given value is not nil.
+func (_u *RelayHostUpdate) SetNillablePluginVersion(v *string) *RelayHostUpdate {
+	if v != nil {
+		_u.SetPluginVersion(*v)
+	}
+	return _u
+}
+
+// ClearPluginVersion clears the value of the "plugin_version" field.
+func (_u *RelayHostUpdate) ClearPluginVersion() *RelayHostUpdate {
+	_u.mutation.ClearPluginVersion()
+	return _u
+}
+
 // SetLastSeenAt sets the "last_seen_at" field.
 func (_u *RelayHostUpdate) SetLastSeenAt(v time.Time) *RelayHostUpdate {
 	_u.mutation.SetLastSeenAt(v)
@@ -198,6 +218,11 @@ func (_u *RelayHostUpdate) check() error {
 			return &ValidationError{Name: "os", err: fmt.Errorf(`ent: validator failed for field "RelayHost.os": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PluginVersion(); ok {
+		if err := relayhost.PluginVersionValidator(v); err != nil {
+			return &ValidationError{Name: "plugin_version", err: fmt.Errorf(`ent: validator failed for field "RelayHost.plugin_version": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.GrantID(); ok {
 		if err := relayhost.GrantIDValidator(v); err != nil {
 			return &ValidationError{Name: "grant_id", err: fmt.Errorf(`ent: validator failed for field "RelayHost.grant_id": %w`, err)}
@@ -241,6 +266,12 @@ func (_u *RelayHostUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.OsCleared() {
 		_spec.ClearField(relayhost.FieldOs, field.TypeEnum)
+	}
+	if value, ok := _u.mutation.PluginVersion(); ok {
+		_spec.SetField(relayhost.FieldPluginVersion, field.TypeString, value)
+	}
+	if _u.mutation.PluginVersionCleared() {
+		_spec.ClearField(relayhost.FieldPluginVersion, field.TypeString)
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)
@@ -346,6 +377,26 @@ func (_u *RelayHostUpdateOne) SetNillableOs(v *relayhost.Os) *RelayHostUpdateOne
 // ClearOs clears the value of the "os" field.
 func (_u *RelayHostUpdateOne) ClearOs() *RelayHostUpdateOne {
 	_u.mutation.ClearOs()
+	return _u
+}
+
+// SetPluginVersion sets the "plugin_version" field.
+func (_u *RelayHostUpdateOne) SetPluginVersion(v string) *RelayHostUpdateOne {
+	_u.mutation.SetPluginVersion(v)
+	return _u
+}
+
+// SetNillablePluginVersion sets the "plugin_version" field if the given value is not nil.
+func (_u *RelayHostUpdateOne) SetNillablePluginVersion(v *string) *RelayHostUpdateOne {
+	if v != nil {
+		_u.SetPluginVersion(*v)
+	}
+	return _u
+}
+
+// ClearPluginVersion clears the value of the "plugin_version" field.
+func (_u *RelayHostUpdateOne) ClearPluginVersion() *RelayHostUpdateOne {
+	_u.mutation.ClearPluginVersion()
 	return _u
 }
 
@@ -455,6 +506,11 @@ func (_u *RelayHostUpdateOne) check() error {
 			return &ValidationError{Name: "os", err: fmt.Errorf(`ent: validator failed for field "RelayHost.os": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PluginVersion(); ok {
+		if err := relayhost.PluginVersionValidator(v); err != nil {
+			return &ValidationError{Name: "plugin_version", err: fmt.Errorf(`ent: validator failed for field "RelayHost.plugin_version": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.GrantID(); ok {
 		if err := relayhost.GrantIDValidator(v); err != nil {
 			return &ValidationError{Name: "grant_id", err: fmt.Errorf(`ent: validator failed for field "RelayHost.grant_id": %w`, err)}
@@ -515,6 +571,12 @@ func (_u *RelayHostUpdateOne) sqlSave(ctx context.Context) (_node *RelayHost, er
 	}
 	if _u.mutation.OsCleared() {
 		_spec.ClearField(relayhost.FieldOs, field.TypeEnum)
+	}
+	if value, ok := _u.mutation.PluginVersion(); ok {
+		_spec.SetField(relayhost.FieldPluginVersion, field.TypeString, value)
+	}
+	if _u.mutation.PluginVersionCleared() {
+		_spec.ClearField(relayhost.FieldPluginVersion, field.TypeString)
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)

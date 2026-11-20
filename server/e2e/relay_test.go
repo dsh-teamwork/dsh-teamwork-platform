@@ -44,6 +44,15 @@ func TestPluginRelay(t *testing.T) {
 				t.Fatalf("browser %t: %v\n%s", browser != "", err, out)
 			}
 		}
+		// The built plugin reports its own version, read from its package, and the relay records it (ADR 0061).
+		var pkg struct{ Version string }
+		if b, err := os.ReadFile(filepath.Join(plugin, "package.json")); err != nil || json.Unmarshal(b, &pkg) != nil || pkg.Version == "" {
+			t.Fatalf("the plugin's package version: %v", err)
+		}
+		var recorded string
+		if err := in.SQL.QueryRowContext(context.Background(), "SELECT plugin_version FROM relay_hosts WHERE user_id = '"+ada+"'").Scan(&recorded); err != nil || recorded != pkg.Version {
+			t.Fatalf("recorded plugin version %q (%v), want %q", recorded, err, pkg.Version)
+		}
 	})
 }
 
