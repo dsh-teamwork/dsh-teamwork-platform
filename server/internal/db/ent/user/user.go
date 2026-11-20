@@ -32,6 +32,8 @@ const (
 	EdgePassword = "password"
 	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
 	EdgeMemberships = "memberships"
+	// EdgePluginGrants holds the string denoting the plugin_grants edge name in mutations.
+	EdgePluginGrants = "plugin_grants"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// IdentitiesTable is the table that holds the identities relation/edge.
@@ -55,6 +57,13 @@ const (
 	MembershipsInverseTable = "memberships"
 	// MembershipsColumn is the table column denoting the memberships relation/edge.
 	MembershipsColumn = "user_id"
+	// PluginGrantsTable is the table that holds the plugin_grants relation/edge.
+	PluginGrantsTable = "plugin_grants"
+	// PluginGrantsInverseTable is the table name for the PluginGrant entity.
+	// It exists in this package in order to avoid circular dependency with the "plugingrant" package.
+	PluginGrantsInverseTable = "plugin_grants"
+	// PluginGrantsColumn is the table column denoting the plugin_grants relation/edge.
+	PluginGrantsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -169,6 +178,20 @@ func ByMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByPluginGrantsCount orders the results by plugin_grants count.
+func ByPluginGrantsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPluginGrantsStep(), opts...)
+	}
+}
+
+// ByPluginGrants orders the results by plugin_grants terms.
+func ByPluginGrants(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPluginGrantsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newIdentitiesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -188,5 +211,12 @@ func newMembershipsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MembershipsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
+	)
+}
+func newPluginGrantsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PluginGrantsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PluginGrantsTable, PluginGrantsColumn),
 	)
 }

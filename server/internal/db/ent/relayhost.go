@@ -30,7 +30,9 @@ type RelayHost struct {
 	// Os holds the value of the "os" field.
 	Os *relayhost.Os `json:"os,omitempty"`
 	// LastSeenAt holds the value of the "last_seen_at" field.
-	LastSeenAt   time.Time `json:"last_seen_at,omitempty"`
+	LastSeenAt time.Time `json:"last_seen_at,omitempty"`
+	// GrantID holds the value of the "grant_id" field.
+	GrantID      *string `json:"grant_id,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -39,7 +41,7 @@ func (*RelayHost) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case relayhost.FieldID, relayhost.FieldUserID, relayhost.FieldClientID, relayhost.FieldName, relayhost.FieldDshVersion, relayhost.FieldOs:
+		case relayhost.FieldID, relayhost.FieldUserID, relayhost.FieldClientID, relayhost.FieldName, relayhost.FieldDshVersion, relayhost.FieldOs, relayhost.FieldGrantID:
 			values[i] = new(sql.NullString)
 		case relayhost.FieldCreatedAt, relayhost.FieldLastSeenAt:
 			values[i] = new(sql.NullTime)
@@ -107,6 +109,13 @@ func (_m *RelayHost) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.LastSeenAt = value.Time
 			}
+		case relayhost.FieldGrantID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field grant_id", values[i])
+			} else if value.Valid {
+				_m.GrantID = new(string)
+				*_m.GrantID = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -165,6 +174,11 @@ func (_m *RelayHost) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("last_seen_at=")
 	builder.WriteString(_m.LastSeenAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	if v := _m.GrantID; v != nil {
+		builder.WriteString("grant_id=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

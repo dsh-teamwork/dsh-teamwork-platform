@@ -44,9 +44,11 @@ type UserEdges struct {
 	Password *Password `json:"password,omitempty"`
 	// Memberships holds the value of the memberships edge.
 	Memberships []*Membership `json:"memberships,omitempty"`
+	// PluginGrants holds the value of the plugin_grants edge.
+	PluginGrants []*PluginGrant `json:"plugin_grants,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // IdentitiesOrErr returns the Identities value or an error if the edge
@@ -76,6 +78,15 @@ func (e UserEdges) MembershipsOrErr() ([]*Membership, error) {
 		return e.Memberships, nil
 	}
 	return nil, &NotLoadedError{edge: "memberships"}
+}
+
+// PluginGrantsOrErr returns the PluginGrants value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PluginGrantsOrErr() ([]*PluginGrant, error) {
+	if e.loadedTypes[3] {
+		return e.PluginGrants, nil
+	}
+	return nil, &NotLoadedError{edge: "plugin_grants"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -174,6 +185,11 @@ func (_m *User) QueryPassword() *PasswordQuery {
 // QueryMemberships queries the "memberships" edge of the User entity.
 func (_m *User) QueryMemberships() *MembershipQuery {
 	return NewUserClient(_m.config).QueryMemberships(_m)
+}
+
+// QueryPluginGrants queries the "plugin_grants" edge of the User entity.
+func (_m *User) QueryPluginGrants() *PluginGrantQuery {
+	return NewUserClient(_m.config).QueryPluginGrants(_m)
 }
 
 // Update returns a builder for updating this User.

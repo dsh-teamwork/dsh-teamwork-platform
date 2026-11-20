@@ -99,6 +99,33 @@ func TestPKCEExchange(t *testing.T) {
 	})
 }
 
+// Signing a plugin out revokes its token at the server (ADR 0060): it opens
+// nothing on the next request, on any route, while the account's other
+// plugins stay signed in.
+func TestSigningOutRevokesThePluginToken(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{})
+		admin := e.admin("a@x.io")
+		one, other := e.pluginFor(admin), e.pluginFor(admin)
+		must(t, one.get("/api/configs"), 200)
+		signOut := func(token string) response {
+			return do(t, http.DefaultClient, "DELETE", e.url+"/api/auth/plugin/token", nil, map[string]string{"Authorization": "Bearer " + token})
+		}
+		if r := signOut(one.token); r.status != 204 {
+			t.Fatalf("sign out: %d %s", r.status, r.body)
+		}
+		refused(t, "a revoked token syncing", one.get("/api/configs"), 401, "unauthorized")
+		refused(t, "a revoked token on a member route", one.get("/api/teams"), 401, "unauthorized")
+		must(t, other.get("/api/configs"), 200)
+		// Again, or with nothing that opens, it says the same and reveals nothing.
+		for _, token := range []string{one.token, "not-a-token", ""} {
+			if r := signOut(token); r.status != 204 {
+				t.Fatalf("sign out %q: %d", token, r.status)
+			}
+		}
+	})
+}
+
 // Ten guesses per account per window, however many arrive at once, and the
 // right password does not get round a spent window.
 func TestPasswordGuessLimitUnderBurst(t *testing.T) {

@@ -46,6 +46,8 @@ type Tx struct {
 	PageVersion *PageVersionClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
+	// PluginGrant is the client for interacting with the PluginGrant builders.
+	PluginGrant *PluginGrantClient
 	// RateWindow is the client for interacting with the RateWindow builders.
 	RateWindow *RateWindowClient
 	// RelayHost is the client for interacting with the RelayHost builders.
@@ -223,6 +225,7 @@ func (tx *Tx) init() {
 	tx.PageMember = NewPageMemberClient(tx.config)
 	tx.PageVersion = NewPageVersionClient(tx.config)
 	tx.Password = NewPasswordClient(tx.config)
+	tx.PluginGrant = NewPluginGrantClient(tx.config)
 	tx.RateWindow = NewRateWindowClient(tx.config)
 	tx.RelayHost = NewRelayHostClient(tx.config)
 	tx.RelayPairing = NewRelayPairingClient(tx.config)

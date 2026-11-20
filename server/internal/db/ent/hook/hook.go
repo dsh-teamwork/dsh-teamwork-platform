@@ -201,6 +201,18 @@ func (f PasswordFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PasswordMutation", m)
 }
 
+// The PluginGrantFunc type is an adapter to allow the use of ordinary
+// function as PluginGrant mutator.
+type PluginGrantFunc func(context.Context, *ent.PluginGrantMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PluginGrantFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PluginGrantMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PluginGrantMutation", m)
+}
+
 // The RateWindowFunc type is an adapter to allow the use of ordinary
 // function as RateWindow mutator.
 type RateWindowFunc func(context.Context, *ent.RateWindowMutation) (ent.Value, error)

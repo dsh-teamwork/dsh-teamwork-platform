@@ -54,6 +54,9 @@ type PageVersion func(*sql.Selector)
 // Password is the predicate function for password builders.
 type Password func(*sql.Selector)
 
+// PluginGrant is the predicate function for plugingrant builders.
+type PluginGrant func(*sql.Selector)
+
 // RateWindow is the predicate function for ratewindow builders.
 type RateWindow func(*sql.Selector)
 

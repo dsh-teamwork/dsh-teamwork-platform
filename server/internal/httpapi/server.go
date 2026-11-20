@@ -86,10 +86,12 @@ func (s *Server) Handler() http.Handler {
 	post("/api/auth/email/verify", s.verifyCode)
 	get("/api/auth/google", s.startGoogle)
 	get(auth.GoogleCallbackPath, s.googleCallback)
-	// No cookie authorizes it and a code is useless without its verifier, so
-	// any client may call it from anywhere, Origin or not.
+	// No cookie authorizes either: a code is useless without its verifier, and
+	// a revocation needs the token it revokes, so any client may call them from
+	// anywhere, Origin or not.
 	if s.Config.ServiceRole != "manage" {
 		mux.HandleFunc("POST /api/auth/plugin/token", s.route(s.pluginToken, false))
+		mux.HandleFunc("DELETE /api/auth/plugin/token", s.route(s.revokePluginToken, false))
 
 		post("/api/teams", s.createTeam)
 		post("/api/teams/{teamId}/providers", s.createProvider)

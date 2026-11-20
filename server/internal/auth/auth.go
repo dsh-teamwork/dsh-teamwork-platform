@@ -18,6 +18,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -309,7 +310,8 @@ func (s *Service) MintHandoff(ctx context.Context, user *ent.User, via, challeng
 var ErrInvalidCode = errors.New("invalid_code")
 
 // RedeemHandoff trades a code and the verifier it was bound to for a Bearer
-// token.
+// token naming a new grant (ADR 0060). The time returned is when it lapses
+// unless it is used.
 func (s *Service) RedeemHandoff(ctx context.Context, code, verifier string) (string, time.Time, error) {
 	c, err := s.Sealer.Open(PluginHandoff, code)
 	if err != nil || !wire.ValidVerifier(verifier) ||
@@ -319,5 +321,77 @@ func (s *Service) RedeemHandoff(ctx context.Context, code, verifier string) (str
 	if exists, err := s.DB.User.Query().Where(user.ID(c.Sub)).Exist(ctx); err != nil || !exists {
 		return "", time.Time{}, ErrInvalidCode
 	}
-	return s.Sealer.Seal(PluginBearer, Claims{Sub: c.Sub, Via: c.Via}, SessionTTL)
+	return s.IssueBearer(ctx, c.Sub, c.Via)
+}
+
+// IssueBearer records a new grant for an existing account, signed in through
+// door via, and seals the token that names it.
+func (s *Service) IssueBearer(ctx context.Context, userID, via string) (string, time.Time, error) {
+	now := s.now()
+	// The account's lapsed grants go here, so abandoned sign-ins do not pile up.
+	if _, err := s.DB.PluginGrant.Delete().Where(plugingrant.UserID(userID), plugingrant.UsedAtLTE(now.Add(-GrantIdle))).Exec(ctx); err != nil {
+		return "", time.Time{}, err
+	}
+	g, err := s.DB.PluginGrant.Create().SetUserID(userID).SetVia(via).SetUsedAt(now).Save(ctx)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+	token, sealedUntil, err := s.Sealer.Seal(PluginBearer, Claims{Sub: userID, Via: via, Grant: g.ID}, GrantMaxTTL)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+	return token, earlier(now.Add(GrantIdle), sealedUntil), nil
+}
+
+// ErrInvalidToken is a Bearer token that is malformed, expired, or whose
+// grant was revoked or lapsed.
+var ErrInvalidToken = errors.New("invalid_token")
+
+// OpenBearer opens a plugin's or the app's token, and returns its claims and
+// when it lapses unless used again. A use moves the grant's used_at on, at
+// most once per grantTouch, by a conditional update rather than a lock.
+func (s *Service) OpenBearer(ctx context.Context, token string) (Claims, time.Time, error) {
+	c, err := s.Sealer.Open(PluginBearer, token)
+	if err != nil || c.Grant == "" {
+		return Claims{}, time.Time{}, ErrInvalidToken
+	}
+	g, err := s.DB.PluginGrant.Query().Where(plugingrant.ID(c.Grant), plugingrant.UserID(c.Sub)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return Claims{}, time.Time{}, ErrInvalidToken
+	}
+	if err != nil {
+		return Claims{}, time.Time{}, err
+	}
+	now, usedAt := s.now(), g.UsedAt
+	if !now.Before(usedAt.Add(GrantIdle)) {
+		return Claims{}, time.Time{}, ErrInvalidToken
+	}
+	if now.Sub(usedAt) >= grantTouch {
+		if err := s.DB.PluginGrant.Update().
+			Where(plugingrant.ID(g.ID), plugingrant.UsedAtLT(now.Add(-grantTouch))).
+			SetUsedAt(now).Exec(ctx); err != nil {
+			return Claims{}, time.Time{}, err
+		}
+		usedAt = now
+	}
+	return c, earlier(usedAt.Add(GrantIdle), time.Unix(c.Exp, 0)), nil
+}
+
+// RevokeBearer deletes the grant a token names: that token, and only it,
+// opens nothing from the next request on. A token that already opens nothing
+// is no error.
+func (s *Service) RevokeBearer(ctx context.Context, token string) error {
+	c, err := s.Sealer.Open(PluginBearer, token)
+	if err != nil || c.Grant == "" {
+		return nil
+	}
+	_, err = s.DB.PluginGrant.Delete().Where(plugingrant.ID(c.Grant), plugingrant.UserID(c.Sub)).Exec(ctx)
+	return err
+}
+
+func earlier(a, b time.Time) time.Time {
+	if b.Before(a) {
+		return b
+	}
+	return a
 }

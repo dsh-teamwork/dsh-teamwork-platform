@@ -522,7 +522,7 @@ func TestAdminAccountsAreOffWhereTheInstanceSendsEmail(t *testing.T) {
 		ctx := context.Background()
 		u := d.Client.User.Create().SetEmail("admin@x.io").SaveX(ctx)
 		d.Client.Identity.Create().SetProvider("email").SetSubject("admin@x.io").SetUserID(u.ID).ExecX(ctx)
-		token, _, err := auth.NewSealer(secret, nil).Seal(auth.PluginBearer, auth.Claims{Sub: u.ID, Via: "email"}, auth.SessionTTL)
+		token, _, err := (&auth.Service{DB: d.Client, Sealer: auth.NewSealer(secret, nil)}).IssueBearer(ctx, u.ID, "email")
 		if err != nil {
 			t.Fatal(err)
 		}

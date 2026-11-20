@@ -21,6 +21,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
@@ -907,6 +908,43 @@ func init() {
 			return nil
 		}
 	}()
+	plugingrantMixin := schema.PluginGrant{}.Mixin()
+	plugingrantMixinFields0 := plugingrantMixin[0].Fields()
+	_ = plugingrantMixinFields0
+	plugingrantFields := schema.PluginGrant{}.Fields()
+	_ = plugingrantFields
+	// plugingrantDescCreatedAt is the schema descriptor for created_at field.
+	plugingrantDescCreatedAt := plugingrantMixinFields0[1].Descriptor()
+	// plugingrant.DefaultCreatedAt holds the default value on creation for the created_at field.
+	plugingrant.DefaultCreatedAt = plugingrantDescCreatedAt.Default.(func() time.Time)
+	// plugingrantDescUserID is the schema descriptor for user_id field.
+	plugingrantDescUserID := plugingrantFields[0].Descriptor()
+	// plugingrant.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	plugingrant.UserIDValidator = plugingrantDescUserID.Validators[0].(func(string) error)
+	// plugingrantDescVia is the schema descriptor for via field.
+	plugingrantDescVia := plugingrantFields[1].Descriptor()
+	// plugingrant.ViaValidator is a validator for the "via" field. It is called by the builders before save.
+	plugingrant.ViaValidator = plugingrantDescVia.Validators[0].(func(string) error)
+	// plugingrantDescID is the schema descriptor for id field.
+	plugingrantDescID := plugingrantMixinFields0[0].Descriptor()
+	// plugingrant.DefaultID holds the default value on creation for the id field.
+	plugingrant.DefaultID = plugingrantDescID.Default.(func() string)
+	// plugingrant.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	plugingrant.IDValidator = func() func(string) error {
+		validators := plugingrantDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	ratewindowMixin := schema.RateWindow{}.Mixin()
 	ratewindowMixinFields0 := ratewindowMixin[0].Fields()
 	_ = ratewindowMixinFields0
@@ -993,6 +1031,10 @@ func init() {
 	relayhostDescDshVersion := relayhostFields[3].Descriptor()
 	// relayhost.DshVersionValidator is a validator for the "dsh_version" field. It is called by the builders before save.
 	relayhost.DshVersionValidator = relayhostDescDshVersion.Validators[0].(func(string) error)
+	// relayhostDescGrantID is the schema descriptor for grant_id field.
+	relayhostDescGrantID := relayhostFields[6].Descriptor()
+	// relayhost.GrantIDValidator is a validator for the "grant_id" field. It is called by the builders before save.
+	relayhost.GrantIDValidator = relayhostDescGrantID.Validators[0].(func(string) error)
 	// relayhostDescID is the schema descriptor for id field.
 	relayhostDescID := relayhostMixinFields0[0].Descriptor()
 	// relayhost.DefaultID holds the default value on creation for the id field.

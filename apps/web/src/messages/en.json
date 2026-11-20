@@ -1191,9 +1191,9 @@
       "loadFailed": "Your computers could not be read. Try again.",
       "revokeFailed": "The device was not removed. Try again.",
       "removeComputer": "Remove this computer",
-      "removeComputerConfirm": "Remove {name} and every phone and browser paired with it? If it signs in to Teamwork again, it comes back here and is paired anew.",
+      "removeComputerConfirm": "Remove {name}? It is signed out of Teamwork at once, and every phone and browser paired with it is removed. Signing in on it again brings it back here, to be paired anew.",
+      "removeComputerHelp": "Lost this computer, or no longer use it? Removing it signs it out of Teamwork at once.",
       "computerRemoved": "Computer removed.",
-      "removeComputerOnline": "That computer is connected. Sign out of Teamwork in DSH on it first, then remove it.",
       "removeComputerFailed": "The computer was not removed. Try again.",
       "browserUnsupported": "This browser cannot keep the key pairing needs. Use a current Chrome, Edge, Firefox or Safari, outside private browsing."
     },

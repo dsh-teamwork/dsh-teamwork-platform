@@ -94,6 +94,11 @@ func LastSeenAt(v time.Time) predicate.RelayHost {
 	return predicate.RelayHost(sql.FieldEQ(FieldLastSeenAt, v))
 }
 
+// GrantID applies equality check predicate on the "grant_id" field. It's identical to GrantIDEQ.
+func GrantID(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldEQ(FieldGrantID, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.RelayHost {
 	return predicate.RelayHost(sql.FieldEQ(FieldCreatedAt, v))
@@ -462,6 +467,81 @@ func LastSeenAtLT(v time.Time) predicate.RelayHost {
 // LastSeenAtLTE applies the LTE predicate on the "last_seen_at" field.
 func LastSeenAtLTE(v time.Time) predicate.RelayHost {
 	return predicate.RelayHost(sql.FieldLTE(FieldLastSeenAt, v))
+}
+
+// GrantIDEQ applies the EQ predicate on the "grant_id" field.
+func GrantIDEQ(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldEQ(FieldGrantID, v))
+}
+
+// GrantIDNEQ applies the NEQ predicate on the "grant_id" field.
+func GrantIDNEQ(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNEQ(FieldGrantID, v))
+}
+
+// GrantIDIn applies the In predicate on the "grant_id" field.
+func GrantIDIn(vs ...string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldIn(FieldGrantID, vs...))
+}
+
+// GrantIDNotIn applies the NotIn predicate on the "grant_id" field.
+func GrantIDNotIn(vs ...string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNotIn(FieldGrantID, vs...))
+}
+
+// GrantIDGT applies the GT predicate on the "grant_id" field.
+func GrantIDGT(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldGT(FieldGrantID, v))
+}
+
+// GrantIDGTE applies the GTE predicate on the "grant_id" field.
+func GrantIDGTE(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldGTE(FieldGrantID, v))
+}
+
+// GrantIDLT applies the LT predicate on the "grant_id" field.
+func GrantIDLT(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldLT(FieldGrantID, v))
+}
+
+// GrantIDLTE applies the LTE predicate on the "grant_id" field.
+func GrantIDLTE(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldLTE(FieldGrantID, v))
+}
+
+// GrantIDContains applies the Contains predicate on the "grant_id" field.
+func GrantIDContains(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldContains(FieldGrantID, v))
+}
+
+// GrantIDHasPrefix applies the HasPrefix predicate on the "grant_id" field.
+func GrantIDHasPrefix(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldHasPrefix(FieldGrantID, v))
+}
+
+// GrantIDHasSuffix applies the HasSuffix predicate on the "grant_id" field.
+func GrantIDHasSuffix(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldHasSuffix(FieldGrantID, v))
+}
+
+// GrantIDIsNil applies the IsNil predicate on the "grant_id" field.
+func GrantIDIsNil() predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldIsNull(FieldGrantID))
+}
+
+// GrantIDNotNil applies the NotNil predicate on the "grant_id" field.
+func GrantIDNotNil() predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldNotNull(FieldGrantID))
+}
+
+// GrantIDEqualFold applies the EqualFold predicate on the "grant_id" field.
+func GrantIDEqualFold(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldEqualFold(FieldGrantID, v))
+}
+
+// GrantIDContainsFold applies the ContainsFold predicate on the "grant_id" field.
+func GrantIDContainsFold(v string) predicate.RelayHost {
+	return predicate.RelayHost(sql.FieldContainsFold(FieldGrantID, v))
 }
 
 // And groups predicates with the AND operator between them.

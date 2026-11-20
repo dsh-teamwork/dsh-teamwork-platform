@@ -109,7 +109,7 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
   /auth/plugin/token:
     post:
-      summary: Trade a code and the plugin's PKCE verifier for a 30-day Bearer token
+      summary: Trade a code and the plugin's PKCE verifier for a Bearer token that lapses after 30 days unused (ADR 0060)
       security: []
       requestBody:
         required: true
@@ -131,9 +131,17 @@ paths:
                 required: [token, expiresAt]
                 properties:
                   token: { type: string }
-                  expiresAt: { type: string, format: date-time }
+                  expiresAt:
+                    type: string
+                    format: date-time
+                    description: When the token lapses if it is not used; every use moves this on, up to a year from sign-in
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
+    delete:
+      summary: Sign out a plugin or the app; the Bearer sent opens nothing from now on
+      security: [{ bearer: [] }]
+      responses:
+        '204': { description: 'Revoked, or the token already opened nothing' }
   /teams:
     get:
       summary: The teams the caller is in, with their role in each
@@ -1611,16 +1619,15 @@ paths:
   /relay/hosts/{id}:
     servers: [{ url: / }]
     delete:
-      summary: "Forget one of the member's own computers with every pairing to it, once it is offline; a connected one is host_online (the web console only)"
+      summary: "Sign one of the member's own computers out and forget it with every pairing to it, connected or not (ADR 0060; the web console only)"
       security: [{ session: [] }]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string } }
       responses:
-        '204': { description: Deleted }
+        '204': { description: Signed out and deleted }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
-        '409': { $ref: '#/components/responses/Error' }
   /relay/pairings/{id}:
     servers: [{ url: / }]
     delete:

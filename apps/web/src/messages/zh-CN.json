@@ -1191,9 +1191,9 @@
       "loadFailed": "读取你的电脑失败，请重试。",
       "revokeFailed": "没能移除这个设备，请重试。",
       "removeComputer": "移除这台电脑",
-      "removeComputerConfirm": "移除 {name} 以及与它配对的所有手机和浏览器？如果它再次登录 Teamwork，会重新出现在这里，需要重新配对。",
+      "removeComputerConfirm": "移除 {name}？它会立即退出 Teamwork，与它配对的所有手机和浏览器也会一并移除。之后在它上面重新登录，它会重新出现在这里，需要重新配对。",
+      "removeComputerHelp": "这台电脑丢失或不再使用？移除后它会立即退出 Teamwork。",
       "computerRemoved": "已移除这台电脑。",
-      "removeComputerOnline": "这台电脑正在连接中。请先在它的 DSH 里退出 Teamwork，再移除。",
       "removeComputerFailed": "没能移除这台电脑，请重试。",
       "browserUnsupported": "这个浏览器无法保存配对需要的密钥。请使用最新版 Chrome、Edge、Firefox 或 Safari，并且不要用无痕模式。"
     },

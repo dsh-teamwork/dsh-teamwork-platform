@@ -79,7 +79,7 @@ needing no call elsewhere on a connection.
   members join by invite, `POST /relay/shared/{hostId}/join`), and a phone
   reaches it only while its account is in the host's team and on its list.
 
-- **The plugin** connects with the 30-day Bearer it already holds ([ADR 0001](../adr/0001-plugin-sign-in.md)).
+- **The plugin** connects with the Bearer it already holds ([ADR 0001](../adr/0001-plugin-sign-in.md), [ADR 0060](../adr/0060-plugin-tokens-are-revocable-grants.md)), kept across restarts, so a computer is back online as soon as DSH starts.
   On first connection the relay records a **host**: the member's id, a stable
   `hostId` the plugin generates and keeps beside its cache, the machine's
   name, and the DSH version and operating system it reports, both refreshed on
@@ -609,12 +609,15 @@ the hosted edition, Cloud DSH.
   session revokes any pairing of the account to its own computers; an app's
   Bearer stays handset-scoped. Another device's pairing is revoked through the
   relay alone, as for an offline desktop (step 6 above).
-  `DELETE /relay/hosts/{id}`, from that session alone, forgets one of the
-  account's computers with its pairing codes and every pairing to it: one no
-  longer used, or a record left by signing in again (a new `clientId`). A
-  connected computer is refused with `host_online`, since its next hello would
-  only record it again; one that connects later is recorded anew, under a new
-  id, with nothing paired. Its phones hear `revoked` at once, and the desktop
+  `DELETE /relay/hosts/{id}`, from that session alone, signs one of the
+  account's computers out and forgets it with its pairing codes and every
+  pairing to it: one lost or no longer used, or a record left by signing in
+  again (a new `clientId`). Each host records `grant_id`, the sign-in its last
+  hello came with ([ADR 0060](../adr/0060-plugin-tokens-are-revocable-grants.md)),
+  and the same transaction deletes that grant, so a connected computer is
+  removed too: its socket closes with 4401 at once and its plugin finds itself
+  signed out at its next sync. One that signs in again is recorded anew, under
+  a new id, with nothing paired. Its phones hear `revoked` at once, and the desktop
   drops their trust when it next lists its pairings, as after any revocation.
 - **Not built:** a team admin seeing a member's computers; telling a member
   their DSH or plugin is older than the team pins; push to a browser.

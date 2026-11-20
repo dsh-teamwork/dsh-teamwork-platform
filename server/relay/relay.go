@@ -40,6 +40,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
@@ -153,19 +154,25 @@ func (r *relay) close() {
 
 // member is the account a token names, checked on every HTTP request, at a
 // socket's hello, and again at each of its pings, so a member who leaves
-// every team, or whose token expires, loses an open socket within one ping
-// interval; "" for anyone else. A person in any team may pair a phone: the
-// relay reaches their own computer, whichever teams they are in.
+// every team, or whose token expires or is revoked, loses an open socket
+// within one ping interval; "" for anyone else. A person in any team may pair
+// a phone: the relay reaches their own computer, whichever teams they are in.
 func (r *relay) member(ctx context.Context, token string) (string, error) {
+	userID, _, err := r.memberGrant(ctx, token)
+	return userID, err
+}
+
+// memberGrant is member with the sign-in the token names (ADR 0060).
+func (r *relay) memberGrant(ctx context.Context, token string) (userID, grant string, err error) {
 	who, err := r.host.Bearer(ctx, token)
 	if err != nil || who == nil {
-		return "", err
+		return "", "", err
 	}
 	in, err := r.host.Users.InTeam(ctx, who.UserID)
 	if err != nil || !in {
-		return "", err
+		return "", "", err
 	}
-	return who.UserID, nil
+	return who.UserID, who.Grant, nil
 }
 
 // browserMember is member for a browser: the account its session cookie
@@ -344,7 +351,7 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		s.c.Close(closeBadHello, "bad hello")
 		return
 	}
-	userID, err := r.member(s.ctx, h.token)
+	userID, grant, err := r.memberGrant(s.ctx, h.token)
 	sharedID := ""
 	if err == nil && userID == "" {
 		// A shared DSH (ADR 0044) proves itself with its host token instead.
@@ -361,7 +368,7 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 	}
 	hostID := sharedID
 	if sharedID == "" {
-		hostID, err = r.recordHost(s.ctx, userID, h)
+		hostID, err = r.recordHost(s.ctx, userID, grant, h)
 		if err != nil {
 			slog.Error("relay: record host", "error", err)
 			s.c.Close(websocket.StatusInternalError, "internal")
@@ -409,20 +416,28 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// nonEmpty is s, or nil for "".
+func nonEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 // recordHost is the host for this member's computer, created on its first
-// connection and refreshed on each after.
-func (r *relay) recordHost(ctx context.Context, userID string, h hello) (string, error) {
+// connection and refreshed on each after, with the sign-in it connected with.
+func (r *relay) recordHost(ctx context.Context, userID, grant string, h hello) (string, error) {
 	now := time.Now().UTC()
 	for try := 0; ; try++ {
 		existing, err := r.db.RelayHost.Query().Where(relayhost.UserID(userID), relayhost.ClientID(h.clientID)).Only(ctx)
 		if err == nil {
-			return existing.ID, r.db.RelayHost.UpdateOne(existing).SetName(h.name).SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetLastSeenAt(now).Exec(ctx)
+			return existing.ID, r.db.RelayHost.UpdateOne(existing).SetName(h.name).SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).Exec(ctx)
 		}
 		if !ent.IsNotFound(err) {
 			return "", err
 		}
 		created, err := r.db.RelayHost.Create().SetUserID(userID).SetClientID(h.clientID).SetName(h.name).
-			SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetLastSeenAt(now).SetCreatedAt(now).Save(ctx)
+			SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).SetCreatedAt(now).Save(ctx)
 		// Two sockets of one computer racing: the loser reads the winner's row.
 		if ent.IsConstraintError(err) && try == 0 {
 			continue
@@ -902,12 +917,13 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"hosts": out})
 }
 
-// deleteHost forgets one of the member's own computers with its pairing codes
-// and every pairing to it: a computer they no longer use, or a record left by
-// signing in again. Only the web console asks, by its session cookie. A
-// computer still connected is refused, since it would only be recorded again
-// as it is; it is signed out of Teamwork on that computer first. One that
-// comes back later is recorded anew and paired again.
+// deleteHost signs one of the member's own computers out and forgets it, with
+// its pairing codes and every pairing to it: a lost or retired computer, or a
+// record left by signing in again. Only the web console asks, by its session
+// cookie. The sign-in the computer last connected with is revoked (ADR 0060)
+// in the same transaction, so a connected one cannot simply be recorded again:
+// its socket closes now, and its plugin finds itself signed out. One that
+// signs in again later is recorded anew and paired again.
 func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 	if bearer(req) != "" {
 		errorJSON(w, http.StatusForbidden, "forbidden")
@@ -918,13 +934,6 @@ func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	id := req.PathValue("id")
-	r.mu.Lock()
-	_, online := r.hosts[id]
-	r.mu.Unlock()
-	if online {
-		errorJSON(w, http.StatusConflict, "host_online")
-		return
-	}
 	ctx := req.Context()
 	tx, err := r.db.Tx(ctx)
 	if err != nil {
@@ -932,9 +941,15 @@ func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer tx.Rollback()
-	n, err := tx.RelayHost.Delete().Where(relayhost.ID(id), relayhost.UserID(userID)).Exec(ctx)
-	if err == nil && n == 0 {
+	h, err := tx.RelayHost.Query().Where(relayhost.ID(id), relayhost.UserID(userID)).Only(ctx)
+	if ent.IsNotFound(err) {
 		err = errNotFound
+	}
+	if err == nil && h.GrantID != nil {
+		_, err = tx.PluginGrant.Delete().Where(plugingrant.ID(*h.GrantID), plugingrant.UserID(userID)).Exec(ctx)
+	}
+	if err == nil {
+		err = tx.RelayHost.DeleteOneID(id).Exec(ctx)
 	}
 	var pairings []string
 	if err == nil {
@@ -957,6 +972,13 @@ func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 	// between hears each pairing end, as a revocation tells it.
 	for _, p := range pairings {
 		r.ended(id, p)
+	}
+	// Signed out: a connected computer goes now rather than at its next ping.
+	r.mu.Lock()
+	s := r.hosts[id]
+	r.mu.Unlock()
+	if s != nil {
+		go s.c.Close(closeUnauthorized, "signed out")
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

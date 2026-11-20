@@ -45,10 +45,19 @@ const HostTTL = time.Hour
 // PageViewTTL is how long a page's view address lives.
 const PageViewTTL = time.Hour
 
-// SessionTTL is how long a browser session and a plugin token last. Neither
-// can be revoked before it expires — the price of having no session table;
-// team access is still re-checked on every request.
+// SessionTTL is how long a browser session lasts. It cannot be revoked before
+// it expires — the price of having no session table; team access is still
+// re-checked on every request.
 const SessionTTL = 30 * 24 * time.Hour
+
+// A plugin's or the app's token names a grant (ADR 0060): it lapses after
+// GrantIdle unused, every use moving that on, and no token outlives
+// GrantMaxTTL from its sign-in. A use is recorded at most once per grantTouch.
+const (
+	GrantIdle   = 30 * 24 * time.Hour
+	GrantMaxTTL = 365 * 24 * time.Hour
+	grantTouch  = time.Hour
+)
 
 // HandoffTTL is how long a plugin's sign-in code lives.
 const HandoffTTL = 2 * time.Minute
@@ -63,6 +72,7 @@ type Claims struct {
 	Host      string `json:"host,omitempty"`      // a computer token's computer or session, for the record
 	Page      string `json:"page,omitempty"`      // a view address's page
 	Version   int    `json:"ver,omitempty"`       // a view address's version of it
+	Grant     string `json:"grant,omitempty"`     // a plugin or app token's grant (ADR 0060)
 	Iat       int64  `json:"iat"`
 	Exp       int64  `json:"exp"`
 }
