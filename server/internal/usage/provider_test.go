@@ -65,3 +65,34 @@ func TestRouteBoundsComeFromTheRoute(t *testing.T) {
 		t.Fatal("a caller's routing field was admitted")
 	}
 }
+
+// A reasoning model's reply comes back in the next request of the same turn,
+// after its tool call ran, with its reasoning under the name the upstream used:
+// OpenRouter's `reasoning` and `reasoning_details`, or `reasoning_text`. Each is
+// input the route's input bound already covers, so it is admitted and sent on
+// unchanged; a malformed one is still refused.
+func TestRouteBoundsAdmitAReplayedReasoningReply(t *testing.T) {
+	for _, field := range []string{
+		`"reasoning_content":"thinking"`,
+		`"reasoning":"thinking"`,
+		`"reasoning_text":"thinking"`,
+		`"reasoning":"thinking","reasoning_details":[{"type":"reasoning.text","text":"thinking","format":"anthropic-claude-v1","index":0}]`,
+	} {
+		messages := `[{"role":"user","content":"list the files"},` +
+			`{"role":"assistant","content":null,` + field + `,"tool_calls":[{"id":"c1","type":"function","function":{"name":"Shell","arguments":"{}"}}]},` +
+			`{"role":"tool","tool_call_id":"c1","content":"a.txt"}]`
+		payload := map[string]json.RawMessage{"messages": json.RawMessage(messages)}
+		if _, err := RouteBounds(payload, 200_000, 4096); err != nil {
+			t.Fatalf("refused a replayed reply with %s: %v", field, err)
+		}
+		if string(payload["messages"]) != messages {
+			t.Fatalf("the replayed reply was changed: %s", payload["messages"])
+		}
+	}
+	for _, field := range []string{`"reasoning":{"text":"x"}`, `"reasoning_text":1`, `"reasoning_details":"x"`, `"reasoning_details":["x"]`} {
+		payload := map[string]json.RawMessage{"messages": json.RawMessage(`[{"role":"assistant","content":"hi",` + field + `}]`)}
+		if _, err := RouteBounds(payload, 200_000, 4096); err == nil {
+			t.Errorf("admitted a malformed %s", field)
+		}
+	}
+}

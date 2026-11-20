@@ -112,8 +112,12 @@ known Flash aliases. Use the documented full 1M-token context as the conservativ
 input bound; forward an explicit `max_tokens` output bound, translating the
 client alias when necessary. The adapter defaults output to 8,192 and rejects
 more than 393,216 output tokens. A funded route uses the same checks with the
-bounds its quote states. Custom proxy URLs, images/files, server tools
-and unknown billable fields cannot inherit this contract. See the upstream
+bounds its quote states. A reasoning model's earlier reply is replayed with
+its reasoning as the upstream named it (`reasoning_content`, `reasoning`,
+`reasoning_text`, or OpenRouter's `reasoning_details` array) and forwarded
+unchanged: it is input, which the input bound covers. Custom proxy URLs,
+images/files, server tools and unknown billable fields cannot inherit this
+contract. See the upstream
 [completion contract](https://api-docs.deepseek.com/api/create-chat-completion/)
 and [model limits](https://api-docs.deepseek.com/quick_start/pricing/).
 
