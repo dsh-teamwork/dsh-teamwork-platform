@@ -79,10 +79,14 @@ var ErrTeamGone = errors.New("team no longer exists")
 
 // OwnedModel is one owned route as a team's configuration shows it. Its
 // bounds are what the plugin sizes the model by (contextWindow, maxTokens),
-// each from 1 to 10,000,000 as every team model's are.
+// each from 1 to 10,000,000 as every team model's are. Offline keeps the
+// configuration in the team but marks the model out of service: the plugin
+// offers it to no session and the console says so; publishing it again
+// without Offline brings it back.
 type OwnedModel struct {
 	ConfigID, Name, Reference string
 	ContextWindow, MaxTokens  int64
+	Offline                   bool
 }
 
 // FundingError carries a safe public refusal, without supplier response text.

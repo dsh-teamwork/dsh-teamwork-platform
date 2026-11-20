@@ -134,9 +134,16 @@ type ModelData struct {
 	ContextWindow *int64 `json:"contextWindow,omitempty"`
 	MaxTokens     *int64 `json:"maxTokens,omitempty"`
 	Vision        *bool  `json:"vision,omitempty"`
+	// Offline is a hosted model its service has taken out of service: the
+	// configuration stays, and comes back when the model does. Only that
+	// service sets it (edition.OwnedModel); an admin's model never carries it.
+	Offline bool `json:"offline,omitempty"`
 }
 
 func (m *ModelData) validate(is *Issues) {
+	if m.Offline {
+		is.Add("Only the service hosting a model marks it offline", "data", "offline")
+	}
 	name(is, &m.Provider, "data", "provider")
 	name(is, &m.Model, "data", "model")
 	tokens(is, m.ContextWindow, "data", "contextWindow")

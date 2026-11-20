@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — A hosted model can be marked offline in every team that has it
+
+- **What:** `edition.OwnedModel` gains `Offline`. Published with it, a hosted model stays in each team's configuration, marked `"offline": true` in its `data` under a new version; published without it, the mark goes. The console's models page labels an offline model. An admin's own model with `offline` is refused (400).
+- **Why:** An operator who takes a hosted model out of service left it in every team's model picker, where every call failed.
+- **Breaking:** None: the field is new, and absent means in service.
+- **Upgrade:** Nothing.
+- **Refs:** `server/edition/funding.go`, `server/internal/usage/funding.go`, `server/internal/wire/team.go`, `docs/tech/usage-budgets.md`, `api/openapi.yaml`.
+
 ## 2026-11-20 — The relay records each computer's plugin version, and the app lists the member's computers
 
 - **What:** The plugin's relay hello may carry `pluginVersion`, recorded on `relay_hosts.plugin_version` and listed as `pluginVersion` by `GET /relay/hosts`; the console shows it beside the DSH version. `GET /relay/hosts` now also answers the app's Bearer with its `X-Device-Key` (required), listing the member's computers with that handset's own pairings only. `@dsh-teamwork/relay-client`'s `RelayClient` gains `listHosts()`.

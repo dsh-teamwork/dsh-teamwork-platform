@@ -2266,6 +2266,7 @@ components:
         vision: { type: boolean }
         contextWindow: { $ref: '#/components/schemas/Tokens' }
         maxTokens: { $ref: '#/components/schemas/Tokens' }
+        offline: { type: boolean, description: "A hosted model its service has taken out of service; only that service sets it, and an admin's model is refused with it" }
     PresetData:
       type: object
       additionalProperties: false
