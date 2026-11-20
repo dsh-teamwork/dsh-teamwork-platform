@@ -243,6 +243,9 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		SetAdminConsole: func(c edition.AdminConsole) { console = c },
 		SetWebConsole:   func(files fs.FS) { webFiles = files },
 		DB:              conn, Dialect: dialect, AppURL: cfg.AppURL, AuthSecret: cfg.AuthSecret, Mux: srv.Mux,
+		OnSignOut: func(f func(context.Context, *edition.Identity) error) {
+			srv.SignOutHandlers = append(srv.SignOutHandlers, f)
+		},
 		RegisterSignInGate: func(g edition.SignInGate) { srv.SignInGate = g }, PendingLogin: srv.PendingLogin, CompleteLogin: srv.CompleteLogin,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		MintComputerToken: srv.MintComputerToken,

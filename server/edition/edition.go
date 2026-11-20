@@ -92,6 +92,7 @@ type SignInGate interface {
 }
 
 type Host struct {
+	OnSignOut          func(func(context.Context, *Identity) error)
 	RegisterSignInGate func(SignInGate)
 	PendingLogin       func(*http.Request) (*Identity, error)
 	CompleteLogin      func(http.ResponseWriter, *http.Request) error

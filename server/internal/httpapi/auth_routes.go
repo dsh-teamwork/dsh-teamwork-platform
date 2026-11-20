@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"errors"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"net/http"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
@@ -147,6 +148,25 @@ func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *Server) signOut(w http.ResponseWriter, r *http.Request) error {
+	if len(s.SignOutHandlers) > 0 {
+		var who *edition.Identity
+		var err error
+		if r.Header.Get("Authorization") != "" {
+			who, err = s.BearerIdentity(r.Context(), bearerToken(r.Header.Get("Authorization")))
+		} else {
+			who, err = s.SessionIdentity(r)
+		}
+		if err != nil {
+			return err
+		}
+		if who != nil {
+			for _, f := range s.SignOutHandlers {
+				if err := f(r.Context(), who); err != nil {
+					return err
+				}
+			}
+		}
+	}
 	s.clearPending(w)
 	s.endSession(w)
 	w.WriteHeader(http.StatusNoContent)
