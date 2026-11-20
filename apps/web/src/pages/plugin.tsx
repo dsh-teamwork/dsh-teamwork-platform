@@ -76,10 +76,13 @@ export function PluginPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          <div className="rounded-md border bg-muted px-3 py-2 text-sm">
-            <p>{t('account', { email: session.user?.email ?? '' })}</p>
-            {to === 'dsh' && teams.data && <p className="text-muted-foreground">{t('scope', { count: teams.data.length })}</p>}
-          </div>
+          {/* A phone's sign-in has no browser session, only its own handoff, so there is no account line to show. */}
+          {session.user && (
+            <div className="rounded-md border bg-muted px-3 py-2 text-sm">
+              <p>{t('account', { email: session.user.email ?? '' })}</p>
+              {to === 'dsh' && teams.data && <p className="text-muted-foreground">{t('scope', { count: teams.data.length })}</p>}
+            </div>
+          )}
           <Failure message={failure ? t(failure) : null} />
           <div className="flex flex-wrap gap-2">
             <Button className="flex-1" disabled={pending} onClick={() => void authorize()}>
