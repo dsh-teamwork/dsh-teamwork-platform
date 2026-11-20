@@ -3816,12 +3816,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The member's own computers, each with every device of theirs paired to it (the web console only, ADR 0048) */
+        /** The member's own computers: the web console sees each with every device of theirs paired to it (ADR 0048), the app the same computers with its own pairings only */
         get: {
             parameters: {
                 query?: never;
                 header?: {
-                    /** @description This browser's handset credential, to mark its own pairings */
+                    /** @description The caller's handset credential, to mark its own pairings; required with a Bearer */
                     "X-Device-Key"?: string;
                 };
                 path?: never;
@@ -3840,6 +3840,7 @@ export interface paths {
                         };
                     };
                 };
+                400: components["responses"]["Error"];
                 401: components["responses"]["Error"];
                 403: components["responses"]["Error"];
             };
@@ -4236,6 +4237,8 @@ export interface components {
             id: string;
             name: string;
             dshVersion: string;
+            /** @description The Teamwork plugin's version; null from a plugin too old to report it */
+            pluginVersion: string | null;
             os: components["schemas"]["HostOs"];
             online: boolean;
             /** Format: date-time */
@@ -4250,7 +4253,7 @@ export interface components {
                 /** Format: date-time */
                 lastUsedAt: string | null;
                 push: boolean;
-                /** @description The pairing of the browser asking */
+                /** @description The pairing of the browser or phone asking */
                 current: boolean;
             }[];
         };

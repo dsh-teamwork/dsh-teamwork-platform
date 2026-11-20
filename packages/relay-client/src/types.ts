@@ -43,6 +43,25 @@ export interface Computer {
   hostId: string;
 }
 
+/**
+ * One of the member's own computers (`GET /relay/hosts`), paired with this device or not: what a switcher offers to
+ * pair. A team's shared DSH is never one.
+ */
+export interface OwnComputer {
+  /** The relay host's id. */
+  hostId: string;
+  name: string;
+  os: HostOs | null;
+  online: boolean;
+  /** When its DSH last connected to the relay (ISO). */
+  lastSeenAt: string;
+  dshVersion: string;
+  /** The Teamwork plugin's version; null from a plugin too old to report it. */
+  pluginVersion: string | null;
+  /** Whether this device holds a confirmed pairing to it. */
+  paired: boolean;
+}
+
 /** A team's shared DSH the member may reach (`GET /relay/shared`). */
 export interface SharedHost {
   id: string;
@@ -213,6 +232,8 @@ export interface RelayClient {
   reset(): void;
   /** The member's paired computers: confirmed pairings only. */
   listComputers(): Promise<Computer[]>;
+  /** The member's own computers, paired with this device or not; none from a server too old to list them to an app. */
+  listHosts(): Promise<OwnComputer[]>;
   /**
    * The teams' shared DSHs this member may reach, joined or not, and the member's teams the server has not enabled
    * Team DSH for, which reach none.

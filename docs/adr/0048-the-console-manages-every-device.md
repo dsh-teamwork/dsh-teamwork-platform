@@ -1,6 +1,6 @@
 # 0048. The web console manages every device paired with a member's own computers
 
-> **Status:** Accepted · **Date:** 2026-11-18
+> **Status:** Accepted — the app's refusal on `GET /relay/hosts` superseded by [0061](0061-the-app-lists-the-members-computers.md) · **Date:** 2026-11-18
 
 ## Context
 

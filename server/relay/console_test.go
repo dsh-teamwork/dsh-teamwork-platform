@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -67,7 +68,7 @@ func TestConsoleManagesTheMembersDevices(t *testing.T) {
 			t.Fatalf("hosts %v", hosts)
 		}
 		h := hosts[0].(obj)
-		equal(t, []any{h["id"], h["name"], h["dshVersion"], h["os"], h["online"]}, []any{pc, "laptop", "0.2.2-rc.1", "macos", true})
+		equal(t, []any{h["id"], h["name"], h["dshVersion"], h["pluginVersion"], h["os"], h["online"]}, []any{pc, "laptop", "0.2.2-rc.1", "0.18.0", "macos", true})
 		devices := map[string]obj{}
 		for _, d := range h["pairings"].([]any) {
 			devices[d.(obj)["id"].(string)] = d.(obj)
@@ -77,9 +78,28 @@ func TestConsoleManagesTheMembersDevices(t *testing.T) {
 			t.Fatalf("devices %v", devices)
 		}
 
-		// An app's Bearer may not list computers this way.
-		if status, _ := w.call(w.adaPhone, "GET", "/relay/hosts", nil); status != 403 {
-			t.Fatalf("app list %d", status)
+		// The app lists the same computers, to pair with any of them, but sees only its own handset's pairings.
+		status, fromPhone := w.call(w.adaPhone, "GET", "/relay/hosts", nil)
+		if status != 200 {
+			t.Fatalf("app list %d %v", status, fromPhone)
+		}
+		phoneHosts := fromPhone["hosts"].([]any)
+		if len(phoneHosts) != 1 || phoneHosts[0].(obj)["id"] != pc {
+			t.Fatalf("app hosts %v", phoneHosts)
+		}
+		if got := phoneHosts[0].(obj)["pairings"].([]any); len(got) != 1 || got[0].(obj)["id"] != phoneID || got[0].(obj)["current"] != true {
+			t.Fatalf("app sees pairings %v", got)
+		}
+		// Another handset of the same account sees the computer and none of these pairings; a Bearer needs its handset.
+		_, other := w.call(handset{w.ada, strings.Repeat("C", 43)}, "GET", "/relay/hosts", nil)
+		if got := other["hosts"].([]any); len(got) != 1 || len(got[0].(obj)["pairings"].([]any)) != 0 {
+			t.Fatalf("another handset sees %v", got)
+		}
+		if status, _ := w.call(handset{w.ada, ""}, "GET", "/relay/hosts", nil); status != 400 {
+			t.Fatalf("app list without its handset %d", status)
+		}
+		if _, bobsPhone := w.call(w.bobPhone, "GET", "/relay/hosts", nil); len(bobsPhone["hosts"].([]any)) != 1 || bobsPhone["hosts"].([]any)[0].(obj)["id"] != bobHost {
+			t.Fatalf("bob's phone sees %v", bobsPhone)
 		}
 		// A revoke must come from this site: a cookie alone, cross-site, is nobody.
 		if status, _ := w.console(w.adaID, "DELETE", "/relay/pairings/"+phoneID, "", false); status != 401 {

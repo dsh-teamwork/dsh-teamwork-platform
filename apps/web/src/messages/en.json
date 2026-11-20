@@ -1161,6 +1161,7 @@
       "unreachableTitle": "Cannot reach {name}",
       "retry": "Try again",
       "version": "DSH {version}",
+      "pluginVersion": "Teamwork {version}",
       "pairTitle": "Pair this browser with {name}",
       "pairHelp": "On that computer, open the Teamwork panel in DSH and choose Devices, then make a pairing code and type it here.",
       "code": "Pairing code",

@@ -1031,8 +1031,12 @@ func init() {
 	relayhostDescDshVersion := relayhostFields[3].Descriptor()
 	// relayhost.DshVersionValidator is a validator for the "dsh_version" field. It is called by the builders before save.
 	relayhost.DshVersionValidator = relayhostDescDshVersion.Validators[0].(func(string) error)
+	// relayhostDescPluginVersion is the schema descriptor for plugin_version field.
+	relayhostDescPluginVersion := relayhostFields[5].Descriptor()
+	// relayhost.PluginVersionValidator is a validator for the "plugin_version" field. It is called by the builders before save.
+	relayhost.PluginVersionValidator = relayhostDescPluginVersion.Validators[0].(func(string) error)
 	// relayhostDescGrantID is the schema descriptor for grant_id field.
-	relayhostDescGrantID := relayhostFields[6].Descriptor()
+	relayhostDescGrantID := relayhostFields[7].Descriptor()
 	// relayhost.GrantIDValidator is a validator for the "grant_id" field. It is called by the builders before save.
 	relayhost.GrantIDValidator = relayhostDescGrantID.Validators[0].(func(string) error)
 	// relayhostDescID is the schema descriptor for id field.

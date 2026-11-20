@@ -14385,21 +14385,22 @@ func (m *RateWindowMutation) ResetEdge(name string) error {
 // RelayHostMutation represents an operation that mutates the RelayHost nodes in the graph.
 type RelayHostMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	created_at    *time.Time
-	user_id       *string
-	client_id     *string
-	name          *string
-	dsh_version   *string
-	os            *relayhost.Os
-	last_seen_at  *time.Time
-	grant_id      *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*RelayHost, error)
-	predicates    []predicate.RelayHost
+	op             Op
+	typ            string
+	id             *string
+	created_at     *time.Time
+	user_id        *string
+	client_id      *string
+	name           *string
+	dsh_version    *string
+	os             *relayhost.Os
+	plugin_version *string
+	last_seen_at   *time.Time
+	grant_id       *string
+	clearedFields  map[string]struct{}
+	done           bool
+	oldValue       func(context.Context) (*RelayHost, error)
+	predicates     []predicate.RelayHost
 }
 
 var _ ent.Mutation = (*RelayHostMutation)(nil)
@@ -14735,6 +14736,55 @@ func (m *RelayHostMutation) ResetOs() {
 	delete(m.clearedFields, relayhost.FieldOs)
 }
 
+// SetPluginVersion sets the "plugin_version" field.
+func (m *RelayHostMutation) SetPluginVersion(s string) {
+	m.plugin_version = &s
+}
+
+// PluginVersion returns the value of the "plugin_version" field in the mutation.
+func (m *RelayHostMutation) PluginVersion() (r string, exists bool) {
+	v := m.plugin_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPluginVersion returns the old "plugin_version" field's value of the RelayHost entity.
+// If the RelayHost object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RelayHostMutation) OldPluginVersion(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPluginVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPluginVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPluginVersion: %w", err)
+	}
+	return oldValue.PluginVersion, nil
+}
+
+// ClearPluginVersion clears the value of the "plugin_version" field.
+func (m *RelayHostMutation) ClearPluginVersion() {
+	m.plugin_version = nil
+	m.clearedFields[relayhost.FieldPluginVersion] = struct{}{}
+}
+
+// PluginVersionCleared returns if the "plugin_version" field was cleared in this mutation.
+func (m *RelayHostMutation) PluginVersionCleared() bool {
+	_, ok := m.clearedFields[relayhost.FieldPluginVersion]
+	return ok
+}
+
+// ResetPluginVersion resets all changes to the "plugin_version" field.
+func (m *RelayHostMutation) ResetPluginVersion() {
+	m.plugin_version = nil
+	delete(m.clearedFields, relayhost.FieldPluginVersion)
+}
+
 // SetLastSeenAt sets the "last_seen_at" field.
 func (m *RelayHostMutation) SetLastSeenAt(t time.Time) {
 	m.last_seen_at = &t
@@ -14854,7 +14904,7 @@ func (m *RelayHostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RelayHostMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, relayhost.FieldCreatedAt)
 	}
@@ -14872,6 +14922,9 @@ func (m *RelayHostMutation) Fields() []string {
 	}
 	if m.os != nil {
 		fields = append(fields, relayhost.FieldOs)
+	}
+	if m.plugin_version != nil {
+		fields = append(fields, relayhost.FieldPluginVersion)
 	}
 	if m.last_seen_at != nil {
 		fields = append(fields, relayhost.FieldLastSeenAt)
@@ -14899,6 +14952,8 @@ func (m *RelayHostMutation) Field(name string) (ent.Value, bool) {
 		return m.DshVersion()
 	case relayhost.FieldOs:
 		return m.Os()
+	case relayhost.FieldPluginVersion:
+		return m.PluginVersion()
 	case relayhost.FieldLastSeenAt:
 		return m.LastSeenAt()
 	case relayhost.FieldGrantID:
@@ -14924,6 +14979,8 @@ func (m *RelayHostMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDshVersion(ctx)
 	case relayhost.FieldOs:
 		return m.OldOs(ctx)
+	case relayhost.FieldPluginVersion:
+		return m.OldPluginVersion(ctx)
 	case relayhost.FieldLastSeenAt:
 		return m.OldLastSeenAt(ctx)
 	case relayhost.FieldGrantID:
@@ -14979,6 +15036,13 @@ func (m *RelayHostMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetOs(v)
 		return nil
+	case relayhost.FieldPluginVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPluginVersion(v)
+		return nil
 	case relayhost.FieldLastSeenAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -15026,6 +15090,9 @@ func (m *RelayHostMutation) ClearedFields() []string {
 	if m.FieldCleared(relayhost.FieldOs) {
 		fields = append(fields, relayhost.FieldOs)
 	}
+	if m.FieldCleared(relayhost.FieldPluginVersion) {
+		fields = append(fields, relayhost.FieldPluginVersion)
+	}
 	if m.FieldCleared(relayhost.FieldGrantID) {
 		fields = append(fields, relayhost.FieldGrantID)
 	}
@@ -15045,6 +15112,9 @@ func (m *RelayHostMutation) ClearField(name string) error {
 	switch name {
 	case relayhost.FieldOs:
 		m.ClearOs()
+		return nil
+	case relayhost.FieldPluginVersion:
+		m.ClearPluginVersion()
 		return nil
 	case relayhost.FieldGrantID:
 		m.ClearGrantID()
@@ -15074,6 +15144,9 @@ func (m *RelayHostMutation) ResetField(name string) error {
 		return nil
 	case relayhost.FieldOs:
 		m.ResetOs()
+		return nil
+	case relayhost.FieldPluginVersion:
+		m.ResetPluginVersion()
 		return nil
 	case relayhost.FieldLastSeenAt:
 		m.ResetLastSeenAt()

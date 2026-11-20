@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — The relay records each computer's plugin version, and the app lists the member's computers
+
+- **What:** The plugin's relay hello may carry `pluginVersion`, recorded on `relay_hosts.plugin_version` and listed as `pluginVersion` by `GET /relay/hosts`; the console shows it beside the DSH version. `GET /relay/hosts` now also answers the app's Bearer with its `X-Device-Key` (required), listing the member's computers with that handset's own pairings only. `@dsh-teamwork/relay-client`'s `RelayClient` gains `listHosts()`.
+- **Why:** A phone knew only the computers it had already paired with, and nothing recorded which plugin version a computer ran.
+- **Breaking:** A `RelayClient` implementation outside this tree (the app's demo relay) must add `listHosts`. A plugin that sends an empty `pluginVersion` is refused 4400; none does.
+- **Upgrade:** Migration `relay_host_plugin_version` (applied at start).
+- **Refs:** ADR 0061, `server/relay/relay.go`, `server/relay/protocol.go`, `packages/relay-client/src/live.ts`, `api/openapi.yaml`.
+
 ## 2026-11-20 — Plugin and app tokens are revocable grants that renew with use
 
 - **What:** `POST /api/auth/plugin/token` records a row in the new `plugin_grants` table and seals its id into the token. The token opens only while its grant exists and was used within 30 days, and for at most a year; each use renews it, at most once an hour. `DELETE /api/auth/plugin/token` revokes the Bearer it is sent with. `expiresAt` in the exchange is now when the token lapses if unused. The plugin keeps its token across restarts. `relay_hosts.grant_id` records the sign-in each computer connected with, and the console's **Remove this computer** (`DELETE /relay/hosts/{id}`) now signs a computer out and works while it is connected; it no longer answers `409 host_online`. `edition.Identity` carries `Grant`.

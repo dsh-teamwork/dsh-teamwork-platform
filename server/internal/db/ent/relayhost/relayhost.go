@@ -26,6 +26,8 @@ const (
 	FieldDshVersion = "dsh_version"
 	// FieldOs holds the string denoting the os field in the database.
 	FieldOs = "os"
+	// FieldPluginVersion holds the string denoting the plugin_version field in the database.
+	FieldPluginVersion = "plugin_version"
 	// FieldLastSeenAt holds the string denoting the last_seen_at field in the database.
 	FieldLastSeenAt = "last_seen_at"
 	// FieldGrantID holds the string denoting the grant_id field in the database.
@@ -43,6 +45,7 @@ var Columns = []string{
 	FieldName,
 	FieldDshVersion,
 	FieldOs,
+	FieldPluginVersion,
 	FieldLastSeenAt,
 	FieldGrantID,
 }
@@ -68,6 +71,8 @@ var (
 	NameValidator func(string) error
 	// DshVersionValidator is a validator for the "dsh_version" field. It is called by the builders before save.
 	DshVersionValidator func(string) error
+	// PluginVersionValidator is a validator for the "plugin_version" field. It is called by the builders before save.
+	PluginVersionValidator func(string) error
 	// GrantIDValidator is a validator for the "grant_id" field. It is called by the builders before save.
 	GrantIDValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
@@ -136,6 +141,11 @@ func ByDshVersion(opts ...sql.OrderTermOption) OrderOption {
 // ByOs orders the results by the os field.
 func ByOs(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOs, opts...).ToFunc()
+}
+
+// ByPluginVersion orders the results by the plugin_version field.
+func ByPluginVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPluginVersion, opts...).ToFunc()
 }
 
 // ByLastSeenAt orders the results by the last_seen_at field.

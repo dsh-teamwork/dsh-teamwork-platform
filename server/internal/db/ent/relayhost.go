@@ -29,6 +29,8 @@ type RelayHost struct {
 	DshVersion string `json:"dsh_version,omitempty"`
 	// Os holds the value of the "os" field.
 	Os *relayhost.Os `json:"os,omitempty"`
+	// PluginVersion holds the value of the "plugin_version" field.
+	PluginVersion *string `json:"plugin_version,omitempty"`
 	// LastSeenAt holds the value of the "last_seen_at" field.
 	LastSeenAt time.Time `json:"last_seen_at,omitempty"`
 	// GrantID holds the value of the "grant_id" field.
@@ -41,7 +43,7 @@ func (*RelayHost) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case relayhost.FieldID, relayhost.FieldUserID, relayhost.FieldClientID, relayhost.FieldName, relayhost.FieldDshVersion, relayhost.FieldOs, relayhost.FieldGrantID:
+		case relayhost.FieldID, relayhost.FieldUserID, relayhost.FieldClientID, relayhost.FieldName, relayhost.FieldDshVersion, relayhost.FieldOs, relayhost.FieldPluginVersion, relayhost.FieldGrantID:
 			values[i] = new(sql.NullString)
 		case relayhost.FieldCreatedAt, relayhost.FieldLastSeenAt:
 			values[i] = new(sql.NullTime)
@@ -102,6 +104,13 @@ func (_m *RelayHost) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Os = new(relayhost.Os)
 				*_m.Os = relayhost.Os(value.String)
+			}
+		case relayhost.FieldPluginVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field plugin_version", values[i])
+			} else if value.Valid {
+				_m.PluginVersion = new(string)
+				*_m.PluginVersion = value.String
 			}
 		case relayhost.FieldLastSeenAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -170,6 +179,11 @@ func (_m *RelayHost) String() string {
 	if v := _m.Os; v != nil {
 		builder.WriteString("os=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.PluginVersion; v != nil {
+		builder.WriteString("plugin_version=")
+		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	builder.WriteString("last_seen_at=")
