@@ -214,7 +214,7 @@ func (s *Server) startSession(w http.ResponseWriter, r *http.Request, user *ent.
 		}
 	}
 	if s.SignInGate != nil {
-		required, err := s.SignInGate.Required(r.Context(), user.ID, "web")
+		required, err := s.SignInGate.Required(r.Context(), user.ID)
 		if err != nil {
 			return err
 		}

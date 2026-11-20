@@ -24,8 +24,7 @@ import (
 // Identity is who a request or a token is: the account, its email, and the
 // door the session came through ("google", "email" or "password").
 type Identity struct {
-	// SessionID identifies exactly this login, including credentials issued before
-	// editions used session-bound grants. Neither field is a client credential.
+	// SessionID identifies one issuance and can be used to scope a grant.
 	SessionID      string    `json:"-"`
 	SessionIssued  time.Time `json:"-"`
 	SessionExpires time.Time `json:"-"`
@@ -87,20 +86,27 @@ type AdminConsole struct {
 
 // SignInGate adds a second verification step after primary authentication.
 type SignInGate interface {
-	Required(ctx context.Context, user, entry string) (bool, error)
+	// Required applies the same account policy to every personal sign-in.
+	Required(ctx context.Context, user string) (bool, error)
+	// ConsumeAppProof redeems verification for this login and PKCE challenge once.
 	ConsumeAppProof(ctx context.Context, user, session, challenge string) (bool, error)
 }
 
 type Host struct {
-	AppLogin           func(*http.Request, string) (*Identity, error)
-	OnSignOut          func(func(context.Context, *Identity) error)
+	// AppLogin resolves the pending phone login for a PKCE challenge or a browser session.
+	AppLogin func(*http.Request, string) (*Identity, error)
+	// OnSignOut registers cleanup for grants belonging to the closing login.
+	OnSignOut func(func(context.Context, *Identity) error)
+	// RegisterSignInGate installs the account verification policy.
 	RegisterSignInGate func(SignInGate)
-	PendingLogin       func(*http.Request) (*Identity, error)
-	CompleteLogin      func(http.ResponseWriter, *http.Request) error
-	ServiceRole        string
-	AddAdminRoutes     func([]AdminRoute)
-	SetAdminConsole    func(AdminConsole)
-	SetWebConsole      func(fs.FS)
+	// PendingLogin resolves the primary-authenticated browser awaiting verification.
+	PendingLogin func(*http.Request) (*Identity, error)
+	// CompleteLogin issues the browser session after successful verification.
+	CompleteLogin   func(http.ResponseWriter, *http.Request) error
+	ServiceRole     string
+	AddAdminRoutes  func([]AdminRoute)
+	SetAdminConsole func(AdminConsole)
+	SetWebConsole   func(fs.FS)
 
 	// DB is the server's connection, and Dialect its kind: "sqlite3",
 	// "postgres" or "mysql". The extension's own tables are there.

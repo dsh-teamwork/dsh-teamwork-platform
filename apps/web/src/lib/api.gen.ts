@@ -52,7 +52,10 @@ export interface paths {
         /** Sign in with an email and a password (instances without SMTP) */
         post: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Local return path including the phone handoff when applicable */
+                    next?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -234,7 +237,15 @@ export interface paths {
                 };
                 400: components["responses"]["Error"];
                 401: components["responses"]["Error"];
-                403: components["responses"]["Error"];
+                /** @description The phone handoff requires verification (verification_required) or the account cannot authorize it */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -674,7 +685,10 @@ export interface paths {
         /** Sign in with the emailed code; a first sign-in makes the account */
         post: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Local return path including the phone handoff when applicable */
+                    next?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;

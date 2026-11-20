@@ -9,7 +9,8 @@ are in `CLAUDE.md`, "The changelog".
 
 - **What:** Editions can require user verification on a new browser login or a phone's PKCE handoff. A pending phone login is scoped to its challenge. Edition identities include a per-login identifier and expiry, and extensions can revoke grants when the user signs out.
 - **Why:** A phone and a browser signed into the same account need independent grants for protected computers.
-- **Upgrade:** Existing credentials remain readable. Community deployments keep their existing login flow.
+- **Breaking:** Editions implement one account-wide login policy.
+- **Upgrade:** Community deployments keep their existing login flow.
 - **Refs:** `server/edition/edition.go`, `server/internal/httpapi/identity.go`, `packages/relay-client/src/pin.ts`.
 
 ## 2026-11-19 — An admin can remove an owned model from a team

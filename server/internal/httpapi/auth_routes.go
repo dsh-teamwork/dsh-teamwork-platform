@@ -2,8 +2,10 @@ package httpapi
 
 import (
 	"errors"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
+	"log/slog"
 	"net/http"
+
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
@@ -151,27 +153,27 @@ func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *Server) signOut(w http.ResponseWriter, r *http.Request) error {
+	s.clearPending(w)
+	s.endSession(w)
 	if len(s.SignOutHandlers) > 0 {
 		var who *edition.Identity
 		var err error
 		if r.Header.Get("Authorization") != "" {
 			who, err = s.BearerIdentity(r.Context(), bearerToken(r.Header.Get("Authorization")))
-		} else {
-			who, err = s.SessionIdentity(r)
+		} else if c, cookieErr := r.Cookie(s.cookieName()); cookieErr == nil {
+			who, err = s.open(r.Context(), auth.Session, c.Value)
 		}
 		if err != nil {
-			return err
+			slog.Error("sign-out identity lookup failed", "error", err)
 		}
 		if who != nil {
 			for _, f := range s.SignOutHandlers {
 				if err := f(r.Context(), who); err != nil {
-					return err
+					slog.Error("sign-out grant cleanup failed", "error", err)
 				}
 			}
 		}
 	}
-	s.clearPending(w)
-	s.endSession(w)
 	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
@@ -212,12 +214,11 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 		c = &caller{user: user, via: who.Via}
-		required, err := s.SignInGate.Required(r.Context(), who.UserID, "app")
+		required, err := s.SignInGate.Required(r.Context(), who.UserID)
 		if err != nil {
 			return err
 		}
 		if required {
-
 			ok, err := s.SignInGate.ConsumeAppProof(r.Context(), who.UserID, who.SessionID, in.Challenge)
 			if err != nil {
 				return err

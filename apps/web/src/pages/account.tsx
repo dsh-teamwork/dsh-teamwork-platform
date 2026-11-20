@@ -1,4 +1,3 @@
-import { editionSecurity } from '@/lib/edition';
 /**
  * `/account`: the account settings, where every way to the account leads
  * (components/account.tsx). One page in sections divided by hairlines, after
@@ -8,6 +7,7 @@ import { editionSecurity } from '@/lib/edition';
  * (docs/adr/0039-deleting-an-account.md).
  */
 
+import { editionSecurity } from '@/lib/edition';
 import { Check, LogOut, Moon, Pencil, Sun, Trash2 } from 'lucide-react';
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';

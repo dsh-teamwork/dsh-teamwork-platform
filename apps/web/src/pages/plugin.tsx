@@ -1,4 +1,3 @@
-import { editionSecurity } from '@/lib/edition';
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { api, type PluginCode, type TeamSummary } from '@/lib/api';
 import { isLoopback } from '@/lib/return-path';
 import { useSession } from '@/lib/session';
+import { editionSecurity } from '@/lib/edition';
 import { useApi } from '@/lib/use-api';
 
 const CHALLENGE = /^[A-Za-z0-9_-]{43}$/;
