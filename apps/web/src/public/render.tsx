@@ -115,17 +115,21 @@ export function renderPages(
     );
   }
   if (legal) {
-    const documents = [
-      ['privacy', 'Privacy Policy', 'What we collect, where it is kept, who can see it, and how to have it removed.'],
-      ['terms', 'Terms of Service', 'The terms that govern using this service.'],
-    ] as const;
-    for (const [name, title, description] of documents) {
-      pages[`${name}.html`] = page(
-        <Document locale="en" title={`${title} · ${APP_NAME}`} description={description} path={`/${name}`} assets={assets}>
-          <LegalDocument markdown={legal[name]} />
-        </Document>,
-      );
-    }
+    pages['privacy.html'] = legalPage(assets, 'privacy', 'Privacy Policy', 'What we collect, where it is kept, who can see it, and how to have it removed.', legal.privacy);
+    pages['terms.html'] = legalPage(assets, 'terms', 'Terms of Service', 'The terms that govern using this service.', legal.terms);
   }
   return pages;
+}
+
+/**
+ * One legal page at `/{name}`, English as its Markdown is, filed as
+ * `{name}.html`. An edition that publishes a legal page of its own adds it
+ * to what its renderPages returns through this.
+ */
+export function legalPage(assets: Assets, name: string, title: string, description: string, markdown: string): string {
+  return page(
+    <Document locale="en" title={`${title} · ${APP_NAME}`} description={description} path={`/${name}`} assets={assets}>
+      <LegalDocument markdown={markdown} />
+    </Document>,
+  );
 }
