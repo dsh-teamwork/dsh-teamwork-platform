@@ -86,6 +86,17 @@ func TestConfigInputRefusesUndeclaredFields(t *testing.T) {
 	}
 }
 
+// Only the service hosting a model marks it offline (edition.OwnedModel): an
+// admin's model cannot carry the mark to hide itself from members' DSH.
+func TestAnAdminsModelIsNeverOffline(t *testing.T) {
+	if config(t, `{"kind":"model","name":"m","data":{"provider":"p","model":"m","offline":true}}`) == nil {
+		t.Fatal("accepted an admin's model marked offline")
+	}
+	if err := config(t, `{"kind":"model","name":"m","data":{"provider":"p","model":"m","offline":false}}`); err != nil {
+		t.Fatalf("refused a model not marked offline: %v", err)
+	}
+}
+
 func TestConfigInputPinsPluginToExactVersion(t *testing.T) {
 	if config(t, `{"kind":"plugin","name":"p","data":{"package":"@a/b","version":"^1.0.0"}}`) == nil {
 		t.Fatal("accepted a version range")

@@ -1,6 +1,7 @@
 package usage
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -93,6 +94,22 @@ func TestAPublishedModelCarriesItsBoundsAndARepublicationRefreshesThem(t *testin
 		}
 		if c, data := read(); c.Name != "Astra 2" || *data.ContextWindow != 400_000 || *data.MaxTokens != 32_000 || c.Version != 2 {
 			t.Fatalf("republished as %q %s at version %d", c.Name, c.Data, c.Version)
+		}
+		// Taken out of service, it stays in the team, marked, under a new version the plugin syncs; back in
+		// service, the mark goes the same way.
+		m.Offline = true
+		if err := publish(m); err != nil {
+			t.Fatal(err)
+		}
+		if c, data := read(); !data.Offline || c.Version != 3 {
+			t.Fatalf("taken offline as %s at version %d", c.Data, c.Version)
+		}
+		m.Offline = false
+		if err := publish(m); err != nil {
+			t.Fatal(err)
+		}
+		if c, data := read(); data.Offline || bytes.Contains(c.Data, []byte("offline")) || c.Version != 4 {
+			t.Fatalf("back in service as %s at version %d", c.Data, c.Version)
 		}
 		for _, bad := range []edition.OwnedModel{
 			{ConfigID: "astra", Name: "Astra", Reference: "openai/other", ContextWindow: 1, MaxTokens: 1},

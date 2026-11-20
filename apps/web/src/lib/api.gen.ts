@@ -4592,6 +4592,8 @@ export interface components {
             vision?: boolean;
             contextWindow?: components["schemas"]["Tokens"];
             maxTokens?: components["schemas"]["Tokens"];
+            /** @description A hosted model its service has taken out of service; only that service sets it, and an admin's model is refused with it */
+            offline?: boolean;
         };
         /** @description Inherits the session model, references a team model, or names a provider/model; exactly one choice. */
         PresetData: {

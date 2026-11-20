@@ -270,6 +270,7 @@ function ModelRow({ teamId, reload, model, usedBy, referenceProvider, baseUrl }:
           <ProviderMark hints={[model.data.model, model.name, model.data.provider, baseUrl]} name={model.name} />
           {model.name}
         </span>
+        {model.data.offline && <span className="mt-0.5 block text-xs text-muted-foreground">{t('offline')}</span>}
         {unpriced && (
           <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
             {/* Amber, as a dot: no member's call reaches this model until its admin sets a rate (docs/design.md). */}

@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-19
+> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-20
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -39,6 +39,15 @@ other (`DELETE /api/teams/{teamId}/configs/{configId}`, refused while a preset
 calls it); its edition hears `edition.ModelRemoved` with the `ConfigID` in the
 same transaction and forgets the route, so publishing it again adds it back.
 Its name, bounds and rate stay the edition's to change.
+
+An edition that takes a model out of service publishes it with
+`OwnedModel.Offline`: the configuration stays in the team, so presets that call
+it stay whole, and its `data` carries `"offline": true` under a new version.
+The plugin offers it to no session and words a preset on it as not ready; the
+console marks it on the models page. Publishing it again without `Offline`
+brings it back in every team at once. Only an edition sets the mark: an admin's
+model with `offline` is refused. Calls are refused by the edition's own route
+check, whatever the mark says.
 
 `server/internal/usage` owns normalization, immutable model rates, usage rows,
 policy/window reservations, settlement, recovery and notification work. The
