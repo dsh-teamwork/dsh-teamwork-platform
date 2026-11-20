@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — A reasoning model's replayed reply no longer fails a budgeted call
+
+- **What:** The gateway's request check for funded and budgeted routes (`usage.RouteBounds`) admits, on a message, `reasoning` and `reasoning_text` as text and `reasoning_details` as an array of objects, beside `reasoning_content`, and forwards them unchanged.
+- **Why:** After a tool call, DSH sends the assistant's reply back with its reasoning under the name the upstream used; through OpenRouter that is `reasoning` and `reasoning_details`, which the check refused with 400 `budget_request_unsupported`, so every later call in the session failed.
+- **Breaking:** None.
+- **Upgrade:** Nothing; a session stuck on this error works again on retry once deployed.
+- **Refs:** `server/internal/usage/provider.go`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-20 — The models page lists the team's models first, and "Add provider" is "BYOK model service"
 
 - **What:** A team's models page shows its team models first, then the connected BYOK model services under their own heading. "Add provider" is now "BYOK model service". An edition's models (`EditionModels`, `mountWeb`'s `models`) are an action in the page header beside it, no longer a section above the list.

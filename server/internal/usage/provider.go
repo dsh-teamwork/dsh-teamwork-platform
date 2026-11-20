@@ -72,9 +72,20 @@ func RouteBounds(payload map[string]json.RawMessage, maxInput, maxOutput int64) 
 		}
 		for key, value := range message {
 			switch key {
-			case "role", "name", "tool_call_id", "reasoning_content":
+			// A reasoning model's earlier reply comes back with its reasoning under
+			// the name its upstream used (DeepSeek's reasoning_content,
+			// OpenRouter's reasoning, or reasoning_text). It is input, which
+			// maxInput already bounds.
+			case "role", "name", "tool_call_id", "reasoning_content", "reasoning", "reasoning_text":
 				var text string
 				if json.Unmarshal(value, &text) != nil {
+					return unsupported()
+				}
+			case "reasoning_details":
+				// OpenRouter's structured reasoning, replayed so a model can
+				// continue its own thinking across a tool call: input too.
+				var details []map[string]json.RawMessage
+				if json.Unmarshal(value, &details) != nil {
 					return unsupported()
 				}
 			case "content":
