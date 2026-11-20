@@ -20,7 +20,7 @@ become its admin. Every new team gets a **team assistant** preset.
 
 ## 2. Connect a provider and publish models
 
-Open **Models → Add provider**. Pick a provider from the list and paste its API
+Open **Models → BYOK model service**. Pick a provider from the list and paste its API
 key (each listed provider is named as [Models.dev](https://models.dev) names it,
 such as `alibaba-cn` or `moonshotai-cn`, which is where its models' limits and
 prices are read), or enter any OpenAI-compatible address under **Custom**. The key is checked
