@@ -28,6 +28,8 @@ const (
 	FieldOs = "os"
 	// FieldLastSeenAt holds the string denoting the last_seen_at field in the database.
 	FieldLastSeenAt = "last_seen_at"
+	// FieldGrantID holds the string denoting the grant_id field in the database.
+	FieldGrantID = "grant_id"
 	// Table holds the table name of the relayhost in the database.
 	Table = "relay_hosts"
 )
@@ -42,6 +44,7 @@ var Columns = []string{
 	FieldDshVersion,
 	FieldOs,
 	FieldLastSeenAt,
+	FieldGrantID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -65,6 +68,8 @@ var (
 	NameValidator func(string) error
 	// DshVersionValidator is a validator for the "dsh_version" field. It is called by the builders before save.
 	DshVersionValidator func(string) error
+	// GrantIDValidator is a validator for the "grant_id" field. It is called by the builders before save.
+	GrantIDValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -136,4 +141,9 @@ func ByOs(opts ...sql.OrderTermOption) OrderOption {
 // ByLastSeenAt orders the results by the last_seen_at field.
 func ByLastSeenAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastSeenAt, opts...).ToFunc()
+}
+
+// ByGrantID orders the results by the grant_id field.
+func ByGrantID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGrantID, opts...).ToFunc()
 }

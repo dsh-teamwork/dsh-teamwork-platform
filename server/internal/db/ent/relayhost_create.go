@@ -81,6 +81,20 @@ func (_c *RelayHostCreate) SetLastSeenAt(v time.Time) *RelayHostCreate {
 	return _c
 }
 
+// SetGrantID sets the "grant_id" field.
+func (_c *RelayHostCreate) SetGrantID(v string) *RelayHostCreate {
+	_c.mutation.SetGrantID(v)
+	return _c
+}
+
+// SetNillableGrantID sets the "grant_id" field if the given value is not nil.
+func (_c *RelayHostCreate) SetNillableGrantID(v *string) *RelayHostCreate {
+	if v != nil {
+		_c.SetGrantID(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *RelayHostCreate) SetID(v string) *RelayHostCreate {
 	_c.mutation.SetID(v)
@@ -185,6 +199,11 @@ func (_c *RelayHostCreate) check() error {
 	if _, ok := _c.mutation.LastSeenAt(); !ok {
 		return &ValidationError{Name: "last_seen_at", err: errors.New(`ent: missing required field "RelayHost.last_seen_at"`)}
 	}
+	if v, ok := _c.mutation.GrantID(); ok {
+		if err := relayhost.GrantIDValidator(v); err != nil {
+			return &ValidationError{Name: "grant_id", err: fmt.Errorf(`ent: validator failed for field "RelayHost.grant_id": %w`, err)}
+		}
+	}
 	if v, ok := _c.mutation.ID(); ok {
 		if err := relayhost.IDValidator(v); err != nil {
 			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "RelayHost.id": %w`, err)}
@@ -253,6 +272,10 @@ func (_c *RelayHostCreate) createSpec() (*RelayHost, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)
 		_node.LastSeenAt = value
+	}
+	if value, ok := _c.mutation.GrantID(); ok {
+		_spec.SetField(relayhost.FieldGrantID, field.TypeString, value)
+		_node.GrantID = &value
 	}
 	return _node, _spec
 }
@@ -381,6 +404,24 @@ func (u *RelayHostUpsert) SetLastSeenAt(v time.Time) *RelayHostUpsert {
 // UpdateLastSeenAt sets the "last_seen_at" field to the value that was provided on create.
 func (u *RelayHostUpsert) UpdateLastSeenAt() *RelayHostUpsert {
 	u.SetExcluded(relayhost.FieldLastSeenAt)
+	return u
+}
+
+// SetGrantID sets the "grant_id" field.
+func (u *RelayHostUpsert) SetGrantID(v string) *RelayHostUpsert {
+	u.Set(relayhost.FieldGrantID, v)
+	return u
+}
+
+// UpdateGrantID sets the "grant_id" field to the value that was provided on create.
+func (u *RelayHostUpsert) UpdateGrantID() *RelayHostUpsert {
+	u.SetExcluded(relayhost.FieldGrantID)
+	return u
+}
+
+// ClearGrantID clears the value of the "grant_id" field.
+func (u *RelayHostUpsert) ClearGrantID() *RelayHostUpsert {
+	u.SetNull(relayhost.FieldGrantID)
 	return u
 }
 
@@ -523,6 +564,27 @@ func (u *RelayHostUpsertOne) SetLastSeenAt(v time.Time) *RelayHostUpsertOne {
 func (u *RelayHostUpsertOne) UpdateLastSeenAt() *RelayHostUpsertOne {
 	return u.Update(func(s *RelayHostUpsert) {
 		s.UpdateLastSeenAt()
+	})
+}
+
+// SetGrantID sets the "grant_id" field.
+func (u *RelayHostUpsertOne) SetGrantID(v string) *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.SetGrantID(v)
+	})
+}
+
+// UpdateGrantID sets the "grant_id" field to the value that was provided on create.
+func (u *RelayHostUpsertOne) UpdateGrantID() *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.UpdateGrantID()
+	})
+}
+
+// ClearGrantID clears the value of the "grant_id" field.
+func (u *RelayHostUpsertOne) ClearGrantID() *RelayHostUpsertOne {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.ClearGrantID()
 	})
 }
 
@@ -832,6 +894,27 @@ func (u *RelayHostUpsertBulk) SetLastSeenAt(v time.Time) *RelayHostUpsertBulk {
 func (u *RelayHostUpsertBulk) UpdateLastSeenAt() *RelayHostUpsertBulk {
 	return u.Update(func(s *RelayHostUpsert) {
 		s.UpdateLastSeenAt()
+	})
+}
+
+// SetGrantID sets the "grant_id" field.
+func (u *RelayHostUpsertBulk) SetGrantID(v string) *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.SetGrantID(v)
+	})
+}
+
+// UpdateGrantID sets the "grant_id" field to the value that was provided on create.
+func (u *RelayHostUpsertBulk) UpdateGrantID() *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.UpdateGrantID()
+	})
+}
+
+// ClearGrantID clears the value of the "grant_id" field.
+func (u *RelayHostUpsertBulk) ClearGrantID() *RelayHostUpsertBulk {
+	return u.Update(func(s *RelayHostUpsert) {
+		s.ClearGrantID()
 	})
 }
 

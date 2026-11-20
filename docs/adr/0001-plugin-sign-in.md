@@ -1,6 +1,6 @@
 # 0001. The DSH plugin signs in through the website with a pasted PKCE code
 
-> **Status:** Accepted · **Date:** 2026-11-10
+> **Status:** Accepted — its token's lifetime and revocation superseded by [0060](0060-plugin-tokens-are-revocable-grants.md) · **Date:** 2026-11-10
 
 ## Context
 

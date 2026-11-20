@@ -26,7 +26,28 @@ func (User) Edges() []ent.Edge {
 		edge.To("identities", Identity.Type).Annotations(cascade),
 		edge.To("password", Password.Type).Unique().Annotations(cascade),
 		edge.To("memberships", Membership.Type).Annotations(cascade),
+		edge.To("plugin_grants", PluginGrant.Type).Annotations(cascade),
 	}
+}
+
+// PluginGrant is one sign-in of a DSH plugin or the phone app: its Bearer
+// token names the row, and opens only while the row exists and was used within
+// auth.GrantIdle (ADR 0060). Deleting the row revokes the token.
+type PluginGrant struct{ ent.Schema }
+
+func (PluginGrant) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
+func (PluginGrant) Fields() []ent.Field {
+	return []ent.Field{
+		field.String("user_id").MaxLen(32),
+		field.String("via").MaxLen(32),
+		field.Time("used_at").SchemaType(mysqlTime),
+	}
+}
+func (PluginGrant) Edges() []ent.Edge {
+	return []ent.Edge{edge.From("user", User.Type).Ref("plugin_grants").Field("user_id").Unique().Required()}
+}
+func (PluginGrant) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("user_id")}
 }
 
 // Identity is one way into an account: a provider and the subject it proves.

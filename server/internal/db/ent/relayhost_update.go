@@ -119,6 +119,26 @@ func (_u *RelayHostUpdate) SetNillableLastSeenAt(v *time.Time) *RelayHostUpdate 
 	return _u
 }
 
+// SetGrantID sets the "grant_id" field.
+func (_u *RelayHostUpdate) SetGrantID(v string) *RelayHostUpdate {
+	_u.mutation.SetGrantID(v)
+	return _u
+}
+
+// SetNillableGrantID sets the "grant_id" field if the given value is not nil.
+func (_u *RelayHostUpdate) SetNillableGrantID(v *string) *RelayHostUpdate {
+	if v != nil {
+		_u.SetGrantID(*v)
+	}
+	return _u
+}
+
+// ClearGrantID clears the value of the "grant_id" field.
+func (_u *RelayHostUpdate) ClearGrantID() *RelayHostUpdate {
+	_u.mutation.ClearGrantID()
+	return _u
+}
+
 // Mutation returns the RelayHostMutation object of the builder.
 func (_u *RelayHostUpdate) Mutation() *RelayHostMutation {
 	return _u.mutation
@@ -178,6 +198,11 @@ func (_u *RelayHostUpdate) check() error {
 			return &ValidationError{Name: "os", err: fmt.Errorf(`ent: validator failed for field "RelayHost.os": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.GrantID(); ok {
+		if err := relayhost.GrantIDValidator(v); err != nil {
+			return &ValidationError{Name: "grant_id", err: fmt.Errorf(`ent: validator failed for field "RelayHost.grant_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -219,6 +244,12 @@ func (_u *RelayHostUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.GrantID(); ok {
+		_spec.SetField(relayhost.FieldGrantID, field.TypeString, value)
+	}
+	if _u.mutation.GrantIDCleared() {
+		_spec.ClearField(relayhost.FieldGrantID, field.TypeString)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
@@ -332,6 +363,26 @@ func (_u *RelayHostUpdateOne) SetNillableLastSeenAt(v *time.Time) *RelayHostUpda
 	return _u
 }
 
+// SetGrantID sets the "grant_id" field.
+func (_u *RelayHostUpdateOne) SetGrantID(v string) *RelayHostUpdateOne {
+	_u.mutation.SetGrantID(v)
+	return _u
+}
+
+// SetNillableGrantID sets the "grant_id" field if the given value is not nil.
+func (_u *RelayHostUpdateOne) SetNillableGrantID(v *string) *RelayHostUpdateOne {
+	if v != nil {
+		_u.SetGrantID(*v)
+	}
+	return _u
+}
+
+// ClearGrantID clears the value of the "grant_id" field.
+func (_u *RelayHostUpdateOne) ClearGrantID() *RelayHostUpdateOne {
+	_u.mutation.ClearGrantID()
+	return _u
+}
+
 // Mutation returns the RelayHostMutation object of the builder.
 func (_u *RelayHostUpdateOne) Mutation() *RelayHostMutation {
 	return _u.mutation
@@ -404,6 +455,11 @@ func (_u *RelayHostUpdateOne) check() error {
 			return &ValidationError{Name: "os", err: fmt.Errorf(`ent: validator failed for field "RelayHost.os": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.GrantID(); ok {
+		if err := relayhost.GrantIDValidator(v); err != nil {
+			return &ValidationError{Name: "grant_id", err: fmt.Errorf(`ent: validator failed for field "RelayHost.grant_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -462,6 +518,12 @@ func (_u *RelayHostUpdateOne) sqlSave(ctx context.Context) (_node *RelayHost, er
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(relayhost.FieldLastSeenAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.GrantID(); ok {
+		_spec.SetField(relayhost.FieldGrantID, field.TypeString, value)
+	}
+	if _u.mutation.GrantIDCleared() {
+		_spec.ClearField(relayhost.FieldGrantID, field.TypeString)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	_node = &RelayHost{config: _u.config}

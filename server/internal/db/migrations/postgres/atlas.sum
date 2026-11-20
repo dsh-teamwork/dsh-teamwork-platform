@@ -1,4 +1,4 @@
-h1:tw5JZsXmWpv9ZH6hJOGpSe0UMIlUs6h1S+lYWuefS9M=
+h1:TE8MDqyB5hSO3msjrLwlJ6t2OtnSYSstCy3TCp+Ih6Q=
 20261114012021_init.sql h1:iMOUyNDjsoN2pj1dEAgWtcpU2a5fByVlZgoCXiaOC0s=
 20261115041609_usage_metering.sql h1:hmiNJMr1kxsgtgVBku/vxrvrU1Hqyzw2Q0wEosNSm30=
 20261115044856_budget_reservations.sql h1:4ZPHNOx9bCw/rSuKnOs0NRy2fMJfOBPyohDlmcPtQUI=
@@ -18,3 +18,4 @@ h1:tw5JZsXmWpv9ZH6hJOGpSe0UMIlUs6h1S+lYWuefS9M=
 20261118003546_shared_archive.sql h1:3mTPir4iMOJTrESxu5zNm/zY0JIR/x0yt678UjxOi5g=
 20261118135115_relay_host_os.sql h1:nhoZt6IUcfCfafvteqxOkE0L4UHbNWdOFxP/OYZJ3gg=
 20261119011929_pages.sql h1:petT1rwPYVr4riD8xjw5CoXAN08A9gqcK6MI8scJyFU=
+20261120050622_plugin_grants.sql h1:XMr4nzYjVjy6VSdvQsqtCBS7Rl0WUXjABQ0fQcqr4dM=

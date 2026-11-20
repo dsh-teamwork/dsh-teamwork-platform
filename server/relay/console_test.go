@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
-
-	"github.com/coder/websocket"
+	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
@@ -113,26 +112,23 @@ func TestConsoleManagesTheMembersDevices(t *testing.T) {
 	})
 }
 
-// The web console forgets one of the member's own computers once it is
-// offline, with its pairing codes and every pairing to it; a connected one is
-// refused, since it would only be recorded again. It reaches no other
-// member's, and an app's token reaches none.
+// The web console signs one of the member's own computers out and forgets it
+// (ADR 0060), connected or not, with its pairing codes and every pairing to
+// it: its socket closes at once and the sign-in it connected with opens
+// nothing, while the member's other sign-ins stay. It reaches no other
+// member's computer, and an app's token reaches none.
 func TestConsoleDeletesAComputer(t *testing.T) {
 	each(t, func(t *testing.T, w *world) {
-		laptop := w.host(w.ada, "ada-laptop")
+		laptopToken := w.in.Bearer(w.adaID) // its own sign-in, apart from the phone's
+		laptop := w.host(laptopToken, "ada-laptop")
 		pc := laptop.hostID()
 		laptop.ask(obj{"t": "offer"})
 		phoneID := w.paired(w.adaID, pc, true)
 		phone := w.phone(w.adaPhone)
+		phone.send(sealed(phoneID, "open"))
+		laptop.next(is("sealed")) // the phone is attached to the connected computer
 		bobHost := w.host(w.bob, "bob-laptop").hostID()
 		bobID := w.r.db.RelayHost.GetX(w.r.ctx, bobHost).UserID
-
-		if status, body := w.console(w.adaID, "DELETE", "/relay/hosts/"+pc, "", true); status != 409 || body["error"] != "host_online" {
-			t.Fatalf("online computer %d %v", status, body)
-		}
-		laptop.c.Close(websocket.StatusNormalClosure, "")
-		phone.send(sealed(phoneID, "open"))
-		equal(t, phone.next(is("error"))["error"], "offline")
 
 		if status, _ := w.call(w.adaPhone, "DELETE", "/relay/hosts/"+pc, nil); status != 403 {
 			t.Fatalf("app delete %d", status)
@@ -148,6 +144,20 @@ func TestConsoleDeletesAComputer(t *testing.T) {
 			t.Fatalf("delete %d", status)
 		}
 		equal(t, phone.next(is("revoked")), obj{"t": "revoked", "pairingId": phoneID})
+		select {
+		case <-laptop.closed:
+		case <-time.After(3 * time.Second):
+			t.Fatal("the computer stayed connected after it was removed")
+		}
+		if laptop.ended != closeUnauthorized {
+			t.Fatalf("removed computer closed with %d", laptop.ended)
+		}
+		if code := w.host(laptopToken, "ada-laptop").code; code != closeUnauthorized {
+			t.Fatalf("the removed computer's sign-in reconnected: %d", code)
+		}
+		if status, _ := w.call(w.adaPhone, "GET", "/relay/pairings", nil); status != 200 {
+			t.Fatalf("the phone's own sign-in went with the computer: %d", status)
+		}
 		if w.r.db.RelayHost.Query().Where(relayhost.ID(pc)).ExistX(w.r.ctx) ||
 			w.r.db.RelayPairing.Query().Where(relaypairing.HostID(pc)).ExistX(w.r.ctx) ||
 			w.r.db.RelayPairingOffer.Query().Where(relaypairingoffer.HostID(pc)).ExistX(w.r.ctx) {

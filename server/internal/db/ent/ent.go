@@ -28,6 +28,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
@@ -119,6 +120,7 @@ func checkColumn(t, c string) error {
 			pagemember.Table:           pagemember.ValidColumn,
 			pageversion.Table:          pageversion.ValidColumn,
 			password.Table:             password.ValidColumn,
+			plugingrant.Table:          plugingrant.ValidColumn,
 			ratewindow.Table:           ratewindow.ValidColumn,
 			relayhost.Table:            relayhost.ValidColumn,
 			relaypairing.Table:         relaypairing.ValidColumn,

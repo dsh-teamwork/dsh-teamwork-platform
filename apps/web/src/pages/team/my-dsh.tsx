@@ -133,7 +133,15 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
           <p className="text-sm text-muted-foreground">{hosts?.length === 0 ? t('none') : t('intro')}</p>
         </section>
       ) : devices ? (
-        <DevicesView host={host} back={`${base}/${host.id}`} changed={() => void load()} />
+        <DevicesView
+          host={host}
+          back={`${base}/${host.id}`}
+          changed={() => void load()}
+          removed={() => {
+            void load();
+            navigate(base);
+          }}
+        />
       ) : ready && !unreachable ? (
         <Conversation
           key={computerId}
@@ -198,7 +206,10 @@ function State({ icon: Icon, spin, title, body, children }: { icon: LucideIcon; 
   );
 }
 
-/** Forgets an offline computer with every device paired to it: one no longer used, or a record left by signing in again. */
+/**
+ * Signs a computer out and forgets it with every device paired to it, connected or not (ADR 0060): one lost or no
+ * longer used, or a record left by signing in again.
+ */
 function RemoveComputer({ host, removed }: { host: MyComputer; removed: () => void }) {
   const { me } = useTeam();
   const t = useTranslations('team.myDsh');
@@ -210,8 +221,8 @@ function RemoveComputer({ host, removed }: { host: MyComputer; removed: () => vo
       await removeComputer(me, host);
       toast.success(t('computerRemoved'));
       removed();
-    } catch (error) {
-      toast.error(t(error instanceof Error && error.message === 'host_online' ? 'removeComputerOnline' : 'removeComputerFailed'));
+    } catch {
+      toast.error(t('removeComputerFailed'));
     } finally {
       setBusy(false);
     }
@@ -245,8 +256,11 @@ function HostHeader({ host, twin }: { host: MyComputer; twin: string | null }) {
   );
 }
 
-/** The computer's devices page: every phone and browser of the member's paired with it, each removable (ADR 0048). */
-function DevicesView({ host, back, changed }: { host: MyComputer; back: string; changed: () => void }) {
+/**
+ * The computer's devices page: every phone and browser of the member's paired with it, each removable (ADR 0048), and
+ * the computer itself, which removing signs out of Teamwork (ADR 0060).
+ */
+function DevicesView({ host, back, changed, removed }: { host: MyComputer; back: string; changed: () => void; removed: () => void }) {
   const { me } = useTeam();
   const t = useTranslations('team.myDsh');
   const format = useFormatter();
@@ -301,6 +315,10 @@ function DevicesView({ host, back, changed }: { host: MyComputer; back: string; 
           );
         })}
       </ul>
+      <section className="flex flex-col items-start gap-2 border-t pt-4">
+        <p className="text-muted-foreground">{t('removeComputerHelp')}</p>
+        <RemoveComputer host={host} removed={removed} />
+      </section>
     </div>
   );
 }

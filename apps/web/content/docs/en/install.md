@@ -112,6 +112,10 @@ whichever directory DSH is started from.
 
 Signing in syncs the team's resources at once, then every 60 seconds.
 
+DSH stays signed in when it restarts. The sign-in lapses only after 30 days
+unused; `/teamwork logout` ends it on the server too, so a copy of it opens
+nothing.
+
 ### Choose the server
 
 The plugin signs in to `https://www.dshteamwork.com` by default. To use another

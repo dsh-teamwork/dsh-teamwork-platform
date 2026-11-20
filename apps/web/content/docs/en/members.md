@@ -97,11 +97,11 @@ paired with it, where **Remove** cuts any of them off at once, a lost phone
 included. If you enter the wrong PIN too often, run `/teamwork pin reset` in
 DSH on that computer.
 
-A computer that is offline offers **Remove this computer**: it goes from the
-list with every device paired with it. Use it for a computer you no longer use,
-or for an old entry left after signing in again. A computer still connected
-cannot be removed; sign out of Teamwork in DSH on it first. If it signs in again
-later, it comes back and is paired anew.
+**Remove this computer**, on a computer's devices page or on one that is
+offline, signs it out of Teamwork at once and takes it from the list with every
+device paired with it, even while it is connected. Use it for a lost computer,
+one you no longer use, or an old entry left after signing in again. If it signs
+in again later, it comes back and is paired anew.
 
 ## Pages your agent publishes
 

@@ -51,6 +51,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0056 — An admin deletes a team](0056-an-admin-deletes-a-team.md) — the admin deletes a team with everyone in it, typing its name back.
 
 - [0059 — Account verification](0059-account-verification.md) — one policy covers personal sign-ins.
+- [0060 — Plugin tokens are revocable grants](0060-plugin-tokens-are-revocable-grants.md) — a kept token renews with use and signing out revokes it.
 
 The template:
 

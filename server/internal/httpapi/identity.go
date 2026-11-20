@@ -64,9 +64,9 @@ func (s *Server) identify(r *http.Request) (*caller, error) {
 	if token == "" {
 		return nil, nil
 	}
-	claims, err := s.Auth.Sealer.Open(purpose, token)
-	if err != nil {
-		return nil, nil
+	claims, _, err := s.openToken(r.Context(), purpose, token)
+	if err != nil || claims == nil {
+		return nil, err
 	}
 	user, err := s.Auth.DB.User.Get(r.Context(), claims.Sub)
 	if ent.IsNotFound(err) {
@@ -76,6 +76,27 @@ func (s *Server) identify(r *http.Request) (*caller, error) {
 		return nil, err
 	}
 	return &caller{user: user, via: claims.Via, bearer: bearer, issued: time.Unix(claims.Iat, 0)}, nil
+}
+
+// openToken is a sealed value's claims and when it stops opening, or nil
+// claims when it does not open. A plugin's or the app's token also needs its
+// grant (ADR 0060), and its use moves that grant's lapse on.
+func (s *Server) openToken(ctx context.Context, purpose auth.Purpose, token string) (*auth.Claims, time.Time, error) {
+	if purpose == auth.PluginBearer {
+		claims, lapses, err := s.Auth.OpenBearer(ctx, token)
+		if errors.Is(err, auth.ErrInvalidToken) {
+			return nil, time.Time{}, nil
+		}
+		if err != nil {
+			return nil, time.Time{}, err
+		}
+		return &claims, lapses, nil
+	}
+	claims, err := s.Auth.Sealer.Open(purpose, token)
+	if err != nil {
+		return nil, time.Time{}, nil
+	}
+	return &claims, time.Unix(claims.Exp, 0), nil
 }
 
 // requireUser is the caller, or 401. A browser session whose admin-set
@@ -111,7 +132,7 @@ func (s *Server) requirePlugin(r *http.Request) (*caller, error) {
 		return s.requireUser(r)
 	}
 	if _, err := s.Auth.Sealer.Open(auth.PluginBearer, token); err == nil {
-		return s.requireUser(r)
+		return s.requireUser(r) // which also holds it to its grant
 	}
 	if claims, err := s.Auth.Sealer.Open(auth.HostBearer, token); err == nil {
 		if claims.Team == "" {
@@ -338,9 +359,9 @@ func (s *Server) BearerIdentity(ctx context.Context, token string) (*edition.Ide
 func (s *Server) SameOrigin(r *http.Request) bool { return s.sameOrigin(r) }
 
 func (s *Server) open(ctx context.Context, purpose auth.Purpose, token string) (*edition.Identity, error) {
-	claims, err := s.Auth.Sealer.Open(purpose, token)
-	if err != nil {
-		return nil, nil
+	claims, lapses, err := s.openToken(ctx, purpose, token)
+	if err != nil || claims == nil {
+		return nil, err
 	}
 	user, err := s.Auth.DB.User.Get(ctx, claims.Sub)
 	if ent.IsNotFound(err) {
@@ -352,7 +373,7 @@ func (s *Server) open(ctx context.Context, purpose auth.Purpose, token string) (
 	// Each issuance seals a fresh randomized JWE. Fingerprinting the verified
 	// token also gives an existing login a stable ID without reissuing it.
 	digest := sha256.Sum256([]byte(token))
-	id := &edition.Identity{UserID: user.ID, Via: claims.Via, SessionID: hex.EncodeToString(digest[:]), SessionExpires: time.Unix(claims.Exp, 0), SessionIssued: time.Unix(claims.Iat, 0)}
+	id := &edition.Identity{UserID: user.ID, Via: claims.Via, SessionID: hex.EncodeToString(digest[:]), SessionExpires: lapses, Grant: claims.Grant, SessionIssued: time.Unix(claims.Iat, 0)}
 	if user.Email != nil {
 		id.Email = *user.Email
 	}

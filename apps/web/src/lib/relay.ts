@@ -130,13 +130,12 @@ export async function removeDevice(pairingId: string): Promise<void> {
 }
 
 /**
- * Forgets one of the member's own computers with every pairing to it (`DELETE /relay/hosts/{id}`): one no longer used,
- * or a record left by signing in again. The relay refuses a connected one (`host_online`), which would only be recorded
- * again. This browser forgets its own keys for that computer too; one that comes back is paired again.
+ * Signs one of the member's own computers out and forgets it with every pairing to it (`DELETE /relay/hosts/{id}`,
+ * ADR 0060), connected or not: one lost or no longer used, or a record left by signing in again. This browser forgets
+ * its own keys for that computer too; one that signs in again is paired again.
  */
 export async function removeComputer(account: string, host: MyComputer): Promise<void> {
   const response = await fetch(`/relay/hosts/${encodeURIComponent(host.id)}`, { method: 'DELETE', credentials: 'same-origin' });
-  if (response.status === 409) throw new Error('host_online');
   if (!response.ok && response.status !== 404) throw new Error(`remove computer: ${response.status}`);
   const keys = new BrowserKeys(account);
   for (const pairing of host.pairings) {

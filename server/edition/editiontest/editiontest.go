@@ -130,7 +130,7 @@ func (in *Instance) Member(teamID, userID string) {
 // Bearer is a token for the account, as the plugin and the app hold one.
 func (in *Instance) Bearer(userID string) string {
 	in.t.Helper()
-	token, _, err := in.srv.Auth.Sealer.Seal(auth.PluginBearer, auth.Claims{Sub: userID, Via: "password"}, auth.SessionTTL)
+	token, _, err := in.srv.Auth.IssueBearer(context.Background(), userID, "password")
 	if err != nil {
 		in.t.Fatal(err)
 	}

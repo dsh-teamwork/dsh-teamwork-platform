@@ -28,9 +28,12 @@ type Identity struct {
 	SessionID      string    `json:"-"`
 	SessionIssued  time.Time `json:"-"`
 	SessionExpires time.Time `json:"-"`
-	UserID         string
-	Email          string
-	Via            string
+	// Grant is the plugin_grants row a plugin's or the app's Bearer names
+	// (ADR 0060); empty for a browser session.
+	Grant  string `json:"-"`
+	UserID string
+	Email  string
+	Via    string
 }
 
 // User is an account, as an operator lists it.

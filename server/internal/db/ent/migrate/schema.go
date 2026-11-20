@@ -490,6 +490,35 @@ var (
 			},
 		},
 	}
+	// PluginGrantsColumns holds the columns for the "plugin_grants" table.
+	PluginGrantsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "via", Type: field.TypeString, Size: 32},
+		{Name: "used_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+	}
+	// PluginGrantsTable holds the schema information for the "plugin_grants" table.
+	PluginGrantsTable = &schema.Table{
+		Name:       "plugin_grants",
+		Columns:    PluginGrantsColumns,
+		PrimaryKey: []*schema.Column{PluginGrantsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "plugin_grants_users_plugin_grants",
+				Columns:    []*schema.Column{PluginGrantsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "plugingrant_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{PluginGrantsColumns[4]},
+			},
+		},
+	}
 	// RateWindowsColumns holds the columns for the "rate_windows" table.
 	RateWindowsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -514,6 +543,7 @@ var (
 		{Name: "dsh_version", Type: field.TypeString, Size: 160},
 		{Name: "os", Type: field.TypeEnum, Nullable: true, Enums: []string{"macos", "windows", "linux"}},
 		{Name: "last_seen_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "grant_id", Type: field.TypeString, Nullable: true, Size: 32},
 	}
 	// RelayHostsTable holds the schema information for the "relay_hosts" table.
 	RelayHostsTable = &schema.Table{
@@ -923,6 +953,7 @@ var (
 		PageMembersTable,
 		PageVersionsTable,
 		PasswordsTable,
+		PluginGrantsTable,
 		RateWindowsTable,
 		RelayHostsTable,
 		RelayPairingsTable,
@@ -1008,6 +1039,11 @@ func init() {
 	}
 	PasswordsTable.ForeignKeys[0].RefTable = UsersTable
 	PasswordsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	PluginGrantsTable.ForeignKeys[0].RefTable = UsersTable
+	PluginGrantsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

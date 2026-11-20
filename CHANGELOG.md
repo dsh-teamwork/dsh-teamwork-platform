@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — Plugin and app tokens are revocable grants that renew with use
+
+- **What:** `POST /api/auth/plugin/token` records a row in the new `plugin_grants` table and seals its id into the token. The token opens only while its grant exists and was used within 30 days, and for at most a year; each use renews it, at most once an hour. `DELETE /api/auth/plugin/token` revokes the Bearer it is sent with. `expiresAt` in the exchange is now when the token lapses if unused. The plugin keeps its token across restarts. `relay_hosts.grant_id` records the sign-in each computer connected with, and the console's **Remove this computer** (`DELETE /relay/hosts/{id}`) now signs a computer out and works while it is connected; it no longer answers `409 host_online`. `edition.Identity` carries `Grant`.
+- **Why:** The plugin asked its member to sign in after every DSH restart, because a token kept on disk could not be revoked.
+- **Breaking:** Every plugin and app token minted before this opens nothing; each signs in once more.
+- **Upgrade:** Migration `plugin_grants` (applied at start). Nothing else.
+- **Refs:** ADR 0060, `server/internal/auth/auth.go`, `server/internal/httpapi/identity.go`, `server/relay/relay.go`, `apps/web/src/pages/team/my-dsh.tsx`, `api/openapi.yaml`.
+
 ## 2026-11-20 — Optional verification before web sessions and phone handoffs
 
 - **What:** Editions can require user verification on a new browser login or a phone's PKCE handoff. A pending phone login is scoped to its challenge. Edition identities include a per-login identifier and expiry, and extensions can revoke grants when the user signs out.

@@ -42,9 +42,96 @@ func TestHandoffTradesForBearer(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		c, err := s.Sealer.Open(auth.PluginBearer, token)
-		if err != nil || c.Sub != userID || c.Via != "google" {
-			t.Fatalf("bearer claims %+v, %v; want sub %s via google", c, err, userID)
+		c, _, err := s.OpenBearer(ctx, token)
+		if err != nil || c.Sub != userID || c.Via != "google" || c.Grant == "" {
+			t.Fatalf("bearer claims %+v, %v; want sub %s via google with a grant", c, err, userID)
+		}
+	})
+}
+
+// A token lapses a GrantIdle after its last use, not after its sign-in, so a
+// DSH in daily use never has to sign in again — up to GrantMaxTTL (ADR 0060).
+func TestBearerLapsesOnlyWhenUnused(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		ctx := context.Background()
+		c := newClock()
+		s := newService(d, c)
+		userID, code := handoff(t, s, d)
+		token, lapses, err := s.RedeemHandoff(ctx, code, verifier)
+		if err != nil || !lapses.Equal(c.Now().Add(auth.GrantIdle)) {
+			t.Fatalf("lapses %v, %v", lapses, err)
+		}
+		for range 3 {
+			c.Advance(auth.GrantIdle - time.Second)
+			if _, lapses, err = s.OpenBearer(ctx, token); err != nil || !lapses.Equal(c.Now().Add(auth.GrantIdle)) {
+				t.Fatalf("a token in use lapsed: %v, %v", lapses, err)
+			}
+		}
+		c.Advance(auth.GrantIdle)
+		if _, _, err := s.OpenBearer(ctx, token); !errors.Is(err, auth.ErrInvalidToken) {
+			t.Fatalf("a token unused for GrantIdle opened: %v", err)
+		}
+
+		// However often it is used, no token outlives GrantMaxTTL.
+		token, _, err = s.IssueBearer(ctx, userID, "google")
+		if err != nil {
+			t.Fatal(err)
+		}
+		for used := time.Duration(0); used+auth.GrantIdle/2 < auth.GrantMaxTTL; used += auth.GrantIdle / 2 {
+			c.Advance(auth.GrantIdle / 2)
+			if _, _, err := s.OpenBearer(ctx, token); err != nil {
+				t.Fatalf("lapsed after %v: %v", used, err)
+			}
+		}
+		c.Advance(auth.GrantIdle / 2)
+		if _, _, err := s.OpenBearer(ctx, token); !errors.Is(err, auth.ErrInvalidToken) {
+			t.Fatalf("a token opened past GrantMaxTTL: %v", err)
+		}
+	})
+}
+
+// Revoking a token closes it at once, and only it: the same account's other
+// DSHs stay signed in.
+func TestRevokedBearerDoesNotOpen(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		ctx := context.Background()
+		s := newService(d, newClock())
+		userID, _ := handoff(t, s, d)
+		one, _, err := s.IssueBearer(ctx, userID, "google")
+		if err != nil {
+			t.Fatal(err)
+		}
+		other, _, err := s.IssueBearer(ctx, userID, "google")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.RevokeBearer(ctx, one); err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := s.OpenBearer(ctx, one); !errors.Is(err, auth.ErrInvalidToken) {
+			t.Fatalf("a revoked token opened: %v", err)
+		}
+		if _, _, err := s.OpenBearer(ctx, other); err != nil {
+			t.Fatalf("revoking one token closed another: %v", err)
+		}
+		if err := s.RevokeBearer(ctx, one); err != nil {
+			t.Fatalf("revoking twice: %v", err)
+		}
+	})
+}
+
+// A token sealed without a grant — every token from before ADR 0060 — opens
+// nothing, however long its seal has left.
+func TestBearerWithoutGrantDoesNotOpen(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		s := newService(d, newClock())
+		userID, _ := handoff(t, s, d)
+		token, _, err := s.Sealer.Seal(auth.PluginBearer, auth.Claims{Sub: userID, Via: "google"}, auth.GrantIdle)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := s.OpenBearer(context.Background(), token); !errors.Is(err, auth.ErrInvalidToken) {
+			t.Fatalf("a token without a grant opened: %v", err)
 		}
 	})
 }

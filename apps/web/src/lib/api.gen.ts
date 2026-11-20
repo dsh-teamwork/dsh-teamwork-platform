@@ -263,7 +263,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Trade a code and the plugin's PKCE verifier for a 30-day Bearer token */
+        /** Trade a code and the plugin's PKCE verifier for a Bearer token that lapses after 30 days unused (ADR 0060) */
         post: {
             parameters: {
                 query?: never;
@@ -288,7 +288,10 @@ export interface paths {
                     content: {
                         "application/json": {
                             token: string;
-                            /** Format: date-time */
+                            /**
+                             * Format: date-time
+                             * @description When the token lapses if it is not used; every use moves this on, up to a year from sign-in
+                             */
                             expiresAt: string;
                         };
                     };
@@ -297,7 +300,25 @@ export interface paths {
                 401: components["responses"]["Error"];
             };
         };
-        delete?: never;
+        /** Sign out a plugin or the app; the Bearer sent opens nothing from now on */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Revoked, or the token already opened nothing */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -3841,7 +3862,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Forget one of the member's own computers with every pairing to it, once it is offline; a connected one is host_online (the web console only) */
+        /** Sign one of the member's own computers out and forget it with every pairing to it, connected or not (ADR 0060; the web console only) */
         delete: {
             parameters: {
                 query?: never;
@@ -3853,7 +3874,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Deleted */
+                /** @description Signed out and deleted */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -3863,7 +3884,6 @@ export interface paths {
                 401: components["responses"]["Error"];
                 403: components["responses"]["Error"];
                 404: components["responses"]["Error"];
-                409: components["responses"]["Error"];
             };
         };
         options?: never;

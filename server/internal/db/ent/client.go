@@ -31,6 +31,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
@@ -87,6 +88,8 @@ type Client struct {
 	PageVersion *PageVersionClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
+	// PluginGrant is the client for interacting with the PluginGrant builders.
+	PluginGrant *PluginGrantClient
 	// RateWindow is the client for interacting with the RateWindow builders.
 	RateWindow *RateWindowClient
 	// RelayHost is the client for interacting with the RelayHost builders.
@@ -144,6 +147,7 @@ func (c *Client) init() {
 	c.PageMember = NewPageMemberClient(c.config)
 	c.PageVersion = NewPageVersionClient(c.config)
 	c.Password = NewPasswordClient(c.config)
+	c.PluginGrant = NewPluginGrantClient(c.config)
 	c.RateWindow = NewRateWindowClient(c.config)
 	c.RelayHost = NewRelayHostClient(c.config)
 	c.RelayPairing = NewRelayPairingClient(c.config)
@@ -267,6 +271,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		PageMember:           NewPageMemberClient(cfg),
 		PageVersion:          NewPageVersionClient(cfg),
 		Password:             NewPasswordClient(cfg),
+		PluginGrant:          NewPluginGrantClient(cfg),
 		RateWindow:           NewRateWindowClient(cfg),
 		RelayHost:            NewRelayHostClient(cfg),
 		RelayPairing:         NewRelayPairingClient(cfg),
@@ -317,6 +322,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		PageMember:           NewPageMemberClient(cfg),
 		PageVersion:          NewPageVersionClient(cfg),
 		Password:             NewPasswordClient(cfg),
+		PluginGrant:          NewPluginGrantClient(cfg),
 		RateWindow:           NewRateWindowClient(cfg),
 		RelayHost:            NewRelayHostClient(cfg),
 		RelayPairing:         NewRelayPairingClient(cfg),
@@ -364,10 +370,10 @@ func (c *Client) Use(hooks ...Hook) {
 		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
 		c.Membership, c.ModelRate, c.Page, c.PageFile, c.PageMember, c.PageVersion,
-		c.Password, c.RateWindow, c.RelayHost, c.RelayPairing, c.RelayPairingOffer,
-		c.ResourceArtifact, c.ResourceSubmission, c.SharedArchiveSegment, c.SharedHost,
-		c.SharedHostMember, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest,
-		c.User, c.VerificationCode,
+		c.Password, c.PluginGrant, c.RateWindow, c.RelayHost, c.RelayPairing,
+		c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
+		c.SharedArchiveSegment, c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -380,10 +386,10 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
 		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
 		c.Membership, c.ModelRate, c.Page, c.PageFile, c.PageMember, c.PageVersion,
-		c.Password, c.RateWindow, c.RelayHost, c.RelayPairing, c.RelayPairingOffer,
-		c.ResourceArtifact, c.ResourceSubmission, c.SharedArchiveSegment, c.SharedHost,
-		c.SharedHostMember, c.Team, c.TeamConfig, c.TeamProvider, c.UsageRequest,
-		c.User, c.VerificationCode,
+		c.Password, c.PluginGrant, c.RateWindow, c.RelayHost, c.RelayPairing,
+		c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission,
+		c.SharedArchiveSegment, c.SharedHost, c.SharedHostMember, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -424,6 +430,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PageVersion.mutate(ctx, m)
 	case *PasswordMutation:
 		return c.Password.mutate(ctx, m)
+	case *PluginGrantMutation:
+		return c.PluginGrant.mutate(ctx, m)
 	case *RateWindowMutation:
 		return c.RateWindow.mutate(ctx, m)
 	case *RelayHostMutation:
@@ -2667,6 +2675,155 @@ func (c *PasswordClient) mutate(ctx context.Context, m *PasswordMutation) (Value
 	}
 }
 
+// PluginGrantClient is a client for the PluginGrant schema.
+type PluginGrantClient struct {
+	config
+}
+
+// NewPluginGrantClient returns a client for the PluginGrant from the given config.
+func NewPluginGrantClient(c config) *PluginGrantClient {
+	return &PluginGrantClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `plugingrant.Hooks(f(g(h())))`.
+func (c *PluginGrantClient) Use(hooks ...Hook) {
+	c.hooks.PluginGrant = append(c.hooks.PluginGrant, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `plugingrant.Intercept(f(g(h())))`.
+func (c *PluginGrantClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PluginGrant = append(c.inters.PluginGrant, interceptors...)
+}
+
+// Create returns a builder for creating a PluginGrant entity.
+func (c *PluginGrantClient) Create() *PluginGrantCreate {
+	mutation := newPluginGrantMutation(c.config, OpCreate)
+	return &PluginGrantCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PluginGrant entities.
+func (c *PluginGrantClient) CreateBulk(builders ...*PluginGrantCreate) *PluginGrantCreateBulk {
+	return &PluginGrantCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PluginGrantClient) MapCreateBulk(slice any, setFunc func(*PluginGrantCreate, int)) *PluginGrantCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PluginGrantCreateBulk{err: fmt.Errorf("calling to PluginGrantClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PluginGrantCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PluginGrantCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PluginGrant.
+func (c *PluginGrantClient) Update() *PluginGrantUpdate {
+	mutation := newPluginGrantMutation(c.config, OpUpdate)
+	return &PluginGrantUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PluginGrantClient) UpdateOne(_m *PluginGrant) *PluginGrantUpdateOne {
+	mutation := newPluginGrantMutation(c.config, OpUpdateOne, withPluginGrant(_m))
+	return &PluginGrantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PluginGrantClient) UpdateOneID(id string) *PluginGrantUpdateOne {
+	mutation := newPluginGrantMutation(c.config, OpUpdateOne, withPluginGrantID(id))
+	return &PluginGrantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PluginGrant.
+func (c *PluginGrantClient) Delete() *PluginGrantDelete {
+	mutation := newPluginGrantMutation(c.config, OpDelete)
+	return &PluginGrantDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PluginGrantClient) DeleteOne(_m *PluginGrant) *PluginGrantDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PluginGrantClient) DeleteOneID(id string) *PluginGrantDeleteOne {
+	builder := c.Delete().Where(plugingrant.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PluginGrantDeleteOne{builder}
+}
+
+// Query returns a query builder for PluginGrant.
+func (c *PluginGrantClient) Query() *PluginGrantQuery {
+	return &PluginGrantQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePluginGrant},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PluginGrant entity by its id.
+func (c *PluginGrantClient) Get(ctx context.Context, id string) (*PluginGrant, error) {
+	return c.Query().Where(plugingrant.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PluginGrantClient) GetX(ctx context.Context, id string) *PluginGrant {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a PluginGrant.
+func (c *PluginGrantClient) QueryUser(_m *PluginGrant) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plugingrant.Table, plugingrant.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, plugingrant.UserTable, plugingrant.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PluginGrantClient) Hooks() []Hook {
+	return c.hooks.PluginGrant
+}
+
+// Interceptors returns the client interceptors.
+func (c *PluginGrantClient) Interceptors() []Interceptor {
+	return c.inters.PluginGrant
+}
+
+func (c *PluginGrantClient) mutate(ctx context.Context, m *PluginGrantMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PluginGrantCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PluginGrantUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PluginGrantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PluginGrantDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PluginGrant mutation op: %q", m.Op())
+	}
+}
+
 // RateWindowClient is a client for the RateWindow schema.
 type RateWindowClient struct {
 	config
@@ -4648,6 +4805,22 @@ func (c *UserClient) QueryMemberships(_m *User) *MembershipQuery {
 	return query
 }
 
+// QueryPluginGrants queries the plugin_grants edge of a User.
+func (c *UserClient) QueryPluginGrants(_m *User) *PluginGrantQuery {
+	query := (&PluginGrantClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(plugingrant.Table, plugingrant.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PluginGrantsTable, user.PluginGrantsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -4811,18 +4984,19 @@ type (
 	hooks struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
 		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate, Page,
-		PageFile, PageMember, PageVersion, Password, RateWindow, RelayHost,
-		RelayPairing, RelayPairingOffer, ResourceArtifact, ResourceSubmission,
-		SharedArchiveSegment, SharedHost, SharedHostMember, Team, TeamConfig,
-		TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
+		PageFile, PageMember, PageVersion, Password, PluginGrant, RateWindow,
+		RelayHost, RelayPairing, RelayPairingOffer, ResourceArtifact,
+		ResourceSubmission, SharedArchiveSegment, SharedHost, SharedHostMember, Team,
+		TeamConfig, TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
 		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
 		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate, Page,
-		PageFile, PageMember, PageVersion, Password, RateWindow, RelayHost,
-		RelayPairing, RelayPairingOffer, ResourceArtifact, ResourceSubmission,
-		SharedArchiveSegment, SharedHost, SharedHostMember, Team, TeamConfig,
-		TeamProvider, UsageRequest, User, VerificationCode []ent.Interceptor
+		PageFile, PageMember, PageVersion, Password, PluginGrant, RateWindow,
+		RelayHost, RelayPairing, RelayPairingOffer, ResourceArtifact,
+		ResourceSubmission, SharedArchiveSegment, SharedHost, SharedHostMember, Team,
+		TeamConfig, TeamProvider, UsageRequest, User,
+		VerificationCode []ent.Interceptor
 	}
 )
 

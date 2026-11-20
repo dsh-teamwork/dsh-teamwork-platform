@@ -458,10 +458,13 @@ no person, an hour, on the same two routes, and its calls are the team's
 browser takes a two-minute code bound to that PKCE challenge back to the plugin
 (`docs/adr/0012-the-plugin-gets-its-code-back-on-loopback.md`). The code also
 stays on screen to paste (`/teamwork authorize <code>`). The plugin trades code
-and verifier at `POST /api/auth/plugin/token` for a 30-day Bearer token. A
-session or token **cannot be revoked before it expires** — the price of
-having no session table, chosen deliberately; team access is still re-checked
-on every request. The phone app adds `&redirect_uri=dshteamwork://sign-in`,
+and verifier at `POST /api/auth/plugin/token` for a Bearer token that names
+a row in `plugin_grants` (`docs/adr/0060-plugin-tokens-are-revocable-grants.md`):
+it lapses after 30 days unused, every use renews it, none outlives a year, and
+`DELETE` on the same route revokes it. The plugin keeps it beside its cache, so
+a restart stays signed in. A browser session **cannot be revoked before it
+expires** — the price of having no session table, chosen deliberately; team
+access is still re-checked on every request. The phone app adds `&redirect_uri=dshteamwork://sign-in`,
 which every server accepts with no setting, and after the same confirmation
 the code goes back to it instead of being shown
 (`docs/adr/0046-every-server-sends-the-app-its-code.md`).

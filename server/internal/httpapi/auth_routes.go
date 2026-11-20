@@ -261,3 +261,14 @@ func (s *Server) pluginToken(w http.ResponseWriter, r *http.Request) error {
 	writeJSON(w, http.StatusOK, map[string]string{"token": token, "expiresAt": team.Time(exp)})
 	return nil
 }
+
+// revokePluginToken is signing out of a plugin or the app: the Bearer sent
+// opens nothing from now on (ADR 0060). It answers 204 whether or not the
+// token still opened, so it tells a caller nothing about one.
+func (s *Server) revokePluginToken(w http.ResponseWriter, r *http.Request) error {
+	if err := s.Auth.RevokeBearer(r.Context(), bearerToken(r.Header.Get("Authorization"))); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}

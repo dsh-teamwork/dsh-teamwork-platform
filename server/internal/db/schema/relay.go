@@ -38,6 +38,8 @@ func (created) Annotations() []schema.Annotation {
 // beside its cache, so one computer stays one host across restarts; it is
 // unique per member only, since a plugin chooses it. os is the computer's
 // operating system as its plugin reports it; null from a plugin too old to.
+// grant_id is the sign-in it last connected with (ADR 0060), so removing the
+// computer from the console signs it out; null for one not seen since.
 type RelayHost struct{ ent.Schema }
 
 func (RelayHost) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
@@ -49,6 +51,7 @@ func (RelayHost) Fields() []ent.Field {
 		field.String("dsh_version").MaxLen(runes(40)),
 		field.Enum("os").Values("macos", "windows", "linux").Optional().Nillable(),
 		field.Time("last_seen_at").SchemaType(mysqlTime),
+		field.String("grant_id").Optional().Nillable().MaxLen(32),
 	}
 }
 func (RelayHost) Indexes() []ent.Index {

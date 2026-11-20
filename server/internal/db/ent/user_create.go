@@ -15,6 +15,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
 )
 
@@ -171,6 +172,21 @@ func (_c *UserCreate) AddMemberships(v ...*Membership) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddMembershipIDs(ids...)
+}
+
+// AddPluginGrantIDs adds the "plugin_grants" edge to the PluginGrant entity by IDs.
+func (_c *UserCreate) AddPluginGrantIDs(ids ...string) *UserCreate {
+	_c.mutation.AddPluginGrantIDs(ids...)
+	return _c
+}
+
+// AddPluginGrants adds the "plugin_grants" edges to the PluginGrant entity.
+func (_c *UserCreate) AddPluginGrants(v ...*PluginGrant) *UserCreate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPluginGrantIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -351,6 +367,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.PluginGrantsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PluginGrantsTable,
+			Columns: []string{user.PluginGrantsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugingrant.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

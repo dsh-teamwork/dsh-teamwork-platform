@@ -14,6 +14,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/predicate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/user"
 )
@@ -167,6 +168,21 @@ func (_u *UserUpdate) AddMemberships(v ...*Membership) *UserUpdate {
 	return _u.AddMembershipIDs(ids...)
 }
 
+// AddPluginGrantIDs adds the "plugin_grants" edge to the PluginGrant entity by IDs.
+func (_u *UserUpdate) AddPluginGrantIDs(ids ...string) *UserUpdate {
+	_u.mutation.AddPluginGrantIDs(ids...)
+	return _u
+}
+
+// AddPluginGrants adds the "plugin_grants" edges to the PluginGrant entity.
+func (_u *UserUpdate) AddPluginGrants(v ...*PluginGrant) *UserUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPluginGrantIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -218,6 +234,27 @@ func (_u *UserUpdate) RemoveMemberships(v ...*Membership) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveMembershipIDs(ids...)
+}
+
+// ClearPluginGrants clears all "plugin_grants" edges to the PluginGrant entity.
+func (_u *UserUpdate) ClearPluginGrants() *UserUpdate {
+	_u.mutation.ClearPluginGrants()
+	return _u
+}
+
+// RemovePluginGrantIDs removes the "plugin_grants" edge to PluginGrant entities by IDs.
+func (_u *UserUpdate) RemovePluginGrantIDs(ids ...string) *UserUpdate {
+	_u.mutation.RemovePluginGrantIDs(ids...)
+	return _u
+}
+
+// RemovePluginGrants removes "plugin_grants" edges to PluginGrant entities.
+func (_u *UserUpdate) RemovePluginGrants(v ...*PluginGrant) *UserUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePluginGrantIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -440,6 +477,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.PluginGrantsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PluginGrantsTable,
+			Columns: []string{user.PluginGrantsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugingrant.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPluginGrantsIDs(); len(nodes) > 0 && !_u.mutation.PluginGrantsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PluginGrantsTable,
+			Columns: []string{user.PluginGrantsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugingrant.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PluginGrantsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PluginGrantsTable,
+			Columns: []string{user.PluginGrantsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugingrant.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -597,6 +679,21 @@ func (_u *UserUpdateOne) AddMemberships(v ...*Membership) *UserUpdateOne {
 	return _u.AddMembershipIDs(ids...)
 }
 
+// AddPluginGrantIDs adds the "plugin_grants" edge to the PluginGrant entity by IDs.
+func (_u *UserUpdateOne) AddPluginGrantIDs(ids ...string) *UserUpdateOne {
+	_u.mutation.AddPluginGrantIDs(ids...)
+	return _u
+}
+
+// AddPluginGrants adds the "plugin_grants" edges to the PluginGrant entity.
+func (_u *UserUpdateOne) AddPluginGrants(v ...*PluginGrant) *UserUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPluginGrantIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -648,6 +745,27 @@ func (_u *UserUpdateOne) RemoveMemberships(v ...*Membership) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveMembershipIDs(ids...)
+}
+
+// ClearPluginGrants clears all "plugin_grants" edges to the PluginGrant entity.
+func (_u *UserUpdateOne) ClearPluginGrants() *UserUpdateOne {
+	_u.mutation.ClearPluginGrants()
+	return _u
+}
+
+// RemovePluginGrantIDs removes the "plugin_grants" edge to PluginGrant entities by IDs.
+func (_u *UserUpdateOne) RemovePluginGrantIDs(ids ...string) *UserUpdateOne {
+	_u.mutation.RemovePluginGrantIDs(ids...)
+	return _u
+}
+
+// RemovePluginGrants removes "plugin_grants" edges to PluginGrant entities.
+func (_u *UserUpdateOne) RemovePluginGrants(v ...*PluginGrant) *UserUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePluginGrantIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -893,6 +1011,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PluginGrantsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PluginGrantsTable,
+			Columns: []string{user.PluginGrantsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugingrant.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPluginGrantsIDs(); len(nodes) > 0 && !_u.mutation.PluginGrantsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PluginGrantsTable,
+			Columns: []string{user.PluginGrantsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugingrant.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PluginGrantsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PluginGrantsTable,
+			Columns: []string{user.PluginGrantsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugingrant.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
