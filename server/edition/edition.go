@@ -24,9 +24,13 @@ import (
 // Identity is who a request or a token is: the account, its email, and the
 // door the session came through ("google", "email" or "password").
 type Identity struct {
-	UserID string
-	Email  string
-	Via    string
+	// SessionID identifies exactly this login, including credentials issued before
+	// editions used session-bound grants. Neither field is a client credential.
+	SessionID      string    `json:"-"`
+	SessionExpires time.Time `json:"-"`
+	UserID         string
+	Email          string
+	Via            string
 }
 
 // User is an account, as an operator lists it.

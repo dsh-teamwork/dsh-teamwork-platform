@@ -2,6 +2,8 @@ package httpapi
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"net/url"
@@ -257,7 +259,10 @@ func (s *Server) open(ctx context.Context, purpose auth.Purpose, token string) (
 	if err != nil {
 		return nil, err
 	}
-	id := &edition.Identity{UserID: user.ID, Via: claims.Via}
+	// Each issuance seals a fresh randomized JWE. Fingerprinting the verified
+	// token also gives an existing login a stable ID without reissuing it.
+	digest := sha256.Sum256([]byte(token))
+	id := &edition.Identity{UserID: user.ID, Via: claims.Via, SessionID: hex.EncodeToString(digest[:]), SessionExpires: time.Unix(claims.Exp, 0)}
 	if user.Email != nil {
 		id.Email = *user.Email
 	}
