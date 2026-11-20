@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — A MiniMax stream settles without `[DONE]`
+
+- **What:** The gateway's usage observer counts a streamed response as complete when transport EOF follows its usage frame, as well as when it ends with `[DONE]`. A frame after the usage without `[DONE]` still leaves the call pending.
+- **Why:** MiniMax ends its stream on the usage frame and sends no `[DONE]`, so every streamed MiniMax call, which is every call from DSH, stayed pending with its budget hold kept.
+- **Breaking:** None.
+- **Upgrade:** Nothing. Calls already pending stay so until an admin resolves them.
+- **Refs:** `server/internal/usage/observe.go`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-20 — The models page lists the team's models first, and "Add provider" is "BYOK model service"
 
 - **What:** A team's models page shows its team models first, then the connected BYOK model services under their own heading. "Add provider" is now "BYOK model service". An edition's models (`EditionModels`, `mountWeb`'s `models`) are an action in the page header beside it, no longer a section above the list.

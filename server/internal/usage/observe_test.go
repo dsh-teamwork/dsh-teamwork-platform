@@ -29,6 +29,21 @@ func TestProviderUsageAcrossStreamBoundaries(t *testing.T) {
 	}
 }
 
+// MiniMax closes its stream on the usage frame and sends no [DONE].
+func TestUsageAsTheLastFrameCompletesAStream(t *testing.T) {
+	body := "data: {\"id\":\"call-1\",\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{\"role\":\"assistant\"}}],\"usage\":null}\n\n" +
+		"data: {\"id\":\"call-1\",\"choices\":[],\"usage\":{\"total_tokens\":203,\"prompt_tokens\":200,\"completion_tokens\":3,\"completion_tokens_details\":{\"reasoning_tokens\":0},\"prompt_tokens_details\":{\"cached_tokens\":199}}}\n\n"
+	for _, step := range []int{1, 7, 4096} {
+		r := observe(body, true, true, step)
+		if !r.Known || !r.Complete || r.Invalid || r.Tokens != (Tokens{Input: 200, CacheRead: 199, Output: 3}) {
+			t.Fatalf("step %d: %+v", step, r)
+		}
+		if r := observe(body, true, false, step); r.Complete {
+			t.Fatalf("step %d: a read failure is not a complete response: %+v", step, r)
+		}
+	}
+}
+
 func TestJSONAndOpenAIUsage(t *testing.T) {
 	body := `{"id":"call-1","usage":{"prompt_tokens":2000,"completion_tokens":1000,"prompt_tokens_details":{"cached_tokens":1000},"completion_tokens_details":{"reasoning_tokens":400}}}`
 	r := observe(body, false, true, 1)
@@ -54,8 +69,11 @@ func TestMissingInvalidAndInterruptedUsageAreNotZeroSuccess(t *testing.T) {
 		}
 	}
 	body := "data: {\"usage\":" + deepSeekUsage + "}\n\n"
-	if r := observe(body, true, true, 1); !r.Known || r.Complete {
-		t.Fatalf("missing terminal marker: %+v", r)
+	if r := observe(body+"data: {\"choices\":[{\"delta\":{\"content\":\"more\"}}]}\n\n", true, true, 1); !r.Known || r.Complete {
+		t.Fatalf("a frame after the usage, with no terminal marker: %+v", r)
+	}
+	if r := observe("data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n", true, true, 1); r.Known || r.Complete {
+		t.Fatalf("a stream with no usage: %+v", r)
 	}
 	if r := observe(body+"data: [DONE]\n\n", true, false, 7); r.Complete {
 		t.Fatalf("read failure is not a complete response: %+v", r)

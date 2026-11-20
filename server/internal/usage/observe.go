@@ -31,6 +31,9 @@ type Observer struct {
 	data   []byte
 	result Observation
 	done   bool
+	// last is whether the latest frame carried the usage: a stream that closes
+	// cleanly right after it has said everything it bills, [DONE] or not.
+	last bool
 }
 
 func NewObserver(stream bool) *Observer { return &Observer{stream: stream} }
@@ -95,18 +98,22 @@ func (o *Observer) event() {
 	if bytes.Equal(data, []byte("[DONE]")) {
 		o.done = true
 	} else {
+		known := o.result.Known
 		o.decode(data)
+		o.last = o.result.Known && !known
 	}
 	o.data = o.data[:0]
 }
 
-// Finish requires transport EOF and, for SSE, the terminal marker. Even valid
-// totals from a truncated response are retained only as pending evidence.
+// Finish requires transport EOF and, for SSE, the terminal marker or the usage
+// as the last frame: MiniMax ends a stream on its usage frame, with no [DONE].
+// Even valid totals from a truncated response are retained only as pending
+// evidence, so a frame after the usage without [DONE] leaves the call pending.
 func (o *Observer) Finish(eof bool) Observation {
 	if !o.stream && eof && !o.result.Invalid {
 		o.decode(o.data)
 	}
-	o.result.Complete = eof && !o.result.Invalid && (!o.stream || o.done)
+	o.result.Complete = eof && !o.result.Invalid && (!o.stream || o.done || o.last)
 	return o.result
 }
 
