@@ -93,7 +93,7 @@ interface Props {
 function Models({ team, configs, providers, reload }: Props) {
   const t = useTranslations('team.models');
   // Set once before the first render (mountWeb), so it is the same component on every render.
-  const editionSection = editionModels();
+  const editionAction = editionModels();
   const models = configs.filter((c): c is ModelConfig => c.kind === 'model');
   const providerOf = (m: ModelConfig) => providers.find((p) => p.name === m.data.provider);
   const referenceOf = (m: ModelConfig) => catalogEntry(providerOf(m)?.baseUrl ?? '')?.id ?? m.data.provider;
@@ -107,25 +107,19 @@ function Models({ team, configs, providers, reload }: Props) {
         title={t('title')}
         description={t('description')}
         action={
-          <Button onClick={() => setAdding(true)}>
-            <Plus />
-            {t('addProvider')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {/* Keyed by the team's models, so the edition reads its own list again when one is added or removed here. */}
+            {editionAction && createElement(editionAction, { key: models.map((m) => m.id).join(), teamId: team.id, reload })}
+            {/* Beside an edition's own models, bringing a key is the second way in. */}
+            <Button variant={editionAction ? 'outline' : 'default'} onClick={() => setAdding(true)}>
+              <Plus />
+              {t('addProvider')}
+            </Button>
+          </div>
         }
       />
 
-      {/* Keyed by the team's models, so the section reads its own list again when one is added or removed here. */}
-      {editionSection && createElement(editionSection, { key: models.map((m) => m.id).join(), teamId: team.id, reload })}
-
       <UnpricedNotice teamId={team.id} models={models} referenceOf={referenceOf} reload={reload} />
-
-      {providers.length > 0 && (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {providers.map((p) => (
-            <ProviderCard key={p.id} teamId={team.id} reload={reload} provider={p} count={models.filter((m) => m.data.provider === p.name).length} onAddModels={() => setAdding(p)} />
-          ))}
-        </ul>
-      )}
 
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b px-4 py-3">
@@ -162,6 +156,19 @@ function Models({ team, configs, providers, reload }: Props) {
           </div>
         )}
       </Card>
+
+      {providers.length > 0 && (
+        <section className="flex flex-col gap-3" aria-labelledby="byok-services">
+          <h2 id="byok-services" className="text-sm font-semibold">
+            {t('byokTitle')}
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {providers.map((p) => (
+              <ProviderCard key={p.id} teamId={team.id} reload={reload} provider={p} count={models.filter((m) => m.data.provider === p.name).length} onAddModels={() => setAdding(p)} />
+            ))}
+          </ul>
+        </section>
+      )}
 
       {adding && (
         <ConnectDialog

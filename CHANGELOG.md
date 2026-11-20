@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — The models page lists the team's models first, and "Add provider" is "BYOK model service"
+
+- **What:** A team's models page shows its team models first, then the connected BYOK model services under their own heading. "Add provider" is now "BYOK model service". An edition's models (`EditionModels`, `mountWeb`'s `models`) are an action in the page header beside it, no longer a section above the list.
+- **Why:** Admins came to the page for the team's models and met the edition's catalogue first; and the button did not say that it is for bringing your own key.
+- **Breaking:** An edition's `models` component now renders in the header: a button that opens its own list, not a full-width section.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/models.tsx`, `apps/web/src/lib/edition.ts`, `apps/web/content/docs/*/admins.md`.
+
 ## 2026-11-20 — A hosted model can be marked offline in every team that has it
 
 - **What:** `edition.OwnedModel` gains `Offline`. Published with it, a hosted model stays in each team's configuration, marked `"offline": true` in its `data` under a new version; published without it, the mark goes. The console's models page labels an offline model. An admin's own model with `offline` is refused (400).

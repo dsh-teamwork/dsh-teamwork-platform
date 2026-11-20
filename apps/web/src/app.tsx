@@ -99,7 +99,7 @@ export interface WebExtension {
   routes?: RouteObject[];
   /** Pages inside a team's console, listed in its navigation. */
   teamPages?: TeamPage[];
-  /** Models the edition supplies, offered first on a team's models page (`EditionModels`). */
+  /** Models the edition supplies, offered from the team's models page header (`EditionModels`). */
   models?: EditionModels;
   security?: EditionSecurity;
 }
