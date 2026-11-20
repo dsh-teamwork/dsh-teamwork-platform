@@ -2,7 +2,10 @@ package httpapi
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
+
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
@@ -12,8 +15,10 @@ import (
 // SessionView is GET /api/auth/session: who is signed in, if anyone, and the
 // doors this instance offers.
 type SessionView struct {
-	User  *SessionUser `json:"user"`
-	Doors struct {
+	AppChallenge        string       `json:"appChallenge,omitempty"`
+	PendingVerification bool         `json:"pendingVerification,omitempty"`
+	User                *SessionUser `json:"user"`
+	Doors               struct {
 		Password  bool `json:"password"`
 		EmailCode bool `json:"emailCode"`
 		Google    bool `json:"google"`
@@ -39,6 +44,15 @@ func (s *Server) session(w http.ResponseWriter, r *http.Request) error {
 	v.Doors.EmailCode = !s.Config.Passwords()
 	v.Doors.Google = s.Google != nil
 	v.AppRedirect = wire.AppReturn
+	if s.SignInGate != nil {
+		claims, _ := s.appClaims(r)
+		v.AppChallenge = claims.Challenge
+		pending, err := s.PendingLogin(r)
+		if err != nil {
+			return err
+		}
+		v.PendingVerification = pending != nil
+	}
 	c, err := s.identify(r)
 	if err != nil {
 		return err
@@ -86,7 +100,7 @@ func (s *Server) passwordSignIn(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err := s.startSession(w, user, "password"); err != nil {
+	if err := s.startSession(w, r, user, "password"); err != nil {
 		return err
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"mustChangePassword": user.Edges.Password.MustChange})
@@ -105,7 +119,7 @@ func (s *Server) setup(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err := s.startSession(w, user, "password"); err != nil {
+	if err := s.startSession(w, r, user, "password"); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -139,7 +153,27 @@ func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *Server) signOut(w http.ResponseWriter, r *http.Request) error {
+	s.clearPending(w)
 	s.endSession(w)
+	if len(s.SignOutHandlers) > 0 {
+		var who *edition.Identity
+		var err error
+		if r.Header.Get("Authorization") != "" {
+			who, err = s.BearerIdentity(r.Context(), bearerToken(r.Header.Get("Authorization")))
+		} else if c, cookieErr := r.Cookie(s.cookieName()); cookieErr == nil {
+			who, err = s.open(r.Context(), auth.Session, c.Value)
+		}
+		if err != nil {
+			slog.Error("sign-out identity lookup failed", "error", err)
+		}
+		if who != nil {
+			for _, f := range s.SignOutHandlers {
+				if err := f(r.Context(), who); err != nil {
+					slog.Error("sign-out grant cleanup failed", "error", err)
+				}
+			}
+		}
+	}
 	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
@@ -152,7 +186,7 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if c == nil || c.bearer {
+	if r.Header.Get("Authorization") != "" {
 		return errUnauthorized
 	}
 	var in wire.PluginCode
@@ -167,9 +201,42 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 		}
 		back = &to
 	}
+	if s.SignInGate != nil && back != nil && back.To == "app" {
+		who, err := s.AppLoginIdentity(r, in.Challenge)
+		if err != nil {
+			return err
+		}
+		if who == nil {
+			return errUnauthorized
+		}
+		user, err := s.Auth.DB.User.Get(r.Context(), who.UserID)
+		if err != nil {
+			return err
+		}
+		c = &caller{user: user, via: who.Via}
+		required, err := s.SignInGate.Required(r.Context(), who.UserID)
+		if err != nil {
+			return err
+		}
+		if required {
+			ok, err := s.SignInGate.ConsumeAppProof(r.Context(), who.UserID, who.SessionID, in.Challenge)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return wire.E(http.StatusForbidden, "verification_required")
+			}
+		}
+	}
+	if c == nil || c.bearer {
+		return errUnauthorized
+	}
 	code, err := s.Auth.MintHandoff(r.Context(), c.user, c.via, in.Challenge)
 	if err != nil {
 		return err
+	}
+	if back != nil && back.To == "app" {
+		s.clearPending(w)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"code": code, "returnTo": back})
 	return nil

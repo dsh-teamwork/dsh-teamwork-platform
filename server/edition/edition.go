@@ -24,9 +24,13 @@ import (
 // Identity is who a request or a token is: the account, its email, and the
 // door the session came through ("google", "email" or "password").
 type Identity struct {
-	UserID string
-	Email  string
-	Via    string
+	// SessionID identifies one issuance and can be used to scope a grant.
+	SessionID      string    `json:"-"`
+	SessionIssued  time.Time `json:"-"`
+	SessionExpires time.Time `json:"-"`
+	UserID         string
+	Email          string
+	Via            string
 }
 
 // User is an account, as an operator lists it.
@@ -80,7 +84,25 @@ type AdminConsole struct {
 	GoogleOnly bool
 }
 
+// SignInGate adds a second verification step after primary authentication.
+type SignInGate interface {
+	// Required applies the same account policy to every personal sign-in.
+	Required(ctx context.Context, user string) (bool, error)
+	// ConsumeAppProof redeems verification for this login and PKCE challenge once.
+	ConsumeAppProof(ctx context.Context, user, session, challenge string) (bool, error)
+}
+
 type Host struct {
+	// AppLogin resolves the pending phone login for a PKCE challenge or a browser session.
+	AppLogin func(*http.Request, string) (*Identity, error)
+	// OnSignOut registers cleanup for grants belonging to the closing login.
+	OnSignOut func(func(context.Context, *Identity) error)
+	// RegisterSignInGate installs the account verification policy.
+	RegisterSignInGate func(SignInGate)
+	// PendingLogin resolves the primary-authenticated browser awaiting verification.
+	PendingLogin func(*http.Request) (*Identity, error)
+	// CompleteLogin issues the browser session after successful verification.
+	CompleteLogin   func(http.ResponseWriter, *http.Request) error
 	ServiceRole     string
 	AddAdminRoutes  func([]AdminRoute)
 	SetAdminConsole func(AdminConsole)

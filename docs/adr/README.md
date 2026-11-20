@@ -50,6 +50,8 @@ or the hosted service, kept with the closed edition rather than here.
 
 - [0056 — An admin deletes a team](0056-an-admin-deletes-a-team.md) — the admin deletes a team with everyone in it, typing its name back.
 
+- [0059 — Account verification](0059-account-verification.md) — one policy covers personal sign-ins.
+
 The template:
 
 ```markdown

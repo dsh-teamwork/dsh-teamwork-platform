@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
@@ -48,6 +49,10 @@ type options struct {
 	contentURL    string // CONTENT_URL; APP_URL's own origin when empty
 	subdomains    map[string]http.Handler
 	review        [2]string // REVIEW_SIGN_IN's address and code
+	// gate is an edition's sign-in verification; with it, POST /test/complete
+	// finishes a pending browser login as the edition's own route would.
+	gate     edition.SignInGate
+	signOuts []func(context.Context, *edition.Identity) error
 }
 
 func start(t *testing.T, d *testdb.DB, o options) *env {
@@ -81,6 +86,18 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	srv.Pages = &pages.Service{DB: d.Client, Store: teams.Artifacts, Team: teams, Sealer: authn.Sealer, ContentURL: contentURL}
 	if o.gatewayClient != nil {
 		srv.Gateway.Client = o.gatewayClient
+	}
+	if o.gate != nil {
+		srv.SignInGate = o.gate
+		srv.SignOutHandlers = o.signOuts
+		srv.Mux = http.NewServeMux()
+		srv.Mux.HandleFunc("POST /test/complete", func(w http.ResponseWriter, r *http.Request) {
+			if err := srv.CompleteLogin(w, r); err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.WriteHeader(http.StatusNoContent)
+		})
 	}
 	if o.web != nil {
 		srv.Web = web.New(o.web, web.Options{AppURL: appURL, Viewer: srv.Viewer})

@@ -7,6 +7,7 @@
  * (docs/adr/0039-deleting-an-account.md).
  */
 
+import { editionSecurity } from '@/lib/edition';
 import { Check, LogOut, Moon, Pencil, Sun, Trash2 } from 'lucide-react';
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -32,6 +33,7 @@ import { cn } from '@/lib/utils';
 const PASSWORD_MIN = 10;
 
 export function AccountPage() {
+  const Security = editionSecurity()?.account;
   const t = useTranslations('account');
   useTitle(t('title'));
   const { session } = useSession();
@@ -52,6 +54,7 @@ export function AccountPage() {
             <ThemeChoice />
           </Row>
         </Section>
+        {Security && <Security />}
         {session.doors.password && <PasswordSection />}
         <TeamsSection teams={teams.data} />
         <Section title={t('session')} description={t('sessionHint')} action={<SignOut />} />

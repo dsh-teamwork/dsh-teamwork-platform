@@ -77,7 +77,7 @@ func (s *Server) verifyCode(w http.ResponseWriter, r *http.Request) error {
 	}
 	if created {
 	}
-	if err := s.startSession(w, user, "email"); err != nil {
+	if err := s.startSession(w, r, user, "email"); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -155,7 +155,10 @@ func (s *Server) googleCallback(w http.ResponseWriter, r *http.Request) error {
 	if err == nil && created {
 	}
 	if err == nil {
-		err = s.startSession(w, user, "google")
+		q := r.URL.Query()
+		q.Set("next", claims.Next)
+		r.URL.RawQuery = q.Encode()
+		err = s.startSession(w, r, user, "google")
 	}
 	if err != nil {
 		slog.Error("Google sign-in failed", "error", err)

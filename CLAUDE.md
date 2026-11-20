@@ -414,6 +414,8 @@ between is refused.
 
 ### Sign-in
 
+An edition may require one account-wide verification step for personal access. A primary login then issues a short-lived pending cookie. Browser verification creates a session, and phone verification authorizes only the matching PKCE handoff (ADR 0059).
+
 Three doors, all in `server/internal/auth` (ADR 0014):
 
 - **Google**, through `github.com/markbates/goth`, returning to

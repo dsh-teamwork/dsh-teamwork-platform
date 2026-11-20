@@ -63,6 +63,7 @@
     "setup_link_invalid": "这不是服务器打印的那条链接，请从服务器输出中重新复制。"
   },
   "plugin": {
+    "verification_required": "请先使用通行密钥验证登录，再试一次。",
     "title": "授权 DSH 插件",
     "description": "仅在你刚在自己的 DSH 中运行 /teamwork login 时继续。",
     "descriptionApp": "仅在你刚在自己手机上的 App 里发起登录时继续。",

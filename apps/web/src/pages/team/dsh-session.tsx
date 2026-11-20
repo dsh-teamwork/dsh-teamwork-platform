@@ -1058,7 +1058,7 @@ function Composer({ busy, rows, placeholder, send, files, stop, tools, children 
 }
 
 /** The DSH asks for this member's PIN: set a first one, typed twice, or give it. Only the DSH checks it. */
-export function PinGate({ computerId, state, lockedHint }: { computerId: string; state: PinState | undefined; lockedHint: string }) {
+export function PinGate({ computerId, state, lockedHint, enterHint }: { computerId: string; state: PinState | undefined; lockedHint: string; enterHint?: string }) {
   const t = useTranslations('team.dsh.pin');
   const relay = useSessionClient();
   const [value, setValue] = useState('');
@@ -1091,7 +1091,7 @@ export function PinGate({ computerId, state, lockedHint }: { computerId: string;
     <Card className="m-auto w-full max-w-sm">
       <CardHeader>
         <CardTitle>{t(`${prompt}.title`)}</CardTitle>
-        <CardDescription>{state?.kind === 'wrong' ? t('wrong', { count: state.left }) : prompt === 'locked' ? lockedHint : t(`${prompt}.hint`)}</CardDescription>
+        <CardDescription>{state?.kind === 'wrong' ? t('wrong', { count: state.left }) : prompt === 'locked' ? lockedHint : prompt === 'enter' && enterHint ? enterHint : t(`${prompt}.hint`)}</CardDescription>
       </CardHeader>
       {prompt !== 'locked' && (
         <CardContent>

@@ -178,6 +178,8 @@ chat-completions route.
 
 ## Signing in on the web
 
+An edition may require one account-wide verification step for personal access. A primary login then issues a short-lived pending cookie. Browser verification creates a session, and phone verification authorizes only the matching PKCE handoff (ADR 0059).
+
 Every door is a route under `/api/auth/` and ends in a session cookie, a JWE
 under a key derived from `AUTH_SECRET`.
 

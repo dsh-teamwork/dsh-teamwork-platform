@@ -183,7 +183,7 @@ export function SignInPage() {
                   onSubmit={(event) => {
                     event.preventDefault();
                     void run('password', async () => {
-                      const { mustChangePassword } = await api<{ mustChangePassword: boolean }>('auth/password/sign-in', { body: { email, password } });
+                      const { mustChangePassword } = await api<{ mustChangePassword: boolean }>('auth/password/sign-in?next=' + encodeURIComponent(next), { body: { email, password } });
                       await signedIn(mustChangePassword);
                     });
                   }}
@@ -233,7 +233,7 @@ export function SignInPage() {
                   onSubmit={(event) => {
                     event.preventDefault();
                     void run('verify', async () => {
-                      await api('auth/email/verify', { body: { email, code } });
+                      await api('auth/email/verify?next=' + encodeURIComponent(next), { body: { email, code } });
                       await signedIn();
                     });
                   }}

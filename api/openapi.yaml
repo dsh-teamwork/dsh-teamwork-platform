@@ -30,6 +30,8 @@ paths:
               schema: { $ref: '#/components/schemas/Session' }
   /auth/password/sign-in:
     post:
+      parameters:
+        - { name: next, in: query, schema: { type: string }, description: Local return path including the phone handoff when applicable }
       summary: Sign in with an email and a password (instances without SMTP)
       security: []
       requestBody:
@@ -100,7 +102,11 @@ paths:
               schema: { $ref: '#/components/schemas/PluginCode' }
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
-        '403': { $ref: '#/components/responses/Error' }
+        '403':
+          description: The phone handoff requires verification (verification_required) or the account cannot authorize it
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
   /auth/plugin/token:
     post:
       summary: Trade a code and the plugin's PKCE verifier for a 30-day Bearer token
@@ -305,6 +311,8 @@ paths:
         '503': { $ref: '#/components/responses/Error' }
   /auth/email/verify:
     post:
+      parameters:
+        - { name: next, in: query, schema: { type: string }, description: Local return path including the phone handoff when applicable }
       summary: Sign in with the emailed code; a first sign-in makes the account
       security: []
       requestBody:
@@ -2153,6 +2161,8 @@ components:
             emailCode: { type: boolean }
             google: { type: boolean }
         setupOpen: { type: boolean }
+        appChallenge: { type: string, description: "The pending phone login can authorize only this PKCE challenge." }
+        pendingVerification: { type: boolean, description: "A second verification is pending before this browser signs in." }
         appRedirect: { type: string, description: "The phone app's sign-in address, where /plugin sends its code (ADR 0046)" }
     PasswordSignIn:
       type: object

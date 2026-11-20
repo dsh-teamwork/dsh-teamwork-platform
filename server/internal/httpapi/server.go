@@ -4,11 +4,13 @@
 package httpapi
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
 	"strings"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
@@ -21,16 +23,18 @@ import (
 
 // Server holds what the handlers need.
 type Server struct {
-	ManageRoot bool
-	Config     config.Config
-	Auth       *auth.Service
-	Team       *team.Service
-	Gateway    *gateway.Gateway
-	Usage      *usage.Service
-	Pages      *pages.Service
-	Mailer     auth.Mailer  // where SMTP_URL is set
-	Google     *auth.Google // where the Google door is configured
-	Web        http.Handler
+	SignInGate      edition.SignInGate
+	SignOutHandlers []func(context.Context, *edition.Identity) error
+	ManageRoot      bool
+	Config          config.Config
+	Auth            *auth.Service
+	Team            *team.Service
+	Gateway         *gateway.Gateway
+	Usage           *usage.Service
+	Pages           *pages.Service
+	Mailer          auth.Mailer  // where SMTP_URL is set
+	Google          *auth.Google // where the Google door is configured
+	Web             http.Handler
 	// Mux, when set, is the router Handler adds its routes to: one a closed
 	// edition has already added its own to (server/edition).
 	Mux *http.ServeMux

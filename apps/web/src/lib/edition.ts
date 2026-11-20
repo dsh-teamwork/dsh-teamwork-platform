@@ -84,3 +84,12 @@ export const editionModels = () => models;
 export function setEditionModels(section: EditionModels | undefined) {
   models = section;
 }
+
+export interface EditionSecurity {
+  account: ComponentType;
+  authorizeApp(challenge: string): Promise<void>;
+}
+
+let security: EditionSecurity | undefined;
+export const editionSecurity = () => security;
+export function setEditionSecurity(value: EditionSecurity | undefined) { security = value; }

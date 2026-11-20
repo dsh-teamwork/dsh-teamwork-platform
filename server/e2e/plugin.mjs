@@ -14,16 +14,21 @@ const { BASE, SETUP_TOKEN, STUB_URL, PLUGIN } = process.env;
 const { TeamworkClient } = await import(pathToFileURL(join(PLUGIN, 'lib/client.js')).href);
 const { listenForCode } = await import(pathToFileURL(join(PLUGIN, 'lib/login-callback.js')).href);
 
-// The browser: the site's own Origin, and the session cookie it was given.
-let cookie = '';
+// Keep the cookies returned for this origin, including updates and removals.
+const cookies = new Map();
 async function browser(path, body, method = body === undefined ? 'GET' : 'POST') {
+  const cookie = [...cookies.values()].join('; ');
   const response = await fetch(`${BASE}/api/${path}`, {
     method,
     headers: { Origin: BASE, 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const set = response.headers.get('set-cookie');
-  if (set) cookie = set.split(';')[0];
+  for (const set of response.headers.getSetCookie()) {
+    const [pair, ...attributes] = set.split(';');
+    const name = pair.slice(0, pair.indexOf('='));
+    if (attributes.some(attribute => attribute.trim().toLowerCase() === 'max-age=0')) cookies.delete(name);
+    else cookies.set(name, pair);
+  }
   const text = await response.text();
   if (!response.ok) throw new Error(`${path}: ${response.status} ${text}`);
   return text ? JSON.parse(text) : null;

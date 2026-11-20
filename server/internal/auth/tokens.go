@@ -16,6 +16,8 @@ import (
 type Purpose string
 
 const (
+	PendingLogin  Purpose = "dsh-teamwork.pending-login"
+	AppLogin      Purpose = "dsh-teamwork.app-login"
 	Session       Purpose = "dsh-teamwork.session"
 	PluginHandoff Purpose = "dsh-teamwork.plugin-handoff"
 	PluginBearer  Purpose = "dsh-teamwork.plugin-session"
