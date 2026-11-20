@@ -13,6 +13,7 @@ import (
 // SessionView is GET /api/auth/session: who is signed in, if anyone, and the
 // doors this instance offers.
 type SessionView struct {
+	AppChallenge        string       `json:"appChallenge,omitempty"`
 	PendingVerification bool         `json:"pendingVerification,omitempty"`
 	User                *SessionUser `json:"user"`
 	Doors               struct {
@@ -42,6 +43,8 @@ func (s *Server) session(w http.ResponseWriter, r *http.Request) error {
 	v.Doors.Google = s.Google != nil
 	v.AppRedirect = wire.AppReturn
 	if s.SignInGate != nil {
+		claims, _ := s.appClaims(r)
+		v.AppChallenge = claims.Challenge
 		pending, err := s.PendingLogin(r)
 		if err != nil {
 			return err
@@ -181,7 +184,7 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if c == nil || c.bearer {
+	if r.Header.Get("Authorization") != "" {
 		return errUnauthorized
 	}
 	var in wire.PluginCode
@@ -197,18 +200,24 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 		back = &to
 	}
 	if s.SignInGate != nil && back != nil && back.To == "app" {
-		required, err := s.SignInGate.Required(r.Context(), c.user.ID, "app")
+		who, err := s.AppLoginIdentity(r, in.Challenge)
+		if err != nil {
+			return err
+		}
+		if who == nil {
+			return errUnauthorized
+		}
+		user, err := s.Auth.DB.User.Get(r.Context(), who.UserID)
+		if err != nil {
+			return err
+		}
+		c = &caller{user: user, via: who.Via}
+		required, err := s.SignInGate.Required(r.Context(), who.UserID, "app")
 		if err != nil {
 			return err
 		}
 		if required {
-			who, err := s.SessionIdentity(r)
-			if err != nil {
-				return err
-			}
-			if who == nil {
-				return errUnauthorized
-			}
+
 			ok, err := s.SignInGate.ConsumeAppProof(r.Context(), who.UserID, who.SessionID, in.Challenge)
 			if err != nil {
 				return err
@@ -218,9 +227,15 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 			}
 		}
 	}
+	if c == nil || c.bearer {
+		return errUnauthorized
+	}
 	code, err := s.Auth.MintHandoff(r.Context(), c.user, c.via, in.Challenge)
 	if err != nil {
 		return err
+	}
+	if back != nil && back.To == "app" {
+		s.clearPending(w)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"code": code, "returnTo": back})
 	return nil

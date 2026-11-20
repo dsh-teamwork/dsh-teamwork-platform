@@ -238,6 +238,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	var webFiles fs.FS
 	var adminRoutes []edition.AdminRoute
 	host := edition.Host{
+		AppLogin:        srv.AppLoginIdentity,
 		ServiceRole:     cfg.ServiceRole,
 		AddAdminRoutes:  func(routes []edition.AdminRoute) { adminRoutes = append(adminRoutes, routes...) },
 		SetAdminConsole: func(c edition.AdminConsole) { console = c },

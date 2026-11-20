@@ -196,6 +196,24 @@ func loopback(host string) bool {
 // startSession sets the browser's session cookie.
 func (s *Server) startSession(w http.ResponseWriter, r *http.Request, user *ent.User, via string) error {
 	if s.SignInGate != nil {
+		next, _ := url.Parse(r.URL.Query().Get("next"))
+		if next != nil && next.Path == "/plugin" && next.Query().Get("redirect_uri") == wire.AppReturn && len(next.Query().Get("challenge")) == 43 {
+			must, err := s.Auth.MustChange(r.Context(), user.ID)
+			if err != nil {
+				return err
+			}
+			if !must {
+				value, exp, err := s.Auth.Sealer.Seal(auth.AppLogin, auth.Claims{Sub: user.ID, Via: via, Challenge: next.Query().Get("challenge")}, 5*time.Minute)
+				if err != nil {
+					return err
+				}
+				s.clearPending(w)
+				http.SetCookie(w, &http.Cookie{Name: s.cookieName() + "-app", Value: value, Expires: exp, Path: "/", HttpOnly: true, Secure: s.secure(), SameSite: http.SameSiteStrictMode})
+				return nil
+			}
+		}
+	}
+	if s.SignInGate != nil {
 		required, err := s.SignInGate.Required(r.Context(), user.ID, "web")
 		if err != nil {
 			return err
@@ -214,7 +232,31 @@ func (s *Server) startSession(w http.ResponseWriter, r *http.Request, user *ent.
 	return s.issueSession(w, user, via)
 }
 
+// A first factor completed for the phone can authorize only its own PKCE handoff.
+func (s *Server) appClaims(r *http.Request) (auth.Claims, string) {
+	c, err := r.Cookie(s.cookieName() + "-app")
+	if err != nil {
+		return auth.Claims{}, ""
+	}
+	claims, err := s.Auth.Sealer.Open(auth.AppLogin, c.Value)
+	if err != nil {
+		return auth.Claims{}, ""
+	}
+	return claims, c.Value
+}
+func (s *Server) AppLoginIdentity(r *http.Request, challenge string) (*edition.Identity, error) {
+	claims, value := s.appClaims(r)
+	if value != "" && claims.Challenge == challenge {
+		must, err := s.Auth.MustChange(r.Context(), claims.Sub)
+		if err != nil || must {
+			return nil, err
+		}
+		return s.open(r.Context(), auth.AppLogin, value)
+	}
+	return s.SessionIdentity(r)
+}
 func (s *Server) clearPending(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{Name: s.cookieName() + "-app", Path: "/", MaxAge: -1, HttpOnly: true, Secure: s.secure(), SameSite: http.SameSiteStrictMode})
 	http.SetCookie(w, &http.Cookie{Name: s.cookieName() + "-pending", Path: "/", MaxAge: -1, HttpOnly: true, Secure: s.secure(), SameSite: http.SameSiteStrictMode})
 }
 

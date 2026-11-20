@@ -2153,6 +2153,7 @@ components:
             emailCode: { type: boolean }
             google: { type: boolean }
         setupOpen: { type: boolean }
+        appChallenge: { type: string, description: "The pending phone login can authorize only this PKCE challenge." }
         pendingVerification: { type: boolean, description: "A second verification is pending before this browser signs in." }
         appRedirect: { type: string, description: "The phone app's sign-in address, where /plugin sends its code (ADR 0046)" }
     PasswordSignIn:

@@ -155,6 +155,9 @@ func (s *Server) googleCallback(w http.ResponseWriter, r *http.Request) error {
 	if err == nil && created {
 	}
 	if err == nil {
+		q := r.URL.Query()
+		q.Set("next", claims.Next)
+		r.URL.RawQuery = q.Encode()
 		err = s.startSession(w, r, user, "google")
 	}
 	if err != nil {

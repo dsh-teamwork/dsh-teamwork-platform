@@ -38,8 +38,9 @@ export function PluginPage() {
   const valid = CHALLENGE.test(challenge) && to !== undefined;
   if (!valid) return <CardPage title={t('title')} description={t('invalid')} wide />;
   const here = location.pathname + location.search;
-  if (!session.user) return <Navigate to={`/sign-in?next=${encodeURIComponent(here)}`} replace />;
-  if (session.user.mustChangePassword) return <Navigate to={`/password?next=${encodeURIComponent(here)}`} replace />;
+  const appLogin = to === 'app' && session.appChallenge === challenge;
+  if (!session.user && !appLogin) return <Navigate to={`/sign-in?next=${encodeURIComponent(here)}`} replace />;
+  if (session.user?.mustChangePassword) return <Navigate to={`/password?next=${encodeURIComponent(here)}`} replace />;
 
   async function authorize() {
     setFailed(false);
@@ -76,7 +77,7 @@ export function PluginPage() {
       ) : (
         <div className="flex flex-col gap-3">
           <div className="rounded-md border bg-muted px-3 py-2 text-sm">
-            <p>{t('account', { email: session.user.email ?? '' })}</p>
+            <p>{t('account', { email: session.user?.email ?? '' })}</p>
             {to === 'dsh' && teams.data && <p className="text-muted-foreground">{t('scope', { count: teams.data.length })}</p>}
           </div>
           <Failure message={failed ? t('failed') : null} />

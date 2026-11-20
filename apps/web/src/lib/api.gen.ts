@@ -4483,8 +4483,11 @@ export interface components {
                 google: boolean;
             };
             setupOpen: boolean;
-            /** @description The phone app's sign-in address, where /plugin sends its code (ADR 0046) */
+            /** @description The pending phone login can authorize only this PKCE challenge. */
+            appChallenge?: string;
+            /** @description A second verification is pending before this browser signs in. */
             pendingVerification?: boolean;
+            /** @description The phone app's sign-in address, where /plugin sends its code (ADR 0046) */
             appRedirect: string;
         };
         PasswordSignIn: {
