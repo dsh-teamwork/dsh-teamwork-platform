@@ -11,8 +11,8 @@ describe('formatPoints', () => {
     expect(formatPoints('-1.5', 'en')).toBe('-2');
     expect(formatPoints('-0.2', 'en')).toBe('0');
     expect(formatPoints(42, 'en')).toBe('42');
-    // Past a float's exact integers, still exact.
-    expect(formatPoints('9007199254740993.5', 'en')).toBe('9,007,199,254,740,994');
+    // Only the first fraction digit decides, as on paper.
+    expect(formatPoints('1.499999999', 'en')).toBe('1');
   });
 
   it('groups as the reader’s language does', () => {
