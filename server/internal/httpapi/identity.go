@@ -227,8 +227,8 @@ func (s *Server) startSession(w http.ResponseWriter, r *http.Request, user *ent.
 			http.SetCookie(w, &http.Cookie{Name: s.cookieName() + "-pending", Value: token, Path: "/", HttpOnly: true, Secure: s.secure(), SameSite: http.SameSiteStrictMode, Expires: expiry})
 			return nil
 		}
+		s.clearPending(w)
 	}
-	s.clearPending(w)
 	return s.issueSession(w, user, via)
 }
 
