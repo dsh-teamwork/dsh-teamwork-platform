@@ -67,6 +67,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
   }
   if (!session) return <Loading />;
+  if (session.pendingVerification && window.location.pathname !== '/verify-login') {
+    const target = window.location.pathname === '/sign-in' ? new URLSearchParams(window.location.search).get('next') || '/teams' : window.location.pathname + window.location.search;
+    window.location.replace('/verify-login?next=' + encodeURIComponent(target));
+    return <Loading />;
+  }
   return <SessionContext.Provider value={{ session, refresh, signOut }}>{children}</SessionContext.Provider>;
 }
 

@@ -194,7 +194,55 @@ func loopback(host string) bool {
 }
 
 // startSession sets the browser's session cookie.
-func (s *Server) startSession(w http.ResponseWriter, user *ent.User, via string) error {
+func (s *Server) startSession(w http.ResponseWriter, r *http.Request, user *ent.User, via string) error {
+	if s.SignInGate != nil {
+		required, err := s.SignInGate.Required(r.Context(), user.ID, "web")
+		if err != nil {
+			return err
+		}
+		if required {
+			token, expiry, err := s.Auth.Sealer.Seal(auth.PendingLogin, auth.Claims{Sub: user.ID, Via: via}, 5*time.Minute)
+			if err != nil {
+				return err
+			}
+			s.endSession(w)
+			http.SetCookie(w, &http.Cookie{Name: s.cookieName() + "-pending", Value: token, Path: "/", HttpOnly: true, Secure: s.secure(), SameSite: http.SameSiteStrictMode, Expires: expiry})
+			return nil
+		}
+	}
+	s.clearPending(w)
+	return s.issueSession(w, user, via)
+}
+
+func (s *Server) clearPending(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{Name: s.cookieName() + "-pending", Path: "/", MaxAge: -1, HttpOnly: true, Secure: s.secure(), SameSite: http.SameSiteStrictMode})
+}
+
+func (s *Server) PendingLogin(r *http.Request) (*edition.Identity, error) {
+	c, err := r.Cookie(s.cookieName() + "-pending")
+	if err != nil {
+		return nil, nil
+	}
+	return s.open(r.Context(), auth.PendingLogin, c.Value)
+}
+
+func (s *Server) CompleteLogin(w http.ResponseWriter, r *http.Request) error {
+	who, err := s.PendingLogin(r)
+	if err != nil {
+		return err
+	}
+	if who == nil {
+		return errUnauthorized
+	}
+	user, err := s.Auth.DB.User.Get(r.Context(), who.UserID)
+	if err != nil {
+		return err
+	}
+	s.clearPending(w)
+	return s.issueSession(w, user, who.Via)
+}
+
+func (s *Server) issueSession(w http.ResponseWriter, user *ent.User, via string) error {
 	token, exp, err := s.Auth.Sealer.Seal(auth.Session, auth.Claims{Sub: user.ID, Via: via}, auth.SessionTTL)
 	if err != nil {
 		return err
@@ -262,7 +310,7 @@ func (s *Server) open(ctx context.Context, purpose auth.Purpose, token string) (
 	// Each issuance seals a fresh randomized JWE. Fingerprinting the verified
 	// token also gives an existing login a stable ID without reissuing it.
 	digest := sha256.Sum256([]byte(token))
-	id := &edition.Identity{UserID: user.ID, Via: claims.Via, SessionID: hex.EncodeToString(digest[:]), SessionExpires: time.Unix(claims.Exp, 0)}
+	id := &edition.Identity{UserID: user.ID, Via: claims.Via, SessionID: hex.EncodeToString(digest[:]), SessionExpires: time.Unix(claims.Exp, 0), SessionIssued: time.Unix(claims.Iat, 0)}
 	if user.Email != nil {
 		id.Email = *user.Email
 	}

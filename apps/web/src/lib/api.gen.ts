@@ -4484,6 +4484,7 @@ export interface components {
             };
             setupOpen: boolean;
             /** @description The phone app's sign-in address, where /plugin sends its code (ADR 0046) */
+            pendingVerification?: boolean;
             appRedirect: string;
         };
         PasswordSignIn: {

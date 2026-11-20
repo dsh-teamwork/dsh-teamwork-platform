@@ -1,3 +1,4 @@
+import { editionSecurity } from '@/lib/edition';
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
@@ -44,6 +45,7 @@ export function PluginPage() {
     setFailed(false);
     setPending(true);
     try {
+      if (to === 'app') await editionSecurity()?.authorizeApp(challenge);
       const code = await api<PluginCode>('auth/plugin/code', { body: { challenge, ...(redirectUri ? { redirectUri } : {}) } });
       setMinted(code);
       if (code.returnTo) {

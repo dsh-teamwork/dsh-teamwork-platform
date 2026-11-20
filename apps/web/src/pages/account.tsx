@@ -1,3 +1,4 @@
+import { editionSecurity } from '@/lib/edition';
 /**
  * `/account`: the account settings, where every way to the account leads
  * (components/account.tsx). One page in sections divided by hairlines, after
@@ -32,6 +33,7 @@ import { cn } from '@/lib/utils';
 const PASSWORD_MIN = 10;
 
 export function AccountPage() {
+  const Security = editionSecurity()?.account;
   const t = useTranslations('account');
   useTitle(t('title'));
   const { session } = useSession();
@@ -52,6 +54,7 @@ export function AccountPage() {
             <ThemeChoice />
           </Row>
         </Section>
+        {Security && <Security />}
         {session.doors.password && <PasswordSection />}
         <TeamsSection teams={teams.data} />
         <Section title={t('session')} description={t('sessionHint')} action={<SignOut />} />

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
@@ -21,6 +22,7 @@ import (
 
 // Server holds what the handlers need.
 type Server struct {
+	SignInGate edition.SignInGate
 	ManageRoot bool
 	Config     config.Config
 	Auth       *auth.Service

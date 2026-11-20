@@ -27,6 +27,7 @@ type Identity struct {
 	// SessionID identifies exactly this login, including credentials issued before
 	// editions used session-bound grants. Neither field is a client credential.
 	SessionID      string    `json:"-"`
+	SessionIssued  time.Time `json:"-"`
 	SessionExpires time.Time `json:"-"`
 	UserID         string
 	Email          string
@@ -84,11 +85,20 @@ type AdminConsole struct {
 	GoogleOnly bool
 }
 
+// SignInGate adds a second verification step after primary authentication.
+type SignInGate interface {
+	Required(ctx context.Context, user, entry string) (bool, error)
+	ConsumeAppProof(ctx context.Context, user, session, challenge string) (bool, error)
+}
+
 type Host struct {
-	ServiceRole     string
-	AddAdminRoutes  func([]AdminRoute)
-	SetAdminConsole func(AdminConsole)
-	SetWebConsole   func(fs.FS)
+	RegisterSignInGate func(SignInGate)
+	PendingLogin       func(*http.Request) (*Identity, error)
+	CompleteLogin      func(http.ResponseWriter, *http.Request) error
+	ServiceRole        string
+	AddAdminRoutes     func([]AdminRoute)
+	SetAdminConsole    func(AdminConsole)
+	SetWebConsole      func(fs.FS)
 
 	// DB is the server's connection, and Dialect its kind: "sqlite3",
 	// "postgres" or "mysql". The extension's own tables are there.

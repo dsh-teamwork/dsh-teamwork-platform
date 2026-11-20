@@ -12,8 +12,9 @@ import (
 // SessionView is GET /api/auth/session: who is signed in, if anyone, and the
 // doors this instance offers.
 type SessionView struct {
-	User  *SessionUser `json:"user"`
-	Doors struct {
+	PendingVerification bool         `json:"pendingVerification,omitempty"`
+	User                *SessionUser `json:"user"`
+	Doors               struct {
 		Password  bool `json:"password"`
 		EmailCode bool `json:"emailCode"`
 		Google    bool `json:"google"`
@@ -39,6 +40,13 @@ func (s *Server) session(w http.ResponseWriter, r *http.Request) error {
 	v.Doors.EmailCode = !s.Config.Passwords()
 	v.Doors.Google = s.Google != nil
 	v.AppRedirect = wire.AppReturn
+	if s.SignInGate != nil {
+		pending, err := s.PendingLogin(r)
+		if err != nil {
+			return err
+		}
+		v.PendingVerification = pending != nil
+	}
 	c, err := s.identify(r)
 	if err != nil {
 		return err
@@ -86,7 +94,7 @@ func (s *Server) passwordSignIn(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err := s.startSession(w, user, "password"); err != nil {
+	if err := s.startSession(w, r, user, "password"); err != nil {
 		return err
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"mustChangePassword": user.Edges.Password.MustChange})
@@ -105,7 +113,7 @@ func (s *Server) setup(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err := s.startSession(w, user, "password"); err != nil {
+	if err := s.startSession(w, r, user, "password"); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -139,6 +147,7 @@ func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *Server) signOut(w http.ResponseWriter, r *http.Request) error {
+	s.clearPending(w)
 	s.endSession(w)
 	w.WriteHeader(http.StatusNoContent)
 	return nil
@@ -166,6 +175,28 @@ func (s *Server) pluginCode(w http.ResponseWriter, r *http.Request) error {
 			return wire.E(http.StatusBadRequest, "invalid_redirect")
 		}
 		back = &to
+	}
+	if s.SignInGate != nil && back != nil && back.To == "app" {
+		required, err := s.SignInGate.Required(r.Context(), c.user.ID, "app")
+		if err != nil {
+			return err
+		}
+		if required {
+			who, err := s.SessionIdentity(r)
+			if err != nil {
+				return err
+			}
+			if who == nil {
+				return errUnauthorized
+			}
+			ok, err := s.SignInGate.ConsumeAppProof(r.Context(), who.UserID, who.SessionID, in.Challenge)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return wire.E(http.StatusForbidden, "verification_required")
+			}
+		}
 	}
 	code, err := s.Auth.MintHandoff(r.Context(), c.user, c.via, in.Challenge)
 	if err != nil {
