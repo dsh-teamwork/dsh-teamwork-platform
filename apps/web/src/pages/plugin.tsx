@@ -5,7 +5,7 @@ import { useTranslations } from 'use-intl';
 import { CopyButton } from '@/components/copy-button';
 import { CardPage, Failure, useTitle } from '@/components/page';
 import { Button } from '@/components/ui/button';
-import { api, type PluginCode, type TeamSummary } from '@/lib/api';
+import { api, ApiError, type PluginCode, type TeamSummary } from '@/lib/api';
 import { isLoopback } from '@/lib/return-path';
 import { useSession } from '@/lib/session';
 import { editionSecurity } from '@/lib/edition';
@@ -29,7 +29,7 @@ export function PluginPage() {
   const challenge = params.get('challenge') ?? '';
   const redirectUri = params.get('redirect_uri');
   const [minted, setMinted] = useState<PluginCode | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failure, setFailure] = useState<'verification_required' | 'failed' | null>(null);
   const [pending, setPending] = useState(false);
   // What the code will reach: every team the account is in (the plugin syncs them all, ADR 0013).
   const teams = useApi<TeamSummary[]>(session.user && !session.user.mustChangePassword ? 'teams' : null);
@@ -43,7 +43,7 @@ export function PluginPage() {
   if (session.user?.mustChangePassword) return <Navigate to={`/password?next=${encodeURIComponent(here)}`} replace />;
 
   async function authorize() {
-    setFailed(false);
+    setFailure(null);
     setPending(true);
     try {
       if (to === 'app') await editionSecurity()?.authorizeApp(challenge);
@@ -54,8 +54,8 @@ export function PluginPage() {
         back.searchParams.set('code', code.code);
         window.location.href = back.toString();
       }
-    } catch {
-      setFailed(true);
+    } catch (error) {
+      setFailure(error instanceof ApiError && error.code === 'verification_required' ? 'verification_required' : 'failed');
     } finally {
       setPending(false);
     }
@@ -80,7 +80,7 @@ export function PluginPage() {
             <p>{t('account', { email: session.user?.email ?? '' })}</p>
             {to === 'dsh' && teams.data && <p className="text-muted-foreground">{t('scope', { count: teams.data.length })}</p>}
           </div>
-          <Failure message={failed ? t('failed') : null} />
+          <Failure message={failure ? t(failure) : null} />
           <div className="flex flex-wrap gap-2">
             <Button className="flex-1" disabled={pending} onClick={() => void authorize()}>
               {t('confirm')}

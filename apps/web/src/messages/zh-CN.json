@@ -63,6 +63,7 @@
     "setup_link_invalid": "这不是服务器打印的那条链接，请从服务器输出中重新复制。"
   },
   "plugin": {
+    "verification_required": "请先使用通行密钥验证登录，再试一次。",
     "title": "授权 DSH 插件",
     "description": "仅在你刚在自己的 DSH 中运行 /teamwork login 时继续。",
     "descriptionApp": "仅在你刚在自己手机上的 App 里发起登录时继续。",
@@ -1555,7 +1556,6 @@
     "locked": "已锁定：请先输入 PIN。",
     "invite_refused": "机器拒绝了这个邀请。请向管理员索取新的。",
     "device_key_changed": "机器的密钥与邀请不符。请不要继续，并告知管理员。",
-    "verification_required": "请先使用通行密钥验证登录，再试一次。",
     "device_verification_required": "这个浏览器还没有加入那台机器。",
     "no_directory": "机器上没有可用的项目文件夹。",
     "not_authenticated": "机器没有登录到团队。",

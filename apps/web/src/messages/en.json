@@ -63,6 +63,7 @@
     "setup_link_invalid": "This is not the link the server printed. Copy it again from the server’s output."
   },
   "plugin": {
+    "verification_required": "Verify your sign-in with a passkey and try again.",
     "title": "Authorize the DSH plugin",
     "description": "Only continue if you just ran /teamwork login in your own DSH.",
     "descriptionApp": "Only continue if you just started signing in from the app on your own phone.",
@@ -1555,7 +1556,6 @@
     "locked": "Locked: enter your PIN first.",
     "invite_refused": "The machine refused this invite. Ask your admin for a new one.",
     "device_key_changed": "The machine's key does not match the invite. Do not continue; tell your admin.",
-    "verification_required": "Verify your sign-in with a passkey and try again.",
     "device_verification_required": "This browser has not joined that machine.",
     "no_directory": "The machine has no project folder to start in.",
     "not_authenticated": "The machine is not signed in to the team.",
