@@ -1020,6 +1020,7 @@
       "nextCheck": "dsh-teamwork status on the machine should say Relay: connected."
     },
     "dsh": {
+      "imagesUnavailable": "Images require a model with image understanding.",
       "sessions": "My sessions",
       "online": "Online",
       "offline": "Offline",
@@ -1100,6 +1101,7 @@
         "effortDefault": "Model default"
       },
       "files": {
+        "preparing": "Preparing attachments…",
         "add": "Add files",
         "remove": "Remove {name}",
         "progress": "Uploading {name} · {percent}%"
@@ -1577,6 +1579,8 @@
     "model_unavailable": "This session’s model can’t be used here: none is chosen, it has no key on this computer, or the team removed it. Choose another in the model menu below the message box.",
     "unavailable": "The machine could not be reached. Try again.",
     "file_type": "Choose a text, code, log, CSV, JSON or PDF file. Images and other formats are not supported yet.",
+    "image_model_unsupported": "The selected model cannot accept images. Switch models or remove the images to send.",
+    "image_too_large": "The prepared images exceed this computer’s upload limits.",
     "file_too_large": "Up to 5 files per message: 20 MB each, 50 MB in total.",
     "invalid_upload": "The files didn’t reach your computer in full. Send the message again.",
     "upload_expired": "Your computer no longer has these files. Send again to upload them again.",

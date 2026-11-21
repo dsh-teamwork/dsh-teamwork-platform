@@ -63,6 +63,10 @@ supplier's actual pricing, then save. These only fill the form: nothing is
 synchronized later and no catalog link is saved.
 
 
+To manage picture input, edit a BYOK model and set **Image understanding**.
+**Fill from public catalogue** looks up the current model.
+
+
 ## 3. Add presets and plugins
 
 - **Presets** are roles the team shares: the model a preset calls, the tools it

@@ -1,10 +1,12 @@
 package usage
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/url"
 	"slices"
+	"strings"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -32,7 +34,7 @@ func DeepSeekBounds(base, model string, payload map[string]json.RawMessage) (Tok
 		model != "deepseek-flash" && model != "deepseek-v4-pro" && model != "deepseek-v4-flash" && model != "deepseek-v4-flash-vision-exp" {
 		return Tokens{}, wire.E(http.StatusForbidden, "budget_bound_unavailable")
 	}
-	return RouteBounds(payload, 1<<20, 384<<10)
+	return RouteBoundsWithVision(payload, 1<<20, 384<<10, model == "deepseek-v4-flash-vision-exp")
 }
 
 // RouteBounds holds a text and function-call request to a route's trusted
@@ -40,6 +42,12 @@ func DeepSeekBounds(base, model string, payload map[string]json.RawMessage) (Tok
 // and 8,192 when it asks for none. It rewrites the request to send that output
 // bound, and refuses anything it could not price.
 func RouteBounds(payload map[string]json.RawMessage, maxInput, maxOutput int64) (Tokens, error) {
+	return RouteBoundsWithVision(payload, maxInput, maxOutput, false)
+}
+
+// RouteBoundsWithVision allows inline images only on routes configured for them.
+// Their input tokens are covered by the same trusted context bound as text.
+func RouteBoundsWithVision(payload map[string]json.RawMessage, maxInput, maxOutput int64, vision bool) (Tokens, error) {
 	unsupported := func() (Tokens, error) { return Tokens{}, wire.E(http.StatusBadRequest, "budget_request_unsupported") }
 	// Fail closed if a future gateway starts forwarding another billable
 	// feature (multiple completions, web search, audio, etc.).
@@ -90,7 +98,7 @@ func RouteBounds(payload map[string]json.RawMessage, maxInput, maxOutput int64) 
 				}
 			case "content":
 				var text *string
-				if json.Unmarshal(value, &text) != nil {
+				if json.Unmarshal(value, &text) != nil && !(vision && role == "user" && validVisionContent(value)) {
 					return unsupported()
 				}
 			case "tool_calls":
@@ -124,4 +132,51 @@ func RouteBounds(payload map[string]json.RawMessage, maxInput, maxOutput int64) 
 	payload["max_tokens"], _ = json.Marshal(output)
 	delete(payload, "max_completion_tokens")
 	return Tokens{Input: maxInput, Output: output}, nil
+}
+
+func validVisionContent(raw json.RawMessage) bool {
+	var parts []map[string]json.RawMessage
+	if json.Unmarshal(raw, &parts) != nil || len(parts) == 0 {
+		return false
+	}
+	for _, part := range parts {
+		var kind string
+		if len(part) != 2 || json.Unmarshal(part["type"], &kind) != nil {
+			return false
+		}
+		switch kind {
+		case "text":
+			var text *string
+			if json.Unmarshal(part["text"], &text) != nil || text == nil {
+				return false
+			}
+		case "image_url":
+			var image map[string]json.RawMessage
+			if json.Unmarshal(part["image_url"], &image) != nil || len(image) < 1 || len(image) > 2 {
+				return false
+			}
+			var address string
+			if json.Unmarshal(image["url"], &address) != nil || !validInlineImage(address) {
+				return false
+			}
+			if len(image) == 2 {
+				var detail string
+				if json.Unmarshal(image["detail"], &detail) != nil || !slices.Contains([]string{"auto", "low", "high"}, detail) {
+					return false
+				}
+			}
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func validInlineImage(address string) bool {
+	head, data, ok := strings.Cut(address, ",")
+	if !ok || !slices.Contains([]string{"data:image/png;base64", "data:image/jpeg;base64", "data:image/webp;base64", "data:image/gif;base64"}, head) {
+		return false
+	}
+	decoded, err := base64.StdEncoding.Strict().DecodeString(data)
+	return err == nil && http.DetectContentType(decoded) == strings.TrimSuffix(strings.TrimPrefix(head, "data:"), ";base64")
 }

@@ -211,7 +211,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 		Owner: t.owner, Reference: t.reference, Quote: quote,
 		Bounds: func() (usage.Tokens, error) {
 			if quote != nil {
-				return usage.RouteBounds(payload, quote.MaxInput, quote.MaxOutput)
+				return usage.RouteBoundsWithVision(payload, quote.MaxInput, quote.MaxOutput, quote.Vision)
 			}
 			return usage.DeepSeekBounds(base, t.model, payload)
 		}})

@@ -11,6 +11,8 @@ export const UploadLimitsSchema = z.object({
     .positive()
     .max(256 * 1024),
   extensions: z.array(z.string()),
+  maxImageBytes: z.number().int().positive().optional(),
+  maxMessageImageBytes: z.number().int().positive().optional(),
 });
 export type UploadLimits = z.infer<typeof UploadLimitsSchema>;
 export interface UploadedFile {

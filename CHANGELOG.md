@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-21 — DSH conversations accept multiple images
+
+- **What:** The web composer checks model capability, resizes oversized images and transfers multiple images in acknowledged chunks. The model gateway admits inline raster images for supported bounded routes.
+- **Why:** Members can send screenshots and photos to models that can interpret them.
+- **Breaking:** None.
+- **Upgrade:** Update the DSH Teamwork plugin to send images.
+- **Refs:** `docs/tech/relay.md`.
+
 ## 2026-11-20 — A self-hosted server sends no phone notifications
 
 - **What:** The relay no longer sends through Expo itself. An edition gives the server a sender (`edition.Host.SetPush`, handed `edition.PushMessage`); without one the server notifies no phone, `GET /api/relay` now says `push: false` (a new required field beside `url`), and `PUT /relay/pairings/{id}/push` with a token answers 409 `push_unavailable` while `null` still turns them off. `relay.Extension` loses its push parameter, and the relay client gains `offersPush()`.

@@ -29,6 +29,10 @@ function setup() {
     })),
     cancelUpload: vi.fn(async () => {}),
     prompt: vi.fn(async () => {}),
+    configuration: vi.fn(async () => ({
+      defaultModel: { provider: 'team', model: 'model' },
+      models: [{ provider: 'team', id: 'model', inputModalities: ['text', 'image'] }],
+    })),
   };
   const draft = newFileDraft();
   draft.files = [file('one'), file('two')];
@@ -50,7 +54,7 @@ function setup() {
 }
 it('validates declared file kinds, count and byte budgets, and encodes exact bounded bytes', () => {
   expect(() => validateFiles([{ ...file('one'), name: '../one.txt' }], limits)).toThrow(new RelayError('file_name'));
-  expect(() => validateFiles([{ ...file('image'), name: 'image.png' }], limits)).toThrow(new RelayError('file_type'));
+  expect(() => validateFiles([{ ...file('image'), name: 'image.heic' }], limits)).toThrow(new RelayError('file_type'));
   expect(() => validateFiles(Array(6).fill(file('one')), limits)).toThrow(new RelayError('file_too_large'));
   expect(() => validateFiles([{ ...file('one'), bytes: limits.maxFileBytes + 1 }], limits)).toThrow();
   expect(Uint8Array.from(atob(encodeChunk(new Uint8Array([0, 255, 127, 128]))), (c) => c.charCodeAt(0))).toEqual(
@@ -184,4 +188,26 @@ it('refuses Send before uploads finish without starting a transfer or submitting
   expect(relay.startUpload).not.toHaveBeenCalled();
   expect(relay.prompt).not.toHaveBeenCalled();
   expect(draft.pending).toBeUndefined();
+});
+
+it('uploads multiple images in chunks and blocks upload for a model without image support', async () => {
+  const { relay, draft, options } = setup();
+  draft.files = [file('one'), { ...file('first'), name: 'first.png' }, { ...file('second'), name: 'second.jpg' }];
+  const imageLimits = { ...limits, extensions: [...limits.extensions, 'png', 'jpg'], maxImageBytes: 512 * 1024, maxMessageImageBytes: 1536 * 1024 };
+  expect(() => validateFiles([{ ...draft.files[1], bytes: imageLimits.maxImageBytes + 1 }], imageLimits)).toThrow(new RelayError('image_too_large'));
+  relay.configuration.mockResolvedValueOnce({
+    defaultModel: { provider: 'team', model: 'model' },
+    models: [{ provider: 'team', id: 'model', inputModalities: ['text'] }],
+  });
+  await expect(uploadFiles({ ...options, limits: imageLimits })).rejects.toMatchObject({ code: 'image_model_unsupported' });
+  expect(relay.startUpload).not.toHaveBeenCalled();
+  expect(draft.files).toHaveLength(3);
+  await uploadFiles({ ...options, limits: imageLimits });
+  expect(relay.startUpload).toHaveBeenCalledTimes(3);
+  expect(relay.uploadChunk).toHaveBeenCalledTimes(6);
+  await deliverFiles(options);
+  expect(relay.prompt).toHaveBeenCalledWith('p', 's', '', {
+    requestId: 'stable-id',
+    receipts: [expect.any(String), expect.any(String), expect.any(String)],
+  });
 });
