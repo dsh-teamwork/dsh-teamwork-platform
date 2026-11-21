@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing. `DSH_VERSION` in `apps/web/src/public/home.tsx` moves with each DSH release the plugin is verified on.
 - **Refs:** `apps/web/src/public/home.tsx`, `apps/web/src/public/client.ts`, `apps/web/src/messages/`.
 
+## 2026-11-20 — Hosted models name the provider `hosted`
+
+- **What:** A model an edition publishes now carries `provider: "hosted"` in its configuration data instead of `hosted:<extension>` (`hosted:billing`); which edition funds it stays in the configuration's route owner. No team provider and no admin's model may take the name `hosted`. The models page shows such a model as a "Platform model" badge beside its model id instead of `hosted:billing / …`.
+- **Why:** The extension's internal name reached admins in the console, and a team provider could share the string.
+- **Breaking:** None: nothing depends on the old string. Rows written before keep it until the operator next changes that catalogue model; a local database can be wiped.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/wire/team.go` (`HostedProvider`), `server/internal/usage/funding.go`, `apps/web/src/pages/team/models.tsx`.
+
 ## 2026-11-20 — A presentation template, and pages that save the files they make
 
 - **What:** The console's preset templates gain a fourth, the presentation master (`presenter`: read, write, skill and `teamwork_page`), which plans a talk with the member, writes the slides and their speaker notes with the DSH plugin's `teamwork-slides` skill, and publishes the deck as a page that presents full screen and exports to PDF and an editable PowerPoint file. The page sandbox adds `allow-downloads` (the CSP on `/p/` and the console's viewer, which also allows full screen), so a page can save a file it makes. `teamwork_page` joins the tools the preset editor offers.
