@@ -29,10 +29,6 @@ function setup() {
     })),
     cancelUpload: vi.fn(async () => {}),
     prompt: vi.fn(async () => {}),
-    configuration: vi.fn(async () => ({
-      defaultModel: { provider: 'team', model: 'model' },
-      models: [{ provider: 'team', id: 'model', inputModalities: ['text', 'image'] }],
-    })),
   };
   const draft = newFileDraft();
   draft.files = [file('one'), file('two')];
@@ -190,21 +186,18 @@ it('refuses Send before uploads finish without starting a transfer or submitting
   expect(draft.pending).toBeUndefined();
 });
 
-it('uploads multiple images in chunks and blocks upload for a model without image support', async () => {
+it('uploads multiple images in chunks and reports the host model error on send', async () => {
   const { relay, draft, options } = setup();
   draft.files = [file('one'), { ...file('first'), name: 'first.png' }, { ...file('second'), name: 'second.jpg' }];
   const imageLimits = { ...limits, extensions: [...limits.extensions, 'png', 'jpg'], maxImageBytes: 512 * 1024, maxMessageImageBytes: 1536 * 1024 };
   expect(() => validateFiles([{ ...draft.files[1], bytes: imageLimits.maxImageBytes + 1 }], imageLimits)).toThrow(new RelayError('image_too_large'));
-  relay.configuration.mockResolvedValueOnce({
-    defaultModel: { provider: 'team', model: 'model' },
-    models: [{ provider: 'team', id: 'model', inputModalities: ['text'] }],
-  });
-  await expect(uploadFiles({ ...options, limits: imageLimits })).rejects.toMatchObject({ code: 'image_model_unsupported' });
-  expect(relay.startUpload).not.toHaveBeenCalled();
   expect(draft.files).toHaveLength(3);
   await uploadFiles({ ...options, limits: imageLimits });
   expect(relay.startUpload).toHaveBeenCalledTimes(3);
   expect(relay.uploadChunk).toHaveBeenCalledTimes(6);
+  relay.prompt.mockRejectedValueOnce(new RelayError('image_model_unsupported'));
+  await expect(deliverFiles(options)).rejects.toMatchObject({ code: 'image_model_unsupported' });
+  expect(draft.files).toHaveLength(3);
   await deliverFiles(options);
   expect(relay.prompt).toHaveBeenCalledWith('p', 's', '', {
     requestId: 'stable-id',

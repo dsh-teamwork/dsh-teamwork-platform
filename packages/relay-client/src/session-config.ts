@@ -39,7 +39,6 @@ const ModelSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
-  inputModalities: z.array(z.string()).optional(),
   reasoning: z
     .object({ efforts: z.array(z.object({ id: z.string(), name: z.string() })), defaultEffort: z.string().optional() })
     .optional(),
@@ -50,7 +49,6 @@ const CatalogSchema = z.object({
   failures: z.array(z.object({ name: z.string() })).default([]),
 });
 const ConfigurationSchema = z.object({
-  imageModels: ModelSelectionSchema.array().optional(),
   presets: PresetSchema.array(),
   /** Where the computer lets a session start: where DSH was started, then its workspaces. Older plugins send none. */
   directories: z.string().array().default([]),
@@ -135,16 +133,3 @@ export function configurationOf(sessions: unknown, models: unknown, configuratio
   };
 }
 export type SessionConfiguration = ReturnType<typeof configurationOf>;
-
-/** Resolve the model that will receive the draft, including a preset's model. */
-export function modelAcceptsImages(config: SessionConfiguration | null, options?: SessionOptions): boolean {
-  if (!config) return false;
-  const selection = options
-    ? options.model ?? config.presets.find((preset) => options.agentPreset ? preset.id === options.agentPreset : preset.isDefault)?.model ?? config.defaultModel
-    : config.current?.model ?? config.defaultModel;
-  if (config.imageModels) {
-    return config.imageModels.some((model) => model.provider === selection.provider && model.model === selection.model);
-  }
-  return !!config.models.find((model) => model.provider === selection.provider && model.id === selection.model)
-    ?.inputModalities?.includes('image');
-}

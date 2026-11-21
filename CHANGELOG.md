@@ -15,7 +15,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-21 — DSH conversations accept multiple images
 
-- **What:** The web composer checks model capability, resizes oversized images and transfers multiple images in acknowledged chunks. The model gateway admits inline raster images for supported bounded routes.
+- **What:** The web composer resizes oversized images and transfers multiple images in acknowledged chunks. DSH checks image support against the active model when an image message is sent and the composer shows any resulting error. The model gateway admits inline raster images for supported bounded routes.
 - **Why:** Members can send screenshots and photos to models that can interpret them.
 - **Breaking:** None.
 - **Upgrade:** Update the DSH Teamwork plugin to send images.
