@@ -326,7 +326,8 @@ func (p *pairings) list(ctx context.Context, s scope) ([]pairingView, error) {
 // token and language, or off. Only the handset the pairing is bound to, on the
 // same account, reaches it, and a revoked pairing is not found.
 func (p *pairings) setPush(ctx context.Context, ph phone, pairingID string, in pushUpdate) error {
-	up := p.db.RelayPairing.Update().Where(relaypairing.ID(pairingID), ph.where(), relaypairing.RevokedAtIsNil())
+	reach := []predicate.RelayPairing{relaypairing.ID(pairingID), ph.where(), relaypairing.RevokedAtIsNil()}
+	up := p.db.RelayPairing.Update().Where(reach...)
 	switch {
 	case in.token == nil:
 		up.ClearPushToken().ClearPushLocale()
@@ -336,7 +337,14 @@ func (p *pairings) setPush(ctx context.Context, ph phone, pairingID string, in p
 		up.SetPushToken(*in.token).SetPushLocale(*in.locale)
 	}
 	n, err := up.Save(ctx)
-	if err == nil && n != 1 {
+	if err != nil || n == 1 {
+		return err
+	}
+	// MySQL counts only the rows an update changed, so saving what is already
+	// there (turning off notifications that are off) is 0 there too: only a
+	// pairing this phone cannot reach is not found.
+	reached, err := p.db.RelayPairing.Query().Where(reach...).Exist(ctx)
+	if err == nil && !reached {
 		return errNotFound
 	}
 	return err
