@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-20
+> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-21
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -254,7 +254,11 @@ a 403, so its existence is not told.
     base-uri 'none'; frame-ancestors <APP_URL>`, where `<cdns>` is
     `https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com`;
   - `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`,
-    `Cross-Origin-Resource-Policy: same-site`, `X-Robots-Tag: noindex`;
+    `Cross-Origin-Resource-Policy: cross-origin`, `X-Robots-Tag: noindex`.
+    The policy is `cross-origin` because the sandbox gives the page an opaque
+    origin: to the browser the page's own scripts and styles are then another
+    site's, and `same-site` blocked every file but the entry. What keeps a
+    file private is its unguessable, short-lived address;
   - `Cache-Control: private, no-cache` and an `ETag` of the digest, so a
     browser revalidates (and is re-checked) every time and gets a 304;
   - no `Set-Cookie`, and any cookie sent is ignored.
