@@ -138,6 +138,11 @@ func TestPagesArePrivateToTheirOwner(t *testing.T) {
 		if h.Get("X-Frame-Options") != "" || h.Get("Set-Cookie") != "" || h.Get("X-Content-Type-Options") != "nosniff" || h.Get("Cache-Control") != "private, no-cache" {
 			t.Fatalf("headers %v", h)
 		}
+		// The sandboxed page has an opaque origin, so to the browser its own deck.js or style.css is another site's:
+		// a same-site resource policy blocks every file but the entry (net::ERR_BLOCKED_BY_RESPONSE.NotSameSite).
+		if got := h.Get("Cross-Origin-Resource-Policy"); got != "cross-origin" {
+			t.Fatalf("Cross-Origin-Resource-Policy %q blocks the page's own files", got)
+		}
 		if res, body := fetch(t, address+"style.css", "", nil); res.StatusCode != 200 || body != "h1{color:red}" || !strings.HasPrefix(res.Header.Get("Content-Type"), "text/css") {
 			t.Fatalf("stylesheet: %d %q", res.StatusCode, body)
 		}

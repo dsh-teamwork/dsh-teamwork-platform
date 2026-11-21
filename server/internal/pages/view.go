@@ -83,7 +83,9 @@ func Headers(h http.Header, appURL string) {
 	h.Del("X-Frame-Options") // frame-ancestors decides, and admits the console
 	h.Set("X-Content-Type-Options", "nosniff")
 	h.Set("Referrer-Policy", "no-referrer")
-	h.Set("Cross-Origin-Resource-Policy", "same-site")
+	// cross-origin, not same-site: the sandbox gives the page an opaque origin, so its own files are another
+	// site's to the browser, and same-site would block all but the entry. The address is the capability.
+	h.Set("Cross-Origin-Resource-Policy", "cross-origin")
 	h.Set("X-Robots-Tag", "noindex")
 	h.Set("Cache-Control", "private, no-cache")
 }

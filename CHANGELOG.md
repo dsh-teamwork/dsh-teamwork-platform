@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-21 — A page loads its own scripts and styles
+
+- **What:** Responses under `/p/` carry `Cross-Origin-Resource-Policy: cross-origin` where they carried `same-site`.
+- **Why:** The sandbox gives a page an opaque origin, so Chrome treated the page's own files as another site's and blocked every one but the entry: a published deck showed "deck.js was not found" and a report "report.js was not found".
+- **Breaking:** None.
+- **Upgrade:** Nothing; published pages work once the server is updated.
+- **Refs:** `server/internal/pages/view.go`, `docs/tech/pages.md`.
+
 ## 2026-11-21 — The research analyst template publishes a cited report
 
 - **What:** The research analyst template now follows the DSH plugin's `teamwork-research` skill: it agrees the decision and 3 to 5 sub-questions, reads primary sources, cites every fact with a quote and an access date, and publishes the report as a page that prints to PDF and saves as Markdown. It requires `web_fetch`, `write`, `skill` and `teamwork_page`; `web_search` is optional, since it needs a DeepSeek key on the member's DSH or a server that offers Teamwork search.
