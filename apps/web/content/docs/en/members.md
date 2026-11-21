@@ -122,7 +122,9 @@ their own agent to change it, which adds a version under their name. As the
 owner you can also rename a page, restore an earlier version, or delete it.
 The team's admin sees every page under **All** and can narrow who reads one or
 delete it, but reads its content only if it is shared with them. Pages run in
-a sandbox on their own address, so a page cannot act as you in Teamwork.
+a sandbox on their own address, so a page cannot act as you in Teamwork. A page
+may still go full screen and save a file it makes, such as a deck's PDF or
+PowerPoint export; your browser shows each download.
 
 ## More than one team
 

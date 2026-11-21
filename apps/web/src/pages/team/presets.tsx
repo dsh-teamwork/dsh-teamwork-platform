@@ -162,7 +162,7 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
             <h2 className="text-base font-semibold">{t('templatesTitle')}</h2>
             <p className="text-sm text-muted-foreground">{t('templatesHint')}</p>
           </div>
-          <ul className="grid gap-3 md:grid-cols-3">
+          <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {PRESET_TEMPLATES.map((template) => (
               <li key={template.id} className="flex flex-col gap-3 rounded-lg border border-dashed bg-card p-4">
                 <div className="flex items-start gap-3">

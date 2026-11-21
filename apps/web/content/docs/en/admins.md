@@ -66,8 +66,12 @@ synchronized later and no catalog link is saved.
 ## 3. Add presets and plugins
 
 - **Presets** are roles the team shares: the model a preset calls, the tools it
-  needs and the way it works. Start from a template or a blank preset, and give
-  it an avatar, which members see beside it in the console and the phone app.
+  needs and the way it works. Start from a template (writer, data analyst,
+  research analyst or presentation master) or a blank preset, and give it an
+  avatar, which members see beside it in the console and the phone app. The
+  presentation master plans a talk, writes the slides and their speaker notes,
+  and publishes the deck as a page that presents full screen and exports to PDF
+  and an editable PowerPoint file.
 - **Plugins** pin npm packages at exact versions, so everyone runs the same
   build. Members still confirm each installation in their own DSH.
 

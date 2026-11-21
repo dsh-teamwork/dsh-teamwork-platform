@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — A presentation template, and pages that save the files they make
+
+- **What:** The console's preset templates gain a fourth, the presentation master (`presenter`: read, write, skill and `teamwork_page`), which plans a talk with the member, writes the slides and their speaker notes with the DSH plugin's `teamwork-slides` skill, and publishes the deck as a page that presents full screen and exports to PDF and an editable PowerPoint file. The page sandbox adds `allow-downloads` (the CSP on `/p/` and the console's viewer, which also allows full screen), so a page can save a file it makes. `teamwork_page` joins the tools the preset editor offers.
+- **Why:** Teams asked for decks they can preview, share and hand over as PowerPoint; without `allow-downloads` a published deck could not save its export.
+- **Breaking:** None.
+- **Upgrade:** Members update the DSH plugin for the skill. A phone app WebView does not save a page's files yet.
+- **Refs:** `apps/web/src/lib/preset-templates.ts`, `server/internal/pages/view.go`, `apps/web/src/components/page-viewer.tsx`, `docs/tech/pages.md`, plugin `skills/teamwork-slides/`.
+
 ## 2026-11-20 — Points are shown as whole numbers
 
 - **What:** Every point amount the console shows (My usage, Usage, Budgets and the overview's figures) is rounded half up to a whole number and grouped by locale, through `formatPoints` in `@dsh-teamwork/shared`. Rates per million tokens and the budget form's inputs keep their decimals, and the API still returns exact decimal strings.

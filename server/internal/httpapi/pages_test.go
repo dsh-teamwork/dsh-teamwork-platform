@@ -124,6 +124,14 @@ func TestPagesArePrivateToTheirOwner(t *testing.T) {
 			t.Fatalf("view: %d %q", res.StatusCode, body)
 		}
 		h := res.Header
+		// A page may save a file it makes (a deck's PowerPoint export), and nothing more: never its viewer's origin, the
+		// top window or a popup outside the sandbox.
+		sandbox := strings.Split(strings.Split(h.Get("Content-Security-Policy"), ";")[0], " ")
+		if !slices.Contains(sandbox, "allow-downloads") || slices.ContainsFunc(sandbox, func(f string) bool {
+			return f == "allow-same-origin" || strings.HasPrefix(f, "allow-top-navigation") || f == "allow-popups-to-escape-sandbox"
+		}) {
+			t.Fatalf("sandbox flags: %v", sandbox)
+		}
 		if csp := h.Get("Content-Security-Policy"); !strings.HasPrefix(csp, "sandbox allow-scripts") || strings.Contains(csp, "allow-same-origin") || !strings.Contains(csp, "frame-ancestors "+e.url) {
 			t.Fatalf("CSP %q", csp)
 		}
