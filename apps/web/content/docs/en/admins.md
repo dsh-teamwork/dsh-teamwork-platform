@@ -73,8 +73,10 @@ synchronized later and no catalog link is saved.
   and publishes the deck as a page that presents full screen and exports to PDF
   and an editable PowerPoint file. The research analyst reads primary sources
   and publishes a report with numbered citations, gaps and dated sources, which
-  prints to PDF and saves as Markdown; web search needs a DeepSeek API key in
-  the member's DSH, and without one it works from the pages it can open.
+  prints to PDF and saves as Markdown. For web search a member chooses
+  **Teamwork** under Web search and fetch in DSH, where the server offers it
+  (the hosted service does), or adds a DeepSeek API key; without either it
+  works from the pages it can open.
 - **Plugins** pin npm packages at exact versions, so everyone runs the same
   build. Members still confirm each installation in their own DSH.
 
