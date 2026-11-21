@@ -56,7 +56,7 @@ document.addEventListener('keydown', (event) => {
   for (const menu of document.querySelectorAll<HTMLDetailsElement>('details[data-menu][open]')) menu.open = false;
 });
 
-// The home page's copy buttons: the command beside each stays selectable when the clipboard is refused.
+// The copy buttons: the text beside each is selected instead when the clipboard is refused.
 for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-copy]')) {
   const label = button.textContent;
   button.addEventListener('click', async () => {
@@ -65,7 +65,7 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-c
       button.textContent = '✓';
       setTimeout(() => (button.textContent = label), 1500);
     } catch {
-      const code = button.previousElementSibling;
+      const code = button.parentElement?.querySelector('pre, code');
       if (code) window.getSelection()?.selectAllChildren(code);
     }
   });

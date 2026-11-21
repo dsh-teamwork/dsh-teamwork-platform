@@ -104,10 +104,9 @@
     "createTeam": "创建团队",
     "openConsole": "打开团队控制台",
     "install": {
-      "plugin": "DSH 插件",
-      "copy": "复制包名",
-      "hint": "在 DSH 桌面版打开 Plugins → Add plugin，粘贴上方包名。",
-      "more": "安装指南"
+      "copy": "复制 DSH 插件名",
+      "hint": "已适配最新版 DSH {version}。在桌面版 <menu>插件 → 添加插件</menu> 中粘贴插件名即可。",
+      "more": "完整安装指南"
     },
     "nav": {
       "label": "页面章节",
@@ -550,6 +549,7 @@
       "description": "团队模型是成员的 DSH 可以使用的模型。要用自己的密钥，接入 BYOK 模型服务，再勾选要发布给团队的模型。成员只看到团队模型，看不到地址和密钥。",
       "addProvider": "BYOK 模型服务",
       "teamModels": "团队模型",
+      "platformModel": "平台模型",
       "byokTitle": "BYOK 模型服务",
       "count": "{count} 个模型",
       "empty": "还没有团队模型。接入一个 BYOK 模型服务来添加。",

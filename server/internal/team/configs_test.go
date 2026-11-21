@@ -31,7 +31,7 @@ func TestAnAdminRemovesAnOwnedModelAndItsOwnerHears(t *testing.T) {
 		d.Client.Membership.Create().SetTeamID(team.ID).SetUserID(member.ID).SetRole(membership.RoleMember).ExecX(ctx)
 		owned := func(id string) {
 			d.Client.TeamConfig.Create().SetID(id).SetTeamID(team.ID).SetKind(teamconfig.KindModel).SetName(id).
-				SetData([]byte(`{"provider":"hosted:billing","model":"astra","contextWindow":1000,"maxTokens":100}`)).
+				SetData([]byte(`{"provider":"hosted","model":"astra","contextWindow":1000,"maxTokens":100}`)).
 				SetRouteOwner("billing").SetRouteReference("astra").ExecX(ctx)
 		}
 		owned("used")
