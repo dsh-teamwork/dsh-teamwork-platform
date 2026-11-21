@@ -54,9 +54,6 @@ function Zone({ id, children }: { id?: string; children: ReactNode }) {
 // auto-phrase keeps a CJK title from breaking inside a word where the browser supports it.
 const zoneTitle = 'max-w-3xl text-balance [word-break:auto-phrase] text-3xl font-black tracking-tight sm:text-5xl sm:leading-tight';
 const zoneLede = 'mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg';
-/** A block of equal cells divided by hairlines: the page's one framed pattern. */
-const cells = 'mt-12 grid gap-px overflow-hidden rounded-xl bg-border ring-1 ring-border';
-
 // The community edition: the open half of this product (ADR 0005), self-hosted.
 const communityRepo = 'https://github.com/dsh-teamwork/dsh-teamwork-platform';
 
