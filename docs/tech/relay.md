@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-20
+> **Status:** Current · **Updated:** 2026-11-21
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -481,17 +481,28 @@ against its completed receipt metadata before forwarding a new prompt.
   Cache copies older than 24 hours are removed at startup; app-kill recovery is
   not promised. Original documents and DSH workspace files are never deleted.
 
-### Images remain planned
+### Image attachments
 
-The Teamwork adapter currently declares `input: ['text']`, and the shared model
-configuration has no modality metadata. Image receipt support in DSH does not
-by itself enable team-model vision. Photo library, camera, local previews and
-HEIC conversion wait for actual capability reporting and real-device tests.
-Team-model images also require upstream shared-model metadata, plugin
-propagation and a real gateway test including image encoding plus conversation
-history within the gateway's existing 4 MiB request budget. Shared changes land
-upstream before merging here. The phone must preserve the draft when the
-selected model cannot accept an image.
+The web and phone composers accept multiple PNG, JPEG, WebP and GIF images.
+They resize oversized files before transferring them through the same
+acknowledged chunks as documents. DSH Teamwork advertises a limit of 512 KiB
+per prepared image and 1.5 MiB of prepared images per message, within the
+five-attachment limit. Send carries only receipts. The plugin resolves image
+receipts within the submitting pairing and session, then passes the encoded
+images to DSH for validation and durable storage. Phone photos are converted
+to JPEG. The original file or photo stays with its provider.
+
+The model configuration carries optional `vision` to DSH. BYOK model import
+reads it from the public model catalog, and an administrator can set or refresh
+it in the form. The hosted catalogue exposes the same capability to operators
+and publishes it to teams. Catalogues are read on creation and editing. Both
+composers require a model that advertises image input before uploading images.
+The plugin checks the session's actual model again before sending to DSH.
+
+The hosted gateway admits inline raster image parts on vision-enabled routes
+within its 4 MiB request limit, including re-encoded images in conversation
+history. The trusted route context still bounds the hold. A budgeted BYOK route
+must have a trusted provider bound that supports images.
 
 ## Push notifications
 

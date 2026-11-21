@@ -18,6 +18,8 @@ import {
   applySessionEvent,
   defaultDirectory,
   deliverFiles,
+  modelAcceptsImages,
+  imageMediaType,
   EMPTY_SESSION,
   fileReference,
   toolKey,
@@ -74,7 +76,7 @@ function useSessionClient(): SessionClient {
   return useContext(SessionClientContext) ?? relayFor(me);
 }
 
-const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused', 'not_text']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'image_too_large', 'image_model_unsupported', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused', 'not_text']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {
@@ -434,7 +436,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
   const [state, setState] = useState<SessionState>(EMPTY_SESSION);
   const [options, setOptions] = useState<SessionOptions>({});
   const [config, setConfig] = useConfiguration(computerId, id);
-  const files = useFiles(computerId);
+  const files = useFiles(computerId, modelAcceptsImages(config, id ? undefined : options));
   // The first message, shown until the session's own copy of it arrives.
   const [sent, setSent] = useState('');
   const [busy, setBusy] = useState(false);
@@ -862,6 +864,31 @@ function ModelSettings({ computerId, sessionId, config, setConfig, disabled, val
   );
 }
 
+async function compressAttachment(file: File, limit: number): Promise<File> {
+  if (limit <= 0) throw new RelayError('image_too_large');
+  if (file.size <= limit) return file;
+  const bitmap = await createImageBitmap(file);
+  try {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) throw new RelayError('upload_failed');
+    for (const edge of [1600, 1200, 900, 640, 480, 320]) {
+      const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.8));
+      if (blob && blob.size <= limit) {
+        const extension = blob.type === 'image/webp' ? '.webp' : '.png';
+        return new File([blob], file.name.replace(/\.[^.]+$/, '') + extension, { type: blob.type });
+      }
+    }
+    throw new RelayError('image_too_large');
+  } finally {
+    bitmap.close();
+  }
+}
+
 type Files = ReturnType<typeof useFiles>;
 
 /**
@@ -870,7 +897,7 @@ type Files = ReturnType<typeof useFiles>;
  * acknowledged chunks, then one prompt with their receipts (`attachments` of the relay client, which the phone app
  * uses too). A computer whose plugin cannot take files offers none.
  */
-function useFiles(computerId: string) {
+function useFiles(computerId: string, acceptsImages: boolean) {
   const t = useTranslations('team.dsh.files');
   const word = useRelayError();
   const relay = useSessionClient();
@@ -891,22 +918,41 @@ function useFiles(computerId: string) {
     draft.current.files = next;
     setFiles(next);
   }
-  function add(list: FileList | null) {
+  async function add(list: FileList | null) {
     if (!list?.length || !limits) return;
-    const picked = [...list].map((file) => {
-      const id = crypto.randomUUID();
-      blobs.current.set(id, file);
-      return { id, name: file.name, bytes: file.size, uri: id };
-    });
+    const selected = Array.from(list);
     setFailed(null);
+    setProgress(t('preparing'));
     try {
+      if (files.length + selected.length > limits.maxFiles) throw new RelayError('file_too_large');
+      if (!acceptsImages && selected.some((file) => imageMediaType(file.name))) throw new RelayError('image_model_unsupported');
+      const remaining = (limits.maxMessageImageBytes ?? 0) - files.filter((file) => imageMediaType(file.name)).reduce((sum, file) => sum + file.bytes, 0);
+      const count = selected.filter((file) => imageMediaType(file.name)).length;
+      if (count && !limits.maxImageBytes) throw new RelayError('upload_unsupported');
+      const perImage = Math.min(limits.maxImageBytes ?? 0, Math.floor(remaining / Math.max(1, count)));
+      const prepared: File[] = [];
+      for (const file of selected) {
+        prepared.push(imageMediaType(file.name) ? await compressAttachment(file, perImage) : file);
+      }
+      const picked = prepared.map((file) => {
+        const id = crypto.randomUUID();
+        return { id, name: file.name, bytes: file.size, uri: id };
+      });
       validateFiles([...files, ...picked], limits);
+      picked.forEach((file, index) => blobs.current.set(file.id, prepared[index]));
       choose([...files, ...picked]);
     } catch (error) {
-      for (const file of picked) blobs.current.delete(file.id);
       setFailed(word(error));
+    } finally {
+      setProgress(null);
     }
   }
+  async function read(file: PickedFile, offset: number, length: number) {
+    const blob = blobs.current.get(file.uri);
+    if (!blob) throw new RelayError('upload_expired');
+    return new Uint8Array(await blob.slice(offset, offset + length).arrayBuffer());
+  }
+
   function remove(id: string) {
     blobs.current.delete(id);
     draft.current.uploaded.delete(id);
@@ -914,7 +960,8 @@ function useFiles(computerId: string) {
   }
 
   return {
-    files, limits, progress, failed, add, remove,
+    files, limits, progress, failed, add, remove, acceptsImages,
+    preview: (file: PickedFile) => imageMediaType(file.name) ? blobs.current.get(file.id) : undefined,
     /** A new session's own: made once, with the files' folder and preset, and kept for a retry. */
     target: (options: SessionOptions) => {
       draft.current.options = options;
@@ -931,11 +978,7 @@ function useFiles(computerId: string) {
       try {
         await uploadFiles({
           relay, computerId, sessionId, draft: draft.current, limits, signal,
-          read: async (file, offset, length) => {
-            const blob = blobs.current.get(file.uri);
-            if (!blob) throw new RelayError('upload_expired');
-            return new Uint8Array(await blob.slice(offset, offset + length).arrayBuffer());
-          },
+          read,
           progress: (name, sent, total) => setProgress(t('progress', { name, percent: total ? Math.floor((sent / total) * 100) : 100 })),
         });
         await deliverFiles({ relay, computerId, sessionId, text, draft: draft.current, signal, requestId: () => crypto.randomUUID() });
@@ -951,17 +994,29 @@ function useFiles(computerId: string) {
 
 function AttachButton({ files, disabled }: { files: Files; disabled: boolean }) {
   const t = useTranslations('team.dsh.files');
+  const errors = useTranslations('relayErrors');
   const input = useRef<HTMLInputElement>(null);
   if (!files.limits) return null;
   return (
     <>
-      <input ref={input} type="file" multiple hidden accept={files.limits.extensions.map((extension) => `.${extension}`).join(',')}
-        onChange={(event) => { files.add(event.target.files); event.target.value = ''; }} />
-      <Button type="button" variant="ghost" size="icon" className="size-7" aria-label={t('add')} title={t('add')} disabled={disabled || files.progress !== null} onClick={() => input.current?.click()}>
+      <input ref={input} type="file" multiple hidden accept={files.limits.extensions.filter((extension) => files.acceptsImages || !imageMediaType(`file.${extension}`)).map((extension) => `.${extension}`).join(',')}
+        onChange={(event) => { void files.add(event.target.files); event.target.value = ''; }} />
+      <Button type="button" variant="ghost" size="icon" className="size-7" aria-label={t('add')} title={files.acceptsImages ? t('add') : errors('image_model_unsupported')} disabled={disabled || files.progress !== null} onClick={() => input.current?.click()}>
         <Paperclip className="size-4" aria-hidden />
       </Button>
     </>
   );
+}
+
+function AttachmentThumbnail({ file }: { file?: File }) {
+  const attach = useCallback((element: HTMLImageElement | null) => {
+    if (!element || !file) return;
+    const address = URL.createObjectURL(file);
+    element.src = address;
+    return () => URL.revokeObjectURL(address);
+  }, [file]);
+  if (file) return <img ref={attach} alt="" className="size-8 rounded object-cover" />;
+  return <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />;
 }
 
 function FileCards({ files, disabled }: { files: Files; disabled: boolean }) {
@@ -973,7 +1028,7 @@ function FileCards({ files, disabled }: { files: Files; disabled: boolean }) {
         <ul className="flex flex-wrap gap-2">
           {files.files.map((file) => (
             <li key={file.id} className="flex max-w-60 items-center gap-2 rounded-md border bg-background px-2 py-1 text-xs">
-              <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              <AttachmentThumbnail file={files.preview(file)} />
               <span className="truncate" title={file.name}>{file.name}</span>
               <span className="shrink-0 text-muted-foreground">{fileSize(file.bytes)}</span>
               <button type="button" className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground disabled:opacity-50" aria-label={t('remove', { name: file.name })}
@@ -1021,7 +1076,8 @@ function Composer({ busy, rows, placeholder, send, files, stop, tools, children 
       }}
     >
       <div className="flex flex-col gap-1.5 rounded-2xl border bg-card px-2 pt-2 pb-1.5 shadow-sm focus-within:ring-2 focus-within:ring-ring">
-        <FileCards files={files} disabled={busy} />
+        <FileCards files={files} disabled={busy || files.progress !== null} />
+        {files.limits && !files.acceptsImages && <p className="px-1 text-xs text-muted-foreground">{t('imagesUnavailable')}</p>}
         <Textarea
           value={text}
           rows={rows}

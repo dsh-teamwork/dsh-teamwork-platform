@@ -96,3 +96,23 @@ func TestRouteBoundsAdmitAReplayedReasoningReply(t *testing.T) {
 		}
 	}
 }
+
+func TestHostedVisionBoundsOnlyAcceptInlineImageParts(t *testing.T) {
+	for _, tc := range []struct {
+		name, content string
+		vision, valid bool
+	}{
+		{"image", `[{"type":"text","text":"describe this"},{"type":"image_url","image_url":{"url":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aY1sAAAAASUVORK5CYII="}}]`, true, true},
+		{"text route", `[{"type":"image_url","image_url":{"url":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aY1sAAAAASUVORK5CYII="}}]`, false, false},
+		{"remote fetch", `[{"type":"image_url","image_url":{"url":"https://example.test/image.png"}}]`, true, false},
+		{"audio", `[{"type":"input_audio","input_audio":{}}]`, true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			payload := map[string]json.RawMessage{"messages": json.RawMessage(`[{"role":"user","content":` + tc.content + `}]`)}
+			bound, err := RouteBoundsWithVision(payload, 100_000, 4096, tc.vision)
+			if tc.valid && (err != nil || bound != (Tokens{Input: 100_000, Output: 4096})) || !tc.valid && err == nil {
+				t.Fatalf("bound = %+v, err = %v", bound, err)
+			}
+		})
+	}
+}

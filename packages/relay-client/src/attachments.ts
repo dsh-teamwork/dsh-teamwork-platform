@@ -5,7 +5,7 @@
  * app and the web console each read the bytes their own way.
  */
 import { RelayError, type RelayClient } from './types';
-import type { SessionOptions } from './session-config';
+import { modelAcceptsImages, type SessionOptions } from './session-config';
 import type { UploadedFile, UploadLimits } from './uploads';
 
 export interface PickedFile {
@@ -14,6 +14,20 @@ export interface PickedFile {
   bytes: number;
   /** The reader's own handle for the bytes: a cache file's URI on the phone, a key into the page's own files in a browser. */
   uri: string;
+}
+const imageTypes = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  gif: 'image/gif',
+} as const;
+
+export function imageMediaType(name: string): string | undefined {
+  const dot = name.lastIndexOf('.');
+  if (dot < 0) return undefined;
+  const extension = name.slice(dot + 1).toLowerCase();
+  return Object.hasOwn(imageTypes, extension) ? imageTypes[extension as keyof typeof imageTypes] : undefined;
 }
 export type SessionTarget = { id: string; directory: string };
 export interface FileDraft {
@@ -40,7 +54,13 @@ export function validateFiles(files: PickedFile[], limits: UploadLimits) {
     files.reduce((n, f) => n + f.bytes, 0) > limits.maxMessageBytes
   )
     throw new RelayError('file_too_large');
-  if (files.some((f) => !limits.extensions.includes(f.name.split('.').pop()!.toLowerCase())))
+  const images = files.filter((file) => imageMediaType(file.name));
+  if (images.length && (!limits.maxImageBytes || !limits.maxMessageImageBytes))
+    throw new RelayError('upload_unsupported');
+  if (images.some((file) => !file.bytes || file.bytes > limits.maxImageBytes!) ||
+      images.reduce((sum, file) => sum + file.bytes, 0) > (limits.maxMessageImageBytes ?? 0))
+    throw new RelayError('image_too_large');
+  if (files.some((file) => !limits.extensions.includes(file.name.split('.').pop()!.toLowerCase())))
     throw new RelayError('file_type');
 }
 export function encodeChunk(data: Uint8Array): string {
@@ -75,7 +95,7 @@ export async function ensureFileTarget(
 
 /** Transfer selected bytes without submitting any prompt. */
 export async function uploadFiles(options: {
-  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload'>;
+  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'configuration'>;
   computerId: string;
   sessionId: string;
   draft: FileDraft;
@@ -89,6 +109,11 @@ export async function uploadFiles(options: {
   if (draft.files.length) {
     if (!limits) throw new RelayError('upload_unsupported');
     validateFiles(draft.files, limits);
+  }
+  if (draft.files.some((file) => imageMediaType(file.name)) && !draft.pending?.sent) {
+    const config = await relay.configuration(computerId, draft.options ? undefined : sessionId);
+    if (!modelAcceptsImages(config, draft.options)) throw new RelayError('image_model_unsupported');
+    checkCancelled(signal);
   }
   const total = draft.files.reduce((sum, file) => sum + file.bytes, 0);
   let sent = 0;
@@ -136,7 +161,7 @@ export async function uploadFiles(options: {
 
 /** One immutable outgoing message keeps its id after a lost acknowledgement. */
 export async function deliverFiles(options: {
-  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'prompt'>;
+  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'prompt' | 'configuration'>;
   computerId: string;
   sessionId: string;
   text: string;
@@ -152,6 +177,12 @@ export async function deliverFiles(options: {
   if (draft.pending?.fingerprint !== fingerprint)
     draft.pending = { fingerprint, requestId: options.requestId(), sent: false };
   checkCancelled(signal);
+  if (draft.files.some((file) => imageMediaType(file.name)) && !draft.pending.sent) {
+    if (!modelAcceptsImages(await relay.configuration(computerId, sessionId))) {
+      throw new RelayError('image_model_unsupported');
+    }
+    checkCancelled(signal);
+  }
   const pending = draft.pending;
   pending.sent = true;
   options.submitted?.();

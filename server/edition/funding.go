@@ -31,6 +31,7 @@ type FundingQuote struct {
 	Revision                       int
 	Rates                          Rates
 	MaxInput, MaxOutput            int64
+	Vision                         bool
 	Body                           map[string]json.RawMessage
 }
 
@@ -86,6 +87,7 @@ var ErrTeamGone = errors.New("team no longer exists")
 type OwnedModel struct {
 	ConfigID, Name, Reference string
 	ContextWindow, MaxTokens  int64
+	Vision                    *bool
 	Offline                   bool
 }
 

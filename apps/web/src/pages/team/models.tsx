@@ -477,8 +477,13 @@ function ConnectDialog({
         const reference = references[item.id] ?? (await lookupReference(teamId, referenceProvider, item.id));
         const known = reference?.details ?? {};
         const data = manual
-          ? { provider, model: item.id, ...typedDetails }
-          : { provider, model: item.id, contextWindow: item.contextWindow ?? known.contextWindow, maxTokens: item.maxTokens ?? known.maxTokens, vision: known.vision };
+          ? { provider, model: item.id, vision: known.vision, ...typedDetails }
+          : {
+              provider, model: item.id,
+              contextWindow: item.contextWindow ?? known.contextWindow,
+              maxTokens: item.maxTokens ?? known.maxTokens,
+              vision: known.vision,
+            };
         const created = await api<TeamConfig>(`teams/${teamId}/configs`, { body: { kind: 'model', name: label, data } });
         sent.add(item.id);
         if (reference?.rates && (await saveReferenceRates(teamId, created.id, reference.rates))) priced++;
