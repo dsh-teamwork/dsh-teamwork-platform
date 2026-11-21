@@ -16,7 +16,7 @@
  *   `approval/request`, answered through `$events/result`.
  */
 
-import type { ConversationItem, Pending, PublishedPage, SessionChange, SessionState, SessionStatus, SessionSummary } from './types';
+import type { ConversationItem, Pending, PublishedPage, SessionChange, SessionState, SessionStatus, SessionSummary, SessionWorkspace } from './types';
 
 type Json = Record<string, unknown>;
 const isObject = (value: unknown): value is Json => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -47,7 +47,9 @@ export function summaryOf(item: unknown): SessionSummary | null {
     updatedAt: new Date(typeof item.updatedAt === 'number' ? item.updatedAt : 0).toISOString(),
     directory: typeof item.cwd === 'string' ? directoryName(item.cwd) : '',
     pending: null,
-    marks: isObject(item.teamwork) ? { pinned: item.teamwork.pinned === true, archived: item.teamwork.archived === true } : null,
+    marks: isObject(item.teamwork)
+      ? { pinned: item.teamwork.pinned === true, archived: item.teamwork.archived === true, workspace: workspaceOf(item.teamwork.workspace) }
+      : null,
     // An older plugin reports no step, and an idle session's step is cleared.
     step:
       item.running === true && typeof step.count === 'number' && step.count > 0
@@ -70,6 +72,70 @@ export function sessionsOf(value: unknown, pending: ReadonlyMap<string, Pending>
     .filter((s): s is SessionSummary => s !== null)
     .map((s) => ({ ...s, pending: pending.get(s.id) ?? null }))
     .sort((a, b) => rank(a) - rank(b) || b.updatedAt.localeCompare(a.updatedAt));
+}
+
+/** The workspace a `teamwork` mark names, or null: Ungrouped, or a plugin that names none. */
+function workspaceOf(value: unknown): SessionWorkspace | null {
+  if (!isObject(value) || typeof value.id !== 'string' || typeof value.title !== 'string') return null;
+  const index = typeof value.index === 'number' ? value.index : 0;
+  const position = typeof value.position === 'number' ? value.position : 0;
+  return { id: value.id, title: value.title, index, position };
+}
+
+/** One group of a computer's sessions as DSH's sidebar shows it: a workspace's, or Ungrouped's with `workspace` null. */
+export interface SessionGroup {
+  workspace: { id: string; title: string } | null;
+  sessions: SessionSummary[];
+}
+
+/** Pinned sessions first, archived ones never among them, each part in the order it came. */
+const pinnedFirst = (sessions: SessionSummary[]) => [
+  ...sessions.filter((s) => s.marks?.pinned && !s.marks.archived),
+  ...sessions.filter((s) => !(s.marks?.pinned && !s.marks.archived)),
+];
+const newestFirst = (a: SessionSummary, b: SessionSummary) => b.updatedAt.localeCompare(a.updatedAt) || (a.id < b.id ? -1 : 1);
+
+/**
+ * A computer's sessions grouped as DSH's own sidebar groups them (`@deepseek-ai/dsh-client-ui-workspace`): each
+ * workspace in DSH's order with its sessions in the workspace's own order, then Ungrouped, newest change first, and
+ * within every group the pinned ones lead. Archived sessions are left out unless `archived`; then they stay in their
+ * group. A workspace with no session listed here has no group, and a plugin that marks no workspace lists them all
+ * under Ungrouped.
+ */
+export function sessionGroups(sessions: readonly SessionSummary[], archived = false): SessionGroup[] {
+  const workspaces = new Map<string, { workspace: SessionWorkspace; sessions: SessionSummary[] }>();
+  const ungrouped: SessionSummary[] = [];
+  for (const s of sessions) {
+    if (s.marks?.archived && !archived) continue;
+    const workspace = s.marks?.workspace;
+    if (!workspace) {
+      ungrouped.push(s);
+      continue;
+    }
+    const group = workspaces.get(workspace.id) ?? { workspace, sessions: [] };
+    group.sessions.push(s);
+    workspaces.set(workspace.id, group);
+  }
+  const groups: SessionGroup[] = [...workspaces.values()]
+    .sort((a, b) => a.workspace.index - b.workspace.index)
+    .map(({ workspace, sessions: members }) => ({
+      workspace: { id: workspace.id, title: workspace.title },
+      sessions: pinnedFirst(members.sort((a, b) => a.marks!.workspace!.position - b.marks!.workspace!.position)),
+    }));
+  if (ungrouped.length > 0) groups.push({ workspace: null, sessions: pinnedFirst(ungrouped.sort(newestFirst)) });
+  return groups;
+}
+
+/**
+ * DSH's sidebar search without its matches inside conversations: the sessions whose title or workspace title holds
+ * `query`, ignoring case, newest change first, archived ones only with `archived`.
+ */
+export function searchSessions(sessions: readonly SessionSummary[], query: string, archived = false): SessionSummary[] {
+  const needle = query.trim().toLocaleLowerCase();
+  return sessions
+    .filter((s) => archived || !s.marks?.archived)
+    .filter((s) => `${s.title}\n${s.marks?.workspace?.title ?? ''}`.toLocaleLowerCase().includes(needle))
+    .sort(newestFirst);
 }
 
 /** A tool call's arguments, short enough for one line. */

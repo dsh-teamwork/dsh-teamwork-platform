@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-21 — My DSH's computers move into the sidebar, and sessions group as in DSH
+
+- **What:** My DSH's computers fold out under its entry in the console's sidebar (status dot and name); the column beside it belongs to the open computer: its name, devices, a new session, a search and its sessions, grouped by DSH workspace as DSH's own sidebar groups them. An entry's hint mark sits right after its label. `SessionSummary.marks` gains `workspace`, which the plugin's `session/list` now reports, and `TeamPage` gains `subnav` for an edition's page reached on several computers.
+- **Why:** The computer list took a whole column, and a computer's sessions were a short list under its row; now one column is one computer's sessions, arranged as the member sees them in DSH.
+- **Breaking:** An edition building on `DshColumns` passes `header` where it passed `title`, and `SessionList` takes `unavailable` where it took `locked`. A plugin older than this change reports no workspace, and its sessions all list under Ungrouped.
+- **Upgrade:** Nothing; the plugin's change ships in its next release.
+- **Refs:** `docs/tech/relay.md` ("My DSH in the web console", "The allow-list"); `apps/web/content/docs/*/members.md`.
+
 ## 2026-11-21 — A page loads its own scripts and styles
 
 - **What:** Responses under `/p/` carry `Cross-Origin-Resource-Policy: cross-origin` where they carried `same-site`.

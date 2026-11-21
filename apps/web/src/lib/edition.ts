@@ -47,6 +47,19 @@ export interface TeamPage {
    * page.
    */
   fill?: boolean;
+  /**
+   * What folds out under its entry in the navigation: the computers the page is reached on, each a `SubnavLink`
+   * (components/team/console-shell.tsx) opening its sessions. Mounted only while unfolded, so it reads what it lists
+   * only while that is shown.
+   */
+  subnav?: ComponentType<SubnavProps>;
+}
+
+/** What a `TeamPage.subnav` is given: the team, the computer open on its page (the segment after its path, or ""), and what closes the narrow screen's navigation. */
+export interface SubnavProps {
+  teamId: string;
+  current: string;
+  onNavigate?: () => void;
 }
 
 /** The first segment a team page's navigation entry links to. */

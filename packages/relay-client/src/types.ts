@@ -81,6 +81,14 @@ export interface Pairing {
 
 export type SessionStatus = 'running' | 'idle';
 
+/** The DSH workspace that lists a session: its id and title, its place among the workspaces and the session's among its sessions, both DSH's own order. */
+export interface SessionWorkspace {
+  id: string;
+  title: string;
+  index: number;
+  position: number;
+}
+
 export interface SessionSummary {
   id: string;
   title: string;
@@ -94,10 +102,11 @@ export interface SessionSummary {
   /** A running turn's progress (the plugin's `teamworkStep`): its tool calls so far and what the latest works on; null when idle or not reported. */
   step: { count: number; tool: string; target: string } | null;
   /**
-   * Whether DSH's sidebar pins or archives it (the plugin's `teamwork` mark on `session/list`). Null from a plugin too
-   * old to mark its list, which cannot rename, pin or archive either.
+   * Where DSH's sidebar lists it (the plugin's `teamwork` mark on `session/list`): pinned, archived, and the workspace
+   * that lists it, or null under Ungrouped. Null from a plugin too old to mark its list, which cannot rename, pin or
+   * archive either.
    */
-  marks: { pinned: boolean; archived: boolean } | null;
+  marks: { pinned: boolean; archived: boolean; workspace: SessionWorkspace | null } | null;
 }
 
 /** A folder of a session's working directory (the plugin's `src/phone-files.ts`); paths are relative, with `/`. */

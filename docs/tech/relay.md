@@ -338,10 +338,13 @@ or a browser: pin, rename, copy its id, archive. The plugin passes DSH's own
 with exactly those fields, so a client never sends `stopActivity`: a running
 session's archive is refused (`workspace/session-active`, read as `busy`), and
 the client offers it only while idle. `session/list` marks each item
-`teamwork: { pinned, archived }` from DSH's workspace registry, which the
-relay client reads into `SessionSummary.marks`: pinned sessions follow those
-waiting on the member, archived ones are hidden until asked for, and an older
-plugin's list, unmarked, offers only the copy. On a Team DSH each action is
+`teamwork: { pinned, archived, workspace }` from DSH's workspace registry,
+`workspace` being `{ id, title, index, position }` (the workspace that lists
+it and both places in DSH's own order) or null under Ungrouped, which the
+relay client reads into `SessionSummary.marks`. The phone puts pinned sessions
+after those waiting on the member; the web console groups them as DSH's
+sidebar does (`sessionGroups`); both hide archived ones until asked for, and an
+older plugin's list, unmarked, offers only the copy. On a Team DSH each action is
 held to the member's own sessions like any call that names one, though the
 pin and archive land in that DSH's one registry, seen at its keyboard too.
 Forking a session and opening it in another app stay on the desktop.
@@ -576,24 +579,36 @@ the hosted edition, Cloud DSH.
 
 - **Workspace → My DSH**, `/teams/{teamId}/my-dsh[/{hostId}[/{sessionId}]]`
   and `/teams/{teamId}/my-dsh/{hostId}/devices`
-  (`apps/web/src/pages/team/my-dsh.tsx`), in the same three columns as Team
+  (`apps/web/src/pages/team/my-dsh.tsx`), in the same columns as Team
   DSH, whose parts it shares (`dsh-session.tsx`). Those parts speak to this
   browser's relay unless a page provides another client
   (`SessionClientContext`), as an edition does for a computer its server
   reaches itself. It is listed while the
   account has at least one recorded host, in every team alike: the computers
   are the person's, not a team's.
-- **The second column lists the account's computers**: name, operating system,
-  online or offline, whether this browser is paired with it, and beside each
-  the number of devices paired with it, which opens its devices page. The list
-  is read again every ten seconds, so a computer coming online or going away
-  moves the page along by itself. The open one shows its sessions beneath it
-  once it is online and this browser is paired, one line each, the newest six
-  until "Show all", pinned ones first and archived ones under "Archived"; the
-  arrow at the end of its row folds them away, so the computers below stay in
-  reach. Each session's menu pins, renames, copies its id and archives it
-  ("The allow-list" above).
-- **The third column** follows the computer's state, one at a time, and only
+- **The sidebar lists the account's computers** under My DSH's entry
+  (`MyDshNav` in `components/team/console-shell.tsx`), each a name and a dot,
+  green while it is online, with a short id after a name two of them share;
+  the chevron at the entry's end folds them away, remembered in the browser,
+  and opening the page unfolds them. `/my-dsh` with no computer in the address
+  opens the one this browser opened last, else the first online, else the
+  first. The list is read again every ten seconds while it is shown, as the
+  page reads its own, so a computer coming online or going away moves the page
+  along by itself. An edition's page reached on several computers folds its
+  own out the same way (`TeamPage.subnav`).
+- **The column beside the sidebar is the open computer's**: its name,
+  online or offline, operating system, whether this browser is paired with it,
+  and the number of devices paired with it, which opens its devices page;
+  under them a new session, a search of titles and workspace titles, and the
+  sessions, grouped as DSH's own sidebar groups them (`sessionGroups` in
+  `packages/relay-client`, after `@deepseek-ai/dsh-client-ui-workspace`): each
+  workspace in DSH's order with its sessions in its own order, then
+  Ungrouped, newest first, pinned ones first in every group, each group
+  folding away under its name; archived ones are hidden until "Archived",
+  then shown in their groups. Until the computer answers, the column says why
+  it lists nothing (offline, not paired, PIN, connecting). Each session's menu
+  pins, renames, copies its id and archives it ("The allow-list" above).
+- **The right column** follows the computer's state, one at a time, and only
   the last offers a session: offline (open DSH on it, or remove the
   computer);
   online but not paired with this browser (the six-letter code from the
@@ -606,8 +621,8 @@ the hosted edition, Cloud DSH.
   the address taking the new id draws nothing twice. Above the states before
   it, the computer's name with its operating system and DSH version on
   the left, and on the right whether it is online (green) or offline (grey,
-  with when it was last seen); the list marks each computer the same way.
-- **The devices page** takes the third column: every pairing of the account to
+  with when it was last seen).
+- **The devices page** takes the right column: every pairing of the account to
   the computer, the phone app's and every browser's, with its name, status,
   last use and whether it pushes, this browser marked, each removable.
 - **The composer is laid out as DSH's own input bar**: a new session waits in

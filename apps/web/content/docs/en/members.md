@@ -52,9 +52,11 @@ stays yours until you share it.
 ## Work on your own DSH from the browser
 
 **My DSH** appears under Workspace once a computer of yours, with DSH signed in
-to Teamwork, has connected. It lists those computers, the same in every team,
-each with its operating system and the number of devices paired with it. Open
-one and pair this browser with it once: in DSH on that computer, open the
+to Teamwork, has connected. Its computers fold out beneath it in the sidebar,
+the same in every team, each with a dot that is green while it is online; the
+arrow at the end of **My DSH** folds them away. Open one and its sessions fill
+the column beside the sidebar, under its name, its operating system and the
+number of devices paired with it. Pair this browser with it once: in DSH on that computer, open the
 Teamwork panel, choose **Devices** and make a code, type the code here, check
 that both screens show the same safety code, and approve on the computer. Then
 set a four-digit PIN, which the computer asks for again when you come back.
@@ -88,16 +90,20 @@ model and effort while it is not working, for that session alone. The
 paperclip at the left of the box adds files (text, code, logs, CSV, JSON or PDF; up to
 five, 20 MB each), sent with the message, or on their own.
 
-The open computer lists its latest sessions under it, pinned ones first, with
-**Show all** for the rest; the arrow at the end of its row folds them away, so
-the other computers stay in reach. The **⋯** at the end of a session pins it,
+Above the sessions, **New session** starts one and the search box finds one by
+its title or its workspace. The sessions are grouped as in DSH's own sidebar:
+each workspace in DSH's order with its sessions in the order DSH shows them,
+then **Ungrouped**, newest first, with pinned ones first in every group; a
+group's name folds it away. Grouping by workspace needs a current DSH Teamwork
+plugin on that computer; with an older one every session is under
+**Ungrouped**. The **⋯** at the end of a session pins it,
 renames it, copies its ID or archives it, as in DSH's own sidebar, and both
-show the change. Archived sessions are hidden until you open **Archived**; a
+show the change. Archived sessions are hidden until you open **Archived**, and then shown in their groups; a
 running session can be archived once it stops. The menu needs a current
 DSH Teamwork plugin on that computer; with an older one it offers only the
 copy. In the phone app, press and hold a session for the same menu.
 
-The device count beside a computer opens its devices: every phone and browser
+The device count beside the computer's name opens its devices: every phone and browser
 paired with it, where **Remove** cuts any of them off at once, a lost phone
 included. If you enter the wrong PIN too often, run `/teamwork pin reset` in
 DSH on that computer.

@@ -15,13 +15,15 @@ import {
   newStreams,
   pendingOf,
   questionsResult,
+  searchSessions,
+  sessionGroups,
   sessionsOf,
   snapshotOf,
   streamEventsOf,
   waitingOf,
 } from '../dsh';
 import { applySessionEvent } from '../session';
-import type { SessionState } from '../types';
+import type { SessionState, SessionSummary } from '../types';
 
 describe('reading DSH', () => {
   it('lists sessions with their titles, newest first, without blank ones', () => {
@@ -47,7 +49,7 @@ describe('reading DSH', () => {
       new Map([['waiting', { kind: 'question', id: 'q', question: '?', options: [] }]]),
     );
     expect(sessions.map((s) => s.id)).toEqual(['waiting', 'pinned', 'running', 'archived', 'new']);
-    expect(sessions.find((s) => s.id === 'archived')!.marks).toEqual({ pinned: false, archived: true });
+    expect(sessions.find((s) => s.id === 'archived')!.marks).toEqual({ pinned: false, archived: true, workspace: null });
     // An older plugin marks nothing, and the screens offer no action on it.
     expect(sessions.find((s) => s.id === 'waiting')!.marks).toBeNull();
   });
@@ -210,5 +212,57 @@ describe('a page the agent published', () => {
     expect(run([{ ...call, data: { ...call.data, name: 'bash' } }, result({ teamworkPage: page })]).map((i) => i.kind)).toEqual(['tool']);
     expect(run([call, result({ teamworkPage: { ...page, version: '2' } })]).map((i) => i.kind)).toEqual(['tool']);
     expect(run([call, result({ teamworkPage: { ...page, kind: 'pdf' } })]).map((i) => i.kind)).toEqual(['tool']);
+  });
+});
+
+describe("grouping a computer's sessions as DSH's sidebar does", () => {
+  const session = (id: string, updatedAt: number, marks: Partial<NonNullable<SessionSummary['marks']>> | null = {}): SessionSummary => ({
+    id,
+    title: `Session ${id}`,
+    status: 'idle',
+    updatedAt: new Date(updatedAt).toISOString(),
+    directory: '',
+    pending: null,
+    step: null,
+    marks: marks && { pinned: false, archived: false, workspace: null, ...marks },
+  });
+  const alpha = (position: number) => ({ id: 'w1', title: 'alpha', index: 0, position });
+  const beta = (position: number) => ({ id: 'w2', title: 'beta', index: 1, position });
+
+  it('reads the workspace that lists a session from its mark', () => {
+    const [summary] = sessionsOf({ items: [{ sessionId: 's', updatedAt: 1, teamwork: { pinned: true, workspace: { id: 'w', title: 'Work', index: 2, position: 3 } } }] });
+    expect(summary!.marks).toEqual({ pinned: true, archived: false, workspace: { id: 'w', title: 'Work', index: 2, position: 3 } });
+  });
+
+  it("lists workspaces in DSH's order, each in its own order with pinned ones first, then Ungrouped newest first", () => {
+    const sessions = [
+      session('u-old', 1),
+      session('b0', 9, { workspace: beta(0) }),
+      session('a1', 8, { workspace: alpha(1) }),
+      session('u-new', 5),
+      session('a0', 2, { workspace: alpha(0) }),
+      session('a2', 3, { workspace: alpha(2), pinned: true }),
+      session('u-pin', 0, { pinned: true }),
+    ];
+    expect(sessionGroups(sessions).map((g) => [g.workspace?.title ?? null, g.sessions.map((s) => s.id)])).toEqual([
+      ['alpha', ['a2', 'a0', 'a1']],
+      ['beta', ['b0']],
+      [null, ['u-pin', 'u-new', 'u-old']],
+    ]);
+  });
+
+  it('leaves archived sessions out until asked, then keeps them in their group and never among the pinned', () => {
+    const sessions = [session('a0', 1, { workspace: alpha(0) }), session('a1', 2, { workspace: alpha(1), archived: true, pinned: true }), session('b0', 3, { workspace: beta(0), archived: true })];
+    expect(sessionGroups(sessions).map((g) => g.sessions.map((s) => s.id))).toEqual([['a0']]);
+    expect(sessionGroups(sessions, true).map((g) => g.sessions.map((s) => s.id))).toEqual([['a0', 'a1'], ['b0']]);
+  });
+
+  it('lists everything under Ungrouped from a plugin that marks no workspace', () => {
+    expect(sessionGroups([session('x', 1, null), session('y', 2, null)])).toEqual([{ workspace: null, sessions: [expect.objectContaining({ id: 'y' }), expect.objectContaining({ id: 'x' })] }]);
+  });
+
+  it('searches titles and workspace titles, newest first', () => {
+    const sessions = [session('a0', 1, { workspace: alpha(0) }), session('b0', 2, { workspace: beta(0) }), { ...session('z', 3), title: 'Alphabet soup' }];
+    expect(searchSessions(sessions, ' ALPH ').map((s) => s.id)).toEqual(['z', 'a0']);
   });
 });
