@@ -1,5 +1,5 @@
 import { createTranslator } from 'use-intl';
-import { BatteryFull, Check, Github, Signal, Wifi } from 'lucide-react';
+import { BatteryFull, Check, ExternalLink, Github, Signal, Wifi } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -72,15 +72,32 @@ const STRATA = [
 /** The plugin's npm name: what DSH installs to join a team (the plugin's own README, "Install"). */
 const PLUGIN = '@dsh-teamwork/dsh-teamwork';
 
-/** The package to copy, with its button (wired by client.ts, since this page runs no React). */
-function Copyable({ text, prefix, label }: { text: string; prefix: string; label: string }) {
+/** The newest DSH release the plugin is verified on; moves with the plugin's dsh-agent dev pin. */
+const DSH_VERSION = '0.2.2-rc.5';
+
+/**
+ * DSH's own Plugins sidebar glyph, so the hint shows what the reader will click: `plugin-pinwheel-outline`
+ * from `@deepseek-ai/dsh-web-frontend` 0.2.2-rc.5 (MIT), copied as drawn.
+ */
+function DshPluginsIcon() {
   return (
-    <span className="grid min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 rounded-lg border bg-muted p-1.5 pl-3 font-mono text-[13px] sm:gap-x-3 sm:pl-4 sm:text-sm @min-[32rem]:grid-cols-[auto_minmax(0,1fr)_auto]">
-      <span className="shrink-0 font-sans text-xs text-muted-foreground">{prefix}</span>
-      <code className="min-w-0 overflow-x-auto whitespace-nowrap @max-[32rem]:col-span-2 @max-[32rem]:row-start-2 @max-[32rem]:pb-1">{text}</code>
+    <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.2} className="size-3.5 shrink-0">
+      <path d="M7.84457 5.06199C11.6605 4.93876 14.7962 6.14848 14.8484 7.76397C14.8875 8.97461 13.1838 10.0696 10.7215 10.5942" />
+      <path d="M5.12742 8.07731C5.00419 4.26138 6.21391 1.12568 7.8294 1.07351C9.04004 1.03441 10.135 2.73808 10.6596 5.20037" />
+      <path d="M8.02457 10.6802C4.20865 10.8034 1.07294 9.5937 1.02077 7.97821C0.981678 6.76758 2.68535 5.67262 5.14763 5.14798" />
+      <path d="M10.7476 7.89535C10.8708 11.7113 9.66109 14.847 8.0456 14.8991C6.83496 14.9382 5.74 13.2346 5.21536 10.7723" />
+    </svg>
+  );
+}
+
+/** The package to copy, with its button (wired by client.ts, since this page runs no React). */
+function Copyable({ text, label }: { text: string; label: string }) {
+  return (
+    <span className="flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border bg-muted p-1.5 pr-3 font-mono text-[13px] sm:pr-4 sm:text-sm">
       <button type="button" data-copy={text} className="h-9 min-w-14 shrink-0 rounded-md bg-primary px-3 font-sans text-sm font-medium text-primary-foreground hover:bg-primary/90">
         {label}
       </button>
+      <code className="min-w-0 overflow-x-auto whitespace-nowrap px-1.5 sm:px-0">{text}</code>
     </span>
   );
 }
@@ -242,13 +259,25 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
             <div className="flex w-full min-w-0 max-w-xl flex-col gap-5">
               <h1 className="tide-title text-balance [word-break:auto-phrase]">{t('title')}</h1>
               <p className="tide-intro-lede text-lg font-semibold text-foreground">{t('lede')}</p>
-              <div className="@container mt-2 flex flex-col items-start gap-2.5">
-                <Copyable text={PLUGIN} prefix={t('install.plugin')} label={t('install.copy')} />
-                <p className="text-sm text-muted-foreground">
-                  {t('install.hint')}{' '}
-                  <a href="/docs/install" className="font-medium text-foreground underline-offset-4 hover:underline">
-                    {t('install.more')} →
+              <div className="mt-2 flex flex-col items-start gap-2.5">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <Copyable text={PLUGIN} label={t('install.copy')} />
+                  <a href="/docs/install" target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm font-medium text-foreground underline-offset-4 hover:underline">
+                    {t('install.more')}
+                    <ExternalLink aria-hidden="true" className="size-3.5" />
                   </a>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  <span aria-hidden="true" className="mr-1.5 inline-block size-1.5 -translate-y-px rounded-full bg-success align-middle" />
+                  {t.rich('install.hint', {
+                    version: DSH_VERSION,
+                    menu: (chunks) => (
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap align-bottom text-foreground">
+                        <DshPluginsIcon />
+                        {chunks}
+                      </span>
+                    ),
+                  })}
                 </p>
               </div>
             </div>

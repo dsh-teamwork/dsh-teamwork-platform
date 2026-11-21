@@ -97,6 +97,22 @@ func TestAnAdminsModelIsNeverOffline(t *testing.T) {
 	}
 }
 
+// The provider name a hosted model carries is the service's alone: neither a
+// team provider nor an admin's model may take it and read as a platform model.
+func TestHostedProviderNameIsReserved(t *testing.T) {
+	p := wire.Provider{Name: " hosted ", BaseURL: "https://api.example.com/v1", APIKey: "k"}
+	if p.Validate() == nil {
+		t.Fatal("accepted a team provider named hosted")
+	}
+	if config(t, `{"kind":"model","name":"m","data":{"provider":"hosted","model":"m"}}`) == nil {
+		t.Fatal("accepted an admin's model naming the hosted provider")
+	}
+	p.Name = "hosted-2"
+	if err := p.Validate(); err != nil {
+		t.Fatalf("refused an ordinary provider name: %v", err)
+	}
+}
+
 func TestConfigInputPinsPluginToExactVersion(t *testing.T) {
 	if config(t, `{"kind":"plugin","name":"p","data":{"package":"@a/b","version":"^1.0.0"}}`) == nil {
 		t.Fatal("accepted a version range")

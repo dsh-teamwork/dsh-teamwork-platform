@@ -88,6 +88,9 @@ type Provider struct {
 func (p *Provider) Validate() error {
 	var is Issues
 	name(&is, &p.Name, "name")
+	if p.Name == HostedProvider {
+		is.Add("Reserved for the service's own models", "name")
+	}
 	if !ValidBaseURL(p.BaseURL) {
 		is.Add("An http or https URL with no credentials, query or fragment", "baseUrl")
 	}
@@ -127,6 +130,12 @@ func ValidBaseURL(s string) bool {
 		u.User == nil && u.RawQuery == "" && u.Fragment == "" && !strings.Contains(s, "?") && !strings.Contains(s, "#")
 }
 
+// HostedProvider is the provider every model an edition publishes names
+// (edition.OwnedModel). Which edition owns it, and so funds its calls, is the
+// configuration's route owner, never this string; no team provider may take
+// the name, so a team's own models never read as one.
+const HostedProvider = "hosted"
+
 // ModelData is a provider's model, addressed the way the provider names it.
 type ModelData struct {
 	Provider      string `json:"provider"`
@@ -145,6 +154,9 @@ func (m *ModelData) validate(is *Issues) {
 		is.Add("Only the service hosting a model marks it offline", "data", "offline")
 	}
 	name(is, &m.Provider, "data", "provider")
+	if m.Provider == HostedProvider {
+		is.Add("Only the service hosting a model names this provider", "data", "provider")
+	}
 	name(is, &m.Model, "data", "model")
 	tokens(is, m.ContextWindow, "data", "contextWindow")
 	tokens(is, m.MaxTokens, "data", "maxTokens")

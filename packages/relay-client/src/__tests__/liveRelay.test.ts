@@ -82,7 +82,7 @@ function setup() {
   const asked: Array<{ url: string; init?: RequestInit }> = [];
   const request = (async (url: string, init?: RequestInit) => {
     asked.push({ url, init });
-    if (url.endsWith('/api/relay')) return new Response(JSON.stringify({ url: 'wss://relay.example.test/plugin' }));
+    if (url.endsWith('/api/relay')) return new Response(JSON.stringify({ url: 'wss://relay.example.test/plugin', push: true }));
     if (url.endsWith('/pairings'))
       return new Response(
         JSON.stringify({
@@ -215,6 +215,7 @@ describe('the live relay client', () => {
 
   it('turns one computer’s notifications on with the token and language, or off with null', async () => {
     const { relay, asked } = setup();
+    expect(await relay.offersPush()).toBe(true);
     await relay.setPush('p1', { pushToken: 'ExponentPushToken[abc]', locale: 'zh-CN' });
     expect(asked.at(-1)).toMatchObject({
       url: 'https://relay.example.test/pairings/p1/push',
@@ -547,7 +548,7 @@ describe('joining a shared DSH', () => {
     FakeSocket.quiet = true;
     const trusted: string[] = [];
     const request = (async (url: string) => {
-      if (url.endsWith('/api/relay')) return new Response(JSON.stringify({ url: 'wss://relay.example.test/plugin' }));
+      if (url.endsWith('/api/relay')) return new Response(JSON.stringify({ url: 'wss://relay.example.test/plugin', push: true }));
       if (url.endsWith('/shared/h1/join')) return new Response(JSON.stringify({ pairing: { id: 'j1', hostId: 'h1', hostName: 'build box', status: 'pending' } }), { status: 201 });
       if (url.endsWith('/shared/h2/join')) return new Response(JSON.stringify({ error: 'not_found' }), { status: 404 });
       return new Response('{}', { status: 404 });

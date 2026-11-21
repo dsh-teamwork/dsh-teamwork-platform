@@ -12,6 +12,29 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None. Presets made from the old template keep their own text.
 - **Upgrade:** Members update the DSH plugin for the skill.
 - **Refs:** `apps/web/src/lib/preset-templates.ts`, `apps/web/src/messages/*.json`, plugin `skills/teamwork-research/`.
+## 2026-11-20 — A self-hosted server sends no phone notifications
+
+- **What:** The relay no longer sends through Expo itself. An edition gives the server a sender (`edition.Host.SetPush`, handed `edition.PushMessage`); without one the server notifies no phone, `GET /api/relay` now says `push: false` (a new required field beside `url`), and `PUT /relay/pairings/{id}/push` with a token answers 409 `push_unavailable` while `null` still turns them off. `relay.Extension` loses its push parameter, and the relay client gains `offersPush()`.
+- **Why:** Most users are in mainland China, where Android needs the phone makers' channels, which authenticate the sender with the app's own secret; a self-hosted server cannot hold it (ADR 0062).
+- **Breaking:** A self-hosted server's phones stop receiving notifications; an app reading `GET /api/relay` must accept `push`.
+- **Upgrade:** Nothing to configure. Editions that deliver call `SetPush` from their Mount.
+- **Refs:** ADR 0062, `server/relay/push.go`, `server/edition/edition.go`, `docs/tech/relay.md` ("Push notifications").
+
+## 2026-11-20 — The home page names the DSH version the plugin works with
+
+- **What:** The home page's install block leads with a copy button ("Copy plugin name") before the package name, puts the full install guide beside it as an external link, and states under it that the plugin works with the latest DSH, 0.2.2-rc.5, then where to paste the name, using DSH's own menu labels in each language and its Plugins icon.
+- **Why:** A visitor could not tell whether the plugin fit the DSH they run, and the Chinese hint named the English menu.
+- **Breaking:** None.
+- **Upgrade:** Nothing. `DSH_VERSION` in `apps/web/src/public/home.tsx` moves with each DSH release the plugin is verified on.
+- **Refs:** `apps/web/src/public/home.tsx`, `apps/web/src/public/client.ts`, `apps/web/src/messages/`.
+
+## 2026-11-20 — Hosted models name the provider `hosted`
+
+- **What:** A model an edition publishes now carries `provider: "hosted"` in its configuration data instead of `hosted:<extension>` (`hosted:billing`); which edition funds it stays in the configuration's route owner. No team provider and no admin's model may take the name `hosted`. The models page shows such a model as a "Platform model" badge beside its model id instead of `hosted:billing / …`.
+- **Why:** The extension's internal name reached admins in the console, and a team provider could share the string.
+- **Breaking:** None: nothing depends on the old string. Rows written before keep it until the operator next changes that catalogue model; a local database can be wiped.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/wire/team.go` (`HostedProvider`), `server/internal/usage/funding.go`, `apps/web/src/pages/team/models.tsx`.
 
 ## 2026-11-20 — A presentation template, and pages that save the files they make
 
