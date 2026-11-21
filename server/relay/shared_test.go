@@ -41,7 +41,7 @@ func eachShared(t *testing.T, f func(t *testing.T, w *sharedWorld)) {
 			if err := h.GateTeamDSH(func(_ context.Context, teamID string) (bool, error) { return !w.denied[teamID], nil }); err != nil {
 				return nil, err
 			}
-			w.r = newRelay(h, nil, 200*time.Millisecond, true)
+			w.r = newRelay(h, 200*time.Millisecond, true)
 			if err := h.SubscribeTeams(w.r.teamChanged); err != nil {
 				return nil, err
 			}

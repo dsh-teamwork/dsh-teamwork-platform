@@ -26,7 +26,7 @@ func TestPersonalPairing(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(plugin, "lib", "phone-security.js")); err != nil {
 		t.Fatalf("the DSH plugin is not at %s (set DSH_TEAMWORK_PLUGIN): %v", plugin, err)
 	}
-	ext := relay.Extension(func(context.Context, []relay.PushMessage) error { return nil }, time.Minute, false)
+	ext := relay.Extension(time.Minute, false)
 	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
 		ada := in.Account("ada@example.test")
 		in.Team(ada)

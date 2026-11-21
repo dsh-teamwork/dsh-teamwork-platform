@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — A self-hosted server sends no phone notifications
+
+- **What:** The relay no longer sends through Expo itself. An edition gives the server a sender (`edition.Host.SetPush`, handed `edition.PushMessage`); without one the server notifies no phone, `GET /api/relay` now says `push: false` (a new required field beside `url`), and `PUT /relay/pairings/{id}/push` with a token answers 409 `push_unavailable` while `null` still turns them off. `relay.Extension` loses its push parameter, and the relay client gains `offersPush()`.
+- **Why:** Most users are in mainland China, where Android needs the phone makers' channels, which authenticate the sender with the app's own secret; a self-hosted server cannot hold it (ADR 0062).
+- **Breaking:** A self-hosted server's phones stop receiving notifications; an app reading `GET /api/relay` must accept `push`.
+- **Upgrade:** Nothing to configure. Editions that deliver call `SetPush` from their Mount.
+- **Refs:** ADR 0062, `server/relay/push.go`, `server/edition/edition.go`, `docs/tech/relay.md` ("Push notifications").
+
 ## 2026-11-20 — The home page names the DSH version the plugin works with
 
 - **What:** The home page's install block leads with a copy button ("Copy plugin name") before the package name, puts the full install guide beside it as an external link, and states under it that the plugin works with the latest DSH, 0.2.2-rc.5, then where to paste the name, using DSH's own menu labels in each language and its Plugins icon.

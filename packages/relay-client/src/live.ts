@@ -196,11 +196,16 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     return session;
   }
 
-  /** The relay's HTTP origin, from the plugin socket the server names. */
-  async function relayOrigin(server: string) {
+  /** What the server says of its relay: where the plugin socket is, and whether it delivers notifications. */
+  async function discover(server: string) {
     const response = await request(`${server}/api/relay`);
     if (!response.ok) throw new RelayError('unavailable');
-    const { url } = z.object({ url: z.string() }).parse(await response.json());
+    return z.object({ url: z.string(), push: z.boolean() }).parse(await response.json());
+  }
+
+  /** The relay's HTTP origin, from the plugin socket the server names. */
+  async function relayOrigin(server: string) {
+    const { url } = await discover(server);
     return url.replace(/^ws/, 'http').replace(/\/plugin$/, '');
   }
 
@@ -437,6 +442,10 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       if (!row) return null;
       return pairingDrafts.get(id) ? { ...pairingDrafts.get(id)! } : { ...row, status: await options.keys.peer(id) ? row.status : 'pending' };
 
+    },
+
+    async offersPush() {
+      return (await discover((await signedIn()).server)).push;
     },
 
     async setPush(id, push) {

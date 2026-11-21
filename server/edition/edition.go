@@ -143,6 +143,14 @@ type Host struct {
 	// team, read on every request that needs it. Mount-only, at most once;
 	// without a gate every team may, as on a self-hosted server.
 	GateTeamDSH func(allowed func(ctx context.Context, teamID string) (bool, error)) error
+	// SetPush gives the server a way to deliver notifications to phones
+	// (docs/tech/relay.md, "Push notifications"). Mount-only, at most once.
+	// Without one, as on a self-hosted server, no phone is offered
+	// notifications or sent one: delivery needs the app's own credentials,
+	// which only its publisher holds.
+	SetPush func(SendPush) error
+	// Push is what SetPush gave, nil where nothing did.
+	Push func() SendPush
 	// ServeSubdomains sends every request whose Host is a subdomain of domain
 	// (one label or more before it) to h, ahead of the canonical-host redirect
 	// and every route; the security headers still apply. Mount-only, once per
@@ -209,6 +217,21 @@ const (
 )
 
 type TeamChangeHandler func(context.Context, SQLExecutor, TeamChange) error
+
+// PushMessage is one notification for a phone, in the shape of Expo's push
+// API (https://docs.expo.dev/push-notifications/sending-notifications/). It
+// names a computer and nothing of what waits there, since it passes through
+// the push services.
+type PushMessage struct {
+	To    string            `json:"to"`
+	Title string            `json:"title"`
+	Body  string            `json:"body"`
+	Data  map[string]string `json:"data"`
+	Sound string            `json:"sound"`
+}
+
+// SendPush delivers notifications to phones (Host.SetPush).
+type SendPush func(ctx context.Context, messages []PushMessage) error
 
 // Objects is the server's object store as an extension uses it: the local
 // data directory, or the bucket ARTIFACT_STORAGE_PROVIDER=s3 names, the same

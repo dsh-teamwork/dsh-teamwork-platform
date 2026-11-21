@@ -3102,7 +3102,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The plugin socket's address */
+                /** @description The plugin socket's address, and whether a phone may turn notifications on here: only a server its edition gave a way to deliver them, never a self-hosted one */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3110,6 +3110,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             url: string;
+                            push: boolean;
                         };
                     };
                 };
@@ -3942,7 +3943,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Turn a pairing's notifications on (an Expo push token) or off (null) */
+        /** Turn a pairing's notifications on (an Expo push token) or off (null); on is 409 push_unavailable where GET /api/relay says push is false */
         put: {
             parameters: {
                 query?: never;
@@ -3973,6 +3974,7 @@ export interface paths {
                 400: components["responses"]["Error"];
                 401: components["responses"]["Error"];
                 404: components["responses"]["Error"];
+                409: components["responses"]["Error"];
             };
         };
         post?: never;

@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-19
+> **Status:** Current · **Updated:** 2026-11-20
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -495,6 +495,13 @@ selected model cannot accept an image.
 
 ## Push notifications
 
+**Only a server its edition gave a sender delivers them** ([ADR
+0062](../adr/0062-only-an-edition-delivers-notifications.md)): the relay
+decides who is told and when, and `edition.Host.SetPush` is how the message
+leaves. A self-hosted server has none, so it offers no phone notifications
+and sends nothing; `GET /api/relay` says `push: false`, and the app hides
+every mention.
+
 - **What triggers one:** the plugin listens, first in line, to DSH's
   `user-questions/request` and `approval/request` waterfalls and hands each on
   untouched. Every one it sees becomes a `waiting` frame, and the relay pushes
@@ -505,14 +512,16 @@ selected model cannot accept an image.
   its Me tab, and sends `PUT /relay/pairings/{id}/push` with
   `{ pushToken, locale }` to turn it on or `{ pushToken: null }` to turn it
   off. Only the handset the pairing is bound to, on its account, reaches it;
-  a revoked pairing is 404. The phone's list says only `push: true|false`,
-  never the token.
+  a revoked pairing is 404, and turning them on where the server has no
+  sender is 409 `push_unavailable`. The phone's list says only
+  `push: true|false`, never the token.
 - **What a push says:** only that something waits on a computer, in the language the phone gave with its token. It never carries the
   question itself or a session id. Tapping selects the computer; its pending
   conversations are then read over the encrypted connection.
-- **How it is sent:** through Expo's push service for the first version.
-  Mainland China is a question of the hosted edition's positioning, and is answered before the first
-  Android release there.
+- **How it is sent:** by the edition's sender, handed `edition.PushMessage`:
+  a title, a body, the pairing id and a sound, in Expo's push API's shape.
+  The hosted edition's is Expo's push service, which forwards to APNs and
+  FCM.
 
 ## Validation and release constraints
 
@@ -541,7 +550,7 @@ module registration is shimmed; its AES implementation is not mocked.
 - Physical iOS/Android verification, performance on representative phones and
   independent protocol review remain required before a store release.
 - Notification delivery still requires APNs and Firebase credentials in the
-  app's EAS project. Mainland-China Android availability remains an open question.
+  app's EAS project.
 - DSH's experimental Remote API and approval behavior must be revalidated when
   its pinned version changes. No relay-side content audit or content search
   can operate on encrypted payloads.

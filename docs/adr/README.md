@@ -53,6 +53,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0059 — Account verification](0059-account-verification.md) — one policy covers personal sign-ins.
 - [0060 — Plugin tokens are revocable grants](0060-plugin-tokens-are-revocable-grants.md) — a kept token renews with use and signing out revokes it.
 - [0061 — The app lists the member's computers](0061-the-app-lists-the-members-computers.md) — with its own pairings only, and each plugin's version.
+- [0062 — Only an edition delivers notifications](0062-only-an-edition-delivers-notifications.md) — a self-hosted server offers and sends none.
 
 The template:
 
