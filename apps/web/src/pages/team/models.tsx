@@ -10,7 +10,7 @@
  */
 
 import { catalogEntry, PROVIDER_CATALOG } from '@dsh-teamwork/shared';
-import { KeyRound, Plus, Tag } from 'lucide-react';
+import { Cloud, KeyRound, Plus, Tag } from 'lucide-react';
 import { createElement, useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
@@ -287,7 +287,20 @@ function ModelRow({ teamId, reload, model, usedBy, referenceProvider, baseUrl }:
         )}
       </td>
       <td className="px-4 py-3 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
-        {model.data.provider} / {model.data.model}
+        {/* An edition's model: its provider is the service itself, not one of the team's (wire.HostedProvider). */}
+        {model.owner ? (
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-sans">
+              <Cloud className="size-3" aria-hidden />
+              {t('platformModel')}
+            </span>
+            {model.data.model}
+          </span>
+        ) : (
+          <>
+            {model.data.provider} / {model.data.model}
+          </>
+        )}
       </td>
       <td className="px-4 py-3 tabular-nums">{tokens(model.data.contextWindow)}</td>
       <td className="px-4 py-3 tabular-nums">{tokens(model.data.maxTokens)}</td>

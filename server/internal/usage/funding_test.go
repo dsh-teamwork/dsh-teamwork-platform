@@ -79,7 +79,7 @@ func TestAPublishedModelCarriesItsBoundsAndARepublicationRefreshesThem(t *testin
 			t.Fatal(err)
 		}
 		c, data := read()
-		if data.Provider != "hosted:billing" || data.Model != "openai/astra" || data.ContextWindow == nil || *data.ContextWindow != 1_050_000 || data.MaxTokens == nil || *data.MaxTokens != 128_000 || c.Version != 1 {
+		if data.Provider != wire.HostedProvider || data.Model != "openai/astra" || data.ContextWindow == nil || *data.ContextWindow != 1_050_000 || data.MaxTokens == nil || *data.MaxTokens != 128_000 || c.Version != 1 {
 			t.Fatalf("published %s at version %d", c.Data, c.Version)
 		}
 		if err := publish(m); err != nil {

@@ -550,6 +550,7 @@
       "description": "Team models are the ones members' DSH can use. To bring your own key, connect a BYOK model service and pick the models to publish. Members see team models only, never an address or a key.",
       "addProvider": "BYOK model service",
       "teamModels": "Team models",
+      "platformModel": "Platform model",
       "byokTitle": "BYOK model services",
       "count": "{count, plural, one {# model} other {# models}}",
       "empty": "No team models yet. Connect a BYOK model service to add some.",
