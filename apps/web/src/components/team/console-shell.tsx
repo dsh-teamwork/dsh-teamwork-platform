@@ -6,7 +6,9 @@
  * their own usage and an edition's work pages — and the team's admin alone sees Team management at the
  * sidebar's foot, opening on the team overview, where an admin lands (ADR 0049). On a narrow screen the sidebar becomes a top bar whose menu opens the same navigation in a
  * sheet. Which pages exist is `GROUPS`; the router sends a member who opens a
- * management page home (`AdminOnly` in pages/team/layout.tsx).
+ * management page home (`AdminOnly` in pages/team/layout.tsx). A page reached on several computers (My DSH, an
+ * edition's Cloud DSH) folds out under its entry into the computers themselves, each opening its sessions in the
+ * column beside the sidebar.
  */
 
 import {
@@ -14,6 +16,7 @@ import {
   ChartColumn,
   ChartNoAxesCombined,
   Check,
+  ChevronRight,
   ChevronUp,
   ChevronsUpDown,
   CircleHelp,
@@ -36,15 +39,15 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Dialog, DropdownMenu, Tooltip } from 'radix-ui';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useState, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { AccountRow } from '@/components/account';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { api, type Team, type TeamSummary } from '@/lib/api';
-import { editionTeamPages, navPath, type TeamGroup, type TeamPage } from '@/lib/edition';
+import { api, type Schemas, type Team, type TeamSummary } from '@/lib/api';
+import { editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
 type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'pages';
@@ -69,14 +72,53 @@ interface Section {
   hint?: boolean;
   /** Pages reached from inside this one, which keep its entry selected. */
   within?: string[];
+  /** What folds out under its entry: the computers it is reached on, as `TeamPage.subnav`. */
+  subnav?: ComponentType<SubnavProps>;
 }
 
-/** Whether this person has a computer of their own that connected to the relay (docs/tech/relay.md, "My DSH in the web console"). */
-async function hasOwnComputer() {
+type RelayHost = Schemas['RelayHost'];
+
+/** This person's own computers that connected to the relay, most recently seen first (docs/tech/relay.md, "My DSH in the web console"). */
+async function ownComputers(): Promise<RelayHost[]> {
   const response = await fetch('/relay/hosts', { credentials: 'same-origin' });
-  if (!response.ok) return false;
-  const { hosts } = (await response.json()) as { hosts: unknown[] };
-  return hosts.length > 0;
+  if (!response.ok) throw new Error(`relay hosts: ${response.status}`);
+  return ((await response.json()) as { hosts: RelayHost[] }).hosts;
+}
+
+/** Whether this person has a computer of their own that connected to the relay. */
+const hasOwnComputer = async () => (await ownComputers()).length > 0;
+
+/** How often a list of computers is read again while it is shown, for each one's online state. */
+export const COMPUTERS_REFRESH_MS = 10_000;
+
+/**
+ * Two records can share a name (two DSHs on one machine, or one signed in again): a short id after the name tells them
+ * apart, or null where the name is the only one.
+ */
+export function twinOf(hosts: readonly { id: string; name: string }[], host: { id: string; name: string }): string | null {
+  return hosts.some((other) => other.id !== host.id && other.name === host.name) ? `#${host.id.replace(/[^A-Za-z0-9]/g, '').slice(0, 4)}` : null;
+}
+
+/** My DSH's computers under its entry, read again while they are shown; each opens its sessions beside the sidebar. */
+function MyDshNav({ teamId, current, onNavigate }: SubnavProps) {
+  const [hosts, setHosts] = useState<RelayHost[] | null>(null);
+  const load = useCallback(() => ownComputers().then(setHosts, () => undefined), []);
+  useEffect(() => {
+    void load();
+    const timer = setInterval(() => void load(), COMPUTERS_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [load]);
+  return (hosts ?? []).map((host) => (
+    <SubnavLink
+      key={host.id}
+      to={`/teams/${teamId}/my-dsh/${host.id}`}
+      name={host.name}
+      twin={twinOf(hosts ?? [], host)}
+      online={host.online}
+      current={current === host.id}
+      onNavigate={onNavigate}
+    />
+  ));
 }
 
 /**
@@ -95,7 +137,7 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'pages', key: 'pages', icon: Shapes, fill: true },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
       // Listed only once one of this person's computers connected; the same computers in every team.
-      { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true },
+      { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true, subnav: MyDshNav },
     ],
   },
   // The team overview heads Team management on its own; the toggle below it names the group.
@@ -156,6 +198,11 @@ function sectionOf(pathname: string, teamId: string): string {
 }
 
 const href = (teamId: string, path: string) => (path ? `/teams/${teamId}/${path}` : `/teams/${teamId}`);
+
+/** The segment after the section in the path, which names the open computer on a page with a subnav. */
+function computerOf(pathname: string, teamId: string): string {
+  return pathname.slice(`/teams/${teamId}`.length).replace(/^\//, '').split('/')[1] ?? '';
+}
 const item = 'relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
 // The selected section: a grey fill and, beside it, the navy bar that says this is the team's (docs/design.md, "Component rules").
 const selected = 'bg-secondary font-medium before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-brand';
@@ -237,6 +284,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   const t = useTranslations('team');
   const locale = useLocale();
   const lang = locale === 'zh-CN' ? 'zh-CN' : 'en';
+  const computer = computerOf(useLocation().pathname, team.id);
   const { pages, sections: answered } = useTeamPages(team);
   // A section with `visible` is listed once it says yes, or while the person is on it.
   const listed = (s: Section) => !s.visible || answered.includes(s.path) || s.path === section;
@@ -249,19 +297,29 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
     if (managing) setOpen(true);
   }
 
-  const link = (path: string, label: ReactNode, Icon: LucideIcon, inside: boolean, dot = false, hint?: string) => (
-    <NavLink key={path} to={href(team.id, path)} onClick={onNavigate} current={section === path || inside} hint={hint}>
-      <Icon className="size-4" aria-hidden />
-      <span className="flex-1">{label}</span>
-      {/* Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules"). */}
-      {dot && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
-    </NavLink>
-  );
+  const link = (path: string, label: string, icon: LucideIcon, inside: boolean, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
+    Subnav ? (
+      <NavFold key={path} to={href(team.id, path)} label={label} icon={icon} hint={hint} here={section === path} onNavigate={onNavigate}>
+        <Subnav teamId={team.id} current={section === path ? computer : null} onNavigate={onNavigate} />
+      </NavFold>
+    ) : (
+      <NavLink
+        key={path}
+        to={href(team.id, path)}
+        onClick={onNavigate}
+        current={section === path || inside}
+        hint={hint}
+        icon={icon}
+        label={label}
+        // Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules").
+        trailing={dot && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
+      />
+    );
   const group = ({ key, sections }: (typeof GROUPS)[number]) => (
     <div key={key} className="flex flex-col gap-0.5">
       {key !== 'manage' && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>}
-      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, s.within?.includes(section) ?? false, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined))}
-      {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, false, page.hints?.[lang]))}
+      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, s.within?.includes(section) ?? false, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined, s.subnav))}
+      {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, false, page.hints?.[lang], page.subnav))}
     </div>
   );
 
@@ -290,32 +348,118 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
 }
 
 /**
- * One entry in the navigation. One with a hint says what the page is for beside its label: a question mark that
- * shows the hint on hover, and the hint describes the link to a screen reader.
+ * One entry in the navigation: its icon and label, then, for one with a hint saying what the page is for, a question
+ * mark right after the label that shows the hint on hover (the hint also describes the link to a screen reader), and
+ * `trailing` at the row's end.
  */
-function NavLink({ to, onClick, current, hint, children }: { to: string; onClick?: () => void; current: boolean; hint?: string; children: ReactNode }) {
+function NavLink({ to, onClick, current, hint, icon: Icon, label, trailing }: { to: string; onClick?: () => void; current: boolean; hint?: string; icon: LucideIcon; label: string; trailing?: ReactNode }) {
   const id = useId();
   return (
     <Link to={to} onClick={onClick} aria-current={current ? 'page' : undefined} aria-describedby={hint ? id : undefined} className={cn(item, current && selected)}>
-      {children}
-      {hint && (
-        <>
-          <span id={id} hidden>{hint}</span>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <span className="grid size-4 shrink-0 place-items-center text-muted-foreground hover:text-foreground" aria-hidden>
-                <CircleHelp className="size-3.5" />
-              </span>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content side="right" sideOffset={10} collisionPadding={8} className="z-50 max-w-72 rounded-md border bg-card px-3 py-2 text-xs leading-relaxed text-card-foreground shadow-lg">
-                {hint}
-                <Tooltip.Arrow className="fill-card" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-        </>
-      )}
+      <Icon className="size-4 shrink-0" aria-hidden />
+      <span className="min-w-0 truncate">{label}</span>
+      {hint && <Hint id={id} hint={hint} />}
+      <span className="ml-auto flex shrink-0 items-center">{trailing}</span>
+    </Link>
+  );
+}
+
+/** A question mark that shows `hint` on hover, and the hint hidden under `id` for a screen reader. */
+function Hint({ id, hint }: { id: string; hint: string }) {
+  return (
+    <>
+      <span id={id} hidden>{hint}</span>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <span className="grid size-4 shrink-0 place-items-center text-muted-foreground hover:text-foreground" aria-hidden>
+            <CircleHelp className="size-3.5" />
+          </span>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content side="right" sideOffset={10} collisionPadding={8} className="z-50 max-w-72 rounded-md border bg-card px-3 py-2 text-xs leading-relaxed text-card-foreground shadow-lg">
+            {hint}
+            <Tooltip.Arrow className="fill-card" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </>
+  );
+}
+
+/** Where the sidebar keeps whether an entry's computers are folded away, for the next visit; unset is unfolded. */
+const foldKey = (to: string) => `dsh-teamwork:nav-folded:${to.split('/').pop()}`;
+
+/**
+ * An entry whose computers fold out beneath it (`children`, its subnav): the entry opens the page, and the chevron at
+ * its end folds them away and back, remembered in this browser. Opening the page unfolds them; folded while the
+ * person is on it, the entry itself is the one selected.
+ */
+function NavFold({ to, label, icon: Icon, hint, here, onNavigate, children }: { to: string; label: string; icon: LucideIcon; hint?: string; here: boolean; onNavigate?: () => void; children: ReactNode }) {
+  const t = useTranslations('team');
+  const id = useId();
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(foldKey(to)) !== '1';
+    } catch {
+      return true;
+    }
+  });
+  const fold = (next: boolean) => {
+    setOpen(next);
+    try {
+      if (next) localStorage.removeItem(foldKey(to));
+      else localStorage.setItem(foldKey(to), '1');
+    } catch {
+      // A browser that keeps nothing unfolds it again next time.
+    }
+  };
+  // Arriving on the page unfolds its computers, adjusted while rendering rather than in an effect.
+  const [wasHere, setWasHere] = useState(here);
+  if (here !== wasHere) {
+    setWasHere(here);
+    if (here && !open) setOpen(true);
+  }
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className={cn('relative flex items-center rounded-md hover:bg-accent', here && !open && selected, here && open && 'font-medium')}>
+        <Link
+          to={to}
+          onClick={onNavigate}
+          aria-current={here && !open ? 'page' : undefined}
+          aria-describedby={hint ? id : undefined}
+          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md py-1.5 pl-2.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <Icon className="size-4 shrink-0" aria-hidden />
+          <span className="min-w-0 truncate">{label}</span>
+          {hint && <Hint id={id} hint={hint} />}
+        </Link>
+        <button
+          type="button"
+          onClick={() => fold(!open)}
+          aria-expanded={open}
+          aria-label={t(open ? 'nav.fold' : 'nav.unfold', { name: label })}
+          title={t(open ? 'nav.fold' : 'nav.unfold', { name: label })}
+          className="mr-1 grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <ChevronRight className={cn('size-4 transition-transform motion-reduce:transition-none', open && 'rotate-90')} aria-hidden />
+        </button>
+      </div>
+      {open && <div className="ml-[1.2rem] flex flex-col gap-0.5 border-l pl-2">{children}</div>}
+    </div>
+  );
+}
+
+/**
+ * One computer under an entry: whether it is online, as a dot, and its name, with `twin` after it where another
+ * computer has the same name. Selected while its sessions are open beside the sidebar.
+ */
+export function SubnavLink({ to, name, twin, online, current, onNavigate }: { to: string; name: string; twin?: string | null; online: boolean; current: boolean; onNavigate?: () => void }) {
+  const t = useTranslations('team.dsh');
+  return (
+    <Link to={to} onClick={onNavigate} aria-current={current ? 'page' : undefined} title={name} className={cn(item, 'gap-2 py-1', current && selected, !online && 'text-muted-foreground')}>
+      <span className={cn('size-1.5 shrink-0 rounded-full', online ? 'bg-success' : 'bg-muted-foreground/50')} role="img" aria-label={t(online ? 'online' : 'offline')} />
+      <span className="min-w-0 truncate">{name}</span>
+      {twin && <span className="shrink-0 font-mono text-xs text-muted-foreground">{twin}</span>}
     </Link>
   );
 }

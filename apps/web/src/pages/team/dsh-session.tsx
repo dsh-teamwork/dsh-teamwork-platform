@@ -1,11 +1,12 @@
 /**
- * What the console's pages for reaching a DSH share (Team DSH, team-dsh.tsx; My DSH, my-dsh.tsx): the three columns
- * beside the sidebar, a computer's sessions and PIN as its DSH reports them through the relay, the conversation (a new
+ * What the console's pages for reaching a DSH share (Team DSH, team-dsh.tsx; My DSH, my-dsh.tsx): the two columns
+ * beside the sidebar, a computer's sessions (grouped as DSH's own sidebar groups them) and PIN as its DSH reports them
+ * through the relay, the conversation (a new
  * session included, which keeps its view as it starts), the composer laid out as DSH's own input bar, and the PIN gate. Everything here runs over `@/lib/relay`, end to end encrypted to the DSH, unless the page
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import Markdown, { type Components } from 'react-markdown';
@@ -34,6 +35,8 @@ import {
   pinPrompt,
   RelayError,
   rowsOf,
+  searchSessions,
+  sessionGroups,
   type ModelSelection,
   type PinState,
   type RelayClient,
@@ -92,26 +95,26 @@ export function Dot({ className, label }: { className: string; label?: string })
 }
 
 /**
- * The page's three columns beside the sidebar: its title and `list` in the second, `children` in the third. On a phone
- * the list folds under a button that names it, unlike the console's own menu in the bar above; `onPick` folds it again.
+ * The columns beside the sidebar: `header` (the open computer, or the page's title) and `list` (its sessions) on the
+ * left, the conversation or the computer's state on the right. On a narrow screen the list folds under a button.
  */
-export function DshColumns({ title, list, children }: { title: string; list: (onPick: () => void) => ReactNode; children: ReactNode }) {
+export function DshColumns({ header, list, children }: { header: ReactNode; list: (onPick: () => void) => ReactNode; children: ReactNode }) {
   const t = useTranslations('team.dsh');
   const [menu, setMenu] = useState(false);
   return (
     <div className="flex min-w-0 flex-1 flex-col md:flex-row">
       <aside className="flex flex-col gap-3 border-b px-4 py-4 md:sticky md:top-0 md:h-dvh md:w-72 md:shrink-0 md:border-r md:border-b-0 md:px-3">
-        <div className="flex items-center gap-2.5 md:px-1">
-          <h1 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight">{title}</h1>
+        <div className="flex items-start gap-2.5 md:px-1">
+          <div className="min-w-0 flex-1">{header}</div>
           <Button type="button" variant="outline" size="sm" className="md:hidden" aria-expanded={menu} onClick={() => setMenu(!menu)}>
             <MessagesSquare className="size-4" aria-hidden />
             {t('sessions')}
             <ChevronDown className={cn('size-4 transition-transform', menu && 'rotate-180')} aria-hidden />
           </Button>
         </div>
-        <nav aria-label={title} className={cn(menu ? 'flex' : 'hidden', 'min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto text-sm md:flex')}>
+        <div className={cn(menu ? 'flex' : 'hidden', 'min-h-0 flex-1 flex-col gap-0.5 text-sm md:flex')}>
           {list(() => setMenu(false))}
-        </nav>
+        </div>
       </aside>
       {/* A session's files panel (session-files.tsx) takes the right of a wide screen: the conversation moves over for it. */}
       <section className="mx-auto flex w-full max-w-4xl min-w-0 flex-1 flex-col gap-5 px-4 pt-6 md:px-8 md:pt-6 md:has-[[data-files-panel]]:mr-[min(36rem,45vw)]">{children}</section>
@@ -159,52 +162,88 @@ export function useComputer(computerId: string) {
   return { sessions, pin, failed, reload, locked: computerId !== '' && pinPrompt(pin, false) !== null };
 }
 
-/** How many sessions the open computer lists before "Show all", so the computers below it stay in reach. */
-const SESSIONS_SHOWN = 6;
-
 /**
- * Beneath the open computer in the column: a new session, then the member's sessions on it, one line each, pinned
- * ones first and the newest `SESSIONS_SHOWN` until the rest are asked for, or a word that it is locked. Archived
- * sessions are hidden until "Archived" opens them, as in DSH's sidebar; the open one stays listed either way. Each row
- * has DSH's own actions that fit a browser (pin, rename, copy its id, archive), once the computer's plugin marks its
- * list (`SessionSummary.marks`); an older one offers only the copy.
+ * A computer's sessions in the column: a new session and a search above them, then the sessions grouped as DSH's own
+ * sidebar groups them (`sessionGroups`: each workspace in DSH's order, then Ungrouped, pinned first in each), each
+ * group folding away under its name; while searching, the matches in one list instead. Archived sessions are hidden
+ * until asked for, and then shown in their groups; the open one stays listed either way. `unavailable` says why none
+ * can be listed yet (the computer offline, not paired, locked), and nothing can be started or searched meanwhile.
+ * Each row has DSH's own actions that fit a browser (pin, rename, copy its id, archive), once the computer's plugin
+ * marks its list (`SessionSummary.marks`); an older one offers only the copy.
  */
-export function SessionList({ computerId, base, locked, sessions, sessionId, onPick }: { computerId: string; base: string; locked: boolean; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void }) {
+export function SessionList({ computerId, base, unavailable, sessions, sessionId, onPick }: { computerId: string; base: string; unavailable?: string; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void }) {
   const t = useTranslations('team.dsh');
-  const [all, setAll] = useState(false);
+  const [query, setQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [folded, setFolded] = useState<ReadonlySet<string>>(new Set());
   const list = sessions ?? [];
-  const live = list.filter((s) => !s.marks?.archived);
-  const archived = list.filter((s) => s.marks?.archived);
-  const shown = all ? live : live.filter((s, index) => index < SESSIONS_SHOWN || s.id === sessionId);
-  const shownArchived = showArchived ? archived : archived.filter((s) => s.id === sessionId);
+  const archived = list.filter((s) => s.marks?.archived).length;
+  // The open session stays listed when it is archived and the rest are not.
+  const listed = showArchived ? list : list.filter((s) => !s.marks?.archived || s.id === sessionId);
   const item = (s: SessionSummary) => <SessionRow key={s.id} computerId={computerId} base={base} session={s} open={s.id === sessionId} onPick={onPick} />;
+  const fold = (key: string) => setFolded((was) => {
+    const next = new Set(was);
+    if (!next.delete(key)) next.add(key);
+    return next;
+  });
+  const found = query.trim() ? searchSessions(listed, query, true) : null;
   return (
-    <div className="ml-4 flex flex-col gap-0.5 border-l pl-2">
-      {locked ? (
-        <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('locked')}</p>
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
+      {unavailable ? (
+        <Button type="button" size="sm" disabled>
+          <Plus className="size-4" aria-hidden />
+          {t('newSession')}
+        </Button>
       ) : (
-        <>
-          <Link to={base} onClick={onPick} className={cn(row, 'gap-2 text-muted-foreground', !sessionId && 'text-foreground')}>
+        <Button asChild size="sm">
+          <Link to={base} onClick={onPick} aria-current={sessionId ? undefined : 'page'}>
             <Plus className="size-4" aria-hidden />
             {t('newSession')}
           </Link>
-          {sessions !== null && live.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noSessions')}</p>}
-          {shown.map(item)}
-          {live.length > SESSIONS_SHOWN && (
-            <button type="button" onClick={() => setAll(!all)} className={cn(row, 'text-xs text-muted-foreground')}>
-              {all ? t('showFewer') : t('showAll', { count: live.length })}
-            </button>
-          )}
-          {archived.length > 0 && (
-            <button type="button" aria-expanded={showArchived} onClick={() => setShowArchived(!showArchived)} className={cn(row, 'gap-2 text-xs text-muted-foreground')}>
-              <Archive className="size-3.5" aria-hidden />
-              {t(showArchived ? 'hideArchived' : 'showArchived', { count: archived.length })}
-            </button>
-          )}
-          {shownArchived.map(item)}
-        </>
+        </Button>
       )}
+      <div className="relative">
+        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('search')} aria-label={t('search')} disabled={!!unavailable} className="h-8 pl-8 text-sm" />
+      </div>
+      <nav aria-label={t('sessions')} className="scrollbar-quiet -mx-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1 pb-2">
+        {unavailable ? (
+          <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{unavailable}</p>
+        ) : found ? (
+          found.length === 0 ? <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noMatches')}</p> : found.map(item)
+        ) : (
+          <>
+            {sessions !== null && listed.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noSessions')}</p>}
+            {sessionGroups(listed, true).map((group) => {
+              const key = group.workspace?.id ?? '';
+              const name = group.workspace?.title ?? t('ungrouped');
+              const open = !folded.has(key);
+              return (
+                <div key={key} className="flex flex-col gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => fold(key)}
+                    aria-expanded={open}
+                    title={t(open ? 'collapse' : 'expand', { name })}
+                    className={cn(row, 'mt-1 gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground')}
+                  >
+                    <ChevronRight className={cn('size-3.5 shrink-0 transition-transform motion-reduce:transition-none', open && 'rotate-90')} aria-hidden />
+                    <span className="min-w-0 truncate">{name}</span>
+                    <span className="ml-auto shrink-0 tabular-nums">{group.sessions.length}</span>
+                  </button>
+                  {open && group.sessions.map(item)}
+                </div>
+              );
+            })}
+          </>
+        )}
+        {!unavailable && archived > 0 && (
+          <button type="button" aria-pressed={showArchived} onClick={() => setShowArchived(!showArchived)} className={cn(row, 'mt-1 gap-2 text-xs text-muted-foreground')}>
+            <Archive className="size-3.5" aria-hidden />
+            {t(showArchived ? 'hideArchived' : 'showArchived', { count: archived })}
+          </button>
+        )}
+      </nav>
     </div>
   );
 }
@@ -332,12 +371,9 @@ function SessionRow({ computerId, base, session: s, open, onPick }: { computerId
 
 /**
  * A computer's row in the column: its name, and under it whether it is online (`online`, when known; green, or grey and
- * dimmed when offline) and `note`, with `extra` at its end. The row's link covers all of it, so `extra` may hold a link
- * of its own (one link cannot hold another). `onToggle`, on the open computer, folds its sessions away and back
- * (`expanded`), so the computers below it can be reached without scrolling past them.
+ * dimmed when offline) and `note`.
  */
-export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick, extra, expanded, onToggle }: { icon?: LucideIcon; name: string; note?: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void; extra?: ReactNode; expanded?: boolean; onToggle?: () => void }) {
-  const t = useTranslations('team.dsh');
+export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick }: { icon?: LucideIcon; name: string; note?: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void }) {
   const inner = (
     <>
       <Icon className={cn('size-4 shrink-0', online === false && 'text-muted-foreground')} aria-hidden />
@@ -352,31 +388,11 @@ export function ComputerRow({ icon: Icon = Server, name, note, online, to, open,
     </>
   );
   return to ? (
-    <div className={cn(row, 'gap-2.5', current && selected, open && 'font-medium')}>
-      <Link
-        to={to}
-        onClick={onPick}
-        aria-current={current ? 'page' : undefined}
-        className="flex min-w-0 flex-1 items-center gap-2.5 after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
-      >
-        {inner}
-      </Link>
-      {extra && <span className="relative flex shrink-0">{extra}</span>}
-      {onToggle && (
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={expanded}
-          aria-label={t(expanded ? 'collapse' : 'expand', { name })}
-          title={t(expanded ? 'collapse' : 'expand', { name })}
-          className="relative -mr-1 flex shrink-0 rounded-md p-1 text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-          <ChevronRight className={cn('size-4 transition-transform', expanded && 'rotate-90')} aria-hidden />
-        </button>
-      )}
-    </div>
+    <Link to={to} onClick={onPick} aria-current={current ? 'page' : undefined} className={cn(row, 'gap-2.5', current && selected, open && 'font-medium')}>
+      {inner}
+    </Link>
   ) : (
-    <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}{extra}</div>
+    <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}</div>
   );
 }
 

@@ -60,7 +60,7 @@ export function TeamDshPage() {
   if (unavailable) return <NotEnabled />;
   return (
     <DshColumns
-      title={t('title')}
+      header={<h1 className="truncate text-lg font-semibold tracking-tight">{t('title')}</h1>}
       list={(onPick) => (
         <>
           {hosts?.length === 0 && <p className="px-2.5 text-muted-foreground">{t('none')}</p>}
@@ -78,7 +78,7 @@ export function TeamDshPage() {
                   current={open && !sessionId}
                   onPick={onPick}
                 />
-                {open && <SessionList computerId={paired.id} base={`${base}/${paired.id}`} locked={locked} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
+                {open && <SessionList computerId={paired.id} base={`${base}/${paired.id}`} unavailable={locked ? tt('locked') : undefined} sessions={sessions} sessionId={sessionId} onPick={onPick} />}
               </div>
             );
           })}

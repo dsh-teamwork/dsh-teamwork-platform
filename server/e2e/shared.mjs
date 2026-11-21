@@ -58,7 +58,7 @@ const security = new PhoneSecurity({
     forwarded.push(f);
     void roster.memberOf(f.pairingId).then((m) => m && archive.record({ member: m, device: f.pairingId, dir: 'in', frame: f }));
     // A stand-in for the bridge: one session, which the client reads into its own shape.
-    if (f.t === 'call' && f.method === 'session/list') security.send({ t: 'result', pairingId: f.pairingId, id: f.id, status: 200, body: { result: { ok: true, value: { items: [{ sessionId: 'session-1', cwd: '/home/bob/work', updatedAt: 1, projections: { values: { title: "Bob's" } }, teamwork: { pinned: true, archived: false } }] } } } });
+    if (f.t === 'call' && f.method === 'session/list') security.send({ t: 'result', pairingId: f.pairingId, id: f.id, status: 200, body: { result: { ok: true, value: { items: [{ sessionId: 'session-1', cwd: '/home/bob/work', updatedAt: 1, projections: { values: { title: "Bob's" } }, teamwork: { pinned: true, archived: false, workspace: { id: 'w1', title: 'work', index: 0, position: 0 } } }] } } } });
   },
   confirm: async (id) => { await link.request({ t: 'decide', pairingId: id, accept: true }); }, changed() {}, error() {},
   joining: (id) => joining.get(id),
@@ -98,7 +98,7 @@ bob.watchPin(bobPairing, (state) => { bobPin = state; });
 await until('bob asked for a PIN', () => bobPin?.kind === 'required' && bobPin.set);
 await assert.rejects(bob.listSessions(bobPairing), (error) => error instanceof RelayError && error.code === 'locked');
 assert.deepEqual(await bob.setPin(bobPairing, '2468'), { kind: 'unlocked' });
-assert.deepEqual(await bob.listSessions(bobPairing), [{ id: 'session-1', title: 'Bob\'s', status: 'idle', updatedAt: new Date(1).toISOString(), directory: 'work', pending: null, step: null, marks: { pinned: true, archived: false } }]);
+assert.deepEqual(await bob.listSessions(bobPairing), [{ id: 'session-1', title: 'Bob\'s', status: 'idle', updatedAt: new Date(1).toISOString(), directory: 'work', pending: null, step: null, marks: { pinned: true, archived: false, workspace: { id: 'w1', title: 'work', index: 0, position: 0 } } }]);
 assert.ok(!forwarded.some((f) => f.t === 'call' && f.pairingId === bobPairing && f.method !== 'session/list'));
 
 // What Bob sent is archived, the $events stream the listing opens and then the call: sealed here, kept by the server
