@@ -86,6 +86,10 @@ function Document({ locale, title, description, path, assets, children }: Docume
 
 const page = (element: ReactNode) => `<!doctype html>${renderToStaticMarkup(element)}`;
 
+export function publicPage(props: DocumentProps): string {
+  return page(<Document {...props} />);
+}
+
 /** Every public page, by the file name the Go server looks it up by. */
 export function renderPages(
   assets: Assets,

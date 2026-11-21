@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-19
+> **Status:** Current · **Updated:** 2026-11-21
 
 The DSH Teamwork visual system — the whale mark, the black-and-white palette with its two accents, type, spacing and icons — and the file in code that owns each part.
 
@@ -294,10 +294,11 @@ a person or a character, which at this size reads as clip art.
   drawn from tokens. They are captures of the real interfaces with a demo team,
   in `apps/web/public/home/`, one per language, captured again when those
   screens change, never drawn.
-- **Pricing clarifies the cost of each deployment choice.** Community
-  self-hosting has no license fee. Hosted models on Teamwork Cloud are
-  prepaid by usage. Enterprise private hosting is listed for inquiries
-  about requirements and availability.
+- **Pricing compares deployment choices by capability.** The comparison table
+  scrolls horizontally on narrow screens and ends with a payment-model row.
+  Community self-hosting has no license fee. Hosted models on Teamwork Cloud
+  are prepaid by usage. Enterprise solutions are listed for inquiries about
+  requirements and availability.
 - **The web app's `/` is the landing page on every instance**, self-hosted
   ones included (ADR 0007), so every claim holds for any instance. A
   capability only the hosted service offers, or one that is planned, appears
