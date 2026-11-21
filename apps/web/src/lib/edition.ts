@@ -55,10 +55,13 @@ export interface TeamPage {
   subnav?: ComponentType<SubnavProps>;
 }
 
-/** What a `TeamPage.subnav` is given: the team, the computer open on its page (the segment after its path, or ""), and what closes the narrow screen's navigation. */
+/**
+ * What a `TeamPage.subnav` is given: the team; while its page is open, the segment after its path ("" with none),
+ * which names the computer open on it, and null while another page is; and what closes the narrow screen's navigation.
+ */
 export interface SubnavProps {
   teamId: string;
-  current: string;
+  current: string | null;
   onNavigate?: () => void;
 }
 

@@ -300,7 +300,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   const link = (path: string, label: string, icon: LucideIcon, inside: boolean, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
     Subnav ? (
       <NavFold key={path} to={href(team.id, path)} label={label} icon={icon} hint={hint} here={section === path} onNavigate={onNavigate}>
-        <Subnav teamId={team.id} current={section === path ? computer : ''} onNavigate={onNavigate} />
+        <Subnav teamId={team.id} current={section === path ? computer : null} onNavigate={onNavigate} />
       </NavFold>
     ) : (
       <NavLink
