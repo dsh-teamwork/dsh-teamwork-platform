@@ -93,11 +93,11 @@ function DshPluginsIcon() {
 /** The package to copy, with its button (wired by client.ts, since this page runs no React). */
 function Copyable({ text, label }: { text: string; label: string }) {
   return (
-    <span className="flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border bg-muted p-1.5 pr-3 font-mono text-[13px] sm:pr-4 sm:text-sm">
+    <span className="flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-foreground/10 bg-muted/60 p-1.5 pr-3 font-mono text-[13px] sm:pr-4 sm:text-sm">
       <button type="button" data-copy={text} className="h-9 min-w-14 shrink-0 rounded-md bg-primary px-3 font-sans text-sm font-medium text-primary-foreground hover:bg-primary/90">
         {label}
       </button>
-      <code className="min-w-0 overflow-x-auto whitespace-nowrap px-1.5 sm:px-0">{text}</code>
+      <code className="min-w-0 overflow-x-auto whitespace-nowrap px-1.5 text-muted-foreground sm:px-0">{text}</code>
     </span>
   );
 }
@@ -156,6 +156,7 @@ export interface HomeWorkspace {
   title: string;
   description: string;
   icon?: ReactNode;
+  cloudLink?: { href: string; label: string };
 }
 
 export interface HomeProps {
@@ -196,6 +197,7 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
     ['/docs', 'nav.docs'],
   ] as const;
   const faqs = ['install', 'pricing', 'selfHost', 'security'] as const;
+  const pricingRows = ['access', 'sharing', 'models', 'cloudDsh', 'operations', 'payment'] as const;
 
   return (
     <>
@@ -258,11 +260,11 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
           <div className="tide-intro-copy mx-auto w-full max-w-7xl px-6">
             <div className="flex w-full min-w-0 max-w-xl flex-col gap-5">
               <h1 className="tide-title text-balance [word-break:auto-phrase]">{t('title')}</h1>
-              <p className="tide-intro-lede text-lg font-semibold text-foreground">{t('lede')}</p>
+              <p className="tide-intro-lede text-pretty text-lg font-medium text-muted-foreground">{t('lede')}</p>
               <div className="mt-2 flex flex-col items-start gap-2.5">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   <Copyable text={PLUGIN} label={t('install.copy')} />
-                  <a href="/docs/install" target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm font-medium text-foreground underline-offset-4 hover:underline">
+                  <a href="/docs/install" target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
                     {t('install.more')}
                     <ExternalLink aria-hidden="true" className="size-3.5" />
                   </a>
@@ -409,36 +411,69 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
 
           <Zone id="self-host">
             <Depth depth={t('pricing.depth')} label={t('pricing.label')} />
-            <h2 className={zoneTitle}>{t('pricing.title')}</h2>
-            <div className={`${cells} md:grid-cols-3`}>
-              <div className="flex flex-col gap-3 bg-background p-6">
-                <h3 className="text-lg font-bold">{t('pricing.openTitle')}</h3>
-                <p className="text-base font-semibold">{t('pricing.openRate')}</p>
-                <p className="flex-1 text-sm text-muted-foreground">{t('pricing.openBody')}</p>
-                <div className="mt-2 flex flex-wrap gap-3">
-                  <Button asChild>
-                    <a href={communityRepo}>{t('pricing.repo')}</a>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <a href="/docs/self-hosting">{t('pricing.guide')}</a>
-                  </Button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-3 bg-background p-6">
-                <h3 className="text-lg font-bold">{t('pricing.hostedTitle')}</h3>
-                <p className="text-base font-semibold">{t('pricing.hostedRate')}</p>
-                <p className="text-sm text-muted-foreground">{t('pricing.hostedBody')}</p>
-              </div>
-              <div className="flex flex-col gap-3 bg-background p-6">
-                <h3 className="text-lg font-bold">{t('pricing.enterpriseTitle')}</h3>
-                <p className="text-base font-semibold">{t('pricing.enterpriseRate')}</p>
-                <p className="flex-1 text-sm text-muted-foreground">{t('pricing.enterpriseBody')}</p>
-                <div className="mt-2">
-                  <Button asChild variant="outline">
-                    <a href="mailto:support@dshteamwork.com">{t('pricing.contact')}</a>
-                  </Button>
-                </div>
-              </div>
+            <h2 id="pricing-title" className={zoneTitle}>{t('pricing.title')}</h2>
+            <div role="region" aria-labelledby="pricing-title" tabIndex={0} className="mt-10 overflow-x-auto rounded-xl border bg-background focus-visible:outline-2 focus-visible:outline-offset-4">
+              <table aria-labelledby="pricing-title" className="w-full min-w-[44rem] table-fixed border-collapse text-start text-sm">
+                <thead className="bg-foreground/5">
+                  <tr>
+                    <th scope="col" className="w-[19%] px-4 py-5 text-start align-top">{t('pricing.feature')}</th>
+                    <th scope="col" aria-labelledby="pricing-open" className="w-[25%] px-4 py-5 text-start align-top">
+                      <span id="pricing-open" className="block text-base font-bold">{t('pricing.openTitle')}</span>
+                      <p className="mt-2 font-normal text-muted-foreground">{t('pricing.openBody')}</p>
+                    </th>
+                    <th scope="col" aria-labelledby="pricing-hosted" className="w-[35%] px-4 py-5 text-start align-top">
+                      <span id="pricing-hosted" className="block text-base font-bold">{t('pricing.hostedTitle')}</span>
+                      <p className="mt-2 font-normal text-muted-foreground">{t('pricing.hostedBody')}</p>
+                    </th>
+                    <th scope="col" aria-labelledby="pricing-enterprise" className="w-[21%] px-4 py-5 text-start align-top">
+                      <span id="pricing-enterprise" className="block text-base font-bold">{t('pricing.enterpriseTitle')}</span>
+                      <p className="mt-2 font-normal text-muted-foreground">{t('pricing.enterpriseBody')}</p>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pricingRows.map((row) => (
+                    <tr key={row} className={row === 'payment' ? 'border-t bg-foreground/5' : 'border-t'}>
+                      <th scope="row" className="px-4 py-3 text-start align-top font-semibold">{t(`pricing.comparison.${row}.label`)}</th>
+                      <td className="px-4 py-3 align-top text-muted-foreground">{row === 'cloudDsh' ? t('pricing.unavailable') : t(`pricing.comparison.${row}.open`)}</td>
+                      <td className="px-4 py-3 align-top text-muted-foreground">{t(`pricing.comparison.${row}.hosted`)}</td>
+                      {row === 'access' && (
+                        <td rowSpan={4} className="border-s px-4 py-3 align-middle text-muted-foreground">{t('pricing.pending')}</td>
+                      )}
+                      {(row === 'operations' || row === 'payment') && (
+                        <td className="px-4 py-3 align-top text-muted-foreground">{t(`pricing.comparison.${row}.enterprise`)}</td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t">
+                    <td />
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap gap-2">
+                        <Button asChild size="sm">
+                          <a href={communityRepo}>{t('pricing.repo')}</a>
+                        </Button>
+                        <Button asChild size="sm" variant="outline">
+                          <a href="/docs/self-hosting">{t('pricing.guide')}</a>
+                        </Button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      {workspace?.cloudLink && (
+                        <Button asChild size="sm" variant="outline">
+                          <a href={workspace.cloudLink.href}>{workspace.cloudLink.label}</a>
+                        </Button>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      <Button asChild size="sm" variant="outline">
+                        <a href="mailto:support@dshteamwork.com">{t('pricing.contact')}</a>
+                      </Button>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </Zone>
 

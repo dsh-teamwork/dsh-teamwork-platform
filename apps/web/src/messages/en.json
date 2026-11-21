@@ -100,7 +100,7 @@
     },
     "title": "From super individual to super team.",
     "tagline": "From super individual to super team: DSH Teamwork turns DeepSeek Harness into your team's agent workspace.",
-    "lede": "Share what your best teammates have learned so everyone can use the same models and workflows.",
+    "lede": "With the DSH ecosystem, explore a new paradigm for AI-native work for individuals and teams alike.",
     "createTeam": "Create a team",
     "openConsole": "Open team console",
     "install": {
@@ -115,7 +115,7 @@
       "collaborate": "Collaborate",
       "govern": "Govern",
       "assets": "Team assets",
-      "pricing": "Pricing",
+      "pricing": "Editions and pricing",
       "pluginRepo": "Teamwork plugin on GitHub",
       "docs": "Docs"
     },
@@ -123,7 +123,7 @@
       "depth": "−5 m",
       "label": "Shallows · team overview",
       "title": "How can the whole team make the most of DSH?",
-      "lede": "Members use team models and workflows from the desktop, browser, or phone. Admins review changes and manage budgets and access, so approved improvements reach the whole team and stay on record."
+      "lede": "With DSH Teamwork, you can connect to DSH from your desktop, browser, or phone. Your team's models and settings are shared and kept in sync for every member, so experienced teammates can share their skills and know-how with everyone. Wherever you are and whatever device you're on, you can put your team's best practices to work and keep moving forward together."
     },
     "everywhere": {
       "depth": "−10 m",
@@ -206,19 +206,52 @@
     "pricing": {
       "depth": "−2000 m",
       "label": "Editions and deployment",
-      "title": "Pricing",
+      "title": "Editions and pricing",
       "openTitle": "Open-source Community Edition",
-      "openRate": "Free to self-host",
-      "openBody": "Run the Apache-2.0 community edition on your own server. Your team covers infrastructure and model costs.",
+      "openBody": "Run the Apache-2.0 community edition on your own server.",
       "hostedTitle": "Teamwork Cloud",
-      "hostedRate": "Pay for model usage",
-      "hostedBody": "Teamwork runs the service. Hosted model usage is deducted from your team's prepaid balance, with no subscription or per-seat fee.",
-      "enterpriseTitle": "Enterprise private hosting",
-      "enterpriseRate": "Talk to us",
-      "enterpriseBody": "Need a dedicated deployment or managed operations? Contact Teamwork to discuss your requirements and availability.",
+      "hostedBody": "Use Teamwork without running your own server.",
+      "enterpriseTitle": "Enterprise solutions",
+      "enterpriseBody": "Talk to us about your deployment needs and availability.",
       "contact": "Contact us",
       "repo": "Source on GitHub",
-      "guide": "Self-hosting guide"
+      "guide": "Self-hosting guide",
+      "feature": "Feature",
+      "pending": "Confirm with us",
+      "unavailable": "Unavailable",
+      "comparison": {
+        "access": {
+          "label": "Cross-platform access",
+          "open": "Connect from desktop, web, and mobile",
+          "hosted": "Same as Community, plus mobile push notifications"
+        },
+        "sharing": {
+          "label": "Team resource sharing",
+          "open": "Share and sync team models, agent presets, and plugins",
+          "hosted": "Same as Community"
+        },
+        "models": {
+          "label": "Model usage and budgets",
+          "open": "Bring your own model API key, track usage, and set team budgets",
+          "hosted": "Same as Community, plus Teamwork-hosted models"
+        },
+        "cloudDsh": {
+          "label": "Cloud DSH",
+          "hosted": "Run DSH in the cloud and keep working even when your computer is off. Trial available to selected teams."
+        },
+        "operations": {
+          "label": "Deployment and operations",
+          "open": "Deploy and maintain it yourself",
+          "hosted": "Run and maintained by Teamwork",
+          "enterprise": "Dedicated deployment and operations support"
+        },
+        "payment": {
+          "label": "Payment model",
+          "open": "None",
+          "hosted": "Hosted model usage is deducted from your team’s prepaid balance. No subscription or per-seat fee.",
+          "enterprise": "Contact us for a quote"
+        }
+      }
     },
     "faq": {
       "depth": "−3000 m",

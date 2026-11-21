@@ -100,7 +100,7 @@
     },
     "title": "从超级个体，到超级团队。",
     "tagline": "从超级个体到超级团队：DSH Teamwork 把 DeepSeek Harness 变成团队的 Agent 协作空间。",
-    "lede": "把高手的好做法分享给全队，让每个人都能用上同一套模型和工作流。",
+    "lede": "依托 DSH 生态，探索属于个人与团队的 AI-Native 工作新范式。",
     "createTeam": "创建团队",
     "openConsole": "打开团队控制台",
     "install": {
@@ -115,7 +115,7 @@
       "collaborate": "协同",
       "govern": "治理",
       "assets": "团队资产",
-      "pricing": "收费方式",
+      "pricing": "版本与定价",
       "pluginRepo": "在 GitHub 查看 Teamwork 插件",
       "docs": "文档"
     },
@@ -123,7 +123,7 @@
       "depth": "−5 m",
       "label": "浅水 · 团队总览",
       "title": "如何让全队\n一起用好 DSH？",
-      "lede": "成员从桌面、网页或手机接入，共用团队的模型和工作流。管理员把好审批、预算和权限关，让每一次改进都能同步给全队，并沉淀为可追溯的团队资产。"
+      "lede": "通过 DSH Teamwork，你可以在桌面端、网页或手机上连接 DSH。团队的模型和配置也会统一分发并同步给每位成员，让高手的技能和经验在团队里流动。无论身在何处、用哪台设备，都能用上团队的好做法，和队友一起推进工作。"
     },
     "everywhere": {
       "depth": "−10 m",
@@ -206,19 +206,52 @@
     "pricing": {
       "depth": "−2000 m",
       "label": "版本与部署",
-      "title": "收费方式",
+      "title": "版本与定价",
       "openTitle": "开源社区版",
-      "openRate": "免费自托管",
-      "openBody": "社区版采用 Apache-2.0 开源许可。部署在自己的服务器上，服务器和模型使用成本由团队自行承担。",
-      "hostedTitle": "Cloud 云服务",
-      "hostedRate": "按模型用量计费",
-      "hostedBody": "由 Teamwork 运行服务。使用托管模型时，从团队预付余额按用量扣费，无订阅或席位费。",
-      "enterpriseTitle": "企业私有化托管",
-      "enterpriseRate": "方案咨询",
-      "enterpriseBody": "有专属部署环境或运维支持需求？欢迎联系 Teamwork 沟通方案与开放计划。",
+      "openBody": "将采用 Apache-2.0 许可的开源社区版部署到自己的服务器。",
+      "hostedTitle": "Teamwork 云服务",
+      "hostedBody": "直接使用由 Teamwork 运行的服务。",
+      "enterpriseTitle": "企业解决方案",
+      "enterpriseBody": "联系我们沟通部署需求和开放计划。",
       "contact": "联系我们",
       "repo": "GitHub 源码",
-      "guide": "自托管指南"
+      "guide": "自托管指南",
+      "feature": "功能",
+      "pending": "按方案确认",
+      "unavailable": "暂不提供",
+      "comparison": {
+        "access": {
+          "label": "跨平台接入",
+          "open": "支持桌面、网页和手机接入",
+          "hosted": "同社区版，另支持手机推送通知"
+        },
+        "sharing": {
+          "label": "团队资源共享",
+          "open": "共享和同步团队模型、Agent 预设与插件",
+          "hosted": "同社区版"
+        },
+        "models": {
+          "label": "模型使用与预算",
+          "open": "支持自带模型 API Key、用量统计和团队预算",
+          "hosted": "同社区版，另支持 Teamwork 托管模型"
+        },
+        "cloudDsh": {
+          "label": "云端 DSH",
+          "hosted": "在云端运行 DSH，关掉本地电脑也能继续工作。向部分团队开放试用"
+        },
+        "operations": {
+          "label": "部署与运维",
+          "open": "团队自行部署和维护",
+          "hosted": "由 Teamwork 运行和维护",
+          "enterprise": "专属部署与运维支持"
+        },
+        "payment": {
+          "label": "付费模式",
+          "open": "无",
+          "hosted": "托管模型按实际用量从团队预付余额扣费，无订阅费或席位费",
+          "enterprise": "联系咨询，按方案报价"
+        }
+      }
     },
     "faq": {
       "depth": "−3000 m",

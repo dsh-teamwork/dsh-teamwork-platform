@@ -13,6 +13,30 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Members update the DSH plugin for the skill.
 - **Refs:** `apps/web/src/lib/preset-templates.ts`, `apps/web/src/messages/*.json`, plugin `skills/teamwork-research/`.
 
+## 2026-11-21 — The home page compares Teamwork editions
+
+- **What:** The English and Chinese pricing sections use one table for edition descriptions, links, and capability comparisons, with payment models in the final comparison row. The Teamwork Cloud column links to one overview of hosted models and Cloud DSH.
+- **Why:** Visitors can compare deployment, features, and costs before choosing an edition.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/public/home.tsx`, `apps/web/src/messages/`.
+
+## 2026-11-20 — The home page explains how teams work together with DSH
+
+- **What:** The English and Chinese teamwork sections describe cross-device access to DSH, synced team models and settings, and how teammates share their skills and experience.
+- **Why:** The section explains what team members can do together across devices.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/messages/en.json`, `apps/web/src/messages/zh-CN.json`.
+
+## 2026-11-20 — The home page introduces the AI-native work vision
+
+- **What:** The English and Chinese home page subtitles present the DSH ecosystem as a place for individuals and teams to explore new ways of working with AI. The subtitle uses a lighter weight, and the install panel and guide link use softer colors to emphasize the copy button.
+- **Why:** The subtitle expresses the product vision for individuals and teams.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/public/home.tsx`, `apps/web/src/messages/en.json`, `apps/web/src/messages/zh-CN.json`.
+
 ## 2026-11-20 — A self-hosted server sends no phone notifications
 
 - **What:** The relay no longer sends through Expo itself. An edition gives the server a sender (`edition.Host.SetPush`, handed `edition.PushMessage`); without one the server notifies no phone, `GET /api/relay` now says `push: false` (a new required field beside `url`), and `PUT /relay/pairings/{id}/push` with a token answers 409 `push_unavailable` while `null` still turns them off. `relay.Extension` loses its push parameter, and the relay client gains `offersPush()`.
