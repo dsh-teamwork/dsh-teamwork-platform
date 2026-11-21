@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — The home page names the DSH version the plugin works with
+
+- **What:** The home page's install block leads with a copy button ("Copy plugin name") before the package name, puts the full install guide beside it as an external link, and states under it that the plugin works with the latest DSH, 0.2.2-rc.5, then where to paste the name, using DSH's own menu labels in each language and its Plugins icon.
+- **Why:** A visitor could not tell whether the plugin fit the DSH they run, and the Chinese hint named the English menu.
+- **Breaking:** None.
+- **Upgrade:** Nothing. `DSH_VERSION` in `apps/web/src/public/home.tsx` moves with each DSH release the plugin is verified on.
+- **Refs:** `apps/web/src/public/home.tsx`, `apps/web/src/public/client.ts`, `apps/web/src/messages/`.
+
 ## 2026-11-20 — Hosted models name the provider `hosted`
 
 - **What:** A model an edition publishes now carries `provider: "hosted"` in its configuration data instead of `hosted:<extension>` (`hosted:billing`); which edition funds it stays in the configuration's route owner. No team provider and no admin's model may take the name `hosted`. The models page shows such a model as a "Platform model" badge beside its model id instead of `hosted:billing / …`.
