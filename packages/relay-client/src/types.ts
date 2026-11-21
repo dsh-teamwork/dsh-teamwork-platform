@@ -263,6 +263,8 @@ export interface RelayClient {
   getPairing(id: string): Promise<Pairing | null>;
   /** Disconnects this phone from one computer, after the member confirms. */
   revokeComputer(id: string): Promise<void>;
+  /** Whether the signed-in server delivers notifications at all; a self-hosted one never does. */
+  offersPush(): Promise<boolean>;
   /**
    * Turns one computer's notifications on with this phone's token and
    * language, or off with null. Rejects `not_found` once the pairing is gone.

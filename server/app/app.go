@@ -234,6 +234,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		return nil
 	}
 	var teamDSHGate func(context.Context, string) (bool, error)
+	var push edition.SendPush
 	console := edition.AdminConsole{Base: "/manage"}
 	var webFiles fs.FS
 	var adminRoutes []edition.AdminRoute
@@ -258,6 +259,14 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			teamDSHGate = allowed
 			return nil
 		},
+		SetPush: func(send edition.SendPush) error {
+			if send == nil || push != nil {
+				return errors.New("invalid or duplicate push sender")
+			}
+			push = send
+			return nil
+		},
+		Push: func() edition.SendPush { return push },
 		ServeSubdomains: func(domain string, h http.Handler) error {
 			domain = strings.ToLower(strings.Trim(domain, "."))
 			app, err := url.Parse(cfg.AppURL)

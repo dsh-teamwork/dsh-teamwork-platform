@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — A self-hosted server sends no phone notifications
+
+- **What:** The relay no longer sends through Expo itself. An edition gives the server a sender (`edition.Host.SetPush`, handed `edition.PushMessage`); without one the server notifies no phone, `GET /api/relay` now says `push: false` (a new required field beside `url`), and `PUT /relay/pairings/{id}/push` with a token answers 409 `push_unavailable` while `null` still turns them off. `relay.Extension` loses its push parameter, and the relay client gains `offersPush()`.
+- **Why:** Most users are in mainland China, where Android needs the phone makers' channels, which authenticate the sender with the app's own secret; a self-hosted server cannot hold it (ADR 0062).
+- **Breaking:** A self-hosted server's phones stop receiving notifications; an app reading `GET /api/relay` must accept `push`.
+- **Upgrade:** Nothing to configure. Editions that deliver call `SetPush` from their Mount.
+- **Refs:** ADR 0062, `server/relay/push.go`, `server/edition/edition.go`, `docs/tech/relay.md` ("Push notifications").
+
 ## 2026-11-20 — A presentation template, and pages that save the files they make
 
 - **What:** The console's preset templates gain a fourth, the presentation master (`presenter`: read, write, skill and `teamwork_page`), which plans a talk with the member, writes the slides and their speaker notes with the DSH plugin's `teamwork-slides` skill, and publishes the deck as a page that presents full screen and exports to PDF and an editable PowerPoint file. The page sandbox adds `allow-downloads` (the CSP on `/p/` and the console's viewer, which also allows full screen), so a page can save a file it makes. `teamwork_page` joins the tools the preset editor offers.

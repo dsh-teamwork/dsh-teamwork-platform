@@ -43,20 +43,30 @@ type world struct {
 	adaID              string
 	outsider           string // a signed-in person in no team
 	mu                 sync.Mutex
-	pushed             [][]PushMessage
+	pushed             [][]edition.PushMessage
 }
 
-func each(t *testing.T, f func(t *testing.T, w *world)) {
+func each(t *testing.T, f func(t *testing.T, w *world)) { eachWith(t, true, f) }
+
+// eachWith is each on a server that delivers notifications, recorded in
+// w.pushed, or, without push, on one that delivers none, as a self-hosted
+// server does.
+func eachWith(t *testing.T, push bool, f func(t *testing.T, w *world)) {
 	var w *world
 	ext := edition.Extension{
 		Name: "open-relay",
 		Mount: func(h edition.Host) (func(), error) {
-			w.r = newRelay(h, func(_ context.Context, m []PushMessage) error {
-				w.mu.Lock()
-				w.pushed = append(w.pushed, m)
-				w.mu.Unlock()
-				return nil
-			}, 200*time.Millisecond, false)
+			if push {
+				if err := h.SetPush(func(_ context.Context, m []edition.PushMessage) error {
+					w.mu.Lock()
+					w.pushed = append(w.pushed, m)
+					w.mu.Unlock()
+					return nil
+				}); err != nil {
+					return nil, err
+				}
+			}
+			w.r = newRelay(h, 200*time.Millisecond, false)
 			if err := h.SubscribeTeams(w.r.accountDeleted); err != nil {
 				return nil, err
 			}
@@ -612,7 +622,7 @@ func TestPush(t *testing.T) {
 
 		laptop.send(obj{"t": "waiting"})
 		batch := w.waitPushed(1)[0]
-		to := map[string]PushMessage{}
+		to := map[string]edition.PushMessage{}
 		for _, m := range batch {
 			to[m.To] = m
 		}
@@ -646,12 +656,12 @@ func TestPush(t *testing.T) {
 	})
 }
 
-func (w *world) waitPushed(n int) [][]PushMessage {
+func (w *world) waitPushed(n int) [][]edition.PushMessage {
 	w.t.Helper()
 	for range 200 {
 		w.mu.Lock()
 		if len(w.pushed) >= n {
-			out := append([][]PushMessage(nil), w.pushed...)
+			out := append([][]edition.PushMessage(nil), w.pushed...)
 			w.mu.Unlock()
 			return out
 		}
@@ -791,6 +801,9 @@ func TestSetPush(t *testing.T) {
 		if got := listed(); got["push"] != false {
 			t.Fatalf("paired without a token: %v", got)
 		}
+		if got := discovered(w); got["push"] != true {
+			t.Fatalf("a server that delivers says %v", got)
+		}
 
 		path := "/relay/pairings/" + id + "/push"
 		if s, _ := w.call(w.adaPhone, "PUT", path, obj{"pushToken": "ExponentPushToken[later]", "locale": "zh-CN"}); s != 204 {
@@ -844,13 +857,67 @@ func TestSetPush(t *testing.T) {
 	})
 }
 
+// A server the edition gave no way to deliver, as a self-hosted one, says so,
+// keeps no token, and notifies nobody; a phone may still turn notifications
+// off.
+func TestNoPush(t *testing.T) {
+	eachWith(t, false, func(t *testing.T, w *world) {
+		if got := discovered(w); got["push"] != false {
+			t.Fatalf("a server that delivers nothing says %v", got)
+		}
+		host := w.host(w.ada, "no-push-client")
+		offer := host.ask(obj{"t": "offer"})["value"].(obj)["code"]
+		status, body := w.call(w.adaPhone, "POST", "/relay/pair", obj{"code": offer, "deviceName": "Phone A"})
+		if status != 201 {
+			t.Fatalf("redeem %d %v", status, body)
+		}
+		id := body["pairing"].(obj)["id"].(string)
+		host.next(is("paired"))
+		host.ask(obj{"t": "decide", "pairingId": id, "accept": true})
+
+		path := "/relay/pairings/" + id + "/push"
+		if s, got := w.call(w.adaPhone, "PUT", path, obj{"pushToken": "ExponentPushToken[here]", "locale": "en"}); s != 409 || got["error"] != "push_unavailable" {
+			t.Fatalf("turn on %d %v", s, got)
+		}
+		if p := w.r.db.RelayPairing.GetX(context.Background(), id); p.PushToken != nil {
+			t.Fatalf("kept %v", *p.PushToken)
+		}
+		if s, _ := w.call(w.adaPhone, "PUT", path, obj{"pushToken": nil}); s != 204 {
+			t.Fatalf("turn off %d", s)
+		}
+		// A waiting agent is no error and no notification.
+		host.send(obj{"t": "waiting"})
+		time.Sleep(100 * time.Millisecond)
+		w.mu.Lock()
+		defer w.mu.Unlock()
+		if len(w.pushed) != 0 {
+			t.Fatalf("pushed %v", w.pushed)
+		}
+	})
+}
+
+// discovered is GET /api/relay, which needs no sign-in.
+func discovered(w *world) obj {
+	w.t.Helper()
+	res, err := http.Get(w.in.URL + "/api/relay")
+	if err != nil {
+		w.t.Fatal(err)
+	}
+	defer res.Body.Close()
+	var out obj
+	if res.StatusCode != 200 || json.NewDecoder(res.Body).Decode(&out) != nil {
+		w.t.Fatalf("discover %d", res.StatusCode)
+	}
+	return out
+}
+
 // Team DSH is offline (docs/tech/shared-dsh.md): the relay a binary registers
 // mounts none of its routes, so a team admin cannot make a key, a DSH cannot
 // trade one for a host token, and a member cannot list or join one. Each
 // route answers as a path that never existed does: a 404 under /api, and
 // whatever the site serves elsewhere.
 func TestTeamDSHOffline(t *testing.T) {
-	editiontest.Each(t, []edition.Extension{Extension(nil, time.Second, false)}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
+	editiontest.Each(t, []edition.Extension{Extension(time.Second, false)}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
 		ada := in.Account("ada@example.test")
 		team := in.Team(ada)
 		cookie := in.Session(ada, "password")

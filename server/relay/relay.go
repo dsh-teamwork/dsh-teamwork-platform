@@ -47,17 +47,16 @@ import (
 )
 
 // Every binary mounts the relay (ADR 0044): its main imports this package,
-// which registers it with notifications through Expo and a ping every thirty
-// seconds. Team DSH is offline for now (docs/tech/shared-dsh.md): the binary
+// which registers it with a ping every thirty seconds; notifications go
+// through whatever the edition delivers with (push.go). Team DSH is offline for now (docs/tech/shared-dsh.md): the binary
 // mounts none of its routes, so no shared DSH gets a host token and no
 // member reaches one; its code stays, and its tests mount it.
-func init() { edition.Register(Extension(throughExpo, 30*time.Second, false)) }
+func init() { edition.Register(Extension(30*time.Second, false)) }
 
-// Extension is the relay with its push sender and ping interval; tests pass
-// their own, and teamDSH mounts shared DSHs (shared.go, access.go,
+// Extension is the relay with its ping interval; tests pass their own, and teamDSH mounts shared DSHs (shared.go, access.go,
 // archive.go). It mounts through edition.Host like a closed extension does,
 // and its tables are the open schema's, migrated with the rest.
-func Extension(push SendPush, pingEvery time.Duration, teamDSH bool) edition.Extension {
+func Extension(pingEvery time.Duration, teamDSH bool) edition.Extension {
 	return edition.Extension{
 		// Not "relay": the hosted edition's own migrations are recorded under
 		// that name, from when its relay carried them (ADR 0044).
@@ -66,7 +65,7 @@ func Extension(push SendPush, pingEvery time.Duration, teamDSH bool) edition.Ext
 			if h.ServiceRole == "manage" {
 				return nil, nil
 			}
-			r := newRelay(h, push, pingEvery, teamDSH)
+			r := newRelay(h, pingEvery, teamDSH)
 			if err := h.SubscribeTeams(r.teamChanged); err != nil {
 				return nil, err
 			}
@@ -113,12 +112,12 @@ type attachment struct {
 	sent        int
 }
 
-func newRelay(h edition.Host, push SendPush, pingEvery time.Duration, teamDSH bool) *relay {
+func newRelay(h edition.Host, pingEvery time.Duration, teamDSH bool) *relay {
 	client := clientOf(h)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &relay{
 		db: client, pairings: &pairings{db: client, secret: h.AuthSecret},
-		push: &notifier{db: client, send: push, last: map[string]time.Time{}},
+		push: &notifier{db: client, send: h.Push, last: map[string]time.Time{}},
 		host: h, pingEvery: pingEvery, teamDSH: teamDSH, ctx: ctx, cancel: cancel,
 		hosts: map[string]*socket{}, attached: map[string]*attachment{}, revoked: map[string]bool{}, sockets: map[*socket]struct{}{},
 	}
@@ -721,7 +720,8 @@ func errorJSON(w http.ResponseWriter, status int, code string) {
 	writeJSON(w, status, map[string]string{"error": code})
 }
 
-// discover names the plugin's socket: APP_URL with a WebSocket scheme.
+// discover names the plugin's socket, APP_URL with a WebSocket scheme, and
+// whether a phone may be notified here.
 func (r *relay) discover(w http.ResponseWriter, _ *http.Request) {
 	url := r.host.AppURL
 	if rest, ok := strings.CutPrefix(url, "https://"); ok {
@@ -729,7 +729,8 @@ func (r *relay) discover(w http.ResponseWriter, _ *http.Request) {
 	} else if rest, ok := strings.CutPrefix(url, "http://"); ok {
 		url = "ws://" + rest
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"url": url + "/relay/plugin"})
+	// push says whether a phone may turn notifications on here (push.go).
+	writeJSON(w, http.StatusOK, map[string]any{"url": url + "/relay/plugin", "push": r.host.Push() != nil})
 }
 
 // bearer is a request's Bearer token, or "" when it sends none, as the web
@@ -1005,6 +1006,11 @@ func (r *relay) setPush(w http.ResponseWriter, req *http.Request) {
 	in, ok := parsePushUpdate(body)
 	if !ok {
 		errorJSON(w, http.StatusBadRequest, "invalid_input")
+		return
+	}
+	if in.token != nil && r.host.Push() == nil {
+		// A phone may still turn them off; nothing here would deliver to it.
+		errorJSON(w, http.StatusConflict, "push_unavailable")
 		return
 	}
 	if err := r.pairings.setPush(req.Context(), ph, req.PathValue("id"), in); err != nil {
