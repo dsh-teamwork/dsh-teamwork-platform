@@ -104,10 +104,9 @@
     "createTeam": "创建团队",
     "openConsole": "打开团队控制台",
     "install": {
-      "plugin": "DSH 插件",
-      "copy": "复制包名",
-      "hint": "在 DSH 桌面版打开 Plugins → Add plugin，粘贴上方包名。",
-      "more": "安装指南"
+      "copy": "复制 DSH 插件名",
+      "hint": "已适配最新版 DSH {version}。在桌面版 <menu>插件 → 添加插件</menu> 中粘贴插件名即可。",
+      "more": "完整安装指南"
     },
     "nav": {
       "label": "页面章节",

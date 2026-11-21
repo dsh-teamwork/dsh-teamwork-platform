@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-20 — The home page names the DSH version the plugin works with
+
+- **What:** The home page's install block leads with a copy button ("Copy plugin name") before the package name, puts the full install guide beside it as an external link, and states under it that the plugin works with the latest DSH, 0.2.2-rc.5, then where to paste the name, using DSH's own menu labels in each language and its Plugins icon.
+- **Why:** A visitor could not tell whether the plugin fit the DSH they run, and the Chinese hint named the English menu.
+- **Breaking:** None.
+- **Upgrade:** Nothing. `DSH_VERSION` in `apps/web/src/public/home.tsx` moves with each DSH release the plugin is verified on.
+- **Refs:** `apps/web/src/public/home.tsx`, `apps/web/src/public/client.ts`, `apps/web/src/messages/`.
+
 ## 2026-11-20 — A presentation template, and pages that save the files they make
 
 - **What:** The console's preset templates gain a fourth, the presentation master (`presenter`: read, write, skill and `teamwork_page`), which plans a talk with the member, writes the slides and their speaker notes with the DSH plugin's `teamwork-slides` skill, and publishes the deck as a page that presents full screen and exports to PDF and an editable PowerPoint file. The page sandbox adds `allow-downloads` (the CSP on `/p/` and the console's viewer, which also allows full screen), so a page can save a file it makes. `teamwork_page` joins the tools the preset editor offers.

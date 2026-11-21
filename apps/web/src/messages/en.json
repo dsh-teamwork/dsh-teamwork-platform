@@ -104,10 +104,9 @@
     "createTeam": "Create a team",
     "openConsole": "Open team console",
     "install": {
-      "plugin": "DSH plugin",
-      "copy": "Copy package name",
-      "hint": "In DSH Desktop, open Plugins → Add plugin and paste the package name above.",
-      "more": "Install guide"
+      "copy": "Copy plugin name",
+      "hint": "Works with the latest DSH, {version}. Paste it into <menu>Plugins → Add plugin</menu>.",
+      "more": "Full install guide"
     },
     "nav": {
       "label": "Sections",
