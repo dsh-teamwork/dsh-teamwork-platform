@@ -23,8 +23,10 @@ export interface PresetTemplate {
 export const PRESET_TEMPLATES: readonly PresetTemplate[] = [
   { id: 'writer', avatar: 'writer', requiredTools: ['read', 'write', 'edit'], optionalTools: ['web_search', 'web_fetch', 'ask_user_question'] },
   { id: 'analyst', avatar: 'analyst', requiredTools: ['read', 'bash', 'write'], optionalTools: ['glob', 'ask_user_question'] },
-  { id: 'researcher', avatar: 'researcher', requiredTools: ['web_search', 'web_fetch', 'write'], optionalTools: ['read', 'ask_user_question'] },
-  // Its method is the plugin's teamwork-slides skill, which every member's plugin carries (dsh-teamwork's skills/).
+  // Its method is the plugin's teamwork-research skill. web_search needs a DeepSeek key on the member's DSH, so it is
+  // optional: without it the analyst reads primary sources with web_fetch.
+  { id: 'researcher', avatar: 'researcher', requiredTools: ['web_fetch', 'write', 'skill', 'teamwork_page'], optionalTools: ['web_search', 'read', 'bash', 'ask_user_question'] },
+  // Its method is the plugin's teamwork-slides skill; every member's plugin carries both (dsh-teamwork's skills/).
   { id: 'presenter', avatar: 'training', requiredTools: ['read', 'write', 'skill', 'teamwork_page'], optionalTools: ['bash', 'web_search', 'web_fetch', 'ask_user_question'] },
 ];
 

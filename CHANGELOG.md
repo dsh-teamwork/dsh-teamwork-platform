@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-21 — The research analyst template publishes a cited report
+
+- **What:** The research analyst template now follows the DSH plugin's `teamwork-research` skill: it agrees the decision and 3 to 5 sub-questions, reads primary sources, cites every fact with a quote and an access date, and publishes the report as a page that prints to PDF and saves as Markdown. It requires `web_fetch`, `write`, `skill` and `teamwork_page`; `web_search` is optional, since it needs a DeepSeek key on the member's DSH or a server that offers Teamwork search.
+- **Why:** The template required `web_search`, which a member using team models usually cannot run, and delivered a file nobody else could open.
+- **Breaking:** None. Presets made from the old template keep their own text.
+- **Upgrade:** Members update the DSH plugin for the skill.
+- **Refs:** `apps/web/src/lib/preset-templates.ts`, `apps/web/src/messages/*.json`, plugin `skills/teamwork-research/`.
+
 ## 2026-11-20 — A self-hosted server sends no phone notifications
 
 - **What:** The relay no longer sends through Expo itself. An edition gives the server a sender (`edition.Host.SetPush`, handed `edition.PushMessage`); without one the server notifies no phone, `GET /api/relay` now says `push: false` (a new required field beside `url`), and `PUT /relay/pairings/{id}/push` with a token answers 409 `push_unavailable` while `null` still turns them off. `relay.Extension` loses its push parameter, and the relay client gains `offersPush()`.
