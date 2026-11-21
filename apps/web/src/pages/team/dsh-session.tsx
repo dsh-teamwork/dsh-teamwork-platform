@@ -18,7 +18,6 @@ import {
   applySessionEvent,
   defaultDirectory,
   deliverFiles,
-  modelAcceptsImages,
   imageMediaType,
   EMPTY_SESSION,
   fileReference,
@@ -436,7 +435,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
   const [state, setState] = useState<SessionState>(EMPTY_SESSION);
   const [options, setOptions] = useState<SessionOptions>({});
   const [config, setConfig] = useConfiguration(computerId, id);
-  const files = useFiles(computerId, modelAcceptsImages(config, id ? undefined : options));
+  const files = useFiles(computerId);
   // The first message, shown until the session's own copy of it arrives.
   const [sent, setSent] = useState('');
   const [busy, setBusy] = useState(false);
@@ -897,7 +896,7 @@ type Files = ReturnType<typeof useFiles>;
  * acknowledged chunks, then one prompt with their receipts (`attachments` of the relay client, which the phone app
  * uses too). A computer whose plugin cannot take files offers none.
  */
-function useFiles(computerId: string, acceptsImages: boolean) {
+function useFiles(computerId: string) {
   const t = useTranslations('team.dsh.files');
   const word = useRelayError();
   const relay = useSessionClient();
@@ -925,7 +924,6 @@ function useFiles(computerId: string, acceptsImages: boolean) {
     setProgress(t('preparing'));
     try {
       if (files.length + selected.length > limits.maxFiles) throw new RelayError('file_too_large');
-      if (!acceptsImages && selected.some((file) => imageMediaType(file.name))) throw new RelayError('image_model_unsupported');
       const remaining = (limits.maxMessageImageBytes ?? 0) - files.filter((file) => imageMediaType(file.name)).reduce((sum, file) => sum + file.bytes, 0);
       const count = selected.filter((file) => imageMediaType(file.name)).length;
       if (count && !limits.maxImageBytes) throw new RelayError('upload_unsupported');
@@ -960,7 +958,7 @@ function useFiles(computerId: string, acceptsImages: boolean) {
   }
 
   return {
-    files, limits, progress, failed, add, remove, acceptsImages,
+    files, limits, progress, failed, add, remove,
     preview: (file: PickedFile) => imageMediaType(file.name) ? blobs.current.get(file.id) : undefined,
     /** A new session's own: made once, with the files' folder and preset, and kept for a retry. */
     target: (options: SessionOptions) => {
@@ -994,14 +992,13 @@ function useFiles(computerId: string, acceptsImages: boolean) {
 
 function AttachButton({ files, disabled }: { files: Files; disabled: boolean }) {
   const t = useTranslations('team.dsh.files');
-  const errors = useTranslations('relayErrors');
   const input = useRef<HTMLInputElement>(null);
   if (!files.limits) return null;
   return (
     <>
-      <input ref={input} type="file" multiple hidden accept={files.limits.extensions.filter((extension) => files.acceptsImages || !imageMediaType(`file.${extension}`)).map((extension) => `.${extension}`).join(',')}
+      <input ref={input} type="file" multiple hidden accept={files.limits.extensions.map((extension) => `.${extension}`).join(',')}
         onChange={(event) => { void files.add(event.target.files); event.target.value = ''; }} />
-      <Button type="button" variant="ghost" size="icon" className="size-7" aria-label={t('add')} title={files.acceptsImages ? t('add') : errors('image_model_unsupported')} disabled={disabled || files.progress !== null} onClick={() => input.current?.click()}>
+      <Button type="button" variant="ghost" size="icon" className="size-7" aria-label={t('add')} title={t('add')} disabled={disabled || files.progress !== null} onClick={() => input.current?.click()}>
         <Paperclip className="size-4" aria-hidden />
       </Button>
     </>
@@ -1077,7 +1074,6 @@ function Composer({ busy, rows, placeholder, send, files, stop, tools, children 
     >
       <div className="flex flex-col gap-1.5 rounded-2xl border bg-card px-2 pt-2 pb-1.5 shadow-sm focus-within:ring-2 focus-within:ring-ring">
         <FileCards files={files} disabled={busy || files.progress !== null} />
-        {files.limits && !files.acceptsImages && <p className="px-1 text-xs text-muted-foreground">{t('imagesUnavailable')}</p>}
         <Textarea
           value={text}
           rows={rows}

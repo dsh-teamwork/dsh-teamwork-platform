@@ -5,7 +5,7 @@
  * app and the web console each read the bytes their own way.
  */
 import { RelayError, type RelayClient } from './types';
-import { modelAcceptsImages, type SessionOptions } from './session-config';
+import type { SessionOptions } from './session-config';
 import type { UploadedFile, UploadLimits } from './uploads';
 
 export interface PickedFile {
@@ -95,7 +95,7 @@ export async function ensureFileTarget(
 
 /** Transfer selected bytes without submitting any prompt. */
 export async function uploadFiles(options: {
-  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'configuration'>;
+  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload'>;
   computerId: string;
   sessionId: string;
   draft: FileDraft;
@@ -109,11 +109,6 @@ export async function uploadFiles(options: {
   if (draft.files.length) {
     if (!limits) throw new RelayError('upload_unsupported');
     validateFiles(draft.files, limits);
-  }
-  if (draft.files.some((file) => imageMediaType(file.name)) && !draft.pending?.sent) {
-    const config = await relay.configuration(computerId, draft.options ? undefined : sessionId);
-    if (!modelAcceptsImages(config, draft.options)) throw new RelayError('image_model_unsupported');
-    checkCancelled(signal);
   }
   const total = draft.files.reduce((sum, file) => sum + file.bytes, 0);
   let sent = 0;
@@ -161,7 +156,7 @@ export async function uploadFiles(options: {
 
 /** One immutable outgoing message keeps its id after a lost acknowledgement. */
 export async function deliverFiles(options: {
-  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'prompt' | 'configuration'>;
+  relay: Pick<RelayClient, 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'prompt'>;
   computerId: string;
   sessionId: string;
   text: string;
@@ -177,12 +172,7 @@ export async function deliverFiles(options: {
   if (draft.pending?.fingerprint !== fingerprint)
     draft.pending = { fingerprint, requestId: options.requestId(), sent: false };
   checkCancelled(signal);
-  if (draft.files.some((file) => imageMediaType(file.name)) && !draft.pending.sent) {
-    if (!modelAcceptsImages(await relay.configuration(computerId, sessionId))) {
-      throw new RelayError('image_model_unsupported');
-    }
-    checkCancelled(signal);
-  }
+  // The host resolves the session model before checking whether the prompt can include images.
   const pending = draft.pending;
   pending.sent = true;
   options.submitted?.();

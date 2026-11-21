@@ -1053,7 +1053,6 @@
       "nextCheck": "在那台机器上运行 dsh-teamwork status，应显示 Relay: connected。"
     },
     "dsh": {
-      "imagesUnavailable": "当前模型无法上传图片。请选择支持识图的模型。",
       "sessions": "我的会话",
       "online": "在线",
       "offline": "离线",

@@ -1053,7 +1053,6 @@
       "nextCheck": "dsh-teamwork status on the machine should say Relay: connected."
     },
     "dsh": {
-      "imagesUnavailable": "Images require a model with image understanding.",
       "sessions": "My sessions",
       "online": "Online",
       "offline": "Offline",

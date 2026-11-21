@@ -495,9 +495,10 @@ to JPEG. The original file or photo stays with its provider.
 The model configuration carries optional `vision` to DSH. BYOK model import
 reads it from the public model catalog, and an administrator can set or refresh
 it in the form. The hosted catalogue exposes the same capability to operators
-and publishes it to teams. Catalogues are read on creation and editing. Both
-composers require a model that advertises image input before uploading images.
-The plugin checks the session's actual model again before sending to DSH.
+and publishes it to teams. Catalogues are read on creation and editing. The
+composers report model errors when sending a message with images. The plugin
+resolves the session's model before checking image support and forwarding the
+message to DSH.
 
 The hosted gateway admits inline raster image parts on vision-enabled routes
 within its 4 MiB request limit, including re-encoded images in conversation
