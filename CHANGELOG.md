@@ -12,6 +12,7 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None. Presets made from the old template keep their own text.
 - **Upgrade:** Members update the DSH plugin for the skill.
 - **Refs:** `apps/web/src/lib/preset-templates.ts`, `apps/web/src/messages/*.json`, plugin `skills/teamwork-research/`.
+
 ## 2026-11-20 — A self-hosted server sends no phone notifications
 
 - **What:** The relay no longer sends through Expo itself. An edition gives the server a sender (`edition.Host.SetPush`, handed `edition.PushMessage`); without one the server notifies no phone, `GET /api/relay` now says `push: false` (a new required field beside `url`), and `PUT /relay/pairings/{id}/push` with a token answers 409 `push_unavailable` while `null` still turns them off. `relay.Extension` loses its push parameter, and the relay client gains `offersPush()`.
