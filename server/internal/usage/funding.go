@@ -103,7 +103,7 @@ func (s *Service) RegisterFunding(owner string, p edition.ModelFunding) (edition
 				m.Reference == "" || len(m.Reference) > 100 || !teamTokens(m.ContextWindow) || !teamTokens(m.MaxTokens) {
 				return errors.New("invalid owned model")
 			}
-			want := wire.ModelData{Provider: wire.HostedProvider, Model: m.Reference, ContextWindow: &m.ContextWindow, MaxTokens: &m.MaxTokens, Offline: m.Offline}
+			want := wire.ModelData{Provider: wire.HostedProvider, Model: m.Reference, ContextWindow: &m.ContextWindow, MaxTokens: &m.MaxTokens, Vision: m.Vision, Offline: m.Offline}
 			data, _ := json.Marshal(want)
 			old, err := tx.db.TeamConfig.Query().Where(teamconfig.ID(m.ConfigID)).Only(ctx)
 			if ent.IsNotFound(err) {

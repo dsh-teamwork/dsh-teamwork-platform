@@ -103,6 +103,7 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
   'agent-preset/invalid': 'preset_unavailable', 'agent-preset/locked': 'busy',
   'teamwork/busy': 'busy', 'teamwork/not_found': 'not_found', 'teamwork/not_authenticated': 'not_authenticated',
   'teamwork/missing_tools': 'missing_tools', 'teamwork/missing_plugins': 'missing_plugins',
+  'teamwork/image_model_unsupported': 'image_model_unsupported',
   'teamwork/file_type': 'file_type', 'teamwork/file_name': 'file_name', 'teamwork/file_too_large': 'file_too_large', 'teamwork/invalid_upload': 'invalid_upload',
   'teamwork/upload_expired': 'upload_expired', 'teamwork/upload_failed': 'upload_failed', 'session/attachment-invalid': 'upload_expired',
   'teamwork/locked': 'locked', 'teamwork/preset_changed': 'preset_changed', 'teamwork/model_unavailable': 'model_unavailable', 'teamwork/invalid_request': 'invalid_request',

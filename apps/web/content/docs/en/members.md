@@ -108,6 +108,12 @@ device paired with it, even while it is connected. Use it for a lost computer,
 one you no longer use, or an old entry left after signing in again. If it signs
 in again later, it comes back and is paired anew.
 
+The paperclip in a DSH conversation accepts PNG, JPEG, WebP and GIF when the
+selected model supports images. You can attach multiple images. The clients
+resize photos to fit 512 KiB per image and 1.5 MiB of images per message, then
+transfer them in chunks. The phone app also supports selecting several photos
+from the library and taking a photo with the camera.
+
 ## Pages your agent publishes
 
 Ask the agent in a session for a report, a deck, a dashboard or a diagram, and
@@ -125,6 +131,10 @@ delete it, but reads its content only if it is shared with them. Pages run in
 a sandbox on their own address, so a page cannot act as you in Teamwork. A page
 may still go full screen and save a file it makes, such as a deck's PDF or
 PowerPoint export; your browser shows each download.
+
+In the mobile app, tap a page card to open a bottom sheet that takes up about
+80% of the screen. Tap the browser icon in the top right to open the same
+version in your browser. Tap **Close** to return to the conversation.
 
 ## More than one team
 

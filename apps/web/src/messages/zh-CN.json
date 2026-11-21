@@ -1053,6 +1053,7 @@
       "nextCheck": "在那台机器上运行 dsh-teamwork status，应显示 Relay: connected。"
     },
     "dsh": {
+      "imagesUnavailable": "当前模型无法上传图片。请选择支持识图的模型。",
       "sessions": "我的会话",
       "online": "在线",
       "offline": "离线",
@@ -1133,6 +1134,7 @@
         "effortDefault": "模型默认值"
       },
       "files": {
+        "preparing": "正在准备附件…",
         "add": "添加文件",
         "remove": "移除 {name}",
         "progress": "正在上传 {name} · {percent}%"
@@ -1610,6 +1612,8 @@
     "model_unavailable": "这个会话的模型在这里用不了：可能还没选模型、这台电脑上没有它的密钥，或已被团队移除。请在输入框下方的模型菜单里换一个。",
     "unavailable": "无法连接到机器，请重试。",
     "file_type": "请选择文本、代码、日志、CSV、JSON 或 PDF 文件，暂不支持图片及其他格式。",
+    "image_model_unsupported": "当前模型不能上传图片。请切换到支持识图的模型，或移除图片后再发送。",
+    "image_too_large": "压缩后的图片仍超过这台电脑的上传限制。",
     "file_too_large": "每条消息最多 5 个文件：单个不超过 20 MB，合计不超过 50 MB。",
     "invalid_upload": "文件没有完整传到电脑，请重新发送。",
     "upload_expired": "电脑上已经没有这些文件了，重新发送会再上传一次。",
