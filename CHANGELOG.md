@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-21 — The research analyst template publishes a cited report
+
+- **What:** The research analyst template now follows the DSH plugin's `teamwork-research` skill: it agrees the decision and 3 to 5 sub-questions, reads primary sources, cites every fact with a quote and an access date, and publishes the report as a page that prints to PDF and saves as Markdown. It requires `web_fetch`, `write`, `skill` and `teamwork_page`; `web_search` is optional, since it needs a DeepSeek key on the member's DSH.
+- **Why:** The template required `web_search`, which a member using team models usually cannot run, and delivered a file nobody else could open.
+- **Breaking:** None. Presets made from the old template keep their own text.
+- **Upgrade:** Members update the DSH plugin for the skill.
+- **Refs:** `apps/web/src/lib/preset-templates.ts`, `apps/web/src/messages/*.json`, plugin `skills/teamwork-research/`.
+
 ## 2026-11-20 — A presentation template, and pages that save the files they make
 
 - **What:** The console's preset templates gain a fourth, the presentation master (`presenter`: read, write, skill and `teamwork_page`), which plans a talk with the member, writes the slides and their speaker notes with the DSH plugin's `teamwork-slides` skill, and publishes the deck as a page that presents full screen and exports to PDF and an editable PowerPoint file. The page sandbox adds `allow-downloads` (the CSP on `/p/` and the console's viewer, which also allows full screen), so a page can save a file it makes. `teamwork_page` joins the tools the preset editor offers.
