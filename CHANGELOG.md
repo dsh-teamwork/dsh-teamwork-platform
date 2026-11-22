@@ -5,6 +5,22 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-22 — Reasoning efforts for team models
+
+- **What:** Model configuration carries the supported reasoning efforts. BYOK admins can import them from a matching Models.dev entry or edit them before publishing, and hosted catalogues can publish the same field. DSH syncs the choices and sends the selected effort through the team gateway, which refuses an effort the model does not publish (`400`) and, for DeepSeek, turns thinking on. Every DeepSeek call now fills the `reasoning_content` its default thinking mode requires on replayed assistant messages, which it otherwise refuses.
+- **Why:** Let members adjust reasoning on the team models their provider supports.
+- **Breaking:** None.
+- **Upgrade:** Update the platform and DSH Teamwork plugin. Fill and save the effort choices for existing models where applicable.
+- **Refs:** `server/modelmeta/modelmeta.go`, `server/internal/gateway/gateway.go`, `docs/tech/architecture.md` (the model gateway).
+
+## 2026-11-22 — Provider groups in the conversation model menu
+
+- **What:** The Web composer groups available models by provider, shows model IDs when they differ from display names, and puts reasoning effort choices inside the model menu.
+- **Why:** Match the mobile picker and make models with the same display name distinguishable.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/dsh-session.tsx`.
+
 ## 2026-11-22 — Native Web's live connection opens in Chromium
 
 - **What:** The desktop native Web gateway admits a request without Fetch Metadata when its Origin is the computer's own. Chromium sends none on a WebSocket handshake, so DSH's `/api/remote.mux` was refused with 403 and the page sat reconnecting. The rule is one function, `edition.FromOwnPages`, for every gateway an edition serves through `ServeSubdomains`.

@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-19
+> **Status:** Current · **Updated:** 2026-11-22
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -246,7 +246,13 @@ Without a `redirect_uri`, the code is shown for pasting.
    everything after this is that team's (ADR 0013);
 2. caps output: `max_tokens` defaults to the model's `maxTokens`, and a caller
    asking for more is `400`;
-3. takes the team's provider of that name from `team_providers` — the base
+3. accepts a `reasoning_effort` only when it is one of the model's own
+   `reasoningEfforts`, and `400` otherwise; without one the provider's default
+   applies. For OpenRouter it becomes `reasoning.effort`; for DeepSeek it
+   also turns thinking on. DeepSeek thinks by default, so every call to it
+   gives each replayed assistant message the `reasoning_content` thinking
+   mode requires, empty where the plugin holds none;
+4. takes the team's provider of that name from `team_providers` — the base
    URL its admin entered, with no credentials, query or fragment, and the key
    decrypted from `key_cipher` (AES-256-GCM under `PROVIDER_KEYS_SECRET`,
    bound to the team and the name). The address must pass the network rule of
@@ -255,7 +261,7 @@ Without a `redirect_uri`, the code is shown for pasting.
    http only there. Link-local, carrier-grade NAT and unspecified addresses
    count as private. The rule is checked on save, before the call, and by the
    dialer as it connects, so a rebinding answer is refused;
-4. forwards only the inference fields (`messages`, `tools`, `stream`,
+5. forwards only the inference fields (`messages`, `tools`, `stream`,
    `temperature`, …) following no redirect and waiting at most 120 s for the
    provider's headers, and answers
    the provider's body with none of its headers. A provider failure is `502`

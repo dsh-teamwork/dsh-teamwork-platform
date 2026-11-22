@@ -88,6 +88,7 @@ type OwnedModel struct {
 	ConfigID, Name, Reference string
 	ContextWindow, MaxTokens  int64
 	Vision                    *bool
+	ReasoningEfforts          []string
 	Offline                   bool
 }
 

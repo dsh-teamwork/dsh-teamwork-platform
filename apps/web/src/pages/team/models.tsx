@@ -28,7 +28,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { editionModels } from '@/lib/edition';
 import { api, ApiError, type ConfigOf, type Provider, type Team, type TeamConfig } from '@/lib/api';
-import { lookupReference, type Reference } from '@/lib/model-metadata';
+import { lookupReference, REASONING_EFFORTS, type Reference } from '@/lib/model-metadata';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from './layout';
@@ -477,12 +477,12 @@ function ConnectDialog({
         const reference = references[item.id] ?? (await lookupReference(teamId, referenceProvider, item.id));
         const known = reference?.details ?? {};
         const data = manual
-          ? { provider, model: item.id, vision: known.vision, ...typedDetails }
+          ? { provider, model: item.id, vision: known.vision, reasoningEfforts: known.reasoningEfforts, ...typedDetails }
           : {
               provider, model: item.id,
               contextWindow: item.contextWindow ?? known.contextWindow,
               maxTokens: item.maxTokens ?? known.maxTokens,
-              vision: known.vision,
+              vision: known.vision, reasoningEfforts: known.reasoningEfforts,
             };
         const created = await api<TeamConfig>(`teams/${teamId}/configs`, { body: { kind: 'model', name: label, data } });
         sent.add(item.id);
@@ -623,7 +623,7 @@ function ConnectDialog({
 
         {connected && manual && typed.id.trim() && <div className="flex flex-col gap-3">
           <ModelFields value={typedDetails} disabled={pending} change={setTypedDetails} />
-          <ModelMetadataLookup key={typed.id.trim()} teamId={teamId} provider={referenceProvider} model={typed.id.trim()} current={{ contextWindow: typedDetails.contextWindow, maxTokens: typedDetails.maxTokens, vision: typedDetails.vision }} disabled={pending} apply={(values) => setTypedDetails((current) => ({ ...current, ...values }))} />
+          <ModelMetadataLookup key={typed.id.trim()} teamId={teamId} provider={referenceProvider} model={typed.id.trim()} current={{ contextWindow: typedDetails.contextWindow, maxTokens: typedDetails.maxTokens, vision: typedDetails.vision, reasoningEfforts: typedDetails.reasoningEfforts }} disabled={pending} apply={(values) => setTypedDetails((current) => ({ ...current, ...values }))} />
         </div>}
 
         <DialogFooter>
@@ -725,7 +725,7 @@ function EditModelDialog({ teamId, reload, model, referenceProvider, onClose }: 
   const t = useTranslations('team.models');
   const { pending, run } = useMutation(reload);
   const [name, setName] = useState(model.name);
-  const [details, setDetails] = useState<Partial<ModelConfig['data']>>({ contextWindow: model.data.contextWindow, maxTokens: model.data.maxTokens, vision: model.data.vision });
+  const [details, setDetails] = useState<Partial<ModelConfig['data']>>({ contextWindow: model.data.contextWindow, maxTokens: model.data.maxTokens, vision: model.data.vision, reasoningEfforts: model.data.reasoningEfforts });
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="text-left">
@@ -752,7 +752,7 @@ function EditModelDialog({ teamId, reload, model, referenceProvider, onClose }: 
             <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
           </Field>
           <ModelFields value={details} change={setDetails} disabled={pending} />
-          <ModelMetadataLookup teamId={teamId} provider={referenceProvider} model={model.data.model} current={{ contextWindow: details.contextWindow, maxTokens: details.maxTokens, vision: details.vision }} disabled={pending} apply={(values) => setDetails((current) => ({ ...current, ...values }))} />
+          <ModelMetadataLookup teamId={teamId} provider={referenceProvider} model={model.data.model} current={{ contextWindow: details.contextWindow, maxTokens: details.maxTokens, vision: details.vision, reasoningEfforts: details.reasoningEfforts }} disabled={pending} apply={(values) => setDetails((current) => ({ ...current, ...values }))} />
           <DialogFooter>
             <Button type="submit" disabled={pending}>
               {t('save')}
@@ -772,6 +772,21 @@ function ModelFields({ value, change, disabled }: { value: Partial<ModelConfig['
     {(['contextWindow', 'maxTokens'] as const).map((key) => <Field key={key} id={`${fieldId}-${key}`} label={t(key === 'contextWindow' ? 'context' : 'maxOutput')} hint={key === 'maxTokens' ? t('limitsHint') : undefined}>
       <Input id={`${fieldId}-${key}`} type="number" min={1} max={10000000} disabled={disabled} value={value[key] ?? ''} onChange={(e) => change({ ...value, [key]: e.target.value ? Number(e.target.value) : undefined })} />
     </Field>)}
+    <fieldset className="space-y-1 sm:col-span-2" disabled={disabled}>
+      <legend className="text-sm font-medium">{tm('reasoningEfforts')}</legend>
+      <p className="text-xs text-muted-foreground">{tm('reasoningEffortsHint')}</p>
+      <div className="flex flex-wrap gap-x-3 gap-y-1">
+        {REASONING_EFFORTS.map((effort) => <label key={effort} className="flex items-center gap-1.5 text-sm">
+          <input type="checkbox" checked={value.reasoningEfforts?.includes(effort) ?? false} onChange={(e) => {
+            const selected = new Set(value.reasoningEfforts);
+            if (e.target.checked) selected.add(effort);
+            else selected.delete(effort);
+            change({ ...value, reasoningEfforts: REASONING_EFFORTS.filter((item) => selected.has(item)) });
+          }} />
+          {effort}
+        </label>)}
+      </div>
+    </fieldset>
     <Field id={`${fieldId}-vision`} label={tm('vision')}>
       <Select id={`${fieldId}-vision`} label={tm('vision')} value={value.vision === undefined ? '' : String(value.vision)} disabled={disabled} options={[{ value: '', label: tm('unknown') }, { value: 'true', label: tm('yes') }, { value: 'false', label: tm('no') }]} change={(v) => change({ ...value, vision: v === '' ? undefined : v === 'true' })} />
     </Field>

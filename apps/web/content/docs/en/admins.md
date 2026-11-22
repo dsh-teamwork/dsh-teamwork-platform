@@ -55,6 +55,11 @@ list the same ID, nothing changes and **Choose a reference…** lets you pick on
 by another name. The call ID never changes, and nothing is published until you
 save.
 
+For an exact provider and model match, the catalog can also fill the supported
+reasoning efforts. Review or edit the choices before publishing. Members see
+those efforts in the DSH, App and Web model pickers after the plugin syncs. With
+no efforts selected, the model uses the provider's default behavior.
+
 In a model's reference-rate dialog, while the rate is an estimated cost rather
 than an internal weight, **Fill reference prices** does the same with the
 public prices, converted to CNY per million text tokens at the latest reference

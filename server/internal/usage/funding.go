@@ -18,6 +18,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/modelmeta"
 )
 
 // fundingTx is intentionally not an ent client. Its capability expires before
@@ -100,10 +101,13 @@ func (s *Service) RegisterFunding(owner string, p edition.ModelFunding) (edition
 				return errors.New("model publication outside its team transaction")
 			}
 			if m.ConfigID == "" || len(m.ConfigID) > 32 || strings.TrimSpace(m.Name) == "" || utf8.RuneCountInString(m.Name) > 100 ||
-				m.Reference == "" || len(m.Reference) > 100 || !teamTokens(m.ContextWindow) || !teamTokens(m.MaxTokens) {
+				m.Reference == "" || len(m.Reference) > 100 || !teamTokens(m.ContextWindow) || !teamTokens(m.MaxTokens) || !modelmeta.ValidReasoningEfforts(m.ReasoningEfforts) {
 				return errors.New("invalid owned model")
 			}
-			want := wire.ModelData{Provider: wire.HostedProvider, Model: m.Reference, ContextWindow: &m.ContextWindow, MaxTokens: &m.MaxTokens, Vision: m.Vision, Offline: m.Offline}
+			want := wire.ModelData{Provider: wire.HostedProvider, Model: m.Reference, ContextWindow: &m.ContextWindow, MaxTokens: &m.MaxTokens, Vision: m.Vision, Offline: m.Offline, ReasoningEfforts: slices.Clone(m.ReasoningEfforts)}
+			if len(want.ReasoningEfforts) == 0 {
+				want.ReasoningEfforts = nil
+			}
 			data, _ := json.Marshal(want)
 			old, err := tx.db.TeamConfig.Query().Where(teamconfig.ID(m.ConfigID)).Only(ctx)
 			if ent.IsNotFound(err) {

@@ -1160,7 +1160,8 @@
         "followPreset": "默认模型",
         "noPreset": "未使用预设",
         "effort": "推理强度",
-        "effortDefault": "模型默认值"
+        "effortDefault": "模型默认值",
+        "modelFailures": "未能读取这些提供商的模型：{names}。其他模型仍可选择。"
       },
       "files": {
         "preparing": "正在准备附件…",
@@ -1596,6 +1597,8 @@
     }
   },
   "modelMetadata": {
+    "reasoningEfforts": "推理强度",
+    "reasoningEffortsHint": "选择此提供商的 Chat Completions 接口支持的档位。全部留空时使用提供商默认设置。",
     "refresh": "从公共目录填入",
     "refreshPrices": "填入参考价格",
     "loading": "查询中…",

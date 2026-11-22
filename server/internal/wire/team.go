@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/modelmeta"
 )
 
 // The codes the team API refuses with (TEAM_ERRORS).
@@ -138,11 +140,12 @@ const HostedProvider = "hosted"
 
 // ModelData is a provider's model, addressed the way the provider names it.
 type ModelData struct {
-	Provider      string `json:"provider"`
-	Model         string `json:"model"`
-	ContextWindow *int64 `json:"contextWindow,omitempty"`
-	MaxTokens     *int64 `json:"maxTokens,omitempty"`
-	Vision        *bool  `json:"vision,omitempty"`
+	Provider         string   `json:"provider"`
+	Model            string   `json:"model"`
+	ContextWindow    *int64   `json:"contextWindow,omitempty"`
+	MaxTokens        *int64   `json:"maxTokens,omitempty"`
+	ReasoningEfforts []string `json:"reasoningEfforts,omitempty"`
+	Vision           *bool    `json:"vision,omitempty"`
 	// Offline is a hosted model its service has taken out of service: the
 	// configuration stays, and comes back when the model does. Only that
 	// service sets it (edition.OwnedModel); an admin's model never carries it.
@@ -160,6 +163,9 @@ func (m *ModelData) validate(is *Issues) {
 	name(is, &m.Model, "data", "model")
 	tokens(is, m.ContextWindow, "data", "contextWindow")
 	tokens(is, m.MaxTokens, "data", "maxTokens")
+	if !modelmeta.ValidReasoningEfforts(m.ReasoningEfforts) {
+		is.Add("Distinct supported reasoning efforts", "data", "reasoningEfforts")
+	}
 }
 
 // PluginDependency pins a team plugin at one version.

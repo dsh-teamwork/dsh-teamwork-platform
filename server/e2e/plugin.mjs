@@ -12,6 +12,7 @@ import { pathToFileURL } from 'node:url';
 
 const { BASE, SETUP_TOKEN, STUB_URL, PLUGIN } = process.env;
 const { TeamworkClient } = await import(pathToFileURL(join(PLUGIN, 'lib/client.js')).href);
+const { platformAdapter, teamProvider } = await import(pathToFileURL(join(PLUGIN, 'lib/platform-models.js')).href);
 const { listenForCode } = await import(pathToFileURL(join(PLUGIN, 'lib/login-callback.js')).href);
 
 // Keep the cookies returned for this origin, including updates and removals.
@@ -38,7 +39,7 @@ async function browser(path, body, method = body === undefined ? 'GET' : 'POST')
 await browser('auth/setup', { token: SETUP_TOKEN, email: 'admin@example.com', password: 'correct horse battery' });
 const team = await browser('teams', { name: 'Core' });
 await browser(`teams/${team.id}/providers`, { name: 'stub', baseUrl: STUB_URL, apiKey: 'sk-e2e' });
-const model = await browser(`teams/${team.id}/configs`, { kind: 'model', name: 'Stub', data: { provider: 'stub', model: 'stub-model', maxTokens: 512 } });
+const model = await browser(`teams/${team.id}/configs`, { kind: 'model', name: 'Stub', data: { provider: 'stub', model: 'stub-model', contextWindow: 4096, maxTokens: 512, reasoningEfforts: ['low', 'high'] } });
 // Every call needs a rate (ADR 0050); zero is one.
 await browser(`teams/${team.id}/model-rates/${model.id}`, { revision: 0, basis: 'cost', input: '0', cacheRead: '0', cacheWrite: '0', output: '0' }, 'PUT');
 
@@ -76,19 +77,28 @@ assert.deepEqual(snapshot.teams[0].configs.filter(c=>c.kind==='model').map(c => 
 assert.equal(snapshot.teams[0].configs.filter(c=>c.builtin==='team-assistant' && c.kind==='preset' && c.data.inheritModel===true).length,1);
 
 // A team model, called the way DSH calls it through the plugin.
-const call = (stream) =>
+const call = () =>
   fetch(`${client.endpoint}/api/llm/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${client.platformCredential()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: model.id, messages: [{ role: 'user', content: 'hi' }], stream }),
+    body: JSON.stringify({ model: model.id, messages: [{ role: 'user', content: 'hi' }] }),
   });
-const plain = await call(false);
+const plain = await call();
 assert.equal(plain.status, 200);
 assert.equal((await plain.json()).choices[0].message.content, 'hello');
-const streamed = await call(true);
-assert.equal(streamed.headers.get('content-type'), 'text/event-stream');
-const text = await streamed.text();
-assert.ok(text.trim().endsWith('data: [DONE]'), text);
+const adapter = platformAdapter(client);
+const provider = teamProvider(team.id);
+const info = await adapter.resolveModel(provider, model.id);
+assert.deepEqual(info.reasoning.efforts.map(({ id }) => id), ['low', 'high']);
+let text = '';
+for await (const chunk of adapter.stream({
+  provider, model: model.id, reasoningEffort: 'high',
+  messages: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }],
+})) {
+  if (chunk.type === 'text-delta') text += chunk.text;
+  if (chunk.type === 'finish') assert.notEqual(chunk.reason.kind, 'error');
+}
+assert.equal(text, 'hi');
 
 
 // Exercise the plugin's actual local preparation, upload, approval, sync and download path.

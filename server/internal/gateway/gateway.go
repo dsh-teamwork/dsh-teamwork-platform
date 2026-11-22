@@ -14,6 +14,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -41,6 +42,7 @@ type target struct {
 	teamID, configID, provider, model string
 	maxTokens                         int64
 	owner, reference                  string
+	efforts                           []string // the reasoning efforts the configuration publishes
 }
 
 // Caller is who a call is billed to: a member (UserID), or a shared DSH
@@ -101,14 +103,15 @@ func (g *Gateway) resolve(ctx context.Context, who Caller, configID string) (tar
 		owner, reference = m.RouteOwner, m.RouteReference
 	}
 	var route struct {
-		Provider  string `json:"provider"`
-		Model     string `json:"model"`
-		MaxTokens *int64 `json:"maxTokens"`
+		Provider         string   `json:"provider"`
+		Model            string   `json:"model"`
+		MaxTokens        *int64   `json:"maxTokens"`
+		ReasoningEfforts []string `json:"reasoningEfforts"`
 	}
 	if err := json.Unmarshal(data, &route); err != nil || route.Provider == "" || route.Model == "" {
 		return target{}, forbidden()
 	}
-	t := target{teamID: c.TeamID, configID: effectiveID, provider: route.Provider, model: route.Model, owner: owner, reference: reference}
+	t := target{teamID: c.TeamID, configID: effectiveID, provider: route.Provider, model: route.Model, owner: owner, reference: reference, efforts: route.ReasoningEfforts}
 	if route.MaxTokens != nil {
 		t.maxTokens = *route.MaxTokens
 	}
@@ -169,6 +172,16 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 	}
 	if t.maxTokens > 0 && !hasMax && !hasMaxC {
 		fields["max_tokens"], _ = json.Marshal(t.maxTokens)
+	}
+	// An effort is one the admin (or the hosted catalogue) published for this
+	// model; omitting it leaves the provider's default.
+	if raw, ok := fields["reasoning_effort"]; ok {
+		var effort string
+		if json.Unmarshal(raw, &effort) != nil || !slices.Contains(t.efforts, effort) {
+			var is wire.Issues
+			is.Add("One of the model's reasoning efforts", "reasoning_effort")
+			return is.Err()
+		}
 	}
 
 	meter := g.Usage
@@ -242,6 +255,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 			payload[k] = v
 		}
 	}
+	adaptToUpstream(base, payload)
 	out, _ := json.Marshal(payload)
 	upstreamCtx, cancelUpstream := context.WithDeadline(ctx, *tracked.DeadlineAt)
 	defer cancelUpstream()
@@ -296,5 +310,44 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 			failure = "upstream_interrupted"
 			return nil // headers are sent: the stream simply ends
 		}
+	}
+}
+
+// adaptToUpstream fits the OpenAI-compatible body to an upstream with its own
+// dialect, after the request has been bounded. The effort, already checked
+// against the model's own efforts, is translated where the upstream names it
+// differently.
+func adaptToUpstream(base string, payload map[string]json.RawMessage) {
+	endpoint, err := url.Parse(base)
+	if err != nil {
+		return
+	}
+	var effort string
+	selected := json.Unmarshal(payload["reasoning_effort"], &effort) == nil
+	switch endpoint.Hostname() {
+	case "openrouter.ai":
+		if selected {
+			payload["reasoning"], _ = json.Marshal(map[string]string{"effort": effort})
+			delete(payload, "reasoning_effort")
+		}
+	case "api.deepseek.com":
+		if selected {
+			payload["thinking"] = json.RawMessage(`{"type":"enabled"}`)
+		}
+		// DeepSeek thinks by default, and in thinking mode refuses a replayed
+		// assistant message without reasoning_content. Behind the gateway the
+		// plugin cannot tell DeepSeek is the upstream, so a turn it holds no
+		// reasoning for (another model's, or an interrupted one) arrives
+		// without it. An empty one is accepted.
+		var messages []map[string]json.RawMessage
+		if json.Unmarshal(payload["messages"], &messages) != nil {
+			return
+		}
+		for _, m := range messages {
+			if _, has := m["reasoning_content"]; !has && string(m["role"]) == `"assistant"` {
+				m["reasoning_content"] = json.RawMessage(`""`)
+			}
+		}
+		payload["messages"], _ = json.Marshal(messages)
 	}
 }

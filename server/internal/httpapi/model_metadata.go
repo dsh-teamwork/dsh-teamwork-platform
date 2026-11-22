@@ -44,6 +44,18 @@ func (s *Server) lookupModelMetadata(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return wire.E(http.StatusBadGateway, wire.ModelMetadataUnavailable)
 	}
+	if in.Source == "openrouter" && len(models) > 0 {
+		// Prices and limits come from OpenRouter. Effort choices use its own entries in Models.dev.
+		dev, _ := modelmeta.Search(ctx, s.Gateway.Client, modelmeta.Query{Source: "models_dev", Provider: "openrouter", Query: in.Query})
+		for i := range models {
+			for _, entry := range dev {
+				if entry.ID == models[i].ID {
+					models[i].ReasoningEfforts = entry.ReasoningEfforts
+					break
+				}
+			}
+		}
+	}
 	noStore(w)
 	result := map[string]any{"models": models}
 	if in.Pricing && len(models) > 0 {

@@ -1,6 +1,8 @@
 import { api, type Schemas } from './api';
 
 export type ModelMetadata = Schemas['ModelMetadata'];
+export const REASONING_EFFORTS = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
+type MetadataValue = string | number | boolean | readonly string[] | undefined;
 export type Rates = Partial<Pick<Schemas['ModelRateInput'], 'input' | 'output' | 'cacheRead' | 'cacheWrite'>>;
 
 // Rates are CNY/million tokens with six decimal places. Round up using exact
@@ -47,10 +49,10 @@ export function agreedValues<V extends Record<string, unknown>>(values: V[]): V 
 }
 
 /** The values a reference would change, keyed as the form keys them; an unknown value is never a change. */
-export function changedValues<T extends Record<string, string | number | boolean | undefined>>(current: T, next: Partial<T>): Partial<T> {
+export function changedValues<T extends Record<string, MetadataValue>>(current: T, next: Partial<T>): Partial<T> {
   const changed: Partial<T> = {};
   for (const key of Object.keys(next) as (keyof T)[]) {
-    if (next[key] !== undefined && next[key] !== current[key]) changed[key] = next[key];
+    if (next[key] !== undefined && JSON.stringify(next[key]) !== JSON.stringify(current[key])) changed[key] = next[key];
   }
   return changed;
 }
@@ -62,7 +64,7 @@ export const referenceSource = (provider: string) => (provider === 'openrouter' 
 export interface Reference {
   /** The entry the values came from, as `provider / id`, or the id when several agreeing providers list it. */
   from: string;
-  details: { contextWindow?: number; maxTokens?: number; vision?: boolean };
+  details: { contextWindow?: number; maxTokens?: number; vision?: boolean; reasoningEfforts?: ModelMetadata['reasoningEfforts'] };
   /** Every rate a reference rate needs, or null when the reference states no input or output price or the exchange rate is unavailable. */
   rates: Required<Rates> | null;
 }
@@ -83,9 +85,9 @@ export function completeRates(rates: Rates | null): Required<Rates> | null {
  * none, or the catalog cannot be read. The admin can still choose another
  * reference in the model's dialogs.
  */
-export function referenceFrom(models: ModelMetadata[], model: string, usdToCny: string | undefined): Reference | null {
+export function referenceFrom(models: ModelMetadata[], model: string, usdToCny: string | undefined, provider?: string): Reference | null {
   const exact = exactMatches(models, model);
-  const details = agreedValues(exact.map((m) => ({ contextWindow: m.contextWindow, maxTokens: m.maxTokens, vision: m.vision })));
+  const details = agreedValues(exact.map((m) => ({ contextWindow: m.contextWindow, maxTokens: m.maxTokens, vision: m.vision, reasoningEfforts: m.provider === provider ? m.reasoningEfforts : undefined })));
   const prices = agreedValues(exact.map((m) => m.prices));
   if (!details && !prices) return null;
   return {
@@ -100,7 +102,7 @@ export async function lookupReference(teamId: string, provider: string, model: s
     const found = await api<{ models: ModelMetadata[]; usdToCny?: string }>(`teams/${teamId}/model-metadata/lookup`, {
       body: { source: referenceSource(provider), provider, query: model.trim(), pricing: true },
     });
-    return referenceFrom(found.models, model, found.usdToCny);
+    return referenceFrom(found.models, model, found.usdToCny, provider);
   } catch {
     return null;
   }

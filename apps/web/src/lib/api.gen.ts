@@ -617,6 +617,8 @@ export interface paths {
                         model: string;
                         messages: unknown[];
                         stream?: boolean;
+                        /** @description One of the model configuration's reasoningEfforts; omitted, the provider's default applies */
+                        reasoning_effort?: string;
                     } & {
                         [key: string]: unknown;
                     };
@@ -4625,6 +4627,7 @@ export interface components {
             contextWindow?: components["schemas"]["Tokens"];
             maxTokens?: components["schemas"]["Tokens"];
             vision?: boolean;
+            reasoningEfforts?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
             outputModalities?: string[];
             /** @description Base USD per million text tokens. Absent rates are unknown, not free. */
             prices: {
@@ -4638,6 +4641,7 @@ export interface components {
             provider: string;
             model: string;
             vision?: boolean;
+            reasoningEfforts?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
             contextWindow?: components["schemas"]["Tokens"];
             maxTokens?: components["schemas"]["Tokens"];
             /** @description A hosted model its service has taken out of service; only that service sets it, and an admin's model is refused with it */
