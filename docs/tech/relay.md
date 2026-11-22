@@ -728,9 +728,10 @@ process that accepts `/relay/plugin`. The gateway keeps live host connections,
 pending tickets in memory, so the first implementation uses one
 process for these routes. Leave the variable empty to disable the gateway.
 
-The computer opts in with the Teamwork plugin's `webRelay` setting. The setting
-requires the current DSH host's loopback Web server and applies to personal
-computers without a local PIN. The platforms list an entry only while the
+The owner opts the computer in with the Native DSH Web switch in the Teamwork
+plugin's panel, off by default. It applies at once, needs the current DSH
+host's loopback Web server, applies to personal computers without a local PIN,
+and turns off again when the owner signs out or changes server. The platforms list an entry only while the
 opted-in computer is connected. The owner can obtain a minute-long entry
 ticket with their web session or mobile Bearer. Redemption is single-use, each connected host keeps at most eight unspent
 tickets and can issue thirty per minute. The browser receives a sealed host-only cookie. The gateway
