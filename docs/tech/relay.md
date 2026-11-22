@@ -305,7 +305,7 @@ use, so DSH sees each phone as a separate client.
   - calls: `session/list`, `session/create`, `session/prompt`,
     `session/state`, `session/page`, `session/cancel`, `session/modelCatalog`,
     `teamwork/configuration`, `teamwork/selectModel`, `teamwork/selectPermission`,
-    `teamwork/listFiles`, `teamwork/searchFiles`, `teamwork/readFile`,
+    `teamwork/listFiles`, `teamwork/searchFiles`, `teamwork/readFile`, `teamwork/readDocument`,
     `userQuestions/answer`, `$events/result`, and the list's actions:
     `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
     `workspace/archiveSession`, `workspace/unarchiveSession`;
@@ -381,6 +381,17 @@ opens there too: a read, write or edit step's file, a reply's inline code that
 reads as a path, and a reply's link to a local file (`fileReference`: a folder
 path or a file name with an extension, `file://` allowed, `:line` opening it at
 that line; a web address, a package name or a command is not a file).
+
+**Document previews** use `teamwork/readDocument` (`{ sessionId, path,
+offset, version? }`) from the same file panel or a deliverable card. After
+session and workspace authorization, the plugin returns one 128 KiB range as
+base64 with the document size, offset and version. The first read starts at
+zero. Later reads must carry the same version, and fail if the source changed.
+Source documents and converted previews are each limited to 16 MiB. Word and
+PowerPoint use the computer's DSH Office Kit to produce PDF bytes. PDF and
+Excel read the original bytes. Web and App share lazy document renderers for
+PDF navigation and read-only workbook tabs. Closing the viewer stops requesting
+further ranges. Text files keep the line-numbered reader above.
 
 ## File attachments
 

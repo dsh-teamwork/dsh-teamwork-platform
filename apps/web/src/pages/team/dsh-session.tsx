@@ -9,9 +9,7 @@
 import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
-import Markdown, { type Components } from 'react-markdown';
 import { Link } from 'react-router';
-import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
@@ -21,8 +19,6 @@ import {
   deliverFiles,
   imageMediaType,
   EMPTY_SESSION,
-  fileReference,
-  toolKey,
   ensureFileTarget,
   fileSize,
   newFileDraft,
@@ -37,6 +33,7 @@ import {
   rowsOf,
   searchSessions,
   sessionGroups,
+  visibleConversationRows,
   type ModelSelection,
   type PinState,
   type RelayClient,
@@ -60,13 +57,15 @@ import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
 import { SessionFiles, type FileTarget } from './session-files';
+import { SessionMarkdown } from './session-markdown';
+import { DeliverableCard, SessionSteps, WorkToggle } from './session-work';
 
 /** What the session parts speak to: a computer's sessions and its PIN. */
 export type SessionClient = Pick<
   RelayClient,
   | 'listSessions' | 'watchSessions' | 'follow' | 'older' | 'createSession' | 'configuration' | 'selectModel'
   | 'uploadCapabilities' | 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'cancel' | 'prompt' | 'answer'
-  | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission' | 'listFiles' | 'searchFiles' | 'readFile'
+  | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission' | 'listFiles' | 'searchFiles' | 'readFile' | 'readDocument'
   | 'watchPin' | 'unlock' | 'setPin'
 >;
 
@@ -464,7 +463,16 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
 
   useEffect(() => (id ? relay.follow(computerId, id, (event) => setState((s) => applySessionEvent(s, event))) : undefined), [relay, computerId, id]);
 
+  const [openedWork, setOpenedWork] = useState<ReadonlySet<string>>(new Set());
+  const workKey = (work: string) => JSON.stringify([id, work]);
+  const isWorkOpen = (work: string) => openedWork.has(workKey(work));
   const rows = rowsOf(state.items);
+  const toggleWork = (work: string) => setOpenedWork((open) => {
+    const next = new Set(open);
+    const key = workKey(work);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
   const running = state.status === 'running';
   const hero = !id && !sent;
 
@@ -550,7 +558,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
           {rows.length === 0 && sent && (
             <p className="ml-auto max-w-[85%] rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{sent}</p>
           )}
-          {rows.map((row) =>
+          {visibleConversationRows(rows, isWorkOpen).map((row) =>
             row.kind === 'user' ? (
               <div key={row.id} className="ml-auto flex max-w-[85%] flex-col items-end gap-1.5">
                 {row.attachments?.length ? (
@@ -568,30 +576,21 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
               </div>
             ) : row.kind === 'page' ? (
               <PageCard key={row.id} page={row.page} onOpen={() => setOpenPage(row.page)} />
+            ) : row.kind === 'deliverable' ? (
+              <DeliverableCard key={row.id} row={row} openFile={openFile} />
             ) : row.kind === 'assistant' ? (
-              <div key={row.id} className="flex flex-col gap-2 leading-6 [&_code]:font-mono [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5">
-                <Markdown remarkPlugins={[remarkGfm]} skipHtml components={openFile && fileLinks(openFile)}>{row.text}</Markdown>
+              <div key={row.id} className="min-w-0">
+                <SessionMarkdown text={row.text} openFile={row.streaming ? undefined : openFile} />
+                {row.interrupted && <p className="mt-1 text-xs text-muted-foreground">{t('replyStopped')}</p>}
               </div>
             ) : row.kind === 'failed' ? (
               <p key={row.id} role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-destructive [overflow-wrap:anywhere]">
                 {row.noModel ? t('noModel') : t('turnFailed', { message: row.message })}
               </p>
+            ) : row.kind === 'work' ? (
+              <WorkToggle key={row.id} count={row.count} open={isWorkOpen(row.id)} onToggle={() => toggleWork(row.id)} />
             ) : (
-              <details key={row.id} className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
-                <summary>{t('steps', { count: row.tools.length })}{row.status === 'running' ? ` · ${t('running')}` : row.status === 'done' ? '' : ` · ${t(row.status)}`}</summary>
-                <ul className="mt-2 flex flex-col gap-1">
-                  {row.tools.map((tool) => {
-                    // A step that read, wrote or edited a file opens it.
-                    const file = openFile && ['tools.read', 'tools.write', 'tools.edit'].includes(toolKey(tool.name) ?? '') ? fileReference(tool.summary) : null;
-                    return (
-                      <li key={tool.id} className="truncate font-mono">
-                        {tool.name}{' '}
-                        {file ? <button type="button" className={fileLink} onClick={() => openFile!(file)}>{tool.summary}</button> : tool.summary}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </details>
+              <SessionSteps key={row.id} row={row} openFile={openFile} />
             ),
           )}
           {(isThinking(rows, running) || (rows.length === 0 && sent && !failed)) && (
@@ -1185,27 +1184,6 @@ export function PinGate({ computerId, state, lockedHint, enterHint }: { computer
   );
 }
 
-const fileLink = 'cursor-pointer underline decoration-dotted underline-offset-2 hover:text-foreground hover:decoration-solid';
-
-/**
- * A reply's file names as links to the files column: inline code that reads as a path (`src/app.ts:42`), and a link
- * to a local file. A web address stays a link that opens in a new tab.
- */
-function fileLinks(openFile: (target: FileTarget) => void): Components {
-  return {
-    code({ className, children, ...props }) {
-      const text = typeof children === 'string' ? children : '';
-      const file = !className && !text.includes('\n') ? fileReference(text) : null;
-      if (!file) return <code className={className} {...props}>{children}</code>;
-      return <button type="button" className={cn('font-mono', fileLink)} onClick={() => openFile(file)}>{children}</button>;
-    },
-    a({ href = '', children, node: _node, ...props }) {
-      const file = fileReference(href);
-      if (file) return <button type="button" className={fileLink} onClick={() => openFile(file)}>{children}</button>;
-      return <a href={href} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2" {...props}>{children}</a>;
-    },
-  };
-}
 
 /** A page the agent published in this conversation: a card that opens it. */
 function PageCard({ page, onOpen }: { page: PublishedPage; onOpen: () => void }) {

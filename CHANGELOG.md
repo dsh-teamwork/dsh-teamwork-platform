@@ -5,6 +5,46 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-21 — Preview PDF and Office delivery files
+
+- **What:** Session files and deliverable cards open PDFs and read-only Excel workbooks on App and Web. Word and PowerPoint use the DSH host's Office Kit to produce a PDF. File bytes travel in bounded, versioned relay ranges.
+- **Why:** Members can inspect the documents an agent delivers from the conversation.
+- **Breaking:** None.
+- **Upgrade:** Update the console, App and Teamwork plugin. Word and PowerPoint require Office Kit on the DSH host.
+- **Refs:** `docs/tech/relay.md`, `packages/relay-client/src/dsh-sessions.ts`.
+
+## 2026-11-21 — Show thinking and delivered files in sessions
+
+- **What:** App and Web put DSH's displayable thinking in the execution fold and its explicitly presented files at the end of the turn. File cards open the session's read-only text preview.
+- **Why:** Members can inspect the work and find delivered files after the final reply.
+- **Breaking:** None.
+- **Upgrade:** Update the console and mobile app.
+- **Refs:** `packages/relay-client/src/conversation.ts`, `packages/relay-client/src/dsh.ts`.
+
+## 2026-11-21 — Inspect the work behind a session reply
+
+- **What:** App and Web use the same execution records. Completed turns fold their tool groups while keeping intermediate replies in place. Expand a group to see failed and denied steps, command exit codes and bounded output, and links to files that were read or written.
+- **Why:** Members can review what the agent did while keeping the transcript readable.
+- **Breaking:** None.
+- **Upgrade:** Update the console and mobile app.
+- **Refs:** `packages/relay-client/src/conversation.ts`, `packages/relay-client/src/dsh.ts`.
+
+## 2026-11-21 — In-progress replies resume after a reconnect
+
+- **What:** App and Web restore the active reply from DSH's compact stream snapshot, append later text to the same message, and preserve interrupted replies as recorded by DSH. Workspace links open after settlement and support line and range targets.
+- **Why:** Reconnecting or stopping while a table or code block is being written should leave the visible reply and its file references usable.
+- **Breaking:** None.
+- **Upgrade:** Update the console and mobile app.
+- **Refs:** `packages/relay-client/src/dsh.ts`, `packages/relay-client/src/conversation.ts`.
+
+## 2026-11-21 — Session replies render GFM tables on phones and the web
+
+- **What:** The mobile app parses GFM replies into native views. Both clients render table headers and cells, wrap long text, and scroll wide tables within the reply. File references open in the session's files when available.
+- **Why:** An agent's environment check should be readable as a table even on a narrow screen.
+- **Breaking:** None.
+- **Upgrade:** Update the console and mobile app.
+- **Refs:** `packages/relay-client/src/markdown.ts`, `apps/web/src/pages/team/session-markdown.tsx`, `premium/apps/mobile/components/markdown.tsx`.
+
 ## 2026-11-21 — My DSH's computers move into the sidebar, and sessions group as in DSH
 
 - **What:** My DSH's computers fold out under its entry in the console's sidebar (status dot and name); the column beside it belongs to the open computer: its name, devices, a new session, a search and its sessions, grouped by DSH workspace as DSH's own sidebar groups them. An entry's hint mark sits right after its label. `SessionSummary.marks` gains `workspace`, which the plugin's `session/list` now reports, and `TeamPage` gains `subnav` for an edition's page reached on several computers.

@@ -56,7 +56,7 @@ describe('reading DSH', () => {
 
   it('shows what was said and done, and none of DSH’s own messages', () => {
     const state = snapshotOf(fixture.followSnapshot);
-    expect(state.items.map((i) => i.kind)).toEqual(['user', 'tool', 'assistant']);
+    expect(state.items.map((i) => i.kind)).toEqual(['user', 'tool', 'assistant', 'turn-end']);
     expect(state.items[0]).toMatchObject({ kind: 'user', text: 'Should I deploy?' });
     expect(state.items[1]).toMatchObject({ kind: 'tool', id: 'call_q', name: 'ask_user_question', status: 'done' });
     expect(state.items[2]).toMatchObject({ kind: 'assistant', text: expect.stringContaining('The phone answered') });
@@ -83,7 +83,7 @@ describe('reading DSH', () => {
       }
     }
     expect(statuses).toEqual(['running', 'idle']);
-    expect(state.items.map((i) => i.kind)).toEqual(['user', 'tool', 'assistant']);
+    expect(state.items.map((i) => i.kind)).toEqual(['user', 'tool', 'assistant', 'turn-end']);
   });
 
   it('turns a question waterfall into one card per question, and the answers into DSH’s shape', () => {
@@ -123,7 +123,7 @@ describe('reading DSH', () => {
     const streams = newStreams();
     const replies: string[] = [];
     for (const frame of fixture.followWithStream) {
-      const changes = frame.type === 'event' ? eventsOf((frame as { event: unknown }).event, state) : streamEventsOf((frame as { frame: unknown }).frame, streams, state);
+      const changes = frame.type === 'event' ? eventsOf((frame as { event: unknown }).event, state) : streamEventsOf((frame as { frame: unknown }).frame, streams);
       for (const change of changes) {
         state = applyChange(state, change);
         if (change.type === 'item' && change.item.kind === 'assistant') replies.push(change.item.text);
@@ -134,7 +134,7 @@ describe('reading DSH', () => {
     expect(replies[0]).toBe('The phone answered: ');
     expect(replies[1]).toMatch(/^\+\["\{/);
     expect(state.items.filter((i) => i.kind === 'assistant')).toHaveLength(1);
-    expect(state.items.map((i) => i.kind)).toEqual(['user', 'tool', 'assistant']);
+    expect(state.items.map((i) => i.kind)).toEqual(['user', 'tool', 'assistant', 'turn-end']);
   });
 
   it('opens a session with the reply being written so far', () => {
@@ -142,7 +142,23 @@ describe('reading DSH', () => {
       records: [],
       assistantStream: { revision: 3, activeAttempt: { turn: 2, step: 1, stream: [{ type: 'block-start' }, { type: 'text-delta', text: 'Half ' }, { type: 'text-delta', text: 'way' }] } },
     });
-    expect(state.items).toEqual([{ kind: 'assistant', id: 'assistant-2-1', text: 'Half way' }]);
+    expect(state.items).toEqual([{ kind: 'assistant', id: 'assistant-2-1', text: 'Half way', streaming: true }]);
+  });
+
+  it('discards an abandoned draft and keeps a durable stop if it is already in the reconnect window', () => {
+    const activeAttempt = { attemptId: 'draft', turn: 2, step: 1, stream: [
+      { type: 'chunk', time: 1, chunk: { type: 'text-delta', text: 'Unfinished' } },
+    ] };
+    const streams = newStreams();
+    const baseline = { assistantStream: { activeAttempt } };
+    const state = snapshotOf(baseline, streams);
+    const end = streamEventsOf({ type: 'end', attemptId: 'draft', outcome: { kind: 'abandoned' } }, streams);
+    expect(end.reduce(applyChange, state).items).toEqual([]);
+    const recovered = snapshotOf({ ...baseline, records: [{ event: { type: 'assistant/message', seq: 12, data: {
+      turn: 2, step: 1, interrupted: true, message: { content: [{ type: 'text', text: 'Stopped' }] },
+    } } }] }, streams);
+    expect(recovered.items).toEqual([{ kind: 'assistant', id: 'assistant-2-1', interrupted: true, text: 'Stopped' }]);
+    expect(streams.attempts.size).toBe(0);
   });
 });
 
@@ -173,14 +189,16 @@ it('keeps file-only desktop messages visible in history', () => {
 
 it('shows a turn that failed, and says when it had no model', () => {
   const end = (seq: number, reason: unknown) => eventsOf({ type: 'turn/end', seq, data: { turn: 1, reason } }, { items: [] });
-  expect(end(4, { kind: 'completed' })).toEqual([{ type: 'status', status: 'idle' }]);
-  expect(end(5, { kind: 'aborted', reason: { kind: 'user' } })).toEqual([{ type: 'status', status: 'idle' }]);
+  const boundary = (completed: boolean) => ({ type: 'item', item: { kind: 'turn-end', id: 'turn-end-1', turn: 1, completed } });
+  expect(end(4, { kind: 'completed' })).toEqual([boundary(true), { type: 'status', status: 'idle' }]);
+  expect(end(5, { kind: 'aborted', reason: { kind: 'user' } })).toEqual([boundary(false), { type: 'status', status: 'idle' }]);
   expect(end(6, { kind: 'error', error: { message: 'Out of credit', code: 'UNKNOWN' } })).toEqual([
+    boundary(false),
     { type: 'item', item: { kind: 'failed', id: 'seq-6', message: 'Out of credit', noModel: false } },
     { type: 'status', status: 'idle' },
   ]);
   const message = 'agent "a1" has no provider/model: set AgentOptions.provider and AgentOptions.model or record a model selection';
-  expect(end(7, { kind: 'error', error: { message, code: 'UNKNOWN' } })[0]).toEqual({
+  expect(end(7, { kind: 'error', error: { message, code: 'UNKNOWN' } })[1]).toEqual({
     type: 'item',
     item: { kind: 'failed', id: 'seq-7', message, noModel: true },
   });
