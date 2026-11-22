@@ -70,6 +70,9 @@ func Extension(pingEvery time.Duration, teamDSH bool) edition.Extension {
 				return nil, err
 			}
 			r.routes(h.Mux)
+			if err := r.mountDesktopWeb(); err != nil {
+				return nil, err
+			}
 			if teamDSH {
 				r.sharedRoutes(h.Mux)
 				r.accessRoutes(h.Mux)
@@ -81,14 +84,15 @@ func Extension(pingEvery time.Duration, teamDSH bool) edition.Extension {
 }
 
 type relay struct {
-	db        *ent.Client
-	pairings  *pairings
-	push      *notifier
-	host      edition.Host
-	pingEvery time.Duration
-	teamDSH   bool            // shared DSHs are mounted; without it a host token opens nothing
-	ctx       context.Context // ends when the server shuts down
-	cancel    context.CancelFunc
+	desktopWeb *desktopWeb
+	db         *ent.Client
+	pairings   *pairings
+	push       *notifier
+	host       edition.Host
+	pingEvery  time.Duration
+	teamDSH    bool            // shared DSHs are mounted; without it a host token opens nothing
+	ctx        context.Context // ends when the server shuts down
+	cancel     context.CancelFunc
 
 	handlers sync.WaitGroup // one per open socket, until its handler returns
 
@@ -384,6 +388,9 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		go stale.c.Close(closeReplaced, "replaced")
 	}
 	s.token.Store(h.token)
+	if r.desktopWeb != nil && h.web && sharedID == "" {
+		defer r.desktopWeb.attach(hostID, userID, s)()
+	}
 	s.send(map[string]string{"t": "welcome", "hostId": hostID})
 	defer r.hostLeft(hostID, s)
 	if sharedID != "" {
@@ -842,6 +849,7 @@ func (r *relay) listPairings(w http.ResponseWriter, req *http.Request) {
 // hostView is one of the member's own computers on the web console's list,
 // with every device of theirs paired to it.
 type hostView struct {
+	WebOnline     bool             `json:"webOnline,omitempty"`
 	ID            string           `json:"id"`
 	Name          string           `json:"name"`
 	DSHVersion    string           `json:"dshVersion"`
@@ -918,7 +926,7 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	for i, h := range hosts {
 		_, online := r.hosts[h.ID]
-		out[i] = hostView{ID: h.ID, Name: h.Name, DSHVersion: h.DshVersion, PluginVersion: h.PluginVersion, OS: h.Os, Online: online, LastSeenAt: iso(h.LastSeenAt), Pairings: devices[h.ID]}
+		out[i] = hostView{WebOnline: r.desktopWeb != nil && r.desktopWeb.online(h.ID), ID: h.ID, Name: h.Name, DSHVersion: h.DshVersion, PluginVersion: h.PluginVersion, OS: h.Os, Online: online, LastSeenAt: iso(h.LastSeenAt), Pairings: devices[h.ID]}
 		if out[i].Pairings == nil {
 			out[i].Pairings = []hostDeviceView{}
 		}

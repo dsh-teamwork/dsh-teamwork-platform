@@ -21,6 +21,38 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/dsh-session.tsx`.
 
+## 2026-11-22 — Native Web's live connection opens in Chromium
+
+- **What:** The desktop native Web gateway admits a request without Fetch Metadata when its Origin is the computer's own. Chromium sends none on a WebSocket handshake, so DSH's `/api/remote.mux` was refused with 403 and the page sat reconnecting. The rule is one function, `edition.FromOwnPages`, for every gateway an edition serves through `ServeSubdomains`.
+- **Why:** The native Web page loaded but never received its data.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/edition/origin.go`, `server/relay/web.go`, `docs/tech/relay.md`.
+
+## 2026-11-22 — Owners can open native Web on their personal DSH
+
+- **What:** An online personal DSH may opt in to a native Web entry. The platform issues the owner a one-time ticket and proxies HTTP and WebSockets through the desktop plugin.
+- **Why:** Owners need the original interface for settings and plugins as well as sessions.
+- **Breaking:** An edition's subdomains (`edition.Host.ServeSubdomains`) may no longer sit on `APP_URL`'s registrable domain, which a server refuses at start; before, only `APP_URL`'s host and its parents were refused. Two registrations may now share a site, but neither may sit inside or around the other, and each handler refuses its siblings' requests itself.
+- **Upgrade:** Configure `DESKTOP_WEB_DOMAIN` (on another site than `APP_URL`'s, beside rather than inside any other domain an edition serves) and its wildcard DNS and TLS on the member-facing gateway, then the owner turns on Native DSH Web in the desktop's Teamwork panel (off by default; signing out or changing server turns it off).
+- **Refs:** ADR 0064, `docs/tech/relay.md` and `server/app` (`checkSubdomains`).
+
+## 2026-11-22 — Preview PDF, Excel and Office files in a sandbox
+
+- **What:** Session files and deliverable cards open PDFs and read-only Excel workbooks on App and Web; Word and PowerPoint open as the PDF the DSH host's Office Kit renders. The plugin's new `teamwork/readDocument` sends the bytes in versioned 128 KiB ranges (16 MiB at most); the Office Kit's own cache answers an Office file's ranges after the first. One self-contained page draws them, under a CSP that allows no request and no eval: the console shows it in an iframe sandboxed without same-origin, the App in its WebView. `RelayErrorCode` gains `document_too_large`, `document_empty`, `preview_unavailable` and `preview_unsupported`. `apps/web` depends on `pdfjs-dist`, `xlsx` (SheetJS's own tarball, pinned by integrity in the lockfile) and, to build that page, `esbuild`.
+- **Why:** Members can inspect the documents an agent delivers, and a hostile document an agent fetched cannot act as them.
+- **Breaking:** A computer on a plugin before 0.19.6 cannot preview these files; the reader is told to update the Teamwork plugin.
+- **Upgrade:** Update the console, App and Teamwork plugin (0.19.6). Word and PowerPoint require Office Kit on the DSH host. Installing needs `cdn.sheetjs.com` reachable.
+- **Refs:** `docs/tech/relay.md`, `apps/web/scripts/document-viewer.mjs`, `packages/relay-client/src/dsh-sessions.ts`.
+
+## 2026-11-21 — Session replies show their work, thinking and delivered files
+
+- **What:** App and Web render replies as GFM (tables that wrap and scroll within the reply; the App parses them into native views) and share one set of execution records: completed turns fold their tool groups and thinking behind a disclosure while intermediate replies stay in place, and an expanded group shows failed, denied and stopped steps, command exit codes, bounded output, and links to the files read or written. Files DSH presents at the end of a turn become cards. An in-progress reply is restored from DSH's stream snapshot after a reconnect and keeps growing in place; an interrupted one stays as DSH recorded it. File references support `#Lline` and line ranges and open once the reply settles. `ConversationItem` gains `deliverable`, `tool-result` and `turn-end`; the package's Markdown helpers move to `@dsh-teamwork/relay-client/markdown`.
+- **Why:** Members can review what the agent did and find what it delivered while the transcript stays readable, and a reconnect or a stop leaves the visible reply usable.
+- **Breaking:** None.
+- **Upgrade:** Update the console and mobile app.
+- **Refs:** `packages/relay-client/src/conversation.ts`, `packages/relay-client/src/dsh.ts`, `packages/relay-client/src/markdown.ts`, `apps/web/src/pages/team/session-markdown.tsx`.
+
 ## 2026-11-21 — My DSH's computers move into the sidebar, and sessions group as in DSH
 
 - **What:** My DSH's computers fold out under its entry in the console's sidebar (status dot and name); the column beside it belongs to the open computer: its name, devices, a new session, a search and its sessions, grouped by DSH workspace as DSH's own sidebar groups them. An entry's hint mark sits right after its label. `SessionSummary.marks` gains `workspace`, which the plugin's `session/list` now reports, and `TeamPage` gains `subnav` for an edition's page reached on several computers.

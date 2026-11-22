@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+import { documentViewer } from './scripts/document-viewer.mjs';
 import { publicPages } from './scripts/vite-pages.mjs';
 
 // Under `pnpm dev` the Go server on :3800 is the one address a browser opens:
@@ -15,7 +16,7 @@ import { publicPages } from './scripts/vite-pages.mjs';
 // The build has a second entry, the public pages' script; the manifest tells
 // scripts/prerender.mjs its file and the console's stylesheet.
 export default defineConfig({
-  plugins: [react(), tailwindcss(), publicPages()],
+  plugins: [react(), tailwindcss(), publicPages(), documentViewer()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: { port: 3810, strictPort: true, hmr: { clientPort: 3810 } },
   build: {

@@ -52,6 +52,7 @@ export const CALL_TIMEOUT_MS = 20_000;
 const PairingSchema = z.object({ id: z.string(), hostId: z.string(), hostName: z.string(), hostOs: z.enum(HOST_OS).nullable().catch(null), hostLastSeenAt: z.string().nullable().catch(null), status: z.enum(['pending', 'confirmed']), online: z.boolean().optional(), push: z.boolean().optional() });
 
 const OwnHostSchema = z.object({
+  webOnline: z.boolean().optional(),
   id: z.string(), name: z.string(), dshVersion: z.string(), pluginVersion: z.string().nullable().catch(null),
   os: z.enum(HOST_OS).nullable().catch(null), online: z.boolean(), lastSeenAt: z.string(),
   pairings: z.object({ status: z.enum(['pending', 'confirmed']), current: z.boolean() }).array(),
@@ -340,7 +341,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     await link.ready;
     const id = nextId();
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => fail(id, 'unavailable'), CALL_TIMEOUT_MS);
+      const timer = setTimeout(() => fail(id, 'unavailable'), method === 'teamwork/readDocument' ? 75_000 : CALL_TIMEOUT_MS);
       calls.set(id, { pairingId, resolve, reject, timer });
       void sendSecure(pairingId, { t: 'call', pairingId, id, method, body: { args } }).catch(() => fail(id, 'unavailable'));
     });
@@ -380,7 +381,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       const { hosts } = z.object({ hosts: OwnHostSchema.array() }).parse(await response.json());
       return hosts.map((h) => ({
         hostId: h.id, name: h.name, os: h.os, online: h.online, lastSeenAt: h.lastSeenAt, dshVersion: h.dshVersion,
-        pluginVersion: h.pluginVersion, paired: h.pairings.some((p) => p.current && p.status === 'confirmed'),
+        ...(h.webOnline ? { webOnline: true } : {}), pluginVersion: h.pluginVersion, paired: h.pairings.some((p) => p.current && p.status === 'confirmed'),
       }));
     },
 
@@ -491,6 +492,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     listFiles: sessions.listFiles,
     searchFiles: sessions.searchFiles,
     readFile: sessions.readFile,
+    readDocument: sessions.readDocument,
     uploadCapabilities: sessions.uploadCapabilities,
     startUpload: sessions.startUpload,
     uploadChunk: sessions.uploadChunk,

@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-21
+> **Status:** Current · **Updated:** 2026-11-22
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -305,7 +305,7 @@ use, so DSH sees each phone as a separate client.
   - calls: `session/list`, `session/create`, `session/prompt`,
     `session/state`, `session/page`, `session/cancel`, `session/modelCatalog`,
     `teamwork/configuration`, `teamwork/selectModel`, `teamwork/selectPermission`,
-    `teamwork/listFiles`, `teamwork/searchFiles`, `teamwork/readFile`,
+    `teamwork/listFiles`, `teamwork/searchFiles`, `teamwork/readFile`, `teamwork/readDocument`,
     `userQuestions/answer`, `$events/result`, and the list's actions:
     `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
     `workspace/archiveSession`, `workspace/unarchiveSession`;
@@ -381,6 +381,27 @@ opens there too: a read, write or edit step's file, a reply's inline code that
 reads as a path, and a reply's link to a local file (`fileReference`: a folder
 path or a file name with an extension, `file://` allowed, `:line` opening it at
 that line; a web address, a package name or a command is not a file).
+
+**Document previews** use `teamwork/readDocument` (`{ sessionId, path,
+offset, version? }`) from the same file panel or a deliverable card. After
+session and workspace authorization, the plugin returns one 128 KiB range as
+base64 with the document size, offset and version. The first read starts at
+zero. Later reads must carry the same version, and fail if the source changed.
+Source documents and converted previews are each limited to 16 MiB; an empty
+one is `document_empty`. Word and PowerPoint use the computer's DSH Office Kit
+to produce PDF bytes; each range asks the kit again, and the kit's own cache
+(by source version and content) answers every range after the first without
+converting again. Without the kit the answer is `preview_unavailable`. PDF and Excel read
+the original bytes. A plugin from before 0.19.6 refuses the method, which the
+client reports as `preview_unsupported`. Closing the viewer stops requesting
+further ranges. Text files keep the line-numbered reader above.
+
+The bytes are drawn by one self-contained page, `apps/web/scripts/document-viewer.mjs`:
+pdf.js and SheetJS with their workers, under a CSP that allows no request and
+no eval. An agent's file is untrusted, so the console shows that page in an
+iframe sandboxed without same-origin and posts the bytes to it, and the App
+loads the same page, with the bytes embedded, into a WebView over a local
+file; neither runs a document where a session cookie or a relay key lives.
 
 ## File attachments
 
@@ -694,3 +715,50 @@ the hosted edition, Cloud DSH.
   second.
 - **Manual check before a release.** On a real phone, over a mobile network, a
   member pairs, drives a session, and answers an approval.
+
+### Native Web on a personal computer
+
+See [ADR 0064](../adr/0064-personal-dsh-native-web-relay.md).
+
+Set `DESKTOP_WEB_DOMAIN` to a domain on another site than `APP_URL`'s, and
+neither inside nor around another domain an edition serves: it may share a
+site with one, since every edition subdomain refuses its siblings' requests
+by Fetch Metadata (`edition.Host.ServeSubdomains`). Route its wildcard DNS and TLS to the same member-facing gateway
+process that accepts `/relay/plugin`. The gateway keeps live host connections,
+pending tickets in memory, so the first implementation uses one
+process for these routes. Leave the variable empty to disable the gateway.
+
+The owner opts the computer in with the Native DSH Web switch in the Teamwork
+plugin's panel, off by default. It applies at once, needs the current DSH
+host's loopback Web server, applies to personal computers without a local PIN,
+and turns off again when the owner signs out or changes server. The platforms list an entry only while the
+opted-in computer is connected. The owner can obtain a minute-long entry
+ticket with their web session or mobile Bearer. Redemption is single-use, each connected host keeps at most eight unspent
+tickets and can issue thirty per minute. The browser receives a sealed host-only cookie. The gateway
+admits a proxied request only from the computer's own pages or straight from
+its owner (`edition.FromOwnPages`): Fetch Metadata `same-origin` or `none`,
+or, where a browser sends none, as Chromium does on a WebSocket handshake,
+the exact Origin.
+Turning the feature off, signing out or reconnecting closes forwarded streams
+and requires a fresh ticket.
+
+The gateway asks for one outbound data socket per upstream connection.
+The plugin authenticates to its own DSH with the page launch URL and adds
+that cookie and the local Host and Origin on the computer. HTTP and WebSocket
+bytes use the same data connection. This is a full native Web interface
+with its normal local permissions. The gateway terminates browser HTTPS,
+and the existing paired session interface uses a separate encrypted path.
+
+Native Web cannot be installed as an app: a browser fetches the page's manifest
+without cookies, so the gateway answers it 404 like any request without its
+access cookie, and the console shows that error. An installed app would also
+outlive the ticket that opened it.
+
+My DSH offers the entry beside the computer's device count, and opens it in a
+new tab without an opener.
+
+**Verified by** `server/e2e`'s native Web test, which runs the plugin's own
+relay client and connector in front of a stand-in for DSH's Web server: what
+reaches DSH (its Host and sign-in, none of the browser's credentials, no
+launch token), an upload DSH reads slowly, a body DSH ends by closing, DSH's
+WebSocket, and a reconnect ending the browser's access.

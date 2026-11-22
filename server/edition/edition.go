@@ -153,10 +153,12 @@ type Host struct {
 	Push func() SendPush
 	// ServeSubdomains sends every request whose Host is a subdomain of domain
 	// (one label or more before it) to h, ahead of the canonical-host redirect
-	// and every route; the security headers still apply. Mount-only, once per
-	// domain, which must be neither APP_URL's host nor one of its parents: it
-	// is for pages a closed edition serves from origins of their own (the
-	// premium edition's ADR 0053).
+	// and every route; the security headers still apply. Mount-only. The
+	// domain is on another site than APP_URL's, and neither inside nor around
+	// another registration, but may share a site with one (c.example.com and
+	// d.example.com): the browser then sends a SameSite=Lax cookie on a
+	// sibling's requests, so h must refuse any request its own pages did not
+	// make (FromOwnPages).
 	ServeSubdomains func(domain string, h http.Handler) error
 	// TeamDSHAllowed asks that gate about one team: true where none is set.
 	TeamDSHAllowed func(ctx context.Context, teamID string) (bool, error)

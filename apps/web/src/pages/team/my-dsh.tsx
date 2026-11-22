@@ -17,7 +17,7 @@
  * coming online or going away moves the page along by itself.
  */
 
-import { ArrowLeft, Check, Laptop, Loader, Monitor, RotateCw, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Check, ExternalLink, Laptop, Loader, Monitor, RotateCw, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -27,7 +27,7 @@ import { HOST_OS_NAMES, normalizePairingCode, PAIRING_CODE_LENGTH, RelayError, t
 import { COMPUTERS_REFRESH_MS, twinOf } from '@/components/team/console-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { browserCanJoin, myComputers, relayFor, removeComputer, removeDevice, type MyComputer } from '@/lib/relay';
+import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { Conversation, DshColumns, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
@@ -192,7 +192,8 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
 
 /**
  * The open computer atop its column of sessions: its name, and under it whether it is online, its system and whether
- * this browser is paired with it; at its end, how many devices are paired with it, which opens them.
+ * this browser is paired with it; at its end, how many devices are paired with it, which opens them, and, while the
+ * computer offers it, its native DSH Web in a new tab.
  */
 function ColumnHeader({ host, twin, paired, devices, base }: { host: MyComputer; twin: string | null; paired: boolean; devices: boolean; base: string }) {
   const t = useTranslations('team.myDsh');
@@ -224,7 +225,46 @@ function ColumnHeader({ host, twin, paired, devices, base }: { host: MyComputer;
         <Smartphone className="size-3.5" aria-hidden />
         {host.pairings.length}
       </Link>
+      {host.webOnline && <OpenNativeWeb host={host} />}
     </div>
+  );
+}
+
+/**
+ * Opens the computer's native DSH Web in a new tab through a one-time ticket (platform ADR 0064). The tab opens on the
+ * click itself, since a browser blocks one opened after the ticket's request; it is pointed at the ticket once it
+ * comes, without a way back to this page, and closed if none does.
+ */
+function OpenNativeWeb({ host }: { host: MyComputer }) {
+  const t = useTranslations('team.myDsh');
+  const [opening, setOpening] = useState(false);
+  async function open() {
+    setOpening(true);
+    const tab = window.open('about:blank', '_blank');
+    if (tab) tab.opener = null;
+    try {
+      const address = await desktopWebAddress(host.id);
+      if (tab) tab.location.replace(address);
+      else window.location.assign(address);
+    } catch {
+      tab?.close();
+      toast.error(t('openWebFailed'));
+    } finally {
+      setOpening(false);
+    }
+  }
+  return (
+    <button
+      type="button"
+      disabled={opening}
+      aria-label={t('openWeb')}
+      title={t('openWeb')}
+      onClick={() => void open()}
+      className="mt-1 flex shrink-0 items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-xs font-normal text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+    >
+      <ExternalLink className="size-3.5" aria-hidden />
+      {t('openWebShort')}
+    </button>
   );
 }
 

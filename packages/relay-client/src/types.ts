@@ -48,6 +48,7 @@ export interface Computer {
  * pair. A team's shared DSH is never one.
  */
 export interface OwnComputer {
+  webOnline?: boolean;
   /** The relay host's id. */
   hostId: string;
   name: string;
@@ -124,12 +125,36 @@ export interface FileText {
   truncated: boolean;
 }
 
-export type ToolStatus = 'running' | 'done' | 'failed' | 'denied';
+export type ToolStatus = 'running' | 'done' | 'failed' | 'denied' | 'stopped';
+
+export interface FileTarget { path: string; line?: number }
+
+export interface ToolDetail {
+  output: string;
+  truncated: boolean;
+  exitCode?: number;
+}
+
+export interface ToolResult {
+  output: string;
+  outputLength: number;
+  tail?: string;
+  isError: boolean;
+  code?: string;
+  reason?: string;
+  reasonClipped?: true;
+  file?: FileTarget;
+  page?: PublishedPage;
+}
 
 export type ConversationItem =
   | { kind: 'user'; id: string; text: string; attachments?: { attachmentId: string; name: string; bytes: number }[] }
-  | { kind: 'assistant'; id: string; text: string }
-  | { kind: 'tool'; id: string; name: string; summary: string; status: ToolStatus }
+  | { kind: 'assistant'; id: string; text: string; reasoning?: string; turn?: number; streaming?: true; interrupted?: true }
+  | { kind: 'deliverable'; id: string; turn: number; file: FileTarget; description?: string }
+  | { kind: 'tool'; id: string; name: string; summary: string; status: ToolStatus; turn?: number; file?: FileTarget; background?: true; detail?: ToolDetail }
+  /** A result whose call was outside the loaded history window. */
+  | { kind: 'tool-result'; id: string; callId: string; result: ToolResult }
+  | { kind: 'turn-end'; id: string; turn: number; completed: boolean }
   /** A page the agent published with `teamwork_page` (the platform's docs/tech/pages.md), after the tool that did. */
   | { kind: 'page'; id: string; page: PublishedPage }
   /**
@@ -173,7 +198,8 @@ export type SessionChange =
   /** An item added, or replaced when its id is already there. */
   | { type: 'item'; item: ConversationItem }
   /** Streamed text appended to an assistant item. */
-  | { type: 'delta'; id: string; text: string }
+  | { type: 'delta'; id: string; text: string; reasoning?: true; turn?: number }
+  | { type: 'discard-draft'; id: string }
   | { type: 'status'; status: SessionStatus };
 
 /** What `follow` delivers, in order. `applySessionEvent` (session.ts) folds them into a `SessionState`. */
@@ -210,6 +236,10 @@ export type RelayErrorCode =
   | 'camera_permission'
   | 'file_name'
   | 'file_too_large'
+  | 'document_too_large'
+  | 'document_empty'
+  | 'preview_unavailable'
+  | 'preview_unsupported'
   | 'invalid_upload'
   | 'upload_expired'
   | 'upload_failed'
@@ -320,6 +350,12 @@ export interface RelayClient {
   searchFiles(computerId: string, sessionId: string, query: string): Promise<{ matches: string[]; truncated: boolean }>;
   /** A text file under a session's working directory: its first 256 KiB; a binary one is refused as `not_text`. */
   readFile(computerId: string, sessionId: string, path: string): Promise<FileText>;
+  /**
+   * A PDF or workbook under a session's working directory, or a Word or PowerPoint file as the PDF the computer's
+   * Office Kit renders: its bytes, read in versioned 128 KiB ranges, at most 16 MiB. A plugin from before previews is
+   * `preview_unsupported`; `signal` stops asking for further ranges.
+   */
+  readDocument(computerId: string, sessionId: string, path: string, signal?: AbortSignal): Promise<Uint8Array>;
   /** Switches an idle session's permission preset (one of `configuration`'s `permissions`), and returns the one now in force. */
   selectPermission(computerId: string, sessionId: string, preset: string): Promise<string>;
   /** Stops the agent's current turn; what it already did stays. */
