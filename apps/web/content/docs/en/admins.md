@@ -23,7 +23,13 @@ become its admin. Every new team gets a **team assistant** preset.
 Open **Models → BYOK model service**. Pick a provider from the list and paste its API
 key (each listed provider is named as [Models.dev](https://models.dev) names it,
 such as `alibaba-cn` or `moonshotai-cn`, which is where its models' limits and
-prices are read), or enter any OpenAI-compatible address under **Custom**. The key is checked
+prices are read), or enter any OpenAI-compatible address under **Custom**. Kimi and
+MiniMax offer several accounts: choose the **Region** (mainland China or
+international) and the **Billing** (pay as you go, or the Kimi Coding Plan or
+MiniMax Token Plan subscription) your key belongs to, and the address and name
+follow. Each is its own catalog entry with its own model IDs and prices; a
+subscription's models are imported at a price of 0, so calls to them use no
+member's budget, and its key is the one issued for the subscription. The key is checked
 with the provider before it is saved: a key the provider refuses, or an address
 this server may not call, is shown on the form with what to change. The key is
 stored encrypted and can never be read back. Then tick the models the team
@@ -47,8 +53,10 @@ Members see team models only: never the address or the key.
 When typing a model ID by hand, or editing a model, **Fill from public catalog** fills the
 context window, maximum output and image understanding at once from the entry
 whose ID is exactly the model's: OpenRouter for OpenRouter, Models.dev for
-every other provider (for a provider Models.dev does not know, such as your own
-proxy, it looks the ID up across all its providers). A note under the button
+every other provider, under the listed provider's entry, found by its name or
+else its address (for a provider that matches no listed entry, such as your own
+proxy, it looks up only the exact ID across all of Models.dev's providers, and
+says so when nothing is found). A note under the button
 says where the values came from and what changed, with **Undo**. Unknown values
 leave your entries alone. When there is no exact match, or several providers
 list the same ID, nothing changes and **Choose a reference…** lets you pick one

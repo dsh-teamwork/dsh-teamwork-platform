@@ -9,11 +9,11 @@
  * or a key, in Team resources.
  */
 
-import { catalogEntry, PROVIDER_CATALOG } from '@dsh-teamwork/shared';
-import { Cloud, KeyRound, Plus, Tag } from 'lucide-react';
+import { catalogEntry, catalogVendors, PROVIDER_CATALOG, type CatalogProvider } from '@dsh-teamwork/shared';
+import { Cloud, Info, KeyRound, Plus, Tag } from 'lucide-react';
 import { createElement, useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
-import { useTranslations } from 'use-intl';
+import { useLocale, useTranslations } from 'use-intl';
 
 import { ProviderMark } from '@/components/provider-mark';
 import { ModelMetadataLookup } from '@/components/team/model-metadata';
@@ -30,6 +30,7 @@ import { editionModels } from '@/lib/edition';
 import { api, ApiError, type ConfigOf, type Provider, type Team, type TeamConfig } from '@/lib/api';
 import { lookupReference, REASONING_EFFORTS, type Reference } from '@/lib/model-metadata';
 import { useApi } from '@/lib/use-api';
+import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
 import { ModelRateButton, saveReferenceRates } from './model-rate';
@@ -96,7 +97,10 @@ function Models({ team, configs, providers, reload }: Props) {
   const editionAction = editionModels();
   const models = configs.filter((c): c is ModelConfig => c.kind === 'model');
   const providerOf = (m: ModelConfig) => providers.find((p) => p.name === m.data.provider);
-  const referenceOf = (m: ModelConfig) => catalogEntry(providerOf(m)?.baseUrl ?? '')?.id ?? m.data.provider;
+  const referenceOf = (m: ModelConfig) => {
+    const provider = providerOf(m);
+    return (provider && catalogEntry(provider)?.id) ?? m.data.provider;
+  };
   const usedBy = (id: string) => configs.filter((c) => c.kind === 'preset' && c.data.modelConfigId === id);
   // Which provider the dialog connects or adds models to: `true` for a new one.
   const [adding, setAdding] = useState<Provider | true | null>(null);
@@ -189,13 +193,13 @@ function ProviderCard({ teamId, reload, provider, count, onAddModels }: { teamId
   const tc = useTranslations('team.catalog');
   const { pending, run } = useMutation(reload);
   const [rekey, setRekey] = useState(false);
-  const entry = catalogEntry(provider.baseUrl);
+  const entry = catalogEntry(provider);
   return (
     <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
       <div className="flex items-center gap-3">
         <ProviderMark hints={[entry?.id, provider.name, provider.baseUrl]} name={provider.name} size="md" />
         <div className="flex min-w-0 flex-col">
-          <span className="truncate font-medium">{entry && entry.id === provider.name ? tc(entry.id) : provider.name}</span>
+          <span className="truncate font-medium">{entry && entry.id === provider.name ? tc(entry.vendor) : provider.name}</span>
           <span className="truncate font-mono text-xs text-muted-foreground" title={provider.baseUrl}>
             {provider.baseUrl}
           </span>
@@ -207,6 +211,7 @@ function ProviderCard({ teamId, reload, provider, count, onAddModels }: { teamId
           {t('keySaved')}
         </span>
         <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{t('count', { count })}</span>
+        {entry && <OfferingChips entry={entry} />}
       </div>
       <div className="flex flex-wrap gap-1">
         <Button size="sm" variant="outline" onClick={onAddModels}>
@@ -369,6 +374,7 @@ function ConnectDialog({
 }) {
   const t = useTranslations('team.models');
   const tc = useTranslations('team.catalog');
+  const tp = useTranslations('team.catalogPlans');
   const te = useTranslations('teamErrors');
   const { pending, run } = useMutation(reload);
   const [pick, setPick] = useState<string | null>(existing ? existing.name : null);
@@ -390,7 +396,16 @@ function ConnectDialog({
   const [typedDetails, setTypedDetails] = useState<Partial<ModelConfig['data']>>({});
   // Each ticked model's public reference: undefined while it is read, null when there is none.
   const [references, setReferences] = useState<Record<string, Reference | null | undefined>>({});
-  const referenceProvider = catalogEntry(baseUrl)?.id ?? connected ?? '';
+  const referenceProvider = catalogEntry({ name: connected ?? name, baseUrl })?.id ?? connected ?? '';
+  const locale = useLocale();
+  const offering = PROVIDER_CATALOG.find((p) => p.id === pick);
+  const offerings = offering ? PROVIDER_CATALOG.filter((p) => p.vendor === offering.vendor) : [];
+  // Picking an offering fills its name and address; a name or address the admin changed by hand is kept.
+  function choose(next: CatalogProvider) {
+    if (!offering || name === freeProviderName(offering.id, taken)) setName(freeProviderName(next.id, taken));
+    if (!offering || baseUrl === offering.baseUrl) setBaseUrl(next.baseUrl);
+    setPick(next.id);
+  }
   const taken = new Set(providers.map((p) => p.name));
   const custom = pick === 'custom';
 
@@ -500,26 +515,24 @@ function ConnectDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{connected ? t('chooseModels') : pick ? t('connect', { name: custom ? t('custom') : tc(pick) }) : t('addProvider')}</DialogTitle>
+          <DialogTitle>{connected ? t('chooseModels') : pick ? t('connect', { name: custom || !offering ? t('custom') : tc(offering.vendor) }) : t('addProvider')}</DialogTitle>
           <DialogDescription>{connected ? t('chooseModelsHint') : pick ? (custom ? t('customHint') : t('keyHint')) : t('pickHint')}</DialogDescription>
         </DialogHeader>
 
         {!pick && (
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {PROVIDER_CATALOG.map((p) => (
-              <li key={p.id}>
+            {catalogVendors().map(({ vendor, offerings: all }) => (
+              <li key={vendor}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setPick(p.id);
-                    setName(freeProviderName(p.id, taken));
-                    setBaseUrl(p.baseUrl);
-                  }}
-                  className="flex w-full flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm hover:border-ring"
+                  // The interface language suggests where the account is held; metered billing is the default.
+                  onClick={() => choose(all.find((p) => p.billing === 'metered' && p.region === (locale === 'zh-CN' ? 'cn' : 'global')) ?? all[0])}
+                  className="flex h-full w-full flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm hover:border-ring"
                 >
-                  <ProviderMark hints={[p.id, p.baseUrl]} name={p.id} size="md" />
-                  <span className="font-medium">{tc(p.id)}</span>
-                  {taken.has(p.id) && <span className="text-xs text-muted-foreground">{t('connected')}</span>}
+                  <ProviderMark hints={[all[0].id, all[0].baseUrl]} name={all[0].id} size="md" />
+                  <span className="font-medium">{tc(vendor)}</span>
+                  {all.length > 1 && <span className="text-xs text-muted-foreground"><OfferingSummary offerings={all} plan={all.some((p) => p.billing === 'plan') ? tp(vendor) : null} /></span>}
+                  {all.some((p) => taken.has(p.id)) && <span className="text-xs text-muted-foreground">{t('connected')}</span>}
                 </button>
               </li>
             ))}
@@ -562,7 +575,8 @@ function ConnectDialog({
                 </Field>
               </>
             )}
-            <Field id="provider-key" label={t('apiKey')} hint={t('apiKeyHint')} error={refusal?.field === 'key' ? te(refusal.code) : null}>
+            {offering && offerings.length > 1 && <OfferingChoice offering={offering} offerings={offerings} baseUrl={baseUrl} choose={choose} />}
+            <Field id="provider-key" label={t('apiKey')} hint={offering?.billing === 'plan' ? t('planKeyHint', { plan: tp(offering.vendor) }) : t('apiKeyHint')} error={refusal?.field === 'key' ? te(refusal.code) : null}>
               <Input id="provider-key" type="password" autoComplete="off" value={apiKey} onChange={(e) => setApiKey(e.target.value)} required autoFocus />
             </Field>
             {!custom && (
@@ -791,4 +805,78 @@ function ModelFields({ value, change, disabled }: { value: Partial<ModelConfig['
       <Select id={`${fieldId}-vision`} label={tm('vision')} value={value.vision === undefined ? '' : String(value.vision)} disabled={disabled} options={[{ value: '', label: tm('unknown') }, { value: 'true', label: tm('yes') }, { value: 'false', label: tm('no') }]} change={(v) => change({ ...value, vision: v === '' ? undefined : v === 'true' })} />
     </Field>
   </div>;
+}
+
+/** What a maker offers, for its tile: "Mainland · International · Coding Plan". */
+function OfferingSummary({ offerings, plan }: { offerings: CatalogProvider[]; plan: string | null }) {
+  const t = useTranslations('team.models');
+  const regions = (['cn', 'global'] as const).filter((r) => offerings.some((p) => p.region === r)).map((r) => t(`region.${r}`));
+  return <>{[...(regions.length > 1 ? regions : []), ...(plan ? [plan] : [])].join(' · ')}</>;
+}
+
+/**
+ * The account a maker's key belongs to, where it offers several: its region,
+ * and metered billing or its subscription plan. Each is its own address and
+ * its own Models.dev entry, so the choice decides what the models' limits and
+ * prices are read from.
+ */
+function OfferingChoice({ offering, offerings, baseUrl, choose }: { offering: CatalogProvider; offerings: CatalogProvider[]; baseUrl: string; choose: (next: CatalogProvider) => void }) {
+  const t = useTranslations('team.models');
+  const tp = useTranslations('team.catalogPlans');
+  const regions = (['cn', 'global'] as const).filter((r) => offerings.some((p) => p.region === r));
+  const billings = (['metered', 'plan'] as const).filter((b) => offerings.some((p) => p.billing === b));
+  // Switching one axis keeps the other where that offering exists.
+  const pick = (region: CatalogProvider['region'], billing: CatalogProvider['billing']) =>
+    choose(offerings.find((p) => p.region === region && p.billing === billing) ?? offerings.find((p) => p.region === region) ?? offering);
+  const segment = <V extends string>(label: string, values: readonly V[], current: V, words: (v: V) => string, set: (v: V) => void) =>
+    values.length > 1 && (
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <div role="radiogroup" aria-label={label} className="flex w-fit rounded-md border">
+          {values.map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={current === v}
+              onClick={() => set(v)}
+              className={cn(
+                'px-3.5 py-1.5 text-sm first:rounded-l-md last:rounded-r-md',
+                current === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {words(v)}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  return (
+    <fieldset className="flex flex-col gap-3 rounded-md border px-3 py-3">
+      <legend className="px-1 text-sm font-medium">{t('offering')}</legend>
+      <div className="flex flex-wrap gap-x-6 gap-y-3">
+        {segment(t('regionLabel'), regions, offering.region, (r) => t(`region.${r}`), (r) => pick(r, offering.billing))}
+        {segment(t('billingLabel'), billings, offering.billing, (b) => (b === 'plan' ? tp(offering.vendor) : t('metered')), (b) => pick(offering.region, b))}
+      </div>
+      <p className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">{baseUrl}</p>
+      {offering.billing === 'plan' && (
+        <p className="flex gap-2 text-xs text-muted-foreground">
+          <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          {t('planPricing', { plan: tp(offering.vendor) })}
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
+/** Which of its maker's offerings a connected provider is, where the maker has several. */
+function OfferingChips({ entry }: { entry: CatalogProvider }) {
+  const t = useTranslations('team.models');
+  const tp = useTranslations('team.catalogPlans');
+  const siblings = PROVIDER_CATALOG.filter((p) => p.vendor === entry.vendor);
+  const chips = [
+    ...(new Set(siblings.map((p) => p.region)).size > 1 ? [t(`region.${entry.region}`)] : []),
+    ...(entry.billing === 'plan' ? [tp(entry.vendor)] : []),
+  ];
+  return chips.map((chip) => <span key={chip} className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{chip}</span>);
 }

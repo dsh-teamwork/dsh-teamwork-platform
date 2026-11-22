@@ -571,13 +571,17 @@
     "catalog": {
       "deepseek": "DeepSeek",
       "openai": "OpenAI",
-      "alibaba-cn": "通义千问（阿里云百炼）",
-      "moonshotai-cn": "Kimi（月之暗面）",
+      "alibaba": "通义千问（阿里云百炼）",
+      "kimi": "Kimi（月之暗面）",
       "zhipuai": "智谱 GLM",
       "volcengine": "豆包（火山方舟）",
-      "minimax-cn": "MiniMax",
-      "siliconflow-cn": "硅基流动",
+      "minimax": "MiniMax",
+      "siliconflow": "硅基流动",
       "openrouter": "OpenRouter"
+    },
+    "catalogPlans": {
+      "kimi": "Coding Plan",
+      "minimax": "Token Plan"
     },
     "models": {
       "title": "模型",
@@ -622,6 +626,16 @@
       "back": "上一步",
       "connectSubmit": "连接并读取模型",
       "connected": "已接入",
+      "offering": "接入方式",
+      "regionLabel": "区域",
+      "region": {
+        "cn": "国内",
+        "global": "国际"
+      },
+      "billingLabel": "计费",
+      "metered": "按量付费",
+      "planPricing": "{plan} 按订阅计费：模型的参考价格按 0 导入，成员调用不占用预算。",
+      "planKeyHint": "请使用 {plan} 订阅生成的密钥，不要使用按量付费的密钥。",
       "providerAdded": "提供商已接入。",
       "reading": "正在读取模型列表…",
       "chooseModels": "选择要发布的模型",
@@ -1587,6 +1601,7 @@
     "lookup": "查找",
     "candidate": "选择参考模型",
     "narrow": "最多显示 50 个候选，请缩小查询范围。",
+    "unlistedProvider": "“{provider}”不在内置服务商列表中，因此只能按完整模型 ID 在 Models.dev 中查找。如果它其实是列表中的某家服务商，请从“BYOK 模型服务”重新接入并选择对应的接入方式，之后即可按名称查找。",
     "empty": "未找到匹配项，请换个名称或手动填写。",
     "failed": "无法访问公共目录，请重试或手动填写。",
     "fxFailed": "暂时无法获取汇率，未填入价格；系统不会使用猜测的汇率。请重试或手动填写。",

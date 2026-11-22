@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-22 — Kimi and MiniMax accounts by region and billing
+
+- **What:** The BYOK provider list offers Kimi and MiniMax as one tile each with a choice of region (mainland or international) and billing (pay as you go, or Kimi Coding Plan / MiniMax Token Plan), each its own Models.dev entry and address; a connected provider's card shows which. A provider is matched to its entry by name, then by address, so a renamed provider at a listed address reads its models there, and a plan sharing its address with metered billing is told apart by name. A lookup that finds nothing for a provider matching no entry says it searches exact IDs only. `PROVIDER_CATALOG` entries gain `vendor`, `region` and `billing`, and `catalogEntry` takes the provider (`name`, `baseUrl`).
+- **Why:** Teams on Kimi's Coding Plan or international accounts found no model by name, because their address matched no entry and Models.dev was searched by exact ID across every provider.
+- **Breaking:** None.
+- **Upgrade:** Nothing. An existing provider at a listed address reads its entry on the next lookup; one named and addressed elsewhere is added again from the list.
+- **Refs:** `packages/shared/src/provider-catalog.ts`, `apps/web/src/pages/team/models.tsx`.
+
 ## 2026-11-22 — Reasoning efforts for team models
 
 - **What:** Model configuration carries the supported reasoning efforts. BYOK admins can import them from a matching Models.dev entry or edit them before publishing, and hosted catalogues can publish the same field. DSH syncs the choices and sends the selected effort through the team gateway, which refuses an effort the model does not publish (`400`) and, for DeepSeek, turns thinking on. Every DeepSeek call now fills the `reasoning_content` its default thinking mode requires on replayed assistant messages, which it otherwise refuses.

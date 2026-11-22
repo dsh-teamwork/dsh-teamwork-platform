@@ -1,3 +1,4 @@
+import { PROVIDER_CATALOG } from '@dsh-teamwork/shared';
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
@@ -107,6 +108,9 @@ export function ModelMetadataLookup<T extends Values>({ teamId, provider, model,
   const display = (value: unknown) => value === undefined || value === '' ? t('unknown') : Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? t(value ? 'yes' : 'no') : String(value);
   // Undo is offered only while the fields still hold what was filled: it never overwrites a later hand edit.
   const undoable = outcome?.kind === 'filled' && Object.entries(outcome.filled.after).every(([key, value]) => JSON.stringify(current[key]) === JSON.stringify(value));
+  // A provider named after no catalog entry is searched on Models.dev by exact id alone (modelmeta.Search), which an
+  // admin cannot see; say so where a search came back empty.
+  const unlisted = source === 'models_dev' && !PROVIDER_CATALOG.some((p) => p.id === provider);
   const offerPicker = outcome && (outcome.kind === 'none' || outcome.kind === 'many' || outcome.kind === 'noValues');
 
   return <div className="flex flex-col gap-2 text-sm">
@@ -125,6 +129,7 @@ export function ModelMetadataLookup<T extends Values>({ teamId, provider, model,
       </>}
       {(outcome.kind === 'unchanged' || outcome.kind === 'noValues') && <p>{t(outcome.kind, { source: sourceName, reference: outcome.reference })}</p>}
       {(outcome.kind === 'none' || outcome.kind === 'many') && <p>{t(outcome.kind, { source: sourceName, model })}</p>}
+      {outcome.kind === 'none' && unlisted && <p>{t('unlistedProvider', { provider })}</p>}
       {outcome.kind === 'failed' && <p className="text-destructive">{t('failed')}</p>}
       {outcome.kind === 'fxFailed' && <p>{t('fxFailed')}</p>}
       {outcome.kind === 'undone' && <p>{t('undone')}</p>}
@@ -138,6 +143,7 @@ export function ModelMetadataLookup<T extends Values>({ teamId, provider, model,
         </div>
       </Field>
       {candidates?.models.length === 0 && <p>{t('empty')}</p>}
+      {candidates?.models.length === 0 && unlisted && <p>{t('unlistedProvider', { provider })}</p>}
       {!!candidates?.models.length && <Select label={t('candidate')} value="" disabled={disabled} change={(value) => { const m = candidates.models.find((c) => label(c) === value); if (m) fill(valuesOf(m, candidates), label(m), candidates); }} options={candidates.models.map((m) => ({ value: label(m), label: m.name && m.name !== m.id ? `${label(m)} · ${m.name}` : label(m) }))} />}
       {candidates?.models.length === 50 && <p className="text-muted-foreground">{t('narrow')}</p>}
     </div>}
