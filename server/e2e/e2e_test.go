@@ -116,8 +116,14 @@ func stubProvider(t *testing.T) string {
 			return
 		}
 		if bytes.Contains(body, []byte(`"stream":true`)) {
+			if !bytes.Contains(body, []byte(`"reasoning_effort":"high"`)) {
+				http.Error(w, "expected selected reasoning effort", http.StatusBadRequest)
+				return
+			}
 			w.Header().Set("Content-Type", "text/event-stream")
-			io.WriteString(w, "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\ndata: [DONE]\n\n")
+			io.WriteString(w, "data: "+`{"id":"e2e","object":"chat.completion.chunk","created":1,"model":"stub-model","choices":[{"index":0,"delta":{"role":"assistant","content":"hi"},"finish_reason":null}]}`+"\n\n")
+			io.WriteString(w, "data: "+`{"id":"e2e","object":"chat.completion.chunk","created":1,"model":"stub-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}`+"\n\n")
+			io.WriteString(w, "data: [DONE]\n\n")
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
