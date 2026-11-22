@@ -718,7 +718,7 @@ the hosted edition, Cloud DSH.
 
 ### Native Web on a personal computer
 
-See [ADR 0064](../adr/0064-personal-dsh-native-web-relay.md).
+See [ADR 0064](../adr/0064-personal-dsh-native-web-relay.md). Sessions, the Teamwork bar shell and ending access from the computer are planned in [Native Web sessions and shell](native-web-sessions.md) (ADR 0065).
 
 Set `DESKTOP_WEB_DOMAIN` to a domain on another site than `APP_URL`'s, and
 neither inside nor around another domain an edition serves: it may share a

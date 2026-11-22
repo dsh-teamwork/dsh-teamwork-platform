@@ -55,6 +55,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0061 — The app lists the member's computers](0061-the-app-lists-the-members-computers.md) — with its own pairings only, and each plugin's version.
 - [0062 — Only an edition delivers notifications](0062-only-an-edition-delivers-notifications.md) — a self-hosted server offers and sends none.
 - [0064](0064-personal-dsh-native-web-relay.md) — owners may open a personal DSH’s native Web through an outbound relay.
+- [0065](0065-native-web-sessions-and-shell.md) — native Web runs in a same-origin shell, with idle sessions the computer can end.
 
 The template:
 
