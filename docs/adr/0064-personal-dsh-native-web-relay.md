@@ -14,7 +14,7 @@ single-use ticket through the platform session or mobile Bearer. It becomes a
 host-only cookie on an origin that is independent of the platform's
 registrable domain and the cloud Web domain. The gateway checks Fetch Metadata
 on every proxied request, and requires the exact Origin for browser writes
-and upgrades. The ticket response starts a new same-origin navigation.'
+and upgrades. The ticket response starts a new same-origin navigation.
 
 The existing authenticated host connection requests one outbound data socket
 for each upstream HTTP connection. The plugin signs in to the native Web

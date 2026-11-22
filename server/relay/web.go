@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
-	"errors"
 	"io"
 	"log/slog"
 	"net"
@@ -21,7 +20,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	"golang.org/x/net/publicsuffix"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
 const desktopWebCookie = "__Host-dsh-desktop"
@@ -81,20 +80,6 @@ func (r *relay) mountDesktopWeb() error {
 	domain := strings.ToLower(strings.Trim(r.host.Env("DESKTOP_WEB_DOMAIN"), "."))
 	if domain == "" {
 		return nil
-	}
-	site, err := url.Parse(r.host.AppURL)
-	if err != nil {
-		return err
-	}
-	appSite, appErr := publicsuffix.EffectiveTLDPlusOne(site.Hostname())
-	webSite, webErr := publicsuffix.EffectiveTLDPlusOne(domain)
-	if webErr != nil || (appErr == nil && webSite == appSite) {
-		return errors.New("DESKTOP_WEB_DOMAIN must use a registrable domain separate from APP_URL")
-	}
-	if cloudDomain := strings.ToLower(strings.Trim(r.host.Env("CLOUD_WEB_DOMAIN"), ".")); cloudDomain != "" {
-		if cloudSite, err := publicsuffix.EffectiveTLDPlusOne(cloudDomain); err == nil && cloudSite == webSite {
-			return errors.New("DESKTOP_WEB_DOMAIN must use a registrable domain separate from CLOUD_WEB_DOMAIN")
-		}
 	}
 	var key [32]byte
 	rand.Read(key[:])
@@ -210,7 +195,7 @@ func (r *relay) desktopWebTicket(w http.ResponseWriter, req *http.Request) {
 	if !host.takeTicket(now) {
 		d.mu.Unlock()
 		w.Header().Set("Retry-After", "60")
-		errorJSON(w, http.StatusTooManyRequests, "rate_limited")
+		errorJSON(w, http.StatusTooManyRequests, wire.TooManyAttempts)
 		return
 	}
 	token := host.issue(now)

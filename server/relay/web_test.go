@@ -125,6 +125,19 @@ func TestDesktopWebRelay(t *testing.T) {
 		status(call(http.MethodGet, entry.RequestURI(), entry.Host, nil, "", ""), 404)
 		status(call(http.MethodPost, "/api/session/list", entry.Host, cookies[0], "", "https://foreign.test"), 403)
 		status(call(http.MethodGet, "/", entry.Host, cookies[0], "", "https://sibling."+domain), 403)
+		missingSite, err := http.NewRequestWithContext(ctx, http.MethodGet, in.URL+"/", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		missingSite.Host = entry.Host
+		missingSite.AddCookie(cookies[0])
+		missingSiteResponse, err := client.Do(missingSite)
+		if err != nil {
+			t.Fatal(err)
+		}
+		missingSiteResponse.Body.Close()
+		status(missingSiteResponse, 403)
+
 		altered := *cookies[0]
 		altered.Value = "invalid"
 		status(call(http.MethodGet, "/", entry.Host, &altered, "", ""), 404)

@@ -19,7 +19,7 @@ func TestAnEditionServesTheSubdomainsOfItsDomain(t *testing.T) {
 			return nil, err
 		}
 		// APP_URL's own host and its parents are the site's, and a domain is taken once.
-		refused = append(refused, h.ServeSubdomains("127.0.0.1", serve), h.ServeSubdomains("0.1", serve), h.ServeSubdomains("C.example.test.", serve), h.ServeSubdomains("", serve))
+		refused = append(refused, h.ServeSubdomains("127.0.0.1", serve), h.ServeSubdomains("0.1", serve), h.ServeSubdomains("C.example.test.", serve), h.ServeSubdomains("", serve), h.ServeSubdomains("web.example.test", serve), h.ServeSubdomains("nested.c.example.test", serve))
 		return nil, nil
 	}}
 	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {

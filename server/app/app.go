@@ -22,6 +22,8 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/net/publicsuffix"
+
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
@@ -273,14 +275,25 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			if err != nil {
 				return err
 			}
-			if site := strings.ToLower(app.Hostname()); domain == "" || h == nil || domain == site || strings.HasSuffix(site, "."+domain) {
+			appHost := strings.ToLower(strings.TrimSuffix(app.Hostname(), "."))
+			if domain == appHost || strings.HasSuffix(appHost, "."+domain) {
+				return fmt.Errorf("subdomains of %q overlap the platform host", domain)
+			}
+			site, err := publicsuffix.EffectiveTLDPlusOne(domain)
+			if err != nil || net.ParseIP(domain) != nil || h == nil {
 				return fmt.Errorf("invalid subdomains of %q", domain)
+			}
+			if appSite, err := publicsuffix.EffectiveTLDPlusOne(appHost); err == nil && appSite == site {
+				return fmt.Errorf("subdomains of %q share the platform's registrable domain", domain)
+			}
+			for registered := range srv.Subdomains {
+				registeredSite, _ := publicsuffix.EffectiveTLDPlusOne(registered)
+				if site == registeredSite {
+					return fmt.Errorf("subdomains of %q share a registrable domain with %q", domain, registered)
+				}
 			}
 			if srv.Subdomains == nil {
 				srv.Subdomains = map[string]http.Handler{}
-			}
-			if srv.Subdomains[domain] != nil {
-				return fmt.Errorf("duplicate subdomains of %q", domain)
 			}
 			srv.Subdomains[domain] = h
 			return nil
