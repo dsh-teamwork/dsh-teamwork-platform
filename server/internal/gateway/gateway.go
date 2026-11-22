@@ -255,7 +255,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 			payload[k] = v
 		}
 	}
-	applyReasoningEffort(base, payload)
+	adaptToUpstream(base, payload)
 	out, _ := json.Marshal(payload)
 	upstreamCtx, cancelUpstream := context.WithDeadline(ctx, *tracked.DeadlineAt)
 	defer cancelUpstream()
@@ -313,31 +313,32 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 	}
 }
 
-// The desktop speaks the gateway's OpenAI-compatible effort field, already
-// checked against the model's own efforts. Translate it for upstreams with a
-// different envelope after the request has been bounded.
-func applyReasoningEffort(base string, payload map[string]json.RawMessage) {
-	raw, ok := payload["reasoning_effort"]
-	if !ok {
-		return
-	}
-	var effort string
-	if json.Unmarshal(raw, &effort) != nil {
-		return
-	}
+// adaptToUpstream fits the OpenAI-compatible body to an upstream with its own
+// dialect, after the request has been bounded. The effort, already checked
+// against the model's own efforts, is translated where the upstream names it
+// differently.
+func adaptToUpstream(base string, payload map[string]json.RawMessage) {
 	endpoint, err := url.Parse(base)
 	if err != nil {
 		return
 	}
+	var effort string
+	selected := json.Unmarshal(payload["reasoning_effort"], &effort) == nil
 	switch endpoint.Hostname() {
 	case "openrouter.ai":
-		payload["reasoning"], _ = json.Marshal(map[string]string{"effort": effort})
-		delete(payload, "reasoning_effort")
+		if selected {
+			payload["reasoning"], _ = json.Marshal(map[string]string{"effort": effort})
+			delete(payload, "reasoning_effort")
+		}
 	case "api.deepseek.com":
-		payload["thinking"] = json.RawMessage(`{"type":"enabled"}`)
-		// In thinking mode DeepSeek refuses a replayed assistant message
-		// without reasoning_content. The plugin cannot tell DeepSeek is behind
-		// the gateway, so a turn from before thinking was on arrives without it.
+		if selected {
+			payload["thinking"] = json.RawMessage(`{"type":"enabled"}`)
+		}
+		// DeepSeek thinks by default, and in thinking mode refuses a replayed
+		// assistant message without reasoning_content. Behind the gateway the
+		// plugin cannot tell DeepSeek is the upstream, so a turn it holds no
+		// reasoning for (another model's, or an interrupted one) arrives
+		// without it. An empty one is accepted.
 		var messages []map[string]json.RawMessage
 		if json.Unmarshal(payload["messages"], &messages) != nil {
 			return

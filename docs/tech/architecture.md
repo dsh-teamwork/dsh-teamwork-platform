@@ -249,8 +249,9 @@ Without a `redirect_uri`, the code is shown for pasting.
 3. accepts a `reasoning_effort` only when it is one of the model's own
    `reasoningEfforts`, and `400` otherwise; without one the provider's default
    applies. For OpenRouter it becomes `reasoning.effort`; for DeepSeek it
-   also turns thinking on and gives every replayed assistant message the
-   `reasoning_content` thinking mode requires;
+   also turns thinking on. DeepSeek thinks by default, so every call to it
+   gives each replayed assistant message the `reasoning_content` thinking
+   mode requires, empty where the plugin holds none;
 4. takes the team's provider of that name from `team_providers` — the base
    URL its admin entered, with no credentials, query or fragment, and the key
    decrypted from `key_cipher` (AES-256-GCM under `PROVIDER_KEYS_SECRET`,

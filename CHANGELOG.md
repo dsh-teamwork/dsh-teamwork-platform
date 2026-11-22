@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-22 — Reasoning efforts for team models
 
-- **What:** Model configuration carries the supported reasoning efforts. BYOK admins can import them from a matching Models.dev entry or edit them before publishing, and hosted catalogues can publish the same field. DSH syncs the choices and sends the selected effort through the team gateway, which refuses an effort the model does not publish (`400`) and, for DeepSeek, turns thinking on and fills the `reasoning_content` its thinking mode requires on replayed assistant messages.
+- **What:** Model configuration carries the supported reasoning efforts. BYOK admins can import them from a matching Models.dev entry or edit them before publishing, and hosted catalogues can publish the same field. DSH syncs the choices and sends the selected effort through the team gateway, which refuses an effort the model does not publish (`400`) and, for DeepSeek, turns thinking on. Every DeepSeek call now fills the `reasoning_content` its default thinking mode requires on replayed assistant messages, which it otherwise refuses.
 - **Why:** Let members adjust reasoning on the team models their provider supports.
 - **Breaking:** None.
 - **Upgrade:** Update the platform and DSH Teamwork plugin. Fill and save the effort choices for existing models where applicable.
