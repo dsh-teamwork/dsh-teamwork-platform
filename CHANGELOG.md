@@ -29,6 +29,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/dsh-session.tsx`.
 
+## 2026-11-22 — Native Web access ends when idle, and only its client may use it
+
+- **What:** Entering native DSH Web starts a session the gateway keeps per computer (at most sixteen). It ends after thirty minutes with no traffic, eight hours after entry, or at the first request from another User-Agent than the one that entered; its open requests and WebSockets close with it. The cookie names the session.
+- **Why:** The access cookie lived eight hours whether used or not, and opened the computer from any client that held it (ADR 0065).
+- **Breaking:** Native Web opened before this deploy must be entered again from My DSH.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0065, `docs/tech/native-web-sessions.md`, `server/relay/web.go`.
+
 ## 2026-11-22 — Native Web's live connection opens in Chromium
 
 - **What:** The desktop native Web gateway admits a request without Fetch Metadata when its Origin is the computer's own. Chromium sends none on a WebSocket handshake, so DSH's `/api/remote.mux` was refused with 403 and the page sat reconnecting. The rule is one function, `edition.FromOwnPages`, for every gateway an edition serves through `ServeSubdomains`.

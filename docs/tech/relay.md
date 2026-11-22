@@ -734,7 +734,14 @@ host's loopback Web server, applies to personal computers without a local PIN,
 and turns off again when the owner signs out or changes server. The platforms list an entry only while the
 opted-in computer is connected. The owner can obtain a minute-long entry
 ticket with their web session or mobile Bearer. Redemption is single-use, each connected host keeps at most eight unspent
-tickets and can issue thirty per minute. The browser receives a sealed host-only cookie. The gateway
+tickets and can issue thirty per minute. Spending one starts a session the
+gateway keeps per computer, at most sixteen, the one idle longest ending for a
+seventeenth. The browser receives a sealed host-only cookie naming it. A
+session ends, with every request and WebSocket it holds, when:
+- a request comes from another User-Agent than the one that entered;
+- no byte has moved for it in thirty minutes (an open WebSocket's bytes count);
+- eight hours have passed since entry.
+A sweep each minute ends lapsed sessions (ADR 0065). The gateway
 admits a proxied request only from the computer's own pages or straight from
 its owner (`edition.FromOwnPages`): Fetch Metadata `same-origin` or `none`,
 or, where a browser sends none, as Chromium does on a WebSocket handshake,
