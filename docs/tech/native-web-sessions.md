@@ -35,6 +35,8 @@ the order of work, what gates it, and how done is verified. When it ships,
   - id (16 random bytes);
   - User-Agent hash;
   - locale;
+  - where the ticket came from: `app` for a Bearer (the phone app), `web` for
+    a console session;
   - entered at;
   - last activity;
   - bytes up and down;
@@ -72,7 +74,7 @@ the order of work, what gates it, and how done is verified. When it ships,
   | --- | --- |
   | `GET /__dsh/enter?ticket=…` | Spends the ticket and creates the session. Sets the cookie and answers a same-origin refresh to `/__dsh/` (replaces `/__dsh_desktop_enter`). |
   | `GET /__dsh/` | The shell: the bar, and a frame of `/` or of `?path=`. The path must start with one `/`. |
-  | `GET /__dsh/status` | JSON: computer name, connected, open tunnels, bytes up and down, the last tunnel's dial time, session end. |
+  | `GET /__dsh/status` | JSON: computer name, connected, open tunnels, bytes up and down since the last poll, the last tunnel's dial time, session end. |
   | `POST /__dsh/end` | Ends this session (exact Origin required), then shows the closed page. |
 
 - **Navigation.** A request with `Sec-Fetch-Dest: document` outside `/__dsh/`
@@ -86,9 +88,11 @@ the order of work, what gates it, and how done is verified. When it ships,
   sandbox: it is the same origin and the owner's own DSH.
 - **The bar.** One line, about 32 px:
   - the computer's name and a status dot (connected, reconnecting, gone);
-  - traffic up and down per second;
+  - traffic up and down per second (no session totals);
   - the last dial time;
-  - "Back to Teamwork": a link to My DSH for that computer on `APP_URL`;
+  - "Back to Teamwork": `dshteamwork://` for a session the phone app opened,
+    which returns to the app (the in-app browser cannot be closed from the
+    page), else My DSH for that computer on `APP_URL`;
   - "End session".
 
   On a narrow screen the traffic folds into the dot's tooltip. The bar polls
@@ -157,8 +161,6 @@ from `main`, as before.
 
 ## Open questions
 
-- **"Back to Teamwork" in the phone app.** The in-app browser cannot be closed
-  from the page. Should the link go to My DSH on the web, or to the app
-  (`dshteamwork://`)?
-- **The traffic figures.** Is the traffic per second enough for the bar, or
-  should it also show the session's total?
+None. The owner settled the two that were open: "Back to Teamwork" returns
+to the phone app when the app opened the session, and the bar shows traffic
+per second only.
