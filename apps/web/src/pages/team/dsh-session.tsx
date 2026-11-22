@@ -77,7 +77,7 @@ function useSessionClient(): SessionClient {
   return useContext(SessionClientContext) ?? relayFor(me);
 }
 
-const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'image_too_large', 'image_model_unsupported', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused', 'not_text']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'image_too_large', 'image_model_unsupported', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused', 'not_text', 'document_too_large', 'document_empty', 'preview_unavailable', 'preview_unsupported']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {

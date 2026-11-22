@@ -109,7 +109,7 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
   'teamwork/file_type': 'file_type', 'teamwork/file_name': 'file_name', 'teamwork/file_too_large': 'file_too_large', 'teamwork/invalid_upload': 'invalid_upload',
   'teamwork/upload_expired': 'upload_expired', 'teamwork/upload_failed': 'upload_failed', 'session/attachment-invalid': 'upload_expired',
   'teamwork/locked': 'locked', 'teamwork/preset_changed': 'preset_changed', 'teamwork/model_unavailable': 'model_unavailable', 'teamwork/invalid_request': 'invalid_request',
-  'teamwork/document_too_large': 'document_too_large', 'teamwork/preview_unavailable': 'preview_unavailable',
+  'teamwork/document_too_large': 'document_too_large', 'teamwork/document_empty': 'document_empty', 'teamwork/preview_unavailable': 'preview_unavailable',
   'teamwork/permission_refused': 'permission_refused', 'teamwork/not_text': 'not_text', 'session/title-invalid': 'invalid_request', 'workspace/session-active': 'busy', 'workspace/not-found': 'not_found',
   // A cloud computer's server: an answer to a question no page of that computer still holds.
   'teamwork/stale': 'stale',
@@ -402,9 +402,13 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
       let offset = 0;
       do {
         signal?.throwIfAborted();
-        const response = schema.safeParse(await call(computerId, 'teamwork/readDocument', {
+        const answer = await call(computerId, 'teamwork/readDocument', {
           request: { sessionId, path, offset, ...(version ? { version } : {}) },
-        }));
+        }).catch((error: unknown) => {
+          // A plugin from before previews refuses the method itself.
+          throw error instanceof RelayError && error.code === 'configuration_unsupported' ? new RelayError('preview_unsupported') : error;
+        });
+        const response = schema.safeParse(answer);
         signal?.throwIfAborted();
         if (!response.success) throw new RelayError('unavailable');
         const chunk = response.data;

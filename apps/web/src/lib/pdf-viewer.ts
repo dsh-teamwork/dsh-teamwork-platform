@@ -10,7 +10,7 @@ export interface PdfLabels {
   loading: string;
 }
 
-/** The same read-only canvas viewer runs in the browser and the App's isolated WebView. */
+/** A read-only canvas viewer, mounted only inside the sandboxed preview document (src/lib/document-viewer.ts). */
 export function mountPdfViewer(host: HTMLElement, data: Uint8Array, labels: PdfLabels): () => void {
   host.replaceChildren();
   host.style.cssText = 'display:flex;flex-direction:column;height:100%;min-height:0;color:#202124;background:#e8eaed;font:14px system-ui';

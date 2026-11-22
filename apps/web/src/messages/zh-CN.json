@@ -1649,6 +1649,8 @@
     "image_too_large": "压缩后的图片仍超过这台电脑的上传限制。",
     "document_too_large": "此预览文件超过 16 MiB。",
     "preview_unavailable": "预览 Office 文件需要在这台电脑上启用 DSH Office Kit。",
+    "preview_unsupported": "请更新这台电脑上的 Teamwork 插件以预览文档。",
+    "document_empty": "这个文件是空的。",
     "file_too_large": "每条消息最多 5 个文件：单个不超过 20 MB，合计不超过 50 MB。",
     "invalid_upload": "文件没有完整传到电脑，请重新发送。",
     "upload_expired": "电脑上已经没有这些文件了，重新发送会再上传一次。",

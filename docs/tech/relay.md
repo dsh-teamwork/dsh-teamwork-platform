@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-21
+> **Status:** Current · **Updated:** 2026-11-22
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -387,11 +387,21 @@ offset, version? }`) from the same file panel or a deliverable card. After
 session and workspace authorization, the plugin returns one 128 KiB range as
 base64 with the document size, offset and version. The first read starts at
 zero. Later reads must carry the same version, and fail if the source changed.
-Source documents and converted previews are each limited to 16 MiB. Word and
-PowerPoint use the computer's DSH Office Kit to produce PDF bytes. PDF and
-Excel read the original bytes. Web and App share lazy document renderers for
-PDF navigation and read-only workbook tabs. Closing the viewer stops requesting
+Source documents and converted previews are each limited to 16 MiB; an empty
+one is `document_empty`. Word and PowerPoint use the computer's DSH Office Kit
+to produce PDF bytes, and the plugin keeps its last render (by real path and
+source version, two idle minutes) so the ranges after the first do not convert
+again; without the kit the answer is `preview_unavailable`. PDF and Excel read
+the original bytes. A plugin from before 0.19.6 refuses the method, which the
+client reports as `preview_unsupported`. Closing the viewer stops requesting
 further ranges. Text files keep the line-numbered reader above.
+
+The bytes are drawn by one self-contained page, `apps/web/scripts/document-viewer.mjs`:
+pdf.js and SheetJS with their workers, under a CSP that allows no request and
+no eval. An agent's file is untrusted, so the console shows that page in an
+iframe sandboxed without same-origin and posts the bytes to it, and the App
+loads the same page, with the bytes embedded, into a WebView over a local
+file; neither runs a document where a session cookie or a relay key lives.
 
 ## File attachments
 

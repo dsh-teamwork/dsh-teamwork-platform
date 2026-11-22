@@ -236,7 +236,9 @@ export type RelayErrorCode =
   | 'file_name'
   | 'file_too_large'
   | 'document_too_large'
+  | 'document_empty'
   | 'preview_unavailable'
+  | 'preview_unsupported'
   | 'invalid_upload'
   | 'upload_expired'
   | 'upload_failed'
@@ -347,6 +349,11 @@ export interface RelayClient {
   searchFiles(computerId: string, sessionId: string, query: string): Promise<{ matches: string[]; truncated: boolean }>;
   /** A text file under a session's working directory: its first 256 KiB; a binary one is refused as `not_text`. */
   readFile(computerId: string, sessionId: string, path: string): Promise<FileText>;
+  /**
+   * A PDF or workbook under a session's working directory, or a Word or PowerPoint file as the PDF the computer's
+   * Office Kit renders: its bytes, read in versioned 128 KiB ranges, at most 16 MiB. A plugin from before previews is
+   * `preview_unsupported`; `signal` stops asking for further ranges.
+   */
   readDocument(computerId: string, sessionId: string, path: string, signal?: AbortSignal): Promise<Uint8Array>;
   /** Switches an idle session's permission preset (one of `configuration`'s `permissions`), and returns the one now in force. */
   selectPermission(computerId: string, sessionId: string, preset: string): Promise<string>;

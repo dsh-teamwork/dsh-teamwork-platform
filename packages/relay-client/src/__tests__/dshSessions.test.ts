@@ -177,6 +177,12 @@ describe('a computer\'s sessions over any link', () => {
     call.mockImplementationOnce(async () => ({ offset: 0, size: full.length, version: 'stable', data: base64(full.subarray(0, 128 * 1024)) }));
     call.mockImplementationOnce(async () => ({ offset: 128 * 1024, size: full.length, version: 'changed', data: base64(full.subarray(128 * 1024)) }));
     await expect(sessions.readDocument('cloud', 's1', 'report.pdf')).rejects.toMatchObject({ code: 'unavailable' });
+
+    // A plugin from before previews refuses the method: the reader is told to update it.
+    call.mockImplementationOnce(async () => bridgeValue(403, { error: 'method_not_allowed' }));
+    await expect(sessions.readDocument('cloud', 's1', 'report.pdf')).rejects.toMatchObject({ code: 'preview_unsupported' });
+    call.mockImplementationOnce(async () => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/document_empty' } } }));
+    await expect(sessions.readDocument('cloud', 's1', 'empty.pdf')).rejects.toMatchObject({ code: 'document_empty' });
   });
 
   it('reads a bridge answer as its value or the refusal it means', () => {

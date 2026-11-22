@@ -1,34 +1,27 @@
-import { useEffect, useRef } from 'react';
+import html from 'virtual:document-viewer';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
+import type { DocumentPayload } from '@/lib/document-viewer';
+
+/**
+ * A session's PDF or workbook, drawn by the preview document (scripts/document-viewer.mjs) in an iframe sandboxed
+ * without same-origin: what an agent wrote runs with no access to the console's session, storage or network.
+ */
 export default function SessionDocumentPreview({ data, workbook }: { data: Uint8Array; workbook: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
   const t = useTranslations('team.dsh.browse');
+  const frame = useRef<HTMLIFrameElement>(null);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    const host = ref.current;
-    if (!host) return;
-    let mounted = true;
-    let dispose: (() => void) | undefined;
-    host.textContent = t(workbook ? 'workbook.loading' : 'pdf.loading');
-    const open = async () => {
-      if (workbook) {
-        const { mountWorkbookViewer } = await import('@/lib/workbook-viewer');
-        if (mounted) dispose = mountWorkbookViewer(host, data.slice(), {
-          loading: t('workbook.loading'), failed: t('workbook.failed'),
-          truncated: t('workbook.truncated'), empty: t('workbook.empty'),
-        });
-      } else {
-        const { mountPdfViewer } = await import('@/lib/pdf-viewer');
-        if (mounted) dispose = mountPdfViewer(host, data.slice(), {
-          previous: t('pdf.previous'), next: t('pdf.next'), zoomIn: t('pdf.zoomIn'), zoomOut: t('pdf.zoomOut'),
-          loading: t('pdf.loading'), failed: t('pdf.failed'),
-        });
-      }
-    };
-    void open().catch(() => {
-      if (mounted) host.textContent = t(workbook ? 'workbook.failed' : 'pdf.failed');
-    });
-    return () => { mounted = false; dispose?.(); };
-  }, [data, workbook, t]);
-  return <div ref={ref} className="min-h-0 flex-1" />;
+    if (!loaded) return;
+    const payload: DocumentPayload = workbook
+      ? { workbook, data: data.slice(), labels: { loading: t('workbook.loading'), failed: t('workbook.failed'), truncated: t('workbook.truncated'), empty: t('workbook.empty') } }
+      : { workbook, data: data.slice(), labels: { previous: t('pdf.previous'), next: t('pdf.next'), zoomIn: t('pdf.zoomIn'), zoomOut: t('pdf.zoomOut'), loading: t('pdf.loading'), failed: t('pdf.failed') } };
+    // The frame has no origin to name; only this frame is addressed, and the bytes are moved, not copied.
+    frame.current?.contentWindow?.postMessage(payload, '*', [(payload.data as Uint8Array).buffer]);
+  }, [loaded, data, workbook, t]);
+  return (
+    <iframe ref={frame} title={t(workbook ? 'workbook.title' : 'pdf.title')} srcDoc={html} sandbox="allow-scripts"
+      onLoad={() => setLoaded(true)} className="min-h-0 w-full flex-1 border-0" />
+  );
 }

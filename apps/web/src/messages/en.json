@@ -1649,6 +1649,8 @@
     "image_too_large": "The prepared images exceed this computer’s upload limits.",
     "document_too_large": "This preview is larger than 16 MiB.",
     "preview_unavailable": "Office preview requires DSH Office Kit on this computer.",
+    "preview_unsupported": "Update the Teamwork plugin on this computer to preview documents.",
+    "document_empty": "This file is empty.",
     "file_too_large": "Up to 5 files per message: 20 MB each, 50 MB in total.",
     "invalid_upload": "The files didn’t reach your computer in full. Send the message again.",
     "upload_expired": "Your computer no longer has these files. Send again to upload them again.",
