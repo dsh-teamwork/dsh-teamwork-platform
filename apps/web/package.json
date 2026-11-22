@@ -8,6 +8,7 @@
     "./globals.css": "./src/globals.css",
     "./scripts/prerender": "./scripts/prerender.mjs",
     "./scripts/vite-pages": "./scripts/vite-pages.mjs",
+    "./scripts/document-viewer": "./scripts/document-viewer.mjs",
     "./package.json": "./package.json"
   },
   "scripts": {
