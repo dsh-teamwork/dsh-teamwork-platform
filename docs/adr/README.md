@@ -82,3 +82,5 @@ reader needs.
 - [0029 — Team assistant and inherited models](0029-team-assistant-and-inherited-models.md) — transactional provisioning and an explicit local-model choice.
 
 - [0030 — Reviewed resources and history](0030-reviewed-resources-and-publication-history.md) — approval transactions, private plugin artifacts and immutable recovery.
+
+- [0063 — Owners may open a personal DSH's native Web](0063-personal-dsh-native-web-relay.md).

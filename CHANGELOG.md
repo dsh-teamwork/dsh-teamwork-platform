@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-21 — Owners can open native Web on their personal DSH
+
+- **What:** An online personal DSH may opt in to a native Web entry. The platform issues the owner a one-time ticket and proxies HTTP and WebSockets through the desktop plugin.
+- **Why:** Owners need the original interface for settings and plugins as well as sessions.
+- **Breaking:** None.
+- **Upgrade:** Configure `DESKTOP_WEB_DOMAIN` and its wildcard DNS and TLS on the member-facing gateway, then opt in with `webRelay: true` in the desktop profile.
+- **Refs:** ADR 0063 and `docs/tech/relay.md`.
+
 ## 2026-11-21 — My DSH's computers move into the sidebar, and sessions group as in DSH
 
 - **What:** My DSH's computers fold out under its entry in the console's sidebar (status dot and name); the column beside it belongs to the open computer: its name, devices, a new session, a search and its sessions, grouped by DSH workspace as DSH's own sidebar groups them. An entry's hint mark sits right after its label. `SessionSummary.marks` gains `workspace`, which the plugin's `session/list` now reports, and `TeamPage` gains `subnav` for an edition's page reached on several computers.
