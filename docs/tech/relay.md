@@ -203,6 +203,8 @@ team membership then, and closes with 4401 for anyone else.
 | relay → plugin | `detach` | `pairingId` | Phone unavailable; close its transport and native streams |
 | relay → either | `revoked` | `pairingId` | Drop the pairing |
 | plugin → relay | `waiting` | none | Generic attention signal; no conversation identifier or question type |
+| relay → plugin | `webDial` | `id` | Open one native Web data socket: `/relay/web/tunnel` with `X-DSH-Web-Dial: id` (ADR 0064) |
+| plugin → relay | `webRevoke` | `id` | End every native Web session and unspent ticket of this computer; replied `value: null`, the control connection kept (ADR 0065) |
 
 Relay admission permits pending and confirmed, same-account, same-handset, unrevoked pairings
 so the initial handshake can run. Local desktop trust controls execution.
@@ -718,7 +720,9 @@ the hosted edition, Cloud DSH.
 
 ### Native Web on a personal computer
 
-See [ADR 0064](../adr/0064-personal-dsh-native-web-relay.md). Sessions, the Teamwork bar shell and ending access from the computer are planned in [Native Web sessions and shell](native-web-sessions.md) (ADR 0065).
+See [ADR 0064](../adr/0064-personal-dsh-native-web-relay.md) for the tunnel and
+[ADR 0065](../adr/0065-native-web-sessions-and-shell.md) for its sessions, the
+Teamwork bar and ending access from the computer.
 
 Set `DESKTOP_WEB_DOMAIN` to a domain on another site than `APP_URL`'s, and
 neither inside nor around another domain an edition serves: it may share a
@@ -765,8 +769,14 @@ admits a proxied request only from the computer's own pages or straight from
 its owner (`edition.FromOwnPages`): Fetch Metadata `same-origin` or `none`,
 or, where a browser sends none, as Chromium does on a WebSocket handshake,
 the exact Origin.
-Turning the feature off, signing out or reconnecting closes forwarded streams
-and requires a fresh ticket.
+The computer shows when its native Web is in use: the plugin counts the
+tunnels it serves and when one last moved, and its panel and
+`dsh-teamwork status` say "In use". "Disconnect all" in the panel, or
+`dsh-teamwork web disconnect`, closes the plugin's tunnels and sends
+`webRevoke`: the gateway draws a new generation for the computer, so no cookie
+opens any more, ends every session and drops unspent tickets, and the control
+connection and paired phones stay. Turning the feature off, signing out or
+reconnecting closes forwarded streams and requires a fresh ticket too.
 
 The gateway asks for one outbound data socket per upstream connection.
 The plugin authenticates to its own DSH with the page launch URL and adds
@@ -787,4 +797,9 @@ new tab without an opener.
 relay client and connector in front of a stand-in for DSH's Web server: what
 reaches DSH (its Host and sign-in, none of the browser's credentials, no
 launch token), an upload DSH reads slowly, a body DSH ends by closing, DSH's
-WebSocket, and a reconnect ending the browser's access.
+WebSocket, entry through the shell and its frame headers, and a reconnect and
+`webRevoke` each ending the browser's access. The relay's own tests
+(`server/relay/web_session_test.go`, `web_shell_test.go`) hold the idle and
+absolute limits, the User-Agent binding, the seventeenth session's eviction,
+status polling not counting as activity, the shell's redirect, headers and
+`POST /__dsh/end`.

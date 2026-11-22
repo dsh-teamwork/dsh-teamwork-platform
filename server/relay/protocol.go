@@ -160,7 +160,8 @@ func parsePhoneHello(data []byte) (phoneHello, bool) {
 
 // pluginRequest is what a plugin asks after its welcome; id pairs it with
 // the reply. offer: a fresh pairing code. pairings: this host's phones.
-// decide: confirm or refuse a pending phone. revoke: cut one off.
+// decide: confirm or refuse a pending phone. revoke: cut one off. webRevoke:
+// end every native Web session of this computer (ADR 0065).
 type pluginRequest struct {
 	t, id, pairingID string
 	accept           bool
@@ -172,7 +173,7 @@ func parsePluginRequest(f *frame) (pluginRequest, bool) {
 	}
 	r := pluginRequest{t: f.T, id: *f.ID}
 	switch f.T {
-	case "offer", "pairings":
+	case "offer", "pairings", "webRevoke":
 		return r, true
 	case "decide":
 		if !str(f.PairingID, 1, 1<<20) || f.Accept == nil {
