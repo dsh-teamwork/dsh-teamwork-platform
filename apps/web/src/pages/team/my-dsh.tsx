@@ -27,7 +27,7 @@ import { HOST_OS_NAMES, normalizePairingCode, PAIRING_CODE_LENGTH, RelayError, t
 import { COMPUTERS_REFRESH_MS, twinOf } from '@/components/team/console-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { browserCanJoin, myComputers, relayFor, removeComputer, removeDevice, type MyComputer } from '@/lib/relay';
+import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { Conversation, DshColumns, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
@@ -273,6 +273,17 @@ function RemoveComputer({ host, removed }: { host: MyComputer; removed: () => vo
 function HostHeader({ host, twin }: { host: MyComputer; twin: string | null }) {
   const t = useTranslations('team.myDsh');
   const format = useFormatter();
+  const [opening, setOpening] = useState(false);
+  async function openWeb() {
+    setOpening(true);
+    try {
+      window.location.assign(await desktopWebAddress(host.id));
+    } catch {
+      toast.error(t('openWebFailed'));
+    } finally {
+      setOpening(false);
+    }
+  }
   const facts = [
     host.os ? HOST_OS_NAMES[host.os] : null,
     host.dshVersion ? t('version', { version: host.dshVersion }) : null,
@@ -284,6 +295,11 @@ function HostHeader({ host, twin }: { host: MyComputer; twin: string | null }) {
       <div className="flex min-w-0 flex-col gap-1">
         <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{host.name}</h2>
         {facts.length > 0 && <p className="text-xs text-muted-foreground">{facts.join(' · ')}</p>}
+        {host.webOnline && (
+          <Button className="self-start" variant="outline" size="sm" disabled={opening} onClick={() => void openWeb()}>
+            {t('openWeb')}
+          </Button>
+        )}
       </div>
       <span className={cn('mt-0.5 shrink-0 rounded-full px-2.5 py-1 text-xs font-medium', host.online ? 'bg-success/10' : 'bg-muted')}>
         <Presence

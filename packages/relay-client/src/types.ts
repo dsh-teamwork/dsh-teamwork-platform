@@ -48,6 +48,7 @@ export interface Computer {
  * pair. A team's shared DSH is never one.
  */
 export interface OwnComputer {
+  webOnline?: boolean;
   /** The relay host's id. */
   hostId: string;
   name: string;

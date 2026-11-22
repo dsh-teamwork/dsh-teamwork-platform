@@ -67,6 +67,7 @@ func between(s string, min, max int) bool {
 // frame is every field any frame carries; which ones a frame must have
 // depends on its t. A field absent stays nil.
 type frame struct {
+	Web        bool    `json:"web"`
 	DeviceKey  *string `json:"deviceKey"`
 	T          string  `json:"t"`
 	Token      *string `json:"token"`
@@ -106,6 +107,7 @@ func trimmed(p *string, min, max int) (string, bool) {
 // hello is the first frame on a plugin socket: who is connecting, from which
 // computer. os and pluginVersion are nil from a plugin too old to report them.
 type hello struct {
+	web                               bool
 	token, clientID, name, dshVersion string
 	pluginVersion                     *string
 	os                                *relayhost.Os
@@ -121,7 +123,7 @@ func parseHello(data []byte) (hello, bool) {
 	if !ok1 || !ok2 {
 		return hello{}, false
 	}
-	h := hello{token: *f.Token, clientID: *f.ClientID, name: name, dshVersion: version}
+	h := hello{web: f.Web, token: *f.Token, clientID: *f.ClientID, name: name, dshVersion: version}
 	if f.Plugin != nil {
 		plugin, ok := trimmed(f.Plugin, 1, 40)
 		if !ok {
