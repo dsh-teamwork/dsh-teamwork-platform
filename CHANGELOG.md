@@ -43,7 +43,7 @@ are in `CLAUDE.md`, "The changelog".
 - **Why:** The person using it sees where they are and can leave or end it (ADR 0065).
 - **Breaking:** None for clients: they open the URL the ticket returns.
 - **Upgrade:** Nothing.
-- **Refs:** ADR 0065, `docs/tech/native-web-sessions.md`, `server/relay/web_shell.go`.
+- **Refs:** ADR 0065, `docs/tech/relay.md` ("Native Web on a personal computer"), `server/relay/web_shell.go`.
 
 ## 2026-11-22 — Native Web access ends when idle, and only its client may use it
 
@@ -51,7 +51,7 @@ are in `CLAUDE.md`, "The changelog".
 - **Why:** The access cookie lived eight hours whether used or not, and opened the computer from any client that held it (ADR 0065).
 - **Breaking:** Native Web opened before this deploy must be entered again from My DSH.
 - **Upgrade:** Nothing.
-- **Refs:** ADR 0065, `docs/tech/native-web-sessions.md`, `server/relay/web.go`.
+- **Refs:** ADR 0065, `docs/tech/relay.md` ("Native Web on a personal computer"), `server/relay/web.go`.
 
 ## 2026-11-22 — Native Web's live connection opens in Chromium
 
