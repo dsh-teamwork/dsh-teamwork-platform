@@ -158,8 +158,11 @@ func TestGatewayCallsOnlyTheTeamsOwnProvider(t *testing.T) {
 		_, modelA := stubTeam(t, a, ua, "sk-team-a")
 		_, modelB := stubTeam(t, b, ub, "sk-team-b")
 
-		must(t, call(e.pluginFor(a), modelA, false), 200)
-		if ua.hits() != 1 || ub.hits() != 0 || ua.auths[0] != "Bearer sk-team-a" {
+		must(t, e.pluginFor(a).post("/api/llm/chat/completions", map[string]any{
+			"model": modelA, "messages": []any{map[string]string{"role": "user", "content": "hi"}},
+			"reasoning_effort": "high",
+		}), 200)
+		if ua.hits() != 1 || ub.hits() != 0 || ua.auths[0] != "Bearer sk-team-a" || !strings.Contains(string(ua.bodies[0]), `"reasoning_effort":"high"`) {
 			t.Fatalf("team A's call: A got %v, B got %v", ua.auths, ub.auths)
 		}
 		must(t, call(e.pluginFor(b), modelB, false), 200)

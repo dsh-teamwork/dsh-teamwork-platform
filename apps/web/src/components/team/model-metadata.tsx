@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/select';
 import { api } from '@/lib/api';
 import { agreedValues, changedValues, exactMatches, referenceSource, suggestedRates, type ModelMetadata } from '@/lib/model-metadata';
 
-type Values = Record<string, string | number | boolean | undefined>;
+type Values = Record<string, string | number | boolean | readonly string[] | undefined>;
 type Lookup = { models: ModelMetadata[]; usdToCny?: string; exchangeDate?: string };
 type Filled<T> = { reference: string; before: Partial<T>; after: Partial<T>; fx?: { rate: string; date: string } };
 type Outcome<T> =
@@ -61,7 +61,7 @@ export function ModelMetadataLookup<T extends Values>({ teamId, provider, model,
   // Prices are converted at the lookup's own exchange rate; without one, none are filled.
   function valuesOf(reference: ModelMetadata, found: Lookup): Values | null {
     if (pricing) return found.usdToCny ? suggestedRates(reference.prices, found.usdToCny) : null;
-    return { contextWindow: reference.contextWindow, maxTokens: reference.maxTokens, vision: reference.vision };
+    return { contextWindow: reference.contextWindow, maxTokens: reference.maxTokens, vision: reference.vision, reasoningEfforts: reference.provider === provider && reference.id.toLowerCase() === model.trim().toLowerCase() ? reference.reasoningEfforts : undefined };
   }
 
   function fill(next: Values | null, reference: string, found: Lookup) {
@@ -104,9 +104,9 @@ export function ModelMetadataLookup<T extends Values>({ teamId, provider, model,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auto, model]);
 
-  const display = (value: unknown) => value === undefined || value === '' ? t('unknown') : typeof value === 'boolean' ? t(value ? 'yes' : 'no') : String(value);
+  const display = (value: unknown) => value === undefined || value === '' ? t('unknown') : Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? t(value ? 'yes' : 'no') : String(value);
   // Undo is offered only while the fields still hold what was filled: it never overwrites a later hand edit.
-  const undoable = outcome?.kind === 'filled' && Object.entries(outcome.filled.after).every(([key, value]) => current[key] === value);
+  const undoable = outcome?.kind === 'filled' && Object.entries(outcome.filled.after).every(([key, value]) => JSON.stringify(current[key]) === JSON.stringify(value));
   const offerPicker = outcome && (outcome.kind === 'none' || outcome.kind === 'many' || outcome.kind === 'noValues');
 
   return <div className="flex flex-col gap-2 text-sm">

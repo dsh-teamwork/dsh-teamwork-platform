@@ -1133,7 +1133,8 @@
         "followPreset": "Default model",
         "noPreset": "No preset",
         "effort": "Reasoning",
-        "effortDefault": "Model default"
+        "effortDefault": "Model default",
+        "modelFailures": "Couldn’t list models from: {names}. Other providers remain available."
       },
       "files": {
         "preparing": "Preparing attachments…",
@@ -1566,6 +1567,8 @@
     }
   },
   "modelMetadata": {
+    "reasoningEfforts": "Reasoning efforts",
+    "reasoningEffortsHint": "Choose the efforts supported by this provider’s chat completions endpoint. Leave all unchecked to use the provider default.",
     "refresh": "Fill from public catalog",
     "refreshPrices": "Fill reference prices",
     "loading": "Looking up…",

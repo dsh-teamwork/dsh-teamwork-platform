@@ -137,3 +137,28 @@ func TestEndpointsAreEachUpstreamsOwnPrice(t *testing.T) {
 		}
 	}
 }
+
+func TestModelsDevEffortsExcludeOtherControls(t *testing.T) {
+	models, _, err := modelsDevMetadata([]byte(`{"example":{"models":{"match":{"reasoning_options":[
+  {"type":"toggle"}, {"type":"budget_tokens","min":1024}, {"type":"effort","values":["none","low","max","low","unknown"]}
+ ]},"toggle":{"reasoning_options":[{"type":"toggle"}]},"unknown":{}}}}`), "example")
+	if err != nil || len(models) != 3 {
+		t.Fatalf("metadata: %v %v", models, err)
+	}
+	for _, model := range models {
+		switch model.ID {
+		case "match":
+			if model.ReasoningEfforts == nil || strings.Join(*model.ReasoningEfforts, ",") != "low,max" {
+				t.Fatalf("efforts: %+v", model)
+			}
+		case "toggle":
+			if model.ReasoningEfforts == nil || len(*model.ReasoningEfforts) != 0 {
+				t.Fatalf("toggle: %+v", model)
+			}
+		case "unknown":
+			if model.ReasoningEfforts != nil {
+				t.Fatalf("unknown: %+v", model)
+			}
+		}
+	}
+}

@@ -6,7 +6,7 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import Markdown, { type Components } from 'react-markdown';
@@ -836,20 +836,17 @@ function ModelSettings({ computerId, sessionId, config, setConfig, disabled, val
   const [failed, setFailed] = useState<string | null>(null);
 
   if (sessionId && !config.current) return null;
-  const models = [
-    ...(sessionId ? [] : [{ value: '', label: t('followPreset') }]),
-    ...config.models.map((model) => ({ value: modelKey({ provider: model.provider, model: model.id }), label: model.name, icon: <ProviderMark hints={[model.id, model.name, model.providerName, model.provider]} name={model.name} /> })),
-  ];
   const chosen = sessionId ? config.current?.model : value.model;
-  // How hard the chosen model reasons, where it says it can be told: its own default, or one of its efforts.
-  const reasoning = config.models.find((model) => model.provider === chosen?.provider && model.id === chosen?.model)?.reasoning;
-  const efforts = reasoning ? [{ value: '', label: t('effortDefault') }, ...reasoning.efforts.map((effort) => ({ value: effort.id, label: effort.name }))] : [];
-  const withEffort = (effort: string): ModelSelection => ({ provider: chosen!.provider, model: chosen!.model, ...(effort ? { reasoningEffort: effort } : {}) });
-  const toModel = (key: string): ModelSelection | undefined => {
-    if (!key) return undefined;
-    const [provider, model] = JSON.parse(key) as [string, string];
-    return { provider, model };
-  };
+  const model = config.models.find((item) => item.provider === chosen?.provider && item.id === chosen?.model);
+  const groups = new Map<string, SessionConfiguration['models']>();
+  for (const item of config.models) {
+    const group = groups.get(item.provider);
+    if (group) group.push(item);
+    else groups.set(item.provider, [item]);
+  }
+  const option = 'relative flex items-center gap-2 rounded-md py-1.5 pr-8 pl-2.5 text-sm outline-none data-[disabled]:text-muted-foreground data-[highlighted]:bg-accent';
+  const heading = 'px-2.5 py-1 text-xs font-medium text-muted-foreground';
+  const indicator = <DropdownMenu.ItemIndicator className="absolute top-1/2 right-2 -translate-y-1/2"><Check className="size-4" aria-hidden /></DropdownMenu.ItemIndicator>;
 
   async function choose(next: ModelSelection | undefined) {
     if (!sessionId) return onChange({ ...value, model: next });
@@ -869,12 +866,65 @@ function ModelSettings({ computerId, sessionId, config, setConfig, disabled, val
   return (
     <>
       {failed && <span role="alert" className="text-xs text-destructive">{failed}</span>}
-      <Select label={t('model')} value={modelKey(chosen)} options={models} disabled={disabled || saving} className={chip}
-        change={(key) => void choose(toModel(key))} />
-      {reasoning && (
-        <Select label={t('effort')} value={chosen?.reasoningEffort ?? ''} options={efforts} disabled={disabled || saving} className={cn(chip, 'max-w-36')}
-          change={(effort) => void choose(withEffort(effort))} />
-      )}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <Button type="button" variant="outline" aria-label={t('model')} disabled={disabled || saving} className={cn(chip, 'min-w-0 font-normal')}>
+            {chosen && <ProviderMark hints={[chosen.model, model?.name, model?.providerName, chosen.provider]} name={model?.name ?? chosen.model} />}
+            <span className="truncate">{model?.name ?? chosen?.model ?? t(sessionId ? 'model' : 'followPreset')}</span>
+            <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content align="end" sideOffset={5} className="z-50 max-h-(--radix-dropdown-menu-content-available-height) w-64 max-w-(--radix-dropdown-menu-content-available-width) overflow-y-auto rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+            {!!model?.reasoning?.efforts.length && (
+              <>
+                <DropdownMenu.RadioGroup aria-label={t('effort')} value={chosen?.reasoningEffort ?? ''} onValueChange={(effort) => void choose({
+                  provider: model.provider, model: model.id, ...(effort ? { reasoningEffort: effort } : {}),
+                })}>
+                  <DropdownMenu.Label className={heading}>{t('effort')}</DropdownMenu.Label>
+                  {[{ id: '', name: t('effortDefault') }, ...model.reasoning.efforts].map((effort) => (
+                    <DropdownMenu.RadioItem key={effort.id} value={effort.id} className={option} disabled={disabled || saving}
+                      onSelect={(event) => event.preventDefault()}>
+                      {effort.name}
+                      {indicator}
+                    </DropdownMenu.RadioItem>
+                  ))}
+                </DropdownMenu.RadioGroup>
+                <DropdownMenu.Separator className="my-1 h-px bg-border" />
+              </>
+            )}
+            <DropdownMenu.RadioGroup aria-label={t('model')} value={modelKey(chosen)}>
+              {!sessionId && (
+                <DropdownMenu.RadioItem value="" className={option} disabled={disabled || saving} onSelect={() => void choose(undefined)}>
+                  {t('followPreset')}
+                  {indicator}
+                </DropdownMenu.RadioItem>
+              )}
+              {!!config.modelFailures.length && <p className="px-2.5 py-1 text-xs text-destructive">{t('modelFailures', { names: config.modelFailures.join(', ') })}</p>}
+              {[...groups].map(([provider, items]) => (
+                <DropdownMenu.Group key={provider} aria-label={items[0].providerName} className="mt-1 border-t pt-1 first:mt-0 first:border-t-0 first:pt-0">
+                  <DropdownMenu.Label className={heading}>{items[0].providerName}</DropdownMenu.Label>
+                  {items.map((item) => {
+                    const selection = { provider, model: item.id };
+                    return (
+                      <DropdownMenu.RadioItem key={item.id} value={modelKey(selection)} textValue={item.name} className={option} disabled={disabled || saving}
+                        onSelect={() => void choose(selection)}>
+                        <ProviderMark hints={[item.id, item.name, item.providerName, provider]} name={item.name} />
+                        <span className="min-w-0 break-words">
+                          {item.name}
+                          {item.id !== item.name && <span className="block text-xs text-muted-foreground">{item.id}</span>}
+                        </span>
+                        {indicator}
+                      </DropdownMenu.RadioItem>
+                    );
+                  })}
+                </DropdownMenu.Group>
+              ))}
+            </DropdownMenu.RadioGroup>
+            {!config.models.length && <p className={heading}>{word(new RelayError('model_unavailable'))}</p>}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
     </>
   );
 }

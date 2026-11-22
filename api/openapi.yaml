@@ -2252,6 +2252,10 @@ components:
         contextWindow: { $ref: '#/components/schemas/Tokens' }
         maxTokens: { $ref: '#/components/schemas/Tokens' }
         vision: { type: boolean }
+        reasoningEfforts:
+          type: array
+          uniqueItems: true
+          items: { type: string, enum: [minimal, low, medium, high, xhigh, max] }
         outputModalities: { type: array, items: { type: string } }
         prices:
           type: object
@@ -2270,6 +2274,10 @@ components:
         provider: { type: string }
         model: { type: string }
         vision: { type: boolean }
+        reasoningEfforts:
+          type: array
+          uniqueItems: true
+          items: { type: string, enum: [minimal, low, medium, high, xhigh, max] }
         contextWindow: { $ref: '#/components/schemas/Tokens' }
         maxTokens: { $ref: '#/components/schemas/Tokens' }
         offline: { type: boolean, description: "A hosted model its service has taken out of service; only that service sets it, and an admin's model is refused with it" }

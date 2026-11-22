@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ type Model struct {
 	ContextWindow    *int64            `json:"contextWindow,omitempty"`
 	MaxTokens        *int64            `json:"maxTokens,omitempty"`
 	Vision           *bool             `json:"vision,omitempty"`
+	ReasoningEfforts *[]string         `json:"reasoningEfforts,omitempty"`
 	OutputModalities []string          `json:"outputModalities,omitempty"`
 	Prices           map[string]string `json:"prices"`
 }
@@ -202,11 +204,12 @@ func modelsDevProvider(raw json.RawMessage, provider string) []Model {
 	models := make([]Model, 0, len(entry.Models))
 	for id, raw := range entry.Models {
 		var m struct {
-			ID         string                     `json:"id"`
-			Name       string                     `json:"name"`
-			Limit      limits                     `json:"limit"`
-			Modalities modalities                 `json:"modalities"`
-			Cost       map[string]json.RawMessage `json:"cost"`
+			ID               string                     `json:"id"`
+			Name             string                     `json:"name"`
+			Limit            limits                     `json:"limit"`
+			Modalities       modalities                 `json:"modalities"`
+			ReasoningOptions json.RawMessage            `json:"reasoning_options"`
+			Cost             map[string]json.RawMessage `json:"cost"`
 		}
 		if json.Unmarshal(raw, &m) != nil {
 			continue
@@ -237,9 +240,44 @@ func modelsDevProvider(raw json.RawMessage, provider string) []Model {
 		if m.ID != "" {
 			id = m.ID
 		}
-		models = append(models, Model{ID: id, Name: m.Name, Provider: provider, ContextWindow: bounded(m.Limit.Context), MaxTokens: bounded(m.Limit.Output), Vision: visionOf(m.Modalities.Input), OutputModalities: m.Modalities.Output, Prices: prices})
+		models = append(models, Model{ID: id, Name: m.Name, Provider: provider, ContextWindow: bounded(m.Limit.Context), MaxTokens: bounded(m.Limit.Output), Vision: visionOf(m.Modalities.Input), OutputModalities: m.Modalities.Output, ReasoningEfforts: effortOptions(m.ReasoningOptions), Prices: prices})
 	}
 	return models
+}
+
+// ValidReasoningEfforts accepts the effort IDs the desktop adapter can send.
+func ValidReasoningEfforts(efforts []string) bool {
+	seen := map[string]bool{}
+	for _, effort := range efforts {
+		if !slices.Contains([]string{"minimal", "low", "medium", "high", "xhigh", "max"}, effort) || seen[effort] {
+			return false
+		}
+		seen[effort] = true
+	}
+	return true
+}
+
+func effortOptions(raw json.RawMessage) *[]string {
+	var options []json.RawMessage
+	if json.Unmarshal(raw, &options) != nil || options == nil {
+		return nil
+	}
+	efforts := []string{}
+	for _, option := range options {
+		var o struct {
+			Type   string   `json:"type"`
+			Values []string `json:"values"`
+		}
+		if json.Unmarshal(option, &o) != nil || o.Type != "effort" {
+			continue
+		}
+		for _, value := range o.Values {
+			if ValidReasoningEfforts([]string{value}) && !slices.Contains(efforts, value) {
+				efforts = append(efforts, value)
+			}
+		}
+	}
+	return &efforts
 }
 
 func openRouterMetadata(body []byte) ([]Model, error) {

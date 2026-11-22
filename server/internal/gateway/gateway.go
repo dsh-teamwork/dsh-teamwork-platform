@@ -24,6 +24,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/modelmeta"
 )
 
 // MaxBody is the largest request: a long conversation with tool results is
@@ -242,6 +243,7 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 			payload[k] = v
 		}
 	}
+	applyReasoningEffort(base, payload)
 	out, _ := json.Marshal(payload)
 	upstreamCtx, cancelUpstream := context.WithDeadline(ctx, *tracked.DeadlineAt)
 	defer cancelUpstream()
@@ -296,5 +298,29 @@ func (g *Gateway) Completions(w http.ResponseWriter, r *http.Request, who Caller
 			failure = "upstream_interrupted"
 			return nil // headers are sent: the stream simply ends
 		}
+	}
+}
+
+// The desktop speaks the gateway's OpenAI-compatible effort field. Translate
+// it for upstreams with a different envelope after the request has been bounded.
+func applyReasoningEffort(base string, payload map[string]json.RawMessage) {
+	raw, ok := payload["reasoning_effort"]
+	if !ok {
+		return
+	}
+	var effort string
+	if json.Unmarshal(raw, &effort) != nil || !modelmeta.ValidReasoningEfforts([]string{effort}) {
+		return
+	}
+	endpoint, err := url.Parse(base)
+	if err != nil {
+		return
+	}
+	switch endpoint.Hostname() {
+	case "openrouter.ai":
+		payload["reasoning"], _ = json.Marshal(map[string]string{"effort": effort})
+		delete(payload, "reasoning_effort")
+	case "api.deepseek.com":
+		payload["thinking"] = json.RawMessage(`{"type":"enabled"}`)
 	}
 }

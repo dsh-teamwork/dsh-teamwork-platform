@@ -21,6 +21,9 @@ func TestMetadataLookupIsAdminOnlyTransientAndIndependent(t *testing.T) {
 		var calls atomic.Int32
 		client := &http.Client{Transport: lookupTransport(func(r *http.Request) (*http.Response, error) {
 			calls.Add(1)
+			if r.URL.String() == "https://models.dev/api.json" {
+				return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"openrouter":{"models":{"lab/reference":{"reasoning_options":[{"type":"effort","values":["low","high"]}]}}}}`)), Header: make(http.Header)}, nil
+			}
 			if r.URL.String() != "https://openrouter.ai/api/v1/models" || r.Header.Get("Authorization") != "" {
 				t.Errorf("unexpected public request: %v", r)
 			}
@@ -42,9 +45,13 @@ func TestMetadataLookupIsAdminOnlyTransientAndIndependent(t *testing.T) {
 		}
 		before := d.Client.TeamConfig.Query().CountX(context.Background())
 		for range 2 {
-			must(t, admin.post(path, body), 200)
+			lookedUp := must(t, admin.post(path, body), 200)
+			data := lookedUp["models"].([]any)[0].(map[string]any)
+			if got := data["reasoningEfforts"]; len(got.([]any)) != 2 {
+				t.Fatalf("efforts: %v", got)
+			}
 		}
-		if calls.Load() != 2 || d.Client.TeamConfig.Query().CountX(context.Background()) != before || d.Client.ModelRate.Query().CountX(context.Background()) != 0 {
+		if calls.Load() != 4 || d.Client.TeamConfig.Query().CountX(context.Background()) != before || d.Client.ModelRate.Query().CountX(context.Background()) != 0 {
 			t.Fatal("lookup cached or persisted")
 		}
 		bad := map[string]any{"source": "https://attacker.invalid", "provider": "", "query": "reference"}
@@ -53,15 +60,15 @@ func TestMetadataLookupIsAdminOnlyTransientAndIndependent(t *testing.T) {
 		}
 		addProvider(t, admin, teamID)
 		config := model("Independent")
-		config["data"] = map[string]any{"provider": "deepseek", "model": "custom-alias", "contextWindow": 128000, "maxTokens": 4096, "vision": true}
+		config["data"] = map[string]any{"provider": "deepseek", "model": "custom-alias", "contextWindow": 128000, "maxTokens": 4096, "vision": true, "reasoningEfforts": []string{"low", "high"}}
 		saved := must(t, admin.post("/api/teams/"+teamID+"/configs", config), 201)
 		data := saved["data"].(map[string]any)
-		if data["model"] != "custom-alias" || data["vision"] != true || len(data) != 5 {
+		if data["model"] != "custom-alias" || data["vision"] != true || len(data) != 6 {
 			t.Fatalf("configuration linked or changed: %+v", data)
 		}
 		snapshot := must(t, admin.get("/api/configs"), 200)
 		raw, _ := json.Marshal(snapshot)
-		if !strings.Contains(string(raw), `"vision":true`) || !strings.Contains(string(raw), `"model":"custom-alias"`) {
+		if !strings.Contains(string(raw), `"vision":true`) || !strings.Contains(string(raw), `"reasoningEfforts":["low","high"]`) || !strings.Contains(string(raw), `"model":"custom-alias"`) {
 			t.Fatalf("vision not delivered: %s", raw)
 		}
 
