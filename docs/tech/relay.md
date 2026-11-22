@@ -389,9 +389,9 @@ base64 with the document size, offset and version. The first read starts at
 zero. Later reads must carry the same version, and fail if the source changed.
 Source documents and converted previews are each limited to 16 MiB; an empty
 one is `document_empty`. Word and PowerPoint use the computer's DSH Office Kit
-to produce PDF bytes, and the plugin keeps its last render (by real path and
-source version, two idle minutes) so the ranges after the first do not convert
-again; without the kit the answer is `preview_unavailable`. PDF and Excel read
+to produce PDF bytes; each range asks the kit again, and the kit's own cache
+(by source version and content) answers every range after the first without
+converting again. Without the kit the answer is `preview_unavailable`. PDF and Excel read
 the original bytes. A plugin from before 0.19.6 refuses the method, which the
 client reports as `preview_unsupported`. Closing the viewer stops requesting
 further ranges. Text files keep the line-numbered reader above.
