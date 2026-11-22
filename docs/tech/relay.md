@@ -721,3 +721,9 @@ that cookie and the local Host and Origin on the computer. HTTP and WebSocket
 bytes use the same data connection. This is a full native Web interface
 with its normal local permissions. The gateway terminates browser HTTPS,
 and the existing paired session interface uses a separate encrypted path.
+
+**Verified by** `server/e2e`'s native Web test, which runs the plugin's own
+relay client and connector in front of a stand-in for DSH's Web server: what
+reaches DSH (its Host and sign-in, none of the browser's credentials, no
+launch token), an upload DSH reads slowly, a body DSH ends by closing, DSH's
+WebSocket, and a reconnect ending the browser's access.
