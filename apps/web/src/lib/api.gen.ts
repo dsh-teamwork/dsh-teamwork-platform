@@ -617,6 +617,8 @@ export interface paths {
                         model: string;
                         messages: unknown[];
                         stream?: boolean;
+                        /** @description One of the model configuration's reasoningEfforts; omitted, the provider's default applies */
+                        reasoning_effort?: string;
                     } & {
                         [key: string]: unknown;
                     };

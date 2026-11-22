@@ -49,7 +49,7 @@ func (s *Server) lookupModelMetadata(w http.ResponseWriter, r *http.Request) err
 		dev, _ := modelmeta.Search(ctx, s.Gateway.Client, modelmeta.Query{Source: "models_dev", Provider: "openrouter", Query: in.Query})
 		for i := range models {
 			for _, entry := range dev {
-				if entry.Provider == "openrouter" && entry.ID == models[i].ID {
+				if entry.ID == models[i].ID {
 					models[i].ReasoningEfforts = entry.ReasoningEfforts
 					break
 				}

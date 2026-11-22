@@ -68,6 +68,39 @@ func call(p *plugin, model string, stream bool) response {
 	return p.post("/api/llm/chat/completions", map[string]any{"model": model, "stream": stream, "messages": []any{map[string]string{"role": "user", "content": "hi"}}})
 }
 
+// A caller may ask only for an effort the model's configuration publishes.
+func TestGatewayForwardsOnlyThePublishedEfforts(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{allowPrivate: true})
+		u := newUpstream(t, func(w http.ResponseWriter, r *http.Request) { answerJSON(w, `{"choices":[]}`) })
+		admin := e.admin("a@x.io")
+		teamID, plain := stubTeam(t, admin, u, "sk-team")
+		thinking := must(t, admin.post("/api/teams/"+teamID+"/configs", map[string]any{
+			"kind": "model", "name": "Thinking", "data": map[string]any{"provider": "stub", "model": "stub-model", "reasoningEfforts": []string{"low", "high"}},
+		}), 201)["id"].(string)
+		price(t, admin, teamID, thinking)
+		p := e.pluginFor(admin)
+		ask := func(model string, effort any) response {
+			return p.post("/api/llm/chat/completions", map[string]any{"model": model, "reasoning_effort": effort,
+				"messages": []any{map[string]string{"role": "user", "content": "hi"}}})
+		}
+
+		must(t, ask(thinking, "high"), 200)
+		if u.hits() != 1 || !strings.Contains(string(u.bodies[0]), `"reasoning_effort":"high"`) {
+			t.Fatalf("published effort not forwarded: %s", u.bodies)
+		}
+		for _, refused := range []struct {
+			model  string
+			effort any
+		}{{thinking, "max"}, {thinking, 1}, {plain, "low"}} {
+			must(t, ask(refused.model, refused.effort), 400)
+		}
+		if u.hits() != 1 {
+			t.Fatalf("a refused effort reached the upstream: %d calls", u.hits())
+		}
+	})
+}
+
 // An upstream failure is answered with a code, never with its body.
 func TestGatewayUpstreamFailures(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
@@ -158,11 +191,8 @@ func TestGatewayCallsOnlyTheTeamsOwnProvider(t *testing.T) {
 		_, modelA := stubTeam(t, a, ua, "sk-team-a")
 		_, modelB := stubTeam(t, b, ub, "sk-team-b")
 
-		must(t, e.pluginFor(a).post("/api/llm/chat/completions", map[string]any{
-			"model": modelA, "messages": []any{map[string]string{"role": "user", "content": "hi"}},
-			"reasoning_effort": "high",
-		}), 200)
-		if ua.hits() != 1 || ub.hits() != 0 || ua.auths[0] != "Bearer sk-team-a" || !strings.Contains(string(ua.bodies[0]), `"reasoning_effort":"high"`) {
+		must(t, call(e.pluginFor(a), modelA, false), 200)
+		if ua.hits() != 1 || ub.hits() != 0 || ua.auths[0] != "Bearer sk-team-a" {
 			t.Fatalf("team A's call: A got %v, B got %v", ua.auths, ub.auths)
 		}
 		must(t, call(e.pluginFor(b), modelB, false), 200)

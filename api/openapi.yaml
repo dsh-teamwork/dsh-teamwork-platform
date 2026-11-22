@@ -287,6 +287,7 @@ paths:
                 model: { type: string, minLength: 1 }
                 messages: { type: array, minItems: 1, items: {} }
                 stream: { type: boolean }
+                reasoning_effort: { type: string, description: "One of the model configuration's reasoningEfforts; omitted, the provider's default applies" }
       responses:
         '200':
           description: The provider's answer, streamed through with none of its headers
