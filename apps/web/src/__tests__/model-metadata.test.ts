@@ -1,6 +1,8 @@
-import { catalogEntry, PROVIDER_CATALOG, providerMark } from '@dsh-teamwork/shared';
+import { catalogEntry, catalogVendors, PROVIDER_CATALOG, providerMark } from '@dsh-teamwork/shared';
 import { expect, it } from 'vitest';
 
+import en from '@/messages/en.json';
+import zh from '@/messages/zh-CN.json';
 import { agreedValues, changedValues, completeRates, exactMatches, referenceFrom, suggestedRates, type ModelMetadata } from '@/lib/model-metadata';
 
 it('converts automatically supplied FX to simple rates without floating point drift', () => {
@@ -16,13 +18,37 @@ it('retains unknown buckets and never rounds a positive supplier cost to free', 
   expect(suggestedRates({ input: '1000000000' }, '7')).toBeNull();
 });
 
-it('names each listed provider as Models.dev does, and finds it by address', () => {
-  expect(PROVIDER_CATALOG.map((p) => p.id)).toEqual(['deepseek', 'openai', 'alibaba-cn', 'moonshotai-cn', 'zhipuai', 'volcengine', 'minimax-cn', 'siliconflow-cn', 'openrouter']);
-  expect(catalogEntry('https://dashscope.aliyuncs.com/compatible-mode/v1/')?.id).toBe('alibaba-cn');
-  expect(catalogEntry('https://api.minimaxi.com/v1')?.id).toBe('minimax-cn');
-  expect(catalogEntry('https://custom.example/v1')).toBeUndefined();
-  // Every listed provider is drawn by its maker's mark, from its Models.dev id alone.
-  expect(PROVIDER_CATALOG.map((p) => providerMark(p.id))).toEqual(['deepseek', 'openai', 'qwen', 'kimi', 'zhipu', 'doubao', 'minimax', 'siliconflow', 'openrouter']);
+it('names each listed provider as Models.dev does, and finds it by name, then by address', () => {
+  expect(PROVIDER_CATALOG.map((p) => p.id)).toEqual([
+    'deepseek', 'openai', 'alibaba-cn', 'moonshotai-cn', 'moonshotai', 'kimi-code-plan-cn', 'kimi-code-plan-global', 'zhipuai', 'volcengine',
+    'minimax-cn', 'minimax', 'minimax-cn-coding-plan', 'minimax-coding-plan', 'siliconflow-cn', 'openrouter',
+  ]);
+  const at = (baseUrl: string, name = 'renamed') => catalogEntry({ name, baseUrl })?.id;
+  expect(at('https://dashscope.aliyuncs.com/compatible-mode/v1/')).toBe('alibaba-cn');
+  expect(at('https://api.kimi.com/coding/v1')).toBe('kimi-code-plan-cn');
+  expect(at('https://custom.example/v1')).toBeUndefined();
+  // A plan shares its region's address with metered billing: only its name tells them apart.
+  expect(at('https://api.minimaxi.com/v1', 'minimax-cn-coding-plan')).toBe('minimax-cn-coding-plan');
+  expect(at('https://api.minimaxi.com/v1')).toBe('minimax-cn');
+  // The name wins over a stale address, so an edited address keeps reading its entry.
+  expect(at('https://api.minimax.io/v1', 'minimax-coding-plan')).toBe('minimax-coding-plan');
+  // Every listed provider is drawn by its maker's mark, from its Models.dev id alone, and one tile holds one maker.
+  expect(catalogVendors().map(({ vendor, offerings }) => [vendor, providerMark(offerings[0].id), offerings.length])).toEqual([
+    ['deepseek', 'deepseek', 1], ['openai', 'openai', 1], ['alibaba', 'qwen', 1], ['kimi', 'kimi', 4], ['zhipuai', 'zhipu', 1],
+    ['volcengine', 'doubao', 1], ['minimax', 'minimax', 4], ['siliconflow', 'siliconflow', 1], ['openrouter', 'openrouter', 1],
+  ]);
+  expect(PROVIDER_CATALOG.every((p) => providerMark(p.id) === providerMark(PROVIDER_CATALOG.find((q) => q.vendor === p.vendor)!.id))).toBe(true);
+  // A maker with several offerings offers each region and billing at most once.
+  for (const { offerings } of catalogVendors()) expect(new Set(offerings.map((p) => `${p.region}/${p.billing}`)).size).toBe(offerings.length);
+});
+
+it('words every maker and plan in both languages', () => {
+  for (const messages of [en, zh]) {
+    for (const { vendor, offerings } of catalogVendors()) {
+      expect(messages.team.catalog[vendor as keyof typeof messages.team.catalog], vendor).toBeTruthy();
+      if (offerings.some((p) => p.billing === 'plan')) expect(messages.team.catalogPlans[vendor as keyof typeof messages.team.catalogPlans], vendor).toBeTruthy();
+    }
+  }
 });
 
 it('fills only from exact ids, and from several only when they agree', () => {

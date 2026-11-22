@@ -571,13 +571,17 @@
     "catalog": {
       "deepseek": "DeepSeek",
       "openai": "OpenAI",
-      "alibaba-cn": "Qwen (Alibaba Cloud Model Studio)",
-      "moonshotai-cn": "Kimi (Moonshot AI)",
+      "alibaba": "Qwen (Alibaba Cloud Model Studio)",
+      "kimi": "Kimi (Moonshot AI)",
       "zhipuai": "Zhipu GLM",
       "volcengine": "Doubao (Volcano Engine Ark)",
-      "minimax-cn": "MiniMax",
-      "siliconflow-cn": "SiliconFlow",
+      "minimax": "MiniMax",
+      "siliconflow": "SiliconFlow",
       "openrouter": "OpenRouter"
+    },
+    "catalogPlans": {
+      "kimi": "Coding Plan",
+      "minimax": "Token Plan"
     },
     "models": {
       "title": "Models",
@@ -622,6 +626,16 @@
       "back": "Back",
       "connectSubmit": "Connect and read models",
       "connected": "Connected",
+      "offering": "Account",
+      "regionLabel": "Region",
+      "region": {
+        "cn": "Mainland China",
+        "global": "International"
+      },
+      "billingLabel": "Billing",
+      "metered": "Pay as you go",
+      "planPricing": "{plan} is paid by subscription: its models are imported at a price of 0, so calls to them use no member’s budget.",
+      "planKeyHint": "Use the key issued for your {plan} subscription, not a pay-as-you-go key.",
       "providerAdded": "Provider connected.",
       "reading": "Reading the model list…",
       "chooseModels": "Choose models to publish",
@@ -1161,6 +1175,15 @@
         "noPreset": "No preset",
         "effort": "Reasoning",
         "effortDefault": "Model default",
+        "effortDefaultShort": "Default",
+        "efforts": {
+          "minimal": "Minimal",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "xhigh": "Extra high",
+          "max": "Max"
+        },
         "modelFailures": "Couldn’t list models from: {names}. Other providers remain available."
       },
       "files": {
@@ -1617,6 +1640,7 @@
     "lookup": "Search",
     "candidate": "Choose a reference model",
     "narrow": "Showing up to 50 candidates. Narrow the query if needed.",
+    "unlistedProvider": "“{provider}” is not one of the listed services, so Models.dev is searched by exact model ID only. If it is one of them, connect it again from BYOK model service and pick its account, and its models can be found by name.",
     "empty": "No match. Try another name, or enter the values by hand.",
     "failed": "Could not reach the public catalog. Retry, or enter the values by hand.",
     "fxFailed": "The exchange rate is unavailable, so no price was filled; no guessed rate is ever used. Retry, or enter prices by hand.",

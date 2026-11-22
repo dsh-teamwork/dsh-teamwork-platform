@@ -87,7 +87,7 @@ Beside the paperclip, the permission menu sets what the agent may do on that
 computer: **Read only**, **Workspace write** or **Full access**, as in DSH;
 full access asks you to confirm first. On a Team DSH only the first two can be
 picked; anything wider is set on the machine itself.
-The model menu groups choices by provider and offers reasoning efforts for the selected model when supported. In a session that
+The model menu groups choices by provider; when the selected model supports reasoning efforts, a reasoning selector appears beside it, set to the model's own default until you change it. In a session that
 has started, the folder and preset stay as they are, and you can change its
 model and effort while it is not working, for that session alone. The
 paperclip at the left of the box adds files (text, code, logs, CSV, JSON or PDF; up to
