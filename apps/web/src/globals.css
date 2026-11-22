@@ -628,3 +628,83 @@ body:has(.tide-story) {
     background-color: color-mix(in oklab, var(--muted-foreground) 65%, transparent);
   }
 }
+
+/* Conversation replies. Wide blocks scroll within the reply on a narrow screen. */
+.session-markdown {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.session-markdown :is(p, ul, ol, blockquote, pre, hr, .session-markdown-table) + *,
+.session-markdown :is(h1, h2, h3, h4, h5, h6) + * {
+  margin-block-start: 0.5rem;
+}
+
+.session-markdown :is(h1, h2, h3, h4, h5, h6, th) { font-weight: 600; }
+.session-markdown h1 { font-size: 1.25rem; }
+.session-markdown h2 { font-size: 1.125rem; }
+.session-markdown :is(h3, h4, h5, h6) { font-size: 1rem; }
+.session-markdown :is(ol, ul) { padding-inline-start: 1.5rem; }
+.session-markdown ol { list-style: decimal; }
+.session-markdown ul { list-style: disc; }
+.session-markdown .task-list-item { list-style: none; }
+.session-markdown li + li { margin-block-start: 0.25rem; }
+
+.session-markdown blockquote {
+  border-inline-start: 2px solid var(--border);
+  color: var(--muted-foreground);
+  padding-inline-start: 0.75rem;
+}
+
+.session-markdown :is(a, .session-markdown-file) {
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.session-markdown .session-markdown-file {
+  cursor: pointer;
+  display: inline;
+  text-decoration-style: dotted;
+}
+
+.session-markdown :not(pre) > code {
+  background: var(--muted);
+  border-radius: 0.25rem;
+  padding: 0.1em 0.25em;
+}
+
+.session-markdown pre {
+  font-family: var(--font-mono);
+  background: var(--muted);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  padding: 0.75rem;
+}
+
+.session-markdown-table {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  max-width: 100%;
+  overflow-x: auto;
+  width: fit-content;
+}
+
+.session-markdown-table table {
+  border-collapse: collapse;
+}
+
+.session-markdown-table :is(th, td) {
+  min-width: 8rem;
+  max-width: 24rem;
+  border-inline-end: 1px solid var(--border);
+  border-block-end: 1px solid var(--border);
+  padding: 0.375rem 0.625rem;
+  vertical-align: top;
+}
+
+.session-markdown-table :is(th, td):nth-child(2) { min-width: 15rem; }
+.session-markdown-table :is(th, td):last-child { border-inline-end: 0; }
+.session-markdown-table :is(tbody, thead:last-child) tr:last-child > * { border-block-end: 0; }
+.session-markdown-table th { background: var(--muted); }
+.session-markdown-table th:not([align]) { text-align: start; }

@@ -1,57 +1,60 @@
 import { describe, expect, it } from 'vitest';
-import { parseBlocks, parseInline } from '../markdown';
+
+import { fileReference } from '../conversation';
+import { parseMarkdown } from '../markdown';
+import { chunks, reply } from './markdown-fixture.json';
 
 describe('reading an agent’s Markdown', () => {
-  it('splits a reply into headings, paragraphs, lists, quotes, rules and code', () => {
-    const reply = [
-      '## Plan',
-      'First I will read the tests,',
-      'then fix them.',
-      '',
-      '1. Run `pnpm test`',
-      '2. Fix the **flaky** one',
-      '   on CI too',
-      '- a',
-      '* b',
-      '> careful',
-      '> here',
-      '---',
-      '```ts',
-      'const a = 1;',
-      '',
-      'const b = 2;',
-      '```',
-    ].join('\n');
-    expect(parseBlocks(reply)).toEqual([
-      { type: 'heading', level: 2, text: 'Plan' },
-      { type: 'paragraph', text: 'First I will read the tests,\nthen fix them.' },
-      { type: 'list', ordered: true, start: 1, items: ['Run `pnpm test`', 'Fix the **flaky** one on CI too'] },
-      { type: 'list', ordered: false, start: 1, items: ['a', 'b'] },
-      { type: 'quote', text: 'careful\nhere' },
-      { type: 'rule' },
-      { type: 'code', language: 'ts', text: 'const a = 1;\n\nconst b = 2;' },
-    ]);
+  it('preserves the environment check table, Chinese prose and file references for the native renderer', () => {
+    const tree = parseMarkdown(reply);
+    const table = tree.children.find((node) => node.type === 'element' && node.tagName === 'table');
+    expect(table).toMatchObject({
+      children: expect.arrayContaining([
+        expect.objectContaining({ tagName: 'thead' }),
+        expect.objectContaining({ tagName: 'tbody' }),
+      ]),
+    });
+    const serialized = JSON.stringify(table);
+    expect(serialized).toContain('\u670d\u52a1\u5728\u7ebf');
+    expect(serialized).toContain('/root/dshworkspace');
+    expect(serialized).toContain('"href":"src/check.ts:12"');
+    expect(fileReference('src/check.ts:12')).toEqual({ path: 'src/check.ts', line: 12 });
+    expect(fileReference('file:///%ZZ')).toBeNull();
   });
 
-  it('draws an unclosed fence as code while the reply is still streaming', () => {
-    expect(parseBlocks('Here:\n```sh\nnpm run')).toEqual([
-      { type: 'paragraph', text: 'Here:' },
-      { type: 'code', language: 'sh', text: 'npm run' },
-    ]);
+  it('promotes a streamed header to a table and keeps an unfinished fence as code after replay', () => {
+    const tags = (count: number) => parseMarkdown(chunks.slice(0, count).join('')).children
+      .flatMap((node) => node.type === 'element' ? [node.tagName] : []);
+    expect(tags(1)).toEqual(['p', 'p']);
+    expect(tags(2)).toEqual(['p', 'table']);
+    expect(tags(3)).toEqual(['p', 'table']);
+    expect(tags(4)).toEqual(['p', 'table', 'pre']);
   });
 
-  it('styles bold, italic, inline code and http links, and leaves the rest as typed', () => {
-    expect(parseInline('Run `ls` **now**, *carefully* and see [docs](https://example.com) or [x](javascript:alert(1))')).toEqual([
-      { text: 'Run ' },
-      { text: 'ls', code: true },
-      { text: ' ' },
-      { text: 'now', bold: true },
-      { text: ', ' },
-      { text: 'carefully', italic: true },
-      { text: ' and see ' },
-      { text: 'docs', href: 'https://example.com' },
-      { text: ' or x)' },
-    ]);
-    expect(parseInline('2 * 3 = 6 and read_me_now')).toEqual([{ text: '2 * 3 = 6 and read_me_now' }]);
+  it('produces native render nodes for nested lists, task lists, references and strikethrough', () => {
+    const tree = parseMarkdown('- [x] ~~Old~~\n  - [docs][ref]\n\n[ref]: https://example.com');
+    expect(tree).toMatchObject({
+      children: [{
+        tagName: 'ul',
+        children: expect.arrayContaining([
+          expect.objectContaining({
+            tagName: 'li',
+            children: expect.arrayContaining([
+              expect.objectContaining({ tagName: 'input', properties: { checked: true, disabled: true, type: 'checkbox' } }),
+              expect.objectContaining({ tagName: 'del' }),
+              expect.objectContaining({ tagName: 'ul' }),
+            ]),
+          }),
+        ]),
+      }],
+    });
+    expect(JSON.stringify(tree)).toContain('"href":"https://example.com"');
+  });
+
+  it('renders an unclosed fence as code during streaming and omits raw HTML', () => {
+    expect(parseMarkdown('<script>ignored</script>\n\n```sh\nnpm run').children).toMatchObject([{
+      tagName: 'pre',
+      children: [{ tagName: 'code', properties: { className: ['language-sh'] }, children: [{ value: 'npm run\n' }] }],
+    }]);
   });
 });
