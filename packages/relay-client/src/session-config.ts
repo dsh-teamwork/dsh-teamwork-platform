@@ -133,3 +133,14 @@ export function configurationOf(sessions: unknown, models: unknown, configuratio
   };
 }
 export type SessionConfiguration = ReturnType<typeof configurationOf>;
+
+/**
+ * The plugin's provider for a team's models (dsh-teamwork `src/platform-models.ts`, `teamProvider`): their model id is
+ * the team configuration's id, which names nothing a person would recognise.
+ */
+const TEAM_PROVIDER = 'teamwork-platform-';
+
+/** The id worth showing under a model's name: one that differs from it, and never a team model's configuration id. */
+export function modelDetail(model: { provider: string; id: string; name: string }): string | undefined {
+  return model.provider.startsWith(TEAM_PROVIDER) || model.id === model.name ? undefined : model.id;
+}

@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-22 — No configuration ids under team models in the model menu
+
+- **What:** The conversation model menu shows a model's id under its name only where it differs from the name and is not a team model's: a team model's id is its configuration's id, which named nothing a member would recognise. The rule is `modelDetail` in `@dsh-teamwork/relay-client`, shared with the phone app.
+- **Why:** The provider-grouped menu showed an opaque id under every team model.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `packages/relay-client/src/session-config.ts`, `apps/web/src/pages/team/dsh-session.tsx`.
+
 ## 2026-11-22 — Kimi and MiniMax accounts by region and billing
 
 - **What:** The BYOK provider list offers Kimi and MiniMax as one tile each with a choice of region (mainland or international) and billing (pay as you go, or Kimi Coding Plan / MiniMax Token Plan), each its own Models.dev entry and address; a connected provider's card shows which. A provider is matched to its entry by name, then by address, so a renamed provider at a listed address reads its models there, and a plan sharing its address with metered billing is told apart by name. A lookup that finds nothing for a provider matching no entry says it searches exact IDs only. `PROVIDER_CATALOG` entries gain `vendor`, `region` and `billing`, and `catalogEntry` takes the provider (`name`, `baseUrl`).
