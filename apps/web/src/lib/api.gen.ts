@@ -3888,13 +3888,8 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Error"];
-                /** @description The computer is unavailable */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
             };
         };
         delete?: never;

@@ -11,7 +11,7 @@ are in `CLAUDE.md`, "The changelog".
 - **Why:** Owners need the original interface for settings and plugins as well as sessions.
 - **Breaking:** None.
 - **Upgrade:** Configure `DESKTOP_WEB_DOMAIN` and its wildcard DNS and TLS on the member-facing gateway, then opt in with `webRelay: true` in the desktop profile.
-- **Refs:** ADR 0063 and `docs/tech/relay.md`.
+- **Refs:** ADR 0064 and `docs/tech/relay.md`.
 
 ## 2026-11-21 — My DSH's computers move into the sidebar, and sessions group as in DSH
 

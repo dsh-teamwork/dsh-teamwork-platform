@@ -54,6 +54,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0060 — Plugin tokens are revocable grants](0060-plugin-tokens-are-revocable-grants.md) — a kept token renews with use and signing out revokes it.
 - [0061 — The app lists the member's computers](0061-the-app-lists-the-members-computers.md) — with its own pairings only, and each plugin's version.
 - [0062 — Only an edition delivers notifications](0062-only-an-edition-delivers-notifications.md) — a self-hosted server offers and sends none.
+- [0064](0064-personal-dsh-native-web-relay.md) — owners may open a personal DSH’s native Web through an outbound relay.
 
 The template:
 
@@ -82,5 +83,3 @@ reader needs.
 - [0029 — Team assistant and inherited models](0029-team-assistant-and-inherited-models.md) — transactional provisioning and an explicit local-model choice.
 
 - [0030 — Reviewed resources and history](0030-reviewed-resources-and-publication-history.md) — approval transactions, private plugin artifacts and immutable recovery.
-
-- [0063 — Owners may open a personal DSH's native Web](0063-personal-dsh-native-web-relay.md).

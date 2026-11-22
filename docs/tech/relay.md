@@ -697,19 +697,23 @@ the hosted edition, Cloud DSH.
 
 ### Native Web on a personal computer
 
+See [ADR 0064](../adr/0064-personal-dsh-native-web-relay.md).
+
 Set `DESKTOP_WEB_DOMAIN` to a domain separate from the platform's registrable
-domain. Route its wildcard DNS and TLS to the same member-facing gateway
+domain and the cloud computer Web domain. Route its wildcard DNS and TLS to the same member-facing gateway
 process that accepts `/relay/plugin`. The gateway keeps live host connections,
-tickets and browser sessions in memory, so the first implementation uses one
+pending tickets in memory, so the first implementation uses one
 process for these routes. Leave the variable empty to disable the gateway.
 
 The computer opts in with the Teamwork plugin's `webRelay` setting. The setting
 requires the current DSH host's loopback Web server and applies to personal
 computers without a local PIN. The platforms list an entry only while the
 opted-in computer is connected. The owner can obtain a minute-long entry
-ticket with their web session or mobile Bearer. Redemption is single-use and
-sets a host-only session cookie. Turning off the setting or signing out of
-the computer closes the connection and invalidates access tied to it.
+ticket with their web session or mobile Bearer. Redemption is single-use, each connected host keeps at most eight unspent
+tickets and can issue thirty per minute. The browser receives a sealed host-only cookie. The gateway
+rejects proxied requests with cross-origin or missing browser Fetch Metadata.
+Turning the feature off, signing out or reconnecting closes forwarded streams
+and requires a fresh ticket.
 
 The gateway asks for one outbound data socket per upstream connection.
 The plugin authenticates to its own DSH with the page launch URL and adds

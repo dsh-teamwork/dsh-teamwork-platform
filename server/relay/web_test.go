@@ -72,6 +72,10 @@ func TestDesktopWebRelay(t *testing.T) {
 			}
 			if authority != "" {
 				req.Host = authority
+				req.Header.Set("Sec-Fetch-Site", "same-origin")
+				if origin == "https://sibling."+domain {
+					req.Header.Set("Sec-Fetch-Site", "same-site")
+				}
 			}
 			if cookie != nil {
 				req.AddCookie(cookie)
@@ -113,13 +117,17 @@ func TestDesktopWebRelay(t *testing.T) {
 		}
 		status(call(http.MethodGet, entry.RequestURI(), strings.Repeat("a", 40)+"."+domain, nil, "", ""), 404)
 		session := call(http.MethodGet, entry.RequestURI(), entry.Host, nil, "", "")
-		status(session, 303)
+		status(session, 200)
 		cookies := session.Cookies()
 		if len(cookies) != 1 || !cookies[0].Secure || !cookies[0].HttpOnly || cookies[0].Domain != "" {
 			t.Fatal("invalid browser cookie")
 		}
 		status(call(http.MethodGet, entry.RequestURI(), entry.Host, nil, "", ""), 404)
 		status(call(http.MethodPost, "/api/session/list", entry.Host, cookies[0], "", "https://foreign.test"), 403)
+		status(call(http.MethodGet, "/", entry.Host, cookies[0], "", "https://sibling."+domain), 403)
+		altered := *cookies[0]
+		altered.Value = "invalid"
+		status(call(http.MethodGet, "/", entry.Host, &altered, "", ""), 404)
 
 		type answer struct {
 			body string
@@ -128,8 +136,9 @@ func TestDesktopWebRelay(t *testing.T) {
 		}
 		result := make(chan answer, 1)
 		go func() {
-			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, in.URL+"/", nil)
+			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, in.URL+"/?z=%20&a=1&a=2&to%6Ben=secret", nil)
 			req.Host = entry.Host
+			req.Header.Set("Sec-Fetch-Site", "same-origin")
 			req.AddCookie(cookies[0])
 			res, err := client.Do(req)
 			if err != nil {
@@ -160,7 +169,7 @@ func TestDesktopWebRelay(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if upstream.URL.Path != "/" || upstream.Header.Get("Cookie") != "" {
+		if upstream.URL.Path != "/" || upstream.URL.RawQuery != "z=%20&a=1&a=2" || upstream.Header.Get("Cookie") != "" {
 			t.Fatal("browser credential reached upstream")
 		}
 		if _, err := io.WriteString(conn, "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nSet-Cookie: local=secret\r\n\r\nDSH!"); err != nil {
@@ -178,7 +187,7 @@ func TestDesktopWebRelay(t *testing.T) {
 		browserError := make(chan error, 1)
 		go func() {
 			ws, _, err := websocket.Dial(ctx, in.URL+"/api/remote.mux", &websocket.DialOptions{
-				Host: entry.Host, HTTPHeader: http.Header{"Cookie": {cookies[0].String()}, "Origin": {entry.Scheme + "://" + entry.Host}},
+				Host: entry.Host, HTTPHeader: http.Header{"Cookie": {cookies[0].String()}, "Origin": {entry.Scheme + "://" + entry.Host}, "Sec-Fetch-Site": {"same-origin"}},
 			})
 			if err != nil {
 				browserError <- err
@@ -237,4 +246,29 @@ func TestDesktopWebRelay(t *testing.T) {
 			t.Fatalf("revocation did not close stream: %v", err)
 		}
 	})
+}
+
+func TestDesktopWebTicketQuotaIsPerHost(t *testing.T) {
+	now := time.Now()
+	first := &desktopWebHost{tickets: make(map[string]time.Time)}
+	second := &desktopWebHost{tickets: make(map[string]time.Time)}
+	original := first.issue(now)
+	other := second.issue(now)
+	for i := 1; i <= 8192; i++ {
+		first.issue(now.Add(time.Duration(i) * time.Microsecond))
+	}
+	if len(first.tickets) != desktopWebTicketLimit || !first.tickets[original].IsZero() {
+		t.Fatal("abusive host did not evict its own oldest tickets")
+	}
+	if len(second.tickets) != 1 || second.tickets[other].IsZero() {
+		t.Fatal("one host exhausted another host's ticket quota")
+	}
+	for i := 0; i < desktopWebTicketRate; i++ {
+		if !first.takeTicket(now) {
+			t.Fatal("host limited early")
+		}
+	}
+	if first.takeTicket(now) || !second.takeTicket(now) || !first.takeTicket(now.Add(time.Minute)) {
+		t.Fatal("ticket issuance rate is not isolated or did not reset")
+	}
 }
