@@ -1,0 +1,296 @@
+{
+  "records": [
+    {
+      "event": {
+        "type": "turn/start",
+        "seq": 1,
+        "data": {
+          "turn": 1
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "user/message",
+        "seq": 2,
+        "data": {
+          "source": {
+            "kind": "user"
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "Check the workspace"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/call",
+        "seq": 3,
+        "data": {
+          "turn": 1,
+          "step": 1,
+          "callId": "read",
+          "name": "read",
+          "arguments": "{\"file_path\": \"src/check notes.ts\", \"offset\": 119}"
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/result",
+        "seq": 4,
+        "data": {
+          "turn": 1,
+          "step": 1,
+          "message": {
+            "toolCallId": "read",
+            "content": [
+              {
+                "type": "text",
+                "text": ""
+              }
+            ],
+            "isError": false
+          },
+          "meta": {
+            "path": "src/check notes.ts",
+            "offset": 120
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/call",
+        "seq": 5,
+        "data": {
+          "turn": 1,
+          "step": 1,
+          "callId": "test",
+          "name": "bash",
+          "arguments": "{\"command\": \"pnpm test\", \"description\": \"Run tests\"}"
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/result",
+        "seq": 6,
+        "data": {
+          "turn": 1,
+          "step": 1,
+          "message": {
+            "toolCallId": "test",
+            "content": [
+              {
+                "type": "text",
+                "text": "Sample test output\n[output truncated; full output: (unavailable)]\n[exit code: 2]"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "assistant/message",
+        "seq": 7,
+        "data": {
+          "turn": 1,
+          "step": 1,
+          "message": {
+            "content": [
+              {
+                "type": "text",
+                "text": "The tests failed. I will record the result."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/call",
+        "seq": 8,
+        "data": {
+          "turn": 1,
+          "step": 2,
+          "callId": "write",
+          "name": "write",
+          "arguments": "{\"file_path\": \"report.md\", \"content\": \"Report\"}"
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/result",
+        "seq": 9,
+        "data": {
+          "turn": 1,
+          "step": 2,
+          "message": {
+            "toolCallId": "write",
+            "content": [
+              {
+                "type": "text",
+                "text": "Wrote report.md"
+              }
+            ],
+            "isError": false
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/call",
+        "seq": 10,
+        "data": {
+          "turn": 1,
+          "step": 2,
+          "callId": "declined",
+          "name": "bash",
+          "arguments": "{\"command\": \"pnpm lint\"}"
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/result",
+        "seq": 11,
+        "data": {
+          "turn": 1,
+          "step": 2,
+          "message": {
+            "toolCallId": "declined",
+            "content": [
+              {
+                "type": "text",
+                "text": "Error: the user rejected tool \"bash\""
+              }
+            ],
+            "isError": true
+          },
+          "error": {
+            "name": "ApprovalError",
+            "code": "APPROVAL_REJECTED"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "assistant/message",
+        "seq": 12,
+        "data": {
+          "turn": 1,
+          "step": 3,
+          "message": {
+            "content": [
+              {
+                "type": "text",
+                "text": "The report is ready."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "turn/end",
+        "seq": 13,
+        "data": {
+          "turn": 1,
+          "reason": {
+            "kind": "completed"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "turn/start",
+        "seq": 14,
+        "data": {
+          "turn": 2
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "user/message",
+        "seq": 15,
+        "data": {
+          "source": {
+            "kind": "user"
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "Check the report"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/call",
+        "seq": 16,
+        "data": {
+          "turn": 2,
+          "step": 1,
+          "callId": "broken",
+          "name": "read",
+          "arguments": "{\"file_path\": \"missing.md\"}"
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "tool/result",
+        "seq": 17,
+        "data": {
+          "turn": 2,
+          "step": 1,
+          "message": {
+            "toolCallId": "broken",
+            "content": [
+              {
+                "type": "text",
+                "text": "Read failed"
+              }
+            ],
+            "isError": true
+          },
+          "error": {
+            "name": "FsError",
+            "code": "FS_NOT_FOUND"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "type": "turn/end",
+        "seq": 18,
+        "data": {
+          "turn": 2,
+          "reason": {
+            "kind": "error",
+            "error": {
+              "message": "Check failed"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

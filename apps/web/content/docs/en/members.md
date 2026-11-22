@@ -77,9 +77,12 @@ you set in DSH's Teamwork panel under **My teams**.
 right, read only: the files the session wrote or edited, and every folder,
 searchable by file name, each text file shown with its line numbers. A file
 the conversation names opens there when you click it: a step's file, a path in
-a reply (at its line, for `src/app.ts:42`) or a link to a local file. It
-reaches nothing outside that directory, and needs DSH Teamwork 0.16.0 or later
-on the computer.
+a reply (at its line, for `src/app.ts:42`), a link to a local file or a file
+the agent presented at the end of its reply. PDFs and Excel workbooks (up to
+16 MiB) open as a page-by-page or sheet-by-sheet preview, drawn in a sandbox
+that cannot act as you; Word and PowerPoint files open the same way when the
+computer's DSH has Office Kit. It reaches nothing outside that directory, and
+needs DSH Teamwork 0.16.0 or later on the computer, 0.19.6 for the previews.
 Beside the paperclip, the permission menu sets what the agent may do on that
 computer: **Read only**, **Workspace write** or **Full access**, as in DSH;
 full access asks you to confirm first. On a Team DSH only the first two can be

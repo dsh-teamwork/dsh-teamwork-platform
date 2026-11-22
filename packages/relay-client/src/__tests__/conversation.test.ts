@@ -15,7 +15,7 @@ describe('laying out a conversation', () => {
       tool('c', 'bash', 'running'),
     ]);
     expect(rows.map((r) => r.kind)).toEqual(['user', 'steps', 'assistant', 'steps']);
-    expect(rows[1]).toMatchObject({ kind: 'steps', status: 'failed', tools: [{ id: 'a' }, { id: 'b' }] });
+    expect(rows[1]).toMatchObject({ kind: 'steps', status: 'failed', entries: [{ id: 'a' }, { id: 'b' }] });
     expect(rows[3]).toMatchObject({ status: 'running' });
   });
 
@@ -66,6 +66,10 @@ describe('fileReference', () => {
     expect(fileReference('/home/me/project/Makefile')).toEqual({ path: '/home/me/project/Makefile' });
     expect(fileReference('file:///home/me/notes%20one.md')).toEqual({ path: '/home/me/notes one.md' });
     expect(fileReference('C:\\work\\app.ts:3')).toEqual({ path: 'C:\\work\\app.ts', line: 3 });
+    expect(fileReference('src/check.ts#L120-L125')).toEqual({ path: 'src/check.ts', line: 120 });
+    expect(fileReference('file:///home/me/notes%20one.md#L42')).toEqual({ path: '/home/me/notes one.md', line: 42 });
+    expect(fileReference('src/check.ts:120-125')).toEqual({ path: 'src/check.ts', line: 120 });
+    expect(fileReference('//example.com/src/check.ts#L120')).toBeNull();
     expect(fileReference('.env')).toEqual({ path: '.env' });
   });
 

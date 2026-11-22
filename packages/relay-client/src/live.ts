@@ -341,7 +341,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     await link.ready;
     const id = nextId();
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => fail(id, 'unavailable'), CALL_TIMEOUT_MS);
+      const timer = setTimeout(() => fail(id, 'unavailable'), method === 'teamwork/readDocument' ? 75_000 : CALL_TIMEOUT_MS);
       calls.set(id, { pairingId, resolve, reject, timer });
       void sendSecure(pairingId, { t: 'call', pairingId, id, method, body: { args } }).catch(() => fail(id, 'unavailable'));
     });
@@ -492,6 +492,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     listFiles: sessions.listFiles,
     searchFiles: sessions.searchFiles,
     readFile: sessions.readFile,
+    readDocument: sessions.readDocument,
     uploadCapabilities: sessions.uploadCapabilities,
     startUpload: sessions.startUpload,
     uploadChunk: sessions.uploadChunk,
