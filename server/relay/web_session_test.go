@@ -18,8 +18,10 @@ import (
 
 // desktopWebComputer connects a computer that offers native Web and answers
 // every tunnel the gateway asks for with answer, a raw HTTP response ("ok"
-// when empty); it returns the computer's id.
-func desktopWebComputer(t *testing.T, ctx context.Context, in *editiontest.Instance, token, answer string) string {
+// when empty); it returns the computer's id, and ask, which sends the
+// gateway a request of kind t over the computer's control connection and
+// returns its reply.
+func desktopWebComputer(t *testing.T, ctx context.Context, in *editiontest.Instance, token, answer string) (string, func(t string) obj) {
 	if answer == "" {
 		answer = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok"
 	}
@@ -34,6 +36,7 @@ func desktopWebComputer(t *testing.T, ctx context.Context, in *editiontest.Insta
 		t.Fatal(err)
 	}
 	welcome := make(chan string, 1)
+	replies := make(chan obj, 8)
 	go func() {
 		for {
 			_, data, err := control.Read(ctx)
@@ -45,6 +48,8 @@ func desktopWebComputer(t *testing.T, ctx context.Context, in *editiontest.Insta
 			switch frame["t"] {
 			case "welcome":
 				welcome <- frame["hostId"].(string)
+			case "reply":
+				replies <- frame
 			case "webDial":
 				go func(id string) {
 					tunnel, _, err := websocket.Dial(ctx, in.URL+"/relay/web/tunnel", &websocket.DialOptions{HTTPHeader: http.Header{"X-Dsh-Web-Dial": {id}}})
@@ -62,12 +67,26 @@ func desktopWebComputer(t *testing.T, ctx context.Context, in *editiontest.Insta
 			}
 		}
 	}()
+	ask := func(kind string) obj {
+		t.Helper()
+		request, _ := json.Marshal(obj{"t": kind, "id": kind + "-1"})
+		if err := control.Write(ctx, websocket.MessageText, request); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case reply := <-replies:
+			return reply
+		case <-ctx.Done():
+			t.Fatalf("no reply to %s", kind)
+			return nil
+		}
+	}
 	select {
 	case id := <-welcome:
-		return id
+		return id, ask
 	case <-ctx.Done():
 		t.Fatal("the computer was not welcomed")
-		return ""
+		return "", nil
 	}
 }
 
@@ -85,7 +104,7 @@ func TestDesktopWebSessions(t *testing.T) {
 		defer cancel()
 		owner := in.Account("owner@example.test")
 		in.Team(owner)
-		hostID := desktopWebComputer(t, ctx, in, in.Bearer(owner), "")
+		hostID, ask := desktopWebComputer(t, ctx, in, in.Bearer(owner), "")
 		client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 		do := func(path, authority, agent string, cookie *http.Cookie) int {
 			t.Helper()
@@ -190,6 +209,39 @@ func TestDesktopWebSessions(t *testing.T) {
 			if code := do("/", host, "browser", c); code != 200 {
 				t.Fatalf("session %d after one more entry: %d", i+1, code)
 			}
+		}
+
+		// The computer's word ends every session and every unspent ticket, and keeps its control connection.
+		unspent, err := http.NewRequestWithContext(ctx, http.MethodPost, in.URL+"/api/relay/hosts/"+hostID+"/web/ticket", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		unspent.Header.Set("Authorization", "Bearer "+in.Bearer(owner))
+		res, err := client.Do(unspent)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var waiting struct{ URL string }
+		json.NewDecoder(res.Body).Decode(&waiting)
+		res.Body.Close()
+		if reply := ask("webRevoke"); reply["id"] != "webRevoke-1" || reply["value"] != nil || reply["error"] != nil {
+			t.Fatalf("webRevoke replied %v", reply)
+		}
+		for i, c := range cookies[1:] {
+			if code := do("/", host, "browser", c); code != 404 {
+				t.Fatalf("session %d after webRevoke: %d", i+1, code)
+			}
+		}
+		stale, _ := url.Parse(waiting.URL)
+		if code := do(stale.RequestURI(), stale.Host, "browser", nil); code != 404 {
+			t.Fatalf("a ticket issued before webRevoke: %d", code)
+		}
+		if reply := ask("pairings"); reply["error"] != nil {
+			t.Fatalf("the control connection after webRevoke: %v", reply)
+		}
+		host, cookie = enter("browser")
+		if code := do("/", host, "browser", cookie); code != 200 {
+			t.Fatalf("a fresh entry after webRevoke: %d", code)
 		}
 	})
 }

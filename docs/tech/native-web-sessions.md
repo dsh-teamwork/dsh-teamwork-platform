@@ -1,6 +1,6 @@
 # Native Web sessions and shell
 
-> **Status:** Plan — sessions and shell built · **Updated:** 2026-11-22
+> **Status:** Plan — sessions, shell and webRevoke built; the plugin waits · **Updated:** 2026-11-22
 
 How native DSH Web (`relay.md`, "Native Web on a personal computer") gains the
 sessions, the shell and the computer-side control of

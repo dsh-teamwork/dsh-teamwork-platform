@@ -29,7 +29,7 @@ func TestDesktopWebShell(t *testing.T) {
 		defer cancel()
 		owner := in.Account("owner@example.test")
 		in.Team(owner)
-		hostID := desktopWebComputer(t, ctx, in, in.Bearer(owner), answer)
+		hostID, _ := desktopWebComputer(t, ctx, in, in.Bearer(owner), answer)
 		client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 		type reply struct {
 			code   int

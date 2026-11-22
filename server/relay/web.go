@@ -156,6 +156,25 @@ func (r *relay) mountDesktopWeb() error {
 	return nil
 }
 
+// revoke ends every native Web session of the computer hostID and every ticket
+// not yet spent, at its owner's word (webRevoke): a new generation makes
+// every cookie open nothing, and ending the sessions closes what they hold
+// open. The computer's control connection, and its phones, stay.
+func (d *desktopWeb) revoke(hostID string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	host := d.hosts[webLabel(hostID)]
+	if host == nil {
+		return
+	}
+	host.generation = webSecret()
+	for id, session := range host.sessions {
+		session.end()
+		delete(host.sessions, id)
+	}
+	clear(host.tickets)
+}
+
 // sweep ends every session past its idle or absolute limit, closing what it
 // has open, until ctx ends.
 func (d *desktopWeb) sweep(ctx context.Context) {
@@ -239,16 +258,17 @@ func (h *desktopWebHost) issue(now time.Time, ticket desktopWebTicket) string {
 
 // seal is a session's cookie: its id, sealed to this computer's label and
 // connection, so it opens nothing anywhere else or after a reconnect.
-func (d *desktopWeb) seal(host *desktopWebHost, label, id string) string {
-	return base64.RawURLEncoding.EncodeToString(d.cookies.Seal(nil, nil, []byte(id), []byte(label+host.generation)))
+// The generation is read under d.mu, since webRevoke draws a new one.
+func (d *desktopWeb) seal(generation, label, id string) string {
+	return base64.RawURLEncoding.EncodeToString(d.cookies.Seal(nil, nil, []byte(id), []byte(label+generation)))
 }
 
-func (d *desktopWeb) open(host *desktopWebHost, label, cookie string) (string, bool) {
+func (d *desktopWeb) open(generation, label, cookie string) (string, bool) {
 	sealed, err := base64.RawURLEncoding.DecodeString(cookie)
 	if err != nil {
 		return "", false
 	}
-	plain, err := d.cookies.Open(nil, nil, sealed, []byte(label+host.generation))
+	plain, err := d.cookies.Open(nil, nil, sealed, []byte(label+generation))
 	if err != nil {
 		return "", false
 	}
@@ -344,7 +364,7 @@ func (d *desktopWeb) enter(w http.ResponseWriter, req *http.Request, label strin
 		ticket, ok := host.tickets[id]
 		delete(host.tickets, id)
 		if ok && now.Before(ticket.expires) {
-			session = d.seal(host, label, host.begin(req, now, ticket))
+			session = d.seal(host.generation, label, host.begin(req, now, ticket))
 		}
 	}
 	d.mu.Unlock()
@@ -376,12 +396,16 @@ func (r *relay) session(w http.ResponseWriter, req *http.Request, label string) 
 	}
 	d.mu.Lock()
 	host := d.hosts[label]
+	var generation string
+	if host != nil {
+		generation = host.generation
+	}
 	d.mu.Unlock()
 	if host == nil || host.socket.ctx.Err() != nil {
 		d.closed(w, req)
 		return nil, nil
 	}
-	id, ok := d.open(host, label, cookie.Value)
+	id, ok := d.open(generation, label, cookie.Value)
 	if !ok {
 		d.closed(w, req)
 		return nil, nil

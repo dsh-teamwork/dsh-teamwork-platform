@@ -29,6 +29,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/dsh-session.tsx`.
 
+## 2026-11-22 — A computer can end its native Web sessions: webRevoke
+
+- **What:** The plugin may send the relay request `{ t: 'webRevoke', id }` on its control connection. The gateway draws a new generation for that computer, so every native Web cookie stops opening; it ends every session, with its requests and WebSockets, drops unspent tickets, and replies `value: null`. The control connection and the computer's phones stay.
+- **Why:** The owner at the computer can stop all use of native Web at once (ADR 0065).
+- **Breaking:** None. A plugin that sends it needs this server.
+- **Upgrade:** Deploy this server before releasing a plugin that sends `webRevoke`.
+- **Refs:** ADR 0065, `docs/tech/relay.md` ("Frames"), `server/relay/web.go`.
+
 ## 2026-11-22 — Native Web opens inside a Teamwork bar
 
 - **What:** A native Web ticket now lands in a shell on the computer's own origin (`/__dsh/`). It frames DSH under a thin Teamwork bar with the computer, its connection, traffic per second, the last connect time, "Back to Teamwork" and "End session". A page opened at the top is redirected into the shell, and DSH may be framed by its own origin alone. The ticket request takes an optional `returnTo` (the member's My DSH page), which the console sends; a ticket asked with a Bearer returns to the phone app. The entry path moves from `/__dsh_desktop_enter` to `/__dsh/enter`.

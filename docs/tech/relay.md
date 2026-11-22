@@ -203,6 +203,8 @@ team membership then, and closes with 4401 for anyone else.
 | relay → plugin | `detach` | `pairingId` | Phone unavailable; close its transport and native streams |
 | relay → either | `revoked` | `pairingId` | Drop the pairing |
 | plugin → relay | `waiting` | none | Generic attention signal; no conversation identifier or question type |
+| relay → plugin | `webDial` | `id` | Open one native Web data socket: `/relay/web/tunnel` with `X-DSH-Web-Dial: id` (ADR 0064) |
+| plugin → relay | `webRevoke` | `id` | End every native Web session and unspent ticket of this computer; replied `value: null`, the control connection kept (ADR 0065) |
 
 Relay admission permits pending and confirmed, same-account, same-handset, unrevoked pairings
 so the initial handshake can run. Local desktop trust controls execution.
