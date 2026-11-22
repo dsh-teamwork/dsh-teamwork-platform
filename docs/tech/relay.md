@@ -715,3 +715,38 @@ the hosted edition, Cloud DSH.
   second.
 - **Manual check before a release.** On a real phone, over a mobile network, a
   member pairs, drives a session, and answers an approval.
+
+### Native Web on a personal computer
+
+See [ADR 0064](../adr/0064-personal-dsh-native-web-relay.md).
+
+Set `DESKTOP_WEB_DOMAIN` to a domain on another site than `APP_URL`'s, and
+neither inside nor around another domain an edition serves: it may share a
+site with one, since every edition subdomain refuses its siblings' requests
+by Fetch Metadata (`edition.Host.ServeSubdomains`). Route its wildcard DNS and TLS to the same member-facing gateway
+process that accepts `/relay/plugin`. The gateway keeps live host connections,
+pending tickets in memory, so the first implementation uses one
+process for these routes. Leave the variable empty to disable the gateway.
+
+The computer opts in with the Teamwork plugin's `webRelay` setting. The setting
+requires the current DSH host's loopback Web server and applies to personal
+computers without a local PIN. The platforms list an entry only while the
+opted-in computer is connected. The owner can obtain a minute-long entry
+ticket with their web session or mobile Bearer. Redemption is single-use, each connected host keeps at most eight unspent
+tickets and can issue thirty per minute. The browser receives a sealed host-only cookie. The gateway
+rejects proxied requests with cross-origin or missing browser Fetch Metadata.
+Turning the feature off, signing out or reconnecting closes forwarded streams
+and requires a fresh ticket.
+
+The gateway asks for one outbound data socket per upstream connection.
+The plugin authenticates to its own DSH with the page launch URL and adds
+that cookie and the local Host and Origin on the computer. HTTP and WebSocket
+bytes use the same data connection. This is a full native Web interface
+with its normal local permissions. The gateway terminates browser HTTPS,
+and the existing paired session interface uses a separate encrypted path.
+
+**Verified by** `server/e2e`'s native Web test, which runs the plugin's own
+relay client and connector in front of a stand-in for DSH's Web server: what
+reaches DSH (its Host and sign-in, none of the browser's credentials, no
+launch token), an upload DSH reads slowly, a body DSH ends by closing, DSH's
+WebSocket, and a reconnect ending the browser's access.

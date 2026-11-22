@@ -3854,6 +3854,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/relay/hosts/{id}/web/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a one-time entry ticket for the owner's online native DSH Web */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description URL to open within one minute */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: uri */
+                            url: string;
+                        };
+                    };
+                };
+                401: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/relay/hosts/{id}": {
         parameters: {
             query?: never;
@@ -4243,6 +4287,8 @@ export interface components {
             pluginVersion: string | null;
             os: components["schemas"]["HostOs"];
             online: boolean;
+            /** @description Native Web is enabled and reachable for the owner */
+            webOnline?: boolean;
             /** Format: date-time */
             lastSeenAt: string;
             pairings: {

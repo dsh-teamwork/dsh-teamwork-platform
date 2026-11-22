@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-22 — Owners can open native Web on their personal DSH
+
+- **What:** An online personal DSH may opt in to a native Web entry. The platform issues the owner a one-time ticket and proxies HTTP and WebSockets through the desktop plugin.
+- **Why:** Owners need the original interface for settings and plugins as well as sessions.
+- **Breaking:** An edition's subdomains (`edition.Host.ServeSubdomains`) may no longer sit on `APP_URL`'s registrable domain, which a server refuses at start; before, only `APP_URL`'s host and its parents were refused. Two registrations may now share a site, but neither may sit inside or around the other, and each handler refuses its siblings' requests itself.
+- **Upgrade:** Configure `DESKTOP_WEB_DOMAIN` (on another site than `APP_URL`'s, beside rather than inside any other domain an edition serves) and its wildcard DNS and TLS on the member-facing gateway, then opt in with `webRelay: true` in the desktop profile.
+- **Refs:** ADR 0064, `docs/tech/relay.md` and `server/app` (`checkSubdomains`).
+
 ## 2026-11-22 — Preview PDF, Excel and Office files in a sandbox
 
 - **What:** Session files and deliverable cards open PDFs and read-only Excel workbooks on App and Web; Word and PowerPoint open as the PDF the DSH host's Office Kit renders. The plugin's new `teamwork/readDocument` sends the bytes in versioned 128 KiB ranges (16 MiB at most); the Office Kit's own cache answers an Office file's ranges after the first. One self-contained page draws them, under a CSP that allows no request and no eval: the console shows it in an iframe sandboxed without same-origin, the App in its WebView. `RelayErrorCode` gains `document_too_large`, `document_empty`, `preview_unavailable` and `preview_unsupported`. `apps/web` depends on `pdfjs-dist`, `xlsx` (SheetJS's own tarball, pinned by integrity in the lockfile) and, to build that page, `esbuild`.

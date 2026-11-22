@@ -1227,6 +1227,8 @@
       "introTitle": "在浏览器里使用你自己的电脑",
       "intro": "这里列出你登录了 Teamwork 的每台电脑上的 DSH。打开一台，先把这个浏览器和它配对，就可以在它的会话里工作；浏览器和那台电脑之间端到端加密。",
       "lastSeenShort": "离线 · {time}",
+      "openWeb": "打开原生 DSH Web",
+      "openWebFailed": "无法打开原生 DSH Web。",
       "notPairedShort": "未配对",
       "offlineList": "电脑上线后，这里会列出它的会话。",
       "pairList": "先把这个浏览器和它配对，才能看到它的会话。",
