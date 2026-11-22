@@ -749,6 +749,14 @@ bytes use the same data connection. This is a full native Web interface
 with its normal local permissions. The gateway terminates browser HTTPS,
 and the existing paired session interface uses a separate encrypted path.
 
+Native Web cannot be installed as an app: a browser fetches the page's manifest
+without cookies, so the gateway answers it 404 like any request without its
+access cookie, and the console shows that error. An installed app would also
+outlive the ticket that opened it.
+
+My DSH offers the entry beside the computer's device count, and opens it in a
+new tab without an opener.
+
 **Verified by** `server/e2e`'s native Web test, which runs the plugin's own
 relay client and connector in front of a stand-in for DSH's Web server: what
 reaches DSH (its Host and sign-in, none of the browser's credentials, no
