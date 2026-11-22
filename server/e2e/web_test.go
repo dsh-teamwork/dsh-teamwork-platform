@@ -128,9 +128,17 @@ func TestPluginNativeWeb(t *testing.T) {
 		}
 		authority, cookie := enter()
 		origin := "https://" + authority
+		// The ticket lands in the shell, which frames DSH under the Teamwork bar.
+		res = request(t, ctx, http.MethodGet, in.URL+"/__dsh/", authority, nil, http.Header{"Sec-Fetch-Site": {"same-origin"}, "Sec-Fetch-Dest": {"document"}, "Cookie": {cookie.String()}})
+		shell, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		if res.StatusCode != 200 || !strings.Contains(string(shell), `<iframe id="dsh" src="/"`) {
+			t.Fatalf("the shell: %d", res.StatusCode)
+		}
 		browser := func(method, path string, body io.Reader, extra http.Header) *http.Response {
 			t.Helper()
-			header := http.Header{"Sec-Fetch-Site": {"same-origin"}, "Cookie": {cookie.String() + "; stolen=1"}}
+			// As the shell's frame asks: DSH only ever runs one frame down (ADR 0065).
+			header := http.Header{"Sec-Fetch-Site": {"same-origin"}, "Sec-Fetch-Dest": {"iframe"}, "Cookie": {cookie.String() + "; stolen=1"}}
 			for name, values := range extra {
 				header[name] = values
 			}

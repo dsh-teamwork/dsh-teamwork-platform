@@ -17,8 +17,12 @@ import (
 )
 
 // desktopWebComputer connects a computer that offers native Web and answers
-// every tunnel the gateway asks for with "ok"; it returns the computer's id.
-func desktopWebComputer(t *testing.T, ctx context.Context, in *editiontest.Instance, token string) string {
+// every tunnel the gateway asks for with answer, a raw HTTP response ("ok"
+// when empty); it returns the computer's id.
+func desktopWebComputer(t *testing.T, ctx context.Context, in *editiontest.Instance, token, answer string) string {
+	if answer == "" {
+		answer = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok"
+	}
 	t.Helper()
 	control, _, err := websocket.Dial(ctx, in.URL+"/relay/plugin", nil)
 	if err != nil {
@@ -52,7 +56,7 @@ func desktopWebComputer(t *testing.T, ctx context.Context, in *editiontest.Insta
 					if _, err := http.ReadRequest(bufio.NewReader(conn)); err != nil {
 						return
 					}
-					io.WriteString(conn, "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok")
+					io.WriteString(conn, answer)
 					conn.Close()
 				}(frame["id"].(string))
 			}
@@ -81,7 +85,7 @@ func TestDesktopWebSessions(t *testing.T) {
 		defer cancel()
 		owner := in.Account("owner@example.test")
 		in.Team(owner)
-		hostID := desktopWebComputer(t, ctx, in, in.Bearer(owner))
+		hostID := desktopWebComputer(t, ctx, in, in.Bearer(owner), "")
 		client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 		do := func(path, authority, agent string, cookie *http.Cookie) int {
 			t.Helper()

@@ -29,6 +29,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/dsh-session.tsx`.
 
+## 2026-11-22 — Native Web opens inside a Teamwork bar
+
+- **What:** A native Web ticket now lands in a shell on the computer's own origin (`/__dsh/`). It frames DSH under a thin Teamwork bar with the computer, its connection, traffic per second, the last connect time, "Back to Teamwork" and "End session". A page opened at the top is redirected into the shell, and DSH may be framed by its own origin alone. The ticket request takes an optional `returnTo` (the member's My DSH page), which the console sends; a ticket asked with a Bearer returns to the phone app. The entry path moves from `/__dsh_desktop_enter` to `/__dsh/enter`.
+- **Why:** The person using it sees where they are and can leave or end it (ADR 0065).
+- **Breaking:** None for clients: they open the URL the ticket returns.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0065, `docs/tech/native-web-sessions.md`, `server/relay/web_shell.go`.
+
 ## 2026-11-22 — Native Web access ends when idle, and only its client may use it
 
 - **What:** Entering native DSH Web starts a session the gateway keeps per computer (at most sixteen). It ends after thirty minutes with no traffic, eight hours after entry, or at the first request from another User-Agent than the one that entered; its open requests and WebSockets close with it. The cookie names the session.

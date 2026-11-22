@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Name}} · DSH</title>
+<link rel="stylesheet" href="/__dsh/bar.css">
+<script src="/__dsh/bar.js" defer></script>
+</head>
+<body data-words="{{.Words}}">
+<header class="bar">
+  <span class="dot" id="dot" data-state="on" aria-hidden="true"></span>
+  <strong class="name">{{.Name}}</strong>
+  <span class="rate" id="rate"></span>
+  <span class="dial" id="dial"></span>
+  <span class="spacer"></span>
+  <a class="button" href="{{.Back}}" target="_top">{{.BackLabel}}</a>
+  <button class="button" id="end" type="button">{{.EndLabel}}</button>
+</header>
+<iframe id="dsh" src="{{.Path}}" title="DSH" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+<main class="ended" id="ended" hidden>
+  <p>{{.EndedLabel}}</p>
+  <a class="button" href="{{.Back}}" target="_top">{{.BackLabel}}</a>
+</main>
+</body>
+</html>

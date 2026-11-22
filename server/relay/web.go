@@ -8,12 +8,14 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -21,6 +23,7 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
@@ -28,6 +31,7 @@ const desktopWebCookie = "__Host-dsh-desktop"
 
 type desktopWeb struct {
 	domain  string
+	home    string // APP_URL, where the closed page leads
 	mu      sync.Mutex
 	hosts   map[string]*desktopWebHost
 	cookies cipher.AEAD
@@ -59,6 +63,17 @@ type desktopWebSession struct {
 	last    atomic.Int64 // unix nanoseconds
 	ctx     context.Context
 	end     context.CancelFunc
+	// What the shell shows: the console's language when the ticket was
+	// issued, and where "Back to Teamwork" goes.
+	locale, back string
+	// Bytes to and from the computer, for the bar's traffic.
+	up, down atomic.Int64
+}
+
+// desktopWebTicket is a ticket not yet spent, and what its session will show.
+type desktopWebTicket struct {
+	expires      time.Time
+	locale, back string
 }
 
 func agentOf(r *http.Request) [32]byte { return sha256.Sum256([]byte(r.UserAgent())) }
@@ -74,10 +89,11 @@ type desktopWebSessionKey struct{}
 
 type desktopWebHost struct {
 	socket        *socket
-	user          string
+	user, name    string
+	lastDial      atomic.Int64 // microseconds the last tunnel took to come up; 0 before any
 	generation    string
 	slots         chan struct{}
-	tickets       map[string]time.Time // guarded by desktopWeb.mu
+	tickets       map[string]desktopWebTicket // guarded by desktopWeb.mu
 	ticketWindow  time.Time
 	ticketCount   int
 	sessions      map[string]*desktopWebSession // guarded by desktopWeb.mu
@@ -127,7 +143,7 @@ func (r *relay) mountDesktopWeb() error {
 		return err
 	}
 	d := &desktopWeb{
-		domain: domain, hosts: make(map[string]*desktopWebHost),
+		domain: domain, home: strings.TrimSuffix(r.host.AppURL, "/") + "/", hosts: make(map[string]*desktopWebHost),
 		cookies: cookies, pending: make(map[string]chan net.Conn),
 	}
 	if err := r.host.ServeSubdomains(domain, http.HandlerFunc(r.serveDesktopWeb)); err != nil {
@@ -165,9 +181,9 @@ func (d *desktopWeb) sweep(ctx context.Context) {
 	}
 }
 
-func (d *desktopWeb) attach(id, user string, s *socket) func() {
+func (d *desktopWeb) attach(id, user, name string, s *socket) func() {
 	label := webLabel(id)
-	host := &desktopWebHost{socket: s, user: user, slots: make(chan struct{}, 32), generation: webSecret(), tickets: make(map[string]time.Time), sessions: make(map[string]*desktopWebSession)}
+	host := &desktopWebHost{socket: s, user: user, name: name, slots: make(chan struct{}, 32), generation: webSecret(), tickets: make(map[string]desktopWebTicket), sessions: make(map[string]*desktopWebSession)}
 	d.mu.Lock()
 	d.hosts[label] = host
 	d.mu.Unlock()
@@ -203,12 +219,12 @@ func (h *desktopWebHost) takeTicket(now time.Time) bool {
 }
 
 // issue evicts only this host's oldest unspent ticket when its quota is full.
-func (h *desktopWebHost) issue(now time.Time) string {
+func (h *desktopWebHost) issue(now time.Time, ticket desktopWebTicket) string {
 	var oldest string
-	for id, expiry := range h.tickets {
-		if !now.Before(expiry) {
+	for id, t := range h.tickets {
+		if !now.Before(t.expires) {
 			delete(h.tickets, id)
-		} else if oldest == "" || expiry.Before(h.tickets[oldest]) {
+		} else if oldest == "" || t.expires.Before(h.tickets[oldest].expires) {
 			oldest = id
 		}
 	}
@@ -216,7 +232,8 @@ func (h *desktopWebHost) issue(now time.Time) string {
 		delete(h.tickets, oldest)
 	}
 	id := webSecret()
-	h.tickets[id] = now.Add(time.Minute)
+	ticket.expires = now.Add(time.Minute)
+	h.tickets[id] = ticket
 	return id
 }
 
@@ -240,7 +257,7 @@ func (d *desktopWeb) open(host *desktopWebHost, label, cookie string) (string, b
 
 // begin makes a session for the client of req, ending the one idle longest
 // when the computer already keeps its limit. Called with d.mu held.
-func (host *desktopWebHost) begin(req *http.Request, now time.Time) string {
+func (host *desktopWebHost) begin(req *http.Request, now time.Time, ticket desktopWebTicket) string {
 	if len(host.sessions) >= desktopWebSessionLimit {
 		var oldest string
 		for id, session := range host.sessions {
@@ -252,18 +269,45 @@ func (host *desktopWebHost) begin(req *http.Request, now time.Time) string {
 		delete(host.sessions, oldest)
 	}
 	ctx, end := context.WithCancel(host.socket.ctx)
-	session := &desktopWebSession{agent: agentOf(req), entered: now, ctx: ctx, end: end}
+	session := &desktopWebSession{agent: agentOf(req), entered: now, ctx: ctx, end: end, locale: ticket.locale, back: ticket.back}
 	session.last.Store(now.UnixNano())
 	id := webSecret()
 	host.sessions[id] = session
 	return id
 }
 
+// desktopWebReturn is a console page "Back to Teamwork" may lead to: the
+// member's own My DSH, and nothing a ticket could turn into a redirect.
+var desktopWebReturn = regexp.MustCompile(`^/teams/[A-Za-z0-9_-]{1,64}/my-dsh(/[A-Za-z0-9_-]{1,64})?$`)
+
 func (r *relay) desktopWebTicket(w http.ResponseWriter, req *http.Request) {
 	user := r.caller(w, req)
 	if user == "" {
 		return
 	}
+	var body struct {
+		ReturnTo string `json:"returnTo"`
+	}
+	if req.ContentLength != 0 {
+		if err := json.NewDecoder(io.LimitReader(req.Body, 4096)).Decode(&body); err != nil || body.ReturnTo != "" && !desktopWebReturn.MatchString(body.ReturnTo) {
+			errorJSON(w, http.StatusBadRequest, "invalid_input")
+			return
+		}
+	}
+	// The phone app asks with its Bearer and goes back to itself, since its
+	// in-app browser cannot be closed from the page; a browser goes back to
+	// the console page it came from.
+	back := strings.TrimSuffix(r.host.AppURL, "/") + "/"
+	if bearer(req) != "" {
+		back = "dshteamwork://"
+	} else if body.ReturnTo != "" {
+		back = strings.TrimSuffix(r.host.AppURL, "/") + body.ReturnTo
+	}
+	profile := ""
+	if account, err := r.db.User.Get(req.Context(), user); err == nil && account.Locale != nil {
+		profile = *account.Locale
+	}
+	ticket := desktopWebTicket{locale: web.ViewerLocale(req, profile), back: back}
 	d := r.desktopWeb
 	label := webLabel(req.PathValue("id"))
 	d.mu.Lock()
@@ -280,15 +324,15 @@ func (r *relay) desktopWebTicket(w http.ResponseWriter, req *http.Request) {
 		errorJSON(w, http.StatusTooManyRequests, wire.TooManyAttempts)
 		return
 	}
-	token := host.issue(now)
+	token := host.issue(now, ticket)
 	d.mu.Unlock()
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, map[string]string{"url": d.origin(label) + "/__dsh_desktop_enter?ticket=" + token})
+	writeJSON(w, http.StatusOK, map[string]string{"url": d.origin(label) + desktopWebEnter + "?ticket=" + token})
 }
 
 func (d *desktopWeb) enter(w http.ResponseWriter, req *http.Request, label string) {
 	if req.Method != http.MethodGet {
-		http.NotFound(w, req)
+		d.closed(w, req)
 		return
 	}
 	id := req.URL.Query().Get("ticket")
@@ -297,22 +341,75 @@ func (d *desktopWeb) enter(w http.ResponseWriter, req *http.Request, label strin
 	var session string
 	now := time.Now()
 	if host != nil && host.socket.ctx.Err() == nil {
-		expiry := host.tickets[id]
+		ticket, ok := host.tickets[id]
 		delete(host.tickets, id)
-		if now.Before(expiry) {
-			session = d.seal(host, label, host.begin(req, now))
+		if ok && now.Before(ticket.expires) {
+			session = d.seal(host, label, host.begin(req, now, ticket))
 		}
 	}
 	d.mu.Unlock()
 	if session == "" {
-		http.NotFound(w, req)
+		d.closed(w, req)
 		return
 	}
 	http.SetCookie(w, &http.Cookie{Name: desktopWebCookie, Value: session, Path: "/", MaxAge: int(desktopWebLife / time.Second), Secure: true, HttpOnly: true, SameSite: http.SameSiteLaxMode})
-	// A same-origin document starts a fresh navigation. A cross-site
-	// redirect chain would carry cross-site Fetch Metadata to the homepage.
+	// A same-origin document starts a fresh navigation, into the shell. A
+	// cross-site redirect chain would carry cross-site Fetch Metadata to it.
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	io.WriteString(w, `<!doctype html><html><head><title>DSH Web</title><meta http-equiv="refresh" content="0;url=/"></head><body><a href="/">Open DSH Web</a></body></html>`)
+	io.WriteString(w, `<!doctype html><html><head><title>DSH</title><meta http-equiv="refresh" content="0;url=`+desktopWebShell+`"></head><body><a href="`+desktopWebShell+`">DSH</a></body></html>`)
+}
+
+// session is the live session req belongs to, or nil once it has written why
+// not: no cookie or one that opens nothing, a request from another page, a
+// computer gone, a client other than the one that entered, a session past
+// its limits, or an owner no longer the computer's.
+func (r *relay) session(w http.ResponseWriter, req *http.Request, label string) (*desktopWebHost, *desktopWebSession) {
+	d := r.desktopWeb
+	cookie, err := req.Cookie(desktopWebCookie)
+	if err != nil {
+		d.closed(w, req)
+		return nil, nil
+	}
+	if !edition.FromOwnPages(req, d.origin(label)) {
+		http.Error(w, "Cross-origin request refused", http.StatusForbidden)
+		return nil, nil
+	}
+	d.mu.Lock()
+	host := d.hosts[label]
+	d.mu.Unlock()
+	if host == nil || host.socket.ctx.Err() != nil {
+		d.closed(w, req)
+		return nil, nil
+	}
+	id, ok := d.open(host, label, cookie.Value)
+	if !ok {
+		d.closed(w, req)
+		return nil, nil
+	}
+	now := time.Now()
+	d.mu.Lock()
+	session := host.sessions[id]
+	if session != nil && (session.agent != agentOf(req) || !session.live(now)) {
+		session.end()
+		delete(host.sessions, id)
+		session = nil
+	}
+	d.mu.Unlock()
+	if session == nil {
+		d.closed(w, req)
+		return nil, nil
+	}
+	allowed, err := host.admit(req.Context(), r)
+	if err != nil {
+		slog.Error("desktop web: member admission", "error", err)
+		errorJSON(w, http.StatusInternalServerError, "internal")
+		return nil, nil
+	}
+	if !allowed {
+		d.closed(w, req)
+		return nil, nil
+	}
+	return host, session
 }
 
 func (r *relay) serveDesktopWeb(w http.ResponseWriter, req *http.Request) {
@@ -324,61 +421,32 @@ func (r *relay) serveDesktopWeb(w http.ResponseWriter, req *http.Request) {
 		http.NotFound(w, req)
 		return
 	}
-	if req.URL.Path == "/__dsh_desktop_enter" {
+	if req.URL.Path == desktopWebEnter {
 		d.enter(w, req, label)
 		return
 	}
-	cookie, err := req.Cookie(desktopWebCookie)
-	if err != nil {
-		http.NotFound(w, req)
-		return
-	}
-	if !edition.FromOwnPages(req, d.origin(label)) {
-		http.Error(w, "Cross-origin request refused", http.StatusForbidden)
-		return
-	}
-	d.mu.Lock()
-	host := d.hosts[label]
-	d.mu.Unlock()
-	if host == nil || host.socket.ctx.Err() != nil {
-		http.NotFound(w, req)
-		return
-	}
-	id, ok := d.open(host, label, cookie.Value)
-	if !ok {
-		http.NotFound(w, req)
-		return
-	}
-	// The session must be live and its client the one that entered; a
-	// request that fails either ends it.
-	now := time.Now()
-	d.mu.Lock()
-	session := host.sessions[id]
-	if session != nil && (session.agent != agentOf(req) || !session.live(now)) {
-		session.end()
-		delete(host.sessions, id)
-		session = nil
-	}
-	d.mu.Unlock()
+	host, session := r.session(w, req, label)
 	if session == nil {
-		http.NotFound(w, req)
+		return
+	}
+	if strings.HasPrefix(req.URL.Path, desktopWebShell) {
+		d.shell(w, req, host, session)
+		return
+	}
+	// A page opened at the top, by the address bar or a DSH link to a new
+	// window, lands in a shell; DSH itself is only ever the shell's frame.
+	if req.Header.Get("Sec-Fetch-Dest") == "document" {
+		http.Redirect(w, req, desktopWebShell+"?path="+url.QueryEscape(req.URL.RequestURI()), http.StatusSeeOther)
 		return
 	}
 	session.touch()
-	allowed, err := host.admit(req.Context(), r)
-	if err != nil {
-		slog.Error("desktop web: member admission", "error", err)
-		errorJSON(w, http.StatusInternalServerError, "internal")
-		return
-	}
-	if !allowed {
-		http.NotFound(w, req)
-		return
-	}
 	ctx, cancel := context.WithDeadline(req.Context(), session.entered.Add(desktopWebLife))
 	stop := context.AfterFunc(session.ctx, cancel)
 	defer stop()
 	defer cancel()
+	// The shell frames DSH, so its pages may be framed by their own origin
+	// alone, whatever DSH itself says.
+	w.Header().Del("X-Frame-Options")
 	proxy := httputil.ReverseProxy{
 		Transport: &http.Transport{
 			DisableKeepAlives:     true,
@@ -395,16 +463,35 @@ func (r *relay) serveDesktopWeb(w http.ResponseWriter, req *http.Request) {
 		},
 		ModifyResponse: func(res *http.Response) error {
 			header := res.Header
-			for _, name := range []string{"Set-Cookie", "Cache-Control", "Referrer-Policy", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"} {
+			for _, name := range []string{"Set-Cookie", "Cache-Control", "Referrer-Policy", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "X-Frame-Options"} {
 				header.Del(name)
 			}
-			header.Add("Content-Security-Policy", "frame-ancestors 'none'")
+			withoutFrameAncestors(header)
+			header.Add("Content-Security-Policy", "frame-ancestors 'self'")
 			header.Set("Cross-Origin-Opener-Policy", "same-origin")
 			return nil
 		},
 		FlushInterval: -1,
 	}
 	proxy.ServeHTTP(w, req.WithContext(context.WithValue(ctx, desktopWebSessionKey{}, session)))
+}
+
+// withoutFrameAncestors drops DSH's own frame-ancestors from its policies, so
+// the gateway's is the one that applies; every other directive stays.
+func withoutFrameAncestors(header http.Header) {
+	policies := header.Values("Content-Security-Policy")
+	header.Del("Content-Security-Policy")
+	for _, policy := range policies {
+		var kept []string
+		for _, directive := range strings.Split(policy, ";") {
+			if name, _, _ := strings.Cut(strings.TrimSpace(directive), " "); !strings.EqualFold(name, "frame-ancestors") && strings.TrimSpace(directive) != "" {
+				kept = append(kept, strings.TrimSpace(directive))
+			}
+		}
+		if len(kept) > 0 {
+			header.Add("Content-Security-Policy", strings.Join(kept, "; "))
+		}
+	}
 }
 
 // Preserve ordering, encoding and duplicate values while removing launch tokens.
@@ -433,6 +520,7 @@ func (c *desktopConn) Read(p []byte) (int, error) {
 	n, err := c.Conn.Read(p)
 	if n > 0 && c.session != nil {
 		c.session.touch()
+		c.session.down.Add(int64(n))
 	}
 	return n, err
 }
@@ -441,6 +529,7 @@ func (c *desktopConn) Write(p []byte) (int, error) {
 	n, err := c.Conn.Write(p)
 	if n > 0 && c.session != nil {
 		c.session.touch()
+		c.session.up.Add(int64(n))
 	}
 	return n, err
 }
@@ -474,9 +563,11 @@ func (d *desktopWeb) dial(ctx context.Context, host *desktopWebHost) (net.Conn, 
 		default:
 		}
 	}()
+	asked := time.Now()
 	host.socket.send(map[string]string{"t": "webDial", "id": id})
 	select {
 	case conn := <-delivery:
+		host.lastDial.Store(max(time.Since(asked).Microseconds(), 1))
 		session, _ := ctx.Value(desktopWebSessionKey{}).(*desktopWebSession)
 		return &desktopConn{Conn: conn, release: func() { <-host.slots }, session: session}, nil
 	case <-ctx.Done():

@@ -389,7 +389,7 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 	}
 	s.token.Store(h.token)
 	if r.desktopWeb != nil && h.web && sharedID == "" {
-		defer r.desktopWeb.attach(hostID, userID, s)()
+		defer r.desktopWeb.attach(hostID, userID, h.name, s)()
 	}
 	s.send(map[string]string{"t": "welcome", "hostId": hostID})
 	defer r.hostLeft(hostID, s)

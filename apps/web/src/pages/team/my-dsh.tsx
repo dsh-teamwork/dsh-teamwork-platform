@@ -225,7 +225,7 @@ function ColumnHeader({ host, twin, paired, devices, base }: { host: MyComputer;
         <Smartphone className="size-3.5" aria-hidden />
         {host.pairings.length}
       </Link>
-      {host.webOnline && <OpenNativeWeb host={host} />}
+      {host.webOnline && <OpenNativeWeb host={host} returnTo={`${base}/${host.id}`} />}
     </div>
   );
 }
@@ -235,7 +235,7 @@ function ColumnHeader({ host, twin, paired, devices, base }: { host: MyComputer;
  * click itself, since a browser blocks one opened after the ticket's request; it is pointed at the ticket once it
  * comes, without a way back to this page, and closed if none does.
  */
-function OpenNativeWeb({ host }: { host: MyComputer }) {
+function OpenNativeWeb({ host, returnTo }: { host: MyComputer; returnTo: string }) {
   const t = useTranslations('team.myDsh');
   const [opening, setOpening] = useState(false);
   async function open() {
@@ -243,7 +243,7 @@ function OpenNativeWeb({ host }: { host: MyComputer }) {
     const tab = window.open('about:blank', '_blank');
     if (tab) tab.opener = null;
     try {
-      const address = await desktopWebAddress(host.id);
+      const address = await desktopWebAddress(host.id, returnTo);
       if (tab) tab.location.replace(address);
       else window.location.assign(address);
     } catch {
