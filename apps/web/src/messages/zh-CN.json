@@ -1148,6 +1148,15 @@
         "noPreset": "未使用预设",
         "effort": "推理强度",
         "effortDefault": "模型默认值",
+        "effortDefaultShort": "默认",
+        "efforts": {
+          "minimal": "最低",
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "xhigh": "超高",
+          "max": "最高"
+        },
         "modelFailures": "未能读取这些提供商的模型：{names}。其他模型仍可选择。"
       },
       "files": {

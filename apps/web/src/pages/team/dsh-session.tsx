@@ -6,7 +6,7 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import Markdown, { type Components } from 'react-markdown';
@@ -846,6 +846,9 @@ function ModelSettings({ computerId, sessionId, config, setConfig, disabled, val
   }
   const option = 'relative flex items-center gap-2 rounded-md py-1.5 pr-8 pl-2.5 text-sm outline-none data-[disabled]:text-muted-foreground data-[highlighted]:bg-accent';
   const heading = 'px-2.5 py-1 text-xs font-medium text-muted-foreground';
+  // DSH names efforts in English; the ones every adapter shares are worded in the console's language.
+  const effortName = (effort: { id: string; name: string }) => (t.has(`efforts.${effort.id}`) ? t(`efforts.${effort.id}`) : effort.name);
+  const chosenEffort = model?.reasoning?.efforts.find((effort) => effort.id === chosen?.reasoningEffort);
   const indicator = <DropdownMenu.ItemIndicator className="absolute top-1/2 right-2 -translate-y-1/2"><Check className="size-4" aria-hidden /></DropdownMenu.ItemIndicator>;
 
   async function choose(next: ModelSelection | undefined) {
@@ -876,23 +879,6 @@ function ModelSettings({ computerId, sessionId, config, setConfig, disabled, val
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content align="end" sideOffset={5} className="z-50 max-h-(--radix-dropdown-menu-content-available-height) w-64 max-w-(--radix-dropdown-menu-content-available-width) overflow-y-auto rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
-            {!!model?.reasoning?.efforts.length && (
-              <>
-                <DropdownMenu.RadioGroup aria-label={t('effort')} value={chosen?.reasoningEffort ?? ''} onValueChange={(effort) => void choose({
-                  provider: model.provider, model: model.id, ...(effort ? { reasoningEffort: effort } : {}),
-                })}>
-                  <DropdownMenu.Label className={heading}>{t('effort')}</DropdownMenu.Label>
-                  {[{ id: '', name: t('effortDefault') }, ...model.reasoning.efforts].map((effort) => (
-                    <DropdownMenu.RadioItem key={effort.id} value={effort.id} className={option} disabled={disabled || saving}
-                      onSelect={(event) => event.preventDefault()}>
-                      {effort.name}
-                      {indicator}
-                    </DropdownMenu.RadioItem>
-                  ))}
-                </DropdownMenu.RadioGroup>
-                <DropdownMenu.Separator className="my-1 h-px bg-border" />
-              </>
-            )}
             <DropdownMenu.RadioGroup aria-label={t('model')} value={modelKey(chosen)}>
               {!sessionId && (
                 <DropdownMenu.RadioItem value="" className={option} disabled={disabled || saving} onSelect={() => void choose(undefined)}>
@@ -925,6 +911,33 @@ function ModelSettings({ computerId, sessionId, config, setConfig, disabled, val
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
+      {/* How hard the chosen model reasons, beside it, where it says it can be told: its own default, or one of its efforts. */}
+      {model?.reasoning && model.reasoning.efforts.length > 0 && (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <Button type="button" variant="outline" aria-label={t('effort')} disabled={disabled || saving} className={cn(chip, 'shrink-0 font-normal')}>
+              <Brain className="size-4 text-muted-foreground" aria-hidden />
+              <span>{chosenEffort ? effortName(chosenEffort) : t('effortDefaultShort')}</span>
+              <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content align="end" sideOffset={5} className="z-50 w-44 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+              <DropdownMenu.RadioGroup aria-label={t('effort')} value={chosen?.reasoningEffort ?? ''} onValueChange={(effort) => void choose({
+                provider: model.provider, model: model.id, ...(effort ? { reasoningEffort: effort } : {}),
+              })}>
+                <DropdownMenu.Label className={heading}>{t('effort')}</DropdownMenu.Label>
+                {[{ id: '', name: t('effortDefault') }, ...model.reasoning.efforts].map((effort) => (
+                  <DropdownMenu.RadioItem key={effort.id} value={effort.id} className={option} disabled={disabled || saving}>
+                    {effort.id ? effortName(effort) : effort.name}
+                    {indicator}
+                  </DropdownMenu.RadioItem>
+                ))}
+              </DropdownMenu.RadioGroup>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      )}
     </>
   );
 }

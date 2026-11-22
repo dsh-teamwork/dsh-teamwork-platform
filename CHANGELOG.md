@@ -21,9 +21,9 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Update the platform and DSH Teamwork plugin. Fill and save the effort choices for existing models where applicable.
 - **Refs:** `server/modelmeta/modelmeta.go`, `server/internal/gateway/gateway.go`, `docs/tech/architecture.md` (the model gateway).
 
-## 2026-11-22 — Provider groups in the conversation model menu
+## 2026-11-22 — Provider groups in the conversation model menu, reasoning beside it
 
-- **What:** The Web composer groups available models by provider, shows model IDs when they differ from display names, and puts reasoning effort choices inside the model menu.
+- **What:** The Web composer groups available models by provider, shows model IDs when they differ from display names, and offers the selected model's reasoning effort in a selector of its own beside the model, worded in the console's language.
 - **Why:** Match the mobile picker and make models with the same display name distinguishable.
 - **Breaking:** None.
 - **Upgrade:** Nothing.

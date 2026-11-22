@@ -1148,6 +1148,15 @@
         "noPreset": "No preset",
         "effort": "Reasoning",
         "effortDefault": "Model default",
+        "effortDefaultShort": "Default",
+        "efforts": {
+          "minimal": "Minimal",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "xhigh": "Extra high",
+          "max": "Max"
+        },
         "modelFailures": "Couldn’t list models from: {names}. Other providers remain available."
       },
       "files": {
