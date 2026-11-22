@@ -1,6 +1,6 @@
 # Native Web sessions and shell
 
-> **Status:** Plan · **Updated:** 2026-11-22
+> **Status:** Plan — sessions and shell built · **Updated:** 2026-11-22
 
 How native DSH Web (`relay.md`, "Native Web on a personal computer") gains the
 sessions, the shell and the computer-side control of
@@ -46,8 +46,8 @@ the order of work, what gates it, and how done is verified. When it ships,
   idle and cancels its requests.
 - **Cookie.** The cookie stays `__Host-dsh-desktop`, sealed under the
   process's key with the label and the host generation as additional data. It
-  now holds the session id, the User-Agent hash and the entry time. The
-  browser keeps it for eight hours.
+  holds the session id alone; the table holds the rest. The browser keeps it
+  for eight hours.
 - **Refusal.** A request is refused, its session dropped and its requests
   cancelled, when any of these holds:
   - the session is not in the table;
@@ -74,7 +74,7 @@ the order of work, what gates it, and how done is verified. When it ships,
   | --- | --- |
   | `GET /__dsh/enter?ticket=…` | Spends the ticket and creates the session. Sets the cookie and answers a same-origin refresh to `/__dsh/` (replaces `/__dsh_desktop_enter`). |
   | `GET /__dsh/` | The shell: the bar, and a frame of `/` or of `?path=`. The path must start with one `/`. |
-  | `GET /__dsh/status` | JSON: computer name, connected, open tunnels, bytes up and down since the last poll, the last tunnel's dial time, session end. |
+  | `GET /__dsh/status` | JSON: computer name, connected, the session's bytes up and down so far (the bar turns them into a rate), the last tunnel's dial time, session end. |
   | `POST /__dsh/end` | Ends this session (exact Origin required), then shows the closed page. |
 
 - **Navigation.** A request with `Sec-Fetch-Dest: document` outside `/__dsh/`
@@ -92,7 +92,8 @@ the order of work, what gates it, and how done is verified. When it ships,
   - the last dial time;
   - "Back to Teamwork": `dshteamwork://` for a session the phone app opened,
     which returns to the app (the in-app browser cannot be closed from the
-    page), else My DSH for that computer on `APP_URL`;
+    page), else the console page the ticket request named (`returnTo`, only
+    `/teams/{teamId}/my-dsh[/{hostId}]` admitted), else `APP_URL`'s home;
   - "End session".
 
   On a narrow screen the traffic folds into the dot's tooltip. The bar polls

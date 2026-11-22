@@ -103,9 +103,13 @@ export async function browserCanJoin(): Promise<boolean> {
 
 export type MyComputer = Schemas['RelayHost'];
 
-export async function desktopWebAddress(hostId: string): Promise<string> {
+/**
+ * A one-time entry to the computer's native DSH Web (ADR 0064), whose Teamwork bar leads back to returnTo, the
+ * computer's own My DSH page (ADR 0065).
+ */
+export async function desktopWebAddress(hostId: string, returnTo: string): Promise<string> {
   const response = await fetch(`/api/relay/hosts/${encodeURIComponent(hostId)}/web/ticket`, {
-    method: 'POST', credentials: 'same-origin',
+    method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ returnTo }),
   });
   if (!response.ok) throw new Error(`desktop web ticket: ${response.status}`);
   const { url } = await response.json() as { url: string };

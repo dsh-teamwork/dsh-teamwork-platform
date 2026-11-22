@@ -1,0 +1,44 @@
+/* The Teamwork bar: one quiet line above DSH, which keeps the rest. */
+:root {
+  color-scheme: light dark;
+  --bar-bg: #f6f6f7;
+  --bar-fg: #1f2023;
+  --bar-muted: #6b6f76;
+  --bar-line: #e2e3e6;
+  --on: #16a34a;
+  --wait: #d97706;
+  --off: #9ca3af;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bar-bg: #17181b; --bar-fg: #e8e9ec; --bar-muted: #9a9ea6; --bar-line: #2a2c31; }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  display: flex; flex-direction: column;
+  background: var(--bar-bg); color: var(--bar-fg);
+  font: 13px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.bar {
+  display: flex; align-items: center; gap: 10px; flex: none;
+  height: 32px; padding: 0 10px; border-bottom: 1px solid var(--bar-line);
+  white-space: nowrap; overflow: hidden;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--off); }
+.dot[data-state="on"] { background: var(--on); }
+.dot[data-state="wait"] { background: var(--wait); }
+.name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.rate, .dial { color: var(--bar-muted); font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+.button {
+  font: inherit; color: inherit; text-decoration: none; cursor: pointer;
+  padding: 3px 8px; border: 1px solid var(--bar-line); border-radius: 6px; background: transparent;
+}
+.button:hover { border-color: var(--bar-muted); }
+.button:disabled { opacity: .5; cursor: default; }
+iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+.ended { margin: auto; padding: 24px; text-align: center; max-width: 420px; }
+.ended p { color: var(--bar-muted); line-height: 1.5; }
+@media (max-width: 480px) {
+  .rate, .dial { display: none; }
+}

@@ -741,7 +741,26 @@ session ends, with every request and WebSocket it holds, when:
 - a request comes from another User-Agent than the one that entered;
 - no byte has moved for it in thirty minutes (an open WebSocket's bytes count);
 - eight hours have passed since entry.
-A sweep each minute ends lapsed sessions (ADR 0065). The gateway
+A sweep each minute ends lapsed sessions (ADR 0065).
+
+DSH runs inside a shell the gateway serves on the computer's own origin under
+`/__dsh/` (`server/relay/web_shell.go`, its files in `server/relay/shell/`,
+its words in `server/relay/messages/`). A ticket is spent at `/__dsh/enter`,
+which refreshes into the shell. The shell frames DSH below the Teamwork bar,
+which shows:
+- the computer, whether it is connected, and its traffic per second;
+- the last connect time;
+- "Back to Teamwork": to the phone app for a ticket asked with a Bearer, else
+  to the console page the ticket request named (`returnTo`, only the member's
+  My DSH);
+- "End session".
+
+A page opened at the top, by the address bar or a DSH link to a new window, is
+redirected into a shell. Proxied pages may be framed only by their own origin
+(`frame-ancestors 'self'`, DSH's own `frame-ancestors` and `X-Frame-Options`
+removed). The shell is framed by no one, and runs only its own script. Its
+status polling is not activity. A request no session admits gets a page
+saying so, with a link to Teamwork, where a person opened it. The gateway
 admits a proxied request only from the computer's own pages or straight from
 its owner (`edition.FromOwnPages`): Fetch Metadata `same-origin` or `none`,
 or, where a browser sends none, as Chromium does on a WebSocket handshake,

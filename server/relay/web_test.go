@@ -264,17 +264,17 @@ func TestDesktopWebRelay(t *testing.T) {
 
 func TestDesktopWebTicketQuotaIsPerHost(t *testing.T) {
 	now := time.Now()
-	first := &desktopWebHost{tickets: make(map[string]time.Time)}
-	second := &desktopWebHost{tickets: make(map[string]time.Time)}
-	original := first.issue(now)
-	other := second.issue(now)
+	first := &desktopWebHost{tickets: make(map[string]desktopWebTicket)}
+	second := &desktopWebHost{tickets: make(map[string]desktopWebTicket)}
+	original := first.issue(now, desktopWebTicket{})
+	other := second.issue(now, desktopWebTicket{})
 	for i := 1; i <= 8192; i++ {
-		first.issue(now.Add(time.Duration(i) * time.Microsecond))
+		first.issue(now.Add(time.Duration(i)*time.Microsecond), desktopWebTicket{})
 	}
-	if len(first.tickets) != desktopWebTicketLimit || !first.tickets[original].IsZero() {
+	if len(first.tickets) != desktopWebTicketLimit || !first.tickets[original].expires.IsZero() {
 		t.Fatal("abusive host did not evict its own oldest tickets")
 	}
-	if len(second.tickets) != 1 || second.tickets[other].IsZero() {
+	if len(second.tickets) != 1 || second.tickets[other].expires.IsZero() {
 		t.Fatal("one host exhausted another host's ticket quota")
 	}
 	for i := 0; i < desktopWebTicketRate; i++ {
