@@ -211,6 +211,35 @@ func TestPluginNativeWeb(t *testing.T) {
 			}
 		}
 
+		// The computer's word ends the browser's access and keeps its link; a new ticket opens it again.
+		if _, err := io.WriteString(stdin, "disconnect\n"); err != nil {
+			t.Fatal(err)
+		}
+		if !lines.Scan() || lines.Text() != `{"revoked":true}` {
+			t.Fatalf("webRevoke: %q %v", lines.Text(), lines.Err())
+		}
+		res = browser(http.MethodGet, "/echo", nil, nil)
+		res.Body.Close()
+		if res.StatusCode != 404 {
+			t.Fatalf("the old cookie after webRevoke: %d", res.StatusCode)
+		}
+		authority, cookie = enter()
+		res = browser(http.MethodGet, "/echo", nil, nil)
+		res.Body.Close()
+		if res.StatusCode != 200 {
+			t.Fatalf("a new ticket after webRevoke: %d", res.StatusCode)
+		}
+		ws, _, err = websocket.Dial(ctx, "ws"+strings.TrimPrefix(in.URL, "http")+"/api/remote.mux", &websocket.DialOptions{
+			Host: authority, HTTPHeader: http.Header{"Cookie": {cookie.String()}, "Origin": {"https://" + authority}},
+		})
+		if err != nil {
+			t.Fatalf("a WebSocket after webRevoke: %v", err)
+		}
+		ws.SetReadLimit(1 << 20)
+		if _, _, err := ws.Read(ctx); err != nil {
+			t.Fatal(err)
+		}
+
 		// A reconnect ends the browser's access and its open streams; a new ticket opens it again.
 		if _, err := io.WriteString(stdin, "reconnect\n"); err != nil {
 			t.Fatal(err)
