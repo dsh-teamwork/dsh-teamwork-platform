@@ -5,6 +5,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bridgeValue, createDshSessions, RETRY_MS, type DshLink } from '../dsh-sessions';
 import { RelayError, type SessionEvent } from '../types';
+import { applySessionEvent, EMPTY_SESSION } from '../session';
+import { base64 } from '../secure-channel';
+import { chunks } from './markdown-fixture.json';
 
 function fakeLink() {
   const calls: Array<{ computerId: string; method: string; args: unknown }> = [];
@@ -15,7 +18,7 @@ function fakeLink() {
     async call(computerId, method, args) {
       calls.push({ computerId, method, args });
       if (method === 'session/list') return { items: [{ sessionId: 's1', cwd: '/home/user/work', running: false, updatedAt: 1, projections: { values: { title: 'Fix it' } } }] };
-      if (method === '$events/result') return {};
+      if (method === '$events/result' || method === 'session/cancel') return {};
       if (method === 'session/rename') return { title: 'Release notes', seq: 4 };
       if (method === 'teamwork/selectPermission') return { current: 'read-only' };
       if (method === 'teamwork/listFiles') return { path: '', entries: [{ name: 'src', kind: 'directory' }], truncated: false };
@@ -77,6 +80,109 @@ describe('a computer\'s sessions over any link', () => {
     expect(closed.every((c) => !c.cancel)).toBe(true);
     await vi.advanceTimersByTimeAsync(RETRY_MS[0]! + 10);
     expect(opened.filter((o) => o.endpoint === 'session/follow')).toHaveLength(2);
+  });
+
+  it('continues a streamed Markdown reply from a compact baseline and replays the stopped reply once', async () => {
+    vi.useFakeTimers();
+    const { link, opened, calls } = fakeLink();
+    const attemptId = 'markdown-attempt';
+    const start = { type: 'turn/start', seq: 1, data: { turn: 1 } };
+    const draft = (count: number) => ({
+      type: 'snapshot',
+      records: [{ event: start }],
+      assistantStream: { activeAttempt: { attemptId, turn: 1, step: 1, nextIndex: count,
+        stream: [{ type: 'text-chunks', index: 0, time0: 1, dt: Array(count - 1).fill(1), texts: chunks.slice(0, count) }] } },
+    });
+    const full = chunks.join('');
+    const stopped = { type: 'assistant/message', seq: 2, data: {
+      turn: 1, step: 1, interrupted: true, message: { content: [{ type: 'text', text: full }] },
+    } };
+    const end = { type: 'turn/end', seq: 3, data: { turn: 1, reason: { kind: 'aborted' } } };
+    const send = (follow: (typeof opened)[number], value: Record<string, unknown>) => follow.onBody({ type: 'item', value });
+    const delta = (index: number) => ({
+      type: 'assistant-stream', frame: { type: 'chunk', attemptId, index, chunk: { type: 'text-delta', text: chunks[index] } },
+    });
+    let openedFollows = 0;
+    const sessions = createDshSessions({
+      ...link,
+      async open(computerId, endpoint, args, onBody) {
+        const result = link.open(computerId, endpoint, args, onBody);
+        if (endpoint === 'session/follow') {
+          const snapshots = [draft(1), draft(3), { type: 'snapshot', records: [start, stopped, end].map((event) => ({ event })) }];
+          onBody({ type: 'item', value: snapshots[openedFollows++] });
+        }
+        return result;
+      },
+    }, { locale: () => 'en', nextId: () => 'id' });
+    let state = EMPTY_SESSION;
+    const unfollow = sessions.follow('cloud', 's1', (event) => { state = applySessionEvent(state, event); });
+    const advance = async (ms = 0) => vi.advanceTimersByTimeAsync(ms);
+    const follows = () => opened.filter((stream) => stream.endpoint === 'session/follow');
+    await advance();
+    expect(state.items).toEqual([{ kind: 'assistant', id: 'assistant-1-1', streaming: true, text: chunks[0] }]);
+    send(follows()[0]!, delta(1));
+    expect(state.items[0]).toMatchObject({ text: chunks.slice(0, 2).join('') });
+
+    sessions.ended('cloud', 'offline');
+    expect(state.closed).toBe('offline');
+    expect(state.items[0]).toMatchObject({ text: chunks.slice(0, 2).join('') });
+    await advance(RETRY_MS[0]!);
+    expect(state.closed).toBeNull();
+    send(follows()[0]!, delta(3)); // An old stream cannot append into the new one.
+    expect(state.items[0]).toMatchObject({ text: chunks.slice(0, 3).join('') });
+    send(follows()[1]!, delta(3));
+    expect(state.items[0]).toMatchObject({ streaming: true, text: full });
+
+    await sessions.cancel('cloud', 's1');
+    expect(calls.at(-1)).toMatchObject({ method: 'session/cancel', args: { request: { sessionId: 's1' } } });
+    send(follows()[1]!, { type: 'event', event: stopped });
+    send(follows()[1]!, delta(3)); // A late delta cannot change durable text.
+    send(follows()[1]!, { type: 'assistant-stream', frame: { type: 'end', attemptId, outcome: { kind: 'committed', eventType: 'assistant/message', seq: 2 } } });
+    send(follows()[1]!, { type: 'event', event: end });
+    const settled = { kind: 'assistant', id: 'assistant-1-1', interrupted: true, text: full };
+    const items = [settled, { kind: 'turn-end', id: 'turn-end-1', turn: 1, completed: false }];
+    expect(state).toMatchObject({ status: 'idle', items });
+
+    sessions.ended('cloud', 'offline');
+    await advance(RETRY_MS[0]!);
+    expect(state).toMatchObject({ status: 'idle', closed: null, items });
+    unfollow();
+  });
+
+  it('reassembles PDF ranges, rejects changed versions, and stops reading after cancellation', async () => {
+    const { link } = fakeLink();
+    const full = new Uint8Array(128 * 1024 + 5).fill(32);
+    full.set([37, 80, 68, 70]);
+    const call = vi.fn<DshLink['call']>();
+    call.mockImplementation(async (_computer, method, args) => {
+      expect(method).toBe('teamwork/readDocument');
+      const { offset, version } = (args as { request: { offset: number; version?: string } }).request;
+      expect(version).toBe(offset ? 'stable' : undefined);
+      return { offset, size: full.length, version: 'stable', data: base64(full.subarray(offset, offset + 128 * 1024)) };
+    });
+    const sessions = createDshSessions({ ...link, call }, { locale: () => 'en', nextId: () => 'id' });
+    const received = await sessions.readDocument('cloud', 's1', 'report.pdf');
+    expect(received).toHaveLength(full.length);
+    expect(received.every((byte, index) => byte === full[index])).toBe(true);
+    expect(call).toHaveBeenCalledTimes(2);
+
+    const controller = new AbortController();
+    call.mockImplementationOnce(async () => {
+      controller.abort();
+      return { offset: 0, size: full.length, version: 'stable', data: base64(full.subarray(0, 128 * 1024)) };
+    });
+    await expect(sessions.readDocument('cloud', 's1', 'report.pdf', controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+    expect(call).toHaveBeenCalledTimes(3);
+
+    call.mockImplementationOnce(async () => ({ offset: 0, size: full.length, version: 'stable', data: base64(full.subarray(0, 128 * 1024)) }));
+    call.mockImplementationOnce(async () => ({ offset: 128 * 1024, size: full.length, version: 'changed', data: base64(full.subarray(128 * 1024)) }));
+    await expect(sessions.readDocument('cloud', 's1', 'report.pdf')).rejects.toMatchObject({ code: 'unavailable' });
+
+    // A plugin from before previews refuses the method: the reader is told to update it.
+    call.mockImplementationOnce(async () => bridgeValue(403, { error: 'method_not_allowed' }));
+    await expect(sessions.readDocument('cloud', 's1', 'report.pdf')).rejects.toMatchObject({ code: 'preview_unsupported' });
+    call.mockImplementationOnce(async () => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/document_empty' } } }));
+    await expect(sessions.readDocument('cloud', 's1', 'empty.pdf')).rejects.toMatchObject({ code: 'document_empty' });
   });
 
   it('reads a bridge answer as its value or the refusal it means', () => {

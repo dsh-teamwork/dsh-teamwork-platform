@@ -16,14 +16,15 @@
  *   `approval/request`, answered through `$events/result`.
  */
 
-import type { ConversationItem, Pending, PublishedPage, SessionChange, SessionState, SessionStatus, SessionSummary, SessionWorkspace } from './types';
+import { toolKey, visibleReasoning } from './conversation';
+import type { ConversationItem, FileTarget, Pending, PublishedPage, SessionChange, SessionState, SessionStatus, SessionSummary, SessionWorkspace, ToolResult } from './types';
 
 type Json = Record<string, unknown>;
 const isObject = (value: unknown): value is Json => typeof value === 'object' && value !== null && !Array.isArray(value);
-const text = (content: unknown) =>
+const text = (content: unknown, type = 'text') =>
   Array.isArray(content)
     ? content
-        .filter((part): part is { type: 'text'; text: string } => isObject(part) && part.type === 'text' && typeof part.text === 'string')
+        .filter((part): part is { type: string; text: string } => isObject(part) && part.type === type && typeof part.text === 'string')
         .map((part) => part.text)
         .join('')
     : '';
@@ -138,30 +139,99 @@ export function searchSessions(sessions: readonly SessionSummary[], query: strin
     .sort(newestFirst);
 }
 
-/** A tool call's arguments, short enough for one line. */
-function summarize(args: unknown): string {
-  if (typeof args !== 'string') return '';
+const TOOL_OUTPUT_LIMIT = 4096;
+const REASONING_LIMIT = 16384;
+const TOOL_SUMMARY_LIMIT = 1024;
+
+function preview(value: string, limit: number) {
+  return value.slice(0, limit).replace(/[\uD800-\uDBFF]$/, '');
+}
+
+function toolArgs(args: unknown): Json {
   try {
-    const parsed: unknown = JSON.parse(args);
-    if (isObject(parsed)) {
-      const first = ['command', 'path', 'file_path', 'query', 'url', 'description'].map((k) => parsed[k]).find((v) => typeof v === 'string');
-      if (typeof first === 'string') return first;
-    }
+    const value: unknown = typeof args === 'string' ? JSON.parse(args) : args;
+    if (isObject(value)) return value;
   } catch {
-    // Not JSON: show it as it came.
+    // Older or clipped records can contain incomplete argument JSON.
   }
-  return args;
+  return {};
+}
+
+function fileTarget(path: unknown, offset?: unknown): FileTarget | undefined {
+  if (typeof path !== 'string' || !path.trim() || path.length > TOOL_SUMMARY_LIMIT || /[\u0000-\u001F\u007F]/.test(path)) return undefined;
+  return typeof offset === 'number' && Number.isSafeInteger(offset) && offset > 0 ? { path, line: offset } : { path };
+}
+
+const DENIED_TOOL_CODES = new Set(['APPROVAL_REJECTED', 'AUTO_REVIEW_DENIED', 'FS_SANDBOX_DENIED', 'FS_PERMISSION_DENIED', 'HOOK_DENIED', 'HOOK_BLOCKED']);
+
+function toolResultOf(data: Json, message: Json): ToolResult {
+  const error = isObject(data.error) ? data.error : {};
+  const meta = isObject(data.meta) ? data.meta : {};
+  const body = text(message.content);
+  const clipped = body.length > TOOL_OUTPUT_LIMIT;
+  const reason = typeof error.reason === 'string' && error.reason.trim() ? preview(error.reason, TOOL_OUTPUT_LIMIT) : undefined;
+  const file = fileTarget(meta.path, meta.offset);
+  const page = publishedPage(meta);
+  return {
+    // Keep the first screen and the status markers at the end, even if the call
+    // is on an older page and the reader expands its result much later.
+    output: preview(body, TOOL_OUTPUT_LIMIT),
+    outputLength: body.length,
+    ...(clipped ? { tail: body.slice(-512) } : {}),
+    ...(typeof error.reason === 'string' && error.reason.length > TOOL_OUTPUT_LIMIT ? { reasonClipped: true } : {}),
+    isError: message.isError === true,
+    ...(typeof error.code === 'string' ? { code: error.code } : {}),
+    ...(reason ? { reason } : {}),
+    ...(file ? { file } : {}),
+    ...(page ? { page } : {}),
+  };
+}
+
+export function settleTool(call: Extract<ConversationItem, { kind: 'tool' }>, outcome: ToolResult): typeof call {
+  const command = toolKey(call.name) === 'tools.command';
+  const ending = outcome.tail ?? outcome.output;
+  const denied = DENIED_TOOL_CODES.has(outcome.code ?? '') ||
+    (outcome.isError && /^Error: the user rejected tool "/.test(outcome.output)) ||
+    (command && /^\[sandbox: file access denied under [^\r\n]+ mode\]$/m.test(ending));
+  const exit = command ? /(?:^|\r?\n)\[exit code: (-?\d+|null)\]\s*$/.exec(ending) : null;
+  const signal = command && /(?:^|\n)\[killed by signal: [^\]\n]+\]\s*$/.test(ending);
+  // The relay's frame limiter appends an ellipsis only at one of these string caps.
+  const bridgeClipped = ending.endsWith('…') && [1024, 4096, 16384, 65536].some((cap) => outcome.outputLength === cap || outcome.outputLength === cap + 1);
+  const truncated = bridgeClipped || /(?:^|\n)\[(?:output truncated;|some output was dropped from memory;)/.test(ending);
+  const failed = outcome.isError || signal || (exit?.[1] != null && exit[1] !== '0');
+  const exitCode = exit && exit[1] !== 'null' ? Number(exit[1])
+    : command && outcome.output && !exit && !failed && !denied && !call.background && !truncated &&
+      !/\[(?:still running|timed out|stopped|running in background)/i.test(ending) ? 0 : undefined;
+  const status = denied ? 'denied' : failed ? 'failed' : 'done';
+  const bodyLength = exit ? outcome.outputLength - ending.length + exit.index : outcome.outputLength;
+  const body = command || status !== 'done'
+    ? (outcome.reason ?? outcome.output.slice(0, bodyLength))
+    : '';
+  const detail = body || exitCode !== undefined ? {
+    output: preview(body, TOOL_OUTPUT_LIMIT),
+    truncated: truncated || (outcome.reason ? outcome.reasonClipped === true : bodyLength > TOOL_OUTPUT_LIMIT),
+    ...(Number.isSafeInteger(exitCode) ? { exitCode } : {}),
+  } : undefined;
+  const file = call.file && (outcome.file
+    ? { ...call.file, ...outcome.file } : call.file);
+  return { ...call, status, ...(file ? { file } : {}), ...(detail ? { detail } : {}) };
 }
 
 /** The page a `teamwork_page` result's `meta` names, when it names one completely. */
-function publishedPage(tool: string, meta: unknown): PublishedPage | null {
-  if (tool !== 'teamwork_page' || !isObject(meta) || !isObject(meta.teamworkPage)) return null;
+function publishedPage(meta: unknown): PublishedPage | null {
+  if (!isObject(meta) || !isObject(meta.teamworkPage)) return null;
   const p = meta.teamworkPage;
   const kinds = ['html', 'markdown', 'svg'];
   return typeof p.teamId === 'string' && typeof p.pageId === 'string' && typeof p.version === 'number' &&
     typeof p.title === 'string' && typeof p.kind === 'string' && kinds.includes(p.kind)
     ? { teamId: p.teamId, pageId: p.pageId, version: p.version, title: p.title, kind: p.kind as PublishedPage['kind'] }
     : null;
+}
+
+export function toolPage(call: Extract<ConversationItem, { kind: 'tool' }>, outcome: ToolResult): Extract<ConversationItem, { kind: 'page' }> | undefined {
+  if (call.name === 'teamwork_page' && call.status === 'done' && outcome.page) {
+    return { kind: 'page', id: `page-${call.id}`, page: outcome.page };
+  }
 }
 
 /**
@@ -198,35 +268,72 @@ export function eventsOf(event: unknown, state: Pick<SessionState, 'items'>): Se
         : [];
     }
     case 'assistant/message': {
-      const said = text(isObject(data.message) ? data.message.content : undefined);
+      const content = isObject(data.message) ? data.message.content : undefined;
+      const said = text(content);
+      const reasoning = preview(visibleReasoning(text(content, 'reasoning')), REASONING_LIMIT);
+      const turn = typeof data.turn === 'number' ? data.turn : undefined;
       // The streamed text of the same step has this id, so the committed reply replaces it.
       const step = typeof data.turn === 'number' && typeof data.step === 'number' ? replyId(data.turn, data.step) : id;
-      return said ? [{ type: 'item', item: { kind: 'assistant', id: step, text: said } }] : [];
+      return said || reasoning.trim() ? [{ type: 'item', item: {
+        kind: 'assistant', id: step, text: said,
+        ...(reasoning.trim() ? { reasoning, turn } : {}),
+        ...(data.interrupted === true ? { interrupted: true } : {}),
+      } }] : [];
+    }
+    case 'deliverables/presented': {
+      const { turn, callId, files } = data;
+      if (typeof turn !== 'number' || !Number.isSafeInteger(turn) || turn < 1 || typeof callId !== 'string' || !callId || !Array.isArray(files)) return [];
+      return files.flatMap((entry: unknown, index): SessionChange[] => {
+        if (!isObject(entry) || (entry.description !== undefined && typeof entry.description !== 'string')) return [];
+        const file = fileTarget(entry.path);
+        if (!file || /^[a-z][a-z0-9+.-]*:\/\//i.test(file.path)) return [];
+        const description = typeof entry.description === 'string' ? preview(entry.description, TOOL_SUMMARY_LIMIT) : '';
+        return [{ type: 'item', item: { kind: 'deliverable', id: `${id}-file-${index}`, turn, file, ...(description ? { description } : {}) } }];
+      });
     }
     case 'tool/call': {
       if (typeof data.callId !== 'string') return [];
-      const item: ConversationItem = { kind: 'tool', id: data.callId, name: String(data.name ?? ''), summary: summarize(data.arguments), status: 'running' };
+      const name = String(data.name ?? '');
+      const key = toolKey(name);
+      const args = toolArgs(data.arguments);
+      const target = args.file_path ?? args.path;
+      const file = key === 'tools.read' || key === 'tools.write' || key === 'tools.edit'
+        ? fileTarget(target, key === 'tools.read' ? args.offset : undefined) : undefined;
+      const summary = [args.command, target, args.query, args.url, args.description].find((value): value is string => typeof value === 'string');
+      const item: ConversationItem = {
+        kind: 'tool', id: data.callId, name, status: 'running',
+        summary: preview(summary ?? '', TOOL_SUMMARY_LIMIT),
+        ...(typeof data.turn === 'number' ? { turn: data.turn } : {}),
+        ...(file ? { file } : {}),
+        ...(key === 'tools.command' && args.run_in_background === true ? { background: true } : {}),
+      };
       return [{ type: 'item', item }];
     }
     case 'tool/result': {
       const message = isObject(data.message) ? data.message : {};
       const callId = message.toolCallId;
-      const call = state.items.find((i) => i.kind === 'tool' && i.id === callId);
-      if (!call || call.kind !== 'tool') return [];
-      const done: SessionChange[] = [{ type: 'item', item: { ...call, status: message.isError === true ? 'failed' : 'done' } }];
-      const page = message.isError === true ? null : publishedPage(call.name, data.meta);
-      return page ? [...done, { type: 'item', item: { kind: 'page', id: `page-${call.id}`, page } }] : done;
+      if (typeof callId !== 'string') return [];
+      const result = toolResultOf(data, message);
+      const call = state.items.find((item) => item.kind === 'tool' && item.id === callId);
+      if (!call || call.kind !== 'tool') return [{ type: 'item', item: { kind: 'tool-result', id: `result-${callId}`, callId, result } }];
+      const settled = settleTool(call, result);
+      const page = toolPage(settled, result);
+      return [{ type: 'item', item: settled }, ...(page ? [{ type: 'item' as const, item: page }] : [])];
     }
     case 'turn/start':
       return [{ type: 'status', status: 'running' }];
     case 'turn/end': {
       const reason = isObject(data.reason) ? data.reason : {};
       const failure = reason.kind === 'error' && isObject(reason.error) ? reason.error : null;
-      if (!failure) return [{ type: 'status', status: 'idle' }];
+      const end: SessionChange[] = typeof data.turn === 'number'
+        ? [{ type: 'item', item: { kind: 'turn-end', id: `turn-end-${data.turn}`, turn: data.turn, completed: reason.kind === 'completed' } }]
+        : [];
+      if (!failure) return [...end, { type: 'status', status: 'idle' }];
       const message = typeof failure.message === 'string' ? failure.message : '';
       // DSH's words when a turn starts with no model selected (dsh-agent-loop's preStep).
       const noModel = message.includes('has no provider/model');
       return [
+        ...end,
         { type: 'item', item: { kind: 'failed', id, message, noModel } },
         { type: 'status', status: 'idle' },
       ];
@@ -241,7 +348,7 @@ const replyId = (turn: number, step: number) => `assistant-${turn}-${step}`;
 
 /** Which step each streaming attempt belongs to, and whether it has shown text yet. One per follow. */
 export interface Streams {
-  attempts: Map<string, { id: string; shown: boolean }>;
+  attempts: Map<string, { id: string; turn: number; shown: boolean }>;
 }
 export const newStreams = (): Streams => ({ attempts: new Map() });
 
@@ -250,23 +357,30 @@ export const newStreams = (): Streams => ({ attempts: new Map() });
  * text deltas become a reply that grows as the model writes. A retried attempt
  * starts its step's reply over; tool calls and usage are not shown.
  */
-export function streamEventsOf(frame: unknown, streams: Streams, state: Pick<SessionState, 'items'>): SessionChange[] {
+export function streamEventsOf(frame: unknown, streams: Streams): SessionChange[] {
   if (!isObject(frame) || typeof frame.attemptId !== 'string') return [];
   if (frame.type === 'start' && typeof frame.turn === 'number' && typeof frame.step === 'number') {
-    streams.attempts.set(frame.attemptId, { id: replyId(frame.turn, frame.step), shown: false });
+    streams.attempts.set(frame.attemptId, { id: replyId(frame.turn, frame.step), turn: frame.turn, shown: false });
     return [];
   }
   const attempt = streams.attempts.get(frame.attemptId);
   if (!attempt) return [];
   if (frame.type === 'end') {
     streams.attempts.delete(frame.attemptId);
-    return [];
+    const outcome = isObject(frame.outcome) ? frame.outcome : null;
+    return outcome?.kind === 'abandoned' || outcome?.eventType === 'assistant/attempt'
+      ? [{ type: 'discard-draft', id: attempt.id }]
+      : [];
   }
   const chunk = isObject(frame.chunk) ? frame.chunk : {};
-  if (frame.type !== 'chunk' || chunk.type !== 'text-delta' || typeof chunk.text !== 'string' || !chunk.text) return [];
-  if (attempt.shown && state.items.some((i) => i.id === attempt.id)) return [{ type: 'delta', id: attempt.id, text: chunk.text }];
+  const reasoning = chunk.type === 'reasoning-delta';
+  if (frame.type !== 'chunk' || (!reasoning && chunk.type !== 'text-delta') || typeof chunk.text !== 'string' || !chunk.text) return [];
+  if (attempt.shown) return [{ type: 'delta', id: attempt.id, text: chunk.text, ...(reasoning ? { reasoning: true, turn: attempt.turn } : {}) }];
   attempt.shown = true;
-  return [{ type: 'item', item: { kind: 'assistant', id: attempt.id, text: chunk.text } }];
+  return [{ type: 'item', item: {
+    kind: 'assistant', id: attempt.id, text: reasoning ? '' : chunk.text, streaming: true,
+    ...(reasoning ? { reasoning: preview(chunk.text, REASONING_LIMIT), turn: attempt.turn } : {}),
+  } }];
 }
 
 /**
@@ -286,13 +400,34 @@ export function historyOf(frame: unknown): Pick<SessionState, 'items' | 'status'
 }
 
 /** A follow's opening snapshot, folded into the state the screen starts from. */
-export function snapshotOf(frame: unknown): SessionState {
+export function snapshotOf(frame: unknown, streams = newStreams()): SessionState {
   let state: SessionState = { ...historyOf(frame), pending: null, closed: null };
-  // A reply being written when the follow opened: its text so far.
-  const active = isObject(frame) && isObject(frame.assistantStream) && isObject(frame.assistantStream.activeAttempt) ? frame.assistantStream.activeAttempt : null;
+  streams.attempts.clear();
+  const baseline = isObject(frame) && isObject(frame.assistantStream) ? frame.assistantStream : null;
+  const active = isObject(baseline?.activeAttempt) ? baseline.activeAttempt : null;
   if (active && typeof active.turn === 'number' && typeof active.step === 'number' && Array.isArray(active.stream)) {
-    const written = active.stream.map((c) => (isObject(c) && c.type === 'text-delta' && typeof c.text === 'string' ? c.text : '')).join('');
-    if (written) state = applyChange(state, { type: 'item', item: { kind: 'assistant', id: replyId(active.turn, active.step), text: written } });
+    const id = replyId(active.turn, active.step);
+    // Current DSH snapshots pack adjacent text deltas. Earlier hosts can send raw chunks.
+    const records: unknown[] = active.stream;
+    const collect = (kind: 'text' | 'reasoning') => records.flatMap((record) => {
+      if (!isObject(record)) return [];
+      if (record.type === `${kind}-chunks` && Array.isArray(record.texts)) {
+        return record.texts.filter((part: unknown): part is string => typeof part === 'string');
+      }
+      const chunk = record.type === 'chunk' ? record.chunk : record;
+      return isObject(chunk) && chunk.type === `${kind}-delta` && typeof chunk.text === 'string' ? [chunk.text] : [];
+    }).join('');
+    const written = collect('text');
+    const reasoning = preview(collect('reasoning'), REASONING_LIMIT);
+    // A follow can open between the durable message and the stream's terminal frame.
+    if (state.items.some((item) => item.id === id)) return state;
+    if (typeof active.attemptId === 'string') streams.attempts.set(active.attemptId, { id, turn: active.turn, shown: !!(written || reasoning) });
+    if (written || reasoning) {
+      state = applyChange(state, { type: 'item', item: {
+        kind: 'assistant', id, text: written, streaming: true, ...(reasoning ? { reasoning, turn: active.turn } : {}),
+      } });
+    }
+    if (written || reasoning || typeof active.attemptId === 'string') state = { ...state, status: 'running' };
   }
   return state;
 }
@@ -309,10 +444,17 @@ export function applyChange<S extends SessionState<unknown>>(state: S, change: S
       items[at] = change.item;
       return { ...state, items };
     }
+    case 'discard-draft':
+      return { ...state, items: state.items.filter((item) => item.id !== change.id || item.kind !== 'assistant' || !item.streaming) };
     case 'delta':
       return {
         ...state,
-        items: state.items.map((item) => (item.id === change.id && item.kind === 'assistant' ? { ...item, text: item.text + change.text } : item)),
+        items: state.items.map((item) => {
+          if (item.id !== change.id || item.kind !== 'assistant' || !item.streaming) return item;
+          return change.reasoning
+            ? { ...item, reasoning: preview((item.reasoning ?? '') + change.text, REASONING_LIMIT), turn: change.turn }
+            : { ...item, text: item.text + change.text };
+        }),
       };
   }
 }

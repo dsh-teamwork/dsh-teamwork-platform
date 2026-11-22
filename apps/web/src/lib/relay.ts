@@ -103,6 +103,17 @@ export async function browserCanJoin(): Promise<boolean> {
 
 export type MyComputer = Schemas['RelayHost'];
 
+export async function desktopWebAddress(hostId: string): Promise<string> {
+  const response = await fetch(`/api/relay/hosts/${encodeURIComponent(hostId)}/web/ticket`, {
+    method: 'POST', credentials: 'same-origin',
+  });
+  if (!response.ok) throw new Error(`desktop web ticket: ${response.status}`);
+  const { url } = await response.json() as { url: string };
+  const address = new URL(url);
+  if (address.protocol !== 'https:') throw new Error('invalid desktop web address');
+  return address.href;
+}
+
 /**
  * The member's own computers, most recently seen first, each with every device paired to it (`GET /relay/hosts`, ADR
  * 0048). This browser's handset credential goes along so its own pairings come back marked `current`.

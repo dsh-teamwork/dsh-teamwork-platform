@@ -13,6 +13,7 @@
  * What DSH sends is read in `dsh.ts`; this module only holds the state the screens follow.
  */
 
+import { unbase64 } from './secure-channel';
 import { z } from 'zod';
 import { UploadLimitsSchema } from './uploads';
 import { configurationOf, defaultDirectory, ModelSelectionSchema, startableDirectories } from './session-config';
@@ -58,6 +59,7 @@ export type DshSessions = Pick<
   | 'listFiles'
   | 'searchFiles'
   | 'readFile'
+  | 'readDocument'
   | 'uploadCapabilities'
   | 'startUpload'
   | 'uploadChunk'
@@ -107,6 +109,7 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
   'teamwork/file_type': 'file_type', 'teamwork/file_name': 'file_name', 'teamwork/file_too_large': 'file_too_large', 'teamwork/invalid_upload': 'invalid_upload',
   'teamwork/upload_expired': 'upload_expired', 'teamwork/upload_failed': 'upload_failed', 'session/attachment-invalid': 'upload_expired',
   'teamwork/locked': 'locked', 'teamwork/preset_changed': 'preset_changed', 'teamwork/model_unavailable': 'model_unavailable', 'teamwork/invalid_request': 'invalid_request',
+  'teamwork/document_too_large': 'document_too_large', 'teamwork/document_empty': 'document_empty', 'teamwork/preview_unavailable': 'preview_unavailable',
   'teamwork/permission_refused': 'permission_refused', 'teamwork/not_text': 'not_text', 'session/title-invalid': 'invalid_request', 'workspace/session-active': 'busy', 'workspace/not-found': 'not_found',
   // A cloud computer's server: an answer to a question no page of that computer still holds.
   'teamwork/stale': 'stale',
@@ -130,6 +133,7 @@ interface Follow {
   streamId: string;
   state: SessionState;
   streams: Streams;
+  opening?: object;
   emit: (event: SessionEvent) => void;
 }
 
@@ -169,6 +173,7 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
   function interrupted(follow: Follow, reason: RelayErrorCode) {
     if (follow.streamId && follow.streamId !== 'opening') link.close(follow.computerId, follow.streamId, false);
     follow.streamId = '';
+    follow.opening = undefined;
     follow.emit({ type: 'closed', reason });
     if (RETRIED.has(reason)) return retryLater();
     follows.delete(follow);
@@ -177,13 +182,16 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
   /** Opens a follow's stream: its snapshot, then every change. A failure ends it, or retries it (`interrupted`). */
   async function open(follow: Follow) {
     const { computerId, sessionId } = follow;
+    const opening = {};
+    follow.opening = opening;
     follow.streamId = 'opening';
     try {
       await watchEvents(computerId);
-      if (!follows.has(follow)) return;
+      if (!follows.has(follow) || follow.opening !== opening) return;
       const streamId = await link.open(computerId, 'session/follow', { request: { address: { kind: 'session', sessionId }, activate: true, assistantStream: true } }, (body) => {
         // Frames can come before `open` returns, while the follow still says it is opening.
-        if (follow.streamId !== streamId && follow.streamId !== 'opening') return;
+        if (!follows.has(follow) || follow.opening !== opening) return;
+        if (body.type === 'end') return interrupted(follow, 'unavailable');
         if (body.type === 'error') {
           const code = (body.error as { code?: unknown } | undefined)?.code;
           // DSH or its web server went away, and may come back; anything else is this session's own end.
@@ -193,25 +201,25 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
         const value = body.value as Record<string, unknown> | undefined;
         if (value?.type === 'snapshot') {
           retries = 0;
-          follow.state = { ...snapshotOf(value), pending: pendingFor(computerId, sessionId) };
+          follow.state = { ...snapshotOf(value, follow.streams), pending: pendingFor(computerId, sessionId) };
           return follow.emit({ type: 'snapshot', state: follow.state });
         }
         const changes =
           value?.type === 'event'
             ? eventsOf(value.event, follow.state)
             : value?.type === 'assistant-stream'
-              ? streamEventsOf(value.frame, follow.streams, follow.state)
+              ? streamEventsOf(value.frame, follow.streams)
               : [];
         for (const change of changes) {
           follow.state = applySessionEvent(follow.state, change);
           follow.emit(change);
         }
       });
-      if (follows.has(follow) && follow.streamId === 'opening') follow.streamId = streamId;
+      if (follows.has(follow) && follow.opening === opening) follow.streamId = streamId;
       // Stopped, or interrupted, while it opened.
       else link.close(computerId, streamId, true);
     } catch (error) {
-      if (!follows.has(follow) || follow.streamId !== 'opening') return;
+      if (!follows.has(follow) || follow.opening !== opening) return;
       follow.streamId = '';
       interrupted(follow, error instanceof RelayError ? error.code : 'unavailable');
     }
@@ -385,6 +393,36 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
       return z.object({ matches: z.string().array(), truncated: z.boolean() }).parse(await call(computerId, 'teamwork/searchFiles', { request: { sessionId, query } }));
     },
 
+    async readDocument(computerId, sessionId, path, signal) {
+      const chunkSize = 128 * 1024;
+      const schema = z.object({ version: z.string().min(1).max(128), size: z.number().int().positive().max(16 * 1024 * 1024),
+        offset: z.number().int().nonnegative(), data: z.string().min(1).max(Math.ceil(chunkSize / 3) * 4) });
+      let result: Uint8Array | undefined;
+      let version: string | undefined;
+      let offset = 0;
+      do {
+        signal?.throwIfAborted();
+        const answer = await call(computerId, 'teamwork/readDocument', {
+          request: { sessionId, path, offset, ...(version ? { version } : {}) },
+        }).catch((error: unknown) => {
+          // A plugin from before previews refuses the method itself.
+          throw error instanceof RelayError && error.code === 'configuration_unsupported' ? new RelayError('preview_unsupported') : error;
+        });
+        const response = schema.safeParse(answer);
+        signal?.throwIfAborted();
+        if (!response.success) throw new RelayError('unavailable');
+        const chunk = response.data;
+        result ??= new Uint8Array(chunk.size);
+        version ??= chunk.version;
+        if (chunk.offset !== offset || chunk.version !== version || chunk.size !== result.length) throw new RelayError('unavailable');
+        let data: Uint8Array;
+        try { data = unbase64(chunk.data); } catch { throw new RelayError('unavailable'); }
+        if (data.length !== Math.min(chunkSize, result.length - offset)) throw new RelayError('unavailable');
+        result.set(data, offset);
+        offset += data.length;
+      } while (offset < result.length);
+      return result;
+    },
     async readFile(computerId, sessionId, path) {
       return z.object({ path: z.string(), text: z.string(), bytes: z.number(), truncated: z.boolean() }).parse(await call(computerId, 'teamwork/readFile', { request: { sessionId, path } }));
     },

@@ -8,18 +8,21 @@
  */
 
 import { ArrowLeft, FileText, Folder, Loader, Search, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
-import { fileSize, type ConversationItem, type FileText as Text, type FolderListing, touchedFiles } from '@dsh-teamwork/relay-client';
+import { documentPreviewKind, fileSize, type ConversationItem, type FileText as Text, type FolderListing, touchedFiles } from '@dsh-teamwork/relay-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+
+const SessionDocumentPreview = lazy(() => import('./session-document-preview'));
 
 /** What the panel reads with: the computer's client, held to the calls it needs. */
 export interface FilesClient {
   listFiles(computerId: string, sessionId: string, path: string): Promise<FolderListing>;
   searchFiles(computerId: string, sessionId: string, query: string): Promise<{ matches: string[]; truncated: boolean }>;
+  readDocument(computerId: string, sessionId: string, path: string, signal?: AbortSignal): Promise<Uint8Array>;
   readFile(computerId: string, sessionId: string, path: string): Promise<Text>;
 }
 
@@ -174,6 +177,8 @@ function Browser({ client, computerId, sessionId, word, onOpen }: { client: File
 function Viewer({ client, computerId, sessionId, path, line, word, onBack }: { client: FilesClient; computerId: string; sessionId: string; path: string; line?: number; word: (error: unknown) => string; onBack: () => void }) {
   const t = useTranslations('team.dsh.browse');
   const [file, setFile] = useState<Text | null>(null);
+  const [document, setDocument] = useState<Uint8Array | null>(null);
+  const previewKind = documentPreviewKind(path);
   const [failed, setFailed] = useState<string | null>(null);
   const marked = useRef<HTMLTableRowElement>(null);
   useEffect(() => {
@@ -181,10 +186,16 @@ function Viewer({ client, computerId, sessionId, path, line, word, onBack }: { c
   }, [file]);
   useEffect(() => {
     let live = true;
-    client.readFile(computerId, sessionId, path).then((read) => { if (live) setFile(read); }, (error) => { if (live) setFailed(word(error)); });
-    return () => { live = false; };
+    const controller = new AbortController();
+    const fail = (error: unknown) => { if (live) setFailed(word(error)); };
+    if (previewKind) {
+      void client.readDocument(computerId, sessionId, path, controller.signal).then((bytes) => { if (live) setDocument(bytes); }, fail);
+    } else {
+      void client.readFile(computerId, sessionId, path).then((read) => { if (live) setFile(read); }, fail);
+    }
+    return () => { live = false; controller.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `word` is a fresh closure each render.
-  }, [client, computerId, sessionId, path]);
+  }, [client, computerId, sessionId, path, previewKind]);
   const lines = file ? file.text.replace(/\n$/, '').split('\n') : [];
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -197,7 +208,8 @@ function Viewer({ client, computerId, sessionId, path, line, word, onBack }: { c
         {file && <span className="shrink-0 text-xs text-muted-foreground">{fileSize(file.bytes)}</span>}
       </div>
       {failed && <p role="alert" className="p-4 text-sm text-destructive">{failed}</p>}
-      {!file && !failed && <Loader className="m-4 size-4 animate-spin text-muted-foreground" aria-hidden />}
+      {!file && !document && !failed && <Loader className="m-4 size-4 animate-spin text-muted-foreground" aria-hidden />}
+      {document && <Suspense fallback={<Loader className="m-4 size-4 animate-spin" />}><SessionDocumentPreview data={document} workbook={previewKind === 'workbook'} /></Suspense>}
       {file && (
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="min-w-full font-mono text-xs leading-5">
