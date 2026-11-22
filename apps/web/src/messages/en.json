@@ -1228,6 +1228,7 @@
       "intro": "The DSH on each computer you signed in to Teamwork. Open one to pair this browser with it, then work in its sessions, end-to-end encrypted between this browser and that computer.",
       "lastSeenShort": "Offline · {time}",
       "openWeb": "Open native DSH Web",
+      "openWebShort": "Web",
       "openWebFailed": "Could not open native DSH Web.",
       "notPairedShort": "Not paired",
       "offlineList": "Its sessions are listed here once it is online.",
