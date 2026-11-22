@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-22 — Native Web's live connection opens in Chromium
+
+- **What:** The desktop native Web gateway admits a request without Fetch Metadata when its Origin is the computer's own. Chromium sends none on a WebSocket handshake, so DSH's `/api/remote.mux` was refused with 403 and the page sat reconnecting. The rule is one function, `edition.FromOwnPages`, for every gateway an edition serves through `ServeSubdomains`.
+- **Why:** The native Web page loaded but never received its data.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/edition/origin.go`, `server/relay/web.go`, `docs/tech/relay.md`.
+
 ## 2026-11-22 — Owners can open native Web on their personal DSH
 
 - **What:** An online personal DSH may opt in to a native Web entry. The platform issues the owner a one-time ticket and proxies HTTP and WebSockets through the desktop plugin.

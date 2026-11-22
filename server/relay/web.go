@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
@@ -251,13 +252,8 @@ func (r *relay) serveDesktopWeb(w http.ResponseWriter, req *http.Request) {
 		http.NotFound(w, req)
 		return
 	}
-	site := req.Header.Get("Sec-Fetch-Site")
-	if site != "same-origin" && site != "none" {
-		http.Error(w, "Invalid fetch site", http.StatusForbidden)
-		return
-	}
-	if origin := req.Header.Get("Origin"); (origin != "" || req.Method != http.MethodGet && req.Method != http.MethodHead || req.Header.Get("Upgrade") != "") && origin != d.origin(label) {
-		http.Error(w, "Invalid origin", http.StatusForbidden)
+	if !edition.FromOwnPages(req, d.origin(label)) {
+		http.Error(w, "Cross-origin request refused", http.StatusForbidden)
 		return
 	}
 	d.mu.Lock()
