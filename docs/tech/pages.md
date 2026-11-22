@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-21
+> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-22
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -265,8 +265,9 @@ a 403, so its existence is not told.
 - **Where `/p/` is served: `CONTENT_URL`**, else `APP_URL`'s origin. The
   hosted service sets `https://artifacts.dshteam.work`, on a domain registered
   for untrusted content alone (its other subdomains serve the hosted edition's
-  cloud computers to their owners, each behind a `__Host-` cookie no page can
-  set or replace, and pages ignore cookies), so a page is another site from
+  cloud computers and members' personal DSHs to their owners, each behind a
+  `__Host-` cookie no page can set or replace and a Fetch Metadata check, and
+  pages ignore cookies), so a page is another site from
   the console as well as an opaque origin: the console's
   host-only cookies never go there, a page cannot pass for the console in the
   address bar, and a browser or WebView that ignored the sandbox still could

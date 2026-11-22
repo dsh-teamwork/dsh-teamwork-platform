@@ -11,10 +11,12 @@ original DSH UI, including configuration and plugin management, from a browser.
 
 A personal DSH may opt in through its Teamwork plugin. The owner requests a
 single-use ticket through the platform session or mobile Bearer. It becomes a
-host-only cookie on an origin that is independent of the platform's
-registrable domain and the cloud Web domain. The gateway checks Fetch Metadata
-on every proxied request, and requires the exact Origin for browser writes
-and upgrades. The ticket response starts a new same-origin navigation.
+host-only cookie on an origin on another site than the platform's. It may
+share a site with an edition's other subdomains (the hosted service's cloud
+computers), which the browser treats as one site, so the gateway does not
+rely on the site: it checks Fetch Metadata on every proxied request, and
+requires the exact Origin for browser writes and upgrades. The ticket
+response starts a new same-origin navigation.
 
 The existing authenticated host connection requests one outbound data socket
 for each upstream HTTP connection. The plugin signs in to the native Web

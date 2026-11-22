@@ -271,26 +271,11 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		Push: func() edition.SendPush { return push },
 		ServeSubdomains: func(domain string, h http.Handler) error {
 			domain = strings.ToLower(strings.Trim(domain, "."))
-			app, err := url.Parse(cfg.AppURL)
-			if err != nil {
+			if h == nil {
+				return fmt.Errorf("no handler for the subdomains of %q", domain)
+			}
+			if err := checkSubdomains(cfg.AppURL, domain, srv.Subdomains); err != nil {
 				return err
-			}
-			appHost := strings.ToLower(strings.TrimSuffix(app.Hostname(), "."))
-			if domain == appHost || strings.HasSuffix(appHost, "."+domain) {
-				return fmt.Errorf("subdomains of %q overlap the platform host", domain)
-			}
-			site, err := publicsuffix.EffectiveTLDPlusOne(domain)
-			if err != nil || net.ParseIP(domain) != nil || h == nil {
-				return fmt.Errorf("invalid subdomains of %q", domain)
-			}
-			if appSite, err := publicsuffix.EffectiveTLDPlusOne(appHost); err == nil && appSite == site {
-				return fmt.Errorf("subdomains of %q share the platform's registrable domain", domain)
-			}
-			for registered := range srv.Subdomains {
-				registeredSite, _ := publicsuffix.EffectiveTLDPlusOne(registered)
-				if site == registeredSite {
-					return fmt.Errorf("subdomains of %q share a registrable domain with %q", domain, registered)
-				}
 			}
 			if srv.Subdomains == nil {
 				srv.Subdomains = map[string]http.Handler{}
@@ -394,4 +379,31 @@ func (o storeObjects) Open(ctx context.Context, teamID, kind, id string) (io.Rea
 
 func (o storeObjects) Delete(ctx context.Context, teamID, kind, id string) error {
 	return o.store.DeleteObject(ctx, teamID, kind, id)
+}
+
+// checkSubdomains says whether an edition may serve every subdomain of domain
+// (edition.Host.ServeSubdomains): a registrable name on another site than
+// APP_URL's, so no page there shares the platform's cookies' site, and
+// neither inside nor around a domain already served, so each request has one
+// handler. Registrations may share a site with each other (c.dshteam.work and
+// d.dshteam.work): each handler refuses its siblings' requests itself.
+func checkSubdomains(appURL, domain string, served map[string]http.Handler) error {
+	app, err := url.Parse(appURL)
+	if err != nil {
+		return err
+	}
+	site, err := publicsuffix.EffectiveTLDPlusOne(domain)
+	if err != nil || net.ParseIP(domain) != nil {
+		return fmt.Errorf("invalid subdomains of %q", domain)
+	}
+	appHost := strings.ToLower(strings.TrimSuffix(app.Hostname(), "."))
+	if appSite, err := publicsuffix.EffectiveTLDPlusOne(appHost); domain == appHost || strings.HasSuffix(appHost, "."+domain) || err == nil && appSite == site {
+		return fmt.Errorf("subdomains of %q share the platform's site", domain)
+	}
+	for other := range served {
+		if other == domain || strings.HasSuffix(other, "."+domain) || strings.HasSuffix(domain, "."+other) {
+			return fmt.Errorf("subdomains of %q overlap those of %q", domain, other)
+		}
+	}
+	return nil
 }

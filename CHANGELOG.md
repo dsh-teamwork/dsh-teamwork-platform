@@ -9,9 +9,9 @@ are in `CLAUDE.md`, "The changelog".
 
 - **What:** An online personal DSH may opt in to a native Web entry. The platform issues the owner a one-time ticket and proxies HTTP and WebSockets through the desktop plugin.
 - **Why:** Owners need the original interface for settings and plugins as well as sessions.
-- **Breaking:** None.
-- **Upgrade:** Configure `DESKTOP_WEB_DOMAIN` and its wildcard DNS and TLS on the member-facing gateway, then opt in with `webRelay: true` in the desktop profile.
-- **Refs:** ADR 0064 and `docs/tech/relay.md`.
+- **Breaking:** An edition's subdomains (`edition.Host.ServeSubdomains`) may no longer sit on `APP_URL`'s registrable domain, which a server refuses at start; before, only `APP_URL`'s host and its parents were refused. Two registrations may now share a site, but neither may sit inside or around the other, and each handler refuses its siblings' requests itself.
+- **Upgrade:** Configure `DESKTOP_WEB_DOMAIN` (on another site than `APP_URL`'s, beside rather than inside any other domain an edition serves) and its wildcard DNS and TLS on the member-facing gateway, then opt in with `webRelay: true` in the desktop profile.
+- **Refs:** ADR 0064, `docs/tech/relay.md` and `server/app` (`checkSubdomains`).
 
 ## 2026-11-21 — My DSH's computers move into the sidebar, and sessions group as in DSH
 

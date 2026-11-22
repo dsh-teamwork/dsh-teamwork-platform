@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-21
+> **Status:** Current · **Updated:** 2026-11-22
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -699,8 +699,10 @@ the hosted edition, Cloud DSH.
 
 See [ADR 0064](../adr/0064-personal-dsh-native-web-relay.md).
 
-Set `DESKTOP_WEB_DOMAIN` to a domain separate from the platform's registrable
-domain and the cloud computer Web domain. Route its wildcard DNS and TLS to the same member-facing gateway
+Set `DESKTOP_WEB_DOMAIN` to a domain on another site than `APP_URL`'s, and
+neither inside nor around another domain an edition serves: it may share a
+site with one, since every edition subdomain refuses its siblings' requests
+by Fetch Metadata (`edition.Host.ServeSubdomains`). Route its wildcard DNS and TLS to the same member-facing gateway
 process that accepts `/relay/plugin`. The gateway keeps live host connections,
 pending tickets in memory, so the first implementation uses one
 process for these routes. Leave the variable empty to disable the gateway.

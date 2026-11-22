@@ -18,8 +18,14 @@ func TestAnEditionServesTheSubdomainsOfItsDomain(t *testing.T) {
 		if err := h.ServeSubdomains("c.example.test", serve); err != nil {
 			return nil, err
 		}
-		// APP_URL's own host and its parents are the site's, and a domain is taken once.
-		refused = append(refused, h.ServeSubdomains("127.0.0.1", serve), h.ServeSubdomains("0.1", serve), h.ServeSubdomains("C.example.test.", serve), h.ServeSubdomains("", serve), h.ServeSubdomains("web.example.test", serve), h.ServeSubdomains("nested.c.example.test", serve))
+		// A sibling on the same site has subdomains of its own.
+		sibling := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { io.WriteString(w, "sibling:"+r.Host) })
+		if err := h.ServeSubdomains("d.example.test", sibling); err != nil {
+			return nil, err
+		}
+		// An address or a bare suffix is no domain, and one is taken once: never
+		// again, inside another or around one, so each host has one handler.
+		refused = append(refused, h.ServeSubdomains("127.0.0.1", serve), h.ServeSubdomains("0.1", serve), h.ServeSubdomains("C.example.test.", serve), h.ServeSubdomains("", serve), h.ServeSubdomains("nested.c.example.test", serve), h.ServeSubdomains("example.test", serve), h.ServeSubdomains("d.example.test", serve))
 		return nil, nil
 	}}
 	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{}, func(t *testing.T, in *editiontest.Instance) {
@@ -43,6 +49,9 @@ func TestAnEditionServesTheSubdomainsOfItsDomain(t *testing.T) {
 			if body, res := get(host, "/api/configs"); body != "edition:"+host || res.Header.Get("X-Frame-Options") != "DENY" {
 				t.Errorf("%s: %q %v", host, body, res.Header)
 			}
+		}
+		if body, _ := get("abc.d.example.test", "/api/configs"); body != "sibling:abc.d.example.test" {
+			t.Errorf("the sibling's subdomain reached %q", body)
 		}
 		for _, host := range []string{"c.example.test", "abc.c.example.test.evil", "abcc.example.test"} {
 			if body, _ := get(host, "/api/configs"); body == "edition:"+host {
