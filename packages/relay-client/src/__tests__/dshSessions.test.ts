@@ -161,7 +161,8 @@ describe('a computer\'s sessions over any link', () => {
       return { offset, size: full.length, version: 'stable', data: base64(full.subarray(offset, offset + 128 * 1024)) };
     });
     const sessions = createDshSessions({ ...link, call }, { locale: () => 'en', nextId: () => 'id' });
-    expect(await sessions.readDocument('cloud', 's1', 'report.pdf')).toEqual(full);
+    const received = await sessions.readDocument('cloud', 's1', 'report.pdf');
+    expect(Buffer.from(received).equals(Buffer.from(full))).toBe(true);
     expect(call).toHaveBeenCalledTimes(2);
 
     const controller = new AbortController();
