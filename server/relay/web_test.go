@@ -200,7 +200,8 @@ func TestDesktopWebRelay(t *testing.T) {
 		browserError := make(chan error, 1)
 		go func() {
 			ws, _, err := websocket.Dial(ctx, in.URL+"/api/remote.mux", &websocket.DialOptions{
-				Host: entry.Host, HTTPHeader: http.Header{"Cookie": {cookies[0].String()}, "Origin": {entry.Scheme + "://" + entry.Host}, "Sec-Fetch-Site": {"same-origin"}},
+				Host:       entry.Host, // As Chromium sends it: an Origin and no Fetch Metadata.
+				HTTPHeader: http.Header{"Cookie": {cookies[0].String()}, "Origin": {entry.Scheme + "://" + entry.Host}},
 			})
 			if err != nil {
 				browserError <- err

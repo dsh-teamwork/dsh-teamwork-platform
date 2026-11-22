@@ -735,7 +735,10 @@ and turns off again when the owner signs out or changes server. The platforms li
 opted-in computer is connected. The owner can obtain a minute-long entry
 ticket with their web session or mobile Bearer. Redemption is single-use, each connected host keeps at most eight unspent
 tickets and can issue thirty per minute. The browser receives a sealed host-only cookie. The gateway
-rejects proxied requests with cross-origin or missing browser Fetch Metadata.
+admits a proxied request only from the computer's own pages or straight from
+its owner (`edition.FromOwnPages`): Fetch Metadata `same-origin` or `none`,
+or, where a browser sends none, as Chromium does on a WebSocket handshake,
+the exact Origin.
 Turning the feature off, signing out or reconnecting closes forwarded streams
 and requires a fresh ticket.
 

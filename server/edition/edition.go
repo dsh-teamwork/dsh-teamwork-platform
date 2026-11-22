@@ -158,7 +158,7 @@ type Host struct {
 	// another registration, but may share a site with one (c.example.com and
 	// d.example.com): the browser then sends a SameSite=Lax cookie on a
 	// sibling's requests, so h must refuse any request its own pages did not
-	// make (Fetch Metadata and Origin).
+	// make (FromOwnPages).
 	ServeSubdomains func(domain string, h http.Handler) error
 	// TeamDSHAllowed asks that gate about one team: true where none is set.
 	TeamDSHAllowed func(ctx context.Context, teamID string) (bool, error)

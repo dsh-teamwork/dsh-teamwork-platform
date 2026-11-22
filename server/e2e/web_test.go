@@ -176,8 +176,9 @@ func TestPluginNativeWeb(t *testing.T) {
 
 		// DSH's own WebSocket rides the same tunnel, with its Origin and sign-in.
 		ws, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(in.URL, "http")+"/api/remote.mux", &websocket.DialOptions{
-			Host:       authority,
-			HTTPHeader: http.Header{"Cookie": {cookie.String()}, "Origin": {origin}, "Sec-Fetch-Site": {"same-origin"}},
+			Host: authority,
+			// As Chromium sends it: an Origin and no Fetch Metadata.
+			HTTPHeader: http.Header{"Cookie": {cookie.String()}, "Origin": {origin}},
 		})
 		if err != nil {
 			t.Fatalf("websocket: %v", err)
