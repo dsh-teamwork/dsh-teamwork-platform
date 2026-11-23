@@ -5,6 +5,38 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — A new team's assistant is prompted in its creator's language
+
+- **What:** Creating a team now writes its built-in assistant's prompt in the creator's language too, as its name and description already were (`server/internal/team/assistant.json`, `systemPrompt` per locale). The Chinese prompt says what the English one says, and both still ask the model to answer in each user's language. Existing teams keep the prompt they were given.
+- **Why:** A Chinese-speaking admin opening the assistant's details saw an English prompt among Chinese fields.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/team/assistant.go`, `server/internal/httpapi/assistant_test.go`.
+
+## 2026-11-23 — Team toolbox, and models with their usage
+
+- **What:** Workspace's *Team resources* is now the **Team toolbox** (`/teams/{teamId}/resources`, path unchanged): the team's presets and plugins, and, while none of the reader's computers has signed in, a line leading to connecting DSH. Each preset and plugin opens its details in a dialog (every field, as the review reads it), where a member suggests a change to a preset. My submissions is no longer a page (`/teams/{teamId}/submissions` is gone) but a dialog opened from the toolbox's header, shown once the reader has sent anything, or by `?submissions` from Home; the review queue keeps `/sharing`. Its models moved to *My usage*, now **Models and usage** (`/my-usage`, path unchanged, since the plugin links to it), where one table lists every team model with its rate and what the reader spent on it in the period, then a removed model's and each edition meter's spend. My DSH with no computer shows the same sign-in steps as Home, alone, without its column of sessions (`pages/team/connect-dsh.tsx`, now shared by Home, the team overview, My DSH and the toolbox). Home's last figure counts the toolbox's presets and plugins. The DSH plugin's panel says *team toolbox* where it said *team resources*.
+- **Why:** A member opens the toolbox to see what the team gives them to work with, and looks at models for what they cost and what they used.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/resources.tsx`, `apps/web/src/pages/team/my-usage.tsx`, `apps/web/src/pages/team/connect-dsh.tsx`, `apps/web/content/docs/*/members.md`.
+
+## 2026-11-23 — Workspace puts the DSHs to work in first
+
+- **What:** A team's Workspace navigation now reads Home, My DSH, an edition's own DSH pages (the hosted service's cloud DSH), Shared pages, Team resources, My usage. My DSH is always listed, no longer only once a computer connected; with none it says how to connect one. The navigation carries no hints: its question marks are gone (`Section.hint`, `TeamPage.hints` and `team.nav.hints` with them), and what a page is for is said on the page itself, as Shared pages now does when no page is open and My DSH while no computer has connected. `Section.visible` in the console shell is gone with its last use, and a section's `editions` places an edition's pages of its group right after it.
+- **Why:** Workspace is for working: the places to work come first, what the team shares next, one's own spend last. New members could not tell what the two shared pages were for.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/console-shell.tsx`, `apps/web/content/docs/*/members.md`.
+
+## 2026-11-23 — A team's first page leads with connecting your own DSH
+
+- **What:** A team's Home (everyone) and Team overview (its admin) open with **Connect your DSH** until it is done: (1) sign in to Teamwork from DSH on the computer, with the plugin's package and `/teamwork login` to copy, and the server to set only where it is not the plugin's default; (2) carry on from a browser (My DSH) or the phone app, paired with the computer. Each step ticks itself off from the member's computers on the relay (`GET /relay/hosts`), read every ten seconds until done; once DSH is signed in the second step can be put off for this browser. Done, it folds to one line opening My DSH. The overview's getting-started list drops *Connect a provider* and *Add a preset* (every team has the Team assistant, and a hosted team its models) and keeps *a model the team can call* and *members*; the overview's member instructions become an **Invite members** card linking to the members page. The teams page's welcome steps say the same.
+- **Why:** A new team already has a preset, and on the hosted service models, so the first thing anyone needs is their DSH connected; the checklist sent a hosted admin to paste an API key they did not need, and the admin was never asked to connect their own DSH.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/overview.tsx`, `apps/web/content/docs/*/admins.md`, `apps/web/content/docs/*/members.md`.
+
 ## 2026-11-23 — Escape folds Team management
 
 - **What:** Escape dismisses the topmost dialog first, then folds Team management on the next press. In the narrow sidebar, another press closes the navigation drawer.

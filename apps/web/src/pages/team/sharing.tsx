@@ -1,8 +1,8 @@
 /**
  * Submissions and review: members submit presets and plugin packages, and an
- * admin approves the exact contents before the team gets them. One page in two
- * places (ADR 0043): reached from Team resources, where new ones are sent,
- * `/teams/{teamId}/submissions` is the reader's own submissions; under Team assets,
+ * admin approves the exact contents before the team gets them. One list in two
+ * places (ADR 0043): in the Team toolbox, where new ones are sent, the reader's
+ * own submissions open in a dialog (`MySubmissions`); under Team assets,
  * `/teams/{teamId}/sharing` is the admin's review queue, opening on what
  * waits, with the team's whole history one tab away. Submitting a preset or a
  * plugin happens in a dialog; each submission is a row that opens to show,
@@ -12,7 +12,6 @@
 
 import { ChevronRight, Layers, Package, Puzzle } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router';
 import { useFormatter, useNow, useTranslations } from 'use-intl';
 
 import { Failure } from '@/components/page';
@@ -46,12 +45,40 @@ interface Target {
 
 const PAGE = 50;
 
-export function TeamSharingPage({ view }: { view: 'mine' | 'review' }) {
+/** The admin's review queue, under Team assets. */
+export function TeamSharingPage() {
   const { team } = useTeam();
-  return <Sharing key={`${team.id}-${view}`} team={team} review={view === 'review'} />;
+  const t = useTranslations('team.sharing');
+  const tn = useTranslations('team.nav');
+  return (
+    <>
+      <PageHeader title={tn('sharing')} description={t('adminHint')} />
+      <Submissions key={team.id} team={team} review />
+    </>
+  );
 }
 
-function Sharing({ team, review }: { team: Team; review: boolean }) {
+/** The reader's own submissions, in a dialog over the Team toolbox; `reload` reads again what the toolbox shows of them. */
+export function MySubmissions({ reload, onClose }: { reload: Reload; onClose: () => void }) {
+  const { team } = useTeam();
+  const t = useTranslations('team.sharing');
+  const tn = useTranslations('team.nav');
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{tn('submissions')}</DialogTitle>
+          <DialogDescription>{t('memberHint')}</DialogDescription>
+        </DialogHeader>
+        <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
+          <Submissions team={team} review={false} changed={reload} />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Submissions({ team, review, changed }: { team: Team; review: boolean; changed?: Reload }) {
   const t = useTranslations('team.sharing');
   const tn = useTranslations('team.nav');
   const word = useTeamError();
@@ -62,7 +89,7 @@ function Sharing({ team, review }: { team: Team; review: boolean }) {
   const rows = useApi<Submission[]>(`teams/${team.id}/submissions?offset=${offset}${tab === 'pending' ? '&state=pending' : ''}${review ? '' : '&mine=true'}`);
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
   // A decision or a submission changes what waits for review, so the sidebar's dot reads again too.
-  const reload = () => Promise.all([rows.reload(), configs.reload(), reloadTeamSummary()]);
+  const reload = () => Promise.all([rows.reload(), configs.reload(), reloadTeamSummary(), changed?.()]);
   const [dialog, setDialog] = useState<{ kind: 'preset'; proposal?: Proposal; note?: string; target?: Target } | null>(null);
 
   const failed = (!rows.data && rows.error) || (!configs.data && configs.error);
@@ -72,19 +99,6 @@ function Sharing({ team, review }: { team: Team; review: boolean }) {
 
   return (
     <>
-      <PageHeader
-        title={tn(review ? 'sharing' : 'submissions')}
-        description={review ? t('adminHint') : t('memberHint')}
-        action={
-          // New ones are sent from Team resources, beside what they would change.
-          !review && (
-            <Button asChild variant="outline">
-              <Link to={`/teams/${team.id}/resources`}>{t('submitNew')}</Link>
-            </Button>
-          )
-        }
-      />
-
       <div role="tablist" aria-label={tn(review ? 'sharing' : 'submissions')} className="flex w-fit rounded-lg border p-0.5">
         {tabs.map((key) => (
           <button

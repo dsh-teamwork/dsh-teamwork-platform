@@ -4,8 +4,12 @@ description: Create a team, connect a provider, publish models and presets, brin
 ---
 
 A team is ready when it has a model members can call, a preset to start from,
-and its members. As the team's admin you land on its **Team overview**, which
-tracks these steps, and once the team is running opens with what waits on you:
+and its members. Every new team starts with the **Team assistant** preset, and
+on the hosted service with its platform models too. As the team's admin you land
+on its **Team overview**. Until your own DSH is connected it opens with that:
+sign in to Teamwork from DSH on your computer, then pair a browser (**My DSH**)
+or the phone app with it. Below that it tracks what the team still lacks, and
+once the team is running opens with what waits on you:
 submissions to review, budgets near their limit, calls to resolve and budget
 mail that failed. It heads **Team management** at the foot of the sidebar,
 which only the team's admin sees, with **Team assets** (models, presets,

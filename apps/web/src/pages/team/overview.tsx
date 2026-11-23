@@ -1,17 +1,21 @@
 /**
  * The two summaries of a team (ADR 0049). The workspace's home
  * (`/teams/{teamId}/home`) is everyone's own, an admin's included: what waits
- * on the reader, their last 30 days, what the team changed lately and how DSH
- * joins. The team overview (`/teams/{teamId}/overview`, Team management) is
- * the admin's, where an admin lands: what waits on the team, its last 30
- * days, getting started until it is done, its resources and the instructions
- * to send a new member. Both read `GET …/summary`, the home in its default
- * scope, the caller's own, and the overview with `scope=team`.
+ * on the reader, their last 30 days and what the team changed lately. The
+ * team overview (`/teams/{teamId}/overview`, Team management) is the admin's,
+ * where an admin lands: what waits on the team, its last 30 days, getting
+ * started until it is done, its resources and what to send a new member. Both
+ * read `GET …/summary`, the home in its default scope, the caller's own, and
+ * the overview with `scope=team`.
+ *
+ * Both open with connecting the reader's own DSH until it is done
+ * (./connect-dsh.tsx): a new team already has a preset, and on the hosted
+ * service its models, so the first thing anyone needs is their DSH signed in.
  */
 
 import { formatPoints } from '@dsh-teamwork/shared';
-import { ArrowRight, Check, CircleCheck, CircleSlash, Gauge, GitPullRequestArrow, MailWarning, ReceiptText, Tag } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { ArrowRight, CircleCheck, CircleSlash, Gauge, GitPullRequestArrow, MailWarning, ReceiptText, Tag } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useFormatter, useLocale, useNow, useTranslations } from 'use-intl';
 
@@ -20,14 +24,13 @@ import { Failure } from '@/components/page';
 import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Provider, Schemas, Team, TeamConfig } from '@/lib/api';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Schemas, Team, TeamConfig } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 
+import { ConnectDsh, DshConnected, Mark, useOwnDsh } from './connect-dsh';
 import { useTeam } from './layout';
-
-const LOGIN = '/teamwork login';
 
 type Summary = Schemas['TeamSummary'];
 /** Whose summary a page shows: the reader's own, or the team's for its admin. */
@@ -40,6 +43,7 @@ export function TeamHomePage() {
   const word = useTeamError();
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
   const summary = useApi<Summary>(`teams/${team.id}/summary`);
+  const dsh = useOwnDsh();
   const base = `/teams/${team.id}`;
   if (!configs.data) return configs.error ? <Failure message={word(configs.error)} /> : null;
   const count = (kind: TeamConfig['kind']) => configs.data!.filter((c) => c.kind === kind).length;
@@ -47,29 +51,29 @@ export function TeamHomePage() {
   return (
     <>
       <PageHeader title={team.name} description={t('description')} />
+      <ConnectDsh dsh={dsh} base={base} />
       <Waiting scope="me" summary={summary.data} base={base} />
       <Figures
         scope="me"
         summary={summary.data}
         last={{
-          label: t('figures.resources'),
-          value: configs.data.length,
-          note: t('figures.resourcesNote', { models: count('model'), presets: count('preset'), plugins: count('plugin') }),
+          label: t('figures.toolbox'),
+          value: count('preset') + count('plugin'),
+          note: t('figures.toolboxNote', { presets: count('preset'), plugins: count('plugin') }),
           href: `${base}/resources`,
         }}
       />
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div className={cn('grid items-start gap-6', dsh.done && 'lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]')}>
         <Recent
           configs={configs.data}
           title={t('updates')}
           action={
             <Button asChild size="sm" variant="outline">
-              <Link to={`${base}/resources`}>{t('allResources')}</Link>
+              <Link to={`${base}/resources`}>{t('openToolbox')}</Link>
             </Button>
           }
         />
-        {/* Calls in the last 30 days say this person's DSH is connected: the steps fold away until they are wanted again. */}
-        <Connect team={team} invite={false} connected={(summary.data?.calls ?? 0) > 0} />
+        {dsh.done && <DshConnected dsh={dsh} base={base} />}
       </div>
     </>
   );
@@ -81,24 +85,22 @@ export function TeamOverviewPage() {
   const t = useTranslations('team');
   const word = useTeamError();
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
-  const providers = useApi<Provider[]>(`teams/${team.id}/providers`);
-  const failed = (!configs.data && configs.error) || (!providers.data && providers.error);
-  if (failed) return <Failure message={word(failed)} />;
-  if (!configs.data || !providers.data) return null;
-  const count = (kind: TeamConfig['kind']) => configs.data!.filter((c) => c.kind === kind).length;
+  const dsh = useOwnDsh();
+  if (!configs.data) return configs.error ? <Failure message={word(configs.error)} /> : null;
+  const models = configs.data.filter((c) => c.kind === 'model').length;
   const base = `/teams/${team.id}`;
-  // In the order a new team gets ready: each step needs the one before it.
+  // What a new team still lacks. Its preset is there from the start (the team assistant), and on the hosted service
+  // its models too, so often only the members remain. A model is ready once it has a rate: no call reaches it before
+  // (ADR 0050); a hosted model is priced by the service.
   const steps = [
-    { key: 'provider', hint: 'hint', done: providers.data.length > 0, href: `${base}/models` },
-    // A model is ready once it has a rate: no call reaches it before (ADR 0050).
-    { key: 'model', hint: 'hint', done: count('model') > 0 && (teamSummary?.unpricedModels.length ?? 0) === 0, href: `${base}/models` },
-    { key: 'preset', hint: 'hint', done: count('preset') > 0, href: `${base}/presets` },
+    { key: 'model', hint: models > 0 ? 'hintRates' : 'hint', done: models > 0 && (teamSummary?.unpricedModels.length ?? 0) === 0, href: `${base}/models` },
     { key: 'members', hint: passwords ? 'hintPasswords' : 'hint', done: team.members.length > 1, href: `${base}/members` },
   ] as const;
 
   return (
     <>
       <PageHeader title={t('nav.overview')} description={t('overview.descriptionTeam')} />
+      <ConnectDsh dsh={dsh} base={base} />
       <Waiting scope="team" summary={teamSummary} base={base} />
       <Figures
         scope="team"
@@ -110,8 +112,10 @@ export function TeamOverviewPage() {
           {!steps.every((s) => s.done) && <Setup steps={steps} />}
           <Resources configs={configs.data} base={base} />
         </div>
-        {/* This server's address: the plugin signs in to whichever server it is set to. */}
-        <Connect team={team} invite connected={false} />
+        <div className="flex min-w-0 flex-col gap-6">
+          {dsh.done && <DshConnected dsh={dsh} base={base} />}
+          <Invite team={team} base={base} />
+        </div>
       </div>
     </>
   );
@@ -156,7 +160,7 @@ function Waiting({ scope, summary, base }: { scope: Scope; summary?: Summary; ba
       key: 'reviews',
       icon: <GitPullRequestArrow className="size-4" aria-hidden />,
       text: t(scope === 'team' ? 'reviews' : 'reviewsMine', { count: summary.pendingReviews }),
-      href: scope === 'team' ? `${base}/sharing` : `${base}/submissions`,
+      href: scope === 'team' ? `${base}/sharing` : `${base}/resources?submissions`,
     });
   }
   for (const limit of summary.nearLimit) {
@@ -273,7 +277,7 @@ function Figures({ scope, summary, last }: { scope: Scope; summary?: Summary; la
 }
 
 /** Getting a new team ready, shown to an admin until every step is done. */
-function Setup({ steps }: { steps: readonly { key: 'provider' | 'model' | 'preset' | 'members'; hint: 'hint' | 'hintPasswords'; done: boolean; href: string }[] }) {
+function Setup({ steps }: { steps: readonly { key: 'model' | 'members'; hint: 'hint' | 'hintRates' | 'hintPasswords'; done: boolean; href: string }[] }) {
   const t = useTranslations('team.overview');
   const done = steps.filter((s) => s.done).length;
   return (
@@ -288,15 +292,7 @@ function Setup({ steps }: { steps: readonly { key: 'provider' | 'model' | 'prese
         <ol>
           {steps.map((step, i) => (
             <li key={step.key} className="flex items-center gap-3 border-t px-6 py-3">
-              <span
-                className={cn(
-                  'grid size-6 shrink-0 place-items-center rounded-full border text-xs font-semibold',
-                  step.done ? 'border-primary bg-primary text-primary-foreground' : 'text-muted-foreground',
-                )}
-                aria-hidden
-              >
-                {step.done ? <Check className="size-3.5" /> : i + 1}
-              </span>
+              <Mark n={i + 1} done={step.done} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className={cn('text-sm font-medium', step.done && 'text-muted-foreground')}>{t(`steps.${step.key}.title`)}</span>
                 <span className="text-xs text-muted-foreground">{t(`steps.${step.key}.${step.hint}`)}</span>
@@ -314,74 +310,23 @@ function Setup({ steps }: { steps: readonly { key: 'provider' | 'model' | 'prese
   );
 }
 
-/**
- * How DSH joins, in three steps: install the plugin, point it at this server, sign in. On the team overview the
- * admin can copy the whole of it to send to a new member; on the home, once the reader's DSH is connected, it folds
- * to one line that opens it again.
- */
-function Connect({ team, invite, connected }: { team: Team; invite: boolean; connected: boolean }) {
+/** For the admin: the instructions to send a new member, beside the members page where the invitation is made. */
+function Invite({ team, base }: { team: Team; base: string }) {
   const t = useTranslations('team.overview');
-  const [open, setOpen] = useState(false);
-  // This instance's address: the plugin signs in to whichever server it is set to.
-  const server = window.location.origin;
-  const code = (chunks: ReactNode) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] text-foreground">{chunks}</code>;
-  if (connected && !open) {
-    return (
-      <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3">
-          <span className="flex min-w-0 flex-col gap-1">
-            <CardTitle className="flex items-center gap-2">
-              <CircleCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-              {t('connected')}
-            </CardTitle>
-            <span className="text-xs text-muted-foreground">{t('connectedHint')}</span>
-          </span>
-          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-            {t('showSteps')}
-          </Button>
-        </CardHeader>
-      </Card>
-    );
-  }
+  const { passwords } = useTeam();
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between gap-3">
-        <CardTitle>{invite ? t('connectAdmin') : t('connectMember')}</CardTitle>
-        {invite && <CopyButton text={t('connectMessage', { team: team.name, server })} label={t('copyMessage')} />}
+      <CardHeader>
+        <CardTitle>{t('inviteTitle')}</CardTitle>
+        <CardDescription>{t(passwords ? 'inviteBodyPasswords' : 'inviteBody')}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ol className="flex flex-col gap-3 text-sm">
-          <li className="flex gap-3">
-            <Step n={1} />
-            <span className="text-muted-foreground">
-              {t.rich('connectInstall', { link: (chunks) => <a href="/docs/install" className="text-foreground underline underline-offset-4">{chunks}</a> })}
-            </span>
-          </li>
-          <li className="flex gap-3">
-            <Step n={2} />
-            <span className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{t.rich('connectServer', { server, code })}</span>
-          </li>
-          <li className="flex gap-3">
-            <Step n={3} />
-            <span className="flex min-w-0 flex-1 flex-col gap-2 text-muted-foreground">
-              {t('connectSignIn')}
-              <span className="flex items-center gap-2 rounded-md border bg-muted py-1.5 pr-1.5 pl-3 font-mono text-sm text-foreground">
-                <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{LOGIN}</span>
-                <CopyButton text={LOGIN} />
-              </span>
-            </span>
-          </li>
-        </ol>
+      <CardContent className="flex flex-wrap gap-2">
+        <Button asChild size="sm">
+          <Link to={`${base}/members`}>{t(passwords ? 'inviteActionPasswords' : 'inviteAction')}</Link>
+        </Button>
+        <CopyButton text={t('connectMessage', { team: team.name, server: window.location.origin })} label={t('copyMessage')} />
       </CardContent>
     </Card>
-  );
-}
-
-function Step({ n }: { n: number }) {
-  return (
-    <span aria-hidden className="grid size-5 shrink-0 place-items-center rounded-full border text-[11px] font-semibold text-muted-foreground">
-      {n}
-    </span>
   );
 }
 
