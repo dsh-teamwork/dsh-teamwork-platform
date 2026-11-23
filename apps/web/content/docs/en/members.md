@@ -54,8 +54,9 @@ stays yours until you share it.
 
 ## Work on your own DSH from the browser
 
-**My DSH** appears under Workspace once a computer of yours, with DSH signed in
-to Teamwork, has connected. Its computers fold out beneath it in the sidebar,
+**My DSH** sits under Home in Workspace. Every computer of yours whose DSH
+signed in to Teamwork is listed there; until one has, it says how to connect
+one. Its computers fold out beneath it in the sidebar,
 the same in every team, each with a dot that is green while it is online; the
 arrow at the end of **My DSH** folds them away. Open one and its sessions fill
 the column beside the sidebar, under its name, its operating system and its

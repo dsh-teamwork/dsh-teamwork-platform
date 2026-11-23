@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — Workspace puts the DSHs to work in first
+
+- **What:** A team's Workspace navigation now reads Home, My DSH, an edition's own DSH pages (the hosted service's cloud DSH), Shared pages, Team resources, My usage. My DSH is always listed, no longer only once a computer connected; with none it says how to connect one. Shared pages and Team resources carry a hint saying what each is for. `Section.visible` in the console shell is gone with its last use, and a section's `editions` places an edition's pages of its group right after it.
+- **Why:** Workspace is for working: the places to work come first, what the team shares next, one's own spend last. New members could not tell what the two shared pages were for.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/console-shell.tsx`, `apps/web/content/docs/*/members.md`.
+
 ## 2026-11-23 — A team's first page leads with connecting your own DSH
 
 - **What:** A team's Home (everyone) and Team overview (its admin) open with **Connect your DSH** until it is done: (1) sign in to Teamwork from DSH on the computer, with the plugin's package and `/teamwork login` to copy, and the server to set only where it is not the plugin's default; (2) carry on from a browser (My DSH) or the phone app, paired with the computer. Each step ticks itself off from the member's computers on the relay (`GET /relay/hosts`), read every ten seconds until done; once DSH is signed in the second step can be put off for this browser. Done, it folds to one line opening My DSH. The overview's getting-started list drops *Connect a provider* and *Add a preset* (every team has the Team assistant, and a hosted team its models) and keeps *a model the team can call* and *members*; the overview's member instructions become an **Invite members** card linking to the members page. The teams page's welcome steps say the same.

@@ -572,7 +572,9 @@
       "submissions": "My submissions",
       "myDsh": "My DSH",
       "hints": {
-        "myDsh": "DSH on your own computer, listed here once it signs in to Teamwork. Pair this browser with it once to carry on its sessions here, end-to-end encrypted. Its model usage counts as yours. Only you can use it; the phones and browsers that reach it are listed here, and you can remove any of them."
+        "myDsh": "DSH on your own computer, listed here once it signs in to Teamwork. Pair this browser with it once to carry on its sessions here, end-to-end encrypted. Its model usage counts as yours. Only you can use it; the phones and browsers that reach it are listed here, and you can remove any of them.",
+        "pages": "Reports, decks, dashboards and charts that agents in your DSH sessions published. Open one full screen, share it with teammates, or ask your agent for a new version.",
+        "resources": "The models, presets and plugins the team publishes to your DSH. Send a preset that works well for review, and once approved the whole team has it."
       },
       "pages": "Pages"
     },
