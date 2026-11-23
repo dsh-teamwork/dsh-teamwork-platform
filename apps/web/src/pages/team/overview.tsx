@@ -160,7 +160,7 @@ function Waiting({ scope, summary, base }: { scope: Scope; summary?: Summary; ba
       key: 'reviews',
       icon: <GitPullRequestArrow className="size-4" aria-hidden />,
       text: t(scope === 'team' ? 'reviews' : 'reviewsMine', { count: summary.pendingReviews }),
-      href: scope === 'team' ? `${base}/sharing` : `${base}/submissions`,
+      href: scope === 'team' ? `${base}/sharing` : `${base}/resources?submissions`,
     });
   }
   for (const limit of summary.nearLimit) {

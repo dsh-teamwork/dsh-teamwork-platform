@@ -842,7 +842,6 @@
       "memberHint": "What you submitted to the team, and what its admin decided.",
       "submitPreset": "Submit a preset",
       "uploadPlugin": "Upload a plugin",
-      "submitNew": "Submit something new",
       "tabPending": "Waiting for review",
       "tabAll": "All submissions",
       "empty": "No submissions yet.",
@@ -963,6 +962,7 @@
         "optionalTools": "Optional tools",
         "pluginDependencies": "Plugins",
         "tools": "Tools",
+        "providesTools": "Tools it provides",
         "outputDescription": "Deliverable",
         "instructions": "Instructions",
         "systemPrompt": "Role prompt"
@@ -984,7 +984,8 @@
       "importPreset": "Import a preset",
       "manage": "Manage in Team assets",
       "waiting": "{count} awaiting review",
-      "connect": "These presets and plugins show up in your own DSH. Yours is not connected yet: Home has the steps."
+      "connect": "These presets and plugins show up in your own DSH. Yours is not connected yet: Home has the steps.",
+      "close": "Close"
     },
     "myUsage": {
       "title": "Models and usage",

@@ -66,8 +66,6 @@ interface Section {
   fill?: boolean;
   /** Whether its entry carries a hint, `nav.hints.{key}`, saying what the page is for. */
   hint?: boolean;
-  /** Pages reached from inside this one, which keep its entry selected. */
-  within?: string[];
   /** What folds out under its entry: the computers it is reached on, as `TeamPage.subnav`. */
   subnav?: ComponentType<SubnavProps>;
   /** An edition's pages in this group are listed right after this one, rather than at the group's end. */
@@ -133,7 +131,7 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, hint: true, subnav: MyDshNav, editions: true },
       // What agents published (docs/tech/pages.md); in every team, always listed.
       { path: 'pages', key: 'pages', icon: Shapes, fill: true, hint: true },
-      { path: 'resources', key: 'resources', icon: BookOpen, within: ['submissions'], hint: true },
+      { path: 'resources', key: 'resources', icon: BookOpen, hint: true },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
     ],
   },
@@ -162,7 +160,7 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
   },
 ];
 
-const PATHS = GROUPS.flatMap((g) => g.sections.flatMap((s) => [s.path, ...(s.within ?? [])]));
+const PATHS = GROUPS.flatMap((g) => g.sections.map((s) => s.path));
 
 /** An edition's team pages that are not open ones it replaced, each listed in the group it names. */
 const extraPages = () => editionTeamPages().filter((page) => !PATHS.includes(navPath(page)));
@@ -298,7 +296,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   }, [admin]);
   const shortcut = isMac() ? '⌥M' : 'Alt+M';
 
-  const link = (path: string, label: string, icon: LucideIcon, inside: boolean, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
+  const link = (path: string, label: string, icon: LucideIcon, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
     Subnav ? (
       <NavFold key={path} to={href(team.id, path)} label={label} icon={icon} hint={hint} here={section === path} onNavigate={onNavigate}>
         <Subnav teamId={team.id} current={section === path ? computer : null} onNavigate={onNavigate} />
@@ -308,7 +306,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
         key={path}
         to={href(team.id, path)}
         onClick={onNavigate}
-        current={section === path || inside}
+        current={section === path}
         hint={hint}
         icon={icon}
         label={label}
@@ -316,12 +314,12 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
         trailing={dot && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
       />
     );
-  const editionLinks = (key: string) => pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, false, page.hints?.[lang], page.subnav));
+  const editionLinks = (key: string) => pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, page.hints?.[lang], page.subnav));
   const group = ({ key, sections }: (typeof GROUPS)[number]) => (
     <div key={key} className="flex flex-col gap-0.5">
       {key !== 'manage' && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>}
       {sections.flatMap((s) => [
-        link(s.path, t(`nav.${s.key}`), s.icon, s.within?.includes(section) ?? false, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined, s.subnav),
+        link(s.path, t(`nav.${s.key}`), s.icon, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined, s.subnav),
         ...(s.editions ? editionLinks(key) : []),
       ])}
       {!sections.some((s) => s.editions) && editionLinks(key)}

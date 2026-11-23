@@ -842,7 +842,6 @@
       "memberHint": "你提交给团队的内容，以及管理员的处理结果。",
       "submitPreset": "提交预设",
       "uploadPlugin": "上传插件",
-      "submitNew": "提交新内容",
       "tabPending": "待审核",
       "tabAll": "全部提交",
       "empty": "还没有提交。",
@@ -963,6 +962,7 @@
         "optionalTools": "可选工具",
         "pluginDependencies": "插件",
         "tools": "工具",
+        "providesTools": "提供的工具",
         "outputDescription": "交付物",
         "instructions": "使用说明",
         "systemPrompt": "角色提示词"
@@ -984,7 +984,8 @@
       "importPreset": "导入预设",
       "manage": "在团队资产中管理",
       "waiting": "{count} 项待审核",
-      "connect": "这些预设和插件会出现在你自己的 DSH 里。你还没有接入 DSH，去首页按步骤接入。"
+      "connect": "这些预设和插件会出现在你自己的 DSH 里。你还没有接入 DSH，去首页按步骤接入。",
+      "close": "关闭"
     },
     "myUsage": {
       "title": "模型与用量",

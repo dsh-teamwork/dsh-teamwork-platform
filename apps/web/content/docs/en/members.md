@@ -9,8 +9,9 @@ DSH is connected, it opens with the steps: sign in to Teamwork from DSH on your
 computer, then pair a browser (**My DSH**) or the phone app with it, each ticked
 off by itself as it happens. Below that are your own calls and budget
 for the last 30 days and what the team changed lately; the **Team toolbox**
-lists the team's presets and plugins, with what you have sent for review under
-its **My submissions** link; and **Models and usage** lists the team's models
+lists the team's presets and plugins, each opening its details, with what you
+have sent for review under **My submissions** at its top right once you have
+sent something; and **Models and usage** lists the team's models
 with their rates, then shows the limits that apply to you, the points you spent
 by model and by day, and your latest calls, with a CSV of the period.
 
