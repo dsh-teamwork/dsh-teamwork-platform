@@ -122,7 +122,7 @@ with no task has no clock: make one from **Automation tasks**, choosing that
 session under **Sends to**. Each
 instruction a task sent shows which task and when it was due. A task runs only while DSH runs on that computer;
 one missed while it was off runs once when DSH starts again. Tasks need DSH
-Teamwork 0.20.0 or later on the computer.
+Teamwork 0.19.10 or later on the computer.
 
 The settings button beside the computer's name opens its settings. There you
 can rename the computer: the name shows in Teamwork, on your phones and in
