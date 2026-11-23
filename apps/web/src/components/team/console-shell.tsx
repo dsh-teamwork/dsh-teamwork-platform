@@ -224,7 +224,31 @@ export function ConsoleShell({
   const section = sectionOf(useLocation().pathname, team.id);
   const fill = GROUPS.some((group) => group.sections.some((s) => s.fill && s.path === section)) || extraPages().some((page) => page.fill && navPath(page) === section);
   const [open, setOpen] = useState(false);
-  const close = () => setOpen(false);
+  const [managementOpen, setManagementOpen] = useState(false);
+  const [drawerManagementOpen, setDrawerManagementOpen] = useState(false);
+  const changeDrawerOpen = (next: boolean) => {
+    setOpen(next);
+    if (!next) setDrawerManagementOpen(false);
+  };
+  const close = () => changeDrawerOpen(false);
+
+  useEffect(() => {
+    if (team.role !== 'admin') return;
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (isManageShortcut(event)) {
+        event.preventDefault();
+        const toggleManagement = open ? setDrawerManagementOpen : setManagementOpen;
+        toggleManagement((was) => !was);
+      } else if (event.key === 'Escape' && !event.repeat && !event.isComposing && !open && managementOpen) {
+        // Radix dialogs and menus handle Escape before it reaches the window.
+        event.preventDefault();
+        setManagementOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, [team.role, open, managementOpen]);
 
   return (
     <div className="flex min-h-dvh flex-col md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
@@ -233,7 +257,7 @@ export function ConsoleShell({
         <div className="px-3 pb-4">
           <TeamSwitcher team={team} teams={teams} section={section} />
         </div>
-        <Navigation team={team} section={section} waiting={waiting} />
+        <Navigation team={team} section={section} waiting={waiting} open={managementOpen} setOpen={setManagementOpen} />
         <div className="flex items-center gap-1 border-t px-3 pt-3">
           <AccountRow detail={t(`role.${team.role}`)} />
           <ThemeToggle />
@@ -241,7 +265,7 @@ export function ConsoleShell({
       </aside>
 
       {/* Narrow screens: the team and a menu button; the menu opens the same navigation in a sheet. */}
-      <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Root open={open} onOpenChange={changeDrawerOpen}>
         <div className="sticky top-0 z-30 flex items-center gap-2 border-b bg-muted px-3 py-2 md:hidden">
           <div className="min-w-0 flex-1">
             <TeamSwitcher team={team} teams={teams} section={section} />
@@ -252,14 +276,25 @@ export function ConsoleShell({
         </div>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-foreground/30 md:hidden" />
-          <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto scrollbar-quiet border-r bg-muted py-4 md:hidden" aria-describedby={undefined}>
+          <Dialog.Content
+            className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto scrollbar-quiet border-r bg-muted py-4 md:hidden"
+            aria-describedby={undefined}
+            onEscapeKeyDown={(event) => {
+              if (event.repeat || event.isComposing) {
+                event.preventDefault();
+              } else if (team.role === 'admin' && drawerManagementOpen) {
+                event.preventDefault();
+                setDrawerManagementOpen(false);
+              }
+            }}
+          >
             <div className="flex items-center justify-between gap-2 px-4 pb-4">
               <Dialog.Title className="text-sm font-semibold">{team.name}</Dialog.Title>
               <Dialog.Close className="grid size-8 place-items-center rounded-md hover:bg-accent" aria-label={t('nav.close')}>
                 <X className="size-4" aria-hidden />
               </Dialog.Close>
             </div>
-            <Navigation team={team} section={section} waiting={waiting} onNavigate={close} />
+            <Navigation team={team} section={section} waiting={waiting} open={drawerManagementOpen} setOpen={setDrawerManagementOpen} onNavigate={close} />
             <div className="flex items-center gap-1 border-t px-3 pt-3">
               <AccountRow detail={t(`role.${team.role}`)} onNavigate={close} />
               <ThemeToggle />
@@ -280,7 +315,14 @@ export function ConsoleShell({
  * It starts folded, on its own pages too; a waiting review shows on the toggle
  * while it is folded. An edition's entries join the group they name.
  */
-function Navigation({ team, section, waiting, onNavigate }: { team: Team; section: string; waiting: Waiting; onNavigate?: () => void }) {
+function Navigation({ team, section, waiting, open, setOpen, onNavigate }: {
+  team: Team;
+  section: string;
+  waiting: Waiting;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  onNavigate?: () => void;
+}) {
   const t = useTranslations('team');
   const locale = useLocale();
   const lang = locale === 'zh-CN' ? 'zh-CN' : 'en';
@@ -288,20 +330,8 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   const { pages, sections: answered } = useTeamPages(team);
   // A section with `visible` is listed once it says yes, or while the person is on it.
   const listed = (s: Section) => !s.visible || answered.includes(s.path) || s.path === section;
-  // Folded until the admin opens it; it stays open across its own pages, and folds again once a workspace page is chosen.
-  const [open, setOpen] = useState(false);
   const admin = team.role === 'admin';
-  // Alt+M (Option+M on a Mac) opens and folds it from anywhere but a field being typed in.
-  useEffect(() => {
-    if (!admin) return;
-    const toggle = (event: KeyboardEvent) => {
-      if (!isManageShortcut(event)) return;
-      event.preventDefault();
-      setOpen((was) => !was);
-    };
-    window.addEventListener('keydown', toggle);
-    return () => window.removeEventListener('keydown', toggle);
-  }, [admin]);
+  const managementId = useId();
   const shortcut = isMac() ? '⌥M' : 'Alt+M';
 
   const link = (path: string, label: string, icon: LucideIcon, inside: boolean, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
@@ -351,7 +381,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
               )}
             >
               {/* Folded, its pages are out of the tab order and hidden from a screen reader as well as from sight. */}
-              <div id="team-management" inert={!open} className="scrollbar-quiet min-h-0 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_calc(100%-0.75rem),transparent)] [--brand:var(--brand-foreground)]">
+              <div id={managementId} inert={!open} className="scrollbar-quiet min-h-0 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_calc(100%-0.75rem),transparent)] [--brand:var(--brand-foreground)]">
                 {/* Padded inside, so the folded row is truly empty; the foot's padding is where a long list fades out above the toggle. */}
                 <div className="flex flex-col gap-4 px-3 pt-3 pb-3">{GROUPS.slice(1).map(group)}</div>
               </div>
@@ -361,8 +391,8 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
                 type="button"
                 onClick={() => setOpen(!open)}
                 aria-expanded={open}
-                aria-controls="team-management"
-                aria-keyshortcuts="Alt+M"
+                aria-controls={managementId}
+                aria-keyshortcuts={open ? 'Alt+M Escape' : 'Alt+M'}
                 title={`${t('nav.groups.manage')} (${shortcut})`}
                 // No ground of its own: the toggle is the navy strip's title, its keys always shown, and only its chevron answers a hover.
                 className="group/manage flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
