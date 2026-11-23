@@ -48,7 +48,7 @@ it('reads native model capabilities and the desktop-confirmed session selection'
 
 it('reads the session\'s permission preset, and none from an older plugin', () => {
   const catalog = { default: { provider: 'p', model: 'm' }, groups: [] };
-  const permissions = { current: 'read-only', defaultPreset: 'workspace-write', options: [{ id: 'danger-full-access', name: 'Full access', risky: true, allowed: false }] };
+  const permissions = { current: 'read-only', defaultPreset: 'workspace-write', options: [{ id: 'danger-full-access', name: 'Full access', risky: true }] };
   expect(configurationOf({ items: [] }, catalog, { presets: [], current: null, permissions }).permissions).toEqual(permissions);
   expect(configurationOf({ items: [] }, catalog, { presets: [], current: null }).permissions).toBeNull();
 });

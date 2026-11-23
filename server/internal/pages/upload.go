@@ -32,9 +32,6 @@ type Meta struct {
 	SessionID   string `json:"sessionId"`
 	Computer    string `json:"computer"`
 	BaseVersion int    `json:"baseVersion"`
-	// Starter is the member a Team DSH's session belongs to; only a host token
-	// names one.
-	Starter string `json:"starter"`
 }
 
 // Published is what an upload answers: the page and its new version.
@@ -204,8 +201,8 @@ func (u *upload) validate() error {
 	if utf8.RuneCountInString(m.Note) > 200 {
 		is.Add("At most 200 characters", "note")
 	}
-	if len(m.SessionID) > 128 || utf8.RuneCountInString(m.Computer) > 64 || len(m.Starter) > 32 || m.BaseVersion < 0 {
-		is.Add("Invalid session, computer, starter or base version")
+	if len(m.SessionID) > 128 || utf8.RuneCountInString(m.Computer) > 64 || m.BaseVersion < 0 {
+		is.Add("Invalid session, computer or base version")
 	}
 	if ok {
 		has := false
@@ -219,25 +216,13 @@ func (u *upload) validate() error {
 	return is.Err()
 }
 
-// author is the member a version is written as: the caller, or the starter a
-// Team DSH names, who must be a member of the team now.
-func (s *Service) author(ctx context.Context, c Caller, teamID, starter string) (string, error) {
-	if c.HostID == "" {
-		if _, err := s.member(ctx, c, teamID); err != nil {
-			return "", err
-		}
-		return c.UserID, nil
+// author is the member a version is written as: the caller, who must be a
+// member of the team now.
+func (s *Service) author(ctx context.Context, c Caller, teamID string) (string, error) {
+	if _, err := s.member(ctx, c, teamID); err != nil {
+		return "", err
 	}
-	if c.TeamID != teamID {
-		return "", wire.E(http.StatusNotFound, wire.TeamNotFound)
-	}
-	if starter == "" {
-		return "", invalid("A Team DSH names the session's starter", "starter")
-	}
-	if _, err := s.Team.RequireMembership(ctx, starter, teamID, false); err != nil {
-		return "", invalid("The starter is not a member of the team", "starter")
-	}
-	return starter, nil
+	return c.UserID, nil
 }
 
 // Create publishes a new page at version 1, private to its author.
@@ -250,7 +235,7 @@ func (s *Service) Create(ctx context.Context, c Caller, teamID string, r *http.R
 	if u.meta.Title == "" {
 		return Published{}, invalid("A title", "title")
 	}
-	author, err := s.author(ctx, c, teamID, u.meta.Starter)
+	author, err := s.author(ctx, c, teamID)
 	if err != nil {
 		return Published{}, err
 	}
@@ -258,7 +243,7 @@ func (s *Service) Create(ctx context.Context, c Caller, teamID string, r *http.R
 	err = s.commit(ctx, teamID, u, func(tx *ent.Tx, at time.Time) error {
 		return tx.Page.Create().SetID(id).SetTeamID(teamID).SetOwnerID(author).SetKind(page.Kind(u.meta.Kind)).
 			SetTitle(u.meta.Title).SetCurrentVersion(1).SetUpdatedAt(at).Exec(ctx)
-	}, id, 1, author, c.HostID)
+	}, id, 1, author)
 	if err != nil {
 		return Published{}, err
 	}
@@ -273,7 +258,7 @@ func (s *Service) AddVersion(ctx context.Context, c Caller, teamID, pageID strin
 		return Published{}, err
 	}
 	defer u.close()
-	author, err := s.author(ctx, c, teamID, u.meta.Starter)
+	author, err := s.author(ctx, c, teamID)
 	if err != nil {
 		return Published{}, err
 	}
@@ -299,7 +284,7 @@ func (s *Service) AddVersion(ctx context.Context, c Caller, teamID, pageID strin
 			return wire.E(http.StatusConflict, "page_stale")
 		}
 		return err
-	}, p.ID, next, author, c.HostID)
+	}, p.ID, next, author)
 	if err != nil {
 		return Published{}, err
 	}
@@ -309,7 +294,7 @@ func (s *Service) AddVersion(ctx context.Context, c Caller, teamID, pageID strin
 // commit stores the files the team does not hold yet, then writes the page
 // (head), the version and its files in one transaction. Objects this call
 // wrote that no row names are deleted again when it fails.
-func (s *Service) commit(ctx context.Context, teamID string, u *upload, head func(*ent.Tx, time.Time) error, pageID string, number int, author, hostID string) error {
+func (s *Service) commit(ctx context.Context, teamID string, u *upload, head func(*ent.Tx, time.Time) error, pageID string, number int, author string) error {
 	if s.Store == nil {
 		return wire.E(http.StatusServiceUnavailable, "artifact_storage_unavailable")
 	}
@@ -352,7 +337,7 @@ func (s *Service) commit(ctx context.Context, teamID string, u *upload, head fun
 		if err := head(tx, at); err != nil {
 			return err
 		}
-		v, err := tx.PageVersion.Create().SetPageID(pageID).SetNumber(number).SetAuthorID(author).SetHostID(hostID).
+		v, err := tx.PageVersion.Create().SetPageID(pageID).SetNumber(number).SetAuthorID(author).
 			SetComputer(u.meta.Computer).SetSessionID(u.meta.SessionID).SetNote(u.meta.Note).SetSize(total).SetCreatedAt(at).Save(ctx)
 		if ent.IsConstraintError(err) {
 			return wire.E(http.StatusConflict, "page_stale")

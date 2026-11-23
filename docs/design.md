@@ -284,11 +284,9 @@ a person or a character, which at this size reads as clip art.
 - **Real screens live in the sections below, never in the first screen.**
   *Everywhere* presents desktop and terminal, browser, and phone as equal
   columns that stack on narrow screens. Each pairs a short scenario with a
-  screenshot. The open page describes joining a shared DSH by invitation from
-  a browser or phone. An edition can provide copy for its own workspace.
+  screenshot. An edition can provide copy for its own workspace.
   *Collaborate* shows the market research preset's proposed changes in the
-  review screen and describes how members work on a shared DSH, each in
-  their own session. The hosted page shows the community workspace alongside
+  review screen. The hosted page shows the community workspace alongside
   its own cloud workspace. *Govern* pairs the usage page with three
   questions managers ask about budgets, security, and access. Each screen sits in a plain window or phone frame
   drawn from tokens. They are captures of the real interfaces with a demo team,
@@ -312,7 +310,7 @@ a person or a character, which at this size reads as clip art.
 - **The console's sidebar is work first** (ADR 0043, 0049): *Workspace* at
   the top, the reader's own (home, team resources with their submissions inside,
   my usage, an edition's work pages); for the admin, *Team management* at the foot, opening on the
-  team overview, then *Team assets* (models, presets, plugins, Team DSH,
+  team overview, then *Team assets* (models, presets, plugins,
   review, versions) and *Members and spend* (members, usage, budgets).
   Team management is a `--brand` sheet laid over the workspace, with
   rounded top corners and a shadow cast upward; the rows inside it are

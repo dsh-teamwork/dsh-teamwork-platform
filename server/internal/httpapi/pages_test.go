@@ -273,37 +273,6 @@ func TestPagesHaveAHostOfTheirOwn(t *testing.T) {
 	})
 }
 
-func TestTeamDSHPublishesForItsStarter(t *testing.T) {
-	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
-		e := start(t, d, options{})
-		admin := e.admin("admin@x.io")
-		teamID := newTeam(t, admin, "Pages")
-		other := newTeam(t, admin, "Other")
-		outsider, outsiderID := e.person("out@x.io")
-		_ = outsider
-		var adminID string
-		for _, m := range must(t, admin.get("/api/teams/"+teamID), 200)["members"].([]any) {
-			adminID = m.(map[string]any)["userId"].(string)
-		}
-		token, _, _ := auth.NewSealer(secret, nil).Seal(auth.HostBearer, auth.Claims{Sub: "host-1", Via: "host", Team: teamID}, time.Hour)
-		host := &plugin{e: e, token: token}
-		files := map[string]string{"index.svg": "<svg/>"}
-		meta := func(starter string) map[string]any {
-			return map[string]any{"title": "T", "kind": "svg", "starter": starter}
-		}
-		refused(t, "no starter", publish(t, host, "/api/teams/"+teamID+"/pages", meta(""), files), 400, "invalid_request")
-		refused(t, "a starter outside the team", publish(t, host, "/api/teams/"+teamID+"/pages", meta(outsiderID), files), 400, "invalid_request")
-		refused(t, "another team", publish(t, host, "/api/teams/"+other+"/pages", meta(adminID), files), 404, "team_not_found")
-		id := must(t, publish(t, host, "/api/teams/"+teamID+"/pages", meta(adminID), files), 201)["id"].(string)
-		detail := must(t, admin.get("/api/teams/"+teamID+"/pages/"+id), 200)
-		v := detail["versions"].([]any)[0].(map[string]any)
-		if detail["owner"].(map[string]any)["id"] != adminID || v["teamDsh"] != true {
-			t.Fatalf("detail %v", detail)
-		}
-		refused(t, "a host token views", host.post("/api/teams/"+teamID+"/pages/"+id+"/versions/1/view", nil), 404, "page_not_found")
-	})
-}
-
 // joined is a person who joined the team, with their id.
 func joined(t *testing.T, e *env, admin *browser, teamID, email string) (*browser, string) {
 	t.Helper()
@@ -432,24 +401,6 @@ func TestPageSharingAdmitsOnlyWhomItNames(t *testing.T) {
 func mustID(t *testing.T, b *browser) string {
 	t.Helper()
 	return must(t, b.get("/api/profile"), 200)["id"].(string)
-}
-
-func TestTeamDSHOpensAPageForItsStarter(t *testing.T) {
-	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
-		e := start(t, d, options{})
-		admin := e.admin("admin@x.io")
-		teamID := newTeam(t, admin, "Pages")
-		a, aID := joined(t, e, admin, teamID, "a@x.io")
-		_, bID := joined(t, e, admin, teamID, "b@x.io")
-		base := "/api/teams/" + teamID + "/pages"
-		id := must(t, publish(t, e.pluginFor(a), base, map[string]any{"title": "T", "kind": "svg"}, map[string]string{"index.svg": "<svg/>"}), 201)["id"].(string)
-		token, _, _ := auth.NewSealer(secret, nil).Seal(auth.HostBearer, auth.Claims{Sub: "host-1", Via: "host", Team: teamID}, time.Hour)
-		host := &plugin{e: e, token: token}
-		view := base + "/" + id + "/versions/1/view"
-		must(t, host.post(view+"?starter="+aID, nil), 200)
-		refused(t, "a starter who may not read it", host.post(view+"?starter="+bID, nil), 404, "page_not_found")
-		refused(t, "no starter", host.post(view, nil), 404, "page_not_found")
-	})
 }
 
 // A deleted account takes its private pages and its own team's pages with it;

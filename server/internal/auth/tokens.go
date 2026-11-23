@@ -26,10 +26,6 @@ const (
 	// (ADR 0038): one member, one team, at most ComputerTTL, and accepted only
 	// by GET /api/configs and the model gateway.
 	ComputerBearer Purpose = "dsh-teamwork.computer"
-	// HostBearer is the token a shared DSH holds (ADR 0047): one shared host,
-	// no person, one team, at most HostTTL, and accepted only by
-	// GET /api/configs and the model gateway.
-	HostBearer Purpose = "dsh-teamwork.host"
 	// PageView is a page's view address (docs/tech/pages.md, "The view
 	// address"): one reader, one version of one page, at most PageViewTTL. It
 	// opens nothing but the files that version serves under /p/.
@@ -38,9 +34,6 @@ const (
 
 // ComputerTTL is the longest a computer token lives; its host renews it.
 const ComputerTTL = time.Hour
-
-// HostTTL is the longest a host token lives; the shared DSH renews it.
-const HostTTL = time.Hour
 
 // PageViewTTL is how long a page's view address lives.
 const PageViewTTL = time.Hour
@@ -64,11 +57,11 @@ const HandoffTTL = 2 * time.Minute
 
 // Claims is what a sealed value carries.
 type Claims struct {
-	Sub       string `json:"sub"`                 // the user id; a host token's shared host id
+	Sub       string `json:"sub"`                 // the user id
 	Via       string `json:"via,omitempty"`       // the door: password, email, google, feishu
 	Challenge string `json:"challenge,omitempty"` // a hand-off code's PKCE challenge
 	Next      string `json:"next,omitempty"`      // an OAuth round trip's return path
-	Team      string `json:"team,omitempty"`      // a computer or host token's one team
+	Team      string `json:"team,omitempty"`      // a computer token's one team
 	Host      string `json:"host,omitempty"`      // a computer token's computer or session, for the record
 	Page      string `json:"page,omitempty"`      // a view address's page
 	Version   int    `json:"ver,omitempty"`       // a view address's version of it

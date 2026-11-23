@@ -35,11 +35,10 @@ type FundingQuote struct {
 	Body                           map[string]json.RawMessage
 }
 
-// FundingAdmission is one call to fund. A shared DSH's call (ADR 0047) has a
-// HostID and no UserID.
+// FundingAdmission is one call to fund.
 type FundingAdmission struct {
-	RequestID, TeamID, UserID, HostID, ConfigID, Reference, Model, RateID string
-	HeldUnits                                                             int64
+	RequestID, TeamID, UserID, ConfigID, Reference, Model, RateID string
+	HeldUnits                                                     int64
 }
 
 // FundingSettlement is a call's observed usage. UpstreamCost is the price the

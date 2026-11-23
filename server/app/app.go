@@ -235,7 +235,6 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		}
 		return nil
 	}
-	var teamDSHGate func(context.Context, string) (bool, error)
 	var push edition.SendPush
 	console := edition.AdminConsole{Base: "/manage"}
 	var webFiles fs.FS
@@ -253,14 +252,6 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		RegisterSignInGate: func(g edition.SignInGate) { srv.SignInGate = g }, PendingLogin: srv.PendingLogin, CompleteLogin: srv.CompleteLogin,
 		Bearer: srv.BearerIdentity, Session: srv.SessionIdentity, SameOrigin: srv.SameOrigin,
 		MintComputerToken: srv.MintComputerToken,
-		MintHostToken:     srv.MintHostToken,
-		GateTeamDSH: func(allowed func(context.Context, string) (bool, error)) error {
-			if allowed == nil || teamDSHGate != nil {
-				return errors.New("invalid or duplicate Team DSH gate")
-			}
-			teamDSHGate = allowed
-			return nil
-		},
 		SetPush: func(send edition.SendPush) error {
 			if send == nil || push != nil {
 				return errors.New("invalid or duplicate push sender")
@@ -282,12 +273,6 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			}
 			srv.Subdomains[domain] = h
 			return nil
-		},
-		TeamDSHAllowed: func(ctx context.Context, teamID string) (bool, error) {
-			if teamDSHGate == nil {
-				return true, nil
-			}
-			return teamDSHGate(ctx, teamID)
 		},
 		Objects: objects(teams.Artifacts),
 		Users:   NewUsers(client), Env: env,

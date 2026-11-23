@@ -126,6 +126,7 @@ export function mountWeb({ routes = [], teamPages = [], models, security }: WebE
       { path: 'submissions', element: <TeamSharingPage view="mine" /> },
       { path: 'my-usage', element: <TeamMyUsagePage /> },
       { path: 'my-dsh/:hostId/settings', element: <MyDshPage settings /> },
+      { path: 'my-dsh/:hostId/tasks/:taskId?', element: <MyDshPage tasks /> },
       { path: 'my-dsh/:hostId?/:sessionId?', element: <MyDshPage /> },
       { path: 'pages/:pageId?', element: <TeamPagesPage /> },
     ],

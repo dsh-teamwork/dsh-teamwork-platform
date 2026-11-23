@@ -348,7 +348,7 @@ server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
                      analytics, httpapi (every route), pages (what agents
                      publish, docs/tech/pages.md), web (the embedded
                      console and public pages), wire (request shapes and
-                     error codes); relay/ is the relay and shared DSHs
+                     error codes); relay/ is the relay
                      (docs/tech/relay.md), an extension every main imports;
                      modelmeta/ reads the public model catalogues into form
                      suggestions, for the console and an edition alike
@@ -447,10 +447,7 @@ Bearer, both JWE under keys derived from `AUTH_SECRET`, each kind under its
 own, so one never opens as the other. A **computer token** (ADR 0038) is a
 third kind, minted only by an edition for a cloud computer's plugin: one
 member, one team, an hour, accepted by `GET /api/configs` and the gateway
-alone (`requirePlugin` in `internal/httpapi/identity.go`). A **host token**
-(ADR 0047) is a fourth, minted only by an edition for a shared DSH: one team,
-no person, an hour, on the same two routes, and its calls are the team's
-(`usage_requests.host_id`), held to no member's budget.
+alone (`requirePlugin` in `internal/httpapi/identity.go`).
 
 **The DSH plugin signs in through the website** (`docs/adr/0001-plugin-sign-in.md`).
 `/teamwork login` in DSH listens on `http://127.0.0.1:<port>` and prints

@@ -27,8 +27,6 @@ class FakeSocket {
   static made: FakeSocket[] = [];
   /** Pairings whose desktop is not connected: the relay refuses their packets. */
   static offline = new Set<string>();
-  /** A shared DSH a member joins answers no handshake marker: it waits for the invite. */
-  static quiet = false;
   sent: any[] = [];
   channels = new Map<string,string>();
   onopen?: () => void;
@@ -45,7 +43,7 @@ class FakeSocket {
       this.channels.set(frame.pairingId, frame.channelId);
       if (FakeSocket.offline.has(frame.pairingId)) { queueMicrotask(() => this.push({ t: 'error', pairingId: frame.pairingId, error: 'offline' })); return; }
       const inner = JSON.parse(frame.data);
-      if (inner.t === 'mockHandshake') { if (!FakeSocket.quiet) queueMicrotask(() => this.push({ t: 'secureReady', pairingId: frame.pairingId })); return; }
+      if (inner.t === 'mockHandshake') { queueMicrotask(() => this.push({ t: 'secureReady', pairingId: frame.pairingId })); return; }
       if (inner.t === 'revoke') { queueMicrotask(() => this.push({ t: 'revokedAck', pairingId: frame.pairingId })); return; }
       this.sent.push(inner); return;
     }
@@ -77,7 +75,6 @@ async function answerDirectories(s: FakeSocket, pairingId: string, directories: 
 
 function setup() {
   FakeSocket.made = [];
-  FakeSocket.quiet = false;
   let token = 'bearer-1';
   const asked: Array<{ url: string; init?: RequestInit }> = [];
   const request = (async (url: string, init?: RequestInit) => {
@@ -469,7 +466,7 @@ describe('the live relay client', () => {
     await expect(none).rejects.toMatchObject({ code: 'no_directory' });
   });
 
-  it('starts a member new to a shared DSH where the computer offers, and nowhere it does not', async () => {
+  it('starts a session with no folder of its own where the computer offers, and nowhere it does not', async () => {
     const { relay, socket } = setup();
     const created = relay.createSession('p1');
     const s = await socket();
@@ -539,51 +536,6 @@ describe('the live relay client', () => {
     s.push({t:'result',pairingId:'p1',id:prompt.id,status:200,body:{result:{ok:false,error:{code:'teamwork/missing_tools'}}}});
     await rejected;
     relay.reset();
-  });
-});
-
-describe('joining a shared DSH', () => {
-  function joining(answer: 'pairAccepted' | 'joinRefused') {
-    FakeSocket.made = [];
-    FakeSocket.quiet = true;
-    const trusted: string[] = [];
-    const request = (async (url: string) => {
-      if (url.endsWith('/api/relay')) return new Response(JSON.stringify({ url: 'wss://relay.example.test/plugin', push: true }));
-      if (url.endsWith('/shared/h1/join')) return new Response(JSON.stringify({ pairing: { id: 'j1', hostId: 'h1', hostName: 'build box', status: 'pending' } }), { status: 201 });
-      if (url.endsWith('/shared/h2/join')) return new Response(JSON.stringify({ error: 'not_found' }), { status: 404 });
-      return new Response('{}', { status: 404 });
-    }) as typeof fetch;
-    const relay = createLiveRelay({
-      keys: { relayKey: async () => 'phone-key', identity: async () => ({} as any), peer: async () => undefined, trust: async (id: string) => { trusted.push(id); }, forget: async () => {} },
-      random: (n) => new Uint8Array(n).fill(1), session: async () => ({ server: 'https://teamwork.example.test', token: 't' }), locale: () => 'en', device: 'android', request,
-      WebSocket: FakeSocket as unknown as typeof WebSocket,
-    });
-    // The DSH answers the invite once it arrives inside the channel.
-    void (async () => {
-      await until(() => FakeSocket.made.length > 0 && FakeSocket.made[0]!.sent.length > 0);
-      const s = FakeSocket.made[0]!;
-      s.push({ t: 'welcome' });
-      await until(() => s.sent.some((f) => f.t === 'shareJoin'));
-      s.onmessage?.({ data: JSON.stringify({ t: 'sealed', pairingId: 'j1', channelId: s.channels.get('j1'), kind: 'data', data: JSON.stringify({ t: answer }) }) });
-    })();
-    return { relay, trusted, sent: () => FakeSocket.made[0]!.sent };
-  }
-  const invite = { host: 'h1', key: 'dsh-key', invite: 'inv1', secret: 's3cr3t' };
-
-  it('hands the invite over inside the channel and trusts the DSH once it accepts', async () => {
-    const { relay, trusted, sent } = joining('pairAccepted');
-    const pairing = await relay.join(invite, 'phone');
-    expect(pairing).toMatchObject({ id: 'j1', hostName: 'build box', status: 'confirmed' });
-    expect(sent().find((f) => f.t === 'shareJoin')).toEqual({ t: 'shareJoin', invite: 'inv1', secret: 's3cr3t', name: 'phone', kind: 'android' });
-    expect(sent().some((f) => f.t === 'pairHello')).toBe(false);
-    expect(trusted).toEqual(['j1']);
-  });
-
-  it('says so when the DSH refuses the invite, or the member may not reach it', async () => {
-    const { relay, trusted } = joining('joinRefused');
-    await expect(relay.join(invite, 'phone')).rejects.toMatchObject({ code: 'invite_refused' });
-    expect(trusted).toEqual([]);
-    await expect(relay.join({ ...invite, host: 'h2' }, 'phone')).rejects.toMatchObject({ code: 'not_found' });
   });
 });
 

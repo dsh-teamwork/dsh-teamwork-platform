@@ -112,7 +112,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     await sendSecure(id, message);
     return answered;
   }
-  async function secureLink(id: string, pairing?: { name: string; expectedKey?: string; join?: { invite: string; secret: string } }): Promise<SecureLink> {
+  async function secureLink(id: string, pairing?: { name: string; expectedKey?: string }): Promise<SecureLink> {
     const active = channels.get(id);
     if (active && !active.failed) return active;
     if (opening.has(id)) return opening.get(id)!;
@@ -135,15 +135,12 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
           link.remoteKey = key; link.code = code;
           const draft = pairingDrafts.get(id);
           if (draft) draft.safetyCode = code;
-          // A shared DSH's invite stands in for the safety code: its key is pinned, so only that DSH reads the secret.
-          if (pairing?.join) channel.send({ t: 'shareJoin', invite: pairing.join.invite, secret: pairing.join.secret, name: pairing.name, kind: options.device });
-          else if (pairing) channel.send({ t: 'pairHello', name: pairing.name, kind: options.device });
+          if (pairing) channel.send({ t: 'pairHello', name: pairing.name, kind: options.device });
         },
         message: async value => {
           const body = value as Record<string, unknown> | null;
           if (body?.t === 'verify' && !known) return;
-          if (body?.t === 'joinRefused' && pairing?.join) { channel.close(new Error('invite_refused')); return; }
-          if (body?.t === 'pairAccepted' && (link.userConfirmed || pairing?.join) && link.remoteKey) {
+          if (body?.t === 'pairAccepted' && link.userConfirmed && link.remoteKey) {
             await options.keys.trust(id, link.remoteKey);
             const draft = pairingDrafts.get(id);
             if (draft) draft.status = 'confirmed';
@@ -167,7 +164,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
         closed: error => {
           if (channels.get(id) !== link) return;
           link.failed = true;
-          const code = error.message === 'device_key_changed' || error.message === 'invite_refused' ? error.message : 'unavailable';
+          const code = error.message === 'device_key_changed' ? error.message : 'unavailable';
           reject(new RelayError(code));
           const draft = pairingDrafts.get(id);
           if (draft) draft.verificationError = true;
@@ -385,15 +382,6 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       }));
     },
 
-    async sharedHosts() {
-      const response = await relayHttp('/shared');
-      if (!response.ok) throw new RelayError('unavailable');
-      return z.object({
-        hosts: z.object({ id: z.string(), name: z.string(), teamId: z.string(), teamName: z.string(), online: z.boolean() }).array(),
-        unavailableTeamIds: z.string().array(),
-      }).parse(await response.json());
-    },
-
     async pair(code, deviceName, expectedKey) {
       const response = await relayHttp('/pair', {
         method: 'POST',
@@ -406,18 +394,6 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       pairingDrafts.set(pairing.id, draft);
       await secureLink(pairing.id, { name: deviceName, expectedKey });
       return draft;
-    },
-
-    async join(invite, deviceName) {
-      const response = await relayHttp(`/shared/${encodeURIComponent(invite.host)}/join`, { method: 'POST', body: JSON.stringify({ deviceName }) });
-      if (response.status === 404 || response.status === 400) throw new RelayError('not_found');
-      if (!response.ok) throw new RelayError('unavailable');
-      const pairing = z.object({ pairing: PairingSchema }).parse(await response.json()).pairing;
-      const draft: import('./types').Pairing = { ...pairing, status: 'pending' };
-      pairingDrafts.set(pairing.id, draft);
-      const link = await secureLink(pairing.id, { name: deviceName, expectedKey: invite.key, join: { invite: invite.invite, secret: invite.secret } });
-      await link.ready;
-      return { ...draft };
     },
 
     watchPin(computerId, onChange) {
@@ -481,6 +457,13 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       endPairing(id, 'not_found');
     },
 
+    listTasks: sessions.listTasks,
+    watchTasks: sessions.watchTasks,
+    createTask: sessions.createTask,
+    updateTask: sessions.updateTask,
+    deleteTask: sessions.deleteTask,
+    runTask: sessions.runTask,
+    taskHistory: sessions.taskHistory,
     listSessions: sessions.listSessions,
     watchSessions: sessions.watchSessions,
     follow: sessions.follow,

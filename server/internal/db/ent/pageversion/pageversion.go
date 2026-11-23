@@ -21,8 +21,6 @@ const (
 	FieldNumber = "number"
 	// FieldAuthorID holds the string denoting the author_id field in the database.
 	FieldAuthorID = "author_id"
-	// FieldHostID holds the string denoting the host_id field in the database.
-	FieldHostID = "host_id"
 	// FieldComputer holds the string denoting the computer field in the database.
 	FieldComputer = "computer"
 	// FieldSessionID holds the string denoting the session_id field in the database.
@@ -42,7 +40,6 @@ var Columns = []string{
 	FieldPageID,
 	FieldNumber,
 	FieldAuthorID,
-	FieldHostID,
 	FieldComputer,
 	FieldSessionID,
 	FieldNote,
@@ -66,10 +63,6 @@ var (
 	PageIDValidator func(string) error
 	// AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
 	AuthorIDValidator func(string) error
-	// DefaultHostID holds the default value on creation for the "host_id" field.
-	DefaultHostID string
-	// HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
-	HostIDValidator func(string) error
 	// DefaultComputer holds the default value on creation for the "computer" field.
 	DefaultComputer string
 	// ComputerValidator is a validator for the "computer" field. It is called by the builders before save.
@@ -114,11 +107,6 @@ func ByNumber(opts ...sql.OrderTermOption) OrderOption {
 // ByAuthorID orders the results by the author_id field.
 func ByAuthorID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAuthorID, opts...).ToFunc()
-}
-
-// ByHostID orders the results by the host_id field.
-func ByHostID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldHostID, opts...).ToFunc()
 }
 
 // ByComputer orders the results by the computer field.

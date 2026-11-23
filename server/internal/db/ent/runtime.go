@@ -28,9 +28,6 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedarchivesegment"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhostmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
@@ -815,26 +812,20 @@ func init() {
 	pageversionDescAuthorID := pageversionFields[2].Descriptor()
 	// pageversion.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
 	pageversion.AuthorIDValidator = pageversionDescAuthorID.Validators[0].(func(string) error)
-	// pageversionDescHostID is the schema descriptor for host_id field.
-	pageversionDescHostID := pageversionFields[3].Descriptor()
-	// pageversion.DefaultHostID holds the default value on creation for the host_id field.
-	pageversion.DefaultHostID = pageversionDescHostID.Default.(string)
-	// pageversion.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
-	pageversion.HostIDValidator = pageversionDescHostID.Validators[0].(func(string) error)
 	// pageversionDescComputer is the schema descriptor for computer field.
-	pageversionDescComputer := pageversionFields[4].Descriptor()
+	pageversionDescComputer := pageversionFields[3].Descriptor()
 	// pageversion.DefaultComputer holds the default value on creation for the computer field.
 	pageversion.DefaultComputer = pageversionDescComputer.Default.(string)
 	// pageversion.ComputerValidator is a validator for the "computer" field. It is called by the builders before save.
 	pageversion.ComputerValidator = pageversionDescComputer.Validators[0].(func(string) error)
 	// pageversionDescSessionID is the schema descriptor for session_id field.
-	pageversionDescSessionID := pageversionFields[5].Descriptor()
+	pageversionDescSessionID := pageversionFields[4].Descriptor()
 	// pageversion.DefaultSessionID holds the default value on creation for the session_id field.
 	pageversion.DefaultSessionID = pageversionDescSessionID.Default.(string)
 	// pageversion.SessionIDValidator is a validator for the "session_id" field. It is called by the builders before save.
 	pageversion.SessionIDValidator = pageversionDescSessionID.Validators[0].(func(string) error)
 	// pageversionDescNote is the schema descriptor for note field.
-	pageversionDescNote := pageversionFields[6].Descriptor()
+	pageversionDescNote := pageversionFields[5].Descriptor()
 	// pageversion.DefaultNote holds the default value on creation for the note field.
 	pageversion.DefaultNote = pageversionDescNote.Default.(string)
 	// pageversion.NoteValidator is a validator for the "note" field. It is called by the builders before save.
@@ -1313,289 +1304,6 @@ func init() {
 			return nil
 		}
 	}()
-	sharedarchivesegmentMixin := schema.SharedArchiveSegment{}.Mixin()
-	sharedarchivesegmentMixinFields0 := sharedarchivesegmentMixin[0].Fields()
-	_ = sharedarchivesegmentMixinFields0
-	sharedarchivesegmentFields := schema.SharedArchiveSegment{}.Fields()
-	_ = sharedarchivesegmentFields
-	// sharedarchivesegmentDescCreatedAt is the schema descriptor for created_at field.
-	sharedarchivesegmentDescCreatedAt := sharedarchivesegmentMixinFields0[1].Descriptor()
-	// sharedarchivesegment.DefaultCreatedAt holds the default value on creation for the created_at field.
-	sharedarchivesegment.DefaultCreatedAt = sharedarchivesegmentDescCreatedAt.Default.(func() time.Time)
-	// sharedarchivesegmentDescHostID is the schema descriptor for host_id field.
-	sharedarchivesegmentDescHostID := sharedarchivesegmentFields[0].Descriptor()
-	// sharedarchivesegment.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
-	sharedarchivesegment.HostIDValidator = func() func(string) error {
-		validators := sharedarchivesegmentDescHostID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(host_id string) error {
-			for _, fn := range fns {
-				if err := fn(host_id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedarchivesegmentDescTeamID is the schema descriptor for team_id field.
-	sharedarchivesegmentDescTeamID := sharedarchivesegmentFields[1].Descriptor()
-	// sharedarchivesegment.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
-	sharedarchivesegment.TeamIDValidator = func() func(string) error {
-		validators := sharedarchivesegmentDescTeamID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(team_id string) error {
-			for _, fn := range fns {
-				if err := fn(team_id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedarchivesegmentDescSeq is the schema descriptor for seq field.
-	sharedarchivesegmentDescSeq := sharedarchivesegmentFields[2].Descriptor()
-	// sharedarchivesegment.SeqValidator is a validator for the "seq" field. It is called by the builders before save.
-	sharedarchivesegment.SeqValidator = sharedarchivesegmentDescSeq.Validators[0].(func(int64) error)
-	// sharedarchivesegmentDescPrevDigest is the schema descriptor for prev_digest field.
-	sharedarchivesegmentDescPrevDigest := sharedarchivesegmentFields[3].Descriptor()
-	// sharedarchivesegment.PrevDigestValidator is a validator for the "prev_digest" field. It is called by the builders before save.
-	sharedarchivesegment.PrevDigestValidator = sharedarchivesegmentDescPrevDigest.Validators[0].(func(string) error)
-	// sharedarchivesegmentDescDigest is the schema descriptor for digest field.
-	sharedarchivesegmentDescDigest := sharedarchivesegmentFields[4].Descriptor()
-	// sharedarchivesegment.DigestValidator is a validator for the "digest" field. It is called by the builders before save.
-	sharedarchivesegment.DigestValidator = func() func(string) error {
-		validators := sharedarchivesegmentDescDigest.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(digest string) error {
-			for _, fn := range fns {
-				if err := fn(digest); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedarchivesegmentDescData is the schema descriptor for data field.
-	sharedarchivesegmentDescData := sharedarchivesegmentFields[5].Descriptor()
-	// sharedarchivesegment.DataValidator is a validator for the "data" field. It is called by the builders before save.
-	sharedarchivesegment.DataValidator = sharedarchivesegmentDescData.Validators[0].(func([]byte) error)
-	// sharedarchivesegmentDescID is the schema descriptor for id field.
-	sharedarchivesegmentDescID := sharedarchivesegmentMixinFields0[0].Descriptor()
-	// sharedarchivesegment.DefaultID holds the default value on creation for the id field.
-	sharedarchivesegment.DefaultID = sharedarchivesegmentDescID.Default.(func() string)
-	// sharedarchivesegment.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	sharedarchivesegment.IDValidator = func() func(string) error {
-		validators := sharedarchivesegmentDescID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(id string) error {
-			for _, fn := range fns {
-				if err := fn(id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	sharedhostMixin := schema.SharedHost{}.Mixin()
-	sharedhostMixinFields0 := sharedhostMixin[0].Fields()
-	_ = sharedhostMixinFields0
-	sharedhostFields := schema.SharedHost{}.Fields()
-	_ = sharedhostFields
-	// sharedhostDescCreatedAt is the schema descriptor for created_at field.
-	sharedhostDescCreatedAt := sharedhostMixinFields0[1].Descriptor()
-	// sharedhost.DefaultCreatedAt holds the default value on creation for the created_at field.
-	sharedhost.DefaultCreatedAt = sharedhostDescCreatedAt.Default.(func() time.Time)
-	// sharedhostDescTeamID is the schema descriptor for team_id field.
-	sharedhostDescTeamID := sharedhostFields[0].Descriptor()
-	// sharedhost.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
-	sharedhost.TeamIDValidator = func() func(string) error {
-		validators := sharedhostDescTeamID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(team_id string) error {
-			for _, fn := range fns {
-				if err := fn(team_id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedhostDescName is the schema descriptor for name field.
-	sharedhostDescName := sharedhostFields[1].Descriptor()
-	// sharedhost.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	sharedhost.NameValidator = func() func(string) error {
-		validators := sharedhostDescName.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(name string) error {
-			for _, fn := range fns {
-				if err := fn(name); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedhostDescKeyHash is the schema descriptor for key_hash field.
-	sharedhostDescKeyHash := sharedhostFields[2].Descriptor()
-	// sharedhost.KeyHashValidator is a validator for the "key_hash" field. It is called by the builders before save.
-	sharedhost.KeyHashValidator = func() func(string) error {
-		validators := sharedhostDescKeyHash.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(key_hash string) error {
-			for _, fn := range fns {
-				if err := fn(key_hash); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedhostDescIdentityKey is the schema descriptor for identity_key field.
-	sharedhostDescIdentityKey := sharedhostFields[3].Descriptor()
-	// sharedhost.IdentityKeyValidator is a validator for the "identity_key" field. It is called by the builders before save.
-	sharedhost.IdentityKeyValidator = sharedhostDescIdentityKey.Validators[0].(func(string) error)
-	// sharedhostDescCreatedBy is the schema descriptor for created_by field.
-	sharedhostDescCreatedBy := sharedhostFields[4].Descriptor()
-	// sharedhost.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
-	sharedhost.CreatedByValidator = func() func(string) error {
-		validators := sharedhostDescCreatedBy.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(created_by string) error {
-			for _, fn := range fns {
-				if err := fn(created_by); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedhostDescID is the schema descriptor for id field.
-	sharedhostDescID := sharedhostMixinFields0[0].Descriptor()
-	// sharedhost.DefaultID holds the default value on creation for the id field.
-	sharedhost.DefaultID = sharedhostDescID.Default.(func() string)
-	// sharedhost.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	sharedhost.IDValidator = func() func(string) error {
-		validators := sharedhostDescID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(id string) error {
-			for _, fn := range fns {
-				if err := fn(id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	sharedhostmemberMixin := schema.SharedHostMember{}.Mixin()
-	sharedhostmemberMixinFields0 := sharedhostmemberMixin[0].Fields()
-	_ = sharedhostmemberMixinFields0
-	sharedhostmemberFields := schema.SharedHostMember{}.Fields()
-	_ = sharedhostmemberFields
-	// sharedhostmemberDescCreatedAt is the schema descriptor for created_at field.
-	sharedhostmemberDescCreatedAt := sharedhostmemberMixinFields0[1].Descriptor()
-	// sharedhostmember.DefaultCreatedAt holds the default value on creation for the created_at field.
-	sharedhostmember.DefaultCreatedAt = sharedhostmemberDescCreatedAt.Default.(func() time.Time)
-	// sharedhostmemberDescHostID is the schema descriptor for host_id field.
-	sharedhostmemberDescHostID := sharedhostmemberFields[0].Descriptor()
-	// sharedhostmember.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
-	sharedhostmember.HostIDValidator = func() func(string) error {
-		validators := sharedhostmemberDescHostID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(host_id string) error {
-			for _, fn := range fns {
-				if err := fn(host_id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedhostmemberDescUserID is the schema descriptor for user_id field.
-	sharedhostmemberDescUserID := sharedhostmemberFields[1].Descriptor()
-	// sharedhostmember.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	sharedhostmember.UserIDValidator = func() func(string) error {
-		validators := sharedhostmemberDescUserID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(user_id string) error {
-			for _, fn := range fns {
-				if err := fn(user_id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedhostmemberDescAddedBy is the schema descriptor for added_by field.
-	sharedhostmemberDescAddedBy := sharedhostmemberFields[2].Descriptor()
-	// sharedhostmember.AddedByValidator is a validator for the "added_by" field. It is called by the builders before save.
-	sharedhostmember.AddedByValidator = func() func(string) error {
-		validators := sharedhostmemberDescAddedBy.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(added_by string) error {
-			for _, fn := range fns {
-				if err := fn(added_by); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// sharedhostmemberDescID is the schema descriptor for id field.
-	sharedhostmemberDescID := sharedhostmemberMixinFields0[0].Descriptor()
-	// sharedhostmember.DefaultID holds the default value on creation for the id field.
-	sharedhostmember.DefaultID = sharedhostmemberDescID.Default.(func() string)
-	// sharedhostmember.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	sharedhostmember.IDValidator = func() func(string) error {
-		validators := sharedhostmemberDescID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(id string) error {
-			for _, fn := range fns {
-				if err := fn(id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
 	teamMixin := schema.Team{}.Mixin()
 	teamMixinFields0 := teamMixin[0].Fields()
 	_ = teamMixinFields0
@@ -1760,60 +1468,54 @@ func init() {
 	usagerequestDescUserID := usagerequestFields[1].Descriptor()
 	// usagerequest.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	usagerequest.UserIDValidator = usagerequestDescUserID.Validators[0].(func(string) error)
-	// usagerequestDescHostID is the schema descriptor for host_id field.
-	usagerequestDescHostID := usagerequestFields[2].Descriptor()
-	// usagerequest.DefaultHostID holds the default value on creation for the host_id field.
-	usagerequest.DefaultHostID = usagerequestDescHostID.Default.(string)
-	// usagerequest.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
-	usagerequest.HostIDValidator = usagerequestDescHostID.Validators[0].(func(string) error)
 	// usagerequestDescAppURL is the schema descriptor for app_url field.
-	usagerequestDescAppURL := usagerequestFields[3].Descriptor()
+	usagerequestDescAppURL := usagerequestFields[2].Descriptor()
 	// usagerequest.DefaultAppURL holds the default value on creation for the app_url field.
 	usagerequest.DefaultAppURL = usagerequestDescAppURL.Default.(string)
 	// usagerequest.AppURLValidator is a validator for the "app_url" field. It is called by the builders before save.
 	usagerequest.AppURLValidator = usagerequestDescAppURL.Validators[0].(func(string) error)
 	// usagerequestDescSubmittedConfigID is the schema descriptor for submitted_config_id field.
-	usagerequestDescSubmittedConfigID := usagerequestFields[4].Descriptor()
+	usagerequestDescSubmittedConfigID := usagerequestFields[3].Descriptor()
 	// usagerequest.SubmittedConfigIDValidator is a validator for the "submitted_config_id" field. It is called by the builders before save.
 	usagerequest.SubmittedConfigIDValidator = usagerequestDescSubmittedConfigID.Validators[0].(func(string) error)
 	// usagerequestDescConfigID is the schema descriptor for config_id field.
-	usagerequestDescConfigID := usagerequestFields[5].Descriptor()
+	usagerequestDescConfigID := usagerequestFields[4].Descriptor()
 	// usagerequest.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
 	usagerequest.ConfigIDValidator = usagerequestDescConfigID.Validators[0].(func(string) error)
 	// usagerequestDescProvider is the schema descriptor for provider field.
-	usagerequestDescProvider := usagerequestFields[6].Descriptor()
+	usagerequestDescProvider := usagerequestFields[5].Descriptor()
 	// usagerequest.ProviderValidator is a validator for the "provider" field. It is called by the builders before save.
 	usagerequest.ProviderValidator = usagerequestDescProvider.Validators[0].(func(string) error)
 	// usagerequestDescModel is the schema descriptor for model field.
-	usagerequestDescModel := usagerequestFields[7].Descriptor()
+	usagerequestDescModel := usagerequestFields[6].Descriptor()
 	// usagerequest.ModelValidator is a validator for the "model" field. It is called by the builders before save.
 	usagerequest.ModelValidator = usagerequestDescModel.Validators[0].(func(string) error)
 	// usagerequestDescRateID is the schema descriptor for rate_id field.
-	usagerequestDescRateID := usagerequestFields[11].Descriptor()
+	usagerequestDescRateID := usagerequestFields[10].Descriptor()
 	// usagerequest.DefaultRateID holds the default value on creation for the rate_id field.
 	usagerequest.DefaultRateID = usagerequestDescRateID.Default.(string)
 	// usagerequest.RateIDValidator is a validator for the "rate_id" field. It is called by the builders before save.
 	usagerequest.RateIDValidator = usagerequestDescRateID.Validators[0].(func(string) error)
 	// usagerequestDescRouteOwner is the schema descriptor for route_owner field.
-	usagerequestDescRouteOwner := usagerequestFields[12].Descriptor()
+	usagerequestDescRouteOwner := usagerequestFields[11].Descriptor()
 	// usagerequest.DefaultRouteOwner holds the default value on creation for the route_owner field.
 	usagerequest.DefaultRouteOwner = usagerequestDescRouteOwner.Default.(string)
 	// usagerequest.RouteOwnerValidator is a validator for the "route_owner" field. It is called by the builders before save.
 	usagerequest.RouteOwnerValidator = usagerequestDescRouteOwner.Validators[0].(func(string) error)
 	// usagerequestDescProviderRequestID is the schema descriptor for provider_request_id field.
-	usagerequestDescProviderRequestID := usagerequestFields[23].Descriptor()
+	usagerequestDescProviderRequestID := usagerequestFields[22].Descriptor()
 	// usagerequest.DefaultProviderRequestID holds the default value on creation for the provider_request_id field.
 	usagerequest.DefaultProviderRequestID = usagerequestDescProviderRequestID.Default.(string)
 	// usagerequest.ProviderRequestIDValidator is a validator for the "provider_request_id" field. It is called by the builders before save.
 	usagerequest.ProviderRequestIDValidator = usagerequestDescProviderRequestID.Validators[0].(func(string) error)
 	// usagerequestDescErrorCode is the schema descriptor for error_code field.
-	usagerequestDescErrorCode := usagerequestFields[24].Descriptor()
+	usagerequestDescErrorCode := usagerequestFields[23].Descriptor()
 	// usagerequest.DefaultErrorCode holds the default value on creation for the error_code field.
 	usagerequest.DefaultErrorCode = usagerequestDescErrorCode.Default.(string)
 	// usagerequest.ErrorCodeValidator is a validator for the "error_code" field. It is called by the builders before save.
 	usagerequest.ErrorCodeValidator = usagerequestDescErrorCode.Validators[0].(func(string) error)
 	// usagerequestDescMeter is the schema descriptor for meter field.
-	usagerequestDescMeter := usagerequestFields[26].Descriptor()
+	usagerequestDescMeter := usagerequestFields[25].Descriptor()
 	// usagerequest.DefaultMeter holds the default value on creation for the meter field.
 	usagerequest.DefaultMeter = usagerequestDescMeter.Default.(string)
 	// usagerequest.MeterValidator is a validator for the "meter" field. It is called by the builders before save.
