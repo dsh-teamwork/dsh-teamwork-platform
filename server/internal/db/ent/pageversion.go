@@ -25,8 +25,6 @@ type PageVersion struct {
 	Number int `json:"number,omitempty"`
 	// AuthorID holds the value of the "author_id" field.
 	AuthorID string `json:"author_id,omitempty"`
-	// HostID holds the value of the "host_id" field.
-	HostID string `json:"host_id,omitempty"`
 	// Computer holds the value of the "computer" field.
 	Computer string `json:"computer,omitempty"`
 	// SessionID holds the value of the "session_id" field.
@@ -45,7 +43,7 @@ func (*PageVersion) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case pageversion.FieldNumber, pageversion.FieldSize:
 			values[i] = new(sql.NullInt64)
-		case pageversion.FieldID, pageversion.FieldPageID, pageversion.FieldAuthorID, pageversion.FieldHostID, pageversion.FieldComputer, pageversion.FieldSessionID, pageversion.FieldNote:
+		case pageversion.FieldID, pageversion.FieldPageID, pageversion.FieldAuthorID, pageversion.FieldComputer, pageversion.FieldSessionID, pageversion.FieldNote:
 			values[i] = new(sql.NullString)
 		case pageversion.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -93,12 +91,6 @@ func (_m *PageVersion) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field author_id", values[i])
 			} else if value.Valid {
 				_m.AuthorID = value.String
-			}
-		case pageversion.FieldHostID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field host_id", values[i])
-			} else if value.Valid {
-				_m.HostID = value.String
 			}
 		case pageversion.FieldComputer:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -171,9 +163,6 @@ func (_m *PageVersion) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("author_id=")
 	builder.WriteString(_m.AuthorID)
-	builder.WriteString(", ")
-	builder.WriteString("host_id=")
-	builder.WriteString(_m.HostID)
 	builder.WriteString(", ")
 	builder.WriteString("computer=")
 	builder.WriteString(_m.Computer)

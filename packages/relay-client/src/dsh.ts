@@ -9,7 +9,8 @@
  * - `session/follow` → the conversation: a `snapshot` of the log's records, then
  *   one `event` per committed event, and `assistant-stream` frames carrying a
  *   reply's text as it is written. Only what a person said
- *   (`user/message` from `source.kind: 'user'`), what the agent said
+ *   (`user/message` from `source.kind: 'user'`, or `'schedule'` when one of
+ *   their automation tasks delivered it), what the agent said
  *   (`assistant/message` text) and its tool calls become items; the system
  *   prompt, runtime context and bookkeeping events are DSH's own.
  * - `$events` waterfalls → `Pending`: `user-questions/request` and
@@ -17,6 +18,7 @@
  */
 
 import { toolKey, visibleReasoning } from './conversation';
+import { remindersOf } from './schedule';
 import type { ConversationItem, FileTarget, Pending, PublishedPage, SessionChange, SessionState, SessionStatus, SessionSummary, SessionWorkspace, ToolResult } from './types';
 
 type Json = Record<string, unknown>;
@@ -245,6 +247,11 @@ export function eventsOf(event: unknown, state: Pick<SessionState, 'items'>): Se
   switch (event.type) {
     case 'user/message': {
       const source = isObject(data.source) ? data.source.kind : undefined;
+      if (source === 'schedule') {
+        // An automation task's delivery is the member's own instruction, sent for them; DSH's change notices are the agent's.
+        const reminders = remindersOf(text(data.content));
+        return reminders.length ? [{ type: 'item', item: { kind: 'user', id, text: reminders.map((each) => each.prompt).join('\n\n'), reminders } }] : [];
+      }
       if (source !== 'user') return [];
       const said = text(data.content);
       const attachments = Array.isArray(data.content)

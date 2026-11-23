@@ -55,20 +55,6 @@ func (_c *PageVersionCreate) SetAuthorID(v string) *PageVersionCreate {
 	return _c
 }
 
-// SetHostID sets the "host_id" field.
-func (_c *PageVersionCreate) SetHostID(v string) *PageVersionCreate {
-	_c.mutation.SetHostID(v)
-	return _c
-}
-
-// SetNillableHostID sets the "host_id" field if the given value is not nil.
-func (_c *PageVersionCreate) SetNillableHostID(v *string) *PageVersionCreate {
-	if v != nil {
-		_c.SetHostID(*v)
-	}
-	return _c
-}
-
 // SetComputer sets the "computer" field.
 func (_c *PageVersionCreate) SetComputer(v string) *PageVersionCreate {
 	_c.mutation.SetComputer(v)
@@ -170,10 +156,6 @@ func (_c *PageVersionCreate) defaults() {
 		v := pageversion.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := _c.mutation.HostID(); !ok {
-		v := pageversion.DefaultHostID
-		_c.mutation.SetHostID(v)
-	}
 	if _, ok := _c.mutation.Computer(); !ok {
 		v := pageversion.DefaultComputer
 		_c.mutation.SetComputer(v)
@@ -214,14 +196,6 @@ func (_c *PageVersionCreate) check() error {
 	if v, ok := _c.mutation.AuthorID(); ok {
 		if err := pageversion.AuthorIDValidator(v); err != nil {
 			return &ValidationError{Name: "author_id", err: fmt.Errorf(`ent: validator failed for field "PageVersion.author_id": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.HostID(); !ok {
-		return &ValidationError{Name: "host_id", err: errors.New(`ent: missing required field "PageVersion.host_id"`)}
-	}
-	if v, ok := _c.mutation.HostID(); ok {
-		if err := pageversion.HostIDValidator(v); err != nil {
-			return &ValidationError{Name: "host_id", err: fmt.Errorf(`ent: validator failed for field "PageVersion.host_id": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.Computer(); !ok {
@@ -307,10 +281,6 @@ func (_c *PageVersionCreate) createSpec() (*PageVersion, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AuthorID(); ok {
 		_spec.SetField(pageversion.FieldAuthorID, field.TypeString, value)
 		_node.AuthorID = value
-	}
-	if value, ok := _c.mutation.HostID(); ok {
-		_spec.SetField(pageversion.FieldHostID, field.TypeString, value)
-		_node.HostID = value
 	}
 	if value, ok := _c.mutation.Computer(); ok {
 		_spec.SetField(pageversion.FieldComputer, field.TypeString, value)
@@ -408,9 +378,6 @@ func (u *PageVersionUpsertOne) UpdateNewValues() *PageVersionUpsertOne {
 		}
 		if _, exists := u.create.mutation.AuthorID(); exists {
 			s.SetIgnore(pageversion.FieldAuthorID)
-		}
-		if _, exists := u.create.mutation.HostID(); exists {
-			s.SetIgnore(pageversion.FieldHostID)
 		}
 		if _, exists := u.create.mutation.Computer(); exists {
 			s.SetIgnore(pageversion.FieldComputer)
@@ -649,9 +616,6 @@ func (u *PageVersionUpsertBulk) UpdateNewValues() *PageVersionUpsertBulk {
 			}
 			if _, exists := b.mutation.AuthorID(); exists {
 				s.SetIgnore(pageversion.FieldAuthorID)
-			}
-			if _, exists := b.mutation.HostID(); exists {
-				s.SetIgnore(pageversion.FieldHostID)
 			}
 			if _, exists := b.mutation.Computer(); exists {
 				s.SetIgnore(pageversion.FieldComputer)

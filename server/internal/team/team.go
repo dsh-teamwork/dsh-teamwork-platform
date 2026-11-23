@@ -18,7 +18,6 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
-	entteam "github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamprovider"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -206,23 +205,6 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 		out.Teams = append(out.Teams, t)
 	}
 	return out, nil
-}
-
-// HostSnapshot is the configuration a shared DSH syncs (ADR 0047): its one
-// team, as a member sees it, or no team once the team is gone.
-func (s *Service) HostSnapshot(ctx context.Context, teamID string) (Snapshot, error) {
-	t, err := s.DB.Team.Query().Where(entteam.ID(teamID)).WithConfigs().Only(ctx)
-	if ent.IsNotFound(err) {
-		return Snapshot{Teams: []TeamSnapshot{}}, nil
-	}
-	if err != nil {
-		return Snapshot{}, err
-	}
-	view, err := s.teamSnapshot(ctx, t, string(membership.RoleMember))
-	if err != nil {
-		return Snapshot{}, err
-	}
-	return Snapshot{Teams: []TeamSnapshot{view}}, nil
 }
 
 // teamSnapshot is one team's configurations and the plugin versions its

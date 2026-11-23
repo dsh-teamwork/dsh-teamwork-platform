@@ -1,7 +1,6 @@
 /**
- * A device identity whose Ed25519 private key is a WebCrypto key made non-extractable (`docs/tech/shared-dsh.md`,
- * "Step 0 results"): a page keeps the key in IndexedDB and can sign with it, but no script, its own included, can
- * read it out. Noise only signs with the key and reads its public half, so this wrapper is all it needs.
+ * A device identity whose Ed25519 private key is a WebCrypto key made non-extractable: a page keeps the key in
+ * IndexedDB and can sign with it, but no script, its own included, can read it out. Noise only signs with the key and reads its public half, so this wrapper is all it needs.
  */
 import { publicKeyFromRaw, publicKeyToProtobuf } from '@libp2p/crypto/keys';
 import { base64, type Identity } from './secure-channel';

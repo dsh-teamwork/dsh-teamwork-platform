@@ -85,8 +85,7 @@ computer's DSH has Office Kit. It reaches nothing outside that directory, and
 needs DSH Teamwork 0.16.0 or later on the computer, 0.19.6 for the previews.
 Beside the paperclip, the permission menu sets what the agent may do on that
 computer: **Read only**, **Workspace write** or **Full access**, as in DSH;
-full access asks you to confirm first. On a Team DSH only the first two can be
-picked; anything wider is set on the machine itself.
+full access asks you to confirm first.
 The model menu groups choices by provider; when the selected model supports reasoning efforts, a reasoning selector appears beside it, set to the model's own default until you change it. In a session that
 has started, the folder and preset stay as they are, and you can change its
 model and effort while it is not working, for that session alone. The
@@ -105,6 +104,25 @@ show the change. Archived sessions are hidden until you open **Archived**, and t
 running session can be archived once it stops. The menu needs a current
 DSH Teamwork plugin on that computer; with an older one it offers only the
 copy. In the phone app, press and hold a session for the same menu.
+
+The alarm clock left of the computer's settings button opens its
+**Automation tasks**, the instructions that computer sends on its own: once at a time you pick, every few minutes, every
+day, on chosen days of the week, or on a cron expression in a time zone you
+name. **New task** gives one a name, the instruction, when it runs and where it
+goes: a new session reused each time, a new session each time, or an existing
+session. A task opens to its repeat, its next run and its deliveries, each a
+link to the session it reached; **Run now** sends it at once without moving
+its next run, and **Pause**, **Edit** and **Delete** do what they say. The
+agent can make and change the same tasks when you ask it to in a session.
+In a session that a task sends to, or that a task started, an alarm clock
+beside **Files** shows how many active tasks send to it. It opens those tasks, each with **Run now** and **Pause** or **Resume**;
+the task that started the session, when one that opens a new session each run
+did; **New task for this session**; and all the computer's tasks. A session
+with no task has no clock: make one from **Automation tasks**, choosing that
+session under **Sends to**. Each
+instruction a task sent shows which task and when it was due. A task runs only while DSH runs on that computer;
+one missed while it was off runs once when DSH starts again. Tasks need DSH
+Teamwork 0.19.10 or later on the computer.
 
 The settings button beside the computer's name opens its settings. There you
 can rename the computer: the name shows in Teamwork, on your phones and in

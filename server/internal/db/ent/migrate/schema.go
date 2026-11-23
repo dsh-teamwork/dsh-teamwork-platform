@@ -448,7 +448,6 @@ var (
 		{Name: "page_id", Type: field.TypeString, Size: 32},
 		{Name: "number", Type: field.TypeInt},
 		{Name: "author_id", Type: field.TypeString, Size: 32},
-		{Name: "host_id", Type: field.TypeString, Size: 32, Default: ""},
 		{Name: "computer", Type: field.TypeString, Size: 256, Default: ""},
 		{Name: "session_id", Type: field.TypeString, Size: 128, Default: ""},
 		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
@@ -678,82 +677,6 @@ var (
 			},
 		},
 	}
-	// SharedArchiveSegmentsColumns holds the columns for the "shared_archive_segments" table.
-	SharedArchiveSegmentsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "host_id", Type: field.TypeString, Size: 32},
-		{Name: "team_id", Type: field.TypeString, Size: 32},
-		{Name: "seq", Type: field.TypeInt64},
-		{Name: "prev_digest", Type: field.TypeString, Size: 64},
-		{Name: "digest", Type: field.TypeString, Size: 64},
-		{Name: "data", Type: field.TypeBytes, Size: 2097152, SchemaType: map[string]string{"mysql": "mediumblob"}},
-	}
-	// SharedArchiveSegmentsTable holds the schema information for the "shared_archive_segments" table.
-	SharedArchiveSegmentsTable = &schema.Table{
-		Name:       "shared_archive_segments",
-		Columns:    SharedArchiveSegmentsColumns,
-		PrimaryKey: []*schema.Column{SharedArchiveSegmentsColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "shared_archive_host_seq",
-				Unique:  true,
-				Columns: []*schema.Column{SharedArchiveSegmentsColumns[2], SharedArchiveSegmentsColumns[4]},
-			},
-			{
-				Name:    "shared_archive_team",
-				Unique:  false,
-				Columns: []*schema.Column{SharedArchiveSegmentsColumns[3]},
-			},
-		},
-	}
-	// SharedHostsColumns holds the columns for the "shared_hosts" table.
-	SharedHostsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "team_id", Type: field.TypeString, Size: 32},
-		{Name: "name", Type: field.TypeString, Size: 400},
-		{Name: "key_hash", Type: field.TypeString, Size: 64},
-		{Name: "identity_key", Type: field.TypeString, Nullable: true, Size: 64},
-		{Name: "created_by", Type: field.TypeString, Size: 32},
-		{Name: "bound_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "access", Type: field.TypeEnum, Enums: []string{"team", "listed"}, Default: "team"},
-	}
-	// SharedHostsTable holds the schema information for the "shared_hosts" table.
-	SharedHostsTable = &schema.Table{
-		Name:       "shared_hosts",
-		Columns:    SharedHostsColumns,
-		PrimaryKey: []*schema.Column{SharedHostsColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "shared_hosts_team",
-				Unique:  false,
-				Columns: []*schema.Column{SharedHostsColumns[2]},
-			},
-		},
-	}
-	// SharedHostMembersColumns holds the columns for the "shared_host_members" table.
-	SharedHostMembersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "host_id", Type: field.TypeString, Size: 32},
-		{Name: "user_id", Type: field.TypeString, Size: 32},
-		{Name: "added_by", Type: field.TypeString, Size: 32},
-	}
-	// SharedHostMembersTable holds the schema information for the "shared_host_members" table.
-	SharedHostMembersTable = &schema.Table{
-		Name:       "shared_host_members",
-		Columns:    SharedHostMembersColumns,
-		PrimaryKey: []*schema.Column{SharedHostMembersColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "shared_host_members_host_user",
-				Unique:  true,
-				Columns: []*schema.Column{SharedHostMembersColumns[2], SharedHostMembersColumns[3]},
-			},
-		},
-	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -843,7 +766,6 @@ var (
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "team_id", Type: field.TypeString, Size: 32},
 		{Name: "user_id", Type: field.TypeString, Size: 32},
-		{Name: "host_id", Type: field.TypeString, Size: 32, Default: ""},
 		{Name: "app_url", Type: field.TypeString, Size: 500, Default: ""},
 		{Name: "submitted_config_id", Type: field.TypeString, Size: 32},
 		{Name: "config_id", Type: field.TypeString, Size: 32},
@@ -889,12 +811,12 @@ var (
 			{
 				Name:    "usagerequest_team_id_config_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[7], UsageRequestsColumns[1]},
+				Columns: []*schema.Column{UsageRequestsColumns[2], UsageRequestsColumns[6], UsageRequestsColumns[1]},
 			},
 			{
 				Name:    "usagerequest_state_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageRequestsColumns[11], UsageRequestsColumns[1]},
+				Columns: []*schema.Column{UsageRequestsColumns[10], UsageRequestsColumns[1]},
 			},
 		},
 	}
@@ -961,9 +883,6 @@ var (
 		RelayPairingOffersTable,
 		ResourceArtifactsTable,
 		ResourceSubmissionsTable,
-		SharedArchiveSegmentsTable,
-		SharedHostsTable,
-		SharedHostMembersTable,
 		TeamsTable,
 		TeamConfigsTable,
 		TeamProvidersTable,
@@ -1069,18 +988,6 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	ResourceSubmissionsTable.Annotation = &entsql.Annotation{
-		Charset:   "utf8mb4",
-		Collation: "utf8mb4_bin",
-	}
-	SharedArchiveSegmentsTable.Annotation = &entsql.Annotation{
-		Charset:   "utf8mb4",
-		Collation: "utf8mb4_bin",
-	}
-	SharedHostsTable.Annotation = &entsql.Annotation{
-		Charset:   "utf8mb4",
-		Collation: "utf8mb4_bin",
-	}
-	SharedHostMembersTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

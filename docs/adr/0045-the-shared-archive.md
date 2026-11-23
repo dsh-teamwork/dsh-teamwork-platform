@@ -1,10 +1,10 @@
 # 0045. A shared DSH's archive is sealed segments in a signed chain, kept in the database
 
-> **Status:** Accepted · **Date:** 2026-11-18
+> **Status:** Superseded by 0067 · **Date:** 2026-11-18
 
 ## Context
 
-A shared DSH ([shared-dsh.md](../tech/shared-dsh.md)) is driven by several
+A shared DSH (`docs/tech/shared-dsh.md`) is driven by several
 members over an end-to-end encrypted relay the server cannot read. The team
 still needs a record of what each member did on its machine, and the developer
 decided the server should keep that record while still unable to read it: the

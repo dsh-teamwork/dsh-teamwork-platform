@@ -69,15 +69,6 @@ func (s *Server) configs(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if c.host != "" {
-		snap, err := s.Team.HostSnapshot(r.Context(), c.team)
-		if err != nil {
-			return err
-		}
-		w.Header().Set("Cache-Control", "no-store")
-		writeJSON(w, http.StatusOK, snap)
-		return nil
-	}
 	snap, err := s.Team.ConfigSnapshot(r.Context(), c.user.ID)
 	if err != nil {
 		return err
@@ -104,9 +95,6 @@ func (s *Server) completions(w http.ResponseWriter, r *http.Request) error {
 	body, err := readBody(r, gateway.MaxBody)
 	if err != nil {
 		return err
-	}
-	if c.host != "" {
-		return s.Gateway.Completions(w, r, gateway.Caller{HostID: c.host, Team: c.team}, body)
 	}
 	return s.Gateway.Completions(w, r, gateway.Caller{UserID: c.user.ID, Team: c.team}, body)
 }

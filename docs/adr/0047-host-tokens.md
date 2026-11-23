@@ -1,6 +1,6 @@
 # 0047. A host token signs a shared DSH in for one team, as no person
 
-> **Status:** Accepted · **Date:** 2026-11-17
+> **Status:** Superseded by 0067 · **Date:** 2026-11-17
 
 ## Context
 

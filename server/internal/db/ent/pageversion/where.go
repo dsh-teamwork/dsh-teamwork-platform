@@ -84,11 +84,6 @@ func AuthorID(v string) predicate.PageVersion {
 	return predicate.PageVersion(sql.FieldEQ(FieldAuthorID, v))
 }
 
-// HostID applies equality check predicate on the "host_id" field. It's identical to HostIDEQ.
-func HostID(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldEQ(FieldHostID, v))
-}
-
 // Computer applies equality check predicate on the "computer" field. It's identical to ComputerEQ.
 func Computer(v string) predicate.PageVersion {
 	return predicate.PageVersion(sql.FieldEQ(FieldComputer, v))
@@ -317,71 +312,6 @@ func AuthorIDEqualFold(v string) predicate.PageVersion {
 // AuthorIDContainsFold applies the ContainsFold predicate on the "author_id" field.
 func AuthorIDContainsFold(v string) predicate.PageVersion {
 	return predicate.PageVersion(sql.FieldContainsFold(FieldAuthorID, v))
-}
-
-// HostIDEQ applies the EQ predicate on the "host_id" field.
-func HostIDEQ(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldEQ(FieldHostID, v))
-}
-
-// HostIDNEQ applies the NEQ predicate on the "host_id" field.
-func HostIDNEQ(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldNEQ(FieldHostID, v))
-}
-
-// HostIDIn applies the In predicate on the "host_id" field.
-func HostIDIn(vs ...string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldIn(FieldHostID, vs...))
-}
-
-// HostIDNotIn applies the NotIn predicate on the "host_id" field.
-func HostIDNotIn(vs ...string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldNotIn(FieldHostID, vs...))
-}
-
-// HostIDGT applies the GT predicate on the "host_id" field.
-func HostIDGT(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldGT(FieldHostID, v))
-}
-
-// HostIDGTE applies the GTE predicate on the "host_id" field.
-func HostIDGTE(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldGTE(FieldHostID, v))
-}
-
-// HostIDLT applies the LT predicate on the "host_id" field.
-func HostIDLT(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldLT(FieldHostID, v))
-}
-
-// HostIDLTE applies the LTE predicate on the "host_id" field.
-func HostIDLTE(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldLTE(FieldHostID, v))
-}
-
-// HostIDContains applies the Contains predicate on the "host_id" field.
-func HostIDContains(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldContains(FieldHostID, v))
-}
-
-// HostIDHasPrefix applies the HasPrefix predicate on the "host_id" field.
-func HostIDHasPrefix(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldHasPrefix(FieldHostID, v))
-}
-
-// HostIDHasSuffix applies the HasSuffix predicate on the "host_id" field.
-func HostIDHasSuffix(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldHasSuffix(FieldHostID, v))
-}
-
-// HostIDEqualFold applies the EqualFold predicate on the "host_id" field.
-func HostIDEqualFold(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldEqualFold(FieldHostID, v))
-}
-
-// HostIDContainsFold applies the ContainsFold predicate on the "host_id" field.
-func HostIDContainsFold(v string) predicate.PageVersion {
-	return predicate.PageVersion(sql.FieldContainsFold(FieldHostID, v))
 }
 
 // ComputerEQ applies the EQ predicate on the "computer" field.

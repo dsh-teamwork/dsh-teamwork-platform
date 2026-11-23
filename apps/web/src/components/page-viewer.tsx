@@ -186,7 +186,7 @@ export function PageViewer({ teamId, pageId, version, versions = false, onClose,
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span>{personName(v.author)} · {format.dateTime(new Date(v.createdAt), { dateStyle: 'medium', timeStyle: 'short' })}</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {[v.teamDsh ? t('fromTeamDsh') : v.computer, v.note].filter(Boolean).join(' · ')}
+                      {[v.computer, v.note].filter(Boolean).join(' · ')}
                     </span>
                   </span>
                   {v.number === shown && <span className="text-xs text-muted-foreground">{t('showing')}</span>}
