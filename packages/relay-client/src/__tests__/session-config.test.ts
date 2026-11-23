@@ -63,9 +63,13 @@ it('starts a new session in the team’s default workspace, else in the folder o
   expect(defaultDirectory([], {}, 't')).toBeUndefined();
 });
 
-it("shows a model's id under its name only where it says something", () => {
-  // A team model's id is its configuration's id (dsh-teamwork's teamProvider), never shown.
-  expect(modelDetail({ provider: 'teamwork-platform-t1', id: '47YLA3GOROXBO7H6VJ6FQTSAQR', name: 'DeepSeek V4 Pro' })).toBeUndefined();
+it("shows under a model's name the model it calls, never a team configuration's id", () => {
+  // A team model's id is its configuration's (dsh-teamwork's teamProvider); the plugin describes it by its model.
+  const team = { provider: 'teamwork-platform-t1', id: '47YLA3GOROXBO7H6VJ6FQTSAQR', name: 'DeepSeek V4 Pro' };
+  expect(modelDetail({ ...team, description: 'deepseek-v4-pro' })).toBe('deepseek-v4-pro');
+  expect(modelDetail({ ...team, description: 'DeepSeek V4 Pro' })).toBeUndefined();
+  // An older plugin gives no description: still never the configuration's id.
+  expect(modelDetail(team)).toBeUndefined();
   expect(modelDetail({ provider: 'openai', id: 'gpt-5.5', name: 'GPT-5.5' })).toBe('gpt-5.5');
   expect(modelDetail({ provider: 'deepseek', id: 'deepseek-v4-pro', name: 'deepseek-v4-pro' })).toBeUndefined();
 });

@@ -5,13 +5,13 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
-## 2026-11-22 — No configuration ids under team models in the model menu
+## 2026-11-23 — Team models show the model they call, not a configuration id
 
-- **What:** The conversation model menu shows a model's id under its name only where it differs from the name and is not a team model's: a team model's id is its configuration's id, which named nothing a member would recognise. The rule is `modelDetail` in `@dsh-teamwork/relay-client`, shared with the phone app.
-- **Why:** The provider-grouped menu showed an opaque id under every team model.
-- **Breaking:** None.
-- **Upgrade:** Nothing.
-- **Refs:** `packages/relay-client/src/session-config.ts`, `apps/web/src/pages/team/dsh-session.tsx`.
+- **What:** Under a model's name the conversation model menu shows `modelDetail` (`@dsh-teamwork/relay-client`), the one rule the web, the phone and DSH share: a team model's description, which the plugin sets to the model its configuration calls (`data.model`: a provider's model ID for a BYOK model, the catalogue ID for a hosted one), and another model's ID; nothing where it only repeats the name. A team model's configuration id, its wire model, is never shown. The provider is not shown.
+- **Why:** The provider-grouped menu showed an opaque configuration id under every team model.
+- **Breaking:** None. With a plugin from before the description, a team model shows its name alone.
+- **Upgrade:** Update the DSH Teamwork plugin for the model under the name.
+- **Refs:** `packages/relay-client/src/session-config.ts`, `apps/web/src/pages/team/dsh-session.tsx`, dsh-teamwork `src/platform-models.ts`.
 
 ## 2026-11-22 — Kimi and MiniMax accounts by region and billing
 
