@@ -14,15 +14,18 @@ import { toast } from 'sonner';
 import { useFormatter, useLocale, useNow, useTranslations } from 'use-intl';
 
 import {
+  deviceTimeZone,
+  draftReady,
   RelayError,
   TASK_TITLE_MAX,
+  taskDraft,
+  taskInput,
+  taskPatch,
   type AutomationTask,
   type SessionSummary,
-  type TargetInput,
+  type TaskDraft,
   type TaskHistory,
-  type TaskInput,
-  type TaskPatch,
-  type TimingInput,
+  type TaskRepeat,
 } from '@dsh-teamwork/relay-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -335,102 +338,6 @@ function Deliveries({ computerId, task, sessionsBase, sessionTitle }: { computer
   );
 }
 
-type Repeat = 'once' | 'every' | 'daily' | 'weekly' | 'cron';
-type Destination = 'new_once' | 'new' | 'session';
-
-export interface Draft {
-  title: string;
-  prompt: string;
-  repeat: Repeat;
-  /** `once`: a local date and time, as a `datetime-local` input holds it. */
-  at: string;
-  minutes: string;
-  /** `daily` and `weekly`: HH:mm. */
-  time: string;
-  weekdays: number[];
-  expression: string;
-  timeZone: string;
-  destination: Destination;
-  sessionId: string;
-}
-
-const browserZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-const pad = (n: number) => String(n).padStart(2, '0');
-/** An instant as a `datetime-local` value in this browser's zone. */
-function localInput(date: Date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-/** The form's starting values: a task's own, or a new one's (tomorrow at nine, here, in a session of its own). */
-export function draftOf(task: AutomationTask | undefined, sessionId: string): Draft {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(9, 0, 0, 0);
-  const draft: Draft = {
-    title: task?.title ?? '', prompt: task?.prompt ?? '', repeat: 'daily', at: localInput(tomorrow), minutes: '60', time: '09:00',
-    weekdays: [1, 2, 3, 4, 5], expression: '0 9 * * 1-5', timeZone: browserZone(),
-    destination: sessionId ? 'session' : 'new_once', sessionId,
-  };
-  if (!task) return draft;
-  const timing = task.timing;
-  if (timing.kind === 'at' || timing.kind === 'after') Object.assign(draft, { repeat: 'once', at: localInput(new Date(task.scheduledAt)) });
-  else if (timing.kind === 'every') Object.assign(draft, { repeat: 'every', minutes: String(Math.max(1, Math.round(timing.everySeconds / 60))) });
-  else if (timing.kind === 'daily') Object.assign(draft, { repeat: 'daily', time: timing.time.slice(0, 5), timeZone: timing.timeZone });
-  else if (timing.kind === 'weekly') Object.assign(draft, { repeat: 'weekly', time: timing.time.slice(0, 5), timeZone: timing.timeZone, weekdays: timing.weekdays });
-  else if (timing.kind === 'cron') Object.assign(draft, { repeat: 'cron', expression: timing.expression, timeZone: timing.timeZone });
-  // A reserved session is shown as the one it reuses.
-  draft.destination = task.target.kind;
-  draft.sessionId = task.target.kind === 'new' ? '' : task.target.sessionId;
-  return draft;
-}
-
-/** The form's timing in DSH's management input. */
-export function timingOf(draft: Draft): TimingInput {
-  switch (draft.repeat) {
-    case 'once': return { kind: 'at', at: new Date(draft.at).toISOString() };
-    case 'every': return { kind: 'every', every_seconds: Math.round(Number(draft.minutes) * 60) };
-    case 'daily': return { kind: 'daily', daily: { time: `${draft.time}:00`, time_zone: draft.timeZone.trim() } };
-    case 'weekly': return { kind: 'weekly', weekly: { time: `${draft.time}:00`, time_zone: draft.timeZone.trim(), weekdays: [...draft.weekdays].sort() } };
-    case 'cron': return { kind: 'cron', cron: { expression: draft.expression.trim(), time_zone: draft.timeZone.trim() } };
-  }
-}
-
-function targetOf(draft: Draft): TargetInput {
-  return draft.destination === 'session' ? { kind: 'session', sessionId: draft.sessionId } : { kind: draft.destination };
-}
-
-/** What a new task sends. */
-export function taskInputOf(draft: Draft): TaskInput {
-  return { title: draft.title.trim(), prompt: draft.prompt.trim(), timing: timingOf(draft), target: targetOf(draft) };
-}
-
-/**
- * What an edit of `task` sends: its name and instruction, its timing unless it is a custom rule the form cannot write,
- * and its destination only when it changed, since sending a reused session's again would reserve another one.
- */
-export function taskPatchOf(task: AutomationTask, draft: Draft): TaskPatch {
-  const before = draftOf(task, '');
-  const moved = draft.destination !== before.destination || draft.sessionId !== before.sessionId;
-  return {
-    title: draft.title.trim(),
-    prompt: draft.prompt.trim(),
-    ...(task.timing.kind === 'rrule' ? {} : { timing: timingOf(draft) }),
-    ...(moved ? { target: targetOf(draft) } : {}),
-  };
-}
-
-/** Whether a draft is complete enough to send; what DSH refuses beyond this, it says. */
-function ready(draft: Draft, timingFixed: boolean) {
-  if (!draft.title.trim() || draft.title.trim().length > TASK_TITLE_MAX || !draft.prompt.trim()) return false;
-  if (draft.destination === 'session' && !draft.sessionId) return false;
-  if (timingFixed) return true;
-  if (draft.repeat === 'once') return !Number.isNaN(new Date(draft.at).getTime());
-  if (draft.repeat === 'every') return Number(draft.minutes) >= 1;
-  if (draft.repeat === 'weekly' && draft.weekdays.length === 0) return false;
-  if (draft.repeat === 'cron' && !draft.expression.trim()) return false;
-  return !!draft.timeZone.trim();
-}
-
 /** Makes a task, or changes `task`: its name, instruction, when it runs and where it delivers. A custom rule is kept as it is. */
 function TaskForm({ computerId, sessions, task, back, initialSession = '', cancel, saved }: {
   computerId: string; sessions: SessionSummary[] | null; task?: AutomationTask; back: string; initialSession?: string;
@@ -440,10 +347,10 @@ function TaskForm({ computerId, sessions, task, back, initialSession = '', cance
   const client = useSessionClient();
   const wordError = useTaskError();
   const locale = useLocale();
-  const [draft, setDraft] = useState(() => draftOf(task, initialSession));
+  const [draft, setDraft] = useState(() => taskDraft(task, initialSession));
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-  const set = (change: Partial<Draft>) => setDraft((was) => ({ ...was, ...change }));
+  const set = (change: Partial<TaskDraft>) => setDraft((was) => ({ ...was, ...change }));
   // DSH's custom rules (RRULE) are written on the computer; the form keeps one as it is.
   const timingFixed = task?.timing.kind === 'rrule';
   const zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
@@ -456,11 +363,11 @@ function TaskForm({ computerId, sessions, task, back, initialSession = '', cance
     setFailed(null);
     try {
       if (!task) {
-        saved(await client.createTask(computerId, taskInputOf(draft)));
+        saved(await client.createTask(computerId, taskInput(draft)));
         toast.success(t('created'));
         return;
       }
-      saved(await client.updateTask(computerId, task, taskPatchOf(task, draft)));
+      saved(await client.updateTask(computerId, task, taskPatch(task, draft)));
       toast.success(t('saved'));
     } catch (error) {
       setFailed(wordError(error));
@@ -490,13 +397,13 @@ function TaskForm({ computerId, sessions, task, back, initialSession = '', cance
           <p className="text-sm text-muted-foreground">{t('customHelp')}</p>
         ) : (
           <>
-            <Select label={t('when')} value={draft.repeat} change={(repeat) => set({ repeat: repeat as Repeat })} className="w-full sm:w-64"
+            <Select label={t('when')} value={draft.repeat} change={(repeat) => set({ repeat: repeat as TaskRepeat })} className="w-full sm:w-64"
               options={(['once', 'every', 'daily', 'weekly', 'cron'] as const).map((value) => ({ value, label: t(`repeat.${value}`) }))} />
             {draft.repeat === 'once' && (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="task-at">{t('at')}</Label>
                 <Input id="task-at" type="datetime-local" value={draft.at} onChange={(event) => set({ at: event.target.value })} className="w-full sm:w-64" />
-                <p className="text-xs text-muted-foreground">{t('atHelp', { zone: browserZone() })}</p>
+                <p className="text-xs text-muted-foreground">{t('atHelp', { zone: deviceTimeZone() })}</p>
               </div>
             )}
             {draft.repeat === 'every' && (
@@ -564,7 +471,7 @@ function TaskForm({ computerId, sessions, task, back, initialSession = '', cance
       <p className="text-xs text-muted-foreground">{t('runsWhileOnline')}</p>
       {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
       <div className="flex gap-2">
-        <Button type="submit" disabled={busy || !ready(draft, timingFixed)}>{t(task ? 'save' : 'create')}</Button>
+        <Button type="submit" disabled={busy || !draftReady(draft, timingFixed)}>{t(task ? 'save' : 'create')}</Button>
         {cancel ? <Button type="button" variant="outline" onClick={cancel}>{t('cancel')}</Button> : <Button asChild variant="outline"><Link to={back}>{t('cancel')}</Link></Button>}
       </div>
     </form>

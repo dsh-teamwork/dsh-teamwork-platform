@@ -8,6 +8,7 @@
  *   `RelayError` the screens word.
  * - A delivery lands in its session as a user message framed `[SCHEDULE REMINDER]` (or `… BATCH`); `remindersOf`
  *   reads the instructions out of that framing. `[SCHEDULE CHANGE]` notices are for the agent, and read as nothing.
+ * - A form on the web or the phone holds a `TaskDraft`; `taskInput` and `taskPatch` turn it into what DSH takes.
  */
 
 import { RelayError, type RelayErrorCode } from './types';
@@ -220,4 +221,121 @@ export function remindersOf(text: string): Reminder[] {
     });
   }
   return [];
+}
+
+/** How a form offers a task's repeat: the timings a client writes. A custom rule (RRULE) is read, never written. */
+export type TaskRepeat = 'once' | 'every' | 'daily' | 'weekly' | 'cron';
+
+/**
+ * A task as a form holds it, the same on the web and the phone: text a person types, turned into DSH's input by
+ * `taskInput` and `taskPatch`.
+ */
+export interface TaskDraft {
+  title: string;
+  prompt: string;
+  repeat: TaskRepeat;
+  /** `once`: a local date and time on this device, `YYYY-MM-DDTHH:mm`. */
+  at: string;
+  /** `every`: whole minutes between runs. */
+  minutes: string;
+  /** `daily` and `weekly`: `HH:mm`. */
+  time: string;
+  /** `weekly`: ISO weekdays, Monday 1 to Sunday 7. */
+  weekdays: number[];
+  expression: string;
+  /** `daily`, `weekly` and `cron`: an IANA zone. */
+  timeZone: string;
+  destination: 'new_once' | 'new' | 'session';
+  /** `session`, and a reused session's own once it has one. */
+  sessionId: string;
+}
+
+const pad = (n: number) => String(n).padStart(2, '0');
+/** An instant as this device's local `YYYY-MM-DDTHH:mm`. */
+export function localDateTime(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+/** A local `YYYY-MM-DDTHH:mm` (a space for the `T` too) as an instant, read by its parts: Hermes parses no zone-less string reliably. */
+export function localInstant(text: string): Date | null {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})$/.exec(text.trim());
+  if (!parts) return null;
+  const [, y, mo, d, h, mi] = parts.map(Number) as [number, number, number, number, number, number];
+  const date = new Date(y, mo - 1, d, h, mi);
+  return date.getMonth() === mo - 1 && date.getDate() === d && h < 24 && mi < 60 ? date : null;
+}
+/** This device's IANA zone, where it knows one. */
+export const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+
+/**
+ * A form's starting values: a task's own, or a new one's, tomorrow at nine on weekdays in this device's zone, in a
+ * session of its own unless `sessionId` names one.
+ */
+export function taskDraft(task: AutomationTask | undefined, sessionId: string, now = new Date(), timeZone = deviceTimeZone()): TaskDraft {
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9, 0, 0, 0);
+  const draft: TaskDraft = {
+    title: task?.title ?? '', prompt: task?.prompt ?? '', repeat: 'daily', at: localDateTime(tomorrow), minutes: '60', time: '09:00',
+    weekdays: [1, 2, 3, 4, 5], expression: '0 9 * * 1-5', timeZone,
+    destination: sessionId ? 'session' : 'new_once', sessionId,
+  };
+  if (!task) return draft;
+  const timing = task.timing;
+  if (timing.kind === 'at' || timing.kind === 'after') Object.assign(draft, { repeat: 'once', at: localDateTime(new Date(task.scheduledAt)) });
+  else if (timing.kind === 'every') Object.assign(draft, { repeat: 'every', minutes: String(Math.max(1, Math.round(timing.everySeconds / 60))) });
+  else if (timing.kind === 'daily') Object.assign(draft, { repeat: 'daily', time: timing.time.slice(0, 5), timeZone: timing.timeZone });
+  else if (timing.kind === 'weekly') Object.assign(draft, { repeat: 'weekly', time: timing.time.slice(0, 5), timeZone: timing.timeZone, weekdays: timing.weekdays });
+  else if (timing.kind === 'cron') Object.assign(draft, { repeat: 'cron', expression: timing.expression, timeZone: timing.timeZone });
+  // A reserved session is shown as the one it reuses.
+  draft.destination = task.target.kind;
+  draft.sessionId = task.target.kind === 'new' ? '' : task.target.sessionId;
+  return draft;
+}
+
+/** A draft's timing in DSH's management input. */
+export function draftTiming(draft: TaskDraft): TimingInput {
+  switch (draft.repeat) {
+    case 'once': return { kind: 'at', at: (localInstant(draft.at) ?? new Date(NaN)).toISOString() };
+    case 'every': return { kind: 'every', every_seconds: Math.round(Number(draft.minutes) * 60) };
+    case 'daily': return { kind: 'daily', daily: { time: `${draft.time.trim()}:00`, time_zone: draft.timeZone.trim() } };
+    case 'weekly': return { kind: 'weekly', weekly: { time: `${draft.time.trim()}:00`, time_zone: draft.timeZone.trim(), weekdays: [...draft.weekdays].sort() } };
+    case 'cron': return { kind: 'cron', cron: { expression: draft.expression.trim(), time_zone: draft.timeZone.trim() } };
+  }
+}
+
+function draftTarget(draft: TaskDraft): TargetInput {
+  return draft.destination === 'session' ? { kind: 'session', sessionId: draft.sessionId } : { kind: draft.destination };
+}
+
+/** What a new task sends. */
+export function taskInput(draft: TaskDraft): TaskInput {
+  return { title: draft.title.trim(), prompt: draft.prompt.trim(), timing: draftTiming(draft), target: draftTarget(draft) };
+}
+
+/**
+ * What an edit of `task` sends: its name and instruction, its timing unless it is a custom rule a form cannot write,
+ * and its destination only when it changed, since sending a reused session's again would reserve another one.
+ */
+export function taskPatch(task: AutomationTask, draft: TaskDraft): TaskPatch {
+  const before = taskDraft(task, '');
+  const moved = draft.destination !== before.destination || draft.sessionId !== before.sessionId;
+  return {
+    title: draft.title.trim(),
+    prompt: draft.prompt.trim(),
+    ...(task.timing.kind === 'rrule' ? {} : { timing: draftTiming(draft) }),
+    ...(moved ? { target: draftTarget(draft) } : {}),
+  };
+}
+
+/** Whether a draft is complete enough to send (`timingFixed` for a custom rule kept as it is); what DSH refuses beyond this, it says. */
+export function draftReady(draft: TaskDraft, timingFixed: boolean): boolean {
+  if (!draft.title.trim() || draft.title.trim().length > TASK_TITLE_MAX || !draft.prompt.trim()) return false;
+  if (draft.destination === 'session' && !draft.sessionId) return false;
+  if (timingFixed) return true;
+  if (draft.repeat === 'once') return localInstant(draft.at) !== null;
+  if (draft.repeat === 'every') return Number.isInteger(Number(draft.minutes)) && Number(draft.minutes) >= 1;
+  if ((draft.repeat === 'daily' || draft.repeat === 'weekly') && !/^([01]\d|2[0-3]):[0-5]\d$/.test(draft.time.trim())) return false;
+  if (draft.repeat === 'weekly' && draft.weekdays.length === 0) return false;
+  if (draft.repeat === 'cron' && !draft.expression.trim()) return false;
+  return !!draft.timeZone.trim();
 }

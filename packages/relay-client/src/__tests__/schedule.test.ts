@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { bridgeValue, createDshSessions, type DshLink } from '../dsh-sessions';
 import { eventsOf } from '../dsh';
-import { remindersOf, taskOf, tasksOf } from '../schedule';
+import { draftReady, draftTiming, localDateTime, localInstant, remindersOf, taskDraft, taskInput, taskOf, taskPatch, tasksOf } from '../schedule';
 import { RelayError } from '../types';
 
 const cron = {
@@ -126,5 +126,55 @@ describe('a computer\'s automation tasks', () => {
     } catch (error) {
       expect(error).toMatchObject({ code: 'schedule_invalid', detail: 'invalid_prompt' });
     }
+  });
+});
+
+describe('a task form on the web and the phone', () => {
+  const reused = taskOf(daily)!;
+  const now = new Date(2026, 10, 23, 15, 30);
+
+  it('writes each repeat in DSH\'s management input', () => {
+    const draft = { ...taskDraft(undefined, '', now, 'Asia/Shanghai'), time: '23:30' };
+    expect(draftTiming({ ...draft, repeat: 'daily' })).toEqual({ kind: 'daily', daily: { time: '23:30:00', time_zone: 'Asia/Shanghai' } });
+    expect(draftTiming({ ...draft, repeat: 'weekly', weekdays: [5, 1, 3] })).toEqual({ kind: 'weekly', weekly: { time: '23:30:00', time_zone: 'Asia/Shanghai', weekdays: [1, 3, 5] } });
+    expect(draftTiming({ ...draft, repeat: 'every', minutes: '15' })).toEqual({ kind: 'every', every_seconds: 900 });
+    expect(draftTiming({ ...draft, repeat: 'cron', expression: ' */15 9-17 * * 1-5 ' })).toEqual({ kind: 'cron', cron: { expression: '*/15 9-17 * * 1-5', time_zone: 'Asia/Shanghai' } });
+    // A local date and time is this device's; DSH takes the instant.
+    expect(draftTiming({ ...draft, repeat: 'once', at: '2099-01-01T09:00' })).toEqual({ kind: 'at', at: new Date(2099, 0, 1, 9, 0).toISOString() });
+  });
+
+  it('reads a local date and time by its parts, and refuses one that is not a real time', () => {
+    expect(localInstant('2099-01-01 09:05')).toEqual(new Date(2099, 0, 1, 9, 5));
+    expect(localDateTime(new Date(2099, 0, 1, 9, 5))).toBe('2099-01-01T09:05');
+    for (const text of ['2099-02-30T09:00', '2099-01-01T24:00', '2099-1-1 9:00', 'tomorrow']) expect(localInstant(text), text).toBeNull();
+  });
+
+  it('starts a new task tomorrow at nine on weekdays, in a session of its own or the one it was asked for from', () => {
+    expect(taskDraft(undefined, '', now, 'Asia/Shanghai')).toMatchObject({ repeat: 'daily', at: '2026-11-24T09:00', time: '09:00', weekdays: [1, 2, 3, 4, 5], timeZone: 'Asia/Shanghai', destination: 'new_once' });
+    expect(taskInput({ ...taskDraft(undefined, '', now), title: ' Deploy ', prompt: ' Check it. ' })).toMatchObject({ title: 'Deploy', prompt: 'Check it.', target: { kind: 'new_once' } });
+    expect(taskInput({ ...taskDraft(undefined, 'session-1', now), title: 'a', prompt: 'b' }).target).toEqual({ kind: 'session', sessionId: 'session-1' });
+  });
+
+  it('reads a task back, and sends its destination only when it changed', () => {
+    const draft = taskDraft(reused, '');
+    expect(draft).toMatchObject({ repeat: 'daily', time: '09:00', timeZone: 'Asia/Shanghai', destination: 'new_once', sessionId: 'session-002d' });
+    // Sending new_once again would reserve another session: an edit of the name alone keeps it.
+    expect(taskPatch(reused, { ...draft, title: 'Renamed' })).toEqual({ title: 'Renamed', prompt: 'x', timing: { kind: 'daily', daily: { time: '09:00:00', time_zone: 'Asia/Shanghai' } } });
+    expect(taskPatch(reused, { ...draft, destination: 'new' }).target).toEqual({ kind: 'new' });
+    expect(taskPatch(reused, { ...draft, destination: 'session', sessionId: 'session-2' }).target).toEqual({ kind: 'session', sessionId: 'session-2' });
+    const custom = { ...reused, timing: { kind: 'rrule' as const, rrule: 'DTSTART;TZID=Asia/Shanghai:20990101T090000\nRRULE:FREQ=DAILY' } };
+    expect(taskPatch(custom, { ...taskDraft(custom, ''), prompt: 'New' })).toEqual({ title: 'Probe cron', prompt: 'New' });
+  });
+
+  it('holds back a draft that is not complete', () => {
+    const draft = { ...taskDraft(undefined, '', now, 'UTC'), title: 'T', prompt: 'P' };
+    expect(draftReady(draft, false)).toBe(true);
+    expect(draftReady({ ...draft, title: ' ' }, false)).toBe(false);
+    expect(draftReady({ ...draft, destination: 'session' }, false)).toBe(false);
+    expect(draftReady({ ...draft, time: '9:00' }, false)).toBe(false);
+    expect(draftReady({ ...draft, repeat: 'every', minutes: '0.5' }, false)).toBe(false);
+    expect(draftReady({ ...draft, repeat: 'weekly', weekdays: [] }, false)).toBe(false);
+    expect(draftReady({ ...draft, repeat: 'once', at: 'soon' }, false)).toBe(false);
+    expect(draftReady({ ...draft, repeat: 'once', at: 'soon' }, true)).toBe(true);
   });
 });

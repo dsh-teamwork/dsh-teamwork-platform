@@ -98,7 +98,7 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    every N minutes, daily, weekly or cron in a named zone; a reused new
    session, a new one each run, or an existing session). An edit sends a
    destination only when it changed, since sending `new_once` again reserves
-   another session (`taskPatchOf`). A session's header lists the tasks that
+   another session (`taskPatch` in `relay-client`, which the phone shares). A session's header lists the tasks that
    deliver to it and makes one for it (`?session=`), and a delivered turn
    names its task. A new session's folder and preset are DSH's defaults; the
    form does not choose them yet.
