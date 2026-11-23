@@ -373,12 +373,12 @@
       "welcomeTitle": "Start your first team",
       "welcomeBody": "Create a team and you become its admin. Joining someone else's? Use the invitation link they sent you.",
       "welcomeBodyPasswords": "Create a team and you become its admin. Joining someone else's? Ask its admin to add you; you will get a first password.",
-      "step1Title": "Connect a model provider",
-      "step1Body": "Paste a key once; it stays on the server.",
-      "step2Title": "Publish presets and plugins",
-      "step2Body": "Start from a template and make it the team's.",
+      "step1Title": "Connect your DSH",
+      "step1Body": "Install the Teamwork plugin and sign in: the team's models and presets sync to it.",
+      "step2Title": "Carry on anywhere",
+      "step2Body": "Pair a browser or the phone app with your computer.",
       "step3Title": "Bring people in",
-      "step3Body": "Everyone's DSH picks the team's setup up at the next sync."
+      "step3Body": "Each of them connects their own DSH the same way."
     },
     "overview": {
       "descriptionTeam": "What waits on the team, how it used its models lately, and what it publishes to every member’s DSH.",
@@ -386,17 +386,10 @@
       "setup": "Getting started",
       "go": "Go",
       "steps": {
-        "provider": {
-          "title": "Connect a provider",
-          "hint": "Pick one and paste its API key"
-        },
         "model": {
-          "title": "Publish team models and their rates",
-          "hint": "Members call a model once it has rates, so every call’s points are known"
-        },
-        "preset": {
-          "title": "Add a preset",
-          "hint": "Start from a template in seconds"
+          "title": "Give the team a model it can call",
+          "hint": "Connect a provider on the models page and publish its models",
+          "hintRates": "Set a rate on each model: members call it once it has one"
         },
         "members": {
           "title": "Bring members in",
@@ -404,11 +397,6 @@
           "hintPasswords": "Create their account with a first password"
         }
       },
-      "connectAdmin": "Send this to new members",
-      "connectMember": "Connect your DSH",
-      "connected": "Your DSH is connected",
-      "connectedHint": "It called a team model in the last 30 days.",
-      "showSteps": "Show the steps",
       "recent": "Recent changes",
       "recentEmpty": "No configuration yet.",
       "resources": "Team resources",
@@ -458,10 +446,37 @@
         "resources": "Team resources",
         "resourcesNote": "{models} models · {presets} presets · {plugins} plugins"
       },
-      "connectInstall": "Install the DSH Teamwork plugin. <link>How to install</link>",
-      "connectServer": "On Teamwork's sign-in screen, the server should be <code>{server}</code>.",
-      "connectSignIn": "Sign in from the Teamwork panel, or run:",
-      "connectMessage": "Join {team} on DSH Teamwork: install the plugin ({server}/docs/install), set the server on Teamwork's sign-in screen to {server}, then sign in.",
+      "dsh": {
+        "title": "Connect your DSH",
+        "lede": "The team's models and presets sync to your DSH by themselves. Sign it in once on your computer, then carry on from a browser or your phone too.",
+        "signIn": {
+          "title": "Sign in to Teamwork from DSH on your computer",
+          "install": "In DSH desktop, open Plugins → Add plugin and install this package (<link>other ways to install</link>):",
+          "login": "Then sign in from the Teamwork panel, or run:",
+          "server": "Before signing in, set the server on Teamwork's sign-in screen to <code>{server}</code>.",
+          "waiting": "This page moves on by itself once DSH is signed in.",
+          "done": "{name} is signed in."
+        },
+        "pair": {
+          "title": "Carry on from a browser or your phone",
+          "hint": "Pair them with your computer using the code from Device connections in its Teamwork panel. End-to-end encrypted.",
+          "browserTitle": "In the browser: My DSH",
+          "browserBody": "Open your computer's sessions right here in the console.",
+          "browserAction": "Open My DSH",
+          "phoneTitle": "On your phone: the app",
+          "phoneBody": "Search for DSH Teamwork in your app store, install it and pair with the same kind of code.",
+          "later": "Not now"
+        },
+        "connected": "Your DSH is connected",
+        "connectedHint": "{name}, with a browser or phone paired",
+        "open": "Open My DSH"
+      },
+      "inviteTitle": "Bring members in",
+      "inviteBody": "Send each new member an invitation link from the members page, and these instructions to connect their DSH.",
+      "inviteBodyPasswords": "Create each new member's account on the members page, and send them these instructions to connect their DSH.",
+      "inviteAction": "Create an invitation",
+      "inviteActionPasswords": "Add a member",
+      "connectMessage": "Join {team} on DSH Teamwork: install the Teamwork plugin in DSH ({server}/docs/install), then sign in from its Teamwork panel. If the panel names another server, change it to {server} first.",
       "copyMessage": "Copy instructions"
     },
     "role": {

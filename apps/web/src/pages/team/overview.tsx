@@ -1,33 +1,44 @@
 /**
  * The two summaries of a team (ADR 0049). The workspace's home
  * (`/teams/{teamId}/home`) is everyone's own, an admin's included: what waits
- * on the reader, their last 30 days, what the team changed lately and how DSH
- * joins. The team overview (`/teams/{teamId}/overview`, Team management) is
- * the admin's, where an admin lands: what waits on the team, its last 30
- * days, getting started until it is done, its resources and the instructions
- * to send a new member. Both read `GET …/summary`, the home in its default
- * scope, the caller's own, and the overview with `scope=team`.
+ * on the reader, their last 30 days and what the team changed lately. The
+ * team overview (`/teams/{teamId}/overview`, Team management) is the admin's,
+ * where an admin lands: what waits on the team, its last 30 days, getting
+ * started until it is done, its resources and what to send a new member. Both
+ * read `GET …/summary`, the home in its default scope, the caller's own, and
+ * the overview with `scope=team`.
+ *
+ * Both open with connecting the reader's own DSH until it is done: a new team
+ * already has a preset, and on the hosted service its models, so the first
+ * thing anyone needs is their DSH signed in, then a browser or phone paired
+ * with it. Done is read from the reader's computers on the relay
+ * (`GET /relay/hosts`), not from calls, so the card moves on as soon as DSH
+ * signs in.
  */
 
 import { formatPoints } from '@dsh-teamwork/shared';
-import { ArrowRight, Check, CircleCheck, CircleSlash, Gauge, GitPullRequestArrow, MailWarning, ReceiptText, Tag } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { ArrowRight, Check, CircleCheck, CircleSlash, Gauge, GitPullRequestArrow, Laptop, MailWarning, ReceiptText, Smartphone, Tag } from 'lucide-react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useFormatter, useLocale, useNow, useTranslations } from 'use-intl';
 
 import { CopyButton } from '@/components/copy-button';
 import { Failure } from '@/components/page';
-import { PageHeader } from '@/components/team/console-shell';
+import { COMPUTERS_REFRESH_MS, ownComputers, PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Provider, Schemas, Team, TeamConfig } from '@/lib/api';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Schemas, Team, TeamConfig } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
 
 const LOGIN = '/teamwork login';
+/** The plugin's npm name, what DSH installs (the plugin's README, "Install"). */
+const PLUGIN = '@dsh-teamwork/dsh-teamwork';
+/** The server the plugin signs in to unless told otherwise (the plugin's `DEFAULT_SERVER`); any other needs saying. */
+const PLUGIN_DEFAULT_SERVER = 'https://www.dshteamwork.com';
 
 type Summary = Schemas['TeamSummary'];
 /** Whose summary a page shows: the reader's own, or the team's for its admin. */
@@ -40,6 +51,7 @@ export function TeamHomePage() {
   const word = useTeamError();
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
   const summary = useApi<Summary>(`teams/${team.id}/summary`);
+  const dsh = useOwnDsh();
   const base = `/teams/${team.id}`;
   if (!configs.data) return configs.error ? <Failure message={word(configs.error)} /> : null;
   const count = (kind: TeamConfig['kind']) => configs.data!.filter((c) => c.kind === kind).length;
@@ -47,6 +59,7 @@ export function TeamHomePage() {
   return (
     <>
       <PageHeader title={team.name} description={t('description')} />
+      <ConnectDsh dsh={dsh} base={base} />
       <Waiting scope="me" summary={summary.data} base={base} />
       <Figures
         scope="me"
@@ -58,7 +71,7 @@ export function TeamHomePage() {
           href: `${base}/resources`,
         }}
       />
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div className={cn('grid items-start gap-6', dsh.done && 'lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]')}>
         <Recent
           configs={configs.data}
           title={t('updates')}
@@ -68,8 +81,7 @@ export function TeamHomePage() {
             </Button>
           }
         />
-        {/* Calls in the last 30 days say this person's DSH is connected: the steps fold away until they are wanted again. */}
-        <Connect team={team} invite={false} connected={(summary.data?.calls ?? 0) > 0} />
+        {dsh.done && <DshConnected dsh={dsh} base={base} />}
       </div>
     </>
   );
@@ -81,24 +93,22 @@ export function TeamOverviewPage() {
   const t = useTranslations('team');
   const word = useTeamError();
   const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
-  const providers = useApi<Provider[]>(`teams/${team.id}/providers`);
-  const failed = (!configs.data && configs.error) || (!providers.data && providers.error);
-  if (failed) return <Failure message={word(failed)} />;
-  if (!configs.data || !providers.data) return null;
-  const count = (kind: TeamConfig['kind']) => configs.data!.filter((c) => c.kind === kind).length;
+  const dsh = useOwnDsh();
+  if (!configs.data) return configs.error ? <Failure message={word(configs.error)} /> : null;
+  const models = configs.data.filter((c) => c.kind === 'model').length;
   const base = `/teams/${team.id}`;
-  // In the order a new team gets ready: each step needs the one before it.
+  // What a new team still lacks. Its preset is there from the start (the team assistant), and on the hosted service
+  // its models too, so often only the members remain. A model is ready once it has a rate: no call reaches it before
+  // (ADR 0050); a hosted model is priced by the service.
   const steps = [
-    { key: 'provider', hint: 'hint', done: providers.data.length > 0, href: `${base}/models` },
-    // A model is ready once it has a rate: no call reaches it before (ADR 0050).
-    { key: 'model', hint: 'hint', done: count('model') > 0 && (teamSummary?.unpricedModels.length ?? 0) === 0, href: `${base}/models` },
-    { key: 'preset', hint: 'hint', done: count('preset') > 0, href: `${base}/presets` },
+    { key: 'model', hint: models > 0 ? 'hintRates' : 'hint', done: models > 0 && (teamSummary?.unpricedModels.length ?? 0) === 0, href: `${base}/models` },
     { key: 'members', hint: passwords ? 'hintPasswords' : 'hint', done: team.members.length > 1, href: `${base}/members` },
   ] as const;
 
   return (
     <>
       <PageHeader title={t('nav.overview')} description={t('overview.descriptionTeam')} />
+      <ConnectDsh dsh={dsh} base={base} />
       <Waiting scope="team" summary={teamSummary} base={base} />
       <Figures
         scope="team"
@@ -110,8 +120,10 @@ export function TeamOverviewPage() {
           {!steps.every((s) => s.done) && <Setup steps={steps} />}
           <Resources configs={configs.data} base={base} />
         </div>
-        {/* This server's address: the plugin signs in to whichever server it is set to. */}
-        <Connect team={team} invite connected={false} />
+        <div className="flex min-w-0 flex-col gap-6">
+          {dsh.done && <DshConnected dsh={dsh} base={base} />}
+          <Invite team={team} base={base} />
+        </div>
       </div>
     </>
   );
@@ -273,7 +285,7 @@ function Figures({ scope, summary, last }: { scope: Scope; summary?: Summary; la
 }
 
 /** Getting a new team ready, shown to an admin until every step is done. */
-function Setup({ steps }: { steps: readonly { key: 'provider' | 'model' | 'preset' | 'members'; hint: 'hint' | 'hintPasswords'; done: boolean; href: string }[] }) {
+function Setup({ steps }: { steps: readonly { key: 'model' | 'members'; hint: 'hint' | 'hintRates' | 'hintPasswords'; done: boolean; href: string }[] }) {
   const t = useTranslations('team.overview');
   const done = steps.filter((s) => s.done).length;
   return (
@@ -288,15 +300,7 @@ function Setup({ steps }: { steps: readonly { key: 'provider' | 'model' | 'prese
         <ol>
           {steps.map((step, i) => (
             <li key={step.key} className="flex items-center gap-3 border-t px-6 py-3">
-              <span
-                className={cn(
-                  'grid size-6 shrink-0 place-items-center rounded-full border text-xs font-semibold',
-                  step.done ? 'border-primary bg-primary text-primary-foreground' : 'text-muted-foreground',
-                )}
-                aria-hidden
-              >
-                {step.done ? <Check className="size-3.5" /> : i + 1}
-              </span>
+              <Mark n={i + 1} done={step.done} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className={cn('text-sm font-medium', step.done && 'text-muted-foreground')}>{t(`steps.${step.key}.title`)}</span>
                 <span className="text-xs text-muted-foreground">{t(`steps.${step.key}.${step.hint}`)}</span>
@@ -314,62 +318,130 @@ function Setup({ steps }: { steps: readonly { key: 'provider' | 'model' | 'prese
   );
 }
 
+type RelayHost = Schemas['RelayHost'];
+
+/** The reader's own DSH: their computers on the relay, most recently seen first, and how far connecting it has got. */
+interface OwnDsh {
+  /** Null until first read. */
+  hosts: RelayHost[] | null;
+  /** The computer whose DSH signed in to Teamwork last. */
+  computer?: RelayHost;
+  /** A browser or phone of the reader's is paired with one of them. */
+  paired: boolean;
+  /** Both, so the connect card gives way to one line. */
+  done: boolean;
+}
+
+/** Reads the reader's computers, and again while connecting is not done, so the card moves on when DSH signs in. */
+function useOwnDsh(): OwnDsh {
+  const [hosts, setHosts] = useState<RelayHost[] | null>(null);
+  // A relay that cannot be read leaves the steps showing, as for someone with no computer yet.
+  const load = useCallback(() => ownComputers().then(setHosts, () => setHosts((known) => known ?? [])), []);
+  const computer = hosts?.[0];
+  const paired = (hosts ?? []).some((h) => h.pairings.some((p) => p.status === 'confirmed'));
+  const done = !!computer && paired;
+  useEffect(() => {
+    void load();
+    if (done) return;
+    const timer = setInterval(() => void load(), COMPUTERS_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [load, done]);
+  return { hosts, computer, paired, done };
+}
+
+/** Where this browser remembers that the reader put pairing off, per account: only the second step can be put off. */
+const LATER_KEY = 'dsh-teamwork:connect-later:';
+
 /**
- * How DSH joins, in three steps: install the plugin, point it at this server, sign in. On the team overview the
- * admin can copy the whole of it to send to a new member; on the home, once the reader's DSH is connected, it folds
- * to one line that opens it again.
+ * Connecting the reader's own DSH, at the top of both summaries until it is done: sign DSH in to Teamwork on a computer,
+ * then pair a browser (My DSH) or the phone app with it. Each step ticks itself off from the relay. Once DSH is signed in,
+ * pairing can be put off; nothing shows until the computers are read.
  */
-function Connect({ team, invite, connected }: { team: Team; invite: boolean; connected: boolean }) {
-  const t = useTranslations('team.overview');
-  const [open, setOpen] = useState(false);
-  // This instance's address: the plugin signs in to whichever server it is set to.
+function ConnectDsh({ dsh, base }: { dsh: OwnDsh; base: string }) {
+  const { me } = useTeam();
+  const t = useTranslations('team.overview.dsh');
+  const [later, setLater] = useState(() => {
+    try {
+      return localStorage.getItem(LATER_KEY + me) === '1';
+    } catch {
+      return false;
+    }
+  });
+  if (!dsh.hosts || dsh.done || (dsh.computer && later)) return null;
   const server = window.location.origin;
   const code = (chunks: ReactNode) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] text-foreground">{chunks}</code>;
-  if (connected && !open) {
-    return (
-      <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3">
-          <span className="flex min-w-0 flex-col gap-1">
-            <CardTitle className="flex items-center gap-2">
-              <CircleCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-              {t('connected')}
-            </CardTitle>
-            <span className="text-xs text-muted-foreground">{t('connectedHint')}</span>
-          </span>
-          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-            {t('showSteps')}
-          </Button>
-        </CardHeader>
-      </Card>
-    );
-  }
+  const signedIn = !!dsh.computer;
+
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-3">
-        <CardTitle>{invite ? t('connectAdmin') : t('connectMember')}</CardTitle>
-        {invite && <CopyButton text={t('connectMessage', { team: team.name, server })} label={t('copyMessage')} />}
+    <Card className="border-primary/40">
+      <CardHeader>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('lede')}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ol className="flex flex-col gap-3 text-sm">
-          <li className="flex gap-3">
-            <Step n={1} />
-            <span className="text-muted-foreground">
-              {t.rich('connectInstall', { link: (chunks) => <a href="/docs/install" className="text-foreground underline underline-offset-4">{chunks}</a> })}
-            </span>
+      <CardContent className="px-0 pb-2">
+        <ol>
+          <li className="flex gap-3 border-t px-6 py-4">
+            <Mark n={1} done={signedIn} />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <span className={cn('text-sm font-medium', signedIn && 'text-muted-foreground')}>{t('signIn.title')}</span>
+              {signedIn ? (
+                <span className="text-xs text-muted-foreground">{t('signIn.done', { name: dsh.computer!.name })}</span>
+              ) : (
+                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                  <span>{t.rich('signIn.install', { link: (chunks) => <a href="/docs/install" className="text-foreground underline underline-offset-4">{chunks}</a> })}</span>
+                  <Command text={PLUGIN} />
+                  <span>{t('signIn.login')}</span>
+                  <Command text={LOGIN} />
+                  {/* The plugin signs in to the hosted service unless told otherwise: any other server is worth saying. */}
+                  {server !== PLUGIN_DEFAULT_SERVER && <span className="[overflow-wrap:anywhere]">{t.rich('signIn.server', { server, code })}</span>}
+                  <span className="text-xs">{t('signIn.waiting')}</span>
+                </div>
+              )}
+            </div>
           </li>
-          <li className="flex gap-3">
-            <Step n={2} />
-            <span className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{t.rich('connectServer', { server, code })}</span>
-          </li>
-          <li className="flex gap-3">
-            <Step n={3} />
-            <span className="flex min-w-0 flex-1 flex-col gap-2 text-muted-foreground">
-              {t('connectSignIn')}
-              <span className="flex items-center gap-2 rounded-md border bg-muted py-1.5 pr-1.5 pl-3 font-mono text-sm text-foreground">
-                <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{LOGIN}</span>
-                <CopyButton text={LOGIN} />
+          <li className="flex gap-3 border-t px-6 py-4">
+            <Mark n={2} done={dsh.paired} />
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <span className="flex flex-col gap-0.5">
+                <span className={cn('text-sm font-medium', !signedIn && 'text-muted-foreground')}>{t('pair.title')}</span>
+                <span className="text-xs text-muted-foreground">{t('pair.hint')}</span>
               </span>
-            </span>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-2 rounded-lg border p-3">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <Laptop className="size-4 text-muted-foreground" aria-hidden />
+                    {t('pair.browserTitle')}
+                  </span>
+                  <span className="flex-1 text-xs text-muted-foreground">{t('pair.browserBody')}</span>
+                  <Button asChild size="sm" variant={signedIn ? 'default' : 'outline'} className="self-start">
+                    <Link to={`${base}/my-dsh`}>{t('pair.browserAction')}</Link>
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-2 rounded-lg border p-3">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <Smartphone className="size-4 text-muted-foreground" aria-hidden />
+                    {t('pair.phoneTitle')}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{t('pair.phoneBody')}</span>
+                </div>
+              </div>
+              {signedIn && (
+                <button
+                  type="button"
+                  className="self-start text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                  onClick={() => {
+                    try {
+                      localStorage.setItem(LATER_KEY + me, '1');
+                    } catch {
+                      // Put off for this visit only.
+                    }
+                    setLater(true);
+                  }}
+                >
+                  {t('pair.later')}
+                </button>
+              )}
+            </div>
           </li>
         </ol>
       </CardContent>
@@ -377,10 +449,68 @@ function Connect({ team, invite, connected }: { team: Team; invite: boolean; con
   );
 }
 
-function Step({ n }: { n: number }) {
+/** The reader's DSH once connected: one line, opening it in My DSH. */
+function DshConnected({ dsh, base }: { dsh: OwnDsh; base: string }) {
+  const t = useTranslations('team.overview.dsh');
   return (
-    <span aria-hidden className="grid size-5 shrink-0 place-items-center rounded-full border text-[11px] font-semibold text-muted-foreground">
-      {n}
+    <Card>
+      <CardHeader className="flex-row items-center justify-between gap-3">
+        <span className="flex min-w-0 flex-col gap-1">
+          <CardTitle className="flex items-center gap-2">
+            <CircleCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            {t('connected')}
+          </CardTitle>
+          <span className="truncate text-xs text-muted-foreground">{t('connectedHint', { name: dsh.computer?.name ?? '' })}</span>
+        </span>
+        <Button asChild size="sm" variant="outline">
+          <Link to={`${base}/my-dsh`}>{t('open')}</Link>
+        </Button>
+      </CardHeader>
+    </Card>
+  );
+}
+
+/** For the admin: the instructions to send a new member, beside the members page where the invitation is made. */
+function Invite({ team, base }: { team: Team; base: string }) {
+  const t = useTranslations('team.overview');
+  const { passwords } = useTeam();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('inviteTitle')}</CardTitle>
+        <CardDescription>{t(passwords ? 'inviteBodyPasswords' : 'inviteBody')}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-wrap gap-2">
+        <Button asChild size="sm">
+          <Link to={`${base}/members`}>{t(passwords ? 'inviteActionPasswords' : 'inviteAction')}</Link>
+        </Button>
+        <CopyButton text={t('connectMessage', { team: team.name, server: window.location.origin })} label={t('copyMessage')} />
+      </CardContent>
+    </Card>
+  );
+}
+
+/** A text to type into DSH, with its copy button. */
+function Command({ text }: { text: string }) {
+  return (
+    <span className="flex items-center gap-2 rounded-md border bg-muted py-1.5 pr-1.5 pl-3 font-mono text-sm text-foreground">
+      <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{text}</span>
+      <CopyButton text={text} />
+    </span>
+  );
+}
+
+/** A step's number, or its tick once done. */
+function Mark({ n, done }: { n: number; done: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'grid size-6 shrink-0 place-items-center rounded-full border text-xs font-semibold',
+        done ? 'border-primary bg-primary text-primary-foreground' : 'text-muted-foreground',
+      )}
+    >
+      {done ? <Check className="size-3.5" /> : n}
     </span>
   );
 }

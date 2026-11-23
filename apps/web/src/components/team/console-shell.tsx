@@ -79,7 +79,7 @@ interface Section {
 type RelayHost = Schemas['RelayHost'];
 
 /** This person's own computers that connected to the relay, most recently seen first (docs/tech/relay.md, "My DSH in the web console"). */
-async function ownComputers(): Promise<RelayHost[]> {
+export async function ownComputers(): Promise<RelayHost[]> {
   const response = await fetch('/relay/hosts', { credentials: 'same-origin' });
   if (!response.ok) throw new Error(`relay hosts: ${response.status}`);
   return ((await response.json()) as { hosts: RelayHost[] }).hosts;

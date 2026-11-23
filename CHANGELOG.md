@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — A team's first page leads with connecting your own DSH
+
+- **What:** A team's Home (everyone) and Team overview (its admin) open with **Connect your DSH** until it is done: (1) sign in to Teamwork from DSH on the computer, with the plugin's package and `/teamwork login` to copy, and the server to set only where it is not the plugin's default; (2) carry on from a browser (My DSH) or the phone app, paired with the computer. Each step ticks itself off from the member's computers on the relay (`GET /relay/hosts`), read every ten seconds until done; once DSH is signed in the second step can be put off for this browser. Done, it folds to one line opening My DSH. The overview's getting-started list drops *Connect a provider* and *Add a preset* (every team has the Team assistant, and a hosted team its models) and keeps *a model the team can call* and *members*; the overview's member instructions become an **Invite members** card linking to the members page. The teams page's welcome steps say the same.
+- **Why:** A new team already has a preset, and on the hosted service models, so the first thing anyone needs is their DSH connected; the checklist sent a hosted admin to paste an API key they did not need, and the admin was never asked to connect their own DSH.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/overview.tsx`, `apps/web/content/docs/*/admins.md`, `apps/web/content/docs/*/members.md`.
+
 ## 2026-11-23 — Team management as a sheet; the PIN and pairing code drawn as the app draws them
 
 - **What:** In a team's sidebar, Team management is a navy sheet laid over the workspace, with rounded top corners and a shadow cast upward. It starts folded, as a low strip whose toggle blends into the navy, even on its own pages, and its pages slide open and fold away; Alt+M (Option+M on a Mac), shown on its toggle, toggles it, and choosing a Workspace page folds it. The web console's PIN prompt now matches the phone app's: a lock on its tile, four rings that fill with dots, and the fourth digit sends it, with no Continue button. Pairing a browser in My DSH uses the same prompt: an icon on its tile, one box per character split in two halves as the computer shows the code, sent when the last character is typed, and the safety code in a card of its own.

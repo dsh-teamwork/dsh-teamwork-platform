@@ -373,12 +373,12 @@
       "welcomeTitle": "创建你的第一个团队",
       "welcomeBody": "创建团队后你就是它的管理员。要加入别人的团队？使用对方发给你的邀请链接。",
       "welcomeBodyPasswords": "创建团队后你就是它的管理员。要加入别人的团队？请对方管理员为你添加账号，你会收到初始密码。",
-      "step1Title": "接入模型提供商",
-      "step1Body": "粘贴一次密钥，它只留在服务器上。",
-      "step2Title": "发布预设和插件",
-      "step2Body": "从模板开始，改成团队自己的。",
+      "step1Title": "接入你的 DSH",
+      "step1Body": "安装 Teamwork 插件并登录，团队的模型和预设会自动同步。",
+      "step2Title": "随处继续",
+      "step2Body": "把浏览器或手机 App 和你的电脑配对。",
       "step3Title": "邀请成员加入",
-      "step3Body": "大家的 DSH 下次同步时就会拿到团队配置。"
+      "step3Body": "每个人都按同样的步骤接入自己的 DSH。"
     },
     "overview": {
       "descriptionTeam": "团队的待处理事项、近期用量，以及发布到每位成员 DSH 的资源。",
@@ -386,17 +386,10 @@
       "setup": "起步清单",
       "go": "去完成",
       "steps": {
-        "provider": {
-          "title": "接入一个提供商",
-          "hint": "选提供商，粘贴 API 密钥"
-        },
         "model": {
-          "title": "发布团队模型并设置单价",
-          "hint": "设好单价成员才能调用，每次调用的积分都有据可查"
-        },
-        "preset": {
-          "title": "添加预设",
-          "hint": "从模板开始，几秒钟就好"
+          "title": "让团队有可调用的模型",
+          "hint": "在模型页接入提供商并发布模型",
+          "hintRates": "为每个模型设置单价，设好后成员才能调用"
         },
         "members": {
           "title": "拉成员进来",
@@ -404,11 +397,6 @@
           "hintPasswords": "直接建账号，设好初始密码"
         }
       },
-      "connectAdmin": "发给新成员",
-      "connectMember": "在 DSH 里接入",
-      "connected": "DSH 已接入",
-      "connectedHint": "近 30 天内调用过团队模型。",
-      "showSteps": "查看接入步骤",
       "recent": "最近变更",
       "recentEmpty": "还没有配置。",
       "resources": "团队资源",
@@ -458,10 +446,37 @@
         "resources": "团队资源",
         "resourcesNote": "模型 {models} · 预设 {presets} · 插件 {plugins}"
       },
-      "connectInstall": "安装 DSH Teamwork 插件。<link>安装方法</link>",
-      "connectServer": "在 Teamwork 登录界面，服务器应为 <code>{server}</code>。",
-      "connectSignIn": "在 Teamwork 面板中登录，或运行：",
-      "connectMessage": "加入 DSH Teamwork 上的 {team}：安装插件（{server}/docs/install），在 Teamwork 登录界面把服务器设为 {server}，然后登录。",
+      "dsh": {
+        "title": "接入你的 DSH",
+        "lede": "团队的模型和预设会自动同步到你的 DSH。在电脑上登录一次，之后也能在浏览器或手机上继续。",
+        "signIn": {
+          "title": "在电脑上的 DSH 里登录 Teamwork",
+          "install": "在 DSH 桌面版的「插件 → 添加插件」中安装这个包（<link>其他安装方式</link>）：",
+          "login": "然后在 Teamwork 面板中登录，或运行：",
+          "server": "登录前，在 Teamwork 登录界面把服务器设为 <code>{server}</code>。",
+          "waiting": "DSH 登录后，这里会自动进入下一步。",
+          "done": "{name} 已登录。"
+        },
+        "pair": {
+          "title": "在浏览器或手机上继续",
+          "hint": "用电脑上 Teamwork 面板「设备连接」生成的配对码，把浏览器或手机连到这台电脑，端到端加密。",
+          "browserTitle": "浏览器：我的 DSH",
+          "browserBody": "直接在控制台里打开电脑上的会话。",
+          "browserAction": "打开我的 DSH",
+          "phoneTitle": "手机：DSH Teamwork App",
+          "phoneBody": "在应用商店搜索 DSH Teamwork，安装后同样用配对码连接。",
+          "later": "稍后再说"
+        },
+        "connected": "DSH 已接入",
+        "connectedHint": "{name}，已配对浏览器或手机",
+        "open": "打开我的 DSH"
+      },
+      "inviteTitle": "邀请成员",
+      "inviteBody": "在成员页给每位新成员生成邀请链接，再把下面的说明发给对方，用来接入自己的 DSH。",
+      "inviteBodyPasswords": "在成员页为每位新成员创建账号，再把下面的说明发给对方，用来接入自己的 DSH。",
+      "inviteAction": "生成邀请",
+      "inviteActionPasswords": "添加成员",
+      "connectMessage": "加入 DSH Teamwork 上的 {team}：在 DSH 中安装 Teamwork 插件（{server}/docs/install），然后在 Teamwork 面板中登录。如果面板显示的服务器不是 {server}，先改成它。",
       "copyMessage": "复制说明"
     },
     "role": {

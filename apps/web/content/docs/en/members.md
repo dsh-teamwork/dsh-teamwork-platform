@@ -4,7 +4,10 @@ description: Use team presets and models in DSH, share your own, and ask the tea
 ---
 
 Once you are signed in, the team's models, presets and plugins appear in DSH
-next to your own setup. In the console, your team opens on **Home**, with your own calls and budget
+next to your own setup. In the console, your team opens on **Home**. Until your
+DSH is connected, it opens with the steps: sign in to Teamwork from DSH on your
+computer, then pair a browser (**My DSH**) or the phone app with it, each ticked
+off by itself as it happens. Below that are your own calls and budget
 for the last 30 days and what the team changed lately; **Team
 resources** lists what the team provides, with what you have sent for review
 under its **My submissions** link; and **My usage** shows the limits that apply
