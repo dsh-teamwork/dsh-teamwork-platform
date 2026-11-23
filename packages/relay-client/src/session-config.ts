@@ -133,3 +133,19 @@ export function configurationOf(sessions: unknown, models: unknown, configuratio
   };
 }
 export type SessionConfiguration = ReturnType<typeof configurationOf>;
+
+/**
+ * The plugin's provider for a team's models (dsh-teamwork `src/platform-models.ts`, `teamProvider`): their model id is
+ * the team configuration's id, which names nothing a person would recognise, and their description the model the
+ * configuration calls.
+ */
+const TEAM_PROVIDER = 'teamwork-platform-';
+
+/**
+ * What a selector shows under a model's name, alike on the web, the phone and in DSH: a team model's description (the
+ * model it calls), another model's id, and neither where it only repeats the name. A team model's id is never shown.
+ */
+export function modelDetail(model: { provider: string; id: string; name: string; description?: string }): string | undefined {
+  const detail = model.provider.startsWith(TEAM_PROVIDER) ? model.description : model.id;
+  return detail && detail !== model.name ? detail : undefined;
+}
