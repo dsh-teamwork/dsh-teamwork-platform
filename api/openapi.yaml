@@ -1398,10 +1398,11 @@ paths:
   /relay/hosts/{id}:
     servers: [{ url: / }]
     patch:
-      summary: "Rename one of the member's own computers; the name holds when it connects again (the web console only)"
-      security: [{ session: [] }]
+      summary: "Rename an owned computer from the web console or a confirmed paired handset"
+      security: [{ session: [] }, { bearer: [] }]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: X-Device-Key, in: header, required: false, schema: { type: string }, description: Required with a Bearer token }
       requestBody:
         required: true
         content:

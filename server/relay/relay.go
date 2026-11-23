@@ -38,6 +38,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/coder/websocket"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
@@ -884,24 +885,30 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"hosts": out})
 }
 
-// deleteHost signs one of the member's own computers out and forgets it, with
-// its pairing codes and every pairing to it: a lost or retired computer, or a
-// record left by signing in again. Only the web console asks, by its session
-// cookie. The sign-in the computer last connected with is revoked (ADR 0060)
-// in the same transaction, so a connected one cannot simply be recorded again:
-// its socket closes now, and its plugin finds itself signed out. One that
-// signs in again later is recorded anew and paired again.
 // renameHost gives one of the member's own computers the name the console,
-// the phones and native Web's bar show (the web console only). It holds across
+// the phones and native Web's bar show (the console or a confirmed handset). It holds across
 // reconnects (recordHost).
 func (r *relay) renameHost(w http.ResponseWriter, req *http.Request) {
-	if bearer(req) != "" {
-		errorJSON(w, http.StatusForbidden, "forbidden")
-		return
-	}
 	userID := r.caller(w, req)
 	if userID == "" {
 		return
+	}
+	update := r.db.RelayHost.Update().Where(relayhost.ID(req.PathValue("id")), relayhost.UserID(userID))
+	if bearer(req) != "" {
+		key := req.Header.Get("X-Device-Key")
+		if !validDeviceKey(key) {
+			errorJSON(w, http.StatusBadRequest, "invalid_input")
+			return
+		}
+		// Check the live pairing in the update itself, including when the desktop is offline.
+		update.Where(func(s *sql.Selector) {
+			p := sql.Table(relaypairing.Table)
+			s.Where(sql.In(s.C(relayhost.FieldID), sql.Select(p.C(relaypairing.FieldHostID)).From(p).Where(sql.And(
+				sql.EQ(p.C(relaypairing.FieldUserID), userID),
+				sql.EQ(p.C(relaypairing.FieldDeviceKeyHash), r.pairings.deviceHash(key)),
+				sql.NotNull(p.C(relaypairing.FieldConfirmedAt)), sql.IsNull(p.C(relaypairing.FieldRevokedAt)),
+			))))
+		})
 	}
 	name, err := hostName(req)
 	if err != nil {
@@ -909,7 +916,7 @@ func (r *relay) renameHost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	id := req.PathValue("id")
-	n, err := r.db.RelayHost.Update().Where(relayhost.ID(id), relayhost.UserID(userID)).SetName(name).Save(req.Context())
+	n, err := update.SetName(name).Save(req.Context())
 	if err == nil && n == 0 {
 		err = errNotFound
 	}
@@ -923,6 +930,13 @@ func (r *relay) renameHost(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// deleteHost signs one of the member's own computers out and forgets it, with
+// its pairing codes and every pairing to it: a lost or retired computer, or a
+// record left by signing in again. Only the web console asks, by its session
+// cookie. The sign-in the computer last connected with is revoked (ADR 0060)
+// in the same transaction, so a connected one cannot simply be recorded again:
+// its socket closes now, and its plugin finds itself signed out. One that
+// signs in again later is recorded anew and paired again.
 func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 	if bearer(req) != "" {
 		errorJSON(w, http.StatusForbidden, "forbidden")

@@ -6,8 +6,8 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, Lock, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X } from 'lucide-react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, Lock, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, SlidersHorizontal, Square, X } from 'lucide-react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -33,7 +33,8 @@ import {
   RelayError,
   rowsOf,
   searchSessions,
-  sessionGroups,
+  archiveFilters, sessionGroupings, workspaceRows, sessionSorts, syncManualOrder, visibleSessionGroups, orderedSessionGroups, moveSession, moveNeighbours,
+  readSessionView, rememberSessionOrder, type SessionView,
   visibleConversationRows,
   type ModelSelection,
   type PinState,
@@ -167,22 +168,44 @@ export function useComputer(computerId: string) {
 /**
  * A computer's sessions in the column: a new session and a search above them, then the sessions grouped as DSH's own
  * sidebar groups them (`sessionGroups`: each workspace in DSH's order, then Ungrouped, pinned first in each), each
- * group folding away under its name; while searching, the matches in one list instead. Archived sessions are hidden
- * until asked for, and then shown in their groups; the open one stays listed either way. `unavailable` says why none
+ * group folding away under its name; while searching, the matches in one list instead. View options remember the
+ * archive filter and manual or most recently updated order for this computer. `unavailable` says why none
  * can be listed yet (the computer offline, not paired, locked), and nothing can be started or searched meanwhile.
  * Each row has DSH's own actions that fit a browser (pin, rename, copy its id, archive), once the computer's plugin
  * marks its list (`SessionSummary.marks`); an older one offers only the copy.
  */
-export function SessionList({ computerId, base, unavailable, sessions, sessionId, onPick }: { computerId: string; base: string; unavailable?: string; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void }) {
+type SessionListProps = { computerId: string; base: string; unavailable?: string; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void };
+export function SessionList(props: SessionListProps) {
+  const { me } = useTeam();
+  const storageKey = 'dsh.session-view:' + JSON.stringify([me, props.base, props.computerId]);
+  return <ComputerSessionList key={storageKey} storageKey={storageKey} {...props} />;
+}
+
+function ComputerSessionList({ computerId, base, unavailable, sessions, sessionId, onPick, storageKey }: SessionListProps & { storageKey: string }) {
   const t = useTranslations('team.dsh');
+  const [view, setView] = useState(() => {
+    try { return readSessionView(localStorage.getItem(storageKey)); } catch { return readSessionView(null); }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(view)); } catch { /* Storage is optional in a private tab. */ }
+  }, [view, storageKey]);
   const [query, setQuery] = useState('');
-  const [showArchived, setShowArchived] = useState(false);
   const [folded, setFolded] = useState<ReadonlySet<string>>(new Set());
-  const list = sessions ?? [];
-  const archived = list.filter((s) => s.marks?.archived).length;
-  // The open session stays listed when it is archived and the rest are not.
-  const listed = showArchived ? list : list.filter((s) => !s.marks?.archived || s.id === sessionId);
-  const item = (s: SessionSummary) => <SessionRow key={s.id} computerId={computerId} base={base} session={s} open={s.id === sessionId} onPick={onPick} />;
+  const groups = useMemo(() => orderedSessionGroups(sessions ?? [], view), [sessions, view]);
+  const reconciled = sessions && !unavailable ? syncManualOrder(view, groups) : view;
+  if (reconciled !== view) setView(reconciled);
+  const visible = visibleSessionGroups(groups, view.filter);
+  const listed = visible.flatMap((group) => group.sessions);
+  const move = (id: string, target: string) => setView(moveSession(view, groups, id, target));
+  const item = (s: SessionSummary, index: number, members: SessionSummary[]) => {
+    const { up, down } = query.trim() ? {} : moveNeighbours(members, index);
+    return <SessionRow key={s.id} computerId={computerId} base={base} session={s} open={s.id === sessionId} onPick={onPick}
+      moveUp={up ? () => move(s.id, up) : undefined} moveDown={down ? () => move(s.id, down) : undefined}
+      onDropSession={query.trim() ? undefined : (id) => move(id, s.id)} />;
+  };
+  const chooseSort = (sort: SessionView['sort']) => {
+    if (sort !== view.sort) setView({ ...view, sort, orders: sort === 'manual' ? rememberSessionOrder(groups) : {} });
+  };
   const fold = (key: string) => setFolded((was) => {
     const next = new Set(was);
     if (!next.delete(key)) next.add(key);
@@ -191,6 +214,38 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
   const found = query.trim() ? searchSessions(listed, query, true) : null;
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
+      <div className="flex items-center gap-0.5">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('search')} aria-label={t('search')} disabled={!!unavailable} className="h-8 pl-8 text-sm" />
+        </div>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <Button type="button" size="icon" variant="ghost" className="size-8" disabled={!!unavailable} aria-label={t('viewOptions')} title={t('viewOptions')}>
+              <SlidersHorizontal className="size-4" />
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content align="end" sideOffset={4} className="z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-44 overflow-y-auto rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+              {[{ label: 'filterBy', options: archiveFilters, selected: view.filter }, { label: 'groupBy', options: sessionGroupings, selected: view.grouping }, { label: 'orderBy', options: sessionSorts, selected: view.sort }].map((group) => (
+                <DropdownMenu.RadioGroup key={group.label} value={group.selected} aria-label={t(group.label)}>
+                  <DropdownMenu.Label className="px-2 py-1.5 text-xs text-muted-foreground">{t(group.label)}</DropdownMenu.Label>
+                  {group.options.map((value) => (
+                    <DropdownMenu.RadioItem key={value} value={value} className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+                      onSelect={() => {
+                        if (value === 'manual' || value === 'updated') chooseSort(value);
+                        else if (value === 'workspace' || value === 'workspaceTree' || value === 'flat') setView({ ...view, grouping: value });
+                        else setView({ ...view, filter: value });
+                      }}>
+                      {t(value)}<DropdownMenu.ItemIndicator><Check className="size-4" /></DropdownMenu.ItemIndicator>
+                    </DropdownMenu.RadioItem>
+                  ))}
+                </DropdownMenu.RadioGroup>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      </div>
       {unavailable ? (
         <Button type="button" size="sm" disabled>
           <Plus className="size-4" aria-hidden />
@@ -204,10 +259,6 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
           </Link>
         </Button>
       )}
-      <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-        <Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('search')} aria-label={t('search')} disabled={!!unavailable} className="h-8 pl-8 text-sm" />
-      </div>
       <nav aria-label={t('sessions')} className="scrollbar-quiet -mx-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1 pb-2">
         {unavailable ? (
           <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{unavailable}</p>
@@ -215,13 +266,14 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
           found.length === 0 ? <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noMatches')}</p> : found.map(item)
         ) : (
           <>
-            {sessions !== null && listed.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noSessions')}</p>}
-            {sessionGroups(listed, true).map((group) => {
+            {sessions !== null && listed.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t(view.filter === 'only' ? 'noArchived' : 'noSessions')}</p>}
+            {workspaceRows(visible, view.grouping, folded).map((group) => {
+              if (view.grouping === 'flat') return <div key="flat">{group.sessions.map(item)}</div>;
               const key = group.workspace?.id ?? '';
               const name = group.workspace?.title ?? t('ungrouped');
               const open = !folded.has(key);
               return (
-                <div key={key} className="flex flex-col gap-0.5">
+                <div key={key} style={{ marginInlineStart: Math.min(group.depth, 8) * 12 }} className="flex flex-col gap-0.5">
                   <button
                     type="button"
                     onClick={() => fold(key)}
@@ -239,12 +291,6 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
             })}
           </>
         )}
-        {!unavailable && archived > 0 && (
-          <button type="button" aria-pressed={showArchived} onClick={() => setShowArchived(!showArchived)} className={cn(row, 'mt-1 gap-2 text-xs text-muted-foreground')}>
-            <Archive className="size-3.5" aria-hidden />
-            {t(showArchived ? 'hideArchived' : 'showArchived', { count: archived })}
-          </button>
-        )}
       </nav>
     </div>
   );
@@ -254,7 +300,7 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
  * One session in the column: its title, a pin when pinned, and when it last changed, or "Running"; the menu at its
  * end, and in place of the title a box to rename it. Each action goes to the computer, whose list is read again.
  */
-function SessionRow({ computerId, base, session: s, open, onPick }: { computerId: string; base: string; session: SessionSummary; open: boolean; onPick: () => void }) {
+function SessionRow({ computerId, base, session: s, open, onPick, moveUp, moveDown, onDropSession }: { moveUp?: () => void; moveDown?: () => void; onDropSession?: (id: string) => void; computerId: string; base: string; session: SessionSummary; open: boolean; onPick: () => void }) {
   const t = useTranslations('team.dsh');
   const tc = useTranslations('common');
   const format = useFormatter();
@@ -311,7 +357,13 @@ function SessionRow({ computerId, base, session: s, open, onPick }: { computerId
 
   const item = 'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm outline-none data-[disabled]:text-muted-foreground data-[highlighted]:bg-accent [&_svg]:size-4 [&_svg]:text-muted-foreground';
   return (
-    <div className={cn(row, 'group gap-2', open && cn(selected, 'font-medium'), s.marks?.archived && 'text-muted-foreground')}>
+    <div draggable={!!onDropSession} onDragStart={(e) => e.dataTransfer.setData('application/x-dsh-session', s.id)}
+      onDragOver={(e) => { if (onDropSession && e.dataTransfer.types.includes('application/x-dsh-session')) e.preventDefault(); }}
+      onDrop={(e) => {
+        const source = e.dataTransfer.getData('application/x-dsh-session');
+        if (source && onDropSession) { e.preventDefault(); onDropSession(source); }
+      }}
+      className={cn(row, 'group gap-2', open && cn(selected, 'font-medium'), s.marks?.archived && 'text-muted-foreground')}>
       <Link
         to={`${base}/${s.id}`}
         onClick={onPick}
@@ -322,7 +374,7 @@ function SessionRow({ computerId, base, session: s, open, onPick }: { computerId
         {s.pending && <Dot className="bg-signal" label={t('waiting')} />}
         {s.marks?.pinned && <Pin className="size-3.5 shrink-0 text-muted-foreground" aria-label={t('actions.pinned')} />}
         <span className="min-w-0 flex-1 truncate">{title}</span>
-        <span className="shrink-0 text-xs font-normal text-muted-foreground">
+        <span className={cn('shrink-0 text-xs font-normal text-muted-foreground', s.status === 'running' && !s.pending && 'session-running-label')}>
           {s.status === 'running' ? t('running') : format.relativeTime(new Date(s.updatedAt), new Date())}
         </span>
       </Link>
@@ -337,6 +389,8 @@ function SessionRow({ computerId, base, session: s, open, onPick }: { computerId
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content align="start" sideOffset={4} className="z-50 min-w-44 rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+            {moveUp && <DropdownMenu.Item className={item} onSelect={moveUp}><ArrowUp />{t('moveUp')}</DropdownMenu.Item>}
+            {moveDown && <DropdownMenu.Item className={item} onSelect={moveDown}><ArrowDown />{t('moveDown')}</DropdownMenu.Item>}
             {s.marks && !s.marks.archived && (
               <DropdownMenu.Item className={item} onSelect={() => void act(() => relay.pinSession(computerId, s.id, !s.marks!.pinned))}>
                 {s.marks.pinned ? <PinOff aria-hidden /> : <Pin aria-hidden />}

@@ -708,3 +708,14 @@ body:has(.tide-story) {
 .session-markdown-table :is(tbody, thead:last-child) tr:last-child > * { border-block-end: 0; }
 .session-markdown-table th { background: var(--muted); }
 .session-markdown-table th:not([align]) { text-align: start; }
+
+@keyframes session-running-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+
+@media not all and (prefers-reduced-motion) {
+  .session-running-label {
+    animation: session-running-pulse 3s ease-in-out infinite;
+  }
+}

@@ -82,7 +82,10 @@ function workspaceOf(value: unknown): SessionWorkspace | null {
   if (!isObject(value) || typeof value.id !== 'string' || typeof value.title !== 'string') return null;
   const index = typeof value.index === 'number' ? value.index : 0;
   const position = typeof value.position === 'number' ? value.position : 0;
-  return { id: value.id, title: value.title, index, position };
+  const ancestors = Array.isArray(value.ancestors) ? value.ancestors.flatMap((a: unknown) =>
+    isObject(a) && typeof a.id === 'string' && typeof a.title === 'string' && typeof a.index === 'number'
+      ? [{ id: a.id, title: a.title, index: a.index }] : []) : [];
+  return { id: value.id, title: value.title, index, position, ...(ancestors.length ? { ancestors } : {}) };
 }
 
 /** One group of a computer's sessions as DSH's sidebar shows it: a workspace's, or Ungrouped's with `workspace` null. */

@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — Session views follow desktop workspace preferences
+
+- **What:** My DSH and Cloud DSH put search and view options above New session. Members can filter archived sessions, choose a workspace tree, workspace groups or a flat list, and sort by recent activity or manual order. Running sessions have a subtle pulse. The relay also lets a verified phone rename its owner's computer.
+- **Why:** Members can find the same work across desktop, web and phone, and recognize their computers by name.
+- **Breaking:** None.
+- **Upgrade:** Update the desktop plugin to see nested workspace ancestry.
+- **Refs:** `packages/relay-client/src/session-view.ts`, `apps/web/src/pages/team/dsh-session.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-23 — Escape folds Team management
 
 - **What:** Escape dismisses the topmost dialog first, then folds Team management on the next press. In the narrow sidebar, another press closes the navigation drawer.

@@ -382,6 +382,13 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       }));
     },
 
+    async renameHost(hostId, name) {
+      const response = await relayHttp(`/hosts/${encodeURIComponent(hostId)}`, {
+        method: 'PATCH', body: JSON.stringify({ name: name.trim() }),
+      });
+      if (!response.ok) throw new RelayError(response.status === 404 ? 'not_found' : 'unavailable');
+    },
+
     async pair(code, deviceName, expectedKey) {
       const response = await relayHttp('/pair', {
         method: 'POST',
