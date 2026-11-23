@@ -289,8 +289,21 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   // A section with `visible` is listed once it says yes, or while the person is on it.
   const listed = (s: Section) => !s.visible || answered.includes(s.path) || s.path === section;
   const managing = GROUPS.some((group) => group.key !== 'work' && group.sections.some((s) => s.path === section)) || pages.some((page) => page.group !== 'work' && navPath(page) === section);
-  // Folded until the admin opens it; it stays as they leave it while they move between pages.
+  // Folded until the admin opens it; it stays open across its own pages, and folds again once a workspace page is chosen.
   const [open, setOpen] = useState(false);
+  const admin = team.role === 'admin';
+  // Alt+M (Option+M on a Mac) opens and folds it from anywhere but a field being typed in.
+  useEffect(() => {
+    if (!admin) return;
+    const toggle = (event: KeyboardEvent) => {
+      if (!isManageShortcut(event)) return;
+      event.preventDefault();
+      setOpen((was) => !was);
+    };
+    window.addEventListener('keydown', toggle);
+    return () => window.removeEventListener('keydown', toggle);
+  }, [admin]);
+  const shortcut = isMac() ? '⌥M' : 'Alt+M';
 
   const link = (path: string, label: string, icon: LucideIcon, inside: boolean, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
     Subnav ? (
@@ -321,13 +334,16 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   return (
     <Tooltip.Provider delayDuration={200}>
       <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
-        <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4">{group(GROUPS[0])}</div>
+        {/* Choosing a workspace page, a computer under My DSH included, folds Team management away again. */}
+        <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4" onClickCapture={(event) => (event.target as Element).closest('a') && setOpen(false)}>
+          {group(GROUPS[0])}
+        </div>
         {/* Team management sits apart from the workspace, as a navy sheet laid over it: the team's colour, rounded top
             corners and a shadow cast upward onto the workspace. Its tokens are redrawn in the navy's foreground, so the
             rows inside, their hover and the selected bar follow. Its pages slide open above the toggle and fold away
             again (a grid row eased between 0fr and 1fr); open, it takes at most half the sidebar's height and scrolls
             inside, so the workspace stays in view. */}
-        {team.role === 'admin' && (
+        {admin && (
           <div className="relative z-10 mt-auto flex max-h-[50dvh] shrink-0 flex-col rounded-t-xl bg-brand pb-3 text-foreground shadow-[0_-6px_16px_-6px_rgb(0_0_0/0.25)] dark:shadow-[0_-8px_20px_-4px_rgb(0_0_0/0.6)] [--accent:color-mix(in_oklab,var(--brand-foreground)_12%,transparent)] [--foreground:var(--brand-foreground)] [--muted-foreground:color-mix(in_oklab,var(--brand-foreground)_65%,transparent)] [--ring:var(--brand-foreground)] [--secondary:color-mix(in_oklab,var(--brand-foreground)_16%,transparent)]">
             <div
               className={cn(
@@ -347,11 +363,16 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
                 onClick={() => setOpen(!open)}
                 aria-expanded={open}
                 aria-controls="team-management"
+                aria-keyshortcuts="Alt+M"
+                title={`${t('nav.groups.manage')} (${shortcut})`}
                 // Folded while the person is on one of its pages, the toggle carries the selected bar instead.
-                className={cn(item, 'w-full font-medium', !open && managing && 'bg-secondary before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-foreground')}
+                className={cn(item, 'group/manage w-full font-medium', !open && managing && 'bg-secondary before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-foreground')}
               >
                 <ShieldCheck className="size-4" aria-hidden />
                 <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
+                <kbd className="hidden rounded border border-foreground/25 px-1 font-sans text-[11px] leading-4 text-muted-foreground group-hover/manage:inline group-focus-visible/manage:inline" aria-hidden>
+                  {shortcut}
+                </kbd>
                 {!open && waiting.overview && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
                 <ChevronUp className={cn('size-4 text-muted-foreground transition-transform duration-300 motion-reduce:transition-none', open && 'rotate-180')} aria-hidden />
               </button>
@@ -362,6 +383,15 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
     </Tooltip.Provider>
   );
 }
+
+/** Alt+M with nothing else held, read by the key's place (Option+M types a letter on a Mac), outside a field being typed in. */
+function isManageShortcut(event: KeyboardEvent): boolean {
+  if (event.code !== 'KeyM' || !event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return false;
+  const target = event.target as HTMLElement | null;
+  return !target?.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]');
+}
+
+const isMac = () => typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
 /**
  * One entry in the navigation: its icon and label, then, for one with a hint saying what the page is for, a question

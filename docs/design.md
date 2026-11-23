@@ -319,7 +319,9 @@ a person or a character, which at this size reads as clip art.
   drawn in the navy's foreground, the selected bar included. It starts
   folded, its pages slide open above its toggle and fold away again (none
   of it moves under reduced motion), and folded on one of its pages the
-  toggle carries the selected bar. The account is one menu at its foot; below `md` the sidebar is a sheet
+  toggle carries the selected bar. Alt+M (Option+M on a Mac), shown on the
+  toggle while it is hovered, opens and folds it, and choosing a Workspace
+  page folds it away. The account is one menu at its foot; below `md` the sidebar is a sheet
   behind a menu button (`apps/web/src/components/team/console-shell.tsx`).
 - **A code is typed into slots, the same on the web and the phone.** A
   computer's PIN and a pairing code open with an icon on a `--secondary`
