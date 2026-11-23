@@ -118,8 +118,7 @@ describe('a computer\'s automation tasks', () => {
     expect(changed).toBe(1);
   });
 
-  it('words a shared DSH\'s refusal, and DSH\'s input refusal with its reason', () => {
-    expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/schedule_unavailable' } } })).toThrow(new RelayError('schedule_unavailable'));
+  it('words DSH\'s input refusal with its reason', () => {
     try {
       bridgeValue(200, { result: { ok: false, error: { code: 'schedule/input-invalid', message: 'title is required', details: { code: 'invalid_prompt' } } } });
       expect.unreachable();

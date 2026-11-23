@@ -85,8 +85,7 @@ computer's DSH has Office Kit. It reaches nothing outside that directory, and
 needs DSH Teamwork 0.16.0 or later on the computer, 0.19.6 for the previews.
 Beside the paperclip, the permission menu sets what the agent may do on that
 computer: **Read only**, **Workspace write** or **Full access**, as in DSH;
-full access asks you to confirm first. On a Team DSH only the first two can be
-picked; anything wider is set on the machine itself.
+full access asks you to confirm first.
 The model menu groups choices by provider; when the selected model supports reasoning efforts, a reasoning selector appears beside it, set to the model's own default until you change it. In a session that
 has started, the folder and preset stay as they are, and you can change its
 model and effort while it is not working, for that session alone. The
@@ -123,7 +122,7 @@ with no task has no clock: make one from **Automation tasks**, choosing that
 session under **Sends to**. Each
 instruction a task sent shows which task and when it was due. A task runs only while DSH runs on that computer;
 one missed while it was off runs once when DSH starts again. Tasks need DSH
-Teamwork 0.20.0 or later on the computer, and are not offered on a Team DSH.
+Teamwork 0.20.0 or later on the computer.
 
 The settings button beside the computer's name opens its settings. There you
 can rename the computer: the name shows in Teamwork, on your phones and in

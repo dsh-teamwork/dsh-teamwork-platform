@@ -38,8 +38,6 @@ func (PageVersion) Fields() []ent.Field {
 		field.String("page_id").MaxLen(32).Immutable(),
 		field.Int("number").Immutable(),
 		field.String("author_id").MaxLen(32).Immutable(),
-		// host_id is the Team DSH a host token made it on, or "".
-		field.String("host_id").MaxLen(32).Default("").Immutable(),
 		field.String("computer").MaxLen(runes(64)).Default("").Immutable(),
 		field.String("session_id").MaxLen(128).Default("").Immutable(),
 		field.String("note").MaxLen(runes(200)).Default("").Immutable(),

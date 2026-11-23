@@ -244,17 +244,6 @@ func parsePushUpdate(data []byte) (pushUpdate, bool) {
 // afterwards, once the pairing is confirmed (`PUT /relay/pairings/{id}/push`).
 type redeem struct{ code, deviceName string }
 
-// parseJoin is `POST /relay/shared/{hostId}/join`: the handset's display name.
-func parseJoin(data []byte) (string, bool) {
-	var in struct {
-		DeviceName *string `json:"deviceName"`
-	}
-	if err := json.Unmarshal(data, &in); err != nil {
-		return "", false
-	}
-	return trimmed(in.DeviceName, 1, 100)
-}
-
 func parseRedeem(data []byte) (redeem, bool) {
 	var in struct {
 		Code       *string `json:"code"`

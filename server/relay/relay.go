@@ -25,6 +25,7 @@
 package relay
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -35,6 +36,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode/utf8"
 
 	"github.com/coder/websocket"
 
@@ -48,15 +50,13 @@ import (
 
 // Every binary mounts the relay (ADR 0044): its main imports this package,
 // which registers it with a ping every thirty seconds; notifications go
-// through whatever the edition delivers with (push.go). Team DSH is offline for now (docs/tech/shared-dsh.md): the binary
-// mounts none of its routes, so no shared DSH gets a host token and no
-// member reaches one; its code stays, and its tests mount it.
-func init() { edition.Register(Extension(30*time.Second, false)) }
+// through whatever the edition delivers with (push.go).
+func init() { edition.Register(Extension(30 * time.Second)) }
 
-// Extension is the relay with its ping interval; tests pass their own, and teamDSH mounts shared DSHs (shared.go, access.go,
-// archive.go). It mounts through edition.Host like a closed extension does,
-// and its tables are the open schema's, migrated with the rest.
-func Extension(pingEvery time.Duration, teamDSH bool) edition.Extension {
+// Extension is the relay with its ping interval; tests pass their own. It
+// mounts through edition.Host like a closed extension does, and its tables
+// are the open schema's, migrated with the rest.
+func Extension(pingEvery time.Duration) edition.Extension {
 	return edition.Extension{
 		// Not "relay": the hosted edition's own migrations are recorded under
 		// that name, from when its relay carried them (ADR 0044).
@@ -65,18 +65,13 @@ func Extension(pingEvery time.Duration, teamDSH bool) edition.Extension {
 			if h.ServiceRole == "manage" {
 				return nil, nil
 			}
-			r := newRelay(h, pingEvery, teamDSH)
-			if err := h.SubscribeTeams(r.teamChanged); err != nil {
+			r := newRelay(h, pingEvery)
+			if err := h.SubscribeTeams(r.accountDeleted); err != nil {
 				return nil, err
 			}
 			r.routes(h.Mux)
 			if err := r.mountDesktopWeb(); err != nil {
 				return nil, err
-			}
-			if teamDSH {
-				r.sharedRoutes(h.Mux)
-				r.accessRoutes(h.Mux)
-				r.archiveRoutes(h.Mux)
 			}
 			return r.close, nil
 		},
@@ -90,7 +85,6 @@ type relay struct {
 	push       *notifier
 	host       edition.Host
 	pingEvery  time.Duration
-	teamDSH    bool            // shared DSHs are mounted; without it a host token opens nothing
 	ctx        context.Context // ends when the server shuts down
 	cancel     context.CancelFunc
 
@@ -116,13 +110,13 @@ type attachment struct {
 	sent        int
 }
 
-func newRelay(h edition.Host, pingEvery time.Duration, teamDSH bool) *relay {
+func newRelay(h edition.Host, pingEvery time.Duration) *relay {
 	client := clientOf(h)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &relay{
 		db: client, pairings: &pairings{db: client, secret: h.AuthSecret},
 		push: &notifier{db: client, send: h.Push, last: map[string]time.Time{}},
-		host: h, pingEvery: pingEvery, teamDSH: teamDSH, ctx: ctx, cancel: cancel,
+		host: h, pingEvery: pingEvery, ctx: ctx, cancel: cancel,
 		hosts: map[string]*socket{}, attached: map[string]*attachment{}, revoked: map[string]bool{}, sockets: map[*socket]struct{}{},
 	}
 }
@@ -284,9 +278,7 @@ func (r *relay) keepAlive(s *socket) {
 }
 
 // stillAdmitted re-checks a socket at its ping: a member's token must still
-// name a member, and a phone's uses of shared DSHs must still be allowed; a
-// shared DSH's token must still name its shared host, whose list it is sent
-// again, so its roster follows a member leaving the team.
+// name a member.
 func (r *relay) stillAdmitted(s *socket, token string) bool {
 	var id string
 	var err error
@@ -297,35 +289,7 @@ func (r *relay) stillAdmitted(s *socket, token string) bool {
 	} else {
 		id, err = r.member(s.ctx, token)
 	}
-	if err != nil {
-		return true
-	}
-	if id == "" {
-		shared, err := r.sharedHostOf(s.ctx, token)
-		if err != nil || shared == "" {
-			return err != nil
-		}
-		r.tellMembers(s.ctx, shared)
-		return true
-	}
-	r.mu.Lock()
-	var held []struct{ pairing, host string }
-	for pairingID, a := range r.attached {
-		if a.phone == s {
-			held = append(held, struct{ pairing, host string }{pairingID, a.hostID})
-		}
-	}
-	r.mu.Unlock()
-	for _, h := range held {
-		if shared, ok, err := r.canReach(s.ctx, id, h.host); err == nil && shared && !ok {
-			r.mu.Lock()
-			delete(r.attached, h.pairing)
-			r.mu.Unlock()
-			s.send(map[string]string{"t": "revoked", "pairingId": h.pairing})
-			r.tell(h.host, map[string]string{"t": "detach", "pairingId": h.pairing})
-		}
-	}
-	return true
+	return err != nil || id != ""
 }
 
 // readHello reads a socket's first frame, closing it with 4400 when none
@@ -356,28 +320,20 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	userID, grant, err := r.memberGrant(s.ctx, h.token)
-	sharedID := ""
-	if err == nil && userID == "" {
-		// A shared DSH (ADR 0044) proves itself with its host token instead.
-		sharedID, err = r.sharedHostOf(s.ctx, h.token)
-	}
 	if err != nil {
 		slog.Error("relay: member", "error", err)
 		s.c.Close(websocket.StatusInternalError, "internal")
 		return
 	}
-	if userID == "" && sharedID == "" {
+	if userID == "" {
 		s.c.Close(closeUnauthorized, "not a member")
 		return
 	}
-	hostID, name := sharedID, h.name
-	if sharedID == "" {
-		hostID, name, err = r.recordHost(s.ctx, userID, grant, h)
-		if err != nil {
-			slog.Error("relay: record host", "error", err)
-			s.c.Close(websocket.StatusInternalError, "internal")
-			return
-		}
+	hostID, name, err := r.recordHost(s.ctx, userID, grant, h)
+	if err != nil {
+		slog.Error("relay: record host", "error", err)
+		s.c.Close(websocket.StatusInternalError, "internal")
+		return
 	}
 	r.mu.Lock()
 	stale := r.hosts[hostID]
@@ -389,14 +345,11 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		go stale.c.Close(closeReplaced, "replaced")
 	}
 	s.token.Store(h.token)
-	if r.desktopWeb != nil && h.web && sharedID == "" {
+	if r.desktopWeb != nil && h.web {
 		defer r.desktopWeb.attach(hostID, userID, name, s)()
 	}
 	s.send(map[string]string{"t": "welcome", "hostId": hostID})
 	defer r.hostLeft(hostID, s)
-	if sharedID != "" {
-		r.tellMembers(s.ctx, sharedID)
-	}
 
 	for {
 		_, data, err := s.c.Read(s.ctx)
@@ -412,12 +365,6 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		} else if wt, ok := parseWaiting(f); ok {
 			go r.notify(hostID, wt)
 		} else if request, ok := parsePluginRequest(f); ok {
-			if sharedID != "" && request.t == "offer" {
-				// A pairing code joins a phone to its owner's own computer; a
-				// shared DSH's members join by invite.
-				s.send(reply{T: "reply", ID: request.id, Error: "shared_host"})
-				continue
-			}
 			go func() { s.send(r.answer(hostID, request)) }()
 		}
 	}
@@ -662,11 +609,6 @@ func (r *relay) forward(ph phone, s *socket, f forwarded) error {
 		}
 		if err != nil {
 			return err
-		}
-		if shared, ok, err := r.canReach(s.ctx, ph.userID, hostID); err != nil {
-			return err
-		} else if shared && !ok {
-			return refuse("not_paired")
 		}
 		r.mu.Lock()
 		if r.revoked[f.PairingID] {
@@ -961,7 +903,7 @@ func (r *relay) renameHost(w http.ResponseWriter, req *http.Request) {
 	if userID == "" {
 		return
 	}
-	name, err := sharedName(req)
+	name, err := hostName(req)
 	if err != nil {
 		rejectedJSON(w, err)
 		return
@@ -1100,15 +1042,7 @@ func (r *relay) revokePairing(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// teamChanged is the relay's one subscription to team changes.
-func (r *relay) teamChanged(ctx context.Context, tx edition.SQLExecutor, change edition.TeamChange) error {
-	if err := r.sharedTeamDeleted(ctx, tx, change); err != nil {
-		return err
-	}
-	return r.accountDeleted(ctx, tx, change)
-}
-
-// accountDeleted removes a deleted account's computers, their pairing codes
+// accountDeleted is the relay's one subscription to team changes: it removes a deleted account's computers, their pairing codes
 // and its phones' pairings (docs/adr/0039-deleting-an-account.md), in the
 // deletion's own transaction. A socket still open closes at its next ping,
 // when its token no longer opens.
@@ -1129,4 +1063,50 @@ func (r *relay) accountDeleted(ctx context.Context, tx edition.SQLExecutor, chan
 	}
 	_, err = c.RelayHost.Delete().Where(relayhost.UserID(change.UserID)).Exec(ctx)
 	return err
+}
+
+// hostName is a computer's trimmed display name, of 1 to 100 characters.
+func hostName(req *http.Request) (string, error) {
+	body, err := io.ReadAll(io.LimitReader(req.Body, 4<<10+1))
+	if err != nil || len(body) > 4<<10 {
+		return "", errInvalidInput
+	}
+	var in struct {
+		Name string `json:"name"`
+	}
+	d := json.NewDecoder(bytes.NewReader(body))
+	d.DisallowUnknownFields()
+	if d.Decode(&in) != nil || d.Decode(new(any)) != io.EOF {
+		return "", errInvalidInput
+	}
+	name := strings.TrimSpace(in.Name)
+	if name == "" || utf8.RuneCountInString(name) > 100 {
+		return "", errInvalidInput
+	}
+	return name, nil
+}
+
+// limited counts one pairing attempt by an account: ten in ten minutes.
+func (r *relay) limited(userID string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.attempts == nil {
+		r.attempts = make(map[string]struct {
+			at    time.Time
+			count int
+		})
+	}
+	now := time.Now()
+	for id, previous := range r.attempts {
+		if now.Sub(previous.at) >= 10*time.Minute {
+			delete(r.attempts, id)
+		}
+	}
+	attempt := r.attempts[userID]
+	if attempt.count == 0 {
+		attempt.at = now
+	}
+	attempt.count++
+	r.attempts[userID] = attempt
+	return attempt.count > 10
 }

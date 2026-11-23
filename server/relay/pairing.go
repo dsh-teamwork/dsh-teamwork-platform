@@ -21,7 +21,6 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/sharedhost"
 )
 
 const offerTTL = 2 * time.Minute
@@ -32,29 +31,30 @@ const (
 	codeLength   = 6
 )
 
-// rejected is a pairing refusal the caller is told: "invalid_code" or "not_found".
+// rejected is a refusal the caller is told: "invalid_code", "not_found" or
+// "invalid_input".
 type rejected string
 
 func (r rejected) Error() string { return string(r) }
 
 const (
-	errInvalidCode rejected = "invalid_code"
-	errNotFound    rejected = "not_found"
+	errInvalidCode  rejected = "invalid_code"
+	errNotFound     rejected = "not_found"
+	errInvalidInput rejected = "invalid_input"
 )
 
 // pairingView is a pairing as the plugin and the app read it.
 type pairingView struct {
 	ID     string `json:"id"`
 	HostID string `json:"hostId"`
-	// UserID is the member whose handset it is: a shared DSH checks a joining
-	// member's invite against it.
+	// UserID is the member whose handset it is.
 	UserID   string `json:"userId"`
 	HostName string `json:"hostName"`
 	// HostOS is the operating system of the member's own computer as its plugin
-	// reports it; null for a shared DSH or a plugin too old to report one.
+	// reports it; null for a plugin too old to report one.
 	HostOS *relayhost.Os `json:"hostOs"`
 	// HostLastSeenAt is when its computer last connected to the relay (it may be
-	// connected now); null for a shared DSH that never has.
+	// connected now); null for a computer the relay no longer knows.
 	HostLastSeenAt *string `json:"hostLastSeenAt"`
 	DeviceName     string  `json:"deviceName"`
 	Status         string  `json:"status"` // pending or confirmed
@@ -79,8 +79,6 @@ type pairedHost struct {
 func ofHost(h *ent.RelayHost) pairedHost {
 	return pairedHost{name: h.Name, os: h.Os, lastSeen: &h.LastSeenAt}
 }
-
-func ofShared(h *ent.SharedHost) pairedHost { return pairedHost{name: h.Name, lastSeen: h.LastSeenAt} }
 
 func view(p *ent.RelayPairing, host pairedHost) pairingView {
 	v := pairingView{ID: p.ID, HostID: p.HostID, UserID: p.UserID, HostName: host.name, HostOS: host.os, DeviceName: p.DeviceName, Status: "pending", CreatedAt: iso(p.CreatedAt)}
@@ -229,7 +227,7 @@ func (p *pairings) decide(ctx context.Context, hostID, pairingID string, accept 
 type scope interface{ where() predicate.RelayPairing }
 
 // account is every pairing of one member to the computers they own: the web
-// console's reach (ADR 0048), never another member's devices or a shared DSH.
+// console's reach (ADR 0048), never another member's devices.
 type account struct {
 	userID  string
 	hostIDs []string
@@ -302,13 +300,6 @@ func (p *pairings) list(ctx context.Context, s scope) ([]pairingView, error) {
 	known := map[string]pairedHost{}
 	for _, h := range hosts {
 		known[h.ID] = ofHost(h)
-	}
-	shared, err := p.db.SharedHost.Query().Where(sharedhost.IDIn(hostIDs...)).All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, h := range shared {
-		known[h.ID] = ofShared(h)
 	}
 	_, toPhone := s.(phone)
 	out := make([]pairingView, len(rows))

@@ -1,6 +1,6 @@
 # 0044. The relay and shared DSHs are open
 
-> **Status:** Accepted · **Date:** 2026-11-17
+> **Status:** Accepted — its shared DSH superseded by 0067 · **Date:** 2026-11-17
 
 ## Context
 
@@ -13,7 +13,7 @@ AES-GCM records; a handset credential for admission). It reached only a
 member's own computer, from a closed app that signs in to the hosted service
 alone.
 
-A team now shares one DSH it runs itself ([shared-dsh.md](../tech/shared-dsh.md)):
+A team now shares one DSH it runs itself (`docs/tech/shared-dsh.md`):
 an admin signs it in with a team host key, members reach it through the relay
 by invite, each session belongs to its starter, a PIN locks each member's
 access, and the DSH writes an archive sealed to a key only the admin holds.

@@ -30,7 +30,7 @@ export interface Computer {
   id: string;
   /** The machine's name, as its DSH reported it. */
   name: string;
-  /** Its operating system; null for a team's shared DSH, or a plugin too old to report one. */
+  /** Its operating system; null from a plugin too old to report one. */
   os: HostOs | null;
   /** Whether its DSH holds a connection to the relay right now. */
   online: boolean;
@@ -40,13 +40,13 @@ export interface Computer {
   verified?: boolean;
   /** Whether the relay notifies this phone when the agent on it waits; the token itself never comes back. */
   push: boolean;
-  /** The relay host the pairing reaches: for a team's shared DSH, its shared host's id. */
+  /** The relay host the pairing reaches. */
   hostId: string;
 }
 
 /**
  * One of the member's own computers (`GET /relay/hosts`), paired with this device or not: what a switcher offers to
- * pair. A team's shared DSH is never one.
+ * pair.
  */
 export interface OwnComputer {
   webOnline?: boolean;
@@ -62,15 +62,6 @@ export interface OwnComputer {
   pluginVersion: string | null;
   /** Whether this device holds a confirmed pairing to it. */
   paired: boolean;
-}
-
-/** A team's shared DSH the member may reach (`GET /relay/shared`). */
-export interface SharedHost {
-  id: string;
-  name: string;
-  teamId: string;
-  teamName: string;
-  online: boolean;
 }
 
 export interface Pairing {
@@ -230,7 +221,6 @@ export type RelayErrorCode =
   | 'preset_changed'
   | 'preset_unavailable'
   | 'invalid_request'
-  | 'permission_refused'
   | 'not_text'
   | 'file_type'
   | 'image_too_large'
@@ -250,10 +240,8 @@ export type RelayErrorCode =
   | 'send_uncertain'
   | 'device_verification_required'
   | 'device_key_changed'
-  | 'invite_refused'
   | 'locked'
-  /** Automation tasks: a shared DSH serves none; another device changed it since it was read; it already ended. */
-  | 'schedule_unavailable'
+  /** Automation tasks: another device changed it since it was read; it already ended. */
   | 'schedule_conflict'
   | 'schedule_ended'
   /** DSH refused a task's input; `RelayError.detail` is DSH's own reason (`invalid_rule`, `not_future`, …). */
@@ -262,7 +250,7 @@ export type RelayErrorCode =
   | 'target_archived';
 
 /**
- * Where a computer's PIN lock stands (the server's `docs/tech/shared-dsh.md`, "The PIN"): open, asked for (or asked
+ * Where a computer's PIN lock stands (the server's `docs/tech/relay.md`, "The PIN"): open, asked for (or asked
  * to be set), refused with the tries left, or locked until cleared on that computer. Undefined until it says.
  */
 export type PinState =
@@ -287,23 +275,12 @@ export interface RelayClient {
   /** The member's own computers, paired with this device or not; none from a server too old to list them to an app. */
   listHosts(): Promise<OwnComputer[]>;
   /**
-   * The teams' shared DSHs this member may reach, joined or not, and the member's teams the server has not enabled
-   * Team DSH for, which reach none.
-   */
-  sharedHosts(): Promise<{ hosts: SharedHost[]; unavailableTeamIds: string[] }>;
-  /**
    * Redeems the code a computer's Teamwork panel shows; the pairing then waits
    * for the member to confirm it on that computer. Rejects
    * `not_found` for a wrong, spent or expired code, or one shown on someone
    * else's computer.
    */
   pair(code: string, deviceName: string, expectedKey?: string): Promise<Pairing>;
-  /**
-   * Joins a team's shared DSH with an invite its admin handed over (`joinLink`): the handset pairs pending, pins the
-   * DSH's key from the invite, and hands the invite over inside the encrypted channel. Resolves once the DSH accepted
-   * it; rejects `not_found` when the member may not reach that DSH, and `invite_refused` when the DSH refused the invite.
-   */
-  join(invite: { host: string; key: string; invite: string; secret: string }, deviceName: string): Promise<Pairing>;
   confirmPairing(id: string): Promise<void>;
   /** A computer's PIN lock as it last said, and every change from now on; returns the unsubscribe. */
   watchPin(computerId: string, onChange: (state: PinState | undefined) => void): () => void;
@@ -398,7 +375,7 @@ export interface RelayClient {
   ): Promise<void>;
   /** Answers the pending question or approval `pendingId`. Rejects `stale` if it is no longer pending. */
   answer(computerId: string, sessionId: string, pendingId: string, answer: Answer): Promise<void>;
-  /** The computer's automation tasks, active first (the server's docs/tech/automation-tasks.md); `schedule_unavailable` on a shared DSH. */
+  /** The computer's automation tasks, active first (the server's docs/tech/automation-tasks.md). */
   listTasks(computerId: string): Promise<AutomationTask[]>;
   /** Called whenever one of the computer's tasks changes, wherever it was changed, so a list can read itself again. Returns a function that stops the calls. */
   watchTasks(computerId: string, onChange: () => void): () => void;

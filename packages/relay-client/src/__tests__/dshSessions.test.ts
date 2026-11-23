@@ -216,7 +216,6 @@ describe('a computer\'s sessions over any link', () => {
     expect(changed - before).toBe(5);
     expect(await sessions.selectPermission('c', 's1', 'read-only')).toBe('read-only');
     expect(calls.at(-1)).toMatchObject({ method: 'teamwork/selectPermission', args: { request: { sessionId: 's1', preset: 'read-only' } } });
-    expect(() => bridgeValue(200, { result: { ok: false, error: { code: 'teamwork/permission_refused' } } })).toThrow(new RelayError('permission_refused'));
     expect((await sessions.listFiles('c', 's1', '')).entries).toEqual([{ name: 'src', kind: 'directory' }]);
     expect(calls.at(-1)).toMatchObject({ method: 'teamwork/listFiles', args: { request: { sessionId: 's1', path: '' } } });
     expect((await sessions.readFile('c', 's1', 'a.md')).text).toBe('hi');

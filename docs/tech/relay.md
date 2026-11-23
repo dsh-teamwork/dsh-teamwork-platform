@@ -40,8 +40,8 @@ The hosted edition's smallest useful version works end to end:
 ## Non-goals of this plan
 
 - **Driving another member's DSH.** A pairing joins one person's phone to one
-  of their own computers. A DSH a team shares is planned in
-  [shared-dsh.md](shared-dsh.md), with a PIN lock this relay gains too.
+  of their own computers. A DSH a team shares, Team DSH, was built and
+  removed again ([ADR 0067](../adr/0067-team-dsh-is-removed.md)).
 - **Hiding model inputs from the model gateway.** End-to-end encryption covers
   the phone-to-computer channel. Team-model context still passes through the
   hosted gateway; local and enterprise-direct models have their own routes.
@@ -72,13 +72,6 @@ needing no call elsewhere on a connection.
 
 ## Identities and tokens
 
-- **A shared DSH** ([shared-dsh.md](shared-dsh.md)) connects with its host
-  token instead. Its relay host id is its shared host's id, so no host row is
-  recorded; it is sent `{ t: 'members', members }`, everyone who may reach
-  it, at its hello and at every ping, may not ask for a pairing code (its
-  members join by invite, `POST /relay/shared/{hostId}/join`), and a phone
-  reaches it only while its account is in the host's team and on its list.
-
 - **The plugin** connects with the Bearer it already holds ([ADR 0001](../adr/0001-plugin-sign-in.md), [ADR 0060](../adr/0060-plugin-tokens-are-revocable-grants.md)), kept across restarts, so a computer is back online as soon as DSH starts.
   On first connection the relay records a **host**: the member's id, a stable
   `hostId` the plugin generates and keeps beside its cache, the machine's
@@ -91,9 +84,9 @@ needing no call elsewhere on a connection.
   ([ADR 0061](../adr/0061-the-app-lists-the-members-computers.md)); one too old
   to send it is recorded with none, an empty one refused 4400. The phone's list of pairings
   carries it as `hostOs` and the console's computers as `os`, for each to show
-  beside the computer's name. A shared DSH reports none. The phone's list also
-  carries `hostLastSeenAt`, the host's `last_seen_at` (a shared host's, which
-  may be null), so it can say how long an offline computer has been away.
+  beside the computer's name. The phone's list also carries `hostLastSeenAt`,
+  the host's `last_seen_at`, so it can say how long an offline computer has
+  been away.
 - **The app** signs in through the website the way the plugin does ([ADR 0001](../adr/0001-plugin-sign-in.md)):
   PKCE and a code. It receives its own Bearer, with `via` naming the app. The
   token says who the person is. On its own it reaches no computer.
@@ -171,13 +164,33 @@ The tables:
 - `relay_pairings`: `id`, `user_id`, `host_id`, `device_name`,
   `device_key_hash`, `push_token`, `push_locale`, `confirmed_at`, `revoked_at`,
   `last_used_at`, `created_at`.
-- `shared_hosts`: a team's shared DSHs ([shared-dsh.md](shared-dsh.md)).
 
-Each refers to an account or a team by its id alone, with no foreign key.
+Each refers to an account by its id alone, with no foreign key.
 Deleting an account ([ADR 0039](../adr/0039-deleting-an-account.md)) removes its hosts,
 their codes and every pairing of the account or its hosts, in the deletion's
 transaction through `Host.SubscribeTeams`; a socket still open closes at its
 next ping.
+
+## The PIN
+
+A paired device is asked for a PIN before the computer answers it: a second
+lock on a device that already proved its key. The plugin's `src/pin-lock.ts`
+keeps it; the clients' gates are the app's `components/pin-gate.tsx` and the
+console's `PinGate` (`apps/web/src/pages/team/dsh-session.tsx`).
+
+- **Four digits, set by the owner** from their own device at its first
+  connection after pairing, and changed from any of their devices with the old
+  PIN (`setPin`). The DSH stores it as scrypt with its parameters and salt.
+- **Sent only inside the channel**; nothing is derived from it.
+- **Asked whenever a channel is authorized and after fifteen minutes with
+  nothing sent on it**: the DSH says `pinRequired` (with `set` when there is
+  none yet), and until `unlock` or `setPin` succeeds it answers every call
+  with `teamwork/locked` and ends every stream, so nothing reaches DSH. An
+  unlock lasts as long as the channel and its idle timer.
+- **Five wrong PINs lock it** on every device until it is cleared at the
+  computer (`/teamwork pin reset`), which also clears a forgotten PIN, set
+  again at the next connection. The count is kept in the PIN file, so a
+  restart does not reset it. Signing out clears it.
 
 ## Frames
 
@@ -314,8 +327,7 @@ use, so DSH sees each phone as a separate client.
     `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
     `workspace/archiveSession`, `workspace/unarchiveSession`; and a
     computer's automation tasks, `schedule/catalog`, `schedule/history`,
-    `schedule/create`, `schedule/edit` and `schedule/run`, refused on a
-    shared DSH
+    `schedule/create`, `schedule/edit` and `schedule/run`
     ([automation-tasks.md](automation-tasks.md), ADR 0066);
   - streams: `session/follow`, `$events`.
 - **Tests:** `tests/bridge.test.ts` in the plugin holds the list, and drives
@@ -352,23 +364,17 @@ it and both places in DSH's own order) or null under Ungrouped, which the
 relay client reads into `SessionSummary.marks`. The phone puts pinned sessions
 after those waiting on the member; the web console groups them as DSH's
 sidebar does (`sessionGroups`); both hide archived ones until asked for, and an
-older plugin's list, unmarked, offers only the copy. On a Team DSH each action is
-held to the member's own sessions like any call that names one, though the
-pin and archive land in that DSH's one registry, seen at its keyboard too.
-Forking a session and opening it in another app stay on the desktop.
+older plugin's list, unmarked, offers only the copy. The pin and archive land
+in that DSH's one registry, seen at its keyboard too. Forking a session and opening it in another app stay on the desktop.
 
 **A session's permission preset** (DSH's read-only, workspace write and full
 access, or whatever presets that DSH composes) is `teamwork/configuration`'s
 `permissions`: the offered presets, the session's current one (null before it
 starts) and the default. A preset is `risky` when it leaves the workspace's
-sandbox or skips approval, and the client confirms it once; it is `allowed`
-unless the DSH is shared and the preset risky, so a Team DSH's members pick
-read-only or workspace write and anything wider is set at its keyboard, which
-the client shows and does not offer. `teamwork/selectPermission`
-(`{ sessionId, preset }`, the preset one word) switches an idle session by
-running DSH's own `/permission` command in the plugin's process, as DSH's
-picker does; a preset not allowed is `teamwork/permission_refused`. The
-picker sits at the composer's foot beside the paperclip, as in DSH's input
+sandbox or skips approval, and the client confirms it once.
+`teamwork/selectPermission` (`{ sessionId, preset }`, the preset one word)
+switches an idle session by running DSH's own `/permission` command in the
+plugin's process, as DSH's picker does. The picker sits at the composer's foot beside the paperclip, as in DSH's input
 bar, and a new session's choice is applied once it is created.
 
 **A session's files** are read, never written: `teamwork/listFiles`
@@ -602,14 +608,13 @@ module registration is shimmed; its AES implementation is not mocked.
 ## My DSH in the web console
 
 A member uses their own computers from the browser, as the phone app does, and
-sees and revokes every device paired with them. It is the web console's third
-way to reach a DSH, beside Team DSH ([shared-dsh.md](shared-dsh.md)) and, in
-the hosted edition, Cloud DSH.
+sees and revokes every device paired with them. It is the web console's way
+to reach a DSH, beside, in the hosted edition, Cloud DSH.
 
 - **Workspace → My DSH**, `/teams/{teamId}/my-dsh[/{hostId}[/{sessionId}]]`
   and `/teams/{teamId}/my-dsh/{hostId}/settings`
-  (`apps/web/src/pages/team/my-dsh.tsx`), in the same columns as Team
-  DSH, whose parts it shares (`dsh-session.tsx`). Those parts speak to this
+  (`apps/web/src/pages/team/my-dsh.tsx`), in columns an edition's pages
+  share (`dsh-session.tsx`). Those parts speak to this
   browser's relay unless a page provides another client
   (`SessionClientContext`), as an edition does for a computer its server
   reaches itself. It is listed while the

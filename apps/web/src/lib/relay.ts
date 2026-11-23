@@ -1,9 +1,9 @@
 /**
- * The console as a relay client (docs/tech/shared-dsh.md, "Clients"): the same live client the phone app runs, here
- * on this site's own origin, so the session cookie admits it and no token is held in the page. Its keys live in this
- * browser's IndexedDB, per account: the E2EE identity a non-extractable WebCrypto Ed25519 key, the relay credential
- * that admits this browser as a handset, and each DSH's pinned key. Clearing the site's data forgets them, and the
- * browser then joins again by a new invite.
+ * The console as a relay client (docs/tech/relay.md, "My DSH in the web console"): the same live client the phone app
+ * runs, here on this site's own origin, so the session cookie admits it and no token is held in the page. Its keys
+ * live in this browser's IndexedDB, per account: the E2EE identity a non-extractable WebCrypto Ed25519 key, the relay
+ * credential that admits this browser as a handset, and each DSH's pinned key. Clearing the site's data forgets them,
+ * and the browser then pairs again.
  */
 import {
   base64,

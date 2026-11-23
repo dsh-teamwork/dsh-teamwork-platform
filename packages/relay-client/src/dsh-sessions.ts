@@ -121,10 +121,10 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
   'teamwork/upload_expired': 'upload_expired', 'teamwork/upload_failed': 'upload_failed', 'session/attachment-invalid': 'upload_expired',
   'teamwork/locked': 'locked', 'teamwork/preset_changed': 'preset_changed', 'teamwork/model_unavailable': 'model_unavailable', 'teamwork/invalid_request': 'invalid_request',
   'teamwork/document_too_large': 'document_too_large', 'teamwork/document_empty': 'document_empty', 'teamwork/preview_unavailable': 'preview_unavailable',
-  'teamwork/permission_refused': 'permission_refused', 'teamwork/not_text': 'not_text', 'session/title-invalid': 'invalid_request', 'workspace/session-active': 'busy', 'workspace/not-found': 'not_found',
+  'teamwork/not_text': 'not_text', 'session/title-invalid': 'invalid_request', 'workspace/session-active': 'busy', 'workspace/not-found': 'not_found',
   // A cloud computer's server: an answer to a question no page of that computer still holds.
   'teamwork/stale': 'stale',
-  'teamwork/schedule_unavailable': 'schedule_unavailable', 'schedule/input-invalid': 'schedule_invalid', 'schedule/target-archived': 'target_archived',
+  'schedule/input-invalid': 'schedule_invalid', 'schedule/target-archived': 'target_archived',
 };
 
 /**

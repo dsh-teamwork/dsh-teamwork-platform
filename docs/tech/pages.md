@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-22
+> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-23
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -26,7 +26,7 @@ questions; How done is verified).
 The smallest useful version works end to end, on a self-hosted server as on
 the hosted one:
 
-- in a session on My DSH or Team DSH, the agent makes a page; a card appears
+- in a session on My DSH, the agent makes a page; a card appears
   in the conversation, and clicking it shows the rendered page beside it;
 - the member asks for a change; the page gains version 2, and the viewer can
   step back to version 1;
@@ -98,8 +98,8 @@ the hosted one:
  DSH session                server (one binary)                    browser / app
  ───────────                ───────────────────                    ─────────────
  agent ──teamwork_page──▶ plugin ──POST /api/teams/{t}/pages──▶ internal/pages ──▶ DB rows
-                             (plugin, computer      │                    └──▶ object store
-                              or host token)        │                         teams/{t}/pages/{digest}
+                             (plugin or computer    │                    └──▶ object store
+                              token)                │                         teams/{t}/pages/{digest}
                              ◀── { id, version } ───┘
  tool result ─────── relay (E2E, unchanged) ───────────────────────▶ relay-client: `page` item
                                                                           │ card
@@ -129,12 +129,11 @@ bytes per character the API allows.
 | Table | Columns | Keys and indexes |
 | --- | --- | --- |
 | `pages` | `id`; `team_id`; `owner_id` (a user); `kind` (`html`, `markdown`, `svg`); `title` (≤ 120 chars); `sharing` (`private`, `members`, `team`); `current_version` (int); `created_at`; `updated_at` (the newest version's time) | `(team_id, owner_id, updated_at)`; `(team_id, sharing, updated_at)` |
-| `page_versions` | `id`; `page_id`; `number`; `author_id`; `host_id` (nullable: a Team DSH); `computer` (≤ 64, the plugin's own name for its DSH); `session_id` (≤ 128, opaque); `note` (≤ 200 chars); `size` (bytes, all files); `created_at` | unique `(page_id, number)` |
+| `page_versions` | `id`; `page_id`; `number`; `author_id`; `computer` (≤ 64, the plugin's own name for its DSH); `session_id` (≤ 128, opaque); `note` (≤ 200 chars); `size` (bytes, all files); `created_at` | unique `(page_id, number)` |
 | `page_files` | `id`; `version_id`; `team_id`; `path` (≤ 255); `content_type` (≤ 100); `size`; `digest` (32 chars, below) | unique `(version_id, path)`; `(team_id, digest)` for collection |
 | `page_members` | `page_id`; `user_id`; `added_by`; `created_at` | unique `(page_id, user_id)`; `(user_id, page_id)` for **Shared with me** |
 
-- **The owner never changes.** A Team DSH's page is owned by the session's
-  starter (below); `host_id` on its versions says where it was made.
+- **The owner never changes.**
 - **`current_version` moves by a conditional update**
   (`UPDATE pages SET current_version = n+1 WHERE id = ? AND current_version = n`),
   never a lock: zero rows is `409 page_stale`.
@@ -190,7 +189,7 @@ a 403, so its existence is not told.
 
 | Route | Caller | Does |
 | --- | --- | --- |
-| `POST /api/teams/{teamId}/pages` | plugin, computer or host token | Creates a page at version 1, `private` |
+| `POST /api/teams/{teamId}/pages` | plugin or computer token | Creates a page at version 1, `private` |
 | `POST /api/teams/{teamId}/pages/{id}/versions` | the same | Adds a version on top of `baseVersion`, if the author may read the page |
 | `GET /api/teams/{teamId}/pages?list=mine\|shared\|all&before=` | session or Bearer | The reader's own, those shared with them, or (admins) every page of the team without its content; 50 at a time, newest version first |
 | `GET /api/teams/{teamId}/pages/{id}` | session or Bearer | For a reader: the page, its versions (author, time, note, where made), and for its owner its members. For an admin who is not a reader: the same fields as the list, and its members |
@@ -203,14 +202,13 @@ a 403, so its existence is not told.
 
 - **Upload body**: `multipart/form-data`, at most 16 MiB plus headers. Part
   `meta` (JSON): `title`, `kind`, `note`, `sessionId`, `computer`, and on a
-  version `baseVersion`; on a host token, also `starter` (a user id). Every
+  version `baseVersion`. Every
   other part is a file, its form name the path. The server checks the kind's
   entry exists (`index.html`, `index.md` or `index.svg`), the limits, and
   each content type against its extension (a fixed table; unknown is
   refused, `page_invalid`).
 - **Who uploads**: a plugin token's member; a computer token's member (the
-  hosted edition's cloud sessions); a host token's team, naming the starter,
-  who must be a member of that team now. `requirePlugin`
+  hosted edition's cloud sessions). `requirePlugin`
   (`internal/httpapi/identity.go`) gains the two upload routes and `view`,
   and its comment its list.
 - **Errors**: `page_not_found` 404, `page_stale` 409 (the client re-reads the page),
@@ -232,7 +230,7 @@ a 403, so its existence is not told.
 - **The token** is sealed by `auth.Sealer` under a new purpose,
   `dsh-teamwork.page-view`, so it never opens as a session or a Bearer and
   none of those opens as it. Claims: viewer, team, page, version; an hour.
-  The plugin's `open` gets one too, for its member or the starter.
+  The plugin's `open` gets one too, for its member.
 - **`/p/{token}/` re-checks on every request**, not only when minted: the
   token opens; the viewer is a member of the team now; the page exists and
   admits them; the version exists. Removing a member from the list or the
@@ -311,9 +309,6 @@ In the plugin repository, beside the other `teamwork_*` tools
   other silently.
 - **Never sharing**: the tool has no argument that changes sharing, so text
   an agent read cannot get a page shared.
-- **On a Team DSH** the plugin holds a host token; it names the starter from
-  its roster for the session ([shared-dsh.md](shared-dsh.md), "Sessions
-  belong to their starter"), and a session with no starter cannot publish.
 
 ## The clients
 
@@ -451,12 +446,11 @@ rather than parsing text. What each spike set out to check:
   `/p/` serving with the
   headers, Markdown rendering, `CONTENT_URL` (config, host routing, start-up
   checks, `robots.txt`).
-- Routes: the two uploads (plugin, computer and host tokens), `GET …/pages`
+- Routes: the two uploads (plugin and computer tokens), `GET …/pages`
   (`mine` only), `GET …/pages/{id}`, `…/view`; `requirePlugin` extended;
   `api/openapi.yaml` and `api.gen.ts`.
 - Docs in the same pull request: the two ADRs; `relay.md`'s non-goal;
-  `shared-dsh.md`'s trust statement ("never read", but for what an agent
-  publishes); `self-hosting.md`; this plan's status line.
+  `self-hosting.md`; this plan's status line.
 - Done when the Go suites below pass on all three dialects.
 
 ### Step 2 — the plugin's tool (M; plugin repository)
@@ -481,8 +475,7 @@ rather than parsing text. What each spike set out to check:
 - Server: `PUT …/sharing`, `page_members`, **Shared with me**, **All** for
   admins, readers adding
   versions, `PATCH`, restore, delete and collection, the owner's and admins'
-  rights (an admin narrows, never widens), the
-  host token's starter path.
+  rights (an admin narrows, never widens).
 - Plugin: `open` (a view address, then each file into `directory`).
 - Console: Share, **Shared with me**, **All**, version picker, Restore, Delete.
 - Done when the Goal's four steps pass by hand with two accounts on a
@@ -516,8 +509,7 @@ step 0 ─┬─▶ step 1 ─▶ step 2 ─▶ step 3 ─▶ step 4 ─▶ step
     the page as it was; under `members` a
     chosen member reads and adds a version and an unchosen one gets 404;
     under `team` everyone does;
-  - a member who left the team reads nothing; a host token's starter who is
-    not a member is refused;
+  - a member who left the team reads nothing;
   - changing to `team` and back starts from an empty list; only the owner
     widens, renames and restores, and the owner or an admin deletes;
   - a stale `baseVersion` is a 409 and leaves the page as it was; two

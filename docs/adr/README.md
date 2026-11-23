@@ -33,9 +33,9 @@ or the hosted service, kept with the closed edition rather than here.
 - [0042 — Editions store objects](0042-editions-store-objects-beside-plugin-archives.md) — an edition's bytes live in the server's store, under a kind of its own.
 - [0043 — A work-first team console](0043-a-work-first-team-console.md) — everyone works in the team; only its admin sees Team management.
 - [0044 — The relay and shared DSHs are open](0044-the-relay-and-shared-dshs-are-open.md) — the relay, shared DSHs and their archive join the community edition.
-- [0045 — The shared archive](0045-the-shared-archive.md) — sealed segments in a signed chain, kept in the database, opened only by the admin.
+- [0045 — The shared archive](0045-the-shared-archive.md) — sealed segments in a signed chain, kept in the database, opened only by the admin (superseded by 0067).
 - [0046 — Every server sends the app its code](0046-every-server-sends-the-app-its-code.md) — the app's sign-in address needs no setting; release builds choose a server.
-- [0047 — Host tokens](0047-host-tokens.md) — a shared DSH's token reaches one team's configuration and models as no person.
+- [0047 — Host tokens](0047-host-tokens.md) — a shared DSH's token reaches one team's configuration and models as no person (superseded by 0067).
 - [0048 — The console manages every device](0048-the-console-manages-every-device.md) — the web console lists and revokes every device paired with a member's own computers.
 
 - [0049 — The admin lands on the team overview](0049-the-admin-lands-on-the-team-overview.md) — Workspace is everyone's own; Team management opens on the team's overview.
@@ -57,6 +57,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0064](0064-personal-dsh-native-web-relay.md) — owners may open a personal DSH’s native Web through an outbound relay.
 - [0065](0065-native-web-sessions-and-shell.md) — native Web runs in a same-origin shell, with idle sessions the computer can end.
 - [0066 — A paired device manages its computer's automation tasks](0066-a-paired-device-manages-its-computers-automation-tasks.md) — `schedule/*` passed on for a personal computer, refused on a shared DSH.
+- [0067 — Team DSH is removed](0067-team-dsh-is-removed.md) — shared DSHs, host tokens and the shared archive go; the relay serves a member's own computers.
 
 The template:
 

@@ -46,7 +46,6 @@ type VersionView struct {
 	Note      string    `json:"note"`
 	Computer  string    `json:"computer"`
 	SessionID string    `json:"sessionId"`
-	TeamDSH   bool      `json:"teamDsh"`
 	Size      int64     `json:"size"`
 }
 
@@ -187,7 +186,7 @@ func (s *Service) Get(ctx context.Context, c Caller, teamID, pageID string) (Det
 	d.Versions = make([]VersionView, len(versions))
 	for i, v := range versions {
 		d.Versions[i] = VersionView{Number: v.Number, Author: people(v.AuthorID), CreatedAt: v.CreatedAt.UTC(), Note: v.Note,
-			Computer: v.Computer, SessionID: v.SessionID, TeamDSH: v.HostID != "", Size: v.Size}
+			Computer: v.Computer, SessionID: v.SessionID, Size: v.Size}
 	}
 	return d, nil
 }

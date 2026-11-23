@@ -1,6 +1,6 @@
 # Community edition split
 
-> **Status:** Current — the first release waits · **Updated:** 2026-11-17
+> **Status:** Current — the first release waits · **Updated:** 2026-11-23
 
 How the open community edition, the public `dsh-teamwork/dsh-teamwork-platform`
 (ADR 0005), and the closed edition built on it stay two repositories with one
@@ -55,7 +55,7 @@ ADR 0005's original grouping of usage and billing; its historical text stays.
 
 | Part | Public `dsh-teamwork-platform` | Closed repository only |
 | --- | --- | --- |
-| `server/` | The whole server: every route, the model gateway, sign-in, the relay and shared DSHs (ADR 0044), the schema and migrations of three dialects, and `server/edition`, the extension point | — |
+| `server/` | The whole server: every route, the model gateway, sign-in, the relay (ADR 0044), the schema and migrations of three dialects, and `server/edition`, the extension point | — |
 | `apps/web` | The web frontend and public pages, and `mountWeb`, which an edition's web app composes (ADR 0041); `/privacy` and `/terms` from a build's `LEGAL_DIR` | The hosted service's legal text, `premium/docs/legal/` (ADR 0007) |
 | `packages/shared` | The languages and the rule that picks one | — |
 | `premium/server` | — | The closed binary: the open server with billing and the operator console registered, their tables and migrations |

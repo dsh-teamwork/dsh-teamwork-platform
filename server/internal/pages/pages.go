@@ -51,11 +51,10 @@ func (s *Service) now() time.Time {
 	return time.Now().UTC()
 }
 
-// Caller is who asks: a member (UserID), on behalf of a Team DSH when HostID
-// is set. TeamID, when set, is the one team a computer or host token reaches.
+// Caller is who asks: a member (UserID). TeamID, when set, is the one team a
+// computer token reaches.
 type Caller struct {
 	UserID string
-	HostID string
 	TeamID string
 }
 

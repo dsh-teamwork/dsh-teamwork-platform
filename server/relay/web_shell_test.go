@@ -22,7 +22,7 @@ func TestDesktopWebShell(t *testing.T) {
 	t.Cleanup(func() { desktopWebIdle = idle })
 	// DSH's own response, with a policy that would forbid any frame.
 	const answer = "HTTP/1.1 200 OK\r\nContent-Security-Policy: default-src 'self'; frame-ancestors 'none'\r\nX-Frame-Options: DENY\r\nContent-Length: 4\r\n\r\nDSH!"
-	editiontest.Each(t, []edition.Extension{Extension(30*time.Second, false)}, editiontest.Options{
+	editiontest.Each(t, []edition.Extension{Extension(30 * time.Second)}, editiontest.Options{
 		Env: map[string]string{"DESKTOP_WEB_DOMAIN": domain},
 	}, func(t *testing.T, in *editiontest.Instance) {
 		ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)

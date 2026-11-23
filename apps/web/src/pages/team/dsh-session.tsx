@@ -1,12 +1,12 @@
 /**
- * What the console's pages for reaching a DSH share (Team DSH, team-dsh.tsx; My DSH, my-dsh.tsx): the two columns
+ * What the console's pages for reaching a DSH share (My DSH, my-dsh.tsx): the two columns
  * beside the sidebar, a computer's sessions (grouped as DSH's own sidebar groups them) and PIN as its DSH reports them
  * through the relay, the conversation (a new
  * session included, which keeps its view as it starts), the composer laid out as DSH's own input bar, and the PIN gate. Everything here runs over `@/lib/relay`, end to end encrypted to the DSH, unless the page
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X, type LucideIcon } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import { Link } from 'react-router';
@@ -80,7 +80,7 @@ export function useSessionClient(): SessionClient {
   return useContext(SessionClientContext) ?? relayFor(me);
 }
 
-const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'image_too_large', 'image_model_unsupported', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused', 'not_text', 'document_too_large', 'document_empty', 'preview_unavailable', 'preview_unsupported', 'schedule_unavailable', 'schedule_conflict', 'schedule_ended', 'schedule_invalid', 'target_archived']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'image_too_large', 'image_model_unsupported', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'not_text', 'document_too_large', 'document_empty', 'preview_unavailable', 'preview_unsupported', 'schedule_conflict', 'schedule_ended', 'schedule_invalid', 'target_archived']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {
@@ -368,33 +368,6 @@ function SessionRow({ computerId, base, session: s, open, onPick }: { computerId
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
     </div>
-  );
-}
-
-/**
- * A computer's row in the column: its name, and under it whether it is online (`online`, when known; green, or grey and
- * dimmed when offline) and `note`.
- */
-export function ComputerRow({ icon: Icon = Server, name, note, online, to, open, current, onPick }: { icon?: LucideIcon; name: string; note?: string; online?: boolean; to?: string; open?: boolean; current?: boolean; onPick?: () => void }) {
-  const inner = (
-    <>
-      <Icon className={cn('size-4 shrink-0', online === false && 'text-muted-foreground')} aria-hidden />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className={cn('truncate', online === false && 'text-muted-foreground')}>{name}</span>
-        <span className="flex min-w-0 items-center gap-1 text-xs font-normal text-muted-foreground">
-          {online !== undefined && <Presence online={online} />}
-          {online !== undefined && note && <span aria-hidden>·</span>}
-          {note && <span className="truncate">{note}</span>}
-        </span>
-      </span>
-    </>
-  );
-  return to ? (
-    <Link to={to} onClick={onPick} aria-current={current ? 'page' : undefined} className={cn(row, 'gap-2.5', current && selected, open && 'font-medium')}>
-      {inner}
-    </Link>
-  ) : (
-    <div className={cn(row, 'gap-2.5 text-muted-foreground hover:bg-transparent')}>{inner}</div>
   );
 }
 
@@ -772,8 +745,7 @@ const PRESET_WORDS: Record<string, string> = { 'read-only': 'readOnly', 'workspa
 /**
  * The session's permission preset, at the composer's foot beside the paperclip, as in DSH's own input bar. A new
  * session's is chosen before its first message (`value`); an existing session switches while idle. A risky preset
- * (one that leaves the workspace's sandbox or skips approval) is confirmed once; one its computer keeps to its own
- * keyboard (a Team DSH's risky ones) is shown and cannot be picked.
+ * (one that leaves the workspace's sandbox or skips approval) is confirmed once.
  */
 function PermissionSettings({ computerId, sessionId, config, setConfig, disabled, value, onChange }: {
   computerId: string;
@@ -794,10 +766,9 @@ function PermissionSettings({ computerId, sessionId, config, setConfig, disabled
   const current = sessionId ? permissions.current! : (value ?? permissions.defaultPreset);
   const nameOf = (option: { id: string; name: string }) => (PRESET_WORDS[option.id] ? t(`preset.${PRESET_WORDS[option.id]}`) : option.name);
   const icon = (risky: boolean) => { const Icon = risky ? ShieldAlert : ShieldCheck; return <Icon className="size-4 text-muted-foreground" aria-hidden />; };
-  const options = permissions.options.map((option) => ({
+  const options: { value: string; label: string; disabled?: boolean; icon: ReactNode }[] = permissions.options.map((option) => ({
     value: option.id,
-    label: option.allowed ? nameOf(option) : t('keyboardOnly', { name: nameOf(option) }),
-    disabled: !option.allowed,
+    label: nameOf(option),
     icon: icon(option.risky),
   }));
   // Settings that match no preset (set by hand on the desktop) show as such, and are left by picking one.
@@ -1202,7 +1173,7 @@ function Composer({ busy, rows, placeholder, send, files, stop, tools, children 
 }
 
 /** The DSH asks for this member's PIN: set a first one, typed twice, or give it. Only the DSH checks it. */
-export function PinGate({ computerId, state, lockedHint, enterHint }: { computerId: string; state: PinState | undefined; lockedHint: string; enterHint?: string }) {
+export function PinGate({ computerId, state, lockedHint }: { computerId: string; state: PinState | undefined; lockedHint: string }) {
   const t = useTranslations('team.dsh.pin');
   const relay = useSessionClient();
   const [value, setValue] = useState('');
@@ -1235,7 +1206,7 @@ export function PinGate({ computerId, state, lockedHint, enterHint }: { computer
     <Card className="m-auto w-full max-w-sm">
       <CardHeader>
         <CardTitle>{t(`${prompt}.title`)}</CardTitle>
-        <CardDescription>{state?.kind === 'wrong' ? t('wrong', { count: state.left }) : prompt === 'locked' ? lockedHint : prompt === 'enter' && enterHint ? enterHint : t(`${prompt}.hint`)}</CardDescription>
+        <CardDescription>{state?.kind === 'wrong' ? t('wrong', { count: state.left }) : prompt === 'locked' ? lockedHint : t(`${prompt}.hint`)}</CardDescription>
       </CardHeader>
       {prompt !== 'locked' && (
         <CardContent>

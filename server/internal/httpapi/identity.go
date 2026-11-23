@@ -14,7 +14,6 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
@@ -24,13 +23,9 @@ type caller struct {
 	via    string
 	bearer bool // the plugin's token, rather than the browser's cookie
 	issued time.Time
-	// team is set for a computer token (ADR 0038) or a host token
-	// (ADR 0047): its caller reaches that one team, and only through
-	// requirePlugin's routes.
+	// team is set for a computer token (ADR 0038): its caller reaches that
+	// one team, and only through requirePlugin's routes.
 	team string
-	// host is a host token's shared DSH. Such a caller is no person: user is
-	// nil, and team is set.
-	host string
 }
 
 // bearerToken is the token in `Authorization: Bearer …`, or "".
@@ -122,10 +117,9 @@ func (s *Server) requireUser(r *http.Request) (*caller, error) {
 }
 
 // requirePlugin is requireUser for the routes a DSH plugin needs, which also
-// accept a computer token (ADR 0038) and a host token (ADR 0047): the
-// configuration it syncs, the model gateway, and publishing and viewing pages
-// (docs/tech/pages.md). Every other route calls requireUser, where neither
-// opens.
+// accept a computer token (ADR 0038): the configuration it syncs, the model
+// gateway, and publishing and viewing pages (docs/tech/pages.md). Every other
+// route calls requireUser, where it does not open.
 func (s *Server) requirePlugin(r *http.Request) (*caller, error) {
 	token := bearerToken(r.Header.Get("Authorization"))
 	if token == "" {
@@ -133,12 +127,6 @@ func (s *Server) requirePlugin(r *http.Request) (*caller, error) {
 	}
 	if _, err := s.Auth.Sealer.Open(auth.PluginBearer, token); err == nil {
 		return s.requireUser(r) // which also holds it to its grant
-	}
-	if claims, err := s.Auth.Sealer.Open(auth.HostBearer, token); err == nil {
-		if claims.Team == "" {
-			return nil, errUnauthorized
-		}
-		return &caller{via: claims.Via, bearer: true, team: claims.Team, host: claims.Sub}, nil
 	}
 	claims, err := s.Auth.Sealer.Open(auth.ComputerBearer, token)
 	if err != nil || claims.Team == "" {
@@ -169,23 +157,6 @@ func (s *Server) MintComputerToken(ctx context.Context, userID, teamID, host str
 		return "", time.Time{}, errors.New("a computer token for a team its member is not in")
 	}
 	return s.Auth.Sealer.Seal(auth.ComputerBearer, auth.Claims{Sub: userID, Via: "computer", Team: teamID, Host: host}, ttl)
-}
-
-// MintHostToken seals a host token for a shared DSH of a team (ADR 0047).
-// Only an edition mints one, after checking the shared host is the team's and
-// not revoked; the team must exist.
-func (s *Server) MintHostToken(ctx context.Context, hostID, teamID string, ttl time.Duration) (string, time.Time, error) {
-	if hostID == "" || len(hostID) > 64 || teamID == "" || ttl <= 0 || ttl > auth.HostTTL {
-		return "", time.Time{}, errors.New("invalid host token request")
-	}
-	exists, err := s.Auth.DB.Team.Query().Where(team.ID(teamID)).Exist(ctx)
-	if err != nil {
-		return "", time.Time{}, err
-	}
-	if !exists {
-		return "", time.Time{}, errors.New("a host token for a team that does not exist")
-	}
-	return s.Auth.Sealer.Seal(auth.HostBearer, auth.Claims{Sub: hostID, Via: "host", Team: teamID}, ttl)
 }
 
 // sameOrigin guards a write a browser could be tricked into sending: one the

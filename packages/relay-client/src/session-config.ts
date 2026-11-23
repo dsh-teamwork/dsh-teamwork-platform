@@ -57,14 +57,13 @@ const ConfigurationSchema = z.object({
   /**
    * DSH's permission presets (read-only, workspace write, full access…), the session's current one and the default
    * (the plugin's `src/phone-permission.ts`). A `risky` one leaves the workspace's sandbox or skips approval, and a
-   * client confirms it once; one not `allowed` (risky, on a shared DSH) is shown and cannot be picked. Null where DSH
-   * composes no presets, or from an older plugin.
+   * client confirms it once. Null where DSH composes no presets, or from an older plugin.
    */
   permissions: z
     .object({
       current: z.string().nullable(),
       defaultPreset: z.string(),
-      options: z.array(z.object({ id: z.string(), name: z.string(), description: z.string().optional(), risky: z.boolean(), allowed: z.boolean() })),
+      options: z.array(z.object({ id: z.string(), name: z.string(), description: z.string().optional(), risky: z.boolean() })),
     })
     .nullable()
     .default(null),
@@ -98,7 +97,7 @@ export function directoriesOf(value: unknown): { path: string; name: string }[] 
 }
 /**
  * The folders a new session can start in: those of the reader's own sessions, newest first, then the ones the
- * computer offers. A member new to a shared DSH, or a computer with no session yet, has only the second.
+ * computer offers. A computer with no session yet has only the second.
  */
 export function startableDirectories(sessions: unknown, offered: readonly string[]) {
   const known = directoriesOf(sessions);

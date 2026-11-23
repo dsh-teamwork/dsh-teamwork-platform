@@ -47,7 +47,7 @@ func TestPluginNativeWeb(t *testing.T) {
 		t.Fatalf("the DSH plugin at %s has no native Web connector (set DSH_TEAMWORK_PLUGIN): %v", plugin, err)
 	}
 	const domain = "d.example.test"
-	ext := relay.Extension(time.Minute, false)
+	ext := relay.Extension(time.Minute)
 	editiontest.Each(t, []edition.Extension{ext}, editiontest.Options{Env: map[string]string{"DESKTOP_WEB_DOMAIN": domain}}, func(t *testing.T, in *editiontest.Instance) {
 		ada := in.Account("ada@example.test")
 		in.Team(ada)

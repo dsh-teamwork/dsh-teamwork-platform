@@ -97,7 +97,7 @@ func TestDesktopWebSessions(t *testing.T) {
 	const domain = "desktop.example.test"
 	idle, life := desktopWebIdle, desktopWebLife
 	t.Cleanup(func() { desktopWebIdle, desktopWebLife = idle, life })
-	editiontest.Each(t, []edition.Extension{Extension(30*time.Second, false)}, editiontest.Options{
+	editiontest.Each(t, []edition.Extension{Extension(30 * time.Second)}, editiontest.Options{
 		Env: map[string]string{"DESKTOP_WEB_DOMAIN": domain},
 	}, func(t *testing.T, in *editiontest.Instance) {
 		ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)

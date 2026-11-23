@@ -12,8 +12,7 @@ with no store of the server's own.
 DSH keeps the tasks and delivers them; Teamwork only reaches them. A client
 calls `schedule/*` through the paired channel like any other call
 ([relay.md](relay.md), "The allow-list"); the plugin passes the method on
-unchanged on a personal computer and refuses it on a shared DSH;
-`packages/relay-client` reads the answers into a client's shapes and turns
+unchanged; `packages/relay-client` reads the answers into a client's shapes and turns
 `schedule/changed` on `$events` into a refresh. A due task lands in its
 session as a user turn, which the client shows as a reminder.
 
@@ -62,8 +61,6 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
 
 ## Non-goals
 
-- **A shared DSH.** Its catalog is the whole DSH's and a task names no person;
-  `schedule/*` is refused there until tasks have owners (open question 1).
 - **Waking a stopped cloud computer.** A task fires only while DSH runs; a
   cloud computer outside its running window misses it, and the screen says so.
 - **Server-held triggers** (webhooks, Lark or GitHub events). They remain the
@@ -76,7 +73,7 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
 
 | Piece | Where |
 | --- | --- |
-| The allow-list, and the refusal on a shared DSH | the plugin's `src/bridge.ts`, held by `tests/bridge.test.ts` |
+| The allow-list | the plugin's `src/bridge.ts`, held by `tests/bridge.test.ts` |
 | Tasks read into a client's shapes, the calls, the refresh on `schedule/changed`, reminders in a session | `packages/relay-client` (`schedule.ts`, `dsh-sessions.ts`, `dsh.ts`) |
 | The task page, the session header and the reminder note | `apps/web/src/pages/team/dsh-tasks.tsx`, mounted by `my-dsh.tsx` and `dsh-session.tsx` |
 | The same on the phone | `premium/apps/mobile`, where that directory exists |
@@ -87,7 +84,7 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    to the bridge's identity, `$events` carried `schedule/changed` with no
    arguments, and a delivery arrived as a `user/message` with
    `source.kind: 'schedule'`.
-2. **The channel.** The allow-list and the shared refusal in the plugin;
+2. **The channel.** The allow-list in the plugin;
    `relay-client` reads tasks, calls them, watches `schedule/changed`, and
    keeps `[SCHEDULE REMINDER]` messages as the user's turn with `reminders`;
    the plugin's host test (`tests/host/cloud.mjs`) drives them through its
@@ -123,16 +120,13 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
 
 ## Open questions
 
-1. **Owners on a shared DSH.** A task would need its creator recorded by the
-   plugin (as `src/shared-owner.ts` records a session's), the catalog filtered
-   by it, and a `new` target's session claimed for that member as it is made.
-2. **Revoking a pairing.** Tasks a phone made keep running after it is
+1. **Revoking a pairing.** Tasks a phone made keep running after it is
    revoked (ADR 0066). Whether revoking should offer to delete them needs the
    creating device, which DSH does not record.
 
 ## How it is verified
 
-- The plugin's `tests/bridge.test.ts` holds the list and the shared refusal.
+- The plugin's `tests/bridge.test.ts` holds the list.
 - `relay-client`'s tests read a probed catalog, each miss and error, the
   refresh on `schedule/changed`, and a reminder in a session's history.
 - The plugin's host test creates, pauses, runs and deletes a task through

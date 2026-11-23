@@ -39,9 +39,7 @@ func (UsageRequest) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
 func (UsageRequest) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("team_id").MaxLen(32),
-		// Empty for a call a shared DSH made (ADR 0047), which host_id names.
 		field.String("user_id").MaxLen(32),
-		field.String("host_id").MaxLen(32).Default("").Immutable(),
 		field.String("app_url").MaxLen(500).Default(""),
 		field.String("submitted_config_id").MaxLen(32),
 		field.String("config_id").MaxLen(32),
