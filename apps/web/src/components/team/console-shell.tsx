@@ -364,12 +364,12 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
                 aria-controls="team-management"
                 aria-keyshortcuts="Alt+M"
                 title={`${t('nav.groups.manage')} (${shortcut})`}
-                // No ground of its own: the toggle is the navy strip's title, and only its keys and chevron answer a hover.
+                // No ground of its own: the toggle is the navy strip's title, its keys always shown, and only its chevron answers a hover.
                 className="group/manage flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <ShieldCheck className="size-4" aria-hidden />
                 <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
-                <kbd className="hidden rounded border border-foreground/25 px-1 font-sans text-[11px] leading-4 text-muted-foreground group-hover/manage:inline group-focus-visible/manage:inline" aria-hidden>
+                <kbd className="rounded border border-foreground/25 px-1 font-sans text-[11px] leading-4 text-muted-foreground" aria-hidden>
                   {shortcut}
                 </kbd>
                 {!open && waiting.overview && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
