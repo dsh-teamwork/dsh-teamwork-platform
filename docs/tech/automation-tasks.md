@@ -99,8 +99,8 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    every N minutes, daily, weekly or cron in a named zone; a reused new
    session, a new one each run, or an existing session). An edit sends a
    destination only when it changed, since sending `new_once` again reserves
-   another session (`taskPatch` in `relay-client`, which the phone shares). A session's header has a clock with the
-   count of active tasks that send to it, opening a popover of what belongs
+   another session (`taskPatch` in `relay-client`, which the phone shares). A session's header has a clock while a
+   task belongs to it, with the count of active tasks that send to it, opening a popover of what belongs
    to the session (`sessionTasks` in `relay-client`): those tasks with Run
    now and Pause or Resume, the tasks that started it (a new-session task's
    delivery is in it though it is not their destination), a new task aimed

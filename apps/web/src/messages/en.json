@@ -1413,7 +1413,6 @@
       },
       "sessionTitle": "Automation tasks for this session",
       "sessionHelp": "Instructions this computer sends here on a schedule, as if you typed them.",
-      "sessionEmpty": "Nothing is scheduled for this session yet. Have it receive an instruction on a repeat, for example a status check every weekday at 9:00.",
       "startedBy": "Started this session",
       "allTasks": "All tasks"
     },

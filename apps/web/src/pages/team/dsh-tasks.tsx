@@ -482,7 +482,8 @@ function TaskForm({ computerId, sessions, task, back, initialSession = '', cance
 }
 
 /**
- * In a session's header: a clock, with the count of active tasks that send to this session. It opens what belongs to
+ * In a session's header, while a task belongs to it: a clock, with the count of active tasks that send to this session
+ * (none while they are all paused, or it only started the session). It opens what belongs to
  * the session (the package's `sessionTasks`): the tasks that send here, each with Run now and Pause or Resume and
  * opening its page; the tasks that started it (one that makes a new session each run); a new task aimed here; and the
  * way to all of the computer's tasks.
@@ -495,6 +496,8 @@ export function SessionTasks({ computerId, tasks, items, sessionId, base }: {
   const mine = sessionTasks(tasks ?? [], sessionId, items);
   const label = mine.active ? t('inSession', { count: mine.active }) : t('sessionTitle');
   const close = () => setOpen(false);
+  // No task belongs to the session (or they are still being read): no clock. A new one is made from the tasks page.
+  if (!mine.sending.length && !mine.started.length) return null;
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
@@ -510,11 +513,6 @@ export function SessionTasks({ computerId, tasks, items, sessionId, base }: {
             <p className="text-xs text-muted-foreground">{t('sessionHelp')}</p>
           </header>
           <div className="flex max-h-[min(24rem,60vh)] flex-col gap-3 overflow-y-auto px-2 py-2">
-            {tasks === null ? (
-              <p role="status" className="px-2 py-1.5 text-xs text-muted-foreground">{t('loading')}</p>
-            ) : mine.sending.length === 0 && mine.started.length === 0 ? (
-              <p className="px-2 py-1.5 text-xs text-muted-foreground">{t('sessionEmpty')}</p>
-            ) : null}
             {mine.sending.length > 0 && (
               <ul className="flex flex-col">
                 {mine.sending.map((task) => <SessionTaskRow key={task.id} computerId={computerId} task={task} base={base} onOpen={close} />)}
