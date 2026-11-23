@@ -5,6 +5,7 @@
   "shell.connected": "已连接",
   "shell.reconnecting": "正在重连",
   "shell.dial": "建连 {ms} ms",
+  "shell.since": "已连接",
   "shell.ended": "会话已结束。请从 Teamwork 重新打开原生 DSH Web。",
   "shell.closedTitle": "原生 DSH Web 已关闭",
   "shell.closedBody": "会话已结束，或者这个链接不属于你。请从 Teamwork 的「我的 DSH」重新打开原生 DSH Web。",

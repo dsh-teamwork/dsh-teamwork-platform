@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-22
+> **Status:** Current · **Updated:** 2026-11-23
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -753,7 +753,7 @@ its words in `server/relay/messages/`). A ticket is spent at `/__dsh/enter`,
 which refreshes into the shell. The shell frames DSH below the Teamwork bar,
 which shows:
 - the computer, whether it is connected, and its traffic per second;
-- the last connect time;
+- the last connect time, and how long the session has lasted;
 - "Back to Teamwork": to the phone app for a ticket asked with a Bearer, else
   to the console page the ticket request named (`returnTo`, only the member's
   My DSH);

@@ -28,7 +28,7 @@ body {
 .dot[data-state="on"] { background: var(--on); }
 .dot[data-state="wait"] { background: var(--wait); }
 .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.rate, .dial { color: var(--bar-muted); font-variant-numeric: tabular-nums; }
+.rate, .dial, .since { color: var(--bar-muted); font-variant-numeric: tabular-nums; }
 .spacer { flex: 1; }
 .button {
   font: inherit; color: inherit; text-decoration: none; cursor: pointer;
@@ -40,5 +40,5 @@ iframe { flex: 1; width: 100%; border: 0; background: #fff; }
 .ended { margin: auto; padding: 24px; text-align: center; max-width: 420px; }
 .ended p { color: var(--bar-muted); line-height: 1.5; }
 @media (max-width: 480px) {
-  .rate, .dial { display: none; }
+  .rate, .dial, .since .label { display: none; }
 }

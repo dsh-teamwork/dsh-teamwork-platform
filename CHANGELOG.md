@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — The native Web bar shows how long the session has lasted
+
+- **What:** The Teamwork bar above native DSH Web shows the session's age beside "End session" ("Connected for 1:02:03"; the time alone on a phone). `/__dsh/status` returns `sinceMs` in place of `endsAt`, which nothing read.
+- **Why:** The person using it sees how long the computer has been open to them.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0065, `docs/tech/relay.md` ("Native Web on a personal computer"), `server/relay/shell/`.
+
 ## 2026-11-22 — Kimi and MiniMax accounts by region and billing
 
 - **What:** The BYOK provider list offers Kimi and MiniMax as one tile each with a choice of region (mainland or international) and billing (pay as you go, or Kimi Coding Plan / MiniMax Token Plan), each its own Models.dev entry and address; a connected provider's card shows which. A provider is matched to its entry by name, then by address, so a renamed provider at a listed address reads its models there, and a plan sharing its address with metered billing is told apart by name. A lookup that finds nothing for a provider matching no entry says it searches exact IDs only. `PROVIDER_CATALOG` entries gain `vendor`, `region` and `billing`, and `catalogEntry` takes the provider (`name`, `baseUrl`).
