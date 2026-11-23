@@ -106,8 +106,8 @@ running session can be archived once it stops. The menu needs a current
 DSH Teamwork plugin on that computer; with an older one it offers only the
 copy. In the phone app, press and hold a session for the same menu.
 
-**Automation tasks**, above **New session**, lists the instructions that
-computer sends on its own: once at a time you pick, every few minutes, every
+The alarm clock left of the computer's settings button opens its
+**Automation tasks**, the instructions that computer sends on its own: once at a time you pick, every few minutes, every
 day, on chosen days of the week, or on a cron expression in a time zone you
 name. **New task** gives one a name, the instruction, when it runs and where it
 goes: a new session reused each time, a new session each time, or an existing

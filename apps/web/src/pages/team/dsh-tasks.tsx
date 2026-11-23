@@ -29,9 +29,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
 
-import { row, selected, useRelayError, useSessionClient } from './dsh-session';
+import { useRelayError, useSessionClient } from './dsh-session';
 
 /** A computer's tasks, read again whenever one changes anywhere (on this browser, a phone, or the computer itself). */
 export function useTasks(computerId: string) {
@@ -569,17 +568,6 @@ function TaskForm({ computerId, sessions, task, back, initialSession = '', cance
         {cancel ? <Button type="button" variant="outline" onClick={cancel}>{t('cancel')}</Button> : <Button asChild variant="outline"><Link to={back}>{t('cancel')}</Link></Button>}
       </div>
     </form>
-  );
-}
-
-/** The column's way to the computer's tasks, above its sessions. */
-export function TasksRow({ to, open, onPick }: { to: string; open: boolean; onPick: () => void }) {
-  const t = useTranslations('team.tasks');
-  return (
-    <Link to={to} onClick={onPick} aria-current={open ? 'page' : undefined} className={cn(row, 'gap-2', open && selected)}>
-      <AlarmClock className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-      {t('title')}
-    </Link>
   );
 }
 

@@ -10,7 +10,7 @@
  * relay is spoken to through this browser's pairing. With no computer in the address the page opens the one this
  * browser opened last, else the first online, else the first.
  *
- * Above the sessions, Automation tasks opens the computer's tasks in the right column
+ * The alarm clock beside the settings button opens the computer's automation tasks in the right column
  * (`/teams/{teamId}/my-dsh/{hostId}/tasks[/{taskId}]`, docs/tech/automation-tasks.md).
  *
  * The right column follows the computer's state, one at a time: offline (nothing else is possible), online but not
@@ -20,7 +20,7 @@
  * coming online or going away moves the page along by itself.
  */
 
-import { ArrowLeft, Check, ExternalLink, Laptop, Loader, Monitor, RotateCw, Settings, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
+import { AlarmClock, ArrowLeft, Check, ExternalLink, Laptop, Loader, Monitor, RotateCw, Settings, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -34,7 +34,7 @@ import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeCompute
 import { cn } from '@/lib/utils';
 
 import { Conversation, DshColumns, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
-import { TasksPanel, TasksRow } from './dsh-tasks';
+import { TasksPanel } from './dsh-tasks';
 import { useTeam } from './layout';
 
 /** Where this browser keeps the computer it opened last, for My DSH opened with none in the address. */
@@ -122,13 +122,10 @@ export function MyDshPage({ settings = false, tasks = false }: { settings?: bool
 
   return (
     <DshColumns
-      header={host ? <ColumnHeader host={host} twin={twin} paired={paired !== ''} settings={settings} base={base} /> : <h1 className="truncate text-lg font-semibold tracking-tight">{t('title')}</h1>}
+      header={host ? <ColumnHeader host={host} twin={twin} paired={paired !== ''} settings={settings} tasks={unavailable ? null : tasks} base={base} /> : <h1 className="truncate text-lg font-semibold tracking-tight">{t('title')}</h1>}
       list={(onPick) =>
         host ? (
-          <>
-            {!unavailable && <TasksRow to={`${base}/${host.id}/tasks`} open={tasks} onPick={onPick} />}
-            <SessionList computerId={computerId} base={`${base}/${host.id}`} unavailable={unavailable} sessions={sessions} sessionId={settings || tasks ? '' : sessionId} onPick={onPick} />
-          </>
+          <SessionList computerId={computerId} base={`${base}/${host.id}`} unavailable={unavailable} sessions={sessions} sessionId={settings || tasks ? '' : sessionId} onPick={onPick} />
         ) : (
           hosts?.length === 0 && <p className="px-2.5 text-muted-foreground">{t('none')}</p>
         )
@@ -203,12 +200,20 @@ export function MyDshPage({ settings = false, tasks = false }: { settings?: bool
   );
 }
 
+/** One of the square buttons at the end of the column's header; `open` marks the page it opens as the one shown. */
+const headerButton = (open: boolean) => cn(
+  'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+  open && 'border-brand text-foreground',
+);
+
 /**
  * The open computer atop its column of sessions: its name, and under it whether it is online, its system and whether
- * this browser is paired with it; at its end, its settings.
+ * this browser is paired with it; at its end, its automation tasks while the computer can be reached (`tasks` null
+ * otherwise, true while they are shown) and its settings.
  */
-function ColumnHeader({ host, twin, paired, settings, base }: { host: MyComputer; twin: string | null; paired: boolean; settings: boolean; base: string }) {
+function ColumnHeader({ host, twin, paired, settings, tasks, base }: { host: MyComputer; twin: string | null; paired: boolean; settings: boolean; tasks: boolean | null; base: string }) {
   const t = useTranslations('team.myDsh');
+  const tt = useTranslations('team.tasks');
   const note = [host.os ? HOST_OS_NAMES[host.os] : null, paired ? null : t('notPairedShort')].filter(Boolean).join(' · ');
   return (
     <div className="flex items-start gap-2">
@@ -223,15 +228,23 @@ function ColumnHeader({ host, twin, paired, settings, base }: { host: MyComputer
           {note && <span className="truncate">{note}</span>}
         </p>
       </div>
+      {tasks !== null && (
+        <Link
+          to={tasks ? `${base}/${host.id}` : `${base}/${host.id}/tasks`}
+          aria-label={tt('title')}
+          title={tt('title')}
+          aria-current={tasks ? 'page' : undefined}
+          className={headerButton(tasks)}
+        >
+          <AlarmClock className="size-4" aria-hidden />
+        </Link>
+      )}
       <Link
         to={settings ? `${base}/${host.id}` : `${base}/${host.id}/settings`}
         aria-label={t('settings')}
         title={t('settings')}
         aria-current={settings ? 'page' : undefined}
-        className={cn(
-          'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-          settings && 'border-brand text-foreground',
-        )}
+        className={headerButton(settings)}
       >
         <Settings className="size-4" aria-hidden />
       </Link>

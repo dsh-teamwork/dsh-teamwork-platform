@@ -91,8 +91,8 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    `relay-client` reads tasks, calls them, watches `schedule/changed`, and
    keeps `[SCHEDULE REMINDER]` messages as the user's turn with `reminders`;
    `server/e2e` drives them against the real plugin. Gates everything after.
-3. **The web console (built).** My DSH's column opens **Automation tasks**
-   above the sessions (`/teams/{teamId}/my-dsh/{hostId}/tasks[/{taskId}]`):
+3. **The web console (built).** The alarm clock left of a computer's
+   settings button in My DSH's column opens its tasks (`/teams/{teamId}/my-dsh/{hostId}/tasks[/{taskId}]`):
    the tasks grouped active, paused and ended, a task's detail with run now,
    pause and resume, edit, delete and its deliveries, and the form (once,
    every N minutes, daily, weekly or cron in a named zone; a reused new
