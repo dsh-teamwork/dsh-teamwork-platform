@@ -277,8 +277,8 @@ export function ConsoleShell({
  * Workspace at the top; for the team's admin, Team management at the foot of
  * the sidebar, folded by default so the two read apart: its toggle sits just
  * above the account row and opens Team assets and Members and spend above it.
- * It starts folded, on its own pages too, where the folded toggle carries the
- * selected bar; a waiting review shows on the toggle while it is folded. An edition's entries join the group they name.
+ * It starts folded, on its own pages too; a waiting review shows on the toggle
+ * while it is folded. An edition's entries join the group they name.
  */
 function Navigation({ team, section, waiting, onNavigate }: { team: Team; section: string; waiting: Waiting; onNavigate?: () => void }) {
   const t = useTranslations('team');
@@ -288,7 +288,6 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   const { pages, sections: answered } = useTeamPages(team);
   // A section with `visible` is listed once it says yes, or while the person is on it.
   const listed = (s: Section) => !s.visible || answered.includes(s.path) || s.path === section;
-  const managing = GROUPS.some((group) => group.key !== 'work' && group.sections.some((s) => s.path === section)) || pages.some((page) => page.group !== 'work' && navPath(page) === section);
   // Folded until the admin opens it; it stays open across its own pages, and folds again once a workspace page is chosen.
   const [open, setOpen] = useState(false);
   const admin = team.role === 'admin';
@@ -344,7 +343,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
             again (a grid row eased between 0fr and 1fr); open, it takes at most half the sidebar's height and scrolls
             inside, so the workspace stays in view. */}
         {admin && (
-          <div className="relative z-10 mt-auto flex max-h-[50dvh] shrink-0 flex-col rounded-t-xl bg-brand pb-3 text-foreground shadow-[0_-6px_16px_-6px_rgb(0_0_0/0.25)] dark:shadow-[0_-8px_20px_-4px_rgb(0_0_0/0.6)] [--accent:color-mix(in_oklab,var(--brand-foreground)_12%,transparent)] [--foreground:var(--brand-foreground)] [--muted-foreground:color-mix(in_oklab,var(--brand-foreground)_65%,transparent)] [--ring:var(--brand-foreground)] [--secondary:color-mix(in_oklab,var(--brand-foreground)_16%,transparent)]">
+          <div className="relative z-10 mt-auto flex max-h-[50dvh] shrink-0 flex-col rounded-t-xl bg-brand pb-1.5 text-foreground shadow-[0_-6px_16px_-6px_rgb(0_0_0/0.25)] dark:shadow-[0_-8px_20px_-4px_rgb(0_0_0/0.6)] [--accent:color-mix(in_oklab,var(--brand-foreground)_12%,transparent)] [--foreground:var(--brand-foreground)] [--muted-foreground:color-mix(in_oklab,var(--brand-foreground)_65%,transparent)] [--ring:var(--brand-foreground)] [--secondary:color-mix(in_oklab,var(--brand-foreground)_16%,transparent)]">
             <div
               className={cn(
                 'grid min-h-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none',
@@ -352,12 +351,12 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
               )}
             >
               {/* Folded, its pages are out of the tab order and hidden from a screen reader as well as from sight. */}
-              <div id="team-management" inert={!open} className="scrollbar-quiet min-h-0 overflow-y-auto [--brand:var(--brand-foreground)]">
-                {/* Padded inside, so the folded row is truly empty. */}
-                <div className="flex flex-col gap-4 px-3 pt-3 pb-1">{GROUPS.slice(1).map(group)}</div>
+              <div id="team-management" inert={!open} className="scrollbar-quiet min-h-0 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_calc(100%-0.75rem),transparent)] [--brand:var(--brand-foreground)]">
+                {/* Padded inside, so the folded row is truly empty; the foot's padding is where a long list fades out above the toggle. */}
+                <div className="flex flex-col gap-4 px-3 pt-3 pb-3">{GROUPS.slice(1).map(group)}</div>
               </div>
             </div>
-            <div className="px-3 pt-3">
+            <div className="px-3 pt-1.5">
               <button
                 type="button"
                 onClick={() => setOpen(!open)}
@@ -365,8 +364,8 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
                 aria-controls="team-management"
                 aria-keyshortcuts="Alt+M"
                 title={`${t('nav.groups.manage')} (${shortcut})`}
-                // Folded while the person is on one of its pages, the toggle carries the selected bar instead.
-                className={cn(item, 'group/manage w-full font-medium', !open && managing && 'bg-secondary before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-foreground')}
+                // No ground of its own: the toggle is the navy strip's title, and only its keys and chevron answer a hover.
+                className="group/manage flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <ShieldCheck className="size-4" aria-hidden />
                 <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
@@ -374,7 +373,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
                   {shortcut}
                 </kbd>
                 {!open && waiting.overview && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
-                <ChevronUp className={cn('size-4 text-muted-foreground transition-transform duration-300 motion-reduce:transition-none', open && 'rotate-180')} aria-hidden />
+                <ChevronUp className={cn('size-4 text-muted-foreground transition-transform group-hover/manage:text-foreground duration-300 motion-reduce:transition-none', open && 'rotate-180')} aria-hidden />
               </button>
             </div>
           </div>

@@ -317,9 +317,9 @@ a person or a character, which at this size reads as clip art.
   Team management is a `--brand` sheet laid over the workspace, with
   rounded top corners and a shadow cast upward; the rows inside it are
   drawn in the navy's foreground, the selected bar included. It starts
-  folded, its pages slide open above its toggle and fold away again (none
-  of it moves under reduced motion), and folded on one of its pages the
-  toggle carries the selected bar. Alt+M (Option+M on a Mac), shown on the
+  folded, as a low strip whose toggle has no ground of its own, and its
+  pages slide open above the toggle and fold away again (none of it moves
+  under reduced motion). Alt+M (Option+M on a Mac), shown on the
   toggle while it is hovered, opens and folds it, and choosing a Workspace
   page folds it away. The account is one menu at its foot; below `md` the sidebar is a sheet
   behind a menu button (`apps/web/src/components/team/console-shell.tsx`).
