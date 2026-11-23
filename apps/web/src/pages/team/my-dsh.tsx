@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, renameComputer, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
+import { SignInSteps } from './connect-dsh';
 import { Conversation, DshColumns, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
 import { TasksPanel } from './dsh-tasks';
 import { useTeam } from './layout';
@@ -121,15 +122,29 @@ export function MyDshPage({ settings = false, tasks = false }: { settings?: bool
               ? t('connectingList')
               : undefined;
 
+  // No computer has signed in yet: no column of sessions, only how to sign one in, the same steps as Home's
+  // (./connect-dsh.tsx). The list is read again meanwhile, so the page opens the computer once it signs in.
+  if (hosts?.length === 0) {
+    return (
+      <section className="mx-auto flex w-full max-w-lg flex-col gap-4 px-4 py-10 md:py-16">
+        {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
+        <Laptop className="size-8 text-muted-foreground" aria-hidden />
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-semibold tracking-tight">{t('introTitle')}</h1>
+          <p className="text-sm text-muted-foreground">{t('none')}</p>
+        </div>
+        <SignInSteps />
+      </section>
+    );
+  }
+
   return (
     <DshColumns
       header={host ? <ColumnHeader host={host} twin={twin} paired={paired !== ''} settings={settings} tasks={unavailable ? null : tasks} base={base} /> : <h1 className="truncate text-lg font-semibold tracking-tight">{t('title')}</h1>}
       list={(onPick) =>
         host ? (
           <SessionList computerId={computerId} base={`${base}/${host.id}`} unavailable={unavailable} sessions={sessions} sessionId={settings || tasks ? '' : sessionId} onPick={onPick} />
-        ) : (
-          hosts?.length === 0 && <p className="px-2.5 text-muted-foreground">{t('none')}</p>
-        )
+        ) : null
       }
     >
       {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
@@ -137,7 +152,7 @@ export function MyDshPage({ settings = false, tasks = false }: { settings?: bool
         <section className="m-auto flex max-w-lg flex-col items-center gap-3 py-10 text-center">
           <Laptop className="size-8 text-muted-foreground" aria-hidden />
           <h2 className="text-xl font-semibold tracking-tight">{t('introTitle')}</h2>
-          <p className="text-sm text-muted-foreground">{hosts?.length === 0 ? t('none') : t('intro')}</p>
+          <p className="text-sm text-muted-foreground">{t('intro')}</p>
         </section>
       ) : settings ? (
         <SettingsView

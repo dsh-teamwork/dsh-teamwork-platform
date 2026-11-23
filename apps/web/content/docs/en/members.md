@@ -4,12 +4,16 @@ description: Use team presets and models in DSH, share your own, and ask the tea
 ---
 
 Once you are signed in, the team's models, presets and plugins appear in DSH
-next to your own setup. In the console, your team opens on **Home**, with your own calls and budget
-for the last 30 days and what the team changed lately; **Team
-resources** lists what the team provides, with what you have sent for review
-under its **My submissions** link; and **My usage** shows the limits that apply
-to you, the points you spent by day and by model, and your latest calls, with a
-CSV of the period.
+next to your own setup. In the console, your team opens on **Home**. Until your
+DSH is connected, it opens with the steps: sign in to Teamwork from DSH on your
+computer, then pair a browser (**My DSH**) or the phone app with it, each ticked
+off by itself as it happens. Below that are your own calls and budget
+for the last 30 days and what the team changed lately; the **Team toolbox**
+lists the team's presets and plugins, each opening its details, with what you
+have sent for review under **My submissions** at its top right once you have
+sent something; and **Models and usage** lists the team's models
+with their rates, then shows the limits that apply to you, the points you spent
+by model and by day, and your latest calls, with a CSV of the period.
 
 ## Start from a team preset
 
@@ -23,7 +27,8 @@ an update.
 ## Use a team model
 
 Team models appear among your models. Calls go through the team's server, so
-your computer needs no key. Your team's budget applies to them.
+your computer needs no key. Your team's budget applies to them. The console's
+**Models and usage** lists each team model's rate and what you spent on it.
 
 ## Install a pinned plugin
 
@@ -34,7 +39,7 @@ you confirm.
 ## Share what works
 
 Ask the team assistant to prepare a preset or plugin from your session, or
-submit one under **Team resources** in the console: upload a plugin, import a
+submit one in the console's **Team toolbox**: upload a plugin, import a
 preset file, or write a new preset or a change to one. An admin reviews
 the exact contents; once approved, everyone gets it at their next sync.
 
@@ -51,8 +56,9 @@ stays yours until you share it.
 
 ## Work on your own DSH from the browser
 
-**My DSH** appears under Workspace once a computer of yours, with DSH signed in
-to Teamwork, has connected. Its computers fold out beneath it in the sidebar,
+**My DSH** sits under Home in Workspace. Every computer of yours whose DSH
+signed in to Teamwork is listed there; until one has, it says how to connect
+one. Its computers fold out beneath it in the sidebar,
 the same in every team, each with a dot that is green while it is online; the
 arrow at the end of **My DSH** folds them away. Open one and its sessions fill
 the column beside the sidebar, under its name, its operating system and its

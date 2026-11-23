@@ -33,8 +33,9 @@ func TestNewTeamHasOneInheritedAssistant(t *testing.T) {
 	})
 }
 
-// The assistant is named in the language the creator reads, chosen as the
-// console's pages choose it, and keeps that name when the creator switches.
+// The assistant is named, described and prompted in the language the creator
+// reads, chosen as the console's pages choose it, and keeps them when the
+// creator switches.
 func TestAssistantIsNamedInTheCreatorsLanguage(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		e := start(t, d, options{})
@@ -42,7 +43,8 @@ func TestAssistantIsNamedInTheCreatorsLanguage(t *testing.T) {
 		must(t, admin.post("/api/locale", map[string]string{"locale": "zh-CN"}), 204)
 		id := newTeam(t, admin, "Acme")
 		c := jsonArray(t, admin.get("/api/teams/"+id+"/configs"))[0].(map[string]any)
-		if c["name"] != "Acme\u56e2\u961f\u52a9\u7406" || !strings.Contains(c["data"].(map[string]any)["description"].(string), "\u52a9\u7406") {
+		data := c["data"].(map[string]any)
+		if c["name"] != "Acme\u56e2\u961f\u52a9\u7406" || !strings.Contains(data["description"].(string), "\u52a9\u7406") || !strings.HasPrefix(data["systemPrompt"].(string), "\u4f60\u662f") {
 			t.Fatalf("zh-CN assistant: %v", c)
 		}
 		must(t, admin.post("/api/locale", map[string]string{"locale": "en"}), 204)
@@ -50,8 +52,9 @@ func TestAssistantIsNamedInTheCreatorsLanguage(t *testing.T) {
 			t.Fatalf("renamed on a language change: %v", got)
 		}
 		id = newTeam(t, admin, "Beta")
-		if got := jsonArray(t, admin.get("/api/teams/"+id+"/configs"))[0].(map[string]any)["name"]; got != "Beta assistant" {
-			t.Fatalf("en assistant: %v", got)
+		c = jsonArray(t, admin.get("/api/teams/"+id+"/configs"))[0].(map[string]any)
+		if c["name"] != "Beta assistant" || !strings.HasPrefix(c["data"].(map[string]any)["systemPrompt"].(string), "You are") {
+			t.Fatalf("en assistant: %v", c)
 		}
 	})
 }

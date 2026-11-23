@@ -19,7 +19,6 @@ import {
   ChevronRight,
   ChevronUp,
   ChevronsUpDown,
-  CircleHelp,
   Cpu,
   Gauge,
   GitPullRequestArrow,
@@ -38,7 +37,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { Dialog, DropdownMenu, Tooltip } from 'radix-ui';
+import { Dialog, DropdownMenu } from 'radix-ui';
 import { useCallback, useEffect, useId, useState, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -58,35 +57,26 @@ export interface Waiting {
   sharing: boolean;
 }
 
-/**
- * A page in the navigation: its path and icon; whether it fills the area beside the sidebar, as `TeamPage.fill`
- * does; and, for a page only some people have, whether this person sees it in this team, as `TeamPage.visible`.
- */
+/** A page in the navigation: its path and icon, and whether it fills the area beside the sidebar, as `TeamPage.fill` does. */
 interface Section {
   path: string;
   key: SectionKey;
   icon: LucideIcon;
   fill?: boolean;
-  visible?: (team: Team) => Promise<boolean>;
-  /** Whether its entry carries a hint, `nav.hints.{key}`, saying what the page is for. */
-  hint?: boolean;
-  /** Pages reached from inside this one, which keep its entry selected. */
-  within?: string[];
   /** What folds out under its entry: the computers it is reached on, as `TeamPage.subnav`. */
   subnav?: ComponentType<SubnavProps>;
+  /** An edition's pages in this group are listed right after this one, rather than at the group's end. */
+  editions?: boolean;
 }
 
 type RelayHost = Schemas['RelayHost'];
 
 /** This person's own computers that connected to the relay, most recently seen first (docs/tech/relay.md, "My DSH in the web console"). */
-async function ownComputers(): Promise<RelayHost[]> {
+export async function ownComputers(): Promise<RelayHost[]> {
   const response = await fetch('/relay/hosts', { credentials: 'same-origin' });
   if (!response.ok) throw new Error(`relay hosts: ${response.status}`);
   return ((await response.json()) as { hosts: RelayHost[] }).hosts;
 }
-
-/** Whether this person has a computer of their own that connected to the relay. */
-const hasOwnComputer = async () => (await ownComputers()).length > 0;
 
 /** How often a list of computers is read again while it is shown, for each one's online state. */
 export const COMPUTERS_REFRESH_MS = 10_000;
@@ -131,13 +121,15 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
   {
     key: 'work',
     sections: [
+      // Work first: the DSHs to work in, then what the team shares, then the reader's own spend.
       { path: 'home', key: 'home', icon: House },
-      { path: 'resources', key: 'resources', icon: BookOpen, within: ['submissions'] },
-      // What agents published, the team's pages beside its resources (docs/tech/pages.md); in every team, always listed.
+      // Always listed, so a new member finds it before connecting; the same computers in every team. An edition's
+      // DSH (the hosted service's cloud DSH) follows it.
+      { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, subnav: MyDshNav, editions: true },
+      // What agents published (docs/tech/pages.md); in every team, always listed.
       { path: 'pages', key: 'pages', icon: Shapes, fill: true },
+      { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
-      // Listed only once one of this person's computers connected; the same computers in every team.
-      { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, visible: hasOwnComputer, hint: true, subnav: MyDshNav },
     ],
   },
   // The team overview heads Team management on its own; the toggle below it names the group.
@@ -165,30 +157,29 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
   },
 ];
 
-const PATHS = GROUPS.flatMap((g) => g.sections.flatMap((s) => [s.path, ...(s.within ?? [])]));
+const PATHS = GROUPS.flatMap((g) => g.sections.map((s) => s.path));
 
 /** An edition's team pages that are not open ones it replaced, each listed in the group it names. */
 const extraPages = () => editionTeamPages().filter((page) => !PATHS.includes(navPath(page)));
 
 /**
- * The pages with `visible` this person sees in this team, open sections' paths and an edition's pages, and every
- * extra page they see: an admin's need the admin, and one with `visible` waits for its answer, unlisted until then.
+ * An edition's extra pages this person sees in this team: an admin's need the admin, and one with `visible` waits for
+ * its answer, unlisted until then.
  */
-function useTeamPages(team: Team): { pages: TeamPage[]; sections: string[] } {
-  const [shown, setShown] = useState<{ teamId: string; pages: TeamPage[]; sections: string[] }>({ teamId: '', pages: [], sections: [] });
+function useTeamPages(team: Team): TeamPage[] {
+  const [shown, setShown] = useState<{ teamId: string; pages: TeamPage[] }>({ teamId: '', pages: [] });
   useEffect(() => {
     let live = true;
     const answer = (visible?: (team: Team) => Promise<boolean>) => (visible ? visible(team).catch(() => false) : Promise.resolve(true));
     const candidates = extraPages().filter((page) => page.group === 'work' || team.role === 'admin');
-    const sections = GROUPS.flatMap((group) => group.sections).filter((s) => s.visible);
-    Promise.all([Promise.all(candidates.map((page) => answer(page.visible))), Promise.all(sections.map((s) => answer(s.visible)))]).then(([pages, open]) => {
-      if (live) setShown({ teamId: team.id, pages: candidates.filter((_, i) => pages[i]), sections: sections.filter((_, i) => open[i]).map((s) => s.path) });
+    Promise.all(candidates.map((page) => answer(page.visible))).then((pages) => {
+      if (live) setShown({ teamId: team.id, pages: candidates.filter((_, i) => pages[i]) });
     });
     return () => {
       live = false;
     };
   }, [team]);
-  return shown.teamId === team.id ? shown : { pages: [], sections: [] };
+  return shown.teamId === team.id ? shown.pages : [];
 }
 
 /** The section the path is in, so switching team keeps the person on the same kind of page. */
@@ -327,16 +318,14 @@ function Navigation({ team, section, waiting, open, setOpen, onNavigate }: {
   const locale = useLocale();
   const lang = locale === 'zh-CN' ? 'zh-CN' : 'en';
   const computer = computerOf(useLocation().pathname, team.id);
-  const { pages, sections: answered } = useTeamPages(team);
-  // A section with `visible` is listed once it says yes, or while the person is on it.
-  const listed = (s: Section) => !s.visible || answered.includes(s.path) || s.path === section;
+  const pages = useTeamPages(team);
   const admin = team.role === 'admin';
   const managementId = useId();
   const shortcut = isMac() ? '⌥M' : 'Alt+M';
 
-  const link = (path: string, label: string, icon: LucideIcon, inside: boolean, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
+  const link = (path: string, label: string, icon: LucideIcon, dot = false, Subnav?: ComponentType<SubnavProps>) =>
     Subnav ? (
-      <NavFold key={path} to={href(team.id, path)} label={label} icon={icon} hint={hint} here={section === path} onNavigate={onNavigate}>
+      <NavFold key={path} to={href(team.id, path)} label={label} icon={icon} here={section === path} onNavigate={onNavigate}>
         <Subnav teamId={team.id} current={section === path ? computer : null} onNavigate={onNavigate} />
       </NavFold>
     ) : (
@@ -344,25 +333,27 @@ function Navigation({ team, section, waiting, open, setOpen, onNavigate }: {
         key={path}
         to={href(team.id, path)}
         onClick={onNavigate}
-        current={section === path || inside}
-        hint={hint}
+        current={section === path}
         icon={icon}
         label={label}
         // Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules").
         trailing={dot && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
       />
     );
+  const editionLinks = (key: string) => pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, page.subnav));
   const group = ({ key, sections }: (typeof GROUPS)[number]) => (
     <div key={key} className="flex flex-col gap-0.5">
       {key !== 'manage' && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>}
-      {sections.filter(listed).map((s) => link(s.path, t(`nav.${s.key}`), s.icon, s.within?.includes(section) ?? false, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined, s.subnav))}
-      {pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, false, page.hints?.[lang], page.subnav))}
+      {sections.flatMap((s) => [
+        link(s.path, t(`nav.${s.key}`), s.icon, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.subnav),
+        ...(s.editions ? editionLinks(key) : []),
+      ])}
+      {!sections.some((s) => s.editions) && editionLinks(key)}
     </div>
   );
 
   return (
-    <Tooltip.Provider delayDuration={200}>
-      <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
+    <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
         {/* Choosing a workspace page, a computer under My DSH included, folds Team management away again. */}
         <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4" onClickCapture={(event) => (event.target as Element).closest('a') && setOpen(false)}>
           {group(GROUPS[0])}
@@ -408,8 +399,7 @@ function Navigation({ team, section, waiting, open, setOpen, onNavigate }: {
             </div>
           </div>
         )}
-      </nav>
-    </Tooltip.Provider>
+    </nav>
   );
 }
 
@@ -422,42 +412,14 @@ function isManageShortcut(event: KeyboardEvent): boolean {
 
 const isMac = () => typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
-/**
- * One entry in the navigation: its icon and label, then, for one with a hint saying what the page is for, a question
- * mark right after the label that shows the hint on hover (the hint also describes the link to a screen reader), and
- * `trailing` at the row's end.
- */
-function NavLink({ to, onClick, current, hint, icon: Icon, label, trailing }: { to: string; onClick?: () => void; current: boolean; hint?: string; icon: LucideIcon; label: string; trailing?: ReactNode }) {
-  const id = useId();
+/** One entry in the navigation: its icon and label, and `trailing` at the row's end. What a page is for, its page says. */
+function NavLink({ to, onClick, current, icon: Icon, label, trailing }: { to: string; onClick?: () => void; current: boolean; icon: LucideIcon; label: string; trailing?: ReactNode }) {
   return (
-    <Link to={to} onClick={onClick} aria-current={current ? 'page' : undefined} aria-describedby={hint ? id : undefined} className={cn(item, current && selected)}>
+    <Link to={to} onClick={onClick} aria-current={current ? 'page' : undefined} className={cn(item, current && selected)}>
       <Icon className="size-4 shrink-0" aria-hidden />
       <span className="min-w-0 truncate">{label}</span>
-      {hint && <Hint id={id} hint={hint} />}
       <span className="ml-auto flex shrink-0 items-center">{trailing}</span>
     </Link>
-  );
-}
-
-/** A question mark that shows `hint` on hover, and the hint hidden under `id` for a screen reader. */
-function Hint({ id, hint }: { id: string; hint: string }) {
-  return (
-    <>
-      <span id={id} hidden>{hint}</span>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <span className="grid size-4 shrink-0 place-items-center text-muted-foreground hover:text-foreground" aria-hidden>
-            <CircleHelp className="size-3.5" />
-          </span>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content side="right" sideOffset={10} collisionPadding={8} className="z-50 max-w-72 rounded-md border bg-card px-3 py-2 text-xs leading-relaxed text-card-foreground shadow-lg">
-            {hint}
-            <Tooltip.Arrow className="fill-card" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </>
   );
 }
 
@@ -469,9 +431,8 @@ const foldKey = (to: string) => `dsh-teamwork:nav-folded:${to.split('/').pop()}`
  * its end folds them away and back, remembered in this browser. Opening the page unfolds them; folded while the
  * person is on it, the entry itself is the one selected.
  */
-function NavFold({ to, label, icon: Icon, hint, here, onNavigate, children }: { to: string; label: string; icon: LucideIcon; hint?: string; here: boolean; onNavigate?: () => void; children: ReactNode }) {
+function NavFold({ to, label, icon: Icon, here, onNavigate, children }: { to: string; label: string; icon: LucideIcon; here: boolean; onNavigate?: () => void; children: ReactNode }) {
   const t = useTranslations('team');
-  const id = useId();
   const [open, setOpen] = useState(() => {
     try {
       return localStorage.getItem(foldKey(to)) !== '1';
@@ -501,12 +462,10 @@ function NavFold({ to, label, icon: Icon, hint, here, onNavigate, children }: { 
           to={to}
           onClick={onNavigate}
           aria-current={here && !open ? 'page' : undefined}
-          aria-describedby={hint ? id : undefined}
           className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md py-1.5 pl-2.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <Icon className="size-4 shrink-0" aria-hidden />
           <span className="min-w-0 truncate">{label}</span>
-          {hint && <Hint id={id} hint={hint} />}
         </Link>
         <button
           type="button"
