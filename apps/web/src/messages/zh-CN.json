@@ -1397,8 +1397,7 @@
       "cancel": "取消",
       "created": "任务已创建。",
       "saved": "任务已保存。",
-      "inSession": "{count, plural, =0 {这个会话没有自动化任务} other {这个会话有 # 个自动化任务}}",
-      "noneInSession": "没有自动化任务发送到这个会话。",
+      "inSession": "{count, plural, other {有 # 个进行中的自动化任务发到这个会话}}",
       "newInSession": "为这个会话新建任务",
       "reminder": "自动化任务，计划于 {at}",
       "reminderOf": "{title}，计划于 {at}",
@@ -1411,7 +1410,12 @@
         "time_out_of_range": "这个时间超出范围。",
         "frequency_too_high": "任务最多每分钟运行一次。",
         "subagent_session": "子智能体的会话不能接收任务。"
-      }
+      },
+      "sessionTitle": "这个会话的自动化任务",
+      "sessionHelp": "这台电脑会按计划把指令发到这里，就像你亲手发送一样。",
+      "sessionEmpty": "这个会话还没有安排任务。可以让它按重复规则接收指令，例如每个工作日 9:00 检查一次状态。",
+      "startedBy": "创建了这个会话",
+      "allTasks": "全部任务"
     },
     "pages": {
       "title": "共享页面",

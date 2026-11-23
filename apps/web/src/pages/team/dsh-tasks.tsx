@@ -8,7 +8,7 @@
 
 import { AlarmClock, ArrowLeft, Pause, Play, PencilLine, Plus, Trash2, Zap } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { DropdownMenu } from 'radix-ui';
+import { Popover } from 'radix-ui';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { useFormatter, useLocale, useNow, useTranslations } from 'use-intl';
@@ -17,11 +17,13 @@ import {
   deviceTimeZone,
   draftReady,
   RelayError,
+  sessionTasks,
   TASK_TITLE_MAX,
   taskDraft,
   taskInput,
   taskPatch,
   type AutomationTask,
+  type ConversationItem,
   type SessionSummary,
   type TaskDraft,
   type TaskHistory,
@@ -32,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 import { useRelayError, useSessionClient } from './dsh-session';
 
@@ -478,40 +481,111 @@ function TaskForm({ computerId, sessions, task, back, initialSession = '', cance
   );
 }
 
-/** In a session's header: the tasks that deliver to it, each opened in the tasks page, and a new one aimed at it. */
-export function SessionTasks({ tasks, sessionId, base }: { tasks: AutomationTask[] | null; sessionId: string; base: string }) {
+/**
+ * In a session's header: a clock, with the count of active tasks that send to this session. It opens what belongs to
+ * the session (the package's `sessionTasks`): the tasks that send here, each with Run now and Pause or Resume and
+ * opening its page; the tasks that started it (one that makes a new session each run); a new task aimed here; and the
+ * way to all of the computer's tasks.
+ */
+export function SessionTasks({ computerId, tasks, items, sessionId, base }: {
+  computerId: string; tasks: AutomationTask[] | null; items: readonly ConversationItem[]; sessionId: string; base: string;
+}) {
   const t = useTranslations('team.tasks');
-  const words = useTimingWords();
-  const mine = (tasks ?? []).filter((task) => task.status !== 'ended' && targetSession(task) === sessionId);
+  const [open, setOpen] = useState(false);
+  const mine = sessionTasks(tasks ?? [], sessionId, items);
+  const label = mine.active ? t('inSession', { count: mine.active }) : t('sessionTitle');
+  const close = () => setOpen(false);
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <Button type="button" variant="outline" size="sm" aria-label={t('inSession', { count: mine.length })} title={t('inSession', { count: mine.length })}>
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        <Button type="button" variant="outline" size="sm" aria-label={label} title={label}>
           <AlarmClock aria-hidden />
-          {mine.length > 0 && <span className="tabular-nums">{mine.length}</span>}
+          {mine.active > 0 && <span className="tabular-nums">{mine.active}</span>}
         </Button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={5} className="z-50 flex w-72 flex-col rounded-lg border bg-card p-1 text-sm text-card-foreground shadow-lg">
-          {mine.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noneInSession')}</p>}
-          {mine.map((task) => (
-            <DropdownMenu.Item key={task.id} asChild>
-              <Link to={`${base}/${task.id}`} className="flex flex-col rounded-md px-2.5 py-1.5 outline-none data-highlighted:bg-accent">
-                <span className="truncate">{task.title}</span>
-                <span className="truncate text-xs text-muted-foreground">{words(task)}{task.status === 'paused' ? ` · ${t('status.paused')}` : ''}</span>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 flex w-[22rem] max-w-[calc(100vw-1.5rem)] flex-col rounded-lg border bg-card text-sm text-card-foreground shadow-lg">
+          <header className="flex flex-col gap-0.5 border-b px-4 py-3">
+            <h3 className="font-medium">{t('sessionTitle')}</h3>
+            <p className="text-xs text-muted-foreground">{t('sessionHelp')}</p>
+          </header>
+          <div className="flex max-h-[min(24rem,60vh)] flex-col gap-3 overflow-y-auto px-2 py-2">
+            {tasks === null ? (
+              <p role="status" className="px-2 py-1.5 text-xs text-muted-foreground">{t('loading')}</p>
+            ) : mine.sending.length === 0 && mine.started.length === 0 ? (
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">{t('sessionEmpty')}</p>
+            ) : null}
+            {mine.sending.length > 0 && (
+              <ul className="flex flex-col">
+                {mine.sending.map((task) => <SessionTaskRow key={task.id} computerId={computerId} task={task} base={base} onOpen={close} />)}
+              </ul>
+            )}
+            {mine.started.length > 0 && (
+              <div className="flex flex-col gap-0.5">
+                <h4 className="px-2 text-xs font-medium text-muted-foreground">{t('startedBy')}</h4>
+                <ul className="flex flex-col">
+                  {mine.started.map((task) => <SessionTaskRow key={task.id} computerId={computerId} task={task} base={base} onOpen={close} actions={false} />)}
+                </ul>
+              </div>
+            )}
+          </div>
+          <footer className="flex items-center gap-2 border-t px-3 py-2.5">
+            <Button asChild size="sm">
+              <Link to={`${base}/new?session=${encodeURIComponent(sessionId)}`} onClick={close}>
+                <Plus className="size-4" aria-hidden />
+                {t('newInSession')}
               </Link>
-            </DropdownMenu.Item>
-          ))}
-          <DropdownMenu.Separator className="my-1 h-px bg-border" />
-          <DropdownMenu.Item asChild>
-            <Link to={`${base}/new?session=${encodeURIComponent(sessionId)}`} className="flex items-center gap-2 rounded-md px-2.5 py-1.5 outline-none data-highlighted:bg-accent">
-              <Plus className="size-4" aria-hidden />
-              {t('newInSession')}
-            </Link>
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+            </Button>
+            <Link to={base} onClick={close} className="ml-auto shrink-0 text-xs whitespace-nowrap text-muted-foreground hover:text-foreground hover:underline">{t('allTasks')}</Link>
+          </footer>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
+/** One task in a session's popover: its name and when it runs, opening its page; Run now and Pause or Resume beside it. */
+function SessionTaskRow({ computerId, task, base, onOpen, actions = true }: { computerId: string; task: AutomationTask; base: string; onOpen: () => void; actions?: boolean }) {
+  const t = useTranslations('team.tasks');
+  const client = useSessionClient();
+  const wordError = useTaskError();
+  const words = useTimingWords();
+  const [busy, setBusy] = useState(false);
+  async function act(run: () => Promise<unknown>, done?: string) {
+    setBusy(true);
+    try {
+      await run();
+      if (done) toast.success(done);
+    } catch (error) {
+      toast.error(wordError(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+  const icon = 'flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50';
+  return (
+    <li className={cn('flex items-center gap-1 rounded-md pr-1 hover:bg-accent/60', task.status !== 'active' && 'opacity-70')}>
+      <Link to={`${base}/${task.id}`} onClick={onOpen} className="flex min-w-0 flex-1 flex-col px-2 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
+        <span className="truncate font-medium">{task.title}</span>
+        <span className="flex min-w-0 gap-1 text-xs text-muted-foreground">
+          <span className="truncate">{words(task)}</span>
+          <span aria-hidden>·</span>
+          <span className="shrink-0"><TaskState task={task} /></span>
+        </span>
+      </Link>
+      {actions && task.status !== 'ended' && (
+        <>
+          <button type="button" className={icon} disabled={busy || task.running} title={t('runNow')} aria-label={`${t('runNow')}: ${task.title}`}
+            onClick={() => void act(() => client.runTask(computerId, task.id), t('ran'))}>
+            <Zap className="size-4" aria-hidden />
+          </button>
+          <button type="button" className={icon} disabled={busy} title={t(task.status === 'active' ? 'pause' : 'resume')} aria-label={`${t(task.status === 'active' ? 'pause' : 'resume')}: ${task.title}`}
+            onClick={() => void act(() => client.updateTask(computerId, task, { active: task.status !== 'active' }))}>
+            {task.status === 'active' ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />}
+          </button>
+        </>
+      )}
+    </li>
   );
 }
 

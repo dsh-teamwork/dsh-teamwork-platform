@@ -11,7 +11,7 @@
  * - A form on the web or the phone holds a `TaskDraft`; `taskInput` and `taskPatch` turn it into what DSH takes.
  */
 
-import { RelayError, type RelayErrorCode } from './types';
+import { RelayError, type ConversationItem, type RelayErrorCode } from './types';
 
 /** When a task runs, as DSH stores it. `rrule` is shown, never written, by a client. */
 export type TaskTiming =
@@ -338,4 +338,29 @@ export function draftReady(draft: TaskDraft, timingFixed: boolean): boolean {
   if (draft.repeat === 'weekly' && draft.weekdays.length === 0) return false;
   if (draft.repeat === 'cron' && !draft.expression.trim()) return false;
   return !!draft.timeZone.trim();
+}
+
+/** A session's automation tasks, as its header's clock shows them. */
+export interface SessionTasks {
+  /** Tasks that send to this session and have not ended, in the catalog's order (active first). */
+  sending: AutomationTask[];
+  /** Tasks whose instructions this session received without being their destination: one that starts a new session each run started it. */
+  started: AutomationTask[];
+  /** How many of `sending` are active: the count beside the clock. */
+  active: number;
+}
+
+/** Which of a computer's tasks belong to one session: those that send to it, and those whose deliveries it holds. */
+export function sessionTasks(tasks: readonly AutomationTask[], sessionId: string, items: readonly ConversationItem[]): SessionTasks {
+  const sending = tasks.filter((task) => task.status !== 'ended' && task.target.kind !== 'new' && task.target.sessionId === sessionId);
+  const sent = new Set(sending.map((task) => task.id));
+  const started: AutomationTask[] = [];
+  for (const item of items) {
+    if (item.kind !== 'user') continue;
+    for (const reminder of item.reminders ?? []) {
+      const task = tasks.find((each) => each.id === reminder.scheduleId);
+      if (task && !sent.has(task.id) && !started.includes(task)) started.push(task);
+    }
+  }
+  return { sending, started, active: sending.filter((task) => task.status === 'active').length };
 }

@@ -115,9 +115,11 @@ session. A task opens to its repeat, its next run and its deliveries, each a
 link to the session it reached; **Run now** sends it at once without moving
 its next run, and **Pause**, **Edit** and **Delete** do what they say. The
 agent can make and change the same tasks when you ask it to in a session.
-In a session, the alarm-clock button beside **Files** lists the tasks that send
-to it and makes a new one for it, and each instruction a task sent shows which
-task and when it was due. A task runs only while DSH runs on that computer;
+In a session, the alarm clock beside **Files** shows how many active tasks send
+to it. It opens those tasks, each with **Run now** and **Pause** or **Resume**;
+the task that started the session, when one that opens a new session each run
+did; **New task for this session**; and all the computer's tasks. Each
+instruction a task sent shows which task and when it was due. A task runs only while DSH runs on that computer;
 one missed while it was off runs once when DSH starts again. Tasks need DSH
 Teamwork 0.20.0 or later on the computer, and are not offered on a Team DSH.
 

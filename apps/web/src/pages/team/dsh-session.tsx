@@ -540,7 +540,7 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
         <header className="flex flex-col gap-1">
           <div className="flex items-start gap-2">
             <h2 className="min-w-0 flex-1 text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{id ? title : t('newTitle')}</h2>
-            {id && tasks && <SessionTasks tasks={taskList} sessionId={id} base={tasks} />}
+            {id && tasks && <SessionTasks computerId={computerId} tasks={taskList} items={state.items} sessionId={id} base={tasks} />}
             {id && config?.files && (
               <Button type="button" variant="outline" size="sm" aria-expanded={filesOpen} onClick={() => setFilesOpen(!filesOpen)}>
                 <FolderOpen aria-hidden />

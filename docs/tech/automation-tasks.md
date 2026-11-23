@@ -99,16 +99,20 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    every N minutes, daily, weekly or cron in a named zone; a reused new
    session, a new one each run, or an existing session). An edit sends a
    destination only when it changed, since sending `new_once` again reserves
-   another session (`taskPatch` in `relay-client`, which the phone shares). A session's header lists the tasks that
-   deliver to it and makes one for it (`?session=`), and a delivered turn
-   names its task. A new session's folder and preset are DSH's defaults; the
+   another session (`taskPatch` in `relay-client`, which the phone shares). A session's header has a clock with the
+   count of active tasks that send to it, opening a popover of what belongs
+   to the session (`sessionTasks` in `relay-client`): those tasks with Run
+   now and Pause or Resume, the tasks that started it (a new-session task's
+   delivery is in it though it is not their destination), a new task aimed
+   at it (`?session=`) and all the computer's tasks. A delivered turn names
+   its task. A new session's folder and preset are DSH's defaults; the
    form does not choose them yet.
 4. **The phone (built, in the closed app where `premium/` exists).** An
    alarm clock in the Sessions header opens the current computer's tasks
    above the tabs: the list, a task with the same actions and deliveries,
    and the form, a one-shot time typed as `YYYY-MM-DD HH:mm` in the phone's
-   zone. Unlike the web, a session's header has no clock: the phone opens
-   tasks from the Sessions list alone. A delivered turn names its task.
+   zone. A session's header has the same clock as the web's, opening the
+   same contents in a bottom sheet. A delivered turn names its task.
 5. **Cloud DSH.** The task page warns of a next run outside the computer's
    running window.
 

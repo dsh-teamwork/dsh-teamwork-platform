@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { bridgeValue, createDshSessions, type DshLink } from '../dsh-sessions';
 import { eventsOf } from '../dsh';
-import { draftReady, draftTiming, localDateTime, localInstant, remindersOf, taskDraft, taskInput, taskOf, taskPatch, tasksOf } from '../schedule';
+import { draftReady, draftTiming, sessionTasks, localDateTime, localInstant, remindersOf, taskDraft, taskInput, taskOf, taskPatch, tasksOf } from '../schedule';
 import { RelayError } from '../types';
 
 const cron = {
@@ -176,5 +176,26 @@ describe('a task form on the web and the phone', () => {
     expect(draftReady({ ...draft, repeat: 'weekly', weekdays: [] }, false)).toBe(false);
     expect(draftReady({ ...draft, repeat: 'once', at: 'soon' }, false)).toBe(false);
     expect(draftReady({ ...draft, repeat: 'once', at: 'soon' }, true)).toBe(true);
+  });
+});
+
+describe('a session\'s automation tasks', () => {
+  const task = (id: string, status: string, target: object) => taskOf({ ...cron, id, status, target })!;
+  const tasks = [
+    task('daily', 'active', { kind: 'session', sessionId: 's1' }),
+    task('reused', 'paused', { kind: 'new_once', sessionId: 's1', create: {} }),
+    task('done', 'ended', { kind: 'session', sessionId: 's1' }),
+    task('elsewhere', 'active', { kind: 'session', sessionId: 's2' }),
+    task('fresh', 'active', { kind: 'new', create: {} }),
+  ];
+  const delivered = (scheduleId: string) => ({ kind: 'user' as const, id: scheduleId, text: 'x', reminders: [{ scheduleId, occurrenceAt: 'a', prompt: 'x' }] });
+
+  it('lists the tasks that send to it, active ones counted, and the ones that started it', () => {
+    const mine = sessionTasks(tasks, 's1', [delivered('fresh'), delivered('daily'), delivered('fresh'), delivered('gone')]);
+    expect(mine.sending.map((each) => each.id)).toEqual(['daily', 'reused']);
+    expect(mine.active).toBe(1);
+    // A new-session task's delivery is here though the session is not its destination; a deleted task is not listed.
+    expect(mine.started.map((each) => each.id)).toEqual(['fresh']);
+    expect(sessionTasks(tasks, 's3', [])).toEqual({ sending: [], started: [], active: 0 });
   });
 });

@@ -1397,8 +1397,7 @@
       "cancel": "Cancel",
       "created": "Task created.",
       "saved": "Task saved.",
-      "inSession": "{count, plural, =0 {No automation tasks for this session} one {One automation task for this session} other {# automation tasks for this session}}",
-      "noneInSession": "No automation task sends to this session.",
+      "inSession": "{count, plural, one {One active automation task sends to this session} other {# active automation tasks send to this session}}",
       "newInSession": "New task for this session",
       "reminder": "Automation task, due {at}",
       "reminderOf": "{title}, due {at}",
@@ -1411,7 +1410,12 @@
         "time_out_of_range": "That time is out of range.",
         "frequency_too_high": "A task can run at most once a minute.",
         "subagent_session": "A sub-agent's session cannot receive tasks."
-      }
+      },
+      "sessionTitle": "Automation tasks for this session",
+      "sessionHelp": "Instructions this computer sends here on a schedule, as if you typed them.",
+      "sessionEmpty": "Nothing is scheduled for this session yet. Have it receive an instruction on a repeat, for example a status check every weekday at 9:00.",
+      "startedBy": "Started this session",
+      "allTasks": "All tasks"
     },
     "pages": {
       "title": "Pages",
