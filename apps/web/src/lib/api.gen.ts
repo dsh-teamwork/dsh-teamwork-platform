@@ -3946,7 +3946,38 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
+        /** Rename one of the member's own computers; the name holds when it connects again (the web console only) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Trimmed of spaces */
+                        name: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Renamed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                403: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
         trace?: never;
     };
     "/relay/pairings/{id}": {

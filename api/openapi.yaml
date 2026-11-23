@@ -1653,6 +1653,25 @@ paths:
         '429': { $ref: '#/components/responses/Error' }
   /relay/hosts/{id}:
     servers: [{ url: / }]
+    patch:
+      summary: "Rename one of the member's own computers; the name holds when it connects again (the web console only)"
+      security: [{ session: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties: { name: { type: string, minLength: 1, maxLength: 100, description: Trimmed of spaces } }
+      responses:
+        '204': { description: Renamed }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
     delete:
       summary: "Sign one of the member's own computers out and forget it with every pairing to it, connected or not (ADR 0060; the web console only)"
       security: [{ session: [] }]

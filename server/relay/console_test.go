@@ -196,3 +196,52 @@ func TestConsoleDeletesAComputer(t *testing.T) {
 		}
 	})
 }
+
+// The web console renames one of the member's own computers, and the name
+// holds when the computer connects again announcing its own. It reaches no
+// other member's computer, an app's token renames none, and a name is 1 to 100
+// characters once trimmed.
+func TestConsoleRenamesAComputer(t *testing.T) {
+	each(t, func(t *testing.T, w *world) {
+		pc := w.host(w.ada, "ada-laptop").hostID()
+		bobHost := w.host(w.bob, "bob-laptop").hostID()
+		bobID := w.r.db.RelayHost.GetX(w.r.ctx, bobHost).UserID
+		rename := func(userID, id, name string) int {
+			t.Helper()
+			body, _ := json.Marshal(obj{"name": name})
+			req, _ := http.NewRequest("PATCH", w.in.URL+"/relay/hosts/"+id, bytes.NewReader(body))
+			req.AddCookie(w.in.Session(userID, "password"))
+			req.Header.Set("Origin", w.in.URL)
+			req.Header.Set("Content-Type", "application/json")
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			res.Body.Close()
+			return res.StatusCode
+		}
+
+		if status, _ := w.call(w.adaPhone, "PATCH", "/relay/hosts/"+pc, obj{"name": "Studio"}); status != 403 {
+			t.Fatalf("app rename %d", status)
+		}
+		if status := rename(bobID, pc, "Studio"); status != 404 {
+			t.Fatalf("other member's computer %d", status)
+		}
+		for _, bad := range []string{"  ", strings.Repeat("x", 101)} {
+			if status := rename(w.adaID, pc, bad); status != 400 {
+				t.Fatalf("name %q: %d", bad, status)
+			}
+		}
+		if status := rename(w.adaID, pc, "  Studio Mac  "); status != 204 {
+			t.Fatalf("rename %d", status)
+		}
+		w.host(w.ada, "ada-laptop") // the computer connects again, announcing "laptop"
+		_, listed := w.console(w.adaID, "GET", "/relay/hosts", "", false)
+		if got := listed["hosts"].([]any)[0].(obj)["name"]; got != "Studio Mac" {
+			t.Fatalf("after reconnecting: %v", got)
+		}
+		if got := w.r.db.RelayHost.GetX(w.r.ctx, bobHost).Name; got != "laptop" {
+			t.Fatalf("bob's computer: %q", got)
+		}
+	})
+}

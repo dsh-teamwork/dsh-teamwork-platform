@@ -163,7 +163,9 @@ The plugin atomically writes its seed and account/server-scoped trust roster to
 The tables:
 
 - `relay_hosts`: `id`, `user_id`, `client_id`, `name`, `dsh_version`, `os`,
-  `last_seen_at`, `created_at`.
+  `last_seen_at`, `created_at`. `name` is the one the computer announced on its
+  first connection, or the one its owner gave it since in the console
+  (`PATCH /relay/hosts/{id}`); a later announcement does not change it.
 - `relay_pairing_offers`: `code_hash`, `host_id`, `expires_at`,
   `used_at`. Each code is stored as an HMAC, as the sign-in codes are.
 - `relay_pairings`: `id`, `user_id`, `host_id`, `device_name`,
@@ -601,7 +603,7 @@ way to reach a DSH, beside Team DSH ([shared-dsh.md](shared-dsh.md)) and, in
 the hosted edition, Cloud DSH.
 
 - **Workspace → My DSH**, `/teams/{teamId}/my-dsh[/{hostId}[/{sessionId}]]`
-  and `/teams/{teamId}/my-dsh/{hostId}/devices`
+  and `/teams/{teamId}/my-dsh/{hostId}/settings`
   (`apps/web/src/pages/team/my-dsh.tsx`), in the same columns as Team
   DSH, whose parts it shares (`dsh-session.tsx`). Those parts speak to this
   browser's relay unless a page provides another client
@@ -621,7 +623,7 @@ the hosted edition, Cloud DSH.
   own out the same way (`TeamPage.subnav`).
 - **The column beside the sidebar is the open computer's**: its name,
   online or offline, operating system, whether this browser is paired with it,
-  and the number of devices paired with it, which opens its devices page;
+  and a settings button, which opens its settings page;
   under them a new session, a search of titles and workspace titles, and the
   sessions, grouped as DSH's own sidebar groups them (`sessionGroups` in
   `packages/relay-client`, after `@deepseek-ai/dsh-client-ui-workspace`): each
@@ -645,9 +647,12 @@ the hosted edition, Cloud DSH.
   it, the computer's name with its operating system and DSH version on
   the left, and on the right whether it is online (green) or offline (grey,
   with when it was last seen).
-- **The devices page** takes the right column: every pairing of the account to
+- **The settings page** takes the right column: the computer's name, which
+  the member may change; its native DSH Web, opened from here while the
+  computer offers it, else how to turn it on; every pairing of the account to
   the computer, the phone app's and every browser's, with its name, status,
-  last use and whether it pushes, this browser marked, each removable.
+  last use and whether it pushes, this browser marked, each removable; and
+  removing the computer.
 - **The composer is laid out as DSH's own input bar**: a new session waits in
   the middle of the column, its folder and preset above the box; the box's
   bottom row holds the attachment control on the left and the model, its
@@ -790,8 +795,8 @@ without cookies, so the gateway answers it 404 like any request without its
 access cookie, and the console shows that error. An installed app would also
 outlive the ticket that opened it.
 
-My DSH offers the entry beside the computer's device count, and opens it in a
-new tab without an opener.
+My DSH offers the entry on the computer's settings page, and opens it in a new
+tab without an opener.
 
 **Verified by** `server/e2e`'s native Web test, which runs the plugin's own
 relay client and connector in front of a stand-in for DSH's Web server: what

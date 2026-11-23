@@ -1,10 +1,10 @@
 /**
  * My DSH (`/teams/{teamId}/my-dsh[/{hostId}[/{sessionId}]]`, docs/tech/relay.md, "My DSH in the web console"): the
  * member's own computers, the same in every team, in Workspace. The computers fold out under My DSH in the console's
- * sidebar (`MyDshNav` in console-shell.tsx); the page is the one open. Its column beside the sidebar names it, counts
- * its devices, every phone and browser of the member's paired with it (the count opens them on a page of their own,
- * `/teams/{teamId}/my-dsh/{hostId}/devices`, each removable, ADR 0048), and lists its sessions once this browser is
- * paired with it, grouped as DSH's own sidebar groups them. The column beside that pairs this browser (the code from the
+ * sidebar (`MyDshNav` in console-shell.tsx); the page is the one open. Its column beside the sidebar names it, opens its
+ * settings (`/teams/{teamId}/my-dsh/{hostId}/settings`: its name, its native DSH Web, every phone and browser of the
+ * member's paired with it, each removable, ADR 0048, and removing the computer), and lists its sessions once this
+ * browser is paired with it, grouped as DSH's own sidebar groups them. The column beside that pairs this browser (the code from the
  * computer's Teamwork panel, then the safety code), asks for the computer's PIN, and holds the conversation. An offline
  * computer can be removed itself, with every device paired to it. The computer's id in the address is its host id; the
  * relay is spoken to through this browser's pairing. With no computer in the address the page opens the one this
@@ -17,7 +17,7 @@
  * coming online or going away moves the page along by itself.
  */
 
-import { ArrowLeft, Check, ExternalLink, Laptop, Loader, Monitor, RotateCw, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Check, ExternalLink, Laptop, Loader, Monitor, RotateCw, Settings, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -27,7 +27,7 @@ import { HOST_OS_NAMES, normalizePairingCode, PAIRING_CODE_LENGTH, RelayError, t
 import { COMPUTERS_REFRESH_MS, twinOf } from '@/components/team/console-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, type MyComputer } from '@/lib/relay';
+import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, renameComputer, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { Conversation, DshColumns, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
@@ -36,8 +36,8 @@ import { useTeam } from './layout';
 /** Where this browser keeps the computer it opened last, for My DSH opened with none in the address. */
 const LAST_KEY = 'dsh-teamwork:my-dsh:last';
 
-/** One computer of the member's: its sessions in the column, beside the conversation or, with `devices`, its devices. */
-export function MyDshPage({ devices = false }: { devices?: boolean }) {
+/** One computer of the member's: its sessions in the column, beside the conversation or, with `settings`, its settings. */
+export function MyDshPage({ settings = false }: { settings?: boolean }) {
   const { team, me } = useTeam();
   const { hostId = '', sessionId = '' } = useParams();
   const t = useTranslations('team.myDsh');
@@ -115,10 +115,10 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
 
   return (
     <DshColumns
-      header={host ? <ColumnHeader host={host} twin={twin} paired={paired !== ''} devices={devices} base={base} /> : <h1 className="truncate text-lg font-semibold tracking-tight">{t('title')}</h1>}
+      header={host ? <ColumnHeader host={host} twin={twin} paired={paired !== ''} settings={settings} base={base} /> : <h1 className="truncate text-lg font-semibold tracking-tight">{t('title')}</h1>}
       list={(onPick) =>
         host ? (
-          <SessionList computerId={computerId} base={`${base}/${host.id}`} unavailable={unavailable} sessions={sessions} sessionId={devices ? '' : sessionId} onPick={onPick} />
+          <SessionList computerId={computerId} base={`${base}/${host.id}`} unavailable={unavailable} sessions={sessions} sessionId={settings ? '' : sessionId} onPick={onPick} />
         ) : (
           hosts?.length === 0 && <p className="px-2.5 text-muted-foreground">{t('none')}</p>
         )
@@ -131,8 +131,8 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
           <h2 className="text-xl font-semibold tracking-tight">{t('introTitle')}</h2>
           <p className="text-sm text-muted-foreground">{hosts?.length === 0 ? t('none') : t('intro')}</p>
         </section>
-      ) : devices ? (
-        <DevicesView
+      ) : settings ? (
+        <SettingsView
           host={host}
           back={`${base}/${host.id}`}
           changed={() => void load()}
@@ -192,13 +192,11 @@ export function MyDshPage({ devices = false }: { devices?: boolean }) {
 
 /**
  * The open computer atop its column of sessions: its name, and under it whether it is online, its system and whether
- * this browser is paired with it; at its end, how many devices are paired with it, which opens them, and, while the
- * computer offers it, its native DSH Web in a new tab.
+ * this browser is paired with it; at its end, its settings.
  */
-function ColumnHeader({ host, twin, paired, devices, base }: { host: MyComputer; twin: string | null; paired: boolean; devices: boolean; base: string }) {
+function ColumnHeader({ host, twin, paired, settings, base }: { host: MyComputer; twin: string | null; paired: boolean; settings: boolean; base: string }) {
   const t = useTranslations('team.myDsh');
   const note = [host.os ? HOST_OS_NAMES[host.os] : null, paired ? null : t('notPairedShort')].filter(Boolean).join(' · ');
-  const count = t('deviceCount', { count: host.pairings.length, name: host.name });
   return (
     <div className="flex items-start gap-2">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -213,19 +211,17 @@ function ColumnHeader({ host, twin, paired, devices, base }: { host: MyComputer;
         </p>
       </div>
       <Link
-        to={`${base}/${host.id}/devices`}
-        aria-label={count}
-        title={count}
-        aria-current={devices ? 'page' : undefined}
+        to={settings ? `${base}/${host.id}` : `${base}/${host.id}/settings`}
+        aria-label={t('settings')}
+        title={t('settings')}
+        aria-current={settings ? 'page' : undefined}
         className={cn(
-          'mt-1 flex shrink-0 items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-xs font-normal text-muted-foreground tabular-nums hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-          devices && 'border-brand text-foreground',
+          'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+          settings && 'border-brand text-foreground',
         )}
       >
-        <Smartphone className="size-3.5" aria-hidden />
-        {host.pairings.length}
+        <Settings className="size-4" aria-hidden />
       </Link>
-      {host.webOnline && <OpenNativeWeb host={host} returnTo={`${base}/${host.id}`} />}
     </div>
   );
 }
@@ -254,17 +250,10 @@ function OpenNativeWeb({ host, returnTo }: { host: MyComputer; returnTo: string 
     }
   }
   return (
-    <button
-      type="button"
-      disabled={opening}
-      aria-label={t('openWeb')}
-      title={t('openWeb')}
-      onClick={() => void open()}
-      className="mt-1 flex shrink-0 items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-xs font-normal text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
-    >
-      <ExternalLink className="size-3.5" aria-hidden />
-      {t('openWebShort')}
-    </button>
+    <Button variant="outline" disabled={opening} onClick={() => void open()}>
+      <ExternalLink className="size-4" aria-hidden />
+      {t('openWeb')}
+    </Button>
   );
 }
 
@@ -336,10 +325,10 @@ function HostHeader({ host, twin }: { host: MyComputer; twin: string | null }) {
 }
 
 /**
- * The computer's devices page: every phone and browser of the member's paired with it, each removable (ADR 0048), and
- * the computer itself, which removing signs out of Teamwork (ADR 0060).
+ * The computer's settings: its name, its native DSH Web while it offers it, every phone and browser of the member's
+ * paired with it, each removable (ADR 0048), and the computer itself, which removing signs out of Teamwork (ADR 0060).
  */
-function DevicesView({ host, back, changed, removed }: { host: MyComputer; back: string; changed: () => void; removed: () => void }) {
+function SettingsView({ host, back, changed, removed }: { host: MyComputer; back: string; changed: () => void; removed: () => void }) {
   const { me } = useTeam();
   const t = useTranslations('team.myDsh');
   const format = useFormatter();
@@ -366,7 +355,16 @@ function DevicesView({ host, back, changed, removed }: { host: MyComputer; back:
           <ArrowLeft className="size-3.5" aria-hidden />
           <span className="[overflow-wrap:anywhere]">{host.name}</span>
         </Link>
-        <h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{t('devicesOf', { name: host.name })}</h2>
+        <h2 className="text-xl font-semibold tracking-tight">{t('settings')}</h2>
+      </header>
+      <Rename host={host} renamed={changed} />
+      <section className="flex flex-col items-start gap-2 border-t pt-4">
+        <h3 className="font-semibold">{t('webTitle')}</h3>
+        <p className="text-muted-foreground">{host.webOnline ? t('webHelp') : t('webOff')}</p>
+        {host.webOnline && <OpenNativeWeb host={host} returnTo={back} />}
+      </section>
+      <header className="flex flex-col gap-1 border-t pt-4">
+        <h3 className="font-semibold">{t('devicesTitle')}</h3>
         <p className="text-muted-foreground">{t('devicesHelp')}</p>
       </header>
       {host.pairings.length === 0 && <p className="text-muted-foreground">{t('noDevices')}</p>}
@@ -399,6 +397,38 @@ function DevicesView({ host, back, changed, removed }: { host: MyComputer; back:
         <RemoveComputer host={host} removed={removed} />
       </section>
     </div>
+  );
+}
+
+/** The computer's name, as the console, the phones and native DSH Web's bar show it; it holds when it reconnects. */
+function Rename({ host, renamed }: { host: MyComputer; renamed: () => void }) {
+  const t = useTranslations('team.myDsh');
+  const [name, setName] = useState(host.name);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setName(host.name), [host.name]);
+  const next = name.trim();
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    try {
+      await renameComputer(host.id, next);
+      toast.success(t('renamed'));
+      renamed();
+    } catch {
+      toast.error(t('renameFailed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <form className="flex flex-col gap-2" onSubmit={(event) => void submit(event)}>
+      <label htmlFor="computer-name" className="font-semibold">{t('nameLabel')}</label>
+      <div className="flex max-w-md gap-2">
+        <Input id="computer-name" value={name} maxLength={100} onChange={(event) => setName(event.target.value)} />
+        <Button type="submit" variant="outline" disabled={busy || next === '' || next === host.name}>{t('saveName')}</Button>
+      </div>
+      <p className="text-xs text-muted-foreground">{t('nameHelp')}</p>
+    </form>
   );
 }
 

@@ -134,6 +134,7 @@ func (r *relay) routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /relay/pair", r.pair)
 	mux.HandleFunc("GET /relay/pairings", r.listPairings)
 	mux.HandleFunc("GET /relay/hosts", r.listHosts)
+	mux.HandleFunc("PATCH /relay/hosts/{id}", r.renameHost)
 	mux.HandleFunc("DELETE /relay/hosts/{id}", r.deleteHost)
 	mux.HandleFunc("DELETE /relay/pairings/{id}", r.revokePairing)
 	mux.HandleFunc("PUT /relay/pairings/{id}/push", r.setPush)
@@ -369,9 +370,9 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		s.c.Close(closeUnauthorized, "not a member")
 		return
 	}
-	hostID := sharedID
+	hostID, name := sharedID, h.name
 	if sharedID == "" {
-		hostID, err = r.recordHost(s.ctx, userID, grant, h)
+		hostID, name, err = r.recordHost(s.ctx, userID, grant, h)
 		if err != nil {
 			slog.Error("relay: record host", "error", err)
 			s.c.Close(websocket.StatusInternalError, "internal")
@@ -389,7 +390,7 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 	}
 	s.token.Store(h.token)
 	if r.desktopWeb != nil && h.web && sharedID == "" {
-		defer r.desktopWeb.attach(hostID, userID, h.name, s)()
+		defer r.desktopWeb.attach(hostID, userID, name, s)()
 	}
 	s.send(map[string]string{"t": "welcome", "hostId": hostID})
 	defer r.hostLeft(hostID, s)
@@ -431,16 +432,18 @@ func nonEmpty(s string) *string {
 }
 
 // recordHost is the host for this member's computer, created on its first
-// connection and refreshed on each after, with the sign-in it connected with.
-func (r *relay) recordHost(ctx context.Context, userID, grant string, h hello) (string, error) {
+// connection and refreshed on each after, with the sign-in it connected with,
+// and the name it goes by: the one it announced first, or the member's since
+// (renameHost); a computer announcing another later does not change it.
+func (r *relay) recordHost(ctx context.Context, userID, grant string, h hello) (string, string, error) {
 	now := time.Now().UTC()
 	for try := 0; ; try++ {
 		existing, err := r.db.RelayHost.Query().Where(relayhost.UserID(userID), relayhost.ClientID(h.clientID)).Only(ctx)
 		if err == nil {
-			return existing.ID, r.db.RelayHost.UpdateOne(existing).SetName(h.name).SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetNillablePluginVersion(h.pluginVersion).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).Exec(ctx)
+			return existing.ID, existing.Name, r.db.RelayHost.UpdateOne(existing).SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetNillablePluginVersion(h.pluginVersion).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).Exec(ctx)
 		}
 		if !ent.IsNotFound(err) {
-			return "", err
+			return "", "", err
 		}
 		created, err := r.db.RelayHost.Create().SetUserID(userID).SetClientID(h.clientID).SetName(h.name).
 			SetDshVersion(h.dshVersion).SetNillableOs(h.os).SetNillablePluginVersion(h.pluginVersion).SetLastSeenAt(now).SetNillableGrantID(nonEmpty(grant)).SetCreatedAt(now).Save(ctx)
@@ -449,9 +452,9 @@ func (r *relay) recordHost(ctx context.Context, userID, grant string, h hello) (
 			continue
 		}
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
-		return created.ID, nil
+		return created.ID, created.Name, nil
 	}
 }
 
@@ -946,6 +949,38 @@ func (r *relay) listHosts(w http.ResponseWriter, req *http.Request) {
 // in the same transaction, so a connected one cannot simply be recorded again:
 // its socket closes now, and its plugin finds itself signed out. One that
 // signs in again later is recorded anew and paired again.
+// renameHost gives one of the member's own computers the name the console,
+// the phones and native Web's bar show (the web console only). It holds across
+// reconnects (recordHost).
+func (r *relay) renameHost(w http.ResponseWriter, req *http.Request) {
+	if bearer(req) != "" {
+		errorJSON(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	userID := r.caller(w, req)
+	if userID == "" {
+		return
+	}
+	name, err := sharedName(req)
+	if err != nil {
+		rejectedJSON(w, err)
+		return
+	}
+	id := req.PathValue("id")
+	n, err := r.db.RelayHost.Update().Where(relayhost.ID(id), relayhost.UserID(userID)).SetName(name).Save(req.Context())
+	if err == nil && n == 0 {
+		err = errNotFound
+	}
+	if err != nil {
+		rejectedJSON(w, err)
+		return
+	}
+	if r.desktopWeb != nil {
+		r.desktopWeb.rename(id, name)
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 	if bearer(req) != "" {
 		errorJSON(w, http.StatusForbidden, "forbidden")

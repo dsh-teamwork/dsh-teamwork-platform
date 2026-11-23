@@ -89,8 +89,9 @@ type desktopWebSessionKey struct{}
 
 type desktopWebHost struct {
 	socket        *socket
-	user, name    string
-	lastDial      atomic.Int64 // microseconds the last tunnel took to come up; 0 before any
+	user          string
+	name          atomic.Pointer[string] // the member may rename the computer while it is connected
+	lastDial      atomic.Int64           // microseconds the last tunnel took to come up; 0 before any
 	generation    string
 	slots         chan struct{}
 	tickets       map[string]desktopWebTicket // guarded by desktopWeb.mu
@@ -200,9 +201,20 @@ func (d *desktopWeb) sweep(ctx context.Context) {
 	}
 }
 
+// rename shows a renamed computer's new name in the bars of its open sessions.
+func (d *desktopWeb) rename(id, name string) {
+	d.mu.Lock()
+	host := d.hosts[webLabel(id)]
+	d.mu.Unlock()
+	if host != nil {
+		host.name.Store(&name)
+	}
+}
+
 func (d *desktopWeb) attach(id, user, name string, s *socket) func() {
 	label := webLabel(id)
-	host := &desktopWebHost{socket: s, user: user, name: name, slots: make(chan struct{}, 32), generation: webSecret(), tickets: make(map[string]desktopWebTicket), sessions: make(map[string]*desktopWebSession)}
+	host := &desktopWebHost{socket: s, user: user, slots: make(chan struct{}, 32), generation: webSecret(), tickets: make(map[string]desktopWebTicket), sessions: make(map[string]*desktopWebSession)}
+	host.name.Store(&name)
 	d.mu.Lock()
 	d.hosts[label] = host
 	d.mu.Unlock()
