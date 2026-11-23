@@ -714,7 +714,7 @@ body:has(.tide-story) {
   50% { opacity: 0.72; }
 }
 
-@media not all and (prefers-reduced-motion) {
+@media (prefers-reduced-motion: no-preference) {
   .session-running-label {
     animation: session-running-pulse 3s ease-in-out infinite;
   }

@@ -98,16 +98,20 @@ model and effort while it is not working, for that session alone. The
 paperclip at the left of the box adds files (text, code, logs, CSV, JSON or PDF; up to
 five, 20 MB each), sent with the message, or on their own.
 
-Above the sessions, **New session** starts one and the search box finds one by
-its title or its workspace. The sessions are grouped as in DSH's own sidebar:
-each workspace in DSH's order with its sessions in the order DSH shows them,
-then **Ungrouped**, newest first, with pinned ones first in every group; a
-group's name folds it away. Grouping by workspace needs a current DSH Teamwork
-plugin on that computer; with an older one every session is under
+Above the sessions are the search box, which finds one by its title or its
+workspace, the view options beside it, and **New session**. By default the
+sessions are grouped as in DSH's own sidebar: each workspace in DSH's order with
+its sessions in the order DSH shows them, then **Ungrouped**, newest first, with
+pinned ones first in every group; a group's name folds it away. The view
+options show archived sessions too, or only them; group by workspace, as a
+workspace tree with each workspace under the registered folders that hold it,
+or in one list; and order by DSH's own order or by the latest change. They are
+kept for each computer in this browser. Grouping by workspace needs a current
+DSH Teamwork plugin on that computer; with an older one every session is under
 **Ungrouped**. The **⋯** at the end of a session pins it,
 renames it, copies its ID or archives it, as in DSH's own sidebar, and both
-show the change. Archived sessions are hidden until you open **Archived**, and then shown in their groups; a
-running session can be archived once it stops. The menu needs a current
+show the change. Archived sessions are hidden by default, except the one that
+is open; a running session can be archived once it stops. The menu needs a current
 DSH Teamwork plugin on that computer; with an older one it offers only the
 copy. In the phone app, press and hold a session for the same menu.
 
