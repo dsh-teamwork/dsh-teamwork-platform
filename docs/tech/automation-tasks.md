@@ -1,6 +1,6 @@
 # Automation tasks
 
-> **Status:** Plan — steps 1 to 4 built · **Updated:** 2026-11-23
+> **Status:** Current · **Updated:** 2026-11-23
 
 How a member manages and follows their computer's automation tasks (DSH's
 Schedule) from the web console and the phone: through DSH's own `schedule/*`
@@ -50,15 +50,15 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
   future occurrence. `run` delivers now whatever the status, and does not move
   the next occurrence.
 
-## Goal
+## What a member can do
 
-- A member opens a computer's **automation tasks** in the web console (My DSH,
-  and an edition's Cloud DSH, which share its parts) and in the phone app:
-  every task with its rule, next run, target and status; create one, edit it,
+- Open a computer's **automation tasks** in the web console (My DSH, and an
+  edition's Cloud DSH, which share its parts) and in the phone app: every
+  task with its rule, next run, target and status; create one, edit it,
   pause and resume it, run it now, delete it, and read its deliveries.
-- **In a session**, the tasks that deliver to it are listed in its header,
-  a new one can be made for it, and each delivery is shown as a reminder, not
-  as raw framing text.
+- **In a session** a task belongs to, see those tasks from its header, make
+  another for it, and read each delivery as a reminder, not as raw framing
+  text.
 
 ## Non-goals
 
@@ -81,18 +81,18 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
 | The task page, the session header and the reminder note | `apps/web/src/pages/team/dsh-tasks.tsx`, mounted by `my-dsh.tsx` and `dsh-session.tsx` |
 | The same on the phone | `premium/apps/mobile`, where that directory exists |
 
-## Order of work
+## How it was built
 
 1. **Probe (done, thrown away).** DSH 0.2.2-rc.4 answered every method above
    to the bridge's identity, `$events` carried `schedule/changed` with no
    arguments, and a delivery arrived as a `user/message` with
    `source.kind: 'schedule'`.
-2. **The channel (built).** The allow-list and the shared refusal in the plugin;
+2. **The channel.** The allow-list and the shared refusal in the plugin;
    `relay-client` reads tasks, calls them, watches `schedule/changed`, and
    keeps `[SCHEDULE REMINDER]` messages as the user's turn with `reminders`;
    the plugin's host test (`tests/host/cloud.mjs`) drives them through its
    bridge against a real DSH. Gates everything after.
-3. **The web console (built).** The alarm clock left of a computer's
+3. **The web console.** The alarm clock left of a computer's
    settings button in My DSH's column opens its tasks (`/teams/{teamId}/my-dsh/{hostId}/tasks[/{taskId}]`):
    the tasks grouped active, paused and ended, a task's detail with run now,
    pause and resume, edit, delete and its deliveries, and the form (once,
@@ -107,14 +107,19 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    at it (`?session=`) and all the computer's tasks. A delivered turn names
    its task. A new session's folder and preset are DSH's defaults; the
    form does not choose them yet.
-4. **The phone (built, in the closed app where `premium/` exists).** An
+4. **The phone (in the closed app where `premium/` exists).** An
    alarm clock in the Sessions header opens the current computer's tasks
    above the tabs: the list, a task with the same actions and deliveries,
    and the form, a one-shot time typed as `YYYY-MM-DD HH:mm` in the phone's
    zone. A session's header has the same clock as the web's, opening the
    same contents in a bottom sheet. A delivered turn names its task.
-5. **Cloud DSH.** The task page warns of a next run outside the computer's
-   running window.
+5. **Cloud DSH (in the closed edition).** A cloud computer's tasks open
+   from the same clock in its column on the web and from Sessions on the
+   phone. `TasksPanel` takes a `notice`, said above the list, and a
+   `taskNote`, said with a task: there, a computer with an idle stop says a
+   task due while it is stopped does not run, and an active task whose next
+   run falls where the computer's weekly schedule keeps it stopped says that
+   run is missed. Nothing starts a stopped computer for a task.
 
 ## Open questions
 
@@ -125,11 +130,13 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    revoked (ADR 0066). Whether revoking should offer to delete them needs the
    creating device, which DSH does not record.
 
-## How done is verified
+## How it is verified
 
 - The plugin's `tests/bridge.test.ts` holds the list and the shared refusal.
 - `relay-client`'s tests read a probed catalog, each miss and error, the
   refresh on `schedule/changed`, and a reminder in a session's history.
 - The plugin's host test creates, pauses, runs and deletes a task through
   its bridge and a real DSH, and sees the delivery in its session.
-- Each screen is checked against a real computer on the web and on a phone.
+- Each screen was checked against a real DSH in the web console and in the
+  phone app's development web build, and Cloud DSH's with its API faked;
+  physical phones are still to be checked.
