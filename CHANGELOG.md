@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/my-dsh.tsx`, `server/relay/relay.go`, `docs/tech/relay.md` ("My DSH in the web console").
 
+## 2026-11-23 — Team models show the model they call, not a configuration id
+
+- **What:** Under a model's name the conversation model menu shows `modelDetail` (`@dsh-teamwork/relay-client`), the one rule the web, the phone and DSH share: a team model's description, which the plugin sets to the model its configuration calls (`data.model`: a provider's model ID for a BYOK model, the catalogue ID for a hosted one), and another model's ID; nothing where it only repeats the name. A team model's configuration id, its wire model, is never shown. The provider is not shown.
+- **Why:** The provider-grouped menu showed an opaque configuration id under every team model.
+- **Breaking:** None. With a plugin from before the description, a team model shows its name alone.
+- **Upgrade:** Update the DSH Teamwork plugin for the model under the name.
+- **Refs:** `packages/relay-client/src/session-config.ts`, `apps/web/src/pages/team/dsh-session.tsx`, dsh-teamwork `src/platform-models.ts`.
+
 ## 2026-11-23 — The native Web bar shows how long the session has lasted
 
 - **What:** The Teamwork bar above native DSH Web shows the session's age beside "End session" ("Connected for 1:02:03"; the time alone on a phone). `/__dsh/status` returns `sinceMs` in place of `endsAt`, which nothing read.

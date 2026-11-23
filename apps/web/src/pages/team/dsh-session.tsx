@@ -28,6 +28,7 @@ import {
   type UploadLimits,
   isThinking,
   directoryName,
+  modelDetail,
   pinPrompt,
   RelayError,
   rowsOf,
@@ -897,7 +898,7 @@ function ModelSettings({ computerId, sessionId, config, setConfig, disabled, val
                         <ProviderMark hints={[item.id, item.name, item.providerName, provider]} name={item.name} />
                         <span className="min-w-0 break-words">
                           {item.name}
-                          {item.id !== item.name && <span className="block text-xs text-muted-foreground">{item.id}</span>}
+                          {modelDetail(item) && <span className="block text-xs text-muted-foreground">{modelDetail(item)}</span>}
                         </span>
                         {indicator}
                       </DropdownMenu.RadioItem>

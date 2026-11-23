@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { configurationOf, defaultDirectory, directoriesOf, startableDirectories } from '../session-config';
+import { configurationOf, defaultDirectory, directoriesOf, modelDetail, startableDirectories } from '../session-config';
 
 it('keeps full paths so equal folder names never select the wrong project', () => {
   expect(
@@ -61,4 +61,15 @@ it('starts a new session in the team’s default workspace, else in the folder o
   // A default the computer does not offer is never where a session starts.
   expect(defaultDirectory(startable, { t: '/etc' }, 't')).toBe('/b');
   expect(defaultDirectory([], {}, 't')).toBeUndefined();
+});
+
+it("shows under a model's name the model it calls, never a team configuration's id", () => {
+  // A team model's id is its configuration's (dsh-teamwork's teamProvider); the plugin describes it by its model.
+  const team = { provider: 'teamwork-platform-t1', id: '47YLA3GOROXBO7H6VJ6FQTSAQR', name: 'DeepSeek V4 Pro' };
+  expect(modelDetail({ ...team, description: 'deepseek-v4-pro' })).toBe('deepseek-v4-pro');
+  expect(modelDetail({ ...team, description: 'DeepSeek V4 Pro' })).toBeUndefined();
+  // An older plugin gives no description: still never the configuration's id.
+  expect(modelDetail(team)).toBeUndefined();
+  expect(modelDetail({ provider: 'openai', id: 'gpt-5.5', name: 'GPT-5.5' })).toBe('gpt-5.5');
+  expect(modelDetail({ provider: 'deepseek', id: 'deepseek-v4-pro', name: 'deepseek-v4-pro' })).toBeUndefined();
 });
