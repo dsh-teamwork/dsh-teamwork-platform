@@ -17,6 +17,7 @@ How documents are laid out, named and kept is the "Documentation" section of
 - [Architecture](tech/architecture.md) — components, data model, the team API, both sign-in flows and the model gateway.
 - [Team assistant](tech/team-assistant.md) — default assistant, reviewed plugin/preset sharing, publication history and recovery.
 - [Relay and pairing](tech/relay.md) — how a phone or browser reaches a DSH: pairing, frames, encryption, push.
+- [Automation tasks](tech/automation-tasks.md) — managing a computer's DSH Schedule tasks from the web and the phone.
 - [Shared DSH](tech/shared-dsh.md) — a team's own DSH reached by members through the relay, end to end encrypted.
 - [Pages](tech/pages.md) — pages agents publish from sessions: storage, sharing, sandboxed viewing and the order of work.
 - [Usage points and budgets](tech/usage-budgets.md) — community metering, model prices, team/member limits, reservations, reports and implementation acceptance.

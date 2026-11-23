@@ -481,6 +481,13 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       endPairing(id, 'not_found');
     },
 
+    listTasks: sessions.listTasks,
+    watchTasks: sessions.watchTasks,
+    createTask: sessions.createTask,
+    updateTask: sessions.updateTask,
+    deleteTask: sessions.deleteTask,
+    runTask: sessions.runTask,
+    taskHistory: sessions.taskHistory,
     listSessions: sessions.listSessions,
     watchSessions: sessions.watchSessions,
     follow: sessions.follow,

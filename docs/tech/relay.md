@@ -312,7 +312,11 @@ use, so DSH sees each phone as a separate client.
     `teamwork/listFiles`, `teamwork/searchFiles`, `teamwork/readFile`, `teamwork/readDocument`,
     `userQuestions/answer`, `$events/result`, and the list's actions:
     `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
-    `workspace/archiveSession`, `workspace/unarchiveSession`;
+    `workspace/archiveSession`, `workspace/unarchiveSession`; and a
+    computer's automation tasks, `schedule/catalog`, `schedule/history`,
+    `schedule/create`, `schedule/edit` and `schedule/run`, refused on a
+    shared DSH
+    ([automation-tasks.md](automation-tasks.md), ADR 0066);
   - streams: `session/follow`, `$events`.
 - **Tests:** `tests/bridge.test.ts` in the plugin holds the list, and drives
   the bridge with a method off it, a stream off it, and frames for a stream

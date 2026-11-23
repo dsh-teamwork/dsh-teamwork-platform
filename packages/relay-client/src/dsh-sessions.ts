@@ -32,6 +32,7 @@ import {
   type Streams,
   type Waiting,
 } from './dsh';
+import { deletedResult, historyResult, taskResult, tasksOf } from './schedule';
 import { applySessionEvent } from './session';
 import { RelayError, type Answer, type Pending, type RelayClient, type RelayErrorCode, type SessionEvent, type SessionState } from './types';
 
@@ -71,6 +72,13 @@ export type DshSessions = Pick<
   | 'archiveSession'
   | 'prompt'
   | 'answer'
+  | 'listTasks'
+  | 'watchTasks'
+  | 'createTask'
+  | 'updateTask'
+  | 'deleteTask'
+  | 'runTask'
+  | 'taskHistory'
 > & {
   /** One computer's streams ended (its channel closed, or it went offline): its follows close, and retry when `reason` passes. */
   ended(computerId: string, reason: RelayErrorCode): void;
@@ -91,6 +99,9 @@ const FolderSchema = z.object({
   entries: z.object({ name: z.string(), kind: z.enum(['file', 'directory']), bytes: z.number().optional() }).array(),
   truncated: z.boolean(),
 });
+
+/** How many deliveries one read of a task's history asks for. */
+const TASK_HISTORY_PAGE = 20;
 
 /** How many messages one read of older history asks for, as many as DSH's own opening window. */
 const HISTORY_PAGE = 50;
@@ -113,6 +124,7 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
   'teamwork/permission_refused': 'permission_refused', 'teamwork/not_text': 'not_text', 'session/title-invalid': 'invalid_request', 'workspace/session-active': 'busy', 'workspace/not-found': 'not_found',
   // A cloud computer's server: an answer to a question no page of that computer still holds.
   'teamwork/stale': 'stale',
+  'teamwork/schedule_unavailable': 'schedule_unavailable', 'schedule/input-invalid': 'schedule_invalid', 'schedule/target-archived': 'target_archived',
 };
 
 /**
@@ -120,10 +132,11 @@ const DSH_ERRORS: Record<string, RelayErrorCode> = {
  * refusal means.
  */
 export function bridgeValue(status: number, body: unknown): unknown {
-  const wire = body as { error?: string; result?: { ok?: boolean; value?: unknown; error?: { code?: string } } } | null;
+  const wire = body as { error?: string; result?: { ok?: boolean; value?: unknown; error?: { code?: string; details?: { code?: unknown } } } } | null;
   const result = wire?.result;
   if (status === 200 && result?.ok) return result.value;
-  throw new RelayError(DSH_ERRORS[result?.error?.code ?? wire?.error ?? ''] ?? 'unavailable');
+  const detail = result?.error?.details?.code;
+  throw new RelayError(DSH_ERRORS[result?.error?.code ?? wire?.error ?? ''] ?? 'unavailable', typeof detail === 'string' ? detail : undefined);
 }
 
 interface Follow {
@@ -154,6 +167,8 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
   /** Lists watching a computer's sessions, by computer id. */
   const listWatchers = new Map<string, Set<() => void>>();
   const sessionsChanged = (computerId: string) => listWatchers.get(computerId)?.forEach((onChange) => onChange());
+  /** Lists watching a computer's automation tasks, by computer id; DSH says `schedule/changed` on `$events`. */
+  const taskWatchers = new Map<string, Set<() => void>>();
 
   /**
    * Follows that lost their computer for now try again, all together, after a wait that doubles while they keep
@@ -266,6 +281,8 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
         const [sessionId, running] = value.args as [unknown, unknown];
         if (typeof sessionId === 'string') tellFollowers(computerId, sessionId, { type: 'status', status: running === true ? 'running' : 'idle' });
         sessionsChanged(computerId);
+      } else if (value.type === 'emit' && value.event === 'schedule/changed') {
+        taskWatchers.get(computerId)?.forEach((onChange) => onChange());
       } else if (value.type === 'waterfall') {
         const waiting = waitingOf(value, options.locale());
         if (!waiting) return;
@@ -309,6 +326,7 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
       for (const follow of [...follows]) interrupted(follow, 'not_found');
       events.clear();
       listWatchers.clear();
+      taskWatchers.clear();
     },
 
     async listSessions(computerId) {
@@ -490,6 +508,39 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
     async archiveSession(computerId, sessionId, archived) {
       await call(computerId, archived ? 'workspace/archiveSession' : 'workspace/unarchiveSession', { request: { sessionId } });
       sessionsChanged(computerId);
+    },
+
+    async listTasks(computerId) {
+      return tasksOf(await call(computerId, 'schedule/catalog', {}));
+    },
+
+    watchTasks(computerId, onChange) {
+      let watchers = taskWatchers.get(computerId);
+      if (!watchers) taskWatchers.set(computerId, (watchers = new Set()));
+      watchers.add(onChange);
+      // The change comes on the computer's $events; a stream that cannot open now opens with the next list or follow.
+      void watchEvents(computerId).catch(() => {});
+      return () => void watchers.delete(onChange);
+    },
+
+    async createTask(computerId, input) {
+      return taskResult(await call(computerId, 'schedule/create', { request: input }));
+    },
+
+    async updateTask(computerId, task, patch) {
+      return taskResult(await call(computerId, 'schedule/edit', { request: { id: task.id, action: 'update', patch, expectedUpdatedAt: task.updatedAt } }));
+    },
+
+    async deleteTask(computerId, task) {
+      deletedResult(await call(computerId, 'schedule/edit', { request: { id: task.id, action: 'delete', expectedUpdatedAt: task.updatedAt } }));
+    },
+
+    async runTask(computerId, taskId) {
+      return taskResult(await call(computerId, 'schedule/run', { request: { id: taskId } }));
+    },
+
+    async taskHistory(computerId, taskId, before) {
+      return historyResult(await call(computerId, 'schedule/history', { request: { id: taskId, limit: TASK_HISTORY_PAGE, ...(before ? { before } : {}) } }));
     },
 
     async prompt(computerId, sessionId, text, attachments) {

@@ -3,6 +3,7 @@
  * `RelayClient`; its implementation (`live.ts`) carries the frames in docs/tech/relay.md ("Frames") and reads DSH's
  * Remote API into these shapes (`dsh.ts`). They are the clients', not the wire's.
  */
+import type { AutomationTask, Reminder, TaskHistory, TaskInput, TaskPatch } from './schedule';
 import type { Identity } from './secure-channel';
 
 /**
@@ -148,7 +149,8 @@ export interface ToolResult {
 }
 
 export type ConversationItem =
-  | { kind: 'user'; id: string; text: string; attachments?: { attachmentId: string; name: string; bytes: number }[] }
+  /** The member's turn; one an automation task delivered carries its `reminders`, and `text` is their instructions. */
+  | { kind: 'user'; id: string; text: string; attachments?: { attachmentId: string; name: string; bytes: number }[]; reminders?: Reminder[] }
   | { kind: 'assistant'; id: string; text: string; reasoning?: string; turn?: number; streaming?: true; interrupted?: true }
   | { kind: 'deliverable'; id: string; turn: number; file: FileTarget; description?: string }
   | { kind: 'tool'; id: string; name: string; summary: string; status: ToolStatus; turn?: number; file?: FileTarget; background?: true; detail?: ToolDetail }
@@ -249,7 +251,15 @@ export type RelayErrorCode =
   | 'device_verification_required'
   | 'device_key_changed'
   | 'invite_refused'
-  | 'locked';
+  | 'locked'
+  /** Automation tasks: a shared DSH serves none; another device changed it since it was read; it already ended. */
+  | 'schedule_unavailable'
+  | 'schedule_conflict'
+  | 'schedule_ended'
+  /** DSH refused a task's input; `RelayError.detail` is DSH's own reason (`invalid_rule`, `not_future`, …). */
+  | 'schedule_invalid'
+  /** A task's session is archived, so nothing is delivered to it. */
+  | 'target_archived';
 
 /**
  * Where a computer's PIN lock stands (the server's `docs/tech/shared-dsh.md`, "The PIN"): open, asked for (or asked
@@ -263,7 +273,7 @@ export type PinState =
   | { kind: 'invalid' };
 
 export class RelayError extends Error {
-  constructor(readonly code: RelayErrorCode) {
+  constructor(readonly code: RelayErrorCode, readonly detail?: string) {
     super(code);
     this.name = 'RelayError';
   }
@@ -388,4 +398,18 @@ export interface RelayClient {
   ): Promise<void>;
   /** Answers the pending question or approval `pendingId`. Rejects `stale` if it is no longer pending. */
   answer(computerId: string, sessionId: string, pendingId: string, answer: Answer): Promise<void>;
+  /** The computer's automation tasks, active first (the server's docs/tech/automation-tasks.md); `schedule_unavailable` on a shared DSH. */
+  listTasks(computerId: string): Promise<AutomationTask[]>;
+  /** Called whenever one of the computer's tasks changes, wherever it was changed, so a list can read itself again. Returns a function that stops the calls. */
+  watchTasks(computerId: string, onChange: () => void): () => void;
+  /** Saves a new task; `schedule_invalid` with DSH's reason when DSH refuses its input. */
+  createTask(computerId: string, input: TaskInput): Promise<AutomationTask>;
+  /** Changes, pauses (`active: false`) or resumes a task as it was read; `schedule_conflict` if it changed since. */
+  updateTask(computerId: string, task: Pick<AutomationTask, 'id' | 'updatedAt'>, patch: TaskPatch): Promise<AutomationTask>;
+  /** Deletes a task as it was read, with its saved deliveries; the sessions it delivered to stay. */
+  deleteTask(computerId: string, task: Pick<AutomationTask, 'id' | 'updatedAt'>): Promise<void>;
+  /** Delivers a task now, paused or not, without moving its next run; `busy` while a delivery of it is still pending. */
+  runTask(computerId: string, taskId: string): Promise<AutomationTask>;
+  /** One page of a task's deliveries, newest first; `before` is the previous page's cursor. */
+  taskHistory(computerId: string, taskId: string, before?: string): Promise<TaskHistory>;
 }

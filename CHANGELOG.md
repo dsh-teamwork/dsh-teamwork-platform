@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — Automation tasks through the paired channel
+
+- **What:** A paired device may manage a personal computer's automation tasks, DSH's Schedule: the plugin passes `schedule/catalog`, `history`, `create`, `edit` and `run` on unchanged, and answers each `teamwork/schedule_unavailable` on a shared DSH. `@dsh-teamwork/relay-client` reads them (`schedule.ts`: `listTasks`, `watchTasks` on `schedule/changed`, `createTask`, `updateTask`, `deleteTask`, `runTask`, `taskHistory` on `RelayClient`), with new error codes `schedule_unavailable`, `schedule_conflict`, `schedule_ended`, `schedule_invalid` (DSH's reason in `RelayError.detail`) and `target_archived`. A task's delivery now shows in its session as the member's turn, its instructions as `text` and the task in `reminders`; DSH's `[SCHEDULE CHANGE]` notices stay hidden. No screen manages tasks yet.
+- **Why:** The first slice of `docs/tech/automation-tasks.md`: the web console and the app reach a computer's tasks before either draws them.
+- **Breaking:** Every `RelayClient` implements the seven task methods; an edition's own clients (the app's demo and routed clients) add them when it merges this. A delivery that was dropped from a session's history now appears in it.
+- **Upgrade:** Update the DSH Teamwork plugin for the `schedule/*` calls; an older one refuses them as `configuration_unsupported`.
+- **Refs:** ADR 0066, `docs/tech/automation-tasks.md`, `packages/relay-client/src/schedule.ts`, dsh-teamwork `src/bridge.ts`.
+
 ## 2026-11-23 — A computer's settings in My DSH, and renaming it
 
 - **What:** My DSH's column header keeps one settings button beside the computer's name in place of the device count and the Web button. It opens `/teams/{teamId}/my-dsh/{hostId}/settings` (was `…/devices`): the computer's name, its native DSH Web, its paired devices and removing it. `PATCH /relay/hosts/{id}` (the web console only) renames a computer, and the relay no longer overwrites a recorded host's name with the one its plugin announces on reconnecting, so the console's name holds, shown also on the phones and in native Web's bar.
