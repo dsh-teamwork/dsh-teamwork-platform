@@ -19,7 +19,6 @@ import {
   ChevronRight,
   ChevronUp,
   ChevronsUpDown,
-  CircleHelp,
   Cpu,
   Gauge,
   GitPullRequestArrow,
@@ -38,8 +37,8 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { Dialog, DropdownMenu, Tooltip } from 'radix-ui';
-import { useCallback, useEffect, useId, useState, type ComponentType, type ReactNode } from 'react';
+import { Dialog, DropdownMenu } from 'radix-ui';
+import { useCallback, useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'use-intl';
@@ -64,8 +63,6 @@ interface Section {
   key: SectionKey;
   icon: LucideIcon;
   fill?: boolean;
-  /** Whether its entry carries a hint, `nav.hints.{key}`, saying what the page is for. */
-  hint?: boolean;
   /** What folds out under its entry: the computers it is reached on, as `TeamPage.subnav`. */
   subnav?: ComponentType<SubnavProps>;
   /** An edition's pages in this group are listed right after this one, rather than at the group's end. */
@@ -128,10 +125,10 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'home', key: 'home', icon: House },
       // Always listed, so a new member finds it before connecting; the same computers in every team. An edition's
       // DSH (the hosted service's cloud DSH) follows it.
-      { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, hint: true, subnav: MyDshNav, editions: true },
+      { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, subnav: MyDshNav, editions: true },
       // What agents published (docs/tech/pages.md); in every team, always listed.
-      { path: 'pages', key: 'pages', icon: Shapes, fill: true, hint: true },
-      { path: 'resources', key: 'resources', icon: BookOpen, hint: true },
+      { path: 'pages', key: 'pages', icon: Shapes, fill: true },
+      { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
     ],
   },
@@ -296,9 +293,9 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   }, [admin]);
   const shortcut = isMac() ? '⌥M' : 'Alt+M';
 
-  const link = (path: string, label: string, icon: LucideIcon, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
+  const link = (path: string, label: string, icon: LucideIcon, dot = false, Subnav?: ComponentType<SubnavProps>) =>
     Subnav ? (
-      <NavFold key={path} to={href(team.id, path)} label={label} icon={icon} hint={hint} here={section === path} onNavigate={onNavigate}>
+      <NavFold key={path} to={href(team.id, path)} label={label} icon={icon} here={section === path} onNavigate={onNavigate}>
         <Subnav teamId={team.id} current={section === path ? computer : null} onNavigate={onNavigate} />
       </NavFold>
     ) : (
@@ -307,19 +304,18 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
         to={href(team.id, path)}
         onClick={onNavigate}
         current={section === path}
-        hint={hint}
         icon={icon}
         label={label}
         // Amber, as a dot: something waits on the reader here (docs/design.md, "Component rules").
         trailing={dot && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
       />
     );
-  const editionLinks = (key: string) => pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, page.hints?.[lang], page.subnav));
+  const editionLinks = (key: string) => pages.filter((page) => page.group === key).map((page) => link(navPath(page), page.labels[lang], page.icon, false, page.subnav));
   const group = ({ key, sections }: (typeof GROUPS)[number]) => (
     <div key={key} className="flex flex-col gap-0.5">
       {key !== 'manage' && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>}
       {sections.flatMap((s) => [
-        link(s.path, t(`nav.${s.key}`), s.icon, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.hint ? t(`nav.hints.${s.key}`) : undefined, s.subnav),
+        link(s.path, t(`nav.${s.key}`), s.icon, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.subnav),
         ...(s.editions ? editionLinks(key) : []),
       ])}
       {!sections.some((s) => s.editions) && editionLinks(key)}
@@ -327,8 +323,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   );
 
   return (
-    <Tooltip.Provider delayDuration={200}>
-      <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
+    <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
         {/* Choosing a workspace page, a computer under My DSH included, folds Team management away again. */}
         <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4" onClickCapture={(event) => (event.target as Element).closest('a') && setOpen(false)}>
           {group(GROUPS[0])}
@@ -374,8 +369,7 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
             </div>
           </div>
         )}
-      </nav>
-    </Tooltip.Provider>
+    </nav>
   );
 }
 
@@ -388,42 +382,14 @@ function isManageShortcut(event: KeyboardEvent): boolean {
 
 const isMac = () => typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
-/**
- * One entry in the navigation: its icon and label, then, for one with a hint saying what the page is for, a question
- * mark right after the label that shows the hint on hover (the hint also describes the link to a screen reader), and
- * `trailing` at the row's end.
- */
-function NavLink({ to, onClick, current, hint, icon: Icon, label, trailing }: { to: string; onClick?: () => void; current: boolean; hint?: string; icon: LucideIcon; label: string; trailing?: ReactNode }) {
-  const id = useId();
+/** One entry in the navigation: its icon and label, and `trailing` at the row's end. What a page is for, its page says. */
+function NavLink({ to, onClick, current, icon: Icon, label, trailing }: { to: string; onClick?: () => void; current: boolean; icon: LucideIcon; label: string; trailing?: ReactNode }) {
   return (
-    <Link to={to} onClick={onClick} aria-current={current ? 'page' : undefined} aria-describedby={hint ? id : undefined} className={cn(item, current && selected)}>
+    <Link to={to} onClick={onClick} aria-current={current ? 'page' : undefined} className={cn(item, current && selected)}>
       <Icon className="size-4 shrink-0" aria-hidden />
       <span className="min-w-0 truncate">{label}</span>
-      {hint && <Hint id={id} hint={hint} />}
       <span className="ml-auto flex shrink-0 items-center">{trailing}</span>
     </Link>
-  );
-}
-
-/** A question mark that shows `hint` on hover, and the hint hidden under `id` for a screen reader. */
-function Hint({ id, hint }: { id: string; hint: string }) {
-  return (
-    <>
-      <span id={id} hidden>{hint}</span>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <span className="grid size-4 shrink-0 place-items-center text-muted-foreground hover:text-foreground" aria-hidden>
-            <CircleHelp className="size-3.5" />
-          </span>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content side="right" sideOffset={10} collisionPadding={8} className="z-50 max-w-72 rounded-md border bg-card px-3 py-2 text-xs leading-relaxed text-card-foreground shadow-lg">
-            {hint}
-            <Tooltip.Arrow className="fill-card" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </>
   );
 }
 
@@ -435,9 +401,8 @@ const foldKey = (to: string) => `dsh-teamwork:nav-folded:${to.split('/').pop()}`
  * its end folds them away and back, remembered in this browser. Opening the page unfolds them; folded while the
  * person is on it, the entry itself is the one selected.
  */
-function NavFold({ to, label, icon: Icon, hint, here, onNavigate, children }: { to: string; label: string; icon: LucideIcon; hint?: string; here: boolean; onNavigate?: () => void; children: ReactNode }) {
+function NavFold({ to, label, icon: Icon, here, onNavigate, children }: { to: string; label: string; icon: LucideIcon; here: boolean; onNavigate?: () => void; children: ReactNode }) {
   const t = useTranslations('team');
-  const id = useId();
   const [open, setOpen] = useState(() => {
     try {
       return localStorage.getItem(foldKey(to)) !== '1';
@@ -467,12 +432,10 @@ function NavFold({ to, label, icon: Icon, hint, here, onNavigate, children }: { 
           to={to}
           onClick={onNavigate}
           aria-current={here && !open ? 'page' : undefined}
-          aria-describedby={hint ? id : undefined}
           className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md py-1.5 pl-2.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <Icon className="size-4 shrink-0" aria-hidden />
           <span className="min-w-0 truncate">{label}</span>
-          {hint && <Hint id={id} hint={hint} />}
         </Link>
         <button
           type="button"

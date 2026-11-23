@@ -571,11 +571,6 @@
       "myUsage": "Models and usage",
       "submissions": "My submissions",
       "myDsh": "My DSH",
-      "hints": {
-        "myDsh": "DSH on your own computer, listed here once it signs in to Teamwork. Pair this browser with it once to carry on its sessions here, end-to-end encrypted. Its model usage counts as yours. Only you can use it; the phones and browsers that reach it are listed here, and you can remove any of them.",
-        "pages": "Reports, decks, dashboards and charts that agents in your DSH sessions published. Open one full screen, share it with teammates, or ask your agent for a new version.",
-        "resources": "The presets and plugins the team publishes to your DSH, each with its details. Send a preset that works well for review, and once approved the whole team has it."
-      },
       "pages": "Pages"
     },
     "switcher": {
@@ -1178,7 +1173,7 @@
     },
     "myDsh": {
       "title": "My DSH",
-      "none": "None of your computers has connected yet. Sign in to Teamwork in DSH on a computer, and it appears here.",
+      "none": "DSH on your own computers is listed here: pair this browser with one once to carry on its sessions here, end-to-end encrypted, with its model usage counted as yours and only you able to use it. None has connected yet: sign DSH in to Teamwork on your computer with the steps below.",
       "introTitle": "Use your own computers from the browser",
       "intro": "The DSH on each computer you signed in to Teamwork. Open one to pair this browser with it, then work in its sessions, end-to-end encrypted between this browser and that computer.",
       "lastSeenShort": "Offline · {time}",
@@ -1352,8 +1347,8 @@
       "loading": "Loading…",
       "loadFailed": "Could not load this.",
       "unavailable": "This page is not available to you: it is private, was deleted, or you left its team.",
-      "emptyTitle": "Pages agents publish appear here",
-      "emptyHow": "In a session on My DSH, ask the agent to make a report, a deck or a dashboard and publish it as a page. It stays private to you until you share it.",
+      "emptyTitle": "Pages your team and its agents make",
+      "emptyHow": "In a session on My DSH or a cloud DSH, ask the agent for a report, a deck, a dashboard or a chart and have it published as a page, and it shows up here. Open one full screen, share it with chosen teammates or the whole team, or ask the agent for a new version; earlier versions are kept. Until you share it, only you can see it.",
       "owner": "Owner: {name}",
       "version": "Version",
       "versionN": "Version {n}",

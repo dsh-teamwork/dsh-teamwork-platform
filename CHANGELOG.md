@@ -23,7 +23,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-23 — Workspace puts the DSHs to work in first
 
-- **What:** A team's Workspace navigation now reads Home, My DSH, an edition's own DSH pages (the hosted service's cloud DSH), Shared pages, Team resources, My usage. My DSH is always listed, no longer only once a computer connected; with none it says how to connect one. Shared pages and Team resources carry a hint saying what each is for. `Section.visible` in the console shell is gone with its last use, and a section's `editions` places an edition's pages of its group right after it.
+- **What:** A team's Workspace navigation now reads Home, My DSH, an edition's own DSH pages (the hosted service's cloud DSH), Shared pages, Team resources, My usage. My DSH is always listed, no longer only once a computer connected; with none it says how to connect one. The navigation carries no hints: its question marks are gone (`Section.hint`, `TeamPage.hints` and `team.nav.hints` with them), and what a page is for is said on the page itself, as Shared pages now does when no page is open and My DSH while no computer has connected. `Section.visible` in the console shell is gone with its last use, and a section's `editions` places an edition's pages of its group right after it.
 - **Why:** Workspace is for working: the places to work come first, what the team shares next, one's own spend last. New members could not tell what the two shared pages were for.
 - **Breaking:** None.
 - **Upgrade:** Nothing.
