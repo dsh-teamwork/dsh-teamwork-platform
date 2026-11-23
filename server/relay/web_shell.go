@@ -62,7 +62,7 @@ func (d *desktopWeb) shell(w http.ResponseWriter, req *http.Request, host *deskt
 		encoded, _ := json.Marshal(said)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		shellPage.Execute(w, map[string]any{
-			"Lang": session.locale, "Name": host.name, "Path": framePath(req.URL.Query().Get("path")),
+			"Lang": session.locale, "Name": *host.name.Load(), "Path": framePath(req.URL.Query().Get("path")),
 			// Built by the gateway from APP_URL or the app's own scheme, never from the request.
 			"Back":      template.URL(session.back),
 			"Words":     string(encoded),
@@ -79,7 +79,7 @@ func (d *desktopWeb) shell(w http.ResponseWriter, req *http.Request, host *deskt
 			dial = &ms
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
-			"name": host.name, "connected": host.socket.ctx.Err() == nil,
+			"name": *host.name.Load(), "connected": host.socket.ctx.Err() == nil,
 			"up": session.up.Load(), "down": session.down.Load(), "dialMs": dial,
 			"sinceMs": time.Since(session.entered).Milliseconds(),
 		})

@@ -134,6 +134,14 @@ export async function myComputers(account: string): Promise<MyComputer[]> {
   return ((await response.json()) as { hosts: MyComputer[] }).hosts;
 }
 
+/** Renames one of the member's own computers (`PATCH /relay/hosts/{id}`); the name holds when it reconnects. */
+export async function renameComputer(hostId: string, name: string): Promise<void> {
+  const response = await fetch(`/relay/hosts/${encodeURIComponent(hostId)}`, {
+    method: 'PATCH', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name }),
+  });
+  if (!response.ok) throw new Error(`rename computer: ${response.status}`);
+}
+
 /**
  * Cuts another device off one of the member's own computers (ADR 0048): through the relay alone, as for an offline
  * desktop, which drops that device's trust the next time it lists its pairings. This browser's own pairing goes

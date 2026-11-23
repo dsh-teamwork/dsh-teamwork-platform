@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — A computer's settings in My DSH, and renaming it
+
+- **What:** My DSH's column header keeps one settings button beside the computer's name in place of the device count and the Web button. It opens `/teams/{teamId}/my-dsh/{hostId}/settings` (was `…/devices`): the computer's name, its native DSH Web, its paired devices and removing it. `PATCH /relay/hosts/{id}` (the web console only) renames a computer, and the relay no longer overwrites a recorded host's name with the one its plugin announces on reconnecting, so the console's name holds, shown also on the phones and in native Web's bar.
+- **Why:** The header had grown a row of small buttons, and a computer was known only by its hostname.
+- **Breaking:** A link to `…/my-dsh/{hostId}/devices` no longer opens. A computer renamed on itself keeps the name it was first recorded with until it is renamed in the console.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/my-dsh.tsx`, `server/relay/relay.go`, `docs/tech/relay.md` ("My DSH in the web console").
+
 ## 2026-11-23 — Team models show the model they call, not a configuration id
 
 - **What:** Under a model's name the conversation model menu shows `modelDetail` (`@dsh-teamwork/relay-client`), the one rule the web, the phone and DSH share: a team model's description, which the plugin sets to the model its configuration calls (`data.model`: a provider's model ID for a BYOK model, the catalogue ID for a hosted one), and another model's ID; nothing where it only repeats the name. A team model's configuration id, its wire model, is never shown. The provider is not shown.

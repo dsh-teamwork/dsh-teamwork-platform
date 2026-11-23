@@ -55,8 +55,8 @@ stays yours until you share it.
 to Teamwork, has connected. Its computers fold out beneath it in the sidebar,
 the same in every team, each with a dot that is green while it is online; the
 arrow at the end of **My DSH** folds them away. Open one and its sessions fill
-the column beside the sidebar, under its name, its operating system and the
-number of devices paired with it. Pair this browser with it once: in DSH on that computer, open the
+the column beside the sidebar, under its name, its operating system and its
+settings button. Pair this browser with it once: in DSH on that computer, open the
 Teamwork panel, choose **Devices** and make a code, type the code here, check
 that both screens show the same safety code, and approve on the computer. Then
 set a four-digit PIN, which the computer asks for again when you come back.
@@ -106,12 +106,15 @@ running session can be archived once it stops. The menu needs a current
 DSH Teamwork plugin on that computer; with an older one it offers only the
 copy. In the phone app, press and hold a session for the same menu.
 
-The device count beside the computer's name opens its devices: every phone and browser
-paired with it, where **Remove** cuts any of them off at once, a lost phone
-included. If you enter the wrong PIN too often, run `/teamwork pin reset` in
+The settings button beside the computer's name opens its settings. There you
+can rename the computer: the name shows in Teamwork, on your phones and in
+native DSH Web, and stays when the computer reconnects. You can open its native
+DSH Web in a new tab once it is turned on in the computer's Teamwork panel. You
+also see every phone and browser paired with it, where **Remove** cuts any of
+them off at once, a lost phone included. If you enter the wrong PIN too often, run `/teamwork pin reset` in
 DSH on that computer.
 
-**Remove this computer**, on a computer's devices page or on one that is
+**Remove this computer**, on a computer's settings page or on one that is
 offline, signs it out of Teamwork at once and takes it from the list with every
 device paired with it, even while it is connected. Use it for a lost computer,
 one you no longer use, or an old entry left after signing in again. If it signs
