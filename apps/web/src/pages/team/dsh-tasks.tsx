@@ -6,7 +6,7 @@
  * runs them; nothing here is stored. A task runs only while the computer's DSH runs.
  */
 
-import { AlarmClock, ArrowLeft, Pause, Play, PencilLine, Plus, Trash2, Zap } from 'lucide-react';
+import { AlarmClock, ArrowLeft, Pause, Play, PencilLine, Plus, Trash2, TriangleAlert, Zap } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Popover } from 'radix-ui';
 import { Link, useNavigate, useSearchParams } from 'react-router';
@@ -120,10 +120,12 @@ function TaskState({ task }: { task: AutomationTask }) {
 /**
  * The computer's tasks in the right column: the list (`taskId` ""), the form for a new one (`new`, aimed at the
  * session named in `?session=` when there is one), or one task's detail. `base` is the tasks' own address; a session's
- * address is `sessionsBase/{id}`.
+ * address is `sessionsBase/{id}`. A page that knows when its computer stops gives `notice`, said above the list, and
+ * `taskNote`, said with a task whose next run it would miss (an edition's cloud computer and its schedule).
  */
-export function TasksPanel({ computerId, base, sessionsBase, taskId, sessions }: {
+export function TasksPanel({ computerId, base, sessionsBase, taskId, sessions, notice, taskNote }: {
   computerId: string; base: string; sessionsBase: string; taskId: string; sessions: SessionSummary[] | null;
+  notice?: string; taskNote?: (task: AutomationTask) => string | null;
 }) {
   const t = useTranslations('team.tasks');
   const { tasks, failed } = useTasks(computerId);
@@ -140,9 +142,9 @@ export function TasksPanel({ computerId, base, sessionsBase, taskId, sessions }:
   if (taskId) {
     if (!tasks) return failed ? <p role="alert" className="text-sm text-destructive">{failed}</p> : <p role="status" className="text-sm text-muted-foreground">{t('loading')}</p>;
     if (!task) return <NotFound base={base} />;
-    return <TaskDetail key={task.id} computerId={computerId} task={task} base={base} sessionsBase={sessionsBase} sessions={sessions} />;
+    return <TaskDetail key={task.id} computerId={computerId} task={task} base={base} sessionsBase={sessionsBase} sessions={sessions} note={taskNote?.(task) ?? null} />;
   }
-  return <TaskList tasks={tasks} failed={failed} base={base} />;
+  return <TaskList tasks={tasks} failed={failed} base={base} notice={notice} taskNote={taskNote} />;
 }
 
 function NotFound({ base }: { base: string }) {
@@ -157,7 +159,19 @@ function NotFound({ base }: { base: string }) {
 
 const GROUPS = ['active', 'paused', 'ended'] as const;
 
-function TaskList({ tasks, failed, base }: { tasks: AutomationTask[] | null; failed: string | null; base: string }) {
+/** What a page says about when its computer runs: a line, beside a warning sign. */
+function StopNote({ children, className }: { children: string; className?: string }) {
+  return (
+    <p className={cn('flex items-start gap-1.5 text-xs text-muted-foreground', className)}>
+      <TriangleAlert className="mt-px size-3.5 shrink-0" aria-hidden />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+function TaskList({ tasks, failed, base, notice, taskNote }: {
+  tasks: AutomationTask[] | null; failed: string | null; base: string; notice?: string; taskNote?: (task: AutomationTask) => string | null;
+}) {
   const t = useTranslations('team.tasks');
   const words = useTimingWords();
   return (
@@ -169,6 +183,7 @@ function TaskList({ tasks, failed, base }: { tasks: AutomationTask[] | null; fai
         </div>
         <Button asChild size="sm"><Link to={`${base}/new`}><Plus className="size-4" aria-hidden />{t('new')}</Link></Button>
       </header>
+      {notice && <StopNote className="text-sm">{notice}</StopNote>}
       {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
       {tasks === null && !failed && <p role="status" className="text-sm text-muted-foreground">{t('loading')}</p>}
       {tasks?.length === 0 && (
@@ -193,6 +208,7 @@ function TaskList({ tasks, failed, base }: { tasks: AutomationTask[] | null; fai
                       <span aria-hidden>·</span>
                       <TaskState task={task} />
                     </span>
+                    {taskNote?.(task) && <StopNote className="mt-0.5">{taskNote(task)!}</StopNote>}
                   </Link>
                 </li>
               ))}
@@ -204,8 +220,8 @@ function TaskList({ tasks, failed, base }: { tasks: AutomationTask[] | null; fai
   );
 }
 
-function TaskDetail({ computerId, task, base, sessionsBase, sessions }: {
-  computerId: string; task: AutomationTask; base: string; sessionsBase: string; sessions: SessionSummary[] | null;
+function TaskDetail({ computerId, task, base, sessionsBase, sessions, note }: {
+  computerId: string; task: AutomationTask; base: string; sessionsBase: string; sessions: SessionSummary[] | null; note: string | null;
 }) {
   const t = useTranslations('team.tasks');
   const client = useSessionClient();
@@ -246,6 +262,7 @@ function TaskDetail({ computerId, task, base, sessionsBase, sessions }: {
           <span aria-hidden>·</span>
           <TaskState task={task} />
         </p>
+        {note && <StopNote className="text-sm">{note}</StopNote>}
       </header>
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" disabled={busy || task.running} onClick={() => void act(() => client.runTask(computerId, task.id), t('ran'))}>
