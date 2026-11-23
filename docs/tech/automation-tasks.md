@@ -1,6 +1,6 @@
 # Automation tasks
 
-> **Status:** Plan — steps 1 to 3 built · **Updated:** 2026-11-23
+> **Status:** Plan — steps 1 to 4 built · **Updated:** 2026-11-23
 
 How a member manages and follows their computer's automation tasks (DSH's
 Schedule) from the web console and the phone: through DSH's own `schedule/*`
@@ -90,7 +90,8 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
 2. **The channel (built).** The allow-list and the shared refusal in the plugin;
    `relay-client` reads tasks, calls them, watches `schedule/changed`, and
    keeps `[SCHEDULE REMINDER]` messages as the user's turn with `reminders`;
-   `server/e2e` drives them against the real plugin. Gates everything after.
+   the plugin's host test (`tests/host/cloud.mjs`) drives them through its
+   bridge against a real DSH. Gates everything after.
 3. **The web console (built).** The alarm clock left of a computer's
    settings button in My DSH's column opens its tasks (`/teams/{teamId}/my-dsh/{hostId}/tasks[/{taskId}]`):
    the tasks grouped active, paused and ended, a task's detail with run now,
@@ -102,7 +103,12 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    deliver to it and makes one for it (`?session=`), and a delivered turn
    names its task. A new session's folder and preset are DSH's defaults; the
    form does not choose them yet.
-4. **The phone.** The same two places.
+4. **The phone (built, in the closed app where `premium/` exists).** An
+   alarm clock in the Sessions header opens the current computer's tasks
+   above the tabs: the list, a task with the same actions and deliveries,
+   and the form, a one-shot time typed as `YYYY-MM-DD HH:mm` in the phone's
+   zone. A session's header opens the tasks that send to it, with their
+   count, and a delivered turn names its task.
 5. **Cloud DSH.** The task page warns of a next run outside the computer's
    running window.
 
@@ -120,6 +126,6 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
 - The plugin's `tests/bridge.test.ts` holds the list and the shared refusal.
 - `relay-client`'s tests read a probed catalog, each miss and error, the
   refresh on `schedule/changed`, and a reminder in a session's history.
-- `server/e2e` creates, pauses, runs and deletes a task through the real
-  plugin and DSH, and sees the delivery in its session.
+- The plugin's host test creates, pauses, runs and deletes a task through
+  its bridge and a real DSH, and sees the delivery in its session.
 - Each screen is checked against a real computer on the web and on a phone.
