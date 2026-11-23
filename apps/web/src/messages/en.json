@@ -401,7 +401,7 @@
       "recentEmpty": "No configuration yet.",
       "resources": "Team resources",
       "updates": "Recent team updates",
-      "allResources": "All resources",
+      "openToolbox": "Open the team toolbox",
       "kind": {
         "model": "Model",
         "preset": "Preset",
@@ -443,8 +443,8 @@
         "budgetHint": "Points left under your limits",
         "members": "Members",
         "membersNote": "In this team",
-        "resources": "Team resources",
-        "resourcesNote": "{models} models · {presets} presets · {plugins} plugins"
+        "toolbox": "Team toolbox",
+        "toolboxNote": "{presets} presets · {plugins} plugins"
       },
       "dsh": {
         "title": "Connect your DSH",
@@ -567,14 +567,14 @@
       "waiting": "Something waits on you",
       "fold": "Hide the computers under {name}",
       "unfold": "Show the computers under {name}",
-      "resources": "Team resources",
-      "myUsage": "My usage",
+      "resources": "Team toolbox",
+      "myUsage": "Models and usage",
       "submissions": "My submissions",
       "myDsh": "My DSH",
       "hints": {
         "myDsh": "DSH on your own computer, listed here once it signs in to Teamwork. Pair this browser with it once to carry on its sessions here, end-to-end encrypted. Its model usage counts as yours. Only you can use it; the phones and browsers that reach it are listed here, and you can remove any of them.",
         "pages": "Reports, decks, dashboards and charts that agents in your DSH sessions published. Open one full screen, share it with teammates, or ask your agent for a new version.",
-        "resources": "The models, presets and plugins the team publishes to your DSH. Send a preset that works well for review, and once approved the whole team has it."
+        "resources": "The presets and plugins the team publishes to your DSH, each with its details. Send a preset that works well for review, and once approved the whole team has it."
       },
       "pages": "Pages"
     },
@@ -971,10 +971,7 @@
       "no": "No"
     },
     "resources": {
-      "description": "The models, presets and plugins your team provides, synced to your DSH. Its admin decides what changes; you can submit a new preset, a change to one, or a plugin for review.",
-      "models": "Models",
-      "modelsHint": "They appear among DSH's models as team models, called through the team's server; no key leaves it.",
-      "noModels": "The team has not published a model yet.",
+      "description": "The presets and plugins the team prepared for you, synced to your DSH. Changes are the team admin's call; you can submit a new preset, suggest a change to one or upload a plugin for the admin to review.",
       "presets": "Presets",
       "presetsHint": "Pick one when you start a session in DSH: it brings the role and model the team set up.",
       "noPresets": "The team has no presets yet.",
@@ -986,11 +983,12 @@
       "uploadPlugin": "Upload a plugin",
       "importPreset": "Import a preset",
       "manage": "Manage in Team assets",
-      "waiting": "{count} awaiting review"
+      "waiting": "{count} awaiting review",
+      "connect": "These presets and plugins show up in your own DSH. Yours is not connected yet: Home has the steps."
     },
     "myUsage": {
-      "title": "My usage",
-      "description": "Your own use of this team: the limits that hold you, what you spent, and on which models.",
+      "title": "Models and usage",
+      "description": "The team's models and their rates, and your own use of the team: the limits that apply to you, the points you spent and the models you spent them on.",
       "period": "Period",
       "days": "{count} days",
       "limits": "Your limits",
@@ -1017,9 +1015,12 @@
       "dayDetail": "{day} · {calls, plural, one {# call} other {# calls}}",
       "peak": "Busiest day: {points} points",
       "noUse": "Nothing used in this period.",
-      "byModel": "By model",
+      "models": "Models",
+      "modelsHint": "The models the team publishes to your DSH, called through the team's server, so keys never leave it. Open a model's rate for its price per million tokens.",
+      "noModels": "The team has published no models, and nothing was used in this period.",
       "columns": {
         "model": "Model",
+        "rate": "Rate",
         "calls": "Calls",
         "points": "Points",
         "share": "Share",

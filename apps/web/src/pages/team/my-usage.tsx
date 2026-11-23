@@ -1,10 +1,11 @@
 /**
- * My usage (`/teams/{teamId}/my-usage`), under Workspace for everyone, an
- * admin included (ADR 0049): the reader's own use of the team. First the
- * limits that apply to them now (`GET …/budgets`), then a period's totals,
- * each day's points and each model's (`GET …/usage/stats`, in the browser's
- * time zone), then their latest calls, with all of the period as CSV. Every
- * read names the reader, since an admin's unnamed read is the team's.
+ * Models and usage (`/teams/{teamId}/my-usage`), under Workspace for everyone,
+ * an admin included (ADR 0049): the team's models and the reader's own use of
+ * them. First the limits that apply to them now (`GET …/budgets`), then a
+ * period's totals, every team model with its rate and what the reader spent on
+ * it, each day's points (`GET …/usage/stats`, in the browser's time zone),
+ * then their latest calls, with all of the period as CSV. Every read names the
+ * reader, since an admin's unnamed read is the team's.
  */
 
 import { formatPoints } from '@dsh-teamwork/shared';
@@ -20,11 +21,12 @@ import { PageHeader } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { download, type Schemas } from '@/lib/api';
+import { download, type Schemas, type TeamConfig } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
+import { ModelRateButton } from './model-rate';
 
 type Stats = Schemas['UsageStats'];
 type Budgets = { policies: Schemas['BudgetPolicy'][]; windows: Schemas['BudgetWindow'][] };
@@ -48,9 +50,10 @@ export function TeamMyUsagePage() {
   const stats = useApi<Stats>(`teams/${team.id}/usage/stats?${period}&timezone=${encodeURIComponent(zone)}`);
   const budgets = useApi<Budgets>(`teams/${team.id}/budgets`);
   const recent = useApi<Page>(`teams/${team.id}/usage?${period}&size=10`);
+  const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
   const [exporting, setExporting] = useState(false);
 
-  const failed = (!stats.data && stats.error) || (!budgets.data && budgets.error);
+  const failed = (!stats.data && stats.error) || (!budgets.data && budgets.error) || (!configs.data && configs.error);
   if (failed) return <Failure message={word(failed)} />;
 
   return (
@@ -91,11 +94,11 @@ export function TeamMyUsagePage() {
         ))}
       </div>
 
-      {stats.data ? (
+      {stats.data && configs.data ? (
         <>
           <Totals stats={stats.data} />
+          <Models stats={stats.data} configs={configs.data} />
           <Daily stats={stats.data} />
-          <Sources stats={stats.data} />
         </>
       ) : (
         <section aria-busy="true" className="h-64 rounded-lg border" />
@@ -266,46 +269,78 @@ function Daily({ stats }: { stats: Stats }) {
   );
 }
 
-/** What each model, and each edition meter, spent in the period, most first. */
-function Sources({ stats }: { stats: Stats }) {
+type Model = Extract<TeamConfig, { kind: 'model' }>;
+type Source = Stats['sources'][number];
+
+/**
+ * Every team model, with its rate and what the reader spent on it in the period, most first and then the ones not
+ * used; then what they spent on a model since removed and on each edition meter, which have no rate to show.
+ */
+function Models({ stats, configs }: { stats: Stats; configs: TeamConfig[] }) {
+  const { team } = useTeam();
   const t = useTranslations('team.myUsage');
   const format = useFormatter();
   const locale = useLocale();
   const total = Number(stats.totals.points);
+  const models = configs.filter((c): c is Model => c.kind === 'model');
+  const spent = new Map(stats.sources.filter((s) => s.kind === 'model').map((s) => [s.key, s]));
+  const rows: { key: string; model?: Model; source?: Source }[] = [
+    ...models.map((model) => ({ key: model.id, model, source: spent.get(model.id) })),
+    ...stats.sources.filter((s) => s.kind === 'meter' || !models.some((m) => m.id === s.key)).map((source) => ({ key: `${source.kind}:${source.key}`, source })),
+  ].sort((a, b) => Number(b.source?.points ?? -1) - Number(a.source?.points ?? -1));
+  const used = (source: Source | undefined, value: (s: Source) => string) => (source ? value(source) : '—');
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle>{t('byModel')}</CardTitle>
+        <CardTitle>{t('models')}</CardTitle>
+        <p className="text-sm text-muted-foreground">{t('modelsHint')}</p>
       </CardHeader>
-      {stats.sources.length === 0 ? (
+      {rows.length === 0 ? (
         <CardContent>
-          <p className="text-sm text-muted-foreground">{t('noUse')}</p>
+          <p className="text-sm text-muted-foreground">{t('noModels')}</p>
         </CardContent>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="border-y bg-muted text-xs text-muted-foreground">
               <tr>
-                {(['model', 'calls', 'points', 'share', 'input', 'output'] as const).map((key) => (
-                  <th key={key} className={cn('px-4 py-2.5 font-medium', key !== 'model' && 'text-right')}>
+                {(['model', 'rate', 'calls', 'points', 'share', 'input', 'output'] as const).map((key) => (
+                  <th key={key} className={cn('px-4 py-2.5 font-medium', key !== 'model' && key !== 'rate' && 'text-right')}>
                     {t(`columns.${key}`)}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {stats.sources.map((s) => (
-                <tr key={`${s.kind}:${s.key}`} className="border-b last:border-b-0">
-                  <td className="px-4 py-3 font-medium">
-                    {s.kind === 'meter' ? (s.labels[locale] ?? s.name) : <span className="flex items-center gap-2"><ProviderMark hints={[s.name]} name={s.name} />{s.name}</span>}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{s.kind === 'meter' ? '—' : format.number(s.calls)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatPoints(s.points, locale)}</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">{total > 0 ? format.number(Number(s.points) / total, { style: 'percent', maximumFractionDigits: 1 }) : '—'}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{s.kind === 'meter' ? '—' : format.number(s.input)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{s.kind === 'meter' ? '—' : format.number(s.output)}</td>
-                </tr>
-              ))}
+              {rows.map(({ key, model, source }) => {
+                const meter = source?.kind === 'meter';
+                const name = model?.name ?? (meter ? (source.labels[locale] ?? source.name) : source?.name ?? '');
+                return (
+                  <tr key={key} className="border-b last:border-b-0">
+                    <td className="px-4 py-3">
+                      {meter ? (
+                        <span className="font-medium">{name}</span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <ProviderMark hints={model ? [model.data.model, model.name, model.data.provider] : [name]} name={name} />
+                          <span className="flex flex-col">
+                            <span className="font-medium">{name}</span>
+                            {model && <span className="text-xs text-muted-foreground">{model.data.model}</span>}
+                          </span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 py-3">
+                      {model && <ModelRateButton teamId={team.id} configId={model.id} name={model.name} admin={false} provider={model.data.provider} model={model.data.model} />}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{meter ? '—' : used(source, (s) => format.number(s.calls))}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{used(source, (s) => formatPoints(s.points, locale))}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">{source && total > 0 ? format.number(Number(source.points) / total, { style: 'percent', maximumFractionDigits: 1 }) : '—'}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{meter ? '—' : used(source, (s) => format.number(s.input))}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{meter ? '—' : used(source, (s) => format.number(s.output))}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -8,11 +8,11 @@ next to your own setup. In the console, your team opens on **Home**. Until your
 DSH is connected, it opens with the steps: sign in to Teamwork from DSH on your
 computer, then pair a browser (**My DSH**) or the phone app with it, each ticked
 off by itself as it happens. Below that are your own calls and budget
-for the last 30 days and what the team changed lately; **Team
-resources** lists what the team provides, with what you have sent for review
-under its **My submissions** link; and **My usage** shows the limits that apply
-to you, the points you spent by day and by model, and your latest calls, with a
-CSV of the period.
+for the last 30 days and what the team changed lately; the **Team toolbox**
+lists the team's presets and plugins, with what you have sent for review under
+its **My submissions** link; and **Models and usage** lists the team's models
+with their rates, then shows the limits that apply to you, the points you spent
+by model and by day, and your latest calls, with a CSV of the period.
 
 ## Start from a team preset
 
@@ -26,7 +26,8 @@ an update.
 ## Use a team model
 
 Team models appear among your models. Calls go through the team's server, so
-your computer needs no key. Your team's budget applies to them.
+your computer needs no key. Your team's budget applies to them. The console's
+**Models and usage** lists each team model's rate and what you spent on it.
 
 ## Install a pinned plugin
 
@@ -37,7 +38,7 @@ you confirm.
 ## Share what works
 
 Ask the team assistant to prepare a preset or plugin from your session, or
-submit one under **Team resources** in the console: upload a plugin, import a
+submit one in the console's **Team toolbox**: upload a plugin, import a
 preset file, or write a new preset or a change to one. An admin reviews
 the exact contents; once approved, everyone gets it at their next sync.
 

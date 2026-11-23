@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, renameComputer, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
+import { SignInSteps } from './connect-dsh';
 import { Conversation, DshColumns, PinGate, Presence, SessionList, useComputer, useRelayError } from './dsh-session';
 import { TasksPanel } from './dsh-tasks';
 import { useTeam } from './layout';
@@ -127,18 +128,28 @@ export function MyDshPage({ settings = false, tasks = false }: { settings?: bool
       list={(onPick) =>
         host ? (
           <SessionList computerId={computerId} base={`${base}/${host.id}`} unavailable={unavailable} sessions={sessions} sessionId={settings || tasks ? '' : sessionId} onPick={onPick} />
-        ) : (
-          hosts?.length === 0 && <p className="px-2.5 text-muted-foreground">{t('none')}</p>
-        )
+        ) : null
       }
     >
       {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
       {!host ? (
-        <section className="m-auto flex max-w-lg flex-col items-center gap-3 py-10 text-center">
-          <Laptop className="size-8 text-muted-foreground" aria-hidden />
-          <h2 className="text-xl font-semibold tracking-tight">{t('introTitle')}</h2>
-          <p className="text-sm text-muted-foreground">{hosts?.length === 0 ? t('none') : t('intro')}</p>
-        </section>
+        hosts?.length === 0 ? (
+          // No computer has signed in yet: how to sign one in, the same steps as Home's (./connect-dsh.tsx).
+          <section className="m-auto flex w-full max-w-lg flex-col gap-4 py-10">
+            <Laptop className="size-8 text-muted-foreground" aria-hidden />
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-semibold tracking-tight">{t('introTitle')}</h2>
+              <p className="text-sm text-muted-foreground">{t('none')}</p>
+            </div>
+            <SignInSteps />
+          </section>
+        ) : (
+          <section className="m-auto flex max-w-lg flex-col items-center gap-3 py-10 text-center">
+            <Laptop className="size-8 text-muted-foreground" aria-hidden />
+            <h2 className="text-xl font-semibold tracking-tight">{t('introTitle')}</h2>
+            <p className="text-sm text-muted-foreground">{t('intro')}</p>
+          </section>
+        )
       ) : settings ? (
         <SettingsView
           host={host}

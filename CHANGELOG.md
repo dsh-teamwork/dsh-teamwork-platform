@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — Team toolbox, and models with their usage
+
+- **What:** Workspace's *Team resources* is now the **Team toolbox** (`/teams/{teamId}/resources`, path unchanged): the team's presets and plugins, and, while none of the reader's computers has signed in, a line leading to connecting DSH. Its models moved to *My usage*, now **Models and usage** (`/my-usage`, path unchanged, since the plugin links to it), where one table lists every team model with its rate and what the reader spent on it in the period, then a removed model's and each edition meter's spend. My DSH with no computer shows the same sign-in steps as Home (`pages/team/connect-dsh.tsx`, now shared by Home, the team overview, My DSH and the toolbox). Home's last figure counts the toolbox's presets and plugins. The DSH plugin's panel says *team toolbox* where it said *team resources*.
+- **Why:** A member opens the toolbox to see what the team gives them to work with, and looks at models for what they cost and what they used.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/resources.tsx`, `apps/web/src/pages/team/my-usage.tsx`, `apps/web/src/pages/team/connect-dsh.tsx`, `apps/web/content/docs/*/members.md`.
+
 ## 2026-11-23 — Workspace puts the DSHs to work in first
 
 - **What:** A team's Workspace navigation now reads Home, My DSH, an edition's own DSH pages (the hosted service's cloud DSH), Shared pages, Team resources, My usage. My DSH is always listed, no longer only once a computer connected; with none it says how to connect one. Shared pages and Team resources carry a hint saying what each is for. `Section.visible` in the console shell is gone with its last use, and a section's `editions` places an edition's pages of its group right after it.

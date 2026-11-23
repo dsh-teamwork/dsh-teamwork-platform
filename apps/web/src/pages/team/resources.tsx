@@ -1,19 +1,20 @@
 /**
- * What the team provides (`/teams/{teamId}/resources`), under Work for
- * everyone (ADR 0043): its models, presets and pinned plugins as one read-only
- * catalogue, each with how it shows up in DSH, and a model's rate. Changing
- * them is Team assets's, the admin's alone; a member submits a preset, a
- * change to one or a plugin package here, for review, and follows what they
- * sent on My submissions (`/submissions`), one link away rather than a page of
- * the sidebar, since it is opened far less often.
+ * The team toolbox (`/teams/{teamId}/resources`), under Work for everyone
+ * (ADR 0043): the team's presets and pinned plugins as one read-only
+ * catalogue, each as it shows up in DSH, with a line leading to connecting DSH
+ * while the reader has not. Its models, with their rates, are on Models and
+ * usage (./my-usage.tsx), beside what they cost. Changing any of it is Team
+ * assets's, the admin's alone; a member submits a preset, a change to one or a
+ * plugin package here, for review, and follows what they sent on My
+ * submissions (`/submissions`), one link away rather than a page of the
+ * sidebar, since it is opened far less often.
  */
 
-import { ChevronRight, FileJson, FileUp, Upload } from 'lucide-react';
+import { ArrowRight, ChevronRight, FileJson, FileUp, Laptop, Upload } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useTranslations } from 'use-intl';
 
-import { ProviderMark } from '@/components/provider-mark';
 import { Failure } from '@/components/page';
 import { PresetAvatar } from '@/components/preset-avatar';
 import { PageHeader } from '@/components/team/console-shell';
@@ -22,8 +23,8 @@ import { Button } from '@/components/ui/button';
 import type { Schemas, TeamConfig } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 
+import { useOwnDsh } from './connect-dsh';
 import { useTeam } from './layout';
-import { ModelRateButton } from './model-rate';
 import { blankDraft, presetDraft, PresetEditor, type Draft } from './presets';
 import { PluginDialog, PresetDialog } from './sharing';
 
@@ -37,6 +38,7 @@ export function TeamResourcesPage() {
   const summary = useApi<Schemas['TeamSummary']>(`teams/${team.id}/summary`);
   // An admin changes presets in Team assets; a member submits here.
   const member = team.role === 'member';
+  const dsh = useOwnDsh();
   const [proposing, setProposing] = useState<{ draft: Draft; preset?: Extract<TeamConfig, { kind: 'preset' }> } | null>(null);
   // A file to send: a plugin package, or a preset exported from DSH.
   const [uploading, setUploading] = useState<'plugin' | 'preset' | null>(null);
@@ -69,7 +71,7 @@ export function TeamResourcesPage() {
             </div>
           ) : (
             <Button asChild variant="outline">
-              <Link to={`${base}/models`}>{t('manage')}</Link>
+              <Link to={`${base}/presets`}>{t('manage')}</Link>
             </Button>
           )
         }
@@ -79,13 +81,14 @@ export function TeamResourcesPage() {
         {waiting > 0 && <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-foreground tabular-nums">{t('waiting', { count: waiting })}</span>}
         <ChevronRight className="size-4" aria-hidden />
       </Link>
-      <Group title={t('models')} hint={t('modelsHint')} empty={t('noModels')}>
-        {of('model').map((m) => (
-          <Row key={m.id} name={m.name} detail={m.data.model} icon={<ProviderMark hints={[m.data.model, m.name, m.data.provider]} name={m.name} size="md" />}>
-            <ModelRateButton teamId={team.id} configId={m.id} name={m.name} admin={false} provider={m.data.provider} model={m.data.model} />
-          </Row>
-        ))}
-      </Group>
+      {/* Until one of the reader's computers signs in, none of this reaches them: say where it shows up, and how. */}
+      {dsh.hosts && !dsh.computer && (
+        <Link to={`${base}/home`} className="flex items-center gap-3 rounded-lg border bg-muted px-4 py-3 text-sm hover:bg-accent">
+          <Laptop className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="min-w-0 flex-1">{t('connect')}</span>
+          <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        </Link>
+      )}
       <Group title={t('presets')} hint={t('presetsHint')} empty={t('noPresets')}>
         {of('preset').map((p) => (
           <Row key={p.id} name={p.name} detail={p.data.description} icon={<PresetAvatar avatar={p.data.avatar} name={p.name} />}>
