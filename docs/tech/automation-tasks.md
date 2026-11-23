@@ -107,8 +107,8 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    alarm clock in the Sessions header opens the current computer's tasks
    above the tabs: the list, a task with the same actions and deliveries,
    and the form, a one-shot time typed as `YYYY-MM-DD HH:mm` in the phone's
-   zone. A session's header opens the tasks that send to it, with their
-   count, and a delivered turn names its task.
+   zone. Unlike the web, a session's header has no clock: the phone opens
+   tasks from the Sessions list alone. A delivered turn names its task.
 5. **Cloud DSH.** The task page warns of a next run outside the computer's
    running window.
 
