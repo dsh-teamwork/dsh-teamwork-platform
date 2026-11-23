@@ -389,7 +389,7 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 	}
 	s.token.Store(h.token)
 	if r.desktopWeb != nil && h.web && sharedID == "" {
-		defer r.desktopWeb.attach(hostID, userID, s)()
+		defer r.desktopWeb.attach(hostID, userID, h.name, s)()
 	}
 	s.send(map[string]string{"t": "welcome", "hostId": hostID})
 	defer r.hostLeft(hostID, s)
@@ -560,6 +560,10 @@ func (r *relay) answer(hostID string, q pluginRequest) reply {
 		if _, err = r.pairings.revoke(ctx, host(hostID), q.pairingID, now); err == nil {
 			r.ended(hostID, q.pairingID)
 		}
+	case "webRevoke":
+		if r.desktopWeb != nil {
+			r.desktopWeb.revoke(hostID)
+		}
 	}
 	var rej rejected
 	switch {
@@ -569,7 +573,7 @@ func (r *relay) answer(hostID string, q pluginRequest) reply {
 		slog.Error("relay: plugin request failed", "request", q.t, "error", err)
 		out.Value, out.Error = nil, "internal"
 	case out.Value == nil:
-		// decide and revoke answer `value: null`, as the plugin expects.
+		// decide, revoke and webRevoke answer `value: null`, as the plugin expects.
 		return reply{T: "reply", ID: q.id, Value: json.RawMessage("null")}
 	}
 	return out

@@ -128,9 +128,17 @@ func TestPluginNativeWeb(t *testing.T) {
 		}
 		authority, cookie := enter()
 		origin := "https://" + authority
+		// The ticket lands in the shell, which frames DSH under the Teamwork bar.
+		res = request(t, ctx, http.MethodGet, in.URL+"/__dsh/", authority, nil, http.Header{"Sec-Fetch-Site": {"same-origin"}, "Sec-Fetch-Dest": {"document"}, "Cookie": {cookie.String()}})
+		shell, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		if res.StatusCode != 200 || !strings.Contains(string(shell), `<iframe id="dsh" src="/"`) {
+			t.Fatalf("the shell: %d", res.StatusCode)
+		}
 		browser := func(method, path string, body io.Reader, extra http.Header) *http.Response {
 			t.Helper()
-			header := http.Header{"Sec-Fetch-Site": {"same-origin"}, "Cookie": {cookie.String() + "; stolen=1"}}
+			// As the shell's frame asks: DSH only ever runs one frame down (ADR 0065).
+			header := http.Header{"Sec-Fetch-Site": {"same-origin"}, "Sec-Fetch-Dest": {"iframe"}, "Cookie": {cookie.String() + "; stolen=1"}}
 			for name, values := range extra {
 				header[name] = values
 			}
@@ -201,6 +209,35 @@ func TestPluginNativeWeb(t *testing.T) {
 			if _, back, err := ws.Read(ctx); err != nil || !bytes.Equal(back, message) {
 				t.Fatalf("echo %d: %d bytes, %v", i, len(back), err)
 			}
+		}
+
+		// The computer's word ends the browser's access and keeps its link; a new ticket opens it again.
+		if _, err := io.WriteString(stdin, "disconnect\n"); err != nil {
+			t.Fatal(err)
+		}
+		if !lines.Scan() || lines.Text() != `{"revoked":true}` {
+			t.Fatalf("webRevoke: %q %v", lines.Text(), lines.Err())
+		}
+		res = browser(http.MethodGet, "/echo", nil, nil)
+		res.Body.Close()
+		if res.StatusCode != 404 {
+			t.Fatalf("the old cookie after webRevoke: %d", res.StatusCode)
+		}
+		authority, cookie = enter()
+		res = browser(http.MethodGet, "/echo", nil, nil)
+		res.Body.Close()
+		if res.StatusCode != 200 {
+			t.Fatalf("a new ticket after webRevoke: %d", res.StatusCode)
+		}
+		ws, _, err = websocket.Dial(ctx, "ws"+strings.TrimPrefix(in.URL, "http")+"/api/remote.mux", &websocket.DialOptions{
+			Host: authority, HTTPHeader: http.Header{"Cookie": {cookie.String()}, "Origin": {"https://" + authority}},
+		})
+		if err != nil {
+			t.Fatalf("a WebSocket after webRevoke: %v", err)
+		}
+		ws.SetReadLimit(1 << 20)
+		if _, _, err := ws.Read(ctx); err != nil {
+			t.Fatal(err)
 		}
 
 		// A reconnect ends the browser's access and its open streams; a new ticket opens it again.

@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Update the DSH Teamwork plugin for the model under the name.
 - **Refs:** `packages/relay-client/src/session-config.ts`, `apps/web/src/pages/team/dsh-session.tsx`, dsh-teamwork `src/platform-models.ts`.
 
+## 2026-11-23 — The native Web bar shows how long the session has lasted
+
+- **What:** The Teamwork bar above native DSH Web shows the session's age beside "End session" ("Connected for 1:02:03"; the time alone on a phone). `/__dsh/status` returns `sinceMs` in place of `endsAt`, which nothing read.
+- **Why:** The person using it sees how long the computer has been open to them.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0065, `docs/tech/relay.md` ("Native Web on a personal computer"), `server/relay/shell/`.
+
 ## 2026-11-22 — Kimi and MiniMax accounts by region and billing
 
 - **What:** The BYOK provider list offers Kimi and MiniMax as one tile each with a choice of region (mainland or international) and billing (pay as you go, or Kimi Coding Plan / MiniMax Token Plan), each its own Models.dev entry and address; a connected provider's card shows which. A provider is matched to its entry by name, then by address, so a renamed provider at a listed address reads its models there, and a plan sharing its address with metered billing is told apart by name. A lookup that finds nothing for a provider matching no entry says it searches exact IDs only. `PROVIDER_CATALOG` entries gain `vendor`, `region` and `billing`, and `catalogEntry` takes the provider (`name`, `baseUrl`).
@@ -36,6 +44,30 @@ are in `CLAUDE.md`, "The changelog".
 - **Breaking:** None.
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/dsh-session.tsx`.
+
+## 2026-11-22 — A computer can end its native Web sessions: webRevoke
+
+- **What:** The plugin may send the relay request `{ t: 'webRevoke', id }` on its control connection. The gateway draws a new generation for that computer, so every native Web cookie stops opening; it ends every session, with its requests and WebSockets, drops unspent tickets, and replies `value: null`. The control connection and the computer's phones stay.
+- **Why:** The owner at the computer can stop all use of native Web at once (ADR 0065).
+- **Breaking:** None. A plugin that sends it needs this server.
+- **Upgrade:** Deploy this server before releasing a plugin that sends `webRevoke`.
+- **Refs:** ADR 0065, `docs/tech/relay.md` ("Frames"), `server/relay/web.go`.
+
+## 2026-11-22 — Native Web opens inside a Teamwork bar
+
+- **What:** A native Web ticket now lands in a shell on the computer's own origin (`/__dsh/`). It frames DSH under a thin Teamwork bar with the computer, its connection, traffic per second, the last connect time, "Back to Teamwork" and "End session". A page opened at the top is redirected into the shell, and DSH may be framed by its own origin alone. The ticket request takes an optional `returnTo` (the member's My DSH page), which the console sends; a ticket asked with a Bearer returns to the phone app. The entry path moves from `/__dsh_desktop_enter` to `/__dsh/enter`.
+- **Why:** The person using it sees where they are and can leave or end it (ADR 0065).
+- **Breaking:** None for clients: they open the URL the ticket returns.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0065, `docs/tech/relay.md` ("Native Web on a personal computer"), `server/relay/web_shell.go`.
+
+## 2026-11-22 — Native Web access ends when idle, and only its client may use it
+
+- **What:** Entering native DSH Web starts a session the gateway keeps per computer (at most sixteen). It ends after thirty minutes with no traffic, eight hours after entry, or at the first request from another User-Agent than the one that entered; its open requests and WebSockets close with it. The cookie names the session.
+- **Why:** The access cookie lived eight hours whether used or not, and opened the computer from any client that held it (ADR 0065).
+- **Breaking:** Native Web opened before this deploy must be entered again from My DSH.
+- **Upgrade:** Nothing.
+- **Refs:** ADR 0065, `docs/tech/relay.md` ("Native Web on a personal computer"), `server/relay/web.go`.
 
 ## 2026-11-22 — Native Web's live connection opens in Chromium
 

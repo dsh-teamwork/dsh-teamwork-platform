@@ -1,3 +1,13 @@
 {
-  "waiting": "The agent on {computer} needs your attention."
+  "waiting": "The agent on {computer} needs your attention.",
+  "shell.back": "Back to Teamwork",
+  "shell.end": "End session",
+  "shell.connected": "Connected",
+  "shell.reconnecting": "Reconnecting",
+  "shell.dial": "connect {ms} ms",
+  "shell.since": "Connected for",
+  "shell.ended": "This session has ended. Open native DSH Web again from Teamwork.",
+  "shell.closedTitle": "Native DSH Web is closed",
+  "shell.closedBody": "This session has ended, or this link is not yours. Open native DSH Web again from My DSH in Teamwork.",
+  "shell.openTeamwork": "Open Teamwork"
 }

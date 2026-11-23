@@ -3,7 +3,8 @@
 // "Native Web on a personal computer"). web_test.go plays the browser and
 // starts the server; this script is the computer. It prints one JSON line,
 // {"host": "<hostId>"}, each time the link connects, reconnects when it reads
-// "reconnect" on stdin, and stops when stdin ends.
+// "reconnect" on stdin, sends the relay webRevoke and prints {"revoked": true}
+// when it reads "disconnect", and stops when stdin ends.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
@@ -95,6 +96,11 @@ const link = new RelayLink({
 link.refresh();
 
 for await (const line of createInterface({ input: process.stdin })) {
+  if (line === 'disconnect') {
+    assert.equal(await link.request({ t: 'webRevoke' }), null);
+    console.log(JSON.stringify({ revoked: true }));
+    continue;
+  }
   assert.equal(line, 'reconnect');
   link.refresh();
 }

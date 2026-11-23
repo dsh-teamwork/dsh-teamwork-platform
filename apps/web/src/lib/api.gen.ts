@@ -3865,7 +3865,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Issue a one-time entry ticket for the owner's online native DSH Web */
+        /**
+         * Issue a one-time entry ticket for the owner's online native DSH Web
+         * @description Spending it starts a session (ADR 0065) whose Teamwork bar leads back to returnTo, the member's own My DSH page, for a browser; to the phone app for a Bearer; else to the console's home.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -3875,7 +3878,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        returnTo?: string;
+                    };
+                };
+            };
             responses: {
                 /** @description URL to open within one minute */
                 200: {
@@ -3889,6 +3898,7 @@ export interface paths {
                         };
                     };
                 };
+                400: components["responses"]["Error"];
                 401: components["responses"]["Error"];
                 404: components["responses"]["Error"];
                 429: components["responses"]["Error"];
