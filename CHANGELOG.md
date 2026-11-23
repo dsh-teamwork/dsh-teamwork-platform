@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-23 — Team management as a sheet; the PIN and pairing code drawn as the app draws them
 
-- **What:** In a team's sidebar, Team management is a sheet laid over the workspace: a raised ground, rounded top corners and a shadow cast upward. The web console's PIN prompt now matches the phone app's: a lock on its tile, four rings that fill with dots, and the fourth digit sends it, with no Continue button. Pairing a browser in My DSH uses the same prompt: an icon on its tile, one box per character split in two halves as the computer shows the code, sent when the last character is typed, and the safety code in a card of its own.
+- **What:** In a team's sidebar, Team management is a sheet laid over the workspace, with rounded top corners and a shadow cast upward: a navy strip while folded, a raised plain ground once open. The web console's PIN prompt now matches the phone app's: a lock on its tile, four rings that fill with dots, and the fourth digit sends it, with no Continue button. Pairing a browser in My DSH uses the same prompt: an icon on its tile, one box per character split in two halves as the computer shows the code, sent when the last character is typed, and the safety code in a card of its own.
 - **Why:** The two parts of the sidebar read as one list, and the web and phone asked for the same codes in two different ways.
 - **Breaking:** None.
 - **Upgrade:** Nothing.

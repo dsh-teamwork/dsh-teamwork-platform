@@ -314,9 +314,11 @@ a person or a character, which at this size reads as clip art.
   my usage, an edition's work pages); for the admin, *Team management* at the foot, opening on the
   team overview, then *Team assets* (models, presets, plugins, Team DSH,
   review, versions) and *Members and spend* (members, usage, budgets).
-  Team management is a sheet laid over the workspace: the page ground in
-  light (the sidebar's own in dark), rounded top corners and a shadow cast
-  upward. The account is one menu at its foot; below `md` the sidebar is a sheet
+  Team management is a sheet laid over the workspace, with rounded top
+  corners and a shadow cast upward. Folded, it is a `--brand` strip, the
+  admin's entry in the team's colour; open, it turns to the page ground in
+  light (the sidebar's own in dark), so what is read inside it never
+  outweighs the workspace. The account is one menu at its foot; below `md` the sidebar is a sheet
   behind a menu button (`apps/web/src/components/team/console-shell.tsx`).
 - **A code is typed into slots, the same on the web and the phone.** A
   computer's PIN and a pairing code open with an icon on a `--secondary`
