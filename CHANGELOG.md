@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — A new team's assistant is prompted in its creator's language
+
+- **What:** Creating a team now writes its built-in assistant's prompt in the creator's language too, as its name and description already were (`server/internal/team/assistant.json`, `systemPrompt` per locale). The Chinese prompt says what the English one says, and both still ask the model to answer in each user's language. Existing teams keep the prompt they were given.
+- **Why:** A Chinese-speaking admin opening the assistant's details saw an English prompt among Chinese fields.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/internal/team/assistant.go`, `server/internal/httpapi/assistant_test.go`.
+
 ## 2026-11-23 — Team toolbox, and models with their usage
 
 - **What:** Workspace's *Team resources* is now the **Team toolbox** (`/teams/{teamId}/resources`, path unchanged): the team's presets and plugins, and, while none of the reader's computers has signed in, a line leading to connecting DSH. Each preset and plugin opens its details in a dialog (every field, as the review reads it), where a member suggests a change to a preset. My submissions is no longer a page (`/teams/{teamId}/submissions` is gone) but a dialog opened from the toolbox's header, shown once the reader has sent anything, or by `?submissions` from Home; the review queue keeps `/sharing`. Its models moved to *My usage*, now **Models and usage** (`/my-usage`, path unchanged, since the plugin links to it), where one table lists every team model with its rate and what the reader spent on it in the period, then a removed model's and each edition meter's spend. My DSH with no computer shows the same sign-in steps as Home, alone, without its column of sessions (`pages/team/connect-dsh.tsx`, now shared by Home, the team overview, My DSH and the toolbox). Home's last figure counts the toolbox's presets and plugins. The DSH plugin's panel says *team toolbox* where it said *team resources*.

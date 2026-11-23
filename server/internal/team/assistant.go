@@ -21,14 +21,13 @@ func builtinName(v *string) string {
 }
 
 // provisionAssistant belongs to the team creation transaction, not a sync hook.
-// Its name and description are written once, in the creator's language
-// (wire.Locales; anything else reads English), and stay as written: they are
-// the team's preset from then on. The prompt is English and asks the model to
-// answer in the user's language.
+// Its name, description and prompt are written once, in the creator's
+// language (wire.Locales; anything else reads English), and stay as written:
+// they are the team's preset from then on, which its admin may edit. The
+// prompt still asks the model to answer in each user's own language.
 func provisionAssistant(ctx context.Context, client *ent.Client, teamID, teamName, locale string) error {
 	var text struct {
-		Name, Description map[string]string
-		SystemPrompt      string
+		Name, Description, SystemPrompt map[string]string
 	}
 	if err := json.Unmarshal(assistantCopy, &text); err != nil {
 		return err
@@ -37,7 +36,7 @@ func provisionAssistant(ctx context.Context, client *ent.Client, teamID, teamNam
 		locale = "en"
 	}
 	name := strings.Replace(text.Name[locale], "{team}", teamName, 1)
-	data := wire.PresetData{InheritModel: true, Avatar: "assistant", Description: text.Description[locale], SystemPrompt: text.SystemPrompt, RequiredTools: []string{}, OptionalTools: []string{}, PluginDependencies: []wire.PluginDependency{}}
+	data := wire.PresetData{InheritModel: true, Avatar: "assistant", Description: text.Description[locale], SystemPrompt: text.SystemPrompt[locale], RequiredTools: []string{}, OptionalTools: []string{}, PluginDependencies: []wire.PluginDependency{}}
 	encoded, err := json.Marshal(data)
 	if err != nil {
 		return err
