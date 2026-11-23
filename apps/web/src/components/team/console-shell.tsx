@@ -277,8 +277,8 @@ export function ConsoleShell({
  * Workspace at the top; for the team's admin, Team management at the foot of
  * the sidebar, folded by default so the two read apart: its toggle sits just
  * above the account row and opens Team assets and Members and spend above it.
- * It opens by itself on one of its pages, and a waiting review shows on the
- * toggle while it is folded. An edition's entries join the group they name.
+ * It starts folded, on its own pages too, where the folded toggle carries the
+ * selected bar; a waiting review shows on the toggle while it is folded. An edition's entries join the group they name.
  */
 function Navigation({ team, section, waiting, onNavigate }: { team: Team; section: string; waiting: Waiting; onNavigate?: () => void }) {
   const t = useTranslations('team');
@@ -289,13 +289,8 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   // A section with `visible` is listed once it says yes, or while the person is on it.
   const listed = (s: Section) => !s.visible || answered.includes(s.path) || s.path === section;
   const managing = GROUPS.some((group) => group.key !== 'work' && group.sections.some((s) => s.path === section)) || pages.some((page) => page.group !== 'work' && navPath(page) === section);
-  // Opening one of its pages opens it again, adjusted while rendering rather than in an effect.
-  const [open, setOpen] = useState(managing);
-  const [wasManaging, setWasManaging] = useState(managing);
-  if (managing !== wasManaging) {
-    setWasManaging(managing);
-    if (managing) setOpen(true);
-  }
+  // Folded until the admin opens it; it stays as they leave it while they move between pages.
+  const [open, setOpen] = useState(false);
 
   const link = (path: string, label: string, icon: LucideIcon, inside: boolean, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
     Subnav ? (
@@ -327,27 +322,38 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
     <Tooltip.Provider delayDuration={200}>
       <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
         <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4">{group(GROUPS[0])}</div>
-        {/* Team management sits apart from the workspace, as a sheet laid over it: rounded top corners and a shadow cast
-            upward onto the workspace. Folded, it is a navy strip, the admin's entry in the team's colour; open, it turns
-            to a raised plain ground, so what is read inside it does not outweigh the workspace (ADR 0043). Open, it
-            takes at most half the sidebar's height and scrolls inside, so the workspace stays in view. */}
+        {/* Team management sits apart from the workspace, as a navy sheet laid over it: the team's colour, rounded top
+            corners and a shadow cast upward onto the workspace. Its tokens are redrawn in the navy's foreground, so the
+            rows inside, their hover and the selected bar follow. Its pages slide open above the toggle and fold away
+            again (a grid row eased between 0fr and 1fr); open, it takes at most half the sidebar's height and scrolls
+            inside, so the workspace stays in view. */}
         {team.role === 'admin' && (
-          <div
-            className={cn(
-              'relative z-10 mt-auto flex max-h-[50dvh] shrink-0 flex-col gap-4 rounded-t-xl py-3 transition-colors motion-reduce:transition-none',
-              open
-                ? 'border-t bg-background shadow-[0_-6px_16px_-6px_rgb(0_0_0/0.12)] dark:bg-muted dark:shadow-[0_-8px_20px_-4px_rgb(0_0_0/0.6)]'
-                : // The navy strip redraws the row's tokens in the navy's foreground, so its hover and text follow.
-                  'bg-brand text-foreground shadow-[0_-6px_16px_-6px_rgb(0_0_0/0.25)] dark:shadow-[0_-8px_20px_-4px_rgb(0_0_0/0.6)] [--accent:color-mix(in_oklab,var(--brand-foreground)_14%,transparent)] [--foreground:var(--brand-foreground)] [--muted-foreground:color-mix(in_oklab,var(--brand-foreground)_70%,transparent)] [--ring:var(--brand-foreground)]',
-            )}
-          >
-            {open && <div id="team-management" className="scrollbar-quiet flex min-h-0 flex-col gap-4 overflow-y-auto px-3">{GROUPS.slice(1).map(group)}</div>}
-            <div className="px-3">
-              <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'w-full font-medium')}>
+          <div className="relative z-10 mt-auto flex max-h-[50dvh] shrink-0 flex-col rounded-t-xl bg-brand pb-3 text-foreground shadow-[0_-6px_16px_-6px_rgb(0_0_0/0.25)] dark:shadow-[0_-8px_20px_-4px_rgb(0_0_0/0.6)] [--accent:color-mix(in_oklab,var(--brand-foreground)_12%,transparent)] [--foreground:var(--brand-foreground)] [--muted-foreground:color-mix(in_oklab,var(--brand-foreground)_65%,transparent)] [--ring:var(--brand-foreground)] [--secondary:color-mix(in_oklab,var(--brand-foreground)_16%,transparent)]">
+            <div
+              className={cn(
+                'grid min-h-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none',
+                open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+              )}
+            >
+              {/* Folded, its pages are out of the tab order and hidden from a screen reader as well as from sight. */}
+              <div id="team-management" inert={!open} className="scrollbar-quiet min-h-0 overflow-y-auto [--brand:var(--brand-foreground)]">
+                {/* Padded inside, so the folded row is truly empty. */}
+                <div className="flex flex-col gap-4 px-3 pt-3 pb-1">{GROUPS.slice(1).map(group)}</div>
+              </div>
+            </div>
+            <div className="px-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                aria-expanded={open}
+                aria-controls="team-management"
+                // Folded while the person is on one of its pages, the toggle carries the selected bar instead.
+                className={cn(item, 'w-full font-medium', !open && managing && 'bg-secondary before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-foreground')}
+              >
                 <ShieldCheck className="size-4" aria-hidden />
                 <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
                 {!open && waiting.overview && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
-                <ChevronUp className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
+                <ChevronUp className={cn('size-4 text-muted-foreground transition-transform duration-300 motion-reduce:transition-none', open && 'rotate-180')} aria-hidden />
               </button>
             </div>
           </div>
