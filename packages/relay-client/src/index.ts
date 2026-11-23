@@ -18,6 +18,7 @@ export * from './protocol';
 export * from './secure-channel';
 export * from './server-address';
 export * from './session';
+export * from './session-view';
 export * from './session-config';
 export * from './types';
 export * from './uploads';

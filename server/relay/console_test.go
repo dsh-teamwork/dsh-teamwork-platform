@@ -199,7 +199,7 @@ func TestConsoleDeletesAComputer(t *testing.T) {
 
 // The web console renames one of the member's own computers, and the name
 // holds when the computer connects again announcing its own. It reaches no
-// other member's computer, an app's token renames none, and a name is 1 to 100
+// other member's computer, a phone needs a current confirmed pairing, and a name is 1 to 100
 // characters once trimmed.
 func TestConsoleRenamesAComputer(t *testing.T) {
 	each(t, func(t *testing.T, w *world) {
@@ -221,8 +221,28 @@ func TestConsoleRenamesAComputer(t *testing.T) {
 			return res.StatusCode
 		}
 
-		if status, _ := w.call(w.adaPhone, "PATCH", "/relay/hosts/"+pc, obj{"name": "Studio"}); status != 403 {
-			t.Fatalf("app rename %d", status)
+		phoneRename := func(h handset, id string) int {
+			status, _ := w.call(h, "PATCH", "/relay/hosts/"+id, obj{"name": "Studio"})
+			return status
+		}
+		pairing := w.paired(w.adaID, pc, false)
+		if got := phoneRename(w.adaPhone, pc); got != 404 {
+			t.Fatalf("pending handset: %d", got)
+		}
+		w.r.db.RelayPairing.UpdateOneID(pairing).SetConfirmedAt(time.Now()).ExecX(w.r.ctx)
+		if got := phoneRename(w.adaPhone, pc); got != 204 {
+			t.Fatalf("confirmed handset: %d", got)
+		}
+		if got := phoneRename(handset{w.ada, keyB}, pc); got != 404 {
+			t.Fatalf("other handset: %d", got)
+		}
+		w.paired(w.adaID, bobHost, true)
+		if got := phoneRename(w.adaPhone, bobHost); got != 404 {
+			t.Fatalf("another owner's host: %d", got)
+		}
+		w.r.db.RelayPairing.UpdateOneID(pairing).SetRevokedAt(time.Now()).ExecX(w.r.ctx)
+		if got := phoneRename(w.adaPhone, pc); got != 404 {
+			t.Fatalf("revoked handset: %d", got)
 		}
 		if status := rename(bobID, pc, "Studio"); status != 404 {
 			t.Fatalf("other member's computer %d", status)
