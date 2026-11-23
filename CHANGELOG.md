@@ -37,6 +37,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** `apps/web/src/pages/team/overview.tsx`, `apps/web/content/docs/*/admins.md`, `apps/web/content/docs/*/members.md`.
 
+## 2026-11-23 — Escape folds Team management
+
+- **What:** Escape dismisses the topmost dialog first, then folds Team management on the next press. In the narrow sidebar, another press closes the navigation drawer.
+- **Why:** Keyboard dismissal follows the order of the open layers.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/team/console-shell.tsx`.
+
 ## 2026-11-23 — Team management as a sheet; the PIN and pairing code drawn as the app draws them
 
 - **What:** In a team's sidebar, Team management is a navy sheet laid over the workspace, with rounded top corners and a shadow cast upward. It starts folded, as a low strip whose toggle blends into the navy, even on its own pages, and its pages slide open and fold away; Alt+M (Option+M on a Mac), shown on its toggle, toggles it, and choosing a Workspace page folds it. The web console's PIN prompt now matches the phone app's: a lock on its tile, four rings that fill with dots, and the fourth digit sends it, with no Continue button. Pairing a browser in My DSH uses the same prompt: an icon on its tile, one box per character split in two halves as the computer shows the code, sent when the last character is typed, and the safety code in a card of its own.
