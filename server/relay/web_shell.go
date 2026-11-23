@@ -67,6 +67,7 @@ func (d *desktopWeb) shell(w http.ResponseWriter, req *http.Request, host *deskt
 			"Back":      template.URL(session.back),
 			"Words":     string(encoded),
 			"BackLabel": said["shell.back"], "EndLabel": said["shell.end"], "EndedLabel": said["shell.ended"],
+			"SinceLabel": said["shell.since"],
 		})
 	case req.Method == http.MethodGet && (req.URL.Path == desktopWebShell+"bar.js" || req.URL.Path == desktopWebShell+"bar.css"):
 		http.ServeFileFS(w, req, shellFiles, "shell/"+strings.TrimPrefix(req.URL.Path, desktopWebShell))
@@ -80,7 +81,7 @@ func (d *desktopWeb) shell(w http.ResponseWriter, req *http.Request, host *deskt
 		writeJSON(w, http.StatusOK, map[string]any{
 			"name": host.name, "connected": host.socket.ctx.Err() == nil,
 			"up": session.up.Load(), "down": session.down.Load(), "dialMs": dial,
-			"endsAt": session.entered.Add(desktopWebLife).UTC().Format(time.RFC3339),
+			"sinceMs": time.Since(session.entered).Milliseconds(),
 		})
 	case req.Method == http.MethodPost && req.URL.Path == desktopWebShell+"end":
 		d.mu.Lock()

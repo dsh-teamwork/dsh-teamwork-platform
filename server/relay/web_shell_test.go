@@ -136,10 +136,11 @@ func TestDesktopWebShell(t *testing.T) {
 			Connected bool
 			Up, Down  int64
 			DialMs    *int64
+			SinceMs   *int64
 		}
 		r := call(http.MethodGet, desktopWebShell+"status", host, http.Header{"Sec-Fetch-Site": {"same-origin"}}, cookie, nil)
 		json.Unmarshal([]byte(r.body), &status)
-		if r.code != 200 || status.Name != "Desktop" || !status.Connected || status.Up == 0 || status.Down == 0 || status.DialMs == nil {
+		if r.code != 200 || status.Name != "Desktop" || !status.Connected || status.Up == 0 || status.Down == 0 || status.DialMs == nil || status.SinceMs == nil || *status.SinceMs < 0 {
 			t.Fatalf("status: %d %s", r.code, r.body)
 		}
 		desktopWebIdle = 400 * time.Millisecond
