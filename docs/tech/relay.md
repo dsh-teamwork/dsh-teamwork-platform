@@ -637,6 +637,8 @@ the hosted edition, Cloud DSH.
   then shown in their groups. Until the computer answers, the column says why
   it lists nothing (offline, not paired, PIN, connecting). Each session's menu
   pins, renames, copies its id and archives it ("The allow-list" above).
+  Above them, **Automation tasks** opens the computer's DSH Schedule in the
+  right column ([automation-tasks.md](automation-tasks.md)).
 - **The right column** follows the computer's state, one at a time, and only
   the last offers a session: offline (open DSH on it, or remove the
   computer);

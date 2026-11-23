@@ -60,6 +60,7 @@ import { useTeam } from './layout';
 import { SessionFiles, type FileTarget } from './session-files';
 import { SessionMarkdown } from './session-markdown';
 import { DeliverableCard, SessionSteps, WorkToggle } from './session-work';
+import { ReminderNote, SessionTasks, useTasks } from './dsh-tasks';
 
 /** What the session parts speak to: a computer's sessions and its PIN. */
 export type SessionClient = Pick<
@@ -68,17 +69,18 @@ export type SessionClient = Pick<
   | 'uploadCapabilities' | 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'cancel' | 'prompt' | 'answer'
   | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission' | 'listFiles' | 'searchFiles' | 'readFile' | 'readDocument'
   | 'watchPin' | 'unlock' | 'setPin'
+  | 'listTasks' | 'watchTasks' | 'createTask' | 'updateTask' | 'deleteTask' | 'runTask' | 'taskHistory'
 >;
 
 /** A client a page provides in place of this browser's relay, for computers it reaches another way. */
 export const SessionClientContext = createContext<SessionClient | null>(null);
 
-function useSessionClient(): SessionClient {
+export function useSessionClient(): SessionClient {
   const { me } = useTeam();
   return useContext(SessionClientContext) ?? relayFor(me);
 }
 
-const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'image_too_large', 'image_model_unsupported', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused', 'not_text', 'document_too_large', 'document_empty', 'preview_unavailable', 'preview_unsupported']);
+const WORDED = new Set(['file_type', 'file_name', 'file_too_large', 'image_too_large', 'image_model_unsupported', 'invalid_upload', 'upload_expired', 'upload_failed', 'upload_cancelled', 'upload_unsupported', 'send_uncertain', 'offline', 'not_found', 'busy', 'stale', 'locked', 'invite_refused', 'device_key_changed', 'device_verification_required', 'no_directory', 'not_authenticated', 'missing_tools', 'missing_plugins', 'preset_unavailable', 'model_unavailable', 'invalid_request', 'permission_refused', 'not_text', 'document_too_large', 'document_empty', 'preview_unavailable', 'preview_unsupported', 'schedule_unavailable', 'schedule_conflict', 'schedule_ended', 'schedule_invalid', 'target_archived']);
 
 /** A relay failure in the reader's words; anything unforeseen is "unavailable". */
 export function useRelayError() {
@@ -413,7 +415,7 @@ export function Presence({ online, label }: { online: boolean; label?: string })
  * address catches up with it, so its first message is not drawn a second time; any other change of `sessionId`
  * (another session, or a new one again) opens a fresh view.
  */
-export function Conversation({ computerId, sessionId, title, name, started }: { computerId: string; sessionId: string; title: string; name: string; started: (sessionId: string) => void }) {
+export function Conversation({ computerId, sessionId, title, name, started, tasks }: { computerId: string; sessionId: string; title: string; name: string; started: (sessionId: string) => void; tasks?: string }) {
   const [born, setBorn] = useState<string | null>(null);
   const [round, setRound] = useState(0);
   const [last, setLast] = useState(sessionId);
@@ -432,6 +434,7 @@ export function Conversation({ computerId, sessionId, title, name, started }: { 
       sessionId={sessionId}
       title={title}
       name={name}
+      tasks={tasks}
       started={(id) => {
         setBorn(id);
         started(id);
@@ -440,8 +443,12 @@ export function Conversation({ computerId, sessionId, title, name, started }: { 
   );
 }
 
-/** One session's view: its conversation, what it waits on the member for, and the composer, centred until it starts. */
-function SessionView({ computerId, sessionId, title, name, started }: { computerId: string; sessionId: string; title: string; name: string; started: (sessionId: string) => void }) {
+/**
+ * One session's view: its conversation, what it waits on the member for, and the composer, centred until it starts.
+ * `tasks`, the computer's automation tasks' address where it has them, adds the session's tasks to its header and
+ * names the task behind each delivery.
+ */
+function SessionView({ computerId, sessionId, title, name, started, tasks }: { computerId: string; sessionId: string; title: string; name: string; started: (sessionId: string) => void; tasks?: string }) {
   const { team } = useTeam();
   const t = useTranslations('team.dsh');
   const word = useRelayError();
@@ -451,6 +458,8 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
   const [state, setState] = useState<SessionState>(EMPTY_SESSION);
   const [options, setOptions] = useState<SessionOptions>({});
   const [config, setConfig] = useConfiguration(computerId, id);
+  // A delivery names its task; only a computer whose tasks this page shows is asked for them.
+  const { tasks: taskList } = useTasks(tasks ? computerId : '');
   const files = useFiles(computerId);
   // The first message, shown until the session's own copy of it arrives.
   const [sent, setSent] = useState('');
@@ -531,6 +540,7 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
         <header className="flex flex-col gap-1">
           <div className="flex items-start gap-2">
             <h2 className="min-w-0 flex-1 text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{id ? title : t('newTitle')}</h2>
+            {id && tasks && <SessionTasks tasks={taskList} sessionId={id} base={tasks} />}
             {id && config?.files && (
               <Button type="button" variant="outline" size="sm" aria-expanded={filesOpen} onClick={() => setFilesOpen(!filesOpen)}>
                 <FolderOpen aria-hidden />
@@ -573,6 +583,9 @@ function SessionView({ computerId, sessionId, title, name, started }: { computer
                     ))}
                   </ul>
                 ) : null}
+                {row.reminders?.map((reminder) => (
+                  <ReminderNote key={`${reminder.scheduleId}-${reminder.occurrenceAt}`} occurrenceAt={reminder.occurrenceAt} task={taskList?.find((task) => task.id === reminder.scheduleId)} base={tasks} />
+                ))}
                 {row.text && <p className="rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>}
               </div>
             ) : row.kind === 'page' ? (

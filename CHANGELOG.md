@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — Automation tasks in My DSH
+
+- **What:** My DSH's column opens **Automation tasks** above a computer's sessions (`/teams/{teamId}/my-dsh/{hostId}/tasks[/{taskId}]`, `apps/web/src/pages/team/dsh-tasks.tsx`): the computer's tasks grouped active, paused and ended; a task's repeat, next run, run now, pause and resume, edit, delete and deliveries; and a form for once, every N minutes, daily, weekly or cron in a named time zone, sent to a reused new session, a new session each run or an existing one. A session's header lists the tasks that send to it and makes one for it, and a delivered instruction names its task. `SessionClient` gains the seven task methods. The members' `/docs` page describes it in both languages.
+- **Why:** The third step of `docs/tech/automation-tasks.md`: a member manages a computer's automation tasks from the browser.
+- **Breaking:** An edition's own `SessionClient` (a server that reaches a computer itself) implements the task methods when it merges this.
+- **Upgrade:** Nothing on the server. A computer needs the DSH Teamwork plugin with the `schedule/*` calls; with an older one the page asks for an update.
+- **Refs:** ADR 0066, `docs/tech/automation-tasks.md`, `apps/web/src/pages/team/dsh-tasks.tsx`.
+
 ## 2026-11-23 — Automation tasks through the paired channel
 
 - **What:** A paired device may manage a personal computer's automation tasks, DSH's Schedule: the plugin passes `schedule/catalog`, `history`, `create`, `edit` and `run` on unchanged, and answers each `teamwork/schedule_unavailable` on a shared DSH. `@dsh-teamwork/relay-client` reads them (`schedule.ts`: `listTasks`, `watchTasks` on `schedule/changed`, `createTask`, `updateTask`, `deleteTask`, `runTask`, `taskHistory` on `RelayClient`), with new error codes `schedule_unavailable`, `schedule_conflict`, `schedule_ended`, `schedule_invalid` (DSH's reason in `RelayError.detail`) and `target_archived`. A task's delivery now shows in its session as the member's turn, its instructions as `text` and the task in `reminders`; DSH's `[SCHEDULE CHANGE]` notices stay hidden. No screen manages tasks yet.

@@ -1,6 +1,6 @@
 # Automation tasks
 
-> **Status:** Plan · **Updated:** 2026-11-23
+> **Status:** Plan — steps 1 to 3 built · **Updated:** 2026-11-23
 
 How a member manages and follows their computer's automation tasks (DSH's
 Schedule) from the web console and the phone: through DSH's own `schedule/*`
@@ -78,7 +78,7 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
 | --- | --- |
 | The allow-list, and the refusal on a shared DSH | the plugin's `src/bridge.ts`, held by `tests/bridge.test.ts` |
 | Tasks read into a client's shapes, the calls, the refresh on `schedule/changed`, reminders in a session | `packages/relay-client` (`schedule.ts`, `dsh-sessions.ts`, `dsh.ts`) |
-| The task page and the session header | `apps/web/src/pages/team/my-dsh.tsx`, `dsh-session.tsx` |
+| The task page, the session header and the reminder note | `apps/web/src/pages/team/dsh-tasks.tsx`, mounted by `my-dsh.tsx` and `dsh-session.tsx` |
 | The same on the phone | `premium/apps/mobile`, where that directory exists |
 
 ## Order of work
@@ -87,12 +87,21 @@ five are the ones passed on; DSH's `list`, `view`, `deliveryLimits` and
    to the bridge's identity, `$events` carried `schedule/changed` with no
    arguments, and a delivery arrived as a `user/message` with
    `source.kind: 'schedule'`.
-2. **The channel.** The allow-list and the shared refusal in the plugin;
+2. **The channel (built).** The allow-list and the shared refusal in the plugin;
    `relay-client` reads tasks, calls them, watches `schedule/changed`, and
    keeps `[SCHEDULE REMINDER]` messages as the user's turn with `reminders`;
    `server/e2e` drives them against the real plugin. Gates everything after.
-3. **The web console.** The task page under a computer, and the session
-   header and reminder card.
+3. **The web console (built).** My DSH's column opens **Automation tasks**
+   above the sessions (`/teams/{teamId}/my-dsh/{hostId}/tasks[/{taskId}]`):
+   the tasks grouped active, paused and ended, a task's detail with run now,
+   pause and resume, edit, delete and its deliveries, and the form (once,
+   every N minutes, daily, weekly or cron in a named zone; a reused new
+   session, a new one each run, or an existing session). An edit sends a
+   destination only when it changed, since sending `new_once` again reserves
+   another session (`taskPatchOf`). A session's header lists the tasks that
+   deliver to it and makes one for it (`?session=`), and a delivered turn
+   names its task. A new session's folder and preset are DSH's defaults; the
+   form does not choose them yet.
 4. **The phone.** The same two places.
 5. **Cloud DSH.** The task page warns of a next run outside the computer's
    running window.

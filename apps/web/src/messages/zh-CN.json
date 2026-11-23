@@ -1311,6 +1311,108 @@
       "webOff": "电脑在线时，在它的 Teamwork 面板中打开「原生 DSH Web」开关。",
       "devicesTitle": "已配对设备"
     },
+    "tasks": {
+      "title": "自动化任务",
+      "help": "这台电脑会在你选定的时间把指令发到会话里，可以只发一次，也可以重复发送。",
+      "new": "新建任务",
+      "loading": "正在读取任务…",
+      "pluginTooOld": "请先在这台电脑上更新 DSH Teamwork，才能管理它的自动化任务。",
+      "emptyTitle": "还没有自动化任务",
+      "emptyHelp": "可以在这里新建，也可以在任意会话里直接让智能体创建，例如：“每个工作日 9:00 检查部署状态”。",
+      "groups": {
+        "active": "进行中",
+        "paused": "已暂停",
+        "ended": "已结束"
+      },
+      "status": {
+        "active": "进行中",
+        "paused": "已暂停",
+        "ended": "已结束"
+      },
+      "next": "下次：{at}",
+      "runningNow": "正在发送",
+      "timing": {
+        "once": "仅一次，{at}",
+        "everyMinutes": "每 {count} 分钟",
+        "everyHours": "每 {count} 小时",
+        "daily": "每天 {time}（{zone}）",
+        "weekly": "{days} {time}（{zone}）",
+        "cron": "Cron {expression}（{zone}）",
+        "custom": "自定义重复"
+      },
+      "notFound": "这个任务已不在电脑上。",
+      "back": "返回任务列表",
+      "runNow": "立即运行",
+      "ran": "已发到它的会话。",
+      "pause": "暂停",
+      "resume": "恢复",
+      "edit": "编辑",
+      "delete": "删除",
+      "deleteConfirm": "删除“{title}”及其发送记录？它发送过的会话会保留。",
+      "deleted": "任务已删除。",
+      "instruction": "指令",
+      "deliversTo": "发送到",
+      "untitledSession": "未命名会话",
+      "targets": {
+        "new_once": "新会话，之后一直复用",
+        "new": "每次都新建会话",
+        "session": "已有会话"
+      },
+      "targetHelp": {
+        "new_once": "第一次运行时新建一个会话，之后都在这个会话里继续。",
+        "new": "每次运行都在一个新会话里开始。",
+        "session": "每次运行都在你选的会话里继续。"
+      },
+      "pickSession": "选择会话",
+      "customHelp": "这个任务使用自定义重复规则，规则需要在电脑上的 DSH 里修改；名称、指令和会话可以在这里修改。",
+      "history": "发送记录",
+      "noDeliveries": "还没有发送过。",
+      "moreHistory": "显示更早的",
+      "earlierUnavailable": "更早的发送记录没有保留。",
+      "historyHelp": "发送成功表示指令已送达会话；智能体做了什么，请打开会话查看。",
+      "newTitle": "新建自动化任务",
+      "editTitle": "编辑任务",
+      "name": "名称",
+      "namePlaceholder": "部署检查",
+      "instructionPlaceholder": "每次希望智能体做什么",
+      "when": "运行时间",
+      "repeat": {
+        "once": "仅一次",
+        "every": "每隔几分钟",
+        "daily": "每天",
+        "weekly": "每周",
+        "cron": "Cron 表达式"
+      },
+      "at": "日期和时间",
+      "atHelp": "按这个浏览器的时区 {zone}。",
+      "minutes": "每次间隔（分钟）",
+      "time": "时刻",
+      "weekdays": "星期",
+      "cron": "表达式",
+      "cronHelp": "五个字段：分、时、日、月、星期。例如 0 9 * * 1-5 表示工作日 9:00。",
+      "zone": "时区",
+      "runsWhileOnline": "只有这台电脑上的 DSH 在运行时任务才会执行。关机期间错过的任务，会在 DSH 再次启动时补发一次。",
+      "create": "创建任务",
+      "save": "保存",
+      "cancel": "取消",
+      "created": "任务已创建。",
+      "saved": "任务已保存。",
+      "inSession": "{count, plural, =0 {这个会话没有自动化任务} other {这个会话有 # 个自动化任务}}",
+      "noneInSession": "没有自动化任务发送到这个会话。",
+      "newInSession": "为这个会话新建任务",
+      "reminder": "自动化任务，计划于 {at}",
+      "reminderOf": "{title}，计划于 {at}",
+      "invalid": {
+        "invalid_prompt": "请填写不超过 120 个字符的名称和一条指令。",
+        "invalid_rule": "重复规则无效，请检查 Cron 表达式或间隔分钟数。",
+        "invalid_selector": "请选择任务运行的时间。",
+        "invalid_time_zone": "无法识别这个时区，请使用 Asia/Shanghai 这样的名称。",
+        "not_future": "请选择一个将来的时间。",
+        "time_out_of_range": "这个时间超出范围。",
+        "frequency_too_high": "任务最多每分钟运行一次。",
+        "subagent_session": "子智能体的会话不能接收任务。"
+      }
+    },
     "pages": {
       "title": "共享页面",
       "loading": "加载中…",
@@ -1695,6 +1797,11 @@
     "upload_cancelled": "已取消上传，草稿和所选文件已保留。",
     "upload_unsupported": "请更新这台电脑上的 Teamwork 插件以发送文件。",
     "send_uncertain": "消息可能已发送，请先确认或重试，再编辑草稿。",
-    "file_name": "文件名过长或包含不支持的字符，请重命名后重新选择。"
+    "file_name": "文件名过长或包含不支持的字符，请重命名后重新选择。",
+    "schedule_unavailable": "Team DSH 不提供自动化任务。",
+    "schedule_conflict": "这个任务已在别处被修改，请重新打开后再试。",
+    "schedule_ended": "这个任务已经结束。",
+    "schedule_invalid": "电脑拒绝了这个任务，请检查名称、指令和时间。",
+    "target_archived": "它的会话已归档。请恢复该会话，或改选其他会话。"
   }
 }

@@ -106,6 +106,21 @@ running session can be archived once it stops. The menu needs a current
 DSH Teamwork plugin on that computer; with an older one it offers only the
 copy. In the phone app, press and hold a session for the same menu.
 
+**Automation tasks**, above **New session**, lists the instructions that
+computer sends on its own: once at a time you pick, every few minutes, every
+day, on chosen days of the week, or on a cron expression in a time zone you
+name. **New task** gives one a name, the instruction, when it runs and where it
+goes: a new session reused each time, a new session each time, or an existing
+session. A task opens to its repeat, its next run and its deliveries, each a
+link to the session it reached; **Run now** sends it at once without moving
+its next run, and **Pause**, **Edit** and **Delete** do what they say. The
+agent can make and change the same tasks when you ask it to in a session.
+In a session, the alarm-clock button beside **Files** lists the tasks that send
+to it and makes a new one for it, and each instruction a task sent shows which
+task and when it was due. A task runs only while DSH runs on that computer;
+one missed while it was off runs once when DSH starts again. Tasks need DSH
+Teamwork 0.20.0 or later on the computer, and are not offered on a Team DSH.
+
 The settings button beside the computer's name opens its settings. There you
 can rename the computer: the name shows in Teamwork, on your phones and in
 native DSH Web, and stays when the computer reconnects. You can open its native

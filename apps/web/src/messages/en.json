@@ -1311,6 +1311,108 @@
       "webOff": "Turn on Native DSH Web in the computer's Teamwork panel, while the computer is online.",
       "devicesTitle": "Paired devices"
     },
+    "tasks": {
+      "title": "Automation tasks",
+      "help": "Instructions this computer sends to a session at a time you choose, once or on a repeat.",
+      "new": "New task",
+      "loading": "Reading the tasks…",
+      "pluginTooOld": "Update DSH Teamwork on this computer to manage its automation tasks.",
+      "emptyTitle": "No automation tasks yet",
+      "emptyHelp": "Make one here, or ask the agent in any session, for example: “every weekday at 9:00, check the deployment status”.",
+      "groups": {
+        "active": "Active",
+        "paused": "Paused",
+        "ended": "Ended"
+      },
+      "status": {
+        "active": "Active",
+        "paused": "Paused",
+        "ended": "Ended"
+      },
+      "next": "next {at}",
+      "runningNow": "Delivering now",
+      "timing": {
+        "once": "Once, {at}",
+        "everyMinutes": "Every {count, plural, one {minute} other {# minutes}}",
+        "everyHours": "Every {count, plural, one {hour} other {# hours}}",
+        "daily": "Every day at {time} ({zone})",
+        "weekly": "{days} at {time} ({zone})",
+        "cron": "Cron {expression} ({zone})",
+        "custom": "Custom repeat"
+      },
+      "notFound": "This task is no longer on the computer.",
+      "back": "Back to the tasks",
+      "runNow": "Run now",
+      "ran": "Sent to its session.",
+      "pause": "Pause",
+      "resume": "Resume",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete “{title}” and its delivery records? The sessions it sent to stay.",
+      "deleted": "Task deleted.",
+      "instruction": "Instruction",
+      "deliversTo": "Sends to",
+      "untitledSession": "Untitled session",
+      "targets": {
+        "new_once": "A new session, reused each time",
+        "new": "A new session each time",
+        "session": "An existing session"
+      },
+      "targetHelp": {
+        "new_once": "The first run starts a session; later runs continue it.",
+        "new": "Every run starts in a fresh session.",
+        "session": "Every run continues the session you pick."
+      },
+      "pickSession": "Pick a session",
+      "customHelp": "This task repeats on a custom rule, which is changed in DSH on the computer. Its name, instruction and session can be changed here.",
+      "history": "Deliveries",
+      "noDeliveries": "Not sent yet.",
+      "moreHistory": "Show earlier",
+      "earlierUnavailable": "Earlier deliveries are not kept.",
+      "historyHelp": "A delivery means the instruction reached its session; open the session to see what the agent did.",
+      "newTitle": "New automation task",
+      "editTitle": "Edit task",
+      "name": "Name",
+      "namePlaceholder": "Deployment check",
+      "instructionPlaceholder": "What the agent should do each time",
+      "when": "When",
+      "repeat": {
+        "once": "Once",
+        "every": "Every few minutes",
+        "daily": "Every day",
+        "weekly": "Every week",
+        "cron": "Cron expression"
+      },
+      "at": "Date and time",
+      "atHelp": "In this browser's time zone, {zone}.",
+      "minutes": "Minutes between runs",
+      "time": "Time",
+      "weekdays": "Days of the week",
+      "cron": "Expression",
+      "cronHelp": "Five fields: minute, hour, day of month, month, day of week. For example 0 9 * * 1-5 is 9:00 on weekdays.",
+      "zone": "Time zone",
+      "runsWhileOnline": "A task runs only while DSH is running on this computer. One that was missed while it was off runs once when DSH starts again.",
+      "create": "Create task",
+      "save": "Save",
+      "cancel": "Cancel",
+      "created": "Task created.",
+      "saved": "Task saved.",
+      "inSession": "{count, plural, =0 {No automation tasks for this session} one {One automation task for this session} other {# automation tasks for this session}}",
+      "noneInSession": "No automation task sends to this session.",
+      "newInSession": "New task for this session",
+      "reminder": "Automation task, due {at}",
+      "reminderOf": "{title}, due {at}",
+      "invalid": {
+        "invalid_prompt": "Give the task a name of at most 120 characters and an instruction.",
+        "invalid_rule": "The repeat is not valid. Check the cron expression, or the minutes between runs.",
+        "invalid_selector": "Choose when the task runs.",
+        "invalid_time_zone": "That time zone is not known. Use a name such as Asia/Shanghai.",
+        "not_future": "Pick a time in the future.",
+        "time_out_of_range": "That time is out of range.",
+        "frequency_too_high": "A task can run at most once a minute.",
+        "subagent_session": "A sub-agent's session cannot receive tasks."
+      }
+    },
     "pages": {
       "title": "Pages",
       "loading": "Loading…",
@@ -1695,6 +1797,11 @@
     "upload_cancelled": "Upload cancelled. Your draft and selected files are kept.",
     "upload_unsupported": "Update the Teamwork plugin on this computer to send files.",
     "send_uncertain": "This message may already have been sent. Confirm or retry before editing.",
-    "file_name": "The file name is too long or contains unsupported characters. Rename it and choose it again."
+    "file_name": "The file name is too long or contains unsupported characters. Rename it and choose it again.",
+    "schedule_unavailable": "A Team DSH does not offer automation tasks.",
+    "schedule_conflict": "This task was changed elsewhere. Open it again and retry.",
+    "schedule_ended": "This task has ended.",
+    "schedule_invalid": "The computer refused this task. Check its name, instruction and time.",
+    "target_archived": "Its session is archived. Restore the session or pick another."
   }
 }
