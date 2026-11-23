@@ -327,10 +327,11 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
     <Tooltip.Provider delayDuration={200}>
       <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
         <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4">{group(GROUPS[0])}</div>
-        {/* Team management sits apart from the workspace: its own divider and a slightly deeper ground.
-            Open, it takes at most half the sidebar's height and scrolls inside, so the workspace stays in view. */}
+        {/* Team management sits apart from the workspace, as a sheet laid over it: a raised ground, rounded top corners
+            and a shadow cast upward onto the workspace. Open, it takes at most half the sidebar's height and scrolls
+            inside, so the workspace stays in view. */}
         {team.role === 'admin' && (
-          <div className="mt-auto flex max-h-[50dvh] shrink-0 flex-col gap-4 border-t bg-secondary/60 py-3">
+          <div className="relative z-10 mt-auto flex max-h-[50dvh] shrink-0 flex-col gap-4 rounded-t-xl border-t bg-background py-3 shadow-[0_-6px_16px_-6px_rgb(0_0_0/0.12)] dark:bg-muted dark:shadow-[0_-8px_20px_-4px_rgb(0_0_0/0.6)]">
             {open && <div id="team-management" className="scrollbar-quiet flex min-h-0 flex-col gap-4 overflow-y-auto px-3">{GROUPS.slice(1).map(group)}</div>}
             <div className="px-3">
               <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'w-full font-medium')}>

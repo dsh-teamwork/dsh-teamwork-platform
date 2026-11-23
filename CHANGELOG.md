@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-23 — Team management as a sheet; the PIN and pairing code drawn as the app draws them
+
+- **What:** In a team's sidebar, Team management is a sheet laid over the workspace: a raised ground, rounded top corners and a shadow cast upward. The web console's PIN prompt now matches the phone app's: a lock on its tile, four rings that fill with dots, and the fourth digit sends it, with no Continue button. Pairing a browser in My DSH uses the same prompt: an icon on its tile, one box per character split in two halves as the computer shows the code, sent when the last character is typed, and the safety code in a card of its own.
+- **Why:** The two parts of the sidebar read as one list, and the web and phone asked for the same codes in two different ways.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/components/ui/code-entry.tsx`, `apps/web/src/components/team/console-shell.tsx`, `docs/design.md`.
+
 ## 2026-11-23 — A computer's settings in My DSH, and renaming it
 
 - **What:** My DSH's column header keeps one settings button beside the computer's name in place of the device count and the Web button. It opens `/teams/{teamId}/my-dsh/{hostId}/settings` (was `…/devices`): the computer's name, its native DSH Web, its paired devices and removing it. `PATCH /relay/hosts/{id}` (the web console only) renames a computer, and the relay no longer overwrites a recorded host's name with the one its plugin announces on reconnecting, so the console's name holds, shown also on the phones and in native Web's bar.
