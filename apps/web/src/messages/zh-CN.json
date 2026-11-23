@@ -1154,8 +1154,7 @@
         },
         "wrong": "PIN 错误，还剩 {count} 次。",
         "mismatch": "两次输入的 PIN 不一致，请重新开始。",
-        "unavailable": "机器没有响应，请重试。",
-        "submit": "继续"
+        "unavailable": "机器没有响应，请重试。"
       }
     },
     "myDsh": {

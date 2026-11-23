@@ -1154,8 +1154,7 @@
         },
         "wrong": "Wrong PIN. {count, plural, one {# try} other {# tries}} left.",
         "mismatch": "The two PINs differ. Start again.",
-        "unavailable": "The machine did not answer. Try again.",
-        "submit": "Continue"
+        "unavailable": "The machine did not answer. Try again."
       }
     },
     "myDsh": {

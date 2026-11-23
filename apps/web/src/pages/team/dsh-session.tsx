@@ -6,8 +6,8 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X } from 'lucide-react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, Lock, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X } from 'lucide-react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -49,7 +49,7 @@ import { KIND_ICON, PageViewer } from '@/components/page-viewer';
 import { PresetAvatar } from '@/components/preset-avatar';
 import { ProviderMark } from '@/components/provider-mark';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CodePrompt, CodeSlots } from '@/components/ui/code-entry';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -1173,8 +1173,9 @@ function Composer({ busy, rows, placeholder, send, files, stop, tools, children 
 }
 
 /**
- * The DSH asks for this member's PIN: set a first one, typed twice, or give it. Only the DSH checks it. `enterHint`
- * words the ask for a PIN where a page's computer has its own (an edition's cloud computer, whose PIN is the server's).
+ * The DSH asks for this member's PIN: set a first one, typed twice, or give it. Only the DSH checks it. Drawn as the
+ * phone app's PIN lock is: a lock on its tile and four rings, the fourth digit sending it. `enterHint` words the ask
+ * for a PIN where a page's computer has its own (an edition's cloud computer, whose PIN is the server's).
  */
 export function PinGate({ computerId, state, lockedHint, enterHint }: { computerId: string; state: PinState | undefined; lockedHint: string; enterHint?: string }) {
   const t = useTranslations('team.dsh.pin');
@@ -1186,16 +1187,15 @@ export function PinGate({ computerId, state, lockedHint, enterHint }: { computer
   const prompt = pinPrompt(state, first !== null);
   if (!prompt) return null;
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (value.length !== 4 || busy) return;
-    if (prompt === 'set') { setFirst(value); setValue(''); return; }
-    if (prompt === 'confirm' && value !== first) { setFirst(null); setValue(''); setFailed('mismatch'); return; }
+  async function submit(pin: string) {
+    if (pin.length !== 4 || busy) return;
+    if (prompt === 'set') { setFirst(pin); setValue(''); return; }
+    if (prompt === 'confirm' && pin !== first) { setFirst(null); setValue(''); setFailed('mismatch'); return; }
     setBusy(true);
     setFailed(null);
     try {
-      if (prompt === 'confirm') await relay.setPin(computerId, value);
-      else await relay.unlock(computerId, value);
+      if (prompt === 'confirm') await relay.setPin(computerId, pin);
+      else await relay.unlock(computerId, pin);
     } catch {
       setFailed('unavailable');
     } finally {
@@ -1205,33 +1205,30 @@ export function PinGate({ computerId, state, lockedHint, enterHint }: { computer
     }
   }
 
+  const hint = state?.kind === 'wrong' ? t('wrong', { count: state.left }) : prompt === 'locked' ? lockedHint : prompt === 'enter' && enterHint ? enterHint : t(`${prompt}.hint`);
   return (
-    <Card className="m-auto w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>{t(`${prompt}.title`)}</CardTitle>
-        <CardDescription>{state?.kind === 'wrong' ? t('wrong', { count: state.left }) : prompt === 'locked' ? lockedHint : prompt === 'enter' && enterHint ? enterHint : t(`${prompt}.hint`)}</CardDescription>
-      </CardHeader>
+    <CodePrompt icon={Lock} title={t(`${prompt}.title`)} hint={hint}>
       {prompt !== 'locked' && (
-        <CardContent>
-          <form className="flex flex-col gap-3" onSubmit={(event) => void submit(event)}>
-            <Input
-              aria-label={t(`${prompt}.title`)}
-              type="password"
-              inputMode="numeric"
-              autoComplete="off"
-              autoFocus
-              maxLength={4}
-              value={value}
-              disabled={busy}
-              onChange={(event) => setValue(event.target.value.replace(/\D/g, '').slice(0, 4))}
-              className="text-center font-mono text-2xl tracking-[0.5em]"
-            />
-            {failed && <p role="alert" className="text-sm text-destructive">{t(failed)}</p>}
-            <Button type="submit" disabled={busy || value.length !== 4}>{t('submit')}</Button>
-          </form>
-        </CardContent>
+        <>
+          <CodeSlots
+            // A new key for each step, so the field takes the focus again for the second PIN.
+            key={prompt}
+            label={t(`${prompt}.title`)}
+            length={4}
+            secret
+            value={value}
+            disabled={busy}
+            onChange={(raw) => {
+              const pin = raw.replace(/\D/g, '').slice(0, 4);
+              setValue(pin);
+              if (pin.length === 4) void submit(pin);
+            }}
+          />
+          {busy && <Loader className="size-5 animate-spin text-muted-foreground" aria-hidden />}
+          {failed && <p role="alert" className="text-sm text-destructive">{t(failed)}</p>}
+        </>
       )}
-    </Card>
+    </CodePrompt>
   );
 }
 

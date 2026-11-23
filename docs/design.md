@@ -311,9 +311,24 @@ a person or a character, which at this size reads as clip art.
   the top, the reader's own (home, team resources with their submissions inside,
   my usage, an edition's work pages); for the admin, *Team management* at the foot, opening on the
   team overview, then *Team assets* (models, presets, plugins,
-  review, versions) and *Members and spend* (members, usage, budgets). The
-  account is one menu at its foot; below `md` the sidebar is a sheet
+  review, versions) and *Members and spend* (members, usage, budgets).
+  Team management is a `--brand` sheet laid over the workspace, with
+  rounded top corners and a shadow cast upward; the rows inside it are
+  drawn in the navy's foreground, the selected bar included. It starts
+  folded, as a low strip whose toggle has no ground of its own, and its
+  pages slide open above the toggle and fold away again (none of it moves
+  under reduced motion). Alt+M (Option+M on a Mac), always shown on the
+  toggle, opens and folds it, and choosing a Workspace
+  page folds it away. The account is one menu at its foot; below `md` the sidebar is a sheet
   behind a menu button (`apps/web/src/components/team/console-shell.tsx`).
+- **A code is typed into slots, the same on the web and the phone.** A
+  computer's PIN and a pairing code open with an icon on a `--secondary`
+  tile, a title and one line of what to type. A PIN is four rings that fill
+  with a dot; a pairing code is one box per character, split in two halves
+  with a dash as the computer shows it. The next slot is outlined in
+  `--foreground`, and the last character sends the code
+  (`apps/web/src/components/ui/code-entry.tsx`; the app's `pin-gate.tsx` and
+  `pair.tsx`).
 - **Choosing from a list is one component.** `apps/web/src/components/ui/select.tsx`:
   an outline trigger and a menu on the card surface, never a native `<select>`.
   The language picker is one too; the public pages, which run no React, draw

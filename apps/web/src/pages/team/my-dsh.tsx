@@ -20,7 +20,7 @@
  * coming online or going away moves the page along by itself.
  */
 
-import { AlarmClock, ArrowLeft, Check, ExternalLink, Laptop, Loader, Monitor, RotateCw, Settings, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
+import { AlarmClock, ArrowLeft, Check, ExternalLink, Laptop, Loader, Monitor, MonitorSmartphone, RotateCw, Settings, ShieldCheck, Smartphone, Trash2, WifiOff, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -29,6 +29,7 @@ import { useFormatter, useTranslations } from 'use-intl';
 import { HOST_OS_NAMES, normalizePairingCode, PAIRING_CODE_LENGTH, RelayError, type Pairing } from '@dsh-teamwork/relay-client';
 import { COMPUTERS_REFRESH_MS, twinOf } from '@/components/team/console-shell';
 import { Button } from '@/components/ui/button';
+import { CodePrompt, CodeSlots } from '@/components/ui/code-entry';
 import { Input } from '@/components/ui/input';
 import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, renameComputer, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
@@ -505,14 +506,14 @@ function Pair({ host, paired }: { host: MyComputer; paired: (hostId: string | un
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `t`, `word` and `paired` are fresh closures each render.
   }, [relay, pending]);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (busy || code.length !== PAIRING_CODE_LENGTH) return;
+  // A full code is sent at once, as the phone app does; the button sends it again after a failure.
+  async function submit(value: string) {
+    if (busy || value.length !== PAIRING_CODE_LENGTH) return;
     if (!(await browserCanJoin())) return setFailed(t('browserUnsupported'));
     setBusy(true);
     setFailed(null);
     try {
-      setPairing(await relay.pair(code, t('deviceName')));
+      setPairing(await relay.pair(value, t('deviceName')));
     } catch (error) {
       setFailed(error instanceof RelayError && error.code === 'not_found' ? t('invalidCode') : word(error));
     } finally {
@@ -529,50 +530,64 @@ function Pair({ host, paired }: { host: MyComputer; paired: (hostId: string | un
     }
   }
 
-  return (
-    <section className="mx-auto flex w-full max-w-sm flex-col gap-4 py-6">
-      {!pairing ? (
-        <form className="flex flex-col gap-3" onSubmit={(event) => void submit(event)}>
-          <h3 className="font-semibold">{t('pairTitle', { name: host.name })}</h3>
-          <p className="text-sm text-muted-foreground">{t('pairHelp')}</p>
-          <label className="flex flex-col gap-1.5 text-sm font-medium">
-            {t('code')}
-            <Input
-              value={code}
-              autoFocus
-              autoComplete="one-time-code"
-              className="text-center font-mono text-2xl tracking-[0.4em] uppercase"
-              // No maxLength: the panel shows the code with a space ("PQP WGG"), and a pasted code must keep its last
-              // letter; the space goes first, then the length is held.
-              onChange={(event) => setCode(normalizePairingCode(event.target.value).slice(0, PAIRING_CODE_LENGTH))}
-            />
-          </label>
-          <Button type="submit" disabled={busy || code.length !== PAIRING_CODE_LENGTH}>{busy ? t('pairing') : t('pair')}</Button>
+  const error = failed && <p role="alert" className="text-sm text-destructive">{failed}</p>;
+  if (!pairing)
+    return (
+      <CodePrompt icon={MonitorSmartphone} title={t('pairTitle', { name: host.name })} hint={t('pairHelp')}>
+        <form
+          className="flex w-full flex-col items-center gap-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit(code);
+          }}
+        >
+          <CodeSlots
+            label={t('code')}
+            length={PAIRING_CODE_LENGTH}
+            // The panel shows the code in two halves ("PQP WGG"): the boxes split where it does.
+            group={PAIRING_CODE_LENGTH / 2}
+            value={code}
+            disabled={busy}
+            // The space a pasted code keeps goes first, then the length is held.
+            onChange={(raw) => {
+              const next = normalizePairingCode(raw).slice(0, PAIRING_CODE_LENGTH);
+              setCode(next);
+              setFailed(null);
+              if (next.length === PAIRING_CODE_LENGTH && next !== code) void submit(next);
+            }}
+          />
+          {error}
+          <Button type="submit" className="h-11 w-full" disabled={busy || code.length !== PAIRING_CODE_LENGTH}>
+            {busy && <Loader className="size-4 animate-spin" aria-hidden />}
+            {busy ? t('pairing') : t('pair')}
+          </Button>
         </form>
-      ) : pairing.safetyCode ? (
-        <div className="flex flex-col items-center gap-3 text-center">
-          <h3 className="font-semibold">{t('safetyTitle')}</h3>
-          <p className="text-sm text-muted-foreground">{t('safetyHelp')}</p>
-          <p className="font-mono text-3xl tracking-widest select-all">{pairing.safetyCode}</p>
-          {matched ? (
-            <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader className="size-4 animate-spin" aria-hidden />
-              {t('waitingApproval')}
-            </p>
-          ) : (
-            <Button onClick={() => void confirmMatch(pairing.id)}>
-              <Check className="size-4" aria-hidden />
-              {t('matches')}
-            </Button>
-          )}
-        </div>
-      ) : (
-        <p role="status" className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Loader className="size-4 animate-spin" aria-hidden />
-          {t('pairing')}
-        </p>
-      )}
-      {failed && <p role="alert" className="text-sm text-destructive">{failed}</p>}
-    </section>
+      </CodePrompt>
+    );
+  if (!pairing.safetyCode)
+    return (
+      <CodePrompt icon={MonitorSmartphone} title={t('pairTitle', { name: host.name })} hint={t('connectingHelp')}>
+        <Loader className="size-5 animate-spin text-muted-foreground" role="status" aria-label={t('pairing')} />
+        {error}
+      </CodePrompt>
+    );
+  return (
+    <CodePrompt icon={ShieldCheck} title={t('safetyTitle')} hint={t('safetyHelp')}>
+      <div className="flex w-full flex-col gap-4 rounded-2xl border bg-card p-5 shadow-xs">
+        <p className="font-mono text-3xl font-semibold tracking-widest select-all">{pairing.safetyCode}</p>
+        {matched ? (
+          <p role="status" className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader className="size-4 animate-spin" aria-hidden />
+            {t('waitingApproval')}
+          </p>
+        ) : (
+          <Button className="h-11" onClick={() => void confirmMatch(pairing.id)}>
+            <Check className="size-4" aria-hidden />
+            {t('matches')}
+          </Button>
+        )}
+      </div>
+      {error}
+    </CodePrompt>
   );
 }

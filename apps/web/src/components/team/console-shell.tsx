@@ -277,8 +277,8 @@ export function ConsoleShell({
  * Workspace at the top; for the team's admin, Team management at the foot of
  * the sidebar, folded by default so the two read apart: its toggle sits just
  * above the account row and opens Team assets and Members and spend above it.
- * It opens by itself on one of its pages, and a waiting review shows on the
- * toggle while it is folded. An edition's entries join the group they name.
+ * It starts folded, on its own pages too; a waiting review shows on the toggle
+ * while it is folded. An edition's entries join the group they name.
  */
 function Navigation({ team, section, waiting, onNavigate }: { team: Team; section: string; waiting: Waiting; onNavigate?: () => void }) {
   const t = useTranslations('team');
@@ -288,14 +288,21 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   const { pages, sections: answered } = useTeamPages(team);
   // A section with `visible` is listed once it says yes, or while the person is on it.
   const listed = (s: Section) => !s.visible || answered.includes(s.path) || s.path === section;
-  const managing = GROUPS.some((group) => group.key !== 'work' && group.sections.some((s) => s.path === section)) || pages.some((page) => page.group !== 'work' && navPath(page) === section);
-  // Opening one of its pages opens it again, adjusted while rendering rather than in an effect.
-  const [open, setOpen] = useState(managing);
-  const [wasManaging, setWasManaging] = useState(managing);
-  if (managing !== wasManaging) {
-    setWasManaging(managing);
-    if (managing) setOpen(true);
-  }
+  // Folded until the admin opens it; it stays open across its own pages, and folds again once a workspace page is chosen.
+  const [open, setOpen] = useState(false);
+  const admin = team.role === 'admin';
+  // Alt+M (Option+M on a Mac) opens and folds it from anywhere but a field being typed in.
+  useEffect(() => {
+    if (!admin) return;
+    const toggle = (event: KeyboardEvent) => {
+      if (!isManageShortcut(event)) return;
+      event.preventDefault();
+      setOpen((was) => !was);
+    };
+    window.addEventListener('keydown', toggle);
+    return () => window.removeEventListener('keydown', toggle);
+  }, [admin]);
+  const shortcut = isMac() ? '⌥M' : 'Alt+M';
 
   const link = (path: string, label: string, icon: LucideIcon, inside: boolean, dot = false, hint?: string, Subnav?: ComponentType<SubnavProps>) =>
     Subnav ? (
@@ -326,18 +333,47 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
   return (
     <Tooltip.Provider delayDuration={200}>
       <nav aria-label={t('nav.label')} className="flex min-h-0 flex-1 flex-col">
-        <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4">{group(GROUPS[0])}</div>
-        {/* Team management sits apart from the workspace: its own divider and a slightly deeper ground.
-            Open, it takes at most half the sidebar's height and scrolls inside, so the workspace stays in view. */}
-        {team.role === 'admin' && (
-          <div className="mt-auto flex max-h-[50dvh] shrink-0 flex-col gap-4 border-t bg-secondary/60 py-3">
-            {open && <div id="team-management" className="scrollbar-quiet flex min-h-0 flex-col gap-4 overflow-y-auto px-3">{GROUPS.slice(1).map(group)}</div>}
-            <div className="px-3">
-              <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="team-management" className={cn(item, 'w-full font-medium')}>
+        {/* Choosing a workspace page, a computer under My DSH included, folds Team management away again. */}
+        <div className="scrollbar-quiet min-h-0 overflow-y-auto px-3 pb-4" onClickCapture={(event) => (event.target as Element).closest('a') && setOpen(false)}>
+          {group(GROUPS[0])}
+        </div>
+        {/* Team management sits apart from the workspace, as a navy sheet laid over it: the team's colour, rounded top
+            corners and a shadow cast upward onto the workspace. Its tokens are redrawn in the navy's foreground, so the
+            rows inside, their hover and the selected bar follow. Its pages slide open above the toggle and fold away
+            again (a grid row eased between 0fr and 1fr); open, it takes at most half the sidebar's height and scrolls
+            inside, so the workspace stays in view. */}
+        {admin && (
+          <div className="relative z-10 mt-auto flex max-h-[50dvh] shrink-0 flex-col rounded-t-xl bg-brand pb-1.5 text-foreground shadow-[0_-6px_16px_-6px_rgb(0_0_0/0.25)] dark:shadow-[0_-8px_20px_-4px_rgb(0_0_0/0.6)] [--accent:color-mix(in_oklab,var(--brand-foreground)_12%,transparent)] [--foreground:var(--brand-foreground)] [--muted-foreground:color-mix(in_oklab,var(--brand-foreground)_65%,transparent)] [--ring:var(--brand-foreground)] [--secondary:color-mix(in_oklab,var(--brand-foreground)_16%,transparent)]">
+            <div
+              className={cn(
+                'grid min-h-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none',
+                open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+              )}
+            >
+              {/* Folded, its pages are out of the tab order and hidden from a screen reader as well as from sight. */}
+              <div id="team-management" inert={!open} className="scrollbar-quiet min-h-0 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_calc(100%-0.75rem),transparent)] [--brand:var(--brand-foreground)]">
+                {/* Padded inside, so the folded row is truly empty; the foot's padding is where a long list fades out above the toggle. */}
+                <div className="flex flex-col gap-4 px-3 pt-3 pb-3">{GROUPS.slice(1).map(group)}</div>
+              </div>
+            </div>
+            <div className="px-3 pt-1.5">
+              <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                aria-expanded={open}
+                aria-controls="team-management"
+                aria-keyshortcuts="Alt+M"
+                title={`${t('nav.groups.manage')} (${shortcut})`}
+                // No ground of its own: the toggle is the navy strip's title, its keys always shown, and only its chevron answers a hover.
+                className="group/manage flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
                 <ShieldCheck className="size-4" aria-hidden />
                 <span className="flex-1 text-left">{t('nav.groups.manage')}</span>
+                <kbd className="rounded border border-foreground/25 px-1 font-sans text-[11px] leading-4 text-muted-foreground" aria-hidden>
+                  {shortcut}
+                </kbd>
                 {!open && waiting.overview && <span className="size-1.5 rounded-full bg-signal" role="img" aria-label={t('nav.waiting')} />}
-                <ChevronUp className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
+                <ChevronUp className={cn('size-4 text-muted-foreground transition-transform group-hover/manage:text-foreground duration-300 motion-reduce:transition-none', open && 'rotate-180')} aria-hidden />
               </button>
             </div>
           </div>
@@ -346,6 +382,15 @@ function Navigation({ team, section, waiting, onNavigate }: { team: Team; sectio
     </Tooltip.Provider>
   );
 }
+
+/** Alt+M with nothing else held, read by the key's place (Option+M types a letter on a Mac), outside a field being typed in. */
+function isManageShortcut(event: KeyboardEvent): boolean {
+  if (event.code !== 'KeyM' || !event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return false;
+  const target = event.target as HTMLElement | null;
+  return !target?.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]');
+}
+
+const isMac = () => typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
 /**
  * One entry in the navigation: its icon and label, then, for one with a hint saying what the page is for, a question

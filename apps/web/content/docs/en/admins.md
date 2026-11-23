@@ -10,7 +10,9 @@ submissions to review, budgets near their limit, calls to resolve and budget
 mail that failed. It heads **Team management** at the foot of the sidebar,
 which only the team's admin sees, with **Team assets** (models, presets,
 plugins, review and history) and **Members and spend** (members, usage and
-budgets) below it. The **Workspace** pages at the top are the same for you as
+budgets) below it. Team management starts folded: open it with its toggle or
+**Alt+M** (**Option+M** on a Mac), and it folds away again when you choose a
+Workspace page. The **Workspace** pages at the top are the same for you as
 for every member: your own **Home** shows your own calls and budget.
 
 ## 1. Create the team
