@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import { act, createElement, createRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import { IntlProvider } from 'use-intl';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { joinFrontMatter, splitFrontMatter } from '@/lib/knowledge-format';
+import messages from '@/messages/en.json';
 
 import { KnowledgeEditor, type KnowledgeEditorHandle } from './knowledge-editor';
+import { slashItems } from './knowledge-slash';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 // jsdom lays nothing out; ProseMirror measures the cursor to scroll it into view after an insert.
@@ -48,6 +51,39 @@ The spec is [[spec.pdf]], the old one [[old spec.pdf|the draft]]; ![[missing.png
 Wow![[Pricing]] embeds a document.
 `;
 
+/** The richer format's blocks (docs/tech/knowledge.md, "Format"), written as the editor writes them. */
+const RICHER = `# Release
+
+> [!warning] Mind the **cache** and [[Pricing]]
+> Purge it before a deploy.
+>
+> - one
+> - two
+
+> [!tip]- Folded until opened
+> Hidden until opened.
+
+> [!note]
+
+> [!example] A table first
+>
+> | a | b |
+> | - | - |
+> | 1 | 2 |
+
+> [!info]
+>
+> > [!danger] Nested
+> > Inside.
+
+> Still a plain quote.
+
+\`\`\`mermaid
+flowchart LR
+  A --> B
+\`\`\`
+`;
+
 /** The same, written by hand: other list markers, no table padding, a missing blank line. */
 const MESSY = `# Runbook
 Deploys go out from \`main\`; see [[Glossary#Release train]] and [[Pricing]].
@@ -77,7 +113,7 @@ async function open(body: string, readOnly = false): Promise<{ normalised: strin
   const handle = createRef<KnowledgeEditorHandle>();
   let normalised = '';
   await act(async () => {
-    root.render(createElement(KnowledgeEditor, {
+    root.render(createElement(IntlProvider, { locale: 'en', timeZone: 'UTC', messages, children: createElement(KnowledgeEditor, {
       ref: handle,
       body,
       readOnly,
@@ -87,7 +123,7 @@ async function open(body: string, readOnly = false): Promise<{ normalised: strin
       onReady: (text) => {
         normalised = text;
       },
-    }));
+    }) }));
     for (let i = 0; i < 50 && !normalised; i++) await new Promise((r) => setTimeout(r, 10));
   });
   const html = host.innerHTML;
@@ -95,6 +131,41 @@ async function open(body: string, readOnly = false): Promise<{ normalised: strin
 }
 
 describe('the knowledge editor', () => {
+  it('saves callouts and diagrams in their own syntax unchanged', async () => {
+    const { normalised, handle } = await open(RICHER);
+    expect(normalised).toBe(RICHER);
+    expect(handle.markdown()).toBe(RICHER);
+  });
+
+  it('reads a callout from a quote Obsidian writes, its body after a blank line too', async () => {
+    const { normalised } = await open('> [!WARNING]+  Spaced title\n>\n> Body.\n');
+    expect(normalised).toBe('> [!WARNING]+ Spaced title\n> Body.\n');
+  });
+
+  it('draws a callout by its kind, folded when its file says so', async () => {
+    const { html } = await open(RICHER, true);
+    expect(html).toMatch(/class="knowledge-callout" data-callout="warning" data-family="signal" data-fold=""/);
+    expect(html).toMatch(/class="knowledge-callout is-folded" data-callout="tip" data-family="success" data-fold="-"/);
+    expect(html).toContain('class="knowledge-callout-toggle"');
+    // One with no title is named by its kind.
+    expect(html).toMatch(/class="knowledge-callout is-untitled" data-callout="note"[^>]*><div class="knowledge-callout-label" contenteditable="false">Note</);
+    expect(html).toContain('class="knowledge-diagram is-reading"');
+  });
+
+  it('offers its kinds and folding as choices while editing', async () => {
+    const { html } = await open(RICHER);
+    expect(html).toContain('<select aria-label="Callout type">');
+    expect(html).toContain('<option value="-">Foldable, folded</option>');
+  });
+
+  it('narrows the block menu by either word, and offers files only with somewhere to put them', () => {
+    const name = (id: string) => (id === 'callout' ? '标注' : id);
+    expect(slashItems('mer', name, true)).toEqual(['diagram']);
+    expect(slashItems('标注', name, true)).toEqual(['callout']);
+    expect(slashItems('', name, false)).not.toContain('attach');
+    expect(slashItems('image', name, true)).toEqual(['attach']);
+  });
+
   it('saves a document in its own syntax unchanged', async () => {
     const { normalised, handle } = await open(CANONICAL);
     expect(normalised).toBe(CANONICAL);

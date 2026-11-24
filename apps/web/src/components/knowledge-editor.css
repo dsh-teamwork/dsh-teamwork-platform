@@ -217,3 +217,121 @@
   outline-offset: 1px;
   border-radius: var(--radius-sm);
 }
+
+/*
+ * A callout (components/knowledge-blocks.ts): a line in its kind's colour, a
+ * faint ground of the same, and its title in the text's own colour, since
+ * amber is never text. Its controls sit at the top right; folded, it shows
+ * its title alone.
+ */
+.knowledge-document .knowledge-callout {
+  --callout: var(--brand);
+  position: relative;
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.9rem;
+  border-inline-start: 3px solid var(--callout);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--callout) 7%, transparent);
+}
+.dark .knowledge-document .knowledge-callout[data-family='brand'] {
+  --callout: var(--ring);
+}
+.knowledge-document .knowledge-callout[data-family='success'] {
+  --callout: var(--success);
+}
+.knowledge-document .knowledge-callout[data-family='signal'] {
+  --callout: var(--signal);
+}
+.knowledge-document .knowledge-callout[data-family='destructive'] {
+  --callout: var(--destructive);
+}
+.knowledge-document .knowledge-callout[data-family='muted'] {
+  --callout: var(--muted-foreground);
+}
+.knowledge-document .knowledge-callout-label {
+  display: none;
+  font-weight: 600;
+}
+.knowledge-document .knowledge-callout.is-untitled > .knowledge-callout-label {
+  display: block;
+}
+.knowledge-document .knowledge-callout-title {
+  font-weight: 600;
+}
+.knowledge-document:not([contenteditable='true']) .knowledge-callout.is-untitled > .knowledge-callout-body > .knowledge-callout-title {
+  display: none;
+}
+.knowledge-document .knowledge-callout-body > :is(p, ul, ol, blockquote, pre, table, .knowledge-callout, .knowledge-diagram) {
+  margin: 0.4rem 0 0;
+}
+.knowledge-document .knowledge-callout.is-folded > .knowledge-callout-body > :not(:first-child) {
+  display: none;
+}
+.knowledge-document .knowledge-callout-controls {
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-end: 0.6rem;
+  display: flex;
+  gap: 0.35rem;
+}
+.knowledge-document .knowledge-callout-controls select {
+  padding: 0.05rem 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.75rem;
+}
+.knowledge-editing .knowledge-callout {
+  padding-inline-end: 16rem;
+}
+.knowledge-document .knowledge-callout-toggle {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+  background: currentColor;
+  color: var(--muted-foreground);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 1rem no-repeat;
+  transition: transform 120ms;
+}
+.knowledge-document .knowledge-callout-toggle:hover {
+  color: var(--foreground);
+}
+.knowledge-document .knowledge-callout.is-folded .knowledge-callout-toggle {
+  transform: rotate(-90deg);
+}
+.knowledge-document .knowledge-callout:has(.knowledge-callout-toggle) {
+  padding-inline-end: 2.5rem;
+}
+
+/*
+ * A diagram (a `mermaid` code block): its source above its drawing while
+ * editing, the drawing alone while reading. One whose source cannot be drawn
+ * says so in the destructive colour.
+ */
+.knowledge-document .knowledge-diagram {
+  margin: 0.75rem 0;
+}
+.knowledge-document .knowledge-diagram > pre {
+  margin: 0 0 0.5rem;
+}
+.knowledge-document .knowledge-diagram.is-reading > pre {
+  display: none;
+}
+.knowledge-document .knowledge-diagram-preview {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+.knowledge-document .knowledge-diagram-preview svg {
+  max-width: 100%;
+  height: auto;
+}
+.knowledge-document .knowledge-diagram-preview.is-error {
+  justify-content: flex-start;
+  color: var(--destructive);
+  font-size: 0.875rem;
+}
+.knowledge-document .knowledge-diagram.is-reading:has(> .is-error) > pre {
+  display: block;
+}

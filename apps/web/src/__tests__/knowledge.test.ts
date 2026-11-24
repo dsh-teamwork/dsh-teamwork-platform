@@ -25,6 +25,7 @@ const ops: KnowledgeSpace = {
   name: 'Ops',
   reading: 'team',
   canEdit: true,
+  templatesFolderId: '',
   folders: [
     { id: 'f1', parentId: '', name: 'Runbooks' },
     { id: 'f2', parentId: 'f1', name: 'Gateway' },
@@ -33,7 +34,7 @@ const ops: KnowledgeSpace = {
   ],
   documents: [doc('d1', 'Glossary'), doc('d2', 'Deploys', 'f1'), doc('d3', 'Rate limits', 'f2'), doc('d4', 'Old notes', 'f4')],
 };
-const product: KnowledgeSpace = { id: 'product', name: 'Product', reading: 'members', canEdit: false, folders: [], documents: [doc('d5', 'glossary'), doc('d6', 'Pricing')] };
+const product: KnowledgeSpace = { id: 'product', name: 'Product', reading: 'members', canEdit: false, templatesFolderId: '', folders: [], documents: [doc('d5', 'glossary'), doc('d6', 'Pricing')] };
 const tree: KnowledgeTree = { canCreateSpace: true, spaces: [ops, product] };
 
 describe('front matter', () => {

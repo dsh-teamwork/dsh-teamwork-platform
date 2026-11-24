@@ -78,6 +78,7 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
   const page = `/teams/${team.id}/knowledge`;
   const { data: doc, error, reload } = useApi<Doc>(version ? `${path}?version=${version}` : path);
   const editor = useRef<KnowledgeEditorHandle>(null);
+  const picker = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [saving, setSaving] = useState(false);
   const [asking, setAsking] = useState<'note' | 'rename' | 'move' | null>(null);
@@ -294,7 +295,7 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
         </div>
         {editing ? (
           <div className="flex flex-wrap items-center gap-2">
-            <AttachButton busy={attaching} onFiles={(chosen) => void attach(chosen, false)} />
+            <AttachButton busy={attaching} picker={picker} onFiles={(chosen) => void attach(chosen, false)} />
             <Button variant="outline" size="sm" disabled={saving} onClick={cancel}>{t('cancel')}</Button>
             <Button size="sm" disabled={saving || (editing.conflict && !editing.conflict.rebased)} onClick={() => setAsking('note')}>
               {doc.canEdit ? t('save') : t('propose')}
@@ -385,6 +386,7 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
           attachment={attachment}
           onLinks={setLinked}
           onFiles={editing ? (dropped, pasted) => void attach(dropped, pasted) : undefined}
+          onAttach={editing ? () => picker.current?.click() : undefined}
           onNavigate={(href) => void navigate(href)}
           label={doc.title}
           onReady={(normalisedBody) => {

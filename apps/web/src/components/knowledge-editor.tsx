@@ -10,7 +10,9 @@
  * extension); both are the same node with an `embed` flag, so each is written
  * back exactly as typed. A file pasted or dropped while editing goes to the
  * page, which uploads it and inserts its link at the cursor. Lists are
- * written with `-`, as most hand-written Markdown is. Milkdown loads with the
+ * written with `-`, as most hand-written Markdown is. Callouts and diagrams
+ * are components/knowledge-blocks.ts, and typing `/` on an empty line opens
+ * the block menu (components/knowledge-slash.tsx). Milkdown loads with the
  * knowledge page only, never in the console's main bundle.
  */
 
@@ -25,10 +27,14 @@ import { InputRule } from '@milkdown/kit/prose/inputrules';
 import { DOMSerializer, type DOMOutputSpec, type Node as ProseNode } from '@milkdown/kit/prose/model';
 import { Plugin, TextSelection } from '@milkdown/kit/prose/state';
 import { $inputRule, $node, $prose, $remark, $view, getMarkdown } from '@milkdown/kit/utils';
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { useTranslations } from 'use-intl';
 
-import { headingSlug, isAttachmentName, isImageName, parseWikiTarget, WIKILINK } from '@/lib/knowledge-format';
+import { headingSlug, isAttachmentName, isImageName, knownCalloutKind, parseWikiTarget, WIKILINK } from '@/lib/knowledge-format';
 import { cn } from '@/lib/utils';
+
+import { calloutInputRule, calloutNode, calloutTitleNode, calloutView, codeBlockView, remarkCallout, stringifyCallout, type BlockWords } from './knowledge-blocks';
+import { runSlash, slashItems, SlashMenu, slashPlugin, type SlashItemId, type SlashOpen } from './knowledge-slash';
 
 /** Where a `[[link]]` goes: a console path, or null for a title no document has (a broken link). */
 export type WikiResolver = (raw: string) => string | null;
@@ -187,9 +193,12 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
   onLinks?: (targets: string[]) => void;
   /** Files pasted or dropped while editing; the cursor is already where they go. */
   onFiles?: (files: File[], pasted: boolean) => void;
+  /** Asks for files to attach where the cursor is, from the block menu; without it the menu offers none. */
+  onAttach?: () => void;
   className?: string;
   label?: string;
-}>(function KnowledgeEditor({ body, readOnly, resolve, attachment, onNavigate, onReady, onLinks, onFiles, className, label }, ref) {
+}>(function KnowledgeEditor({ body, readOnly, resolve, attachment, onNavigate, onReady, onLinks, onFiles, onAttach, className, label }, ref) {
+  const t = useTranslations('team.knowledge.editor');
   const root = useRef<HTMLDivElement>(null);
   const editor = useRef<Editor | null>(null);
   const linkNode = useRef<ReturnType<typeof wikiLinkNode> | null>(null);
@@ -199,12 +208,67 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
   const ready = useRef(onReady);
   const links = useRef(onLinks);
   const files = useRef(onFiles);
+  const attachFiles = useRef(onAttach);
+  const blockWords = (): BlockWords => ({
+    kind: (kind) => {
+      const known = knownCalloutKind(kind);
+      return known ? t(`kinds.${known}`) : kind;
+    },
+    kindLabel: t('calloutKind'),
+    fold: { none: t('foldNone'), open: t('foldOpen'), closed: t('foldClosed') },
+    foldLabel: t('calloutFold'),
+    toggle: t('toggleFold'),
+    diagramError: t('diagramError'),
+  });
+  const words = useRef<BlockWords>(blockWords());
   useEffect(() => {
     resolvers.current = { resolve, attachment };
     navigate.current = onNavigate;
     ready.current = onReady;
     links.current = onLinks;
     files.current = onFiles;
+    attachFiles.current = onAttach;
+    words.current = blockWords();
+  });
+
+  // The block menu: where it is open, which item is chosen, and which `/` was dismissed with Escape.
+  const [slash, setSlash] = useState<SlashOpen | null>(null);
+  const [active, setActive] = useState(0);
+  const dismissed = useRef(-1);
+  const shownSlash = useRef<SlashOpen | null>(null);
+  const slashName = (id: SlashItemId) => t(`slash.${id}`);
+  const items = slash ? slashItems(slash.query, slashName, !!onAttach) : [];
+  const menu = useRef({ slash, items, active });
+  const pick = (id: SlashItemId) => {
+    const open = menu.current.slash;
+    if (!open) return;
+    editor.current?.action((ctx) => runSlash(ctx, open, id, () => attachFiles.current?.()));
+    setSlash(null);
+  };
+  const slashKeys = useRef<(event: KeyboardEvent) => boolean>(() => false);
+  const onSlashKey = (event: KeyboardEvent) => {
+    const { slash: open, items: shown, active: at } = menu.current;
+    if (!open) return false;
+    if (event.key === 'Escape') {
+      dismissed.current = open.from;
+      setSlash(null);
+      return true;
+    }
+    if (shown.length === 0) return false;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      setActive((at + step + shown.length) % shown.length);
+      return true;
+    }
+    if (event.key === 'Enter' || event.key === 'Tab') {
+      pick(shown[Math.min(at, shown.length - 1)]);
+      return true;
+    }
+    return false;
+  };
+  useEffect(() => {
+    menu.current = { slash, items, active };
+    slashKeys.current = onSlashKey;
   });
 
   useImperativeHandle(ref, () => ({
@@ -248,6 +312,17 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
         return { update: (next, prev) => { if (next.state.doc !== prev.doc) report(next.state.doc); } };
       },
     }));
+    const reportSlash = (found: SlashOpen | null) => {
+      if (!live) return;
+      let open = found;
+      if (open && open.from === dismissed.current) open = null;
+      else if (!open) dismissed.current = -1;
+      const was = shownSlash.current;
+      if (was === open || (was && open && was.from === open.from && was.to === open.to && was.query === open.query && was.left === open.left && was.top === open.top)) return;
+      if (!open || !was || was.from !== open.from || was.query !== open.query) setActive(0);
+      shownSlash.current = open;
+      setSlash(open);
+    };
     const made = Editor.make()
       .config((ctx) => {
         ctx.set(rootCtx, host);
@@ -277,12 +352,23 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
         ctx.update(remarkStringifyOptionsCtx, (options) => ({
           ...options,
           bullet: '-' as const,
-          handlers: { ...options.handlers, wikiLink: (node: MdNode) => `${node.embed ? '!' : ''}[[${node.target ?? ''}]]` },
+          handlers: {
+            ...options.handlers,
+            wikiLink: (node: MdNode) => `${node.embed ? '!' : ''}[[${node.target ?? ''}]]`,
+            callout: stringifyCallout as never,
+          },
         }));
       })
       .use(commonmark)
       .use(gfm)
       .use(history)
+      .use(remarkCallout)
+      .use(calloutTitleNode)
+      .use(calloutNode)
+      .use(calloutView(words))
+      .use(calloutInputRule)
+      .use(codeBlockView(words))
+      .use(slashPlugin(reportSlash, slashKeys))
       .use(remarkWikiLink)
       .use(wikiLink)
       .use(wikiLinkView(wikiLink, resolvers, views.current))
@@ -298,6 +384,8 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
     });
     return () => {
       live = false;
+      shownSlash.current = null;
+      setSlash(null);
       // One still being made is destroyed once it is made, above.
       const current = editor.current;
       editor.current = null;
@@ -324,5 +412,10 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
     }
   }
 
-  return <div ref={root} onClick={click} className={cn('knowledge-editor', !readOnly && 'knowledge-editing', className)} />;
+  return (
+    <>
+      <div ref={root} onClick={click} className={cn('knowledge-editor', !readOnly && 'knowledge-editing', className)} />
+      {slash && <SlashMenu items={items} active={active} top={slash.top} left={slash.left} onPick={pick} onHover={setActive} />}
+    </>
+  );
 });

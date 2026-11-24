@@ -9,7 +9,7 @@
  */
 
 import { Download, FileText, Image as ImageIcon, Paperclip } from 'lucide-react';
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode, type RefObject } from 'react';
 import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
@@ -205,9 +205,10 @@ function RenameDialog({ renaming }: { renaming: Renaming }) {
 }
 
 /** The Attach button and the file picker it opens. */
-export function AttachButton({ busy, onFiles }: { busy: boolean; onFiles: (files: File[]) => void }) {
+export function AttachButton({ busy, onFiles, picker }: { busy: boolean; onFiles: (files: File[]) => void; picker?: RefObject<HTMLInputElement | null> }) {
   const t = useTranslations('team.knowledge.attachments');
-  const input = useRef<HTMLInputElement>(null);
+  const own = useRef<HTMLInputElement>(null);
+  const input = picker ?? own;
   return (
     <>
       <input

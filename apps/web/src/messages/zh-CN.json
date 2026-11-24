@@ -1633,6 +1633,44 @@
         "baseLabel": "版本 {n}",
         "proposedLabel": "提议内容",
         "cancel": "取消"
+      },
+      "editor": {
+        "kinds": {
+          "note": "备注",
+          "info": "信息",
+          "tip": "提示",
+          "success": "成功",
+          "question": "问题",
+          "warning": "警告",
+          "danger": "危险",
+          "bug": "缺陷",
+          "example": "示例",
+          "quote": "引用"
+        },
+        "calloutKind": "标注类型",
+        "calloutFold": "折叠方式",
+        "foldNone": "始终展开",
+        "foldOpen": "可折叠，默认展开",
+        "foldClosed": "可折叠，默认折叠",
+        "toggleFold": "折叠或展开",
+        "diagramError": "图表源码有误，无法绘制。",
+        "slash": {
+          "label": "插入块",
+          "empty": "没有匹配的块",
+          "heading1": "一级标题",
+          "heading2": "二级标题",
+          "heading3": "三级标题",
+          "bulletList": "无序列表",
+          "orderedList": "有序列表",
+          "taskList": "任务列表",
+          "quote": "引用",
+          "callout": "标注",
+          "codeBlock": "代码块",
+          "diagram": "图表",
+          "table": "表格",
+          "divider": "分割线",
+          "attach": "图片或文件"
+        }
       }
     }
   },

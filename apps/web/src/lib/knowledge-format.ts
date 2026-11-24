@@ -150,3 +150,40 @@ export function suggestAttachmentName(name: string, taken: Iterable<string>): st
     if (!used.has(next)) return next;
   }
 }
+
+/**
+ * A callout's first line, as Obsidian writes it inside a quote:
+ * `> [!warning] Title`, with `-` after the kind for one folded until opened
+ * and `+` for one open that may be folded. The kind is any word; the ones
+ * below have a colour and a name of their own, and any other reads as a note.
+ */
+export const CALLOUT = /^\[!([A-Za-z][\w-]*)\]([+-]?)(?:[ \t]+|$)/;
+
+/** The kinds the editor offers, each with a name in the console's messages. */
+export const CALLOUT_KINDS = ['note', 'info', 'tip', 'success', 'question', 'warning', 'danger', 'bug', 'example', 'quote'] as const;
+export type CalloutKind = (typeof CALLOUT_KINDS)[number];
+
+/** How a callout folds: never, open until folded, or folded until opened. */
+export type CalloutFold = '' | '+' | '-';
+
+const FAMILIES: Record<string, 'brand' | 'success' | 'signal' | 'destructive' | 'muted'> = {
+  note: 'brand', info: 'brand', todo: 'brand', abstract: 'brand', summary: 'brand', tldr: 'brand',
+  tip: 'success', hint: 'success', important: 'success', success: 'success', check: 'success', done: 'success',
+  question: 'signal', help: 'signal', faq: 'signal', warning: 'signal', caution: 'signal', attention: 'signal',
+  danger: 'destructive', error: 'destructive', failure: 'destructive', fail: 'destructive', missing: 'destructive', bug: 'destructive',
+  example: 'muted', quote: 'muted', cite: 'muted',
+};
+
+/** The colour a callout of a kind is drawn in, Obsidian's aliases included; an unknown kind is a note's. */
+export function calloutFamily(kind: string): string {
+  return FAMILIES[kind.toLowerCase()] ?? 'brand';
+}
+
+/** Whether a kind is one the editor names, by any case. */
+export function knownCalloutKind(kind: string): CalloutKind | null {
+  const lower = kind.toLowerCase();
+  return (CALLOUT_KINDS as readonly string[]).includes(lower) ? (lower as CalloutKind) : null;
+}
+
+/** A code block of this language is drawn as a diagram, its source still the text. */
+export const DIAGRAM_LANGUAGE = 'mermaid';

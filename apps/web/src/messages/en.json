@@ -1633,6 +1633,44 @@
         "baseLabel": "Version {n}",
         "proposedLabel": "Proposed",
         "cancel": "Cancel"
+      },
+      "editor": {
+        "kinds": {
+          "note": "Note",
+          "info": "Info",
+          "tip": "Tip",
+          "success": "Success",
+          "question": "Question",
+          "warning": "Warning",
+          "danger": "Danger",
+          "bug": "Bug",
+          "example": "Example",
+          "quote": "Quote"
+        },
+        "calloutKind": "Callout type",
+        "calloutFold": "Folding",
+        "foldNone": "Always open",
+        "foldOpen": "Foldable, open",
+        "foldClosed": "Foldable, folded",
+        "toggleFold": "Fold or unfold",
+        "diagramError": "This diagram's source has an error, so it cannot be drawn.",
+        "slash": {
+          "label": "Insert a block",
+          "empty": "No block matches",
+          "heading1": "Heading 1",
+          "heading2": "Heading 2",
+          "heading3": "Heading 3",
+          "bulletList": "Bulleted list",
+          "orderedList": "Numbered list",
+          "taskList": "Task list",
+          "quote": "Quote",
+          "callout": "Callout",
+          "codeBlock": "Code block",
+          "diagram": "Diagram",
+          "table": "Table",
+          "divider": "Divider",
+          "attach": "Image or file"
+        }
       }
     }
   },
