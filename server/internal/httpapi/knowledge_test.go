@@ -462,10 +462,10 @@ func TestKnowledgeSearchMentionsAndRows(t *testing.T) {
 		create := func(space, folderID, title, text string) string {
 			return must(t, admin.post(base+"/documents", map[string]any{"spaceId": space, "folderId": folderID, "title": title, "text": text}), 201)["id"].(string)
 		}
-		refunds := create(open, folder, "Refunds", "---\nowner: \"@[a](" + aID + ")\"\nstatus: current\n---\n\n# Refunds\n\n## Window\n\nA refund within THIRTY days; thirty is firm.\n")
+		refunds := create(open, folder, "Refunds", "---\nowner: \"@[a]("+aID+")\"\nstatus: current\n---\n\n# Refunds\n\n## Window\n\nA refund within THIRTY days; thirty is firm.\n")
 		create(open, folder, "Thirty-day trial", "# Trial\n\nNothing else.\n")
-		create(open, "", "Pricing", "# Pricing\n\nAsk @[b](" + bID + ") about discounts.\n")
-		create(closed, "", "Secret", "Thirty secrets, for @[b](" + bID + ").\n")
+		create(open, "", "Pricing", "# Pricing\n\nAsk @[b]("+bID+") about discounts.\n")
+		create(closed, "", "Secret", "Thirty secrets, for @[b]("+bID+").\n")
 
 		search := func(c *browser, q string) []any {
 			return must(t, c.get(base+"/search?q="+q), 200)["results"].([]any)

@@ -226,6 +226,21 @@ templates folder offers its documents when you create a new one; `{{title}}`
 and `{{date}}` in a template become the new title and today's date. At the
 foot of a document, **Linked from** lists the documents that link to it.
 
+**Comments** sit beside the text. Select words while reading and choose
+**Comment** to open a thread on them; the words stay underlined while the
+thread is open, and a thread whose words a later version no longer holds says
+so. Anyone who reads the space may comment and reply; the thread's author or
+an editor **Resolves** it. Comments are never part of the document, and agents
+do not read them.
+
+Type `@` to mention a member; **Mentions** at the top of Knowledge lists the
+documents that mention you or name you their owner. The find box finds a
+document by its title and, under **In the text**, by the words in it. A
+folder's menu opens it **as a table**: each document with its owner, status,
+tags and summary, filtered by words, status or tag and sorted by any column.
+The block menu's **Artifact** embeds one of your artifacts as a card; a reader
+opens it only if it is shared with them.
+
 Your agent, in DSH on your computer or a cloud DSH, reads a synced, read-only
 copy of every space you may read, finds what it needs without being pointed
 at it, and cites the document and heading its answer rests on. An agent never

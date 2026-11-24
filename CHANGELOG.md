@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-24 — Knowledge, working together: comments, mentions, search, tables, embedded artifacts
+
+- **What:** Readers comment on a knowledge document beside its text (`knowledge_comments`): a thread quotes words of a version, with the heading above them, takes replies, and is resolved by its author or an editor; agents never comment, and comments are not in the text or the plugin's copy (`GET`, `POST /api/teams/{teamId}/knowledge/documents/{id}/comments`, `PATCH`, `DELETE …/knowledge/comments/{id}`). `@[Name](member-id)` mentions a member, `@` in the editor lists them, and `GET …/knowledge/mentions` lists the documents naming the caller. `GET …/knowledge/search?q=` finds the documents a member reads by title or text, with the line found, shown under the console's find box. `GET …/knowledge/spaces/{id}/documents?folderId=` gives a folder's documents with their front matter, which the console shows as a table filtered and sorted by property. `![[artifact:{id}]]` embeds an artifact's card, which only those it is shared with can open; the block menu chooses one. The plugin's knowledge guide names mentions and embeds.
+- **Why:** Step 4 of `docs/tech/knowledge.md`.
+- **Breaking:** None.
+- **Upgrade:** The binary applies `20261124063144_knowledge_comments` (mysql `…063145`), which creates `knowledge_comments`.
+- **Refs:** `docs/tech/knowledge.md`, `server/internal/knowledge/comments.go`, `server/internal/knowledge/find.go`.
+
 ## 2026-11-24 — Knowledge's richer format: callouts, diagrams, properties, templates, backlinks
 
 - **What:** A knowledge document's text may hold Obsidian callouts (`> [!warning] Title`, `-` or `+` after the kind to fold it) and `mermaid` diagrams, which the console's editor shows as a coloured box and a drawn diagram and writes back exactly as typed; typing `/` on an empty line lists the blocks to insert. Its front matter's `owner` (a member, `@[Name](member-id)`), `status`, `tags` and `summary` are a row under the title and a form while editing that rewrites only the keys that changed. A space may name one of its folders as its templates (`templatesFolderId` on `PATCH /api/teams/{teamId}/knowledge/spaces/{id}` and in the tree), and a new document may start from one, `{{title}}` and `{{date}}` filled in. `KnowledgeDocument` carries `backlinks`, the documents the caller reads whose current text links to it. The console depends on `mermaid` 12.3.0, loaded only when a diagram is drawn, and `yaml` 2.8.2. The plugin's knowledge guide tells agents what these mean.

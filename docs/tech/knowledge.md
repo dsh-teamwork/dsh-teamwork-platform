@@ -1,6 +1,6 @@
 # Knowledge
 
-> **Status:** Current — the first version and the richer format are built; later steps are plan · **Updated:** 2026-11-24
+> **Status:** Current — the first version, the richer format and working together are built; later steps are plan · **Updated:** 2026-11-24
 
 Where a team keeps what its business knows, as documents people and agents
 maintain together: Markdown in a tree of folders, owned by the team and
@@ -93,10 +93,10 @@ since people and agents already know them.
 | Properties | YAML front matter: `owner` (a member, `@[Name](member-id)`), `status`, `tags`, `summary` | A row of properties under the title | Built |
 | Templates | ordinary documents in the folder a space names for them; `{{title}}` and `{{date}}` are filled in | A choice when creating a document | Built |
 | Backlinks | computed from links | The documents linking here, at the foot | Built |
-| Mentions | `@[Name](member-id)` | A mention, listed in the console | Plan: working together |
-| A folder as a table | the front matter of its documents | A table, filtered and sorted by property | Plan: working together |
-| An embedded artifact | `![[artifact:ID]]` | The artifact's card | Plan: working together |
-| Comments | not in the file: kept beside the version, anchored to a range | Comments in the margin | Plan: working together |
+| Mentions | `@[Name](member-id)` | The member as the team names them now; Mentions lists the documents naming the reader | Built |
+| A folder as a table | the front matter of its documents | A table, filtered and sorted by property | Built |
+| An embedded artifact | `![[artifact:ID]]` | The artifact's card, opened only by those it is shared with | Built |
+| Comments | not in the file: kept beside the version, anchored to the words they quote | Threads beside the text, their words marked | Built |
 
 **Headings are stable anchors**, so a citation names the document, its
 version and a heading, and still opens there after an edit elsewhere.
@@ -154,6 +154,7 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   | `knowledge_documents` | `team_id`, `space_id`, `folder_id`, `title` (unique in its folder), `current_version` (moved by a conditional update), `updated_at` |
   | `knowledge_versions` | `document_id`, `number`, `author_id`, `source` (`console`, `agent`), `computer` and `session_id` (an agent's accepted proposal's), `note`, `text` |
   | `knowledge_attachments` | `team_id`, `document_id`, `name` (unique in its document), `content_type`, `size`, `digest` (its object), `created_by` |
+  | `knowledge_comments` | `team_id`, `document_id`, `parent_id` (empty for a thread's first), `author_id`, `version`, `quote`, `anchor` (the heading's slug), `body`, `resolved_by`, `resolved_at` |
   | `knowledge_proposals` | `team_id`, `document_id`, `base_version`, `author_id`, `source`, `computer`, `session_id`, `note`, `text`, `state`, `decided_by`, `decided_at`, `reason`, and the `version` an acceptance made |
 
   A team's deletion removes all of it (`internal/team/account.go`); an
@@ -177,13 +178,19 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   | `POST …/knowledge/proposals/{id}/accept`, `…/decline`, `…/withdraw` | editor; withdraw, its author | Accepting a stale proposal is `knowledge_stale` and leaves it pending |
   | `POST …/knowledge/documents/{id}/attachments` | reader, or their plugin | One file (multipart, part `file`); the same name and bytes again is 200, other bytes `knowledge_name_taken` |
   | `GET …/knowledge/documents/{id}/attachments/{name}` | reader, or their plugin | Its bytes, sandboxed; an image or PDF inline, anything else downloaded |
+  | `GET …/knowledge/search?q=` | member | The documents the caller reads whose title or current text holds `q`, with the line found, title matches first, at most 30 |
+  | `GET …/knowledge/mentions` | member | The documents the caller reads whose current text mentions them |
+  | `GET …/knowledge/spaces/{id}/documents?folderId=` | reader | The documents directly in a folder, or at the root, with their front matter, for a table |
+  | `GET`, `POST …/knowledge/documents/{id}/comments` | reader, never an agent | Every comment, oldest first; a new thread on a quote of a version, or a reply |
+  | `PATCH`, `DELETE …/knowledge/comments/{id}` | the thread's author or an editor | Resolve or reopen a thread; delete a comment, a thread with its replies |
   | `GET /api/knowledge` | plugin or computer token | The sync manifest, every team the token reaches |
 
   Errors are `wire.Error` codes: `knowledge_not_found` (404, also for what
   the caller may not read), `knowledge_not_editor` and
   `knowledge_agent_proposes` (403), `knowledge_stale`,
   `knowledge_name_taken`, `knowledge_folder_not_empty` and
-  `knowledge_proposal_decided` (409), `knowledge_too_large` (413),
+  `knowledge_proposal_decided` and `knowledge_comment_reply` (409),
+  `knowledge_too_large` (413),
   `knowledge_member_not_in_team` (400).
 - **The sync manifest** is the one format other machines keep, so it is the
   part most expensive to change: per team, each space the member reads and
@@ -241,6 +248,22 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   manifest lists each document's attachments with their digests; the copy
   keeps them in `{title}.files/` beside the document, and the tool uploads
   the files a proposal names before proposing it.
+- **Comments** (`internal/knowledge/comments.go`) are kept beside a
+  document, never in its text, so they change no version and neither the
+  copy nor an agent reads them. A thread quotes words of the version it was
+  written on, within one block, with the slug of the heading above; the
+  console marks the first place the shown version holds those words and
+  lists a thread whose words are gone as about another version. Any reader
+  comments, an agent never; a thread's author or an editor resolves it, and
+  a comment's author or an editor deletes it, a thread with its replies.
+  Deleting a document, a space, a team or an account takes the comments
+  with it, an account's threads with their replies.
+- **Search** (`internal/knowledge/find.go`) is the console's: the documents a
+  member reads whose title or current text holds the words, ignoring case,
+  with the line found and the heading above it. It scans the current
+  versions with no index, enough for a team of a few thousand documents;
+  agents search their synced copy instead. Mentions are found the same way,
+  by the member's id in a mention.
 - **Limits** (constants, cheap to change): a document's text 1 MiB, an
   attachment 20 MiB, a team's attachments 2 GiB, counted apart from its
   artifacts.
@@ -269,7 +292,7 @@ tables. Cheap: the limits, the console's screens, the editor library.
 - **Agents read the synced copy** with their own file tools, so the server
   needs no search index to serve them; the console finds a document by its
   title in the first version.
-- **Editions**: everything in this plan's first three steps is the community
+- **Editions**: everything in this plan's first four steps is the community
   edition's, review included, since one team needs all of it to let agents
   write safely. What a company needs is closed: Lark imports and the Lark
   bot, the organisation's roles and directory, audit and its export,
@@ -327,8 +350,10 @@ tables. Cheap: the limits, the console's screens, the editor library.
    copy, and attached by the editor, a paste, a drop or the agent's tool.
 3. **Richer format (built 2026-11-24)**: callouts and folding, diagrams,
    properties, templates and backlinks, and the slash menu to insert blocks.
-4. **Working together**: mentions, comments, a folder as a table, embedded
-   artifacts, and full-text search for the console and the phone app.
+4. **Working together (built 2026-11-24)**: mentions and the reader's
+   Mentions, comments beside the text, a folder as a table, embedded
+   artifacts, and full-text search in the console. The phone app has no
+   knowledge yet; its search comes with it.
 
 **After these, each designed when its turn comes**, not scheduled:
 
@@ -363,5 +388,9 @@ edited in place.
   `components/knowledge-editor.test.tsx`), properties change only their own
   keys, and a rendered document and its raw file say the same thing to a
   reader who reads only the file.
+- **Comments and search**: Go tests on every dialect that a thread, its
+  replies and its resolution follow its document's access and deletion, that
+  an agent comments nothing, and that search and mentions reach only the
+  spaces a member reads.
 - **End to end** (`server/e2e`): a real DSH session reads a synced document,
   cites it, and proposes a change that a second account accepts.
