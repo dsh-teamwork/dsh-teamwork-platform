@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-23
+> **Status:** Current · **Updated:** 2026-11-24
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -416,6 +416,11 @@ no eval. An agent's file is untrusted, so the console shows that page in an
 iframe sandboxed without same-origin and posts the bytes to it, and the App
 loads the same page, with the bytes embedded, into a WebView over a local
 file; neither runs a document where a session cookie or a relay key lives.
+A PDF is drawn as one scrolling column of pages, fitted to the width, each page
+rendered only while it is near the view. The page cannot read the console's
+stylesheet, so the console posts the colours its theme tokens resolve to with
+the bytes, and posts again when the theme changes; the App passes none and gets
+the light theme.
 
 ## File attachments
 

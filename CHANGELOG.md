@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-24 — PDF previews scroll, and delivered files show their kind
+
+- **What:** A session's PDF preview (and the Word and PowerPoint files the computer converts) now shows every page in one scrolling column fitted to the files panel, as DSH does, instead of one page behind Previous and Next; zoom stays, and the page in view is counted beside it. Pages are drawn as they come near the view. The preview follows the console's light or dark theme, whose colours the console posts to the sandboxed page with the bytes (`theme` in `DocumentPayload`); the App passes none and keeps the light one. A file the agent delivers is a card of one width with its kind on a tile (a deck, a sheet, a document, an image, an archive, code).
+- **Why:** Reading a twelve-slide deck took eleven clicks, the white toolbar glared in dark mode, and a run of delivered files had cards of different widths that all looked alike.
+- **Breaking:** None. The `pdf.previous` and `pdf.next` labels are gone from the console; the App still sends its own, which the viewer ignores.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/lib/pdf-viewer.ts`, `apps/web/src/pages/team/session-document-preview.tsx`, `apps/web/src/pages/team/session-work.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-23 — Session view options, in DSH's own order
 
 - **What:** My DSH and Cloud DSH put search and view options above New session. The options show archived sessions too or only them, group by workspace, as a workspace tree (each workspace under the registered folders that hold it) or in one list, and order by DSH's own order (the default) or the latest change; they are kept per member and computer in the browser. Archived sessions stay hidden except the open one. Running sessions pulse subtly, except with reduced motion. A verified, confirmed paired phone may rename its owner's computer (`PATCH /relay/hosts/{id}` with a Bearer token and `X-Device-Key`). `SessionWorkspace.ancestors` carries a workspace's registered parents from the plugin.

@@ -1,19 +1,37 @@
-import { ChevronRight, FileText } from 'lucide-react';
+import { ChevronRight, File, FileArchive, FileCode, FileImage, FileSpreadsheet, FileText, Presentation, type LucideIcon } from 'lucide-react';
+import { createElement } from 'react';
 import { useTranslations } from 'use-intl';
 
 import { directoryName, type FileTarget, type Row, type ToolStatus } from '@dsh-teamwork/relay-client';
 import { cn } from '@/lib/utils';
 import { SessionMarkdown } from './session-markdown';
 
+/** What a file is, told by its extension, as its card's icon: a deck, a sheet and a document should not look alike. */
+const KINDS: [RegExp, LucideIcon][] = [
+  [/\.(pptx?|key|odp)$/i, Presentation],
+  [/\.(xlsx?|csv|tsv|ods|numbers)$/i, FileSpreadsheet],
+  [/\.(pdf|docx?|odt|rtf|md|txt|pages)$/i, FileText],
+  [/\.(png|jpe?g|gif|webp|svg|avif|heic)$/i, FileImage],
+  [/\.(zip|tar|gz|tgz|7z|rar)$/i, FileArchive],
+  [/\.(html?|css|[cm]?[jt]sx?|json|ya?ml|py|go|rs|sh|sql)$/i, FileCode],
+];
+
+function fileIcon(path: string): LucideIcon {
+  return KINDS.find(([pattern]) => pattern.test(path))?.[1] ?? File;
+}
+
+/** A file the session delivered: one width for every card, so a run of them lines up, and its kind on a tile. */
 export function DeliverableCard({ row, openFile }: { row: Extract<Row, { kind: 'deliverable' }>; openFile?: (file: FileTarget) => void }) {
   const t = useTranslations('team.dsh');
   return (
-    <button type="button" disabled={!openFile} onClick={() => openFile?.(row.file)}
-      className="flex max-w-md items-center gap-3 self-start rounded-lg border px-3 py-2.5 text-start disabled:opacity-60">
-      <FileText aria-hidden className="size-4 shrink-0" />
-      <span className="min-w-0 [overflow-wrap:anywhere]">
-        <span className="block font-medium">{directoryName(row.file.path)}</span>
-        <span className="block text-xs text-muted-foreground">{row.description || t('openDeliverable')}</span>
+    <button type="button" disabled={!openFile} onClick={() => openFile?.(row.file)} title={row.file.path}
+      className="flex w-full max-w-md items-center gap-3 self-start rounded-lg border bg-card px-3 py-2.5 text-start hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60 disabled:hover:bg-card">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+        {createElement(fileIcon(row.file.path), { 'aria-hidden': true, className: 'size-5' })}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-medium">{directoryName(row.file.path)}</span>
+        <span className="block truncate text-xs text-muted-foreground">{row.description || t('openDeliverable')}</span>
       </span>
     </button>
   );

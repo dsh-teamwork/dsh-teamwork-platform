@@ -1102,8 +1102,6 @@
         },
         "pdf": {
           "title": "PDF preview",
-          "previous": "Previous page",
-          "next": "Next page",
           "zoomIn": "Zoom in",
           "zoomOut": "Zoom out",
           "loading": "Loading PDF…",
