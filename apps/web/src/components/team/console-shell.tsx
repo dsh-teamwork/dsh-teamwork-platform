@@ -49,7 +49,7 @@ import { api, type Schemas, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'pages';
+type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'artifacts';
 
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
@@ -126,8 +126,8 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       // Always listed, so a new member finds it before connecting; the same computers in every team. An edition's
       // DSH (the hosted service's cloud DSH) follows it.
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, subnav: MyDshNav, editions: true },
-      // What agents published (docs/tech/pages.md); in every team, always listed.
-      { path: 'pages', key: 'pages', icon: Shapes, fill: true },
+      // What agents published (docs/tech/artifacts.md); in every team, always listed.
+      { path: 'artifacts', key: 'artifacts', icon: Shapes, fill: true },
       { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
     ],

@@ -571,7 +571,7 @@
       "myUsage": "Models and usage",
       "submissions": "My submissions",
       "myDsh": "My DSH",
-      "pages": "Pages"
+      "artifacts": "Artifacts"
     },
     "switcher": {
       "label": "Switch team",
@@ -721,7 +721,7 @@
       "todo_write": "Keep a task list",
       "ask_user_question": "Ask the user",
       "skill": "Use a skill",
-      "teamwork_page": "Publish a page"
+      "teamwork_artifact": "Publish an artifact"
     },
     "avatars": {
       "assistant": "Team assistant",
@@ -952,7 +952,7 @@
         "package": "Package",
         "version": "Version",
         "sha256": "SHA-256",
-        "artifactId": "Archive",
+        "packageId": "Archive",
         "requiredTools": "Required tools",
         "optionalTools": "Optional tools",
         "pluginDependencies": "Plugins",
@@ -1342,13 +1342,13 @@
       "startedBy": "Started this session",
       "allTasks": "All tasks"
     },
-    "pages": {
-      "title": "Pages",
+    "artifacts": {
+      "title": "Artifacts",
       "loading": "Loading…",
       "loadFailed": "Could not load this.",
-      "unavailable": "This page is not available to you: it is private, was deleted, or you left its team.",
-      "emptyTitle": "Pages your team and its agents make",
-      "emptyHow": "In a session on My DSH or a cloud DSH, ask the agent for a report, a deck, a dashboard or a chart and have it published as a page, and it shows up here. Open one full screen, share it with chosen teammates or the whole team, or ask the agent for a new version; earlier versions are kept. Until you share it, only you can see it.",
+      "unavailable": "This artifact is not available to you: it is private, was deleted, or you left its team.",
+      "emptyTitle": "Artifacts your team and its agents make",
+      "emptyHow": "In a session on My DSH or a cloud DSH, ask the agent for a report, a deck, a dashboard or a chart and have it published as an artifact, and it shows up here. Open one full screen, share it with chosen teammates or the whole team, or ask the agent for a new version; earlier versions are kept. Until you share it, only you can see it.",
       "owner": "Owner: {name}",
       "version": "Version",
       "versionN": "Version {n}",
@@ -1359,7 +1359,7 @@
       "close": "Close",
       "versions": "Versions",
       "showing": "Showing",
-      "cardNote": "Page · version {n} · open",
+      "cardNote": "Artifact · version {n} · open",
       "sharing": {
         "private": "Private",
         "members": "Some members",
@@ -1371,9 +1371,9 @@
         "all": "All"
       },
       "empty": {
-        "mine": "No pages yet.",
-        "shared": "Nobody has shared a page with you yet.",
-        "all": "No pages in this team yet."
+        "mine": "No artifacts yet.",
+        "shared": "Nobody has shared an artifact with you yet.",
+        "all": "No artifacts in this team yet."
       },
       "via": {
         "you": "{name} · with you",
@@ -1382,16 +1382,16 @@
       "readers": "Readable by {names}",
       "share": "Share",
       "restrict": "Restrict",
-      "governOnly": "You manage this page as the team's admin, but it is not shared with you, so its content stays hidden. You can restrict who reads it or delete it.",
+      "governOnly": "You manage this artifact as the team's admin, but it is not shared with you, so its content stays hidden. You can restrict who reads it or delete it.",
       "restore": "Restore version {n}",
-      "delete": "Delete page",
+      "delete": "Delete artifact",
       "deleteConfirm": "Delete \"{title}\" and every version of it? This cannot be undone.",
       "actionFailed": "That did not work. Try again.",
       "shareDialog": {
         "title": "Share \"{title}\"",
         "restrictTitle": "Restrict \"{title}\"",
-        "note": "Pages stay inside the team; nobody outside it can open one.",
-        "restrictNote": "As the team's admin you can narrow who reads this page, never widen it.",
+        "note": "Artifacts stay inside the team; nobody outside it can open one.",
+        "restrictNote": "As the team's admin you can narrow who reads this artifact, never widen it.",
         "private": {
           "label": "Only me",
           "note": "Only the owner can open it."
@@ -1409,8 +1409,8 @@
         "cancel": "Cancel",
         "save": "Save",
         "failed": "Could not save. Try again.",
-        "page_sharing_widened": "An admin can only narrow who reads a page.",
-        "page_member_not_in_team": "Someone you chose is no longer in the team."
+        "artifact_sharing_widened": "An admin can only narrow who reads an artifact.",
+        "artifact_member_not_in_team": "Someone you chose is no longer in the team."
       }
     }
   },
@@ -1618,10 +1618,10 @@
     "submission_not_found": "Submission not found.",
     "submission_author_required": "Only the author can perform this action.",
     "reason_required": "A rejection reason is required.",
-    "unsafe_artifact": "Unsafe or unsupported plugin archive. Inspect the included files.",
-    "artifact_version_exists": "This package version already exists. Use a new version.",
-    "artifact_mismatch": "Plugin archive integrity check failed.",
-    "artifact_not_found": "Plugin artifact is unavailable.",
+    "unsafe_package": "Unsafe or unsupported plugin archive. Inspect the included files.",
+    "package_version_exists": "This package version already exists. Use a new version.",
+    "package_mismatch": "Plugin archive integrity check failed.",
+    "package_not_found": "Plugin package is unavailable.",
     "revision_not_found": "Historical version not found.",
     "already_admin": "You are already this team's admin.",
     "member_not_found": "That person is not a member of this team.",

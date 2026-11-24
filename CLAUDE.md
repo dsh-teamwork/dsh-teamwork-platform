@@ -345,8 +345,8 @@ server/              Go: the one binary (ADR 0014). cmd/dsh-teamwork runs
                      app.Main; app/ builds the server, edition/ is what a
                      closed package registers through; internal/ holds the
                      rest by concern: config, db, auth, team, gateway,
-                     analytics, httpapi (every route), pages (what agents
-                     publish, docs/tech/pages.md), web (the embedded
+                     analytics, httpapi (every route), artifacts (what
+                     agents publish, docs/tech/artifacts.md), web (the embedded
                      console and public pages), wire (request shapes and
                      error codes); relay/ is the relay
                      (docs/tech/relay.md), an extension every main imports;

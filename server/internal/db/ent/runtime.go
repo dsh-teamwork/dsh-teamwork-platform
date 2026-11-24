@@ -5,6 +5,10 @@ package ent
 import (
 	"time"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifact"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetnotice"
@@ -16,17 +20,13 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/page"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagefile"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
@@ -41,6 +41,196 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	artifactMixin := schema.Artifact{}.Mixin()
+	artifactMixinFields0 := artifactMixin[0].Fields()
+	_ = artifactMixinFields0
+	artifactFields := schema.Artifact{}.Fields()
+	_ = artifactFields
+	// artifactDescCreatedAt is the schema descriptor for created_at field.
+	artifactDescCreatedAt := artifactMixinFields0[1].Descriptor()
+	// artifact.DefaultCreatedAt holds the default value on creation for the created_at field.
+	artifact.DefaultCreatedAt = artifactDescCreatedAt.Default.(func() time.Time)
+	// artifactDescTeamID is the schema descriptor for team_id field.
+	artifactDescTeamID := artifactFields[0].Descriptor()
+	// artifact.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	artifact.TeamIDValidator = artifactDescTeamID.Validators[0].(func(string) error)
+	// artifactDescOwnerID is the schema descriptor for owner_id field.
+	artifactDescOwnerID := artifactFields[1].Descriptor()
+	// artifact.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	artifact.OwnerIDValidator = artifactDescOwnerID.Validators[0].(func(string) error)
+	// artifactDescTitle is the schema descriptor for title field.
+	artifactDescTitle := artifactFields[3].Descriptor()
+	// artifact.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	artifact.TitleValidator = artifactDescTitle.Validators[0].(func(string) error)
+	// artifactDescUpdatedAt is the schema descriptor for updated_at field.
+	artifactDescUpdatedAt := artifactFields[6].Descriptor()
+	// artifact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	artifact.DefaultUpdatedAt = artifactDescUpdatedAt.Default.(func() time.Time)
+	// artifactDescID is the schema descriptor for id field.
+	artifactDescID := artifactMixinFields0[0].Descriptor()
+	// artifact.DefaultID holds the default value on creation for the id field.
+	artifact.DefaultID = artifactDescID.Default.(func() string)
+	// artifact.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	artifact.IDValidator = func() func(string) error {
+		validators := artifactDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	artifactfileMixin := schema.ArtifactFile{}.Mixin()
+	artifactfileMixinFields0 := artifactfileMixin[0].Fields()
+	_ = artifactfileMixinFields0
+	artifactfileFields := schema.ArtifactFile{}.Fields()
+	_ = artifactfileFields
+	// artifactfileDescCreatedAt is the schema descriptor for created_at field.
+	artifactfileDescCreatedAt := artifactfileMixinFields0[1].Descriptor()
+	// artifactfile.DefaultCreatedAt holds the default value on creation for the created_at field.
+	artifactfile.DefaultCreatedAt = artifactfileDescCreatedAt.Default.(func() time.Time)
+	// artifactfileDescVersionID is the schema descriptor for version_id field.
+	artifactfileDescVersionID := artifactfileFields[0].Descriptor()
+	// artifactfile.VersionIDValidator is a validator for the "version_id" field. It is called by the builders before save.
+	artifactfile.VersionIDValidator = artifactfileDescVersionID.Validators[0].(func(string) error)
+	// artifactfileDescTeamID is the schema descriptor for team_id field.
+	artifactfileDescTeamID := artifactfileFields[1].Descriptor()
+	// artifactfile.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	artifactfile.TeamIDValidator = artifactfileDescTeamID.Validators[0].(func(string) error)
+	// artifactfileDescPath is the schema descriptor for path field.
+	artifactfileDescPath := artifactfileFields[2].Descriptor()
+	// artifactfile.PathValidator is a validator for the "path" field. It is called by the builders before save.
+	artifactfile.PathValidator = artifactfileDescPath.Validators[0].(func(string) error)
+	// artifactfileDescContentType is the schema descriptor for content_type field.
+	artifactfileDescContentType := artifactfileFields[3].Descriptor()
+	// artifactfile.ContentTypeValidator is a validator for the "content_type" field. It is called by the builders before save.
+	artifactfile.ContentTypeValidator = artifactfileDescContentType.Validators[0].(func(string) error)
+	// artifactfileDescDigest is the schema descriptor for digest field.
+	artifactfileDescDigest := artifactfileFields[5].Descriptor()
+	// artifactfile.DigestValidator is a validator for the "digest" field. It is called by the builders before save.
+	artifactfile.DigestValidator = artifactfileDescDigest.Validators[0].(func(string) error)
+	// artifactfileDescID is the schema descriptor for id field.
+	artifactfileDescID := artifactfileMixinFields0[0].Descriptor()
+	// artifactfile.DefaultID holds the default value on creation for the id field.
+	artifactfile.DefaultID = artifactfileDescID.Default.(func() string)
+	// artifactfile.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	artifactfile.IDValidator = func() func(string) error {
+		validators := artifactfileDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	artifactmemberMixin := schema.ArtifactMember{}.Mixin()
+	artifactmemberMixinFields0 := artifactmemberMixin[0].Fields()
+	_ = artifactmemberMixinFields0
+	artifactmemberFields := schema.ArtifactMember{}.Fields()
+	_ = artifactmemberFields
+	// artifactmemberDescCreatedAt is the schema descriptor for created_at field.
+	artifactmemberDescCreatedAt := artifactmemberMixinFields0[1].Descriptor()
+	// artifactmember.DefaultCreatedAt holds the default value on creation for the created_at field.
+	artifactmember.DefaultCreatedAt = artifactmemberDescCreatedAt.Default.(func() time.Time)
+	// artifactmemberDescArtifactID is the schema descriptor for artifact_id field.
+	artifactmemberDescArtifactID := artifactmemberFields[0].Descriptor()
+	// artifactmember.ArtifactIDValidator is a validator for the "artifact_id" field. It is called by the builders before save.
+	artifactmember.ArtifactIDValidator = artifactmemberDescArtifactID.Validators[0].(func(string) error)
+	// artifactmemberDescUserID is the schema descriptor for user_id field.
+	artifactmemberDescUserID := artifactmemberFields[1].Descriptor()
+	// artifactmember.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	artifactmember.UserIDValidator = artifactmemberDescUserID.Validators[0].(func(string) error)
+	// artifactmemberDescAddedBy is the schema descriptor for added_by field.
+	artifactmemberDescAddedBy := artifactmemberFields[2].Descriptor()
+	// artifactmember.AddedByValidator is a validator for the "added_by" field. It is called by the builders before save.
+	artifactmember.AddedByValidator = artifactmemberDescAddedBy.Validators[0].(func(string) error)
+	// artifactmemberDescID is the schema descriptor for id field.
+	artifactmemberDescID := artifactmemberMixinFields0[0].Descriptor()
+	// artifactmember.DefaultID holds the default value on creation for the id field.
+	artifactmember.DefaultID = artifactmemberDescID.Default.(func() string)
+	// artifactmember.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	artifactmember.IDValidator = func() func(string) error {
+		validators := artifactmemberDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	artifactversionMixin := schema.ArtifactVersion{}.Mixin()
+	artifactversionMixinFields0 := artifactversionMixin[0].Fields()
+	_ = artifactversionMixinFields0
+	artifactversionFields := schema.ArtifactVersion{}.Fields()
+	_ = artifactversionFields
+	// artifactversionDescCreatedAt is the schema descriptor for created_at field.
+	artifactversionDescCreatedAt := artifactversionMixinFields0[1].Descriptor()
+	// artifactversion.DefaultCreatedAt holds the default value on creation for the created_at field.
+	artifactversion.DefaultCreatedAt = artifactversionDescCreatedAt.Default.(func() time.Time)
+	// artifactversionDescArtifactID is the schema descriptor for artifact_id field.
+	artifactversionDescArtifactID := artifactversionFields[0].Descriptor()
+	// artifactversion.ArtifactIDValidator is a validator for the "artifact_id" field. It is called by the builders before save.
+	artifactversion.ArtifactIDValidator = artifactversionDescArtifactID.Validators[0].(func(string) error)
+	// artifactversionDescAuthorID is the schema descriptor for author_id field.
+	artifactversionDescAuthorID := artifactversionFields[2].Descriptor()
+	// artifactversion.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	artifactversion.AuthorIDValidator = artifactversionDescAuthorID.Validators[0].(func(string) error)
+	// artifactversionDescComputer is the schema descriptor for computer field.
+	artifactversionDescComputer := artifactversionFields[3].Descriptor()
+	// artifactversion.DefaultComputer holds the default value on creation for the computer field.
+	artifactversion.DefaultComputer = artifactversionDescComputer.Default.(string)
+	// artifactversion.ComputerValidator is a validator for the "computer" field. It is called by the builders before save.
+	artifactversion.ComputerValidator = artifactversionDescComputer.Validators[0].(func(string) error)
+	// artifactversionDescSessionID is the schema descriptor for session_id field.
+	artifactversionDescSessionID := artifactversionFields[4].Descriptor()
+	// artifactversion.DefaultSessionID holds the default value on creation for the session_id field.
+	artifactversion.DefaultSessionID = artifactversionDescSessionID.Default.(string)
+	// artifactversion.SessionIDValidator is a validator for the "session_id" field. It is called by the builders before save.
+	artifactversion.SessionIDValidator = artifactversionDescSessionID.Validators[0].(func(string) error)
+	// artifactversionDescNote is the schema descriptor for note field.
+	artifactversionDescNote := artifactversionFields[5].Descriptor()
+	// artifactversion.DefaultNote holds the default value on creation for the note field.
+	artifactversion.DefaultNote = artifactversionDescNote.Default.(string)
+	// artifactversion.NoteValidator is a validator for the "note" field. It is called by the builders before save.
+	artifactversion.NoteValidator = artifactversionDescNote.Validators[0].(func(string) error)
+	// artifactversionDescID is the schema descriptor for id field.
+	artifactversionDescID := artifactversionMixinFields0[0].Descriptor()
+	// artifactversion.DefaultID holds the default value on creation for the id field.
+	artifactversion.DefaultID = artifactversionDescID.Default.(func() string)
+	// artifactversion.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	artifactversion.IDValidator = func() func(string) error {
+		validators := artifactversionDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	budgeteventMixin := schema.BudgetEvent{}.Mixin()
 	budgeteventMixinFields0 := budgeteventMixin[0].Fields()
 	_ = budgeteventMixinFields0
@@ -660,196 +850,6 @@ func init() {
 			return nil
 		}
 	}()
-	pageMixin := schema.Page{}.Mixin()
-	pageMixinFields0 := pageMixin[0].Fields()
-	_ = pageMixinFields0
-	pageFields := schema.Page{}.Fields()
-	_ = pageFields
-	// pageDescCreatedAt is the schema descriptor for created_at field.
-	pageDescCreatedAt := pageMixinFields0[1].Descriptor()
-	// page.DefaultCreatedAt holds the default value on creation for the created_at field.
-	page.DefaultCreatedAt = pageDescCreatedAt.Default.(func() time.Time)
-	// pageDescTeamID is the schema descriptor for team_id field.
-	pageDescTeamID := pageFields[0].Descriptor()
-	// page.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
-	page.TeamIDValidator = pageDescTeamID.Validators[0].(func(string) error)
-	// pageDescOwnerID is the schema descriptor for owner_id field.
-	pageDescOwnerID := pageFields[1].Descriptor()
-	// page.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
-	page.OwnerIDValidator = pageDescOwnerID.Validators[0].(func(string) error)
-	// pageDescTitle is the schema descriptor for title field.
-	pageDescTitle := pageFields[3].Descriptor()
-	// page.TitleValidator is a validator for the "title" field. It is called by the builders before save.
-	page.TitleValidator = pageDescTitle.Validators[0].(func(string) error)
-	// pageDescUpdatedAt is the schema descriptor for updated_at field.
-	pageDescUpdatedAt := pageFields[6].Descriptor()
-	// page.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	page.DefaultUpdatedAt = pageDescUpdatedAt.Default.(func() time.Time)
-	// pageDescID is the schema descriptor for id field.
-	pageDescID := pageMixinFields0[0].Descriptor()
-	// page.DefaultID holds the default value on creation for the id field.
-	page.DefaultID = pageDescID.Default.(func() string)
-	// page.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	page.IDValidator = func() func(string) error {
-		validators := pageDescID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(id string) error {
-			for _, fn := range fns {
-				if err := fn(id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	pagefileMixin := schema.PageFile{}.Mixin()
-	pagefileMixinFields0 := pagefileMixin[0].Fields()
-	_ = pagefileMixinFields0
-	pagefileFields := schema.PageFile{}.Fields()
-	_ = pagefileFields
-	// pagefileDescCreatedAt is the schema descriptor for created_at field.
-	pagefileDescCreatedAt := pagefileMixinFields0[1].Descriptor()
-	// pagefile.DefaultCreatedAt holds the default value on creation for the created_at field.
-	pagefile.DefaultCreatedAt = pagefileDescCreatedAt.Default.(func() time.Time)
-	// pagefileDescVersionID is the schema descriptor for version_id field.
-	pagefileDescVersionID := pagefileFields[0].Descriptor()
-	// pagefile.VersionIDValidator is a validator for the "version_id" field. It is called by the builders before save.
-	pagefile.VersionIDValidator = pagefileDescVersionID.Validators[0].(func(string) error)
-	// pagefileDescTeamID is the schema descriptor for team_id field.
-	pagefileDescTeamID := pagefileFields[1].Descriptor()
-	// pagefile.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
-	pagefile.TeamIDValidator = pagefileDescTeamID.Validators[0].(func(string) error)
-	// pagefileDescPath is the schema descriptor for path field.
-	pagefileDescPath := pagefileFields[2].Descriptor()
-	// pagefile.PathValidator is a validator for the "path" field. It is called by the builders before save.
-	pagefile.PathValidator = pagefileDescPath.Validators[0].(func(string) error)
-	// pagefileDescContentType is the schema descriptor for content_type field.
-	pagefileDescContentType := pagefileFields[3].Descriptor()
-	// pagefile.ContentTypeValidator is a validator for the "content_type" field. It is called by the builders before save.
-	pagefile.ContentTypeValidator = pagefileDescContentType.Validators[0].(func(string) error)
-	// pagefileDescDigest is the schema descriptor for digest field.
-	pagefileDescDigest := pagefileFields[5].Descriptor()
-	// pagefile.DigestValidator is a validator for the "digest" field. It is called by the builders before save.
-	pagefile.DigestValidator = pagefileDescDigest.Validators[0].(func(string) error)
-	// pagefileDescID is the schema descriptor for id field.
-	pagefileDescID := pagefileMixinFields0[0].Descriptor()
-	// pagefile.DefaultID holds the default value on creation for the id field.
-	pagefile.DefaultID = pagefileDescID.Default.(func() string)
-	// pagefile.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	pagefile.IDValidator = func() func(string) error {
-		validators := pagefileDescID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(id string) error {
-			for _, fn := range fns {
-				if err := fn(id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	pagememberMixin := schema.PageMember{}.Mixin()
-	pagememberMixinFields0 := pagememberMixin[0].Fields()
-	_ = pagememberMixinFields0
-	pagememberFields := schema.PageMember{}.Fields()
-	_ = pagememberFields
-	// pagememberDescCreatedAt is the schema descriptor for created_at field.
-	pagememberDescCreatedAt := pagememberMixinFields0[1].Descriptor()
-	// pagemember.DefaultCreatedAt holds the default value on creation for the created_at field.
-	pagemember.DefaultCreatedAt = pagememberDescCreatedAt.Default.(func() time.Time)
-	// pagememberDescPageID is the schema descriptor for page_id field.
-	pagememberDescPageID := pagememberFields[0].Descriptor()
-	// pagemember.PageIDValidator is a validator for the "page_id" field. It is called by the builders before save.
-	pagemember.PageIDValidator = pagememberDescPageID.Validators[0].(func(string) error)
-	// pagememberDescUserID is the schema descriptor for user_id field.
-	pagememberDescUserID := pagememberFields[1].Descriptor()
-	// pagemember.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	pagemember.UserIDValidator = pagememberDescUserID.Validators[0].(func(string) error)
-	// pagememberDescAddedBy is the schema descriptor for added_by field.
-	pagememberDescAddedBy := pagememberFields[2].Descriptor()
-	// pagemember.AddedByValidator is a validator for the "added_by" field. It is called by the builders before save.
-	pagemember.AddedByValidator = pagememberDescAddedBy.Validators[0].(func(string) error)
-	// pagememberDescID is the schema descriptor for id field.
-	pagememberDescID := pagememberMixinFields0[0].Descriptor()
-	// pagemember.DefaultID holds the default value on creation for the id field.
-	pagemember.DefaultID = pagememberDescID.Default.(func() string)
-	// pagemember.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	pagemember.IDValidator = func() func(string) error {
-		validators := pagememberDescID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(id string) error {
-			for _, fn := range fns {
-				if err := fn(id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	pageversionMixin := schema.PageVersion{}.Mixin()
-	pageversionMixinFields0 := pageversionMixin[0].Fields()
-	_ = pageversionMixinFields0
-	pageversionFields := schema.PageVersion{}.Fields()
-	_ = pageversionFields
-	// pageversionDescCreatedAt is the schema descriptor for created_at field.
-	pageversionDescCreatedAt := pageversionMixinFields0[1].Descriptor()
-	// pageversion.DefaultCreatedAt holds the default value on creation for the created_at field.
-	pageversion.DefaultCreatedAt = pageversionDescCreatedAt.Default.(func() time.Time)
-	// pageversionDescPageID is the schema descriptor for page_id field.
-	pageversionDescPageID := pageversionFields[0].Descriptor()
-	// pageversion.PageIDValidator is a validator for the "page_id" field. It is called by the builders before save.
-	pageversion.PageIDValidator = pageversionDescPageID.Validators[0].(func(string) error)
-	// pageversionDescAuthorID is the schema descriptor for author_id field.
-	pageversionDescAuthorID := pageversionFields[2].Descriptor()
-	// pageversion.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
-	pageversion.AuthorIDValidator = pageversionDescAuthorID.Validators[0].(func(string) error)
-	// pageversionDescComputer is the schema descriptor for computer field.
-	pageversionDescComputer := pageversionFields[3].Descriptor()
-	// pageversion.DefaultComputer holds the default value on creation for the computer field.
-	pageversion.DefaultComputer = pageversionDescComputer.Default.(string)
-	// pageversion.ComputerValidator is a validator for the "computer" field. It is called by the builders before save.
-	pageversion.ComputerValidator = pageversionDescComputer.Validators[0].(func(string) error)
-	// pageversionDescSessionID is the schema descriptor for session_id field.
-	pageversionDescSessionID := pageversionFields[4].Descriptor()
-	// pageversion.DefaultSessionID holds the default value on creation for the session_id field.
-	pageversion.DefaultSessionID = pageversionDescSessionID.Default.(string)
-	// pageversion.SessionIDValidator is a validator for the "session_id" field. It is called by the builders before save.
-	pageversion.SessionIDValidator = pageversionDescSessionID.Validators[0].(func(string) error)
-	// pageversionDescNote is the schema descriptor for note field.
-	pageversionDescNote := pageversionFields[5].Descriptor()
-	// pageversion.DefaultNote holds the default value on creation for the note field.
-	pageversion.DefaultNote = pageversionDescNote.Default.(string)
-	// pageversion.NoteValidator is a validator for the "note" field. It is called by the builders before save.
-	pageversion.NoteValidator = pageversionDescNote.Validators[0].(func(string) error)
-	// pageversionDescID is the schema descriptor for id field.
-	pageversionDescID := pageversionMixinFields0[0].Descriptor()
-	// pageversion.DefaultID holds the default value on creation for the id field.
-	pageversion.DefaultID = pageversionDescID.Default.(func() string)
-	// pageversion.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	pageversion.IDValidator = func() func(string) error {
-		validators := pageversionDescID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(id string) error {
-			for _, fn := range fns {
-				if err := fn(id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
 	passwordMixin := schema.Password{}.Mixin()
 	passwordMixinFields0 := passwordMixin[0].Fields()
 	_ = passwordMixinFields0
@@ -923,6 +923,59 @@ func init() {
 	// plugingrant.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	plugingrant.IDValidator = func() func(string) error {
 		validators := plugingrantDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	pluginpackageMixin := schema.PluginPackage{}.Mixin()
+	pluginpackageMixinFields0 := pluginpackageMixin[0].Fields()
+	_ = pluginpackageMixinFields0
+	pluginpackageFields := schema.PluginPackage{}.Fields()
+	_ = pluginpackageFields
+	// pluginpackageDescCreatedAt is the schema descriptor for created_at field.
+	pluginpackageDescCreatedAt := pluginpackageMixinFields0[1].Descriptor()
+	// pluginpackage.DefaultCreatedAt holds the default value on creation for the created_at field.
+	pluginpackage.DefaultCreatedAt = pluginpackageDescCreatedAt.Default.(func() time.Time)
+	// pluginpackageDescTeamID is the schema descriptor for team_id field.
+	pluginpackageDescTeamID := pluginpackageFields[0].Descriptor()
+	// pluginpackage.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	pluginpackage.TeamIDValidator = pluginpackageDescTeamID.Validators[0].(func(string) error)
+	// pluginpackageDescAuthorID is the schema descriptor for author_id field.
+	pluginpackageDescAuthorID := pluginpackageFields[1].Descriptor()
+	// pluginpackage.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	pluginpackage.AuthorIDValidator = pluginpackageDescAuthorID.Validators[0].(func(string) error)
+	// pluginpackageDescPackage is the schema descriptor for package field.
+	pluginpackageDescPackage := pluginpackageFields[2].Descriptor()
+	// pluginpackage.PackageValidator is a validator for the "package" field. It is called by the builders before save.
+	pluginpackage.PackageValidator = pluginpackageDescPackage.Validators[0].(func(string) error)
+	// pluginpackageDescVersion is the schema descriptor for version field.
+	pluginpackageDescVersion := pluginpackageFields[3].Descriptor()
+	// pluginpackage.VersionValidator is a validator for the "version" field. It is called by the builders before save.
+	pluginpackage.VersionValidator = pluginpackageDescVersion.Validators[0].(func(string) error)
+	// pluginpackageDescSha256 is the schema descriptor for sha256 field.
+	pluginpackageDescSha256 := pluginpackageFields[4].Descriptor()
+	// pluginpackage.Sha256Validator is a validator for the "sha256" field. It is called by the builders before save.
+	pluginpackage.Sha256Validator = pluginpackageDescSha256.Validators[0].(func(string) error)
+	// pluginpackageDescPublished is the schema descriptor for published field.
+	pluginpackageDescPublished := pluginpackageFields[7].Descriptor()
+	// pluginpackage.DefaultPublished holds the default value on creation for the published field.
+	pluginpackage.DefaultPublished = pluginpackageDescPublished.Default.(bool)
+	// pluginpackageDescID is the schema descriptor for id field.
+	pluginpackageDescID := pluginpackageMixinFields0[0].Descriptor()
+	// pluginpackage.DefaultID holds the default value on creation for the id field.
+	pluginpackage.DefaultID = pluginpackageDescID.Default.(func() string)
+	// pluginpackage.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	pluginpackage.IDValidator = func() func(string) error {
+		validators := pluginpackageDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
@@ -1163,59 +1216,6 @@ func init() {
 	// relaypairingoffer.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	relaypairingoffer.IDValidator = func() func(string) error {
 		validators := relaypairingofferDescID.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(id string) error {
-			for _, fn := range fns {
-				if err := fn(id); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	resourceartifactMixin := schema.ResourceArtifact{}.Mixin()
-	resourceartifactMixinFields0 := resourceartifactMixin[0].Fields()
-	_ = resourceartifactMixinFields0
-	resourceartifactFields := schema.ResourceArtifact{}.Fields()
-	_ = resourceartifactFields
-	// resourceartifactDescCreatedAt is the schema descriptor for created_at field.
-	resourceartifactDescCreatedAt := resourceartifactMixinFields0[1].Descriptor()
-	// resourceartifact.DefaultCreatedAt holds the default value on creation for the created_at field.
-	resourceartifact.DefaultCreatedAt = resourceartifactDescCreatedAt.Default.(func() time.Time)
-	// resourceartifactDescTeamID is the schema descriptor for team_id field.
-	resourceartifactDescTeamID := resourceartifactFields[0].Descriptor()
-	// resourceartifact.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
-	resourceartifact.TeamIDValidator = resourceartifactDescTeamID.Validators[0].(func(string) error)
-	// resourceartifactDescAuthorID is the schema descriptor for author_id field.
-	resourceartifactDescAuthorID := resourceartifactFields[1].Descriptor()
-	// resourceartifact.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
-	resourceartifact.AuthorIDValidator = resourceartifactDescAuthorID.Validators[0].(func(string) error)
-	// resourceartifactDescPackage is the schema descriptor for package field.
-	resourceartifactDescPackage := resourceartifactFields[2].Descriptor()
-	// resourceartifact.PackageValidator is a validator for the "package" field. It is called by the builders before save.
-	resourceartifact.PackageValidator = resourceartifactDescPackage.Validators[0].(func(string) error)
-	// resourceartifactDescVersion is the schema descriptor for version field.
-	resourceartifactDescVersion := resourceartifactFields[3].Descriptor()
-	// resourceartifact.VersionValidator is a validator for the "version" field. It is called by the builders before save.
-	resourceartifact.VersionValidator = resourceartifactDescVersion.Validators[0].(func(string) error)
-	// resourceartifactDescSha256 is the schema descriptor for sha256 field.
-	resourceartifactDescSha256 := resourceartifactFields[4].Descriptor()
-	// resourceartifact.Sha256Validator is a validator for the "sha256" field. It is called by the builders before save.
-	resourceartifact.Sha256Validator = resourceartifactDescSha256.Validators[0].(func(string) error)
-	// resourceartifactDescPublished is the schema descriptor for published field.
-	resourceartifactDescPublished := resourceartifactFields[7].Descriptor()
-	// resourceartifact.DefaultPublished holds the default value on creation for the published field.
-	resourceartifact.DefaultPublished = resourceartifactDescPublished.Default.(bool)
-	// resourceartifactDescID is the schema descriptor for id field.
-	resourceartifactDescID := resourceartifactMixinFields0[0].Descriptor()
-	// resourceartifact.DefaultID holds the default value on creation for the id field.
-	resourceartifact.DefaultID = resourceartifactDescID.Default.(func() string)
-	// resourceartifact.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	resourceartifact.IDValidator = func() func(string) error {
-		validators := resourceartifactDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),

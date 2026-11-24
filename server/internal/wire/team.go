@@ -264,7 +264,7 @@ func (p *PresetData) validate(is *Issues) {
 
 // PluginData pins an npm package at one exact version.
 type PluginData struct {
-	ArtifactID    string   `json:"artifactId,omitempty"`
+	PackageID     string   `json:"packageId,omitempty"`
 	SHA256        string   `json:"sha256,omitempty"`
 	Package       string   `json:"package"`
 	Version       string   `json:"version"`
@@ -273,8 +273,8 @@ type PluginData struct {
 }
 
 func (p *PluginData) validate(is *Issues) {
-	if (p.ArtifactID == "") != (p.SHA256 == "") || len(p.ArtifactID) > 32 || (p.SHA256 != "" && !regexp.MustCompile(`^[a-f0-9]{64}$`).MatchString(p.SHA256)) {
-		is.Add("An artifact and its SHA-256 digest are required together", "data", "artifactId")
+	if (p.PackageID == "") != (p.SHA256 == "") || len(p.PackageID) > 32 || (p.SHA256 != "" && !regexp.MustCompile(`^[a-f0-9]{64}$`).MatchString(p.SHA256)) {
+		is.Add("A package and its SHA-256 digest are required together", "data", "packageId")
 	}
 	if !npmPackage.MatchString(p.Package) {
 		is.Add("An npm package name", "data", "package")

@@ -94,7 +94,7 @@ To manage picture input, edit a BYOK model and set **Image understanding**.
   research analyst or presentation master) or a blank preset, and give it an
   avatar, which members see beside it in the console and the phone app. The
   presentation master plans a talk, writes the slides and their speaker notes,
-  and publishes the deck as a page that presents full screen and exports to PDF
+  and publishes the deck as an artifact that presents full screen and exports to PDF
   and an editable PowerPoint file. The research analyst reads primary sources
   and publishes a report with numbered citations, gaps and dated sources, which
   prints to PDF and saves as Markdown. For web search a member chooses

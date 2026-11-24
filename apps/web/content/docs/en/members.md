@@ -50,8 +50,8 @@ team's resources, your usage, budgets, members, or what is waiting for review.
 Describe a preset you want and it drafts the whole thing (persona, method,
 model and tools), shows it to you, and submits it for review once you agree.
 An admin can have it create or change presets, review submissions, or turn a
-month's usage into a page. It suggests what to do next from what it finds.
-Anything it would change still asks for your approval, and a page it publishes
+month's usage into an artifact. It suggests what to do next from what it finds.
+Anything it would change still asks for your approval, and an artifact it publishes
 stays yours until you share it.
 
 ## Work on your own DSH from the browser
@@ -150,25 +150,25 @@ resize photos to fit 512 KiB per image and 1.5 MiB of images per message, then
 transfer them in chunks. The phone app also supports selecting several photos
 from the library and taking a photo with the camera.
 
-## Pages your agent publishes
+## Artifacts your agent publishes
 
 Ask the agent in a session for a report, a deck, a dashboard or a diagram, and
 to publish it. It appears as a card in the conversation; the card opens the
-page beside the conversation, and **Pages** under Workspace lists every page
+artifact beside the conversation, and **Artifacts** under Workspace lists every artifact
 you published in this team, newest first, with its versions. Asking the agent
-for a change adds a version; the earlier ones stay. A page starts private to
+for a change adds a version; the earlier ones stay. An artifact starts private to
 you, and the agent cannot share it. **Share** offers **Only me**, **Specific
-members** and **Everyone in the team**; nobody outside the team can open a
-page. Whoever can read a page sees it under **Shared with me** and can ask
+members** and **Everyone in the team**; nobody outside the team can open an
+artifact. Whoever can read an artifact sees it under **Shared with me** and can ask
 their own agent to change it, which adds a version under their name. As the
-owner you can also rename a page, restore an earlier version, or delete it.
-The team's admin sees every page under **All** and can narrow who reads one or
-delete it, but reads its content only if it is shared with them. Pages run in
-a sandbox on their own address, so a page cannot act as you in Teamwork. A page
+owner you can also rename an artifact, restore an earlier version, or delete it.
+The team's admin sees every artifact under **All** and can narrow who reads one or
+delete it, but reads its content only if it is shared with them. Artifacts run in
+a sandbox on their own address, so an artifact cannot act as you in Teamwork. An artifact
 may still go full screen and save a file it makes, such as a deck's PDF or
 PowerPoint export; your browser shows each download.
 
-In the mobile app, tap a page card to open a bottom sheet that takes up about
+In the mobile app, tap an artifact card to open a bottom sheet that takes up about
 80% of the screen. Tap the browser icon in the top right to open the same
 version in your browser. Tap **Close** to return to the conversation.
 

@@ -25,15 +25,15 @@ export const PRESET_TEMPLATES: readonly PresetTemplate[] = [
   { id: 'analyst', avatar: 'analyst', requiredTools: ['read', 'bash', 'write'], optionalTools: ['glob', 'ask_user_question'] },
   // Its method is the plugin's teamwork-research skill. web_search needs a DeepSeek key on the member's DSH, so it is
   // optional: without it the analyst reads primary sources with web_fetch.
-  { id: 'researcher', avatar: 'researcher', requiredTools: ['web_fetch', 'write', 'skill', 'teamwork_page'], optionalTools: ['web_search', 'read', 'bash', 'ask_user_question'] },
+  { id: 'researcher', avatar: 'researcher', requiredTools: ['web_fetch', 'write', 'skill', 'teamwork_artifact'], optionalTools: ['web_search', 'read', 'bash', 'ask_user_question'] },
   // Its method is the plugin's teamwork-slides skill; every member's plugin carries both (dsh-teamwork's skills/).
-  { id: 'presenter', avatar: 'training', requiredTools: ['read', 'write', 'skill', 'teamwork_page'], optionalTools: ['bash', 'web_search', 'web_fetch', 'ask_user_question'] },
+  { id: 'presenter', avatar: 'training', requiredTools: ['read', 'write', 'skill', 'teamwork_artifact'], optionalTools: ['bash', 'web_search', 'web_fetch', 'ask_user_question'] },
 ];
 
 /**
  * The tools DSH registers under these names (DSH 0.2.2: `dsh-tool-fs`,
  * `-fs-search`, `-bash`, `-web`, `-todo`, `-ask-user`, `-skill`), and the
- * Teamwork plugin's `teamwork_page`, which every member has. A preset may name
+ * Teamwork plugin's `teamwork_artifact`, which every member has. A preset may name
  * others, such as a plugin's; the editor keeps those as they are. Each one's
  * description is `team.tools.<name>`.
  */
@@ -50,5 +50,5 @@ export const DSH_TOOLS = [
   'todo_write',
   'ask_user_question',
   'skill',
-  'teamwork_page',
+  'teamwork_artifact',
 ] as const;

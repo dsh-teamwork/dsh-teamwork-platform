@@ -25,14 +25,14 @@ import (
 	"golang.org/x/net/publicsuffix"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifacts"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/pages"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/objectstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
@@ -76,35 +76,35 @@ func run(version string) error {
 		return err
 	}
 	defer client.Close()
-	if cfg.MigrateArtifactPaths {
-		store, err := artifactstore.FromEnv(cfg.DataDir, os.Getenv)
+	if cfg.MigratePackagePaths {
+		store, err := objectstore.FromEnv(cfg.DataDir, os.Getenv)
 		if err != nil {
 			return err
 		}
-		count, err := (&team.Service{DB: client, Artifacts: store}).MigrateArtifactPaths(ctx)
+		count, err := (&team.Service{DB: client, Objects: store}).MigratePackagePaths(ctx)
 		if err != nil {
 			return err
 		}
-		slog.Info("artifact paths verified", "count", count)
+		slog.Info("package paths verified", "count", count)
 		return nil
 	}
-	if cfg.MigrateArtifacts {
-		store, err := artifactstore.FromEnv(cfg.DataDir, os.Getenv)
+	if cfg.MigratePackages {
+		store, err := objectstore.FromEnv(cfg.DataDir, os.Getenv)
 		if err != nil {
 			return err
 		}
-		if _, ok := store.(*artifactstore.S3); !ok {
+		if _, ok := store.(*objectstore.S3); !ok {
 			return errors.New("--migrate-artifacts requires ARTIFACT_STORAGE_PROVIDER=s3")
 		}
 		dir := os.Getenv("ARTIFACT_LOCAL_DIR")
 		if dir == "" {
 			dir = filepath.Join(cfg.DataDir, "artifacts")
 		}
-		count, err := (&team.Service{DB: client, Artifacts: store}).MigrateArtifacts(ctx, dir)
+		count, err := (&team.Service{DB: client, Objects: store}).MigratePackages(ctx, dir)
 		if err != nil {
 			return err
 		}
-		slog.Info("artifact migration verified", "count", count)
+		slog.Info("package migration verified", "count", count)
 		return nil
 	}
 
@@ -115,21 +115,21 @@ func run(version string) error {
 	// After the server stops taking requests, and before the deferred close
 	// of the database.
 	defer stopExtensions()
-	if srv.Team.Artifacts != nil {
-		count, err := srv.Team.MigrateArtifactPaths(ctx)
+	if srv.Team.Objects != nil {
+		count, err := srv.Team.MigratePackagePaths(ctx)
 		if err != nil {
 			return err
 		}
-		slog.Info("artifact paths verified", "count", count)
+		slog.Info("package paths verified", "count", count)
 	}
-	if remote, ok := srv.Team.Artifacts.(*artifactstore.S3); ok {
+	if remote, ok := srv.Team.Objects.(*objectstore.S3); ok {
 		checkCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		err := remote.Check(checkCtx)
 		cancel()
 		if err != nil {
-			return fmt.Errorf("S3 artifact storage check: %w", err)
+			return fmt.Errorf("S3 object storage check: %w", err)
 		}
-		slog.Info("artifact storage verified", "provider", "s3")
+		slog.Info("object storage verified", "provider", "s3")
 	}
 	// A management process never offers the first account: the database is
 	// shared, so it is claimed where members sign in, and a management
@@ -191,7 +191,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	}
 	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords()}
 	if cfg.ServiceRole != "manage" {
-		teams.Artifacts, err = artifactstore.FromEnv(cfg.DataDir, env)
+		teams.Objects, err = objectstore.FromEnv(cfg.DataDir, env)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -206,7 +206,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		Usage:   meter,
 	}
 	if cfg.ServiceRole != "manage" {
-		srv.Pages = &pages.Service{DB: client, Store: teams.Artifacts, Team: teams, Sealer: authn.Sealer, ContentURL: cfg.ContentURL}
+		srv.Artifacts = &artifacts.Service{DB: client, Store: teams.Objects, Team: teams, Sealer: authn.Sealer, ContentURL: cfg.ContentURL}
 	}
 	if !cfg.Passwords() {
 		mail := auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}
@@ -274,7 +274,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			srv.Subdomains[domain] = h
 			return nil
 		},
-		Objects: objects(teams.Artifacts),
+		Objects: objects(teams.Objects),
 		Users:   NewUsers(client), Env: env,
 		WithTeamTx:          meter.WithTeamTx,
 		ResolveFundingUsage: meter.ResolveFunding,
@@ -345,14 +345,14 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 
 // objects lends an edition the server's object store, beside its plugin
 // archives; nil on a process without one.
-func objects(store artifactstore.Store) edition.Objects {
+func objects(store objectstore.Store) edition.Objects {
 	if store == nil {
 		return nil
 	}
 	return storeObjects{store}
 }
 
-type storeObjects struct{ store artifactstore.Store }
+type storeObjects struct{ store objectstore.Store }
 
 func (o storeObjects) Put(ctx context.Context, teamID, kind, id string, body io.ReadSeeker, size int64) error {
 	return o.store.PutObject(ctx, teamID, kind, id, body, size)

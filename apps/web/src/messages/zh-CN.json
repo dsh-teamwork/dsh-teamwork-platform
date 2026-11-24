@@ -571,7 +571,7 @@
       "myUsage": "模型与用量",
       "submissions": "我的提交",
       "myDsh": "我的 DSH",
-      "pages": "共享页面"
+      "artifacts": "共享页面"
     },
     "switcher": {
       "label": "切换团队",
@@ -721,7 +721,7 @@
       "todo_write": "任务清单",
       "ask_user_question": "向用户提问",
       "skill": "调用技能",
-      "teamwork_page": "发布页面"
+      "teamwork_artifact": "发布页面"
     },
     "avatars": {
       "assistant": "团队助理",
@@ -952,7 +952,7 @@
         "package": "包名",
         "version": "版本",
         "sha256": "SHA-256",
-        "artifactId": "压缩包",
+        "packageId": "压缩包",
         "requiredTools": "必需工具",
         "optionalTools": "可选工具",
         "pluginDependencies": "插件",
@@ -1342,7 +1342,7 @@
       "startedBy": "创建了这个会话",
       "allTasks": "全部任务"
     },
-    "pages": {
+    "artifacts": {
       "title": "共享页面",
       "loading": "加载中…",
       "loadFailed": "加载失败。",
@@ -1409,8 +1409,8 @@
         "cancel": "取消",
         "save": "保存",
         "failed": "保存失败，请重试。",
-        "page_sharing_widened": "管理员只能收紧页面的读者范围。",
-        "page_member_not_in_team": "你选择的成员已不在团队中。"
+        "artifact_sharing_widened": "管理员只能收紧页面的读者范围。",
+        "artifact_member_not_in_team": "你选择的成员已不在团队中。"
       }
     }
   },
@@ -1618,10 +1618,10 @@
     "submission_not_found": "找不到提交记录。",
     "submission_author_required": "只有提交人可以执行此操作。",
     "reason_required": "请填写拒绝原因。",
-    "unsafe_artifact": "插件包不安全或格式不支持，请检查文件内容。",
-    "artifact_version_exists": "该插件版本已存在，请使用新版本号。",
-    "artifact_mismatch": "插件包校验失败。",
-    "artifact_not_found": "找不到可访问的插件包。",
+    "unsafe_package": "插件包不安全或格式不支持，请检查文件内容。",
+    "package_version_exists": "该插件版本已存在，请使用新版本号。",
+    "package_mismatch": "插件包校验失败。",
+    "package_not_found": "找不到可访问的插件包。",
     "revision_not_found": "找不到历史版本。",
     "already_admin": "你已经是这个团队的管理员。",
     "member_not_found": "此人不是这个团队的成员。",

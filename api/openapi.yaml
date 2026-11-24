@@ -1029,7 +1029,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ResourceSubmission' }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/artifacts:
+  /teams/{teamId}/packages:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
     post:
@@ -1041,25 +1041,25 @@ paths:
             schema: { type: string, format: binary }
       responses:
         '200':
-          description: Private artifact metadata
+          description: Private plugin package metadata
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ResourceArtifact' }
+              schema: { $ref: '#/components/schemas/PluginPackage' }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/artifacts/{id}:
+  /teams/{teamId}/packages/{id}:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     get:
-      summary: Inspect an authorized artifact and its included files
+      summary: Inspect an authorized plugin package and its included files
       responses:
         '200':
-          description: Private artifact metadata
+          description: Private plugin package metadata
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ResourceArtifact' }
+              schema: { $ref: '#/components/schemas/PluginPackage' }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/artifacts/{id}/download:
+  /teams/{teamId}/packages/{id}/download:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
@@ -1072,11 +1072,11 @@ paths:
             application/octet-stream:
               schema: { type: string, format: binary }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/pages:
+  /teams/{teamId}/artifacts:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
     post:
-      summary: Publish a new page from a DSH session, private to its author (docs/tech/pages.md)
+      summary: Publish a new artifact from a DSH session, private to its author (docs/tech/artifacts.md)
       description: Plugin or computer token.
       requestBody:
         required: true
@@ -1086,17 +1086,17 @@ paths:
               type: object
               required: [meta]
               properties:
-                meta: { $ref: '#/components/schemas/PageUploadMeta' }
+                meta: { $ref: '#/components/schemas/ArtifactUploadMeta' }
               additionalProperties: { type: string, format: binary }
       responses:
         '201':
-          description: The page at version 1
+          description: The artifact at version 1
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/PagePublished' }
+              schema: { $ref: '#/components/schemas/ArtifactPublished' }
         default: { $ref: '#/components/responses/Error' }
     get:
-      summary: The caller's own pages (mine), pages shared with them (shared), or every page of the team for an admin (all); newest version first, 50 at a time
+      summary: The caller's own artifacts (mine), artifacts shared with them (shared), or every artifact of the team for an admin (all); newest version first, 50 at a time
       parameters:
         - { name: list, in: query, schema: { type: string, enum: [mine, shared, all] } }
         - { name: before, in: query, schema: { type: string } }
@@ -1105,23 +1105,23 @@ paths:
           description: One page of the list
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/PageList' }
+              schema: { $ref: '#/components/schemas/ArtifactList' }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/pages/{id}:
+  /teams/{teamId}/artifacts/{id}:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     get:
-      summary: A page the caller may read, with its versions; or, for the team's admin, the page without its content
+      summary: An artifact the caller may read, with its versions; or, for the team's admin, the artifact without its content
       responses:
         '200':
-          description: The page
+          description: The artifact
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/PageDetail' }
+              schema: { $ref: '#/components/schemas/ArtifactDetail' }
         default: { $ref: '#/components/responses/Error' }
     patch:
-      summary: Rename a page; its owner's alone
+      summary: Rename an artifact; its owner's alone
       requestBody:
         required: true
         content:
@@ -1136,16 +1136,16 @@ paths:
         '204': { description: Renamed }
         default: { $ref: '#/components/responses/Error' }
     delete:
-      summary: Delete a page and every version; its owner or the team's admin
+      summary: Delete an artifact and every version; its owner or the team's admin
       responses:
         '204': { description: Deleted }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/pages/{id}/sharing:
+  /teams/{teamId}/artifacts/{id}/sharing:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     put:
-      summary: Set who may read a page; the owner sets any, the team's admin only narrows (page_sharing_widened otherwise)
+      summary: Set who may read an artifact; the owner sets any, the team's admin only narrows (artifact_sharing_widened otherwise)
       requestBody:
         required: true
         content:
@@ -1160,7 +1160,7 @@ paths:
       responses:
         '204': { description: Shared }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/pages/{id}/versions/{n}/restore:
+  /teams/{teamId}/artifacts/{id}/versions/{n}/restore:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
@@ -1172,14 +1172,14 @@ paths:
           description: The new version
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/PagePublished' }
+              schema: { $ref: '#/components/schemas/ArtifactPublished' }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/pages/{id}/versions:
+  /teams/{teamId}/artifacts/{id}/versions:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     post:
-      summary: Add a version on top of meta.baseVersion; page_stale when it is no longer current
+      summary: Add a version on top of meta.baseVersion; artifact_stale when it is no longer current
       requestBody:
         required: true
         content:
@@ -1188,16 +1188,16 @@ paths:
               type: object
               required: [meta]
               properties:
-                meta: { $ref: '#/components/schemas/PageUploadMeta' }
+                meta: { $ref: '#/components/schemas/ArtifactUploadMeta' }
               additionalProperties: { type: string, format: binary }
       responses:
         '201':
           description: The new version
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/PagePublished' }
+              schema: { $ref: '#/components/schemas/ArtifactPublished' }
         default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/pages/{id}/versions/{n}/view:
+  /teams/{teamId}/artifacts/{id}/versions/{n}/view:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
@@ -1209,7 +1209,7 @@ paths:
           description: The address and the version's files
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/PageView' }
+              schema: { $ref: '#/components/schemas/ArtifactView' }
         default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/history:
     parameters:
@@ -1259,7 +1259,7 @@ paths:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     get:
-      summary: Export a resource manifest and retained plugin artifacts; administrator only
+      summary: Export a resource manifest and retained plugin packages; administrator only
       responses:
         '200':
           description: Backup archive, without provider keys or authentication material
@@ -1477,18 +1477,18 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
   schemas:
-    PageUploadMeta:
+    ArtifactUploadMeta:
       type: object
       required: [kind]
       additionalProperties: false
       properties:
         title: { type: string, maxLength: 120 }
-        kind: { type: string, enum: [html, markdown, svg] }
+        kind: { type: string, enum: [html, svg] }
         note: { type: string, maxLength: 200 }
         sessionId: { type: string, maxLength: 128 }
         computer: { type: string, maxLength: 64 }
         baseVersion: { type: integer, minimum: 0 }
-    PagePublished:
+    ArtifactPublished:
       type: object
       required: [id, teamId, version, title, kind]
       additionalProperties: false
@@ -1497,8 +1497,8 @@ components:
         teamId: { type: string }
         version: { type: integer }
         title: { type: string }
-        kind: { type: string, enum: [html, markdown, svg] }
-    PagePerson:
+        kind: { type: string, enum: [html, svg] }
+    ArtifactPerson:
       type: object
       required: [id, name, email]
       additionalProperties: false
@@ -1506,57 +1506,57 @@ components:
         id: { type: string }
         name: { type: string, nullable: true }
         email: { type: string, nullable: true }
-    PageSummary:
+    ArtifactSummary:
       type: object
       required: [id, title, kind, sharing, owner, currentVersion, updatedAt, updatedBy, via]
       additionalProperties: false
       properties:
         id: { type: string }
         title: { type: string }
-        kind: { type: string, enum: [html, markdown, svg] }
+        kind: { type: string, enum: [html, svg] }
         sharing: { type: string, enum: [private, members, team] }
-        owner: { $ref: '#/components/schemas/PagePerson' }
+        owner: { $ref: '#/components/schemas/ArtifactPerson' }
         currentVersion: { type: integer }
         updatedAt: { type: string, format: date-time }
-        updatedBy: { $ref: '#/components/schemas/PagePerson' }
+        updatedBy: { $ref: '#/components/schemas/ArtifactPerson' }
         via: { type: string, enum: [you, team], nullable: true }
-    PageList:
+    ArtifactList:
       type: object
-      required: [pages, next]
+      required: [artifacts, next]
       additionalProperties: false
       properties:
-        pages: { type: array, items: { $ref: '#/components/schemas/PageSummary' } }
+        artifacts: { type: array, items: { $ref: '#/components/schemas/ArtifactSummary' } }
         next: { type: string, nullable: true }
-    PageDetail:
+    ArtifactDetail:
       type: object
       required: [id, title, kind, sharing, owner, currentVersion, updatedAt, updatedBy, via, access, members, versions]
       additionalProperties: false
       properties:
         id: { type: string }
         title: { type: string }
-        kind: { type: string, enum: [html, markdown, svg] }
+        kind: { type: string, enum: [html, svg] }
         sharing: { type: string, enum: [private, members, team] }
-        owner: { $ref: '#/components/schemas/PagePerson' }
+        owner: { $ref: '#/components/schemas/ArtifactPerson' }
         currentVersion: { type: integer }
         updatedAt: { type: string, format: date-time }
-        updatedBy: { $ref: '#/components/schemas/PagePerson' }
+        updatedBy: { $ref: '#/components/schemas/ArtifactPerson' }
         via: { type: string, enum: [you, team], nullable: true }
         access: { type: string, enum: [owner, reader, admin] }
-        members: { type: array, items: { $ref: '#/components/schemas/PagePerson' } }
-        versions: { type: array, items: { $ref: '#/components/schemas/PageVersion' } }
-    PageVersion:
+        members: { type: array, items: { $ref: '#/components/schemas/ArtifactPerson' } }
+        versions: { type: array, items: { $ref: '#/components/schemas/ArtifactVersion' } }
+    ArtifactVersion:
       type: object
       required: [number, author, createdAt, note, computer, sessionId, size]
       additionalProperties: false
       properties:
         number: { type: integer }
-        author: { $ref: '#/components/schemas/PagePerson' }
+        author: { $ref: '#/components/schemas/ArtifactPerson' }
         createdAt: { type: string, format: date-time }
         note: { type: string }
         computer: { type: string }
         sessionId: { type: string }
         size: { type: integer, format: int64 }
-    PageView:
+    ArtifactView:
       type: object
       required: [url, expiresAt, files]
       additionalProperties: false
@@ -1999,7 +1999,7 @@ components:
       required: [package, version]
       additionalProperties: false
       properties:
-        artifactId: { type: string }
+        packageId: { type: string }
         sha256: { type: string, pattern: '^[a-f0-9]{64}$' }
         package: { type: string }
         version: { type: string }
@@ -2121,7 +2121,7 @@ components:
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
         decidedAt: { type: string, format: date-time, nullable: true }
-    ResourceArtifact:
+    PluginPackage:
       type: object
       required: [id, package, version, sha256, size, files, published]
       properties:

@@ -1,4 +1,4 @@
-import { applyChange, settleTool, toolPage } from './dsh';
+import { applyChange, settleTool, toolArtifact } from './dsh';
 import type { ConversationItem, SessionEvent, SessionState } from './types';
 
 export const EMPTY_SESSION: SessionState = { status: 'idle', items: [], pending: null, closed: null, earlier: null };
@@ -23,8 +23,8 @@ export function applySessionEvent(state: SessionState, event: SessionEvent): Ses
         if (index === undefined || call?.kind !== 'tool') return [item];
         const settled = settleTool(call, item.result);
         earlier[index] = settled;
-        const page = toolPage(settled, item.result);
-        return page ? [page] : [];
+        const artifact = toolArtifact(settled, item.result);
+        return artifact ? [artifact] : [];
       });
       return { ...state, items: [...earlier, ...current], earlier: event.earlier };
     }

@@ -15,6 +15,10 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifact"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetnotice"
@@ -26,17 +30,13 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/page"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagefile"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
@@ -53,6 +53,14 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Artifact is the client for interacting with the Artifact builders.
+	Artifact *ArtifactClient
+	// ArtifactFile is the client for interacting with the ArtifactFile builders.
+	ArtifactFile *ArtifactFileClient
+	// ArtifactMember is the client for interacting with the ArtifactMember builders.
+	ArtifactMember *ArtifactMemberClient
+	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
+	ArtifactVersion *ArtifactVersionClient
 	// BudgetEvent is the client for interacting with the BudgetEvent builders.
 	BudgetEvent *BudgetEventClient
 	// BudgetGate is the client for interacting with the BudgetGate builders.
@@ -75,18 +83,12 @@ type Client struct {
 	Membership *MembershipClient
 	// ModelRate is the client for interacting with the ModelRate builders.
 	ModelRate *ModelRateClient
-	// Page is the client for interacting with the Page builders.
-	Page *PageClient
-	// PageFile is the client for interacting with the PageFile builders.
-	PageFile *PageFileClient
-	// PageMember is the client for interacting with the PageMember builders.
-	PageMember *PageMemberClient
-	// PageVersion is the client for interacting with the PageVersion builders.
-	PageVersion *PageVersionClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
 	// PluginGrant is the client for interacting with the PluginGrant builders.
 	PluginGrant *PluginGrantClient
+	// PluginPackage is the client for interacting with the PluginPackage builders.
+	PluginPackage *PluginPackageClient
 	// RateWindow is the client for interacting with the RateWindow builders.
 	RateWindow *RateWindowClient
 	// RelayHost is the client for interacting with the RelayHost builders.
@@ -95,8 +97,6 @@ type Client struct {
 	RelayPairing *RelayPairingClient
 	// RelayPairingOffer is the client for interacting with the RelayPairingOffer builders.
 	RelayPairingOffer *RelayPairingOfferClient
-	// ResourceArtifact is the client for interacting with the ResourceArtifact builders.
-	ResourceArtifact *ResourceArtifactClient
 	// ResourceSubmission is the client for interacting with the ResourceSubmission builders.
 	ResourceSubmission *ResourceSubmissionClient
 	// Team is the client for interacting with the Team builders.
@@ -122,6 +122,10 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Artifact = NewArtifactClient(c.config)
+	c.ArtifactFile = NewArtifactFileClient(c.config)
+	c.ArtifactMember = NewArtifactMemberClient(c.config)
+	c.ArtifactVersion = NewArtifactVersionClient(c.config)
 	c.BudgetEvent = NewBudgetEventClient(c.config)
 	c.BudgetGate = NewBudgetGateClient(c.config)
 	c.BudgetNotice = NewBudgetNoticeClient(c.config)
@@ -133,17 +137,13 @@ func (c *Client) init() {
 	c.Invite = NewInviteClient(c.config)
 	c.Membership = NewMembershipClient(c.config)
 	c.ModelRate = NewModelRateClient(c.config)
-	c.Page = NewPageClient(c.config)
-	c.PageFile = NewPageFileClient(c.config)
-	c.PageMember = NewPageMemberClient(c.config)
-	c.PageVersion = NewPageVersionClient(c.config)
 	c.Password = NewPasswordClient(c.config)
 	c.PluginGrant = NewPluginGrantClient(c.config)
+	c.PluginPackage = NewPluginPackageClient(c.config)
 	c.RateWindow = NewRateWindowClient(c.config)
 	c.RelayHost = NewRelayHostClient(c.config)
 	c.RelayPairing = NewRelayPairingClient(c.config)
 	c.RelayPairingOffer = NewRelayPairingOfferClient(c.config)
-	c.ResourceArtifact = NewResourceArtifactClient(c.config)
 	c.ResourceSubmission = NewResourceSubmissionClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.TeamConfig = NewTeamConfigClient(c.config)
@@ -243,6 +243,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		Artifact:           NewArtifactClient(cfg),
+		ArtifactFile:       NewArtifactFileClient(cfg),
+		ArtifactMember:     NewArtifactMemberClient(cfg),
+		ArtifactVersion:    NewArtifactVersionClient(cfg),
 		BudgetEvent:        NewBudgetEventClient(cfg),
 		BudgetGate:         NewBudgetGateClient(cfg),
 		BudgetNotice:       NewBudgetNoticeClient(cfg),
@@ -254,17 +258,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Invite:             NewInviteClient(cfg),
 		Membership:         NewMembershipClient(cfg),
 		ModelRate:          NewModelRateClient(cfg),
-		Page:               NewPageClient(cfg),
-		PageFile:           NewPageFileClient(cfg),
-		PageMember:         NewPageMemberClient(cfg),
-		PageVersion:        NewPageVersionClient(cfg),
 		Password:           NewPasswordClient(cfg),
 		PluginGrant:        NewPluginGrantClient(cfg),
+		PluginPackage:      NewPluginPackageClient(cfg),
 		RateWindow:         NewRateWindowClient(cfg),
 		RelayHost:          NewRelayHostClient(cfg),
 		RelayPairing:       NewRelayPairingClient(cfg),
 		RelayPairingOffer:  NewRelayPairingOfferClient(cfg),
-		ResourceArtifact:   NewResourceArtifactClient(cfg),
 		ResourceSubmission: NewResourceSubmissionClient(cfg),
 		Team:               NewTeamClient(cfg),
 		TeamConfig:         NewTeamConfigClient(cfg),
@@ -291,6 +291,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		Artifact:           NewArtifactClient(cfg),
+		ArtifactFile:       NewArtifactFileClient(cfg),
+		ArtifactMember:     NewArtifactMemberClient(cfg),
+		ArtifactVersion:    NewArtifactVersionClient(cfg),
 		BudgetEvent:        NewBudgetEventClient(cfg),
 		BudgetGate:         NewBudgetGateClient(cfg),
 		BudgetNotice:       NewBudgetNoticeClient(cfg),
@@ -302,17 +306,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Invite:             NewInviteClient(cfg),
 		Membership:         NewMembershipClient(cfg),
 		ModelRate:          NewModelRateClient(cfg),
-		Page:               NewPageClient(cfg),
-		PageFile:           NewPageFileClient(cfg),
-		PageMember:         NewPageMemberClient(cfg),
-		PageVersion:        NewPageVersionClient(cfg),
 		Password:           NewPasswordClient(cfg),
 		PluginGrant:        NewPluginGrantClient(cfg),
+		PluginPackage:      NewPluginPackageClient(cfg),
 		RateWindow:         NewRateWindowClient(cfg),
 		RelayHost:          NewRelayHostClient(cfg),
 		RelayPairing:       NewRelayPairingClient(cfg),
 		RelayPairingOffer:  NewRelayPairingOfferClient(cfg),
-		ResourceArtifact:   NewResourceArtifactClient(cfg),
 		ResourceSubmission: NewResourceSubmissionClient(cfg),
 		Team:               NewTeamClient(cfg),
 		TeamConfig:         NewTeamConfigClient(cfg),
@@ -326,7 +326,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		BudgetEvent.
+//		Artifact.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -349,11 +349,11 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
-		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
-		c.Membership, c.ModelRate, c.Page, c.PageFile, c.PageMember, c.PageVersion,
-		c.Password, c.PluginGrant, c.RateWindow, c.RelayHost, c.RelayPairing,
-		c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission, c.Team,
+		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion, c.BudgetEvent,
+		c.BudgetGate, c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation,
+		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.Membership,
+		c.ModelRate, c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow,
+		c.RelayHost, c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
 		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
@@ -364,11 +364,11 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
-		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
-		c.Membership, c.ModelRate, c.Page, c.PageFile, c.PageMember, c.PageVersion,
-		c.Password, c.PluginGrant, c.RateWindow, c.RelayHost, c.RelayPairing,
-		c.RelayPairingOffer, c.ResourceArtifact, c.ResourceSubmission, c.Team,
+		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion, c.BudgetEvent,
+		c.BudgetGate, c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation,
+		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.Membership,
+		c.ModelRate, c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow,
+		c.RelayHost, c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
 		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
@@ -378,6 +378,14 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *ArtifactMutation:
+		return c.Artifact.mutate(ctx, m)
+	case *ArtifactFileMutation:
+		return c.ArtifactFile.mutate(ctx, m)
+	case *ArtifactMemberMutation:
+		return c.ArtifactMember.mutate(ctx, m)
+	case *ArtifactVersionMutation:
+		return c.ArtifactVersion.mutate(ctx, m)
 	case *BudgetEventMutation:
 		return c.BudgetEvent.mutate(ctx, m)
 	case *BudgetGateMutation:
@@ -400,18 +408,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Membership.mutate(ctx, m)
 	case *ModelRateMutation:
 		return c.ModelRate.mutate(ctx, m)
-	case *PageMutation:
-		return c.Page.mutate(ctx, m)
-	case *PageFileMutation:
-		return c.PageFile.mutate(ctx, m)
-	case *PageMemberMutation:
-		return c.PageMember.mutate(ctx, m)
-	case *PageVersionMutation:
-		return c.PageVersion.mutate(ctx, m)
 	case *PasswordMutation:
 		return c.Password.mutate(ctx, m)
 	case *PluginGrantMutation:
 		return c.PluginGrant.mutate(ctx, m)
+	case *PluginPackageMutation:
+		return c.PluginPackage.mutate(ctx, m)
 	case *RateWindowMutation:
 		return c.RateWindow.mutate(ctx, m)
 	case *RelayHostMutation:
@@ -420,8 +422,6 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.RelayPairing.mutate(ctx, m)
 	case *RelayPairingOfferMutation:
 		return c.RelayPairingOffer.mutate(ctx, m)
-	case *ResourceArtifactMutation:
-		return c.ResourceArtifact.mutate(ctx, m)
 	case *ResourceSubmissionMutation:
 		return c.ResourceSubmission.mutate(ctx, m)
 	case *TeamMutation:
@@ -438,6 +438,538 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.VerificationCode.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// ArtifactClient is a client for the Artifact schema.
+type ArtifactClient struct {
+	config
+}
+
+// NewArtifactClient returns a client for the Artifact from the given config.
+func NewArtifactClient(c config) *ArtifactClient {
+	return &ArtifactClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `artifact.Hooks(f(g(h())))`.
+func (c *ArtifactClient) Use(hooks ...Hook) {
+	c.hooks.Artifact = append(c.hooks.Artifact, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `artifact.Intercept(f(g(h())))`.
+func (c *ArtifactClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Artifact = append(c.inters.Artifact, interceptors...)
+}
+
+// Create returns a builder for creating a Artifact entity.
+func (c *ArtifactClient) Create() *ArtifactCreate {
+	mutation := newArtifactMutation(c.config, OpCreate)
+	return &ArtifactCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Artifact entities.
+func (c *ArtifactClient) CreateBulk(builders ...*ArtifactCreate) *ArtifactCreateBulk {
+	return &ArtifactCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ArtifactClient) MapCreateBulk(slice any, setFunc func(*ArtifactCreate, int)) *ArtifactCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ArtifactCreateBulk{err: fmt.Errorf("calling to ArtifactClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ArtifactCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ArtifactCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Artifact.
+func (c *ArtifactClient) Update() *ArtifactUpdate {
+	mutation := newArtifactMutation(c.config, OpUpdate)
+	return &ArtifactUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ArtifactClient) UpdateOne(_m *Artifact) *ArtifactUpdateOne {
+	mutation := newArtifactMutation(c.config, OpUpdateOne, withArtifact(_m))
+	return &ArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ArtifactClient) UpdateOneID(id string) *ArtifactUpdateOne {
+	mutation := newArtifactMutation(c.config, OpUpdateOne, withArtifactID(id))
+	return &ArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Artifact.
+func (c *ArtifactClient) Delete() *ArtifactDelete {
+	mutation := newArtifactMutation(c.config, OpDelete)
+	return &ArtifactDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ArtifactClient) DeleteOne(_m *Artifact) *ArtifactDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ArtifactClient) DeleteOneID(id string) *ArtifactDeleteOne {
+	builder := c.Delete().Where(artifact.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ArtifactDeleteOne{builder}
+}
+
+// Query returns a query builder for Artifact.
+func (c *ArtifactClient) Query() *ArtifactQuery {
+	return &ArtifactQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeArtifact},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Artifact entity by its id.
+func (c *ArtifactClient) Get(ctx context.Context, id string) (*Artifact, error) {
+	return c.Query().Where(artifact.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ArtifactClient) GetX(ctx context.Context, id string) *Artifact {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ArtifactClient) Hooks() []Hook {
+	return c.hooks.Artifact
+}
+
+// Interceptors returns the client interceptors.
+func (c *ArtifactClient) Interceptors() []Interceptor {
+	return c.inters.Artifact
+}
+
+func (c *ArtifactClient) mutate(ctx context.Context, m *ArtifactMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ArtifactCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ArtifactUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ArtifactDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Artifact mutation op: %q", m.Op())
+	}
+}
+
+// ArtifactFileClient is a client for the ArtifactFile schema.
+type ArtifactFileClient struct {
+	config
+}
+
+// NewArtifactFileClient returns a client for the ArtifactFile from the given config.
+func NewArtifactFileClient(c config) *ArtifactFileClient {
+	return &ArtifactFileClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `artifactfile.Hooks(f(g(h())))`.
+func (c *ArtifactFileClient) Use(hooks ...Hook) {
+	c.hooks.ArtifactFile = append(c.hooks.ArtifactFile, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `artifactfile.Intercept(f(g(h())))`.
+func (c *ArtifactFileClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ArtifactFile = append(c.inters.ArtifactFile, interceptors...)
+}
+
+// Create returns a builder for creating a ArtifactFile entity.
+func (c *ArtifactFileClient) Create() *ArtifactFileCreate {
+	mutation := newArtifactFileMutation(c.config, OpCreate)
+	return &ArtifactFileCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ArtifactFile entities.
+func (c *ArtifactFileClient) CreateBulk(builders ...*ArtifactFileCreate) *ArtifactFileCreateBulk {
+	return &ArtifactFileCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ArtifactFileClient) MapCreateBulk(slice any, setFunc func(*ArtifactFileCreate, int)) *ArtifactFileCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ArtifactFileCreateBulk{err: fmt.Errorf("calling to ArtifactFileClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ArtifactFileCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ArtifactFileCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ArtifactFile.
+func (c *ArtifactFileClient) Update() *ArtifactFileUpdate {
+	mutation := newArtifactFileMutation(c.config, OpUpdate)
+	return &ArtifactFileUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ArtifactFileClient) UpdateOne(_m *ArtifactFile) *ArtifactFileUpdateOne {
+	mutation := newArtifactFileMutation(c.config, OpUpdateOne, withArtifactFile(_m))
+	return &ArtifactFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ArtifactFileClient) UpdateOneID(id string) *ArtifactFileUpdateOne {
+	mutation := newArtifactFileMutation(c.config, OpUpdateOne, withArtifactFileID(id))
+	return &ArtifactFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ArtifactFile.
+func (c *ArtifactFileClient) Delete() *ArtifactFileDelete {
+	mutation := newArtifactFileMutation(c.config, OpDelete)
+	return &ArtifactFileDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ArtifactFileClient) DeleteOne(_m *ArtifactFile) *ArtifactFileDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ArtifactFileClient) DeleteOneID(id string) *ArtifactFileDeleteOne {
+	builder := c.Delete().Where(artifactfile.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ArtifactFileDeleteOne{builder}
+}
+
+// Query returns a query builder for ArtifactFile.
+func (c *ArtifactFileClient) Query() *ArtifactFileQuery {
+	return &ArtifactFileQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeArtifactFile},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ArtifactFile entity by its id.
+func (c *ArtifactFileClient) Get(ctx context.Context, id string) (*ArtifactFile, error) {
+	return c.Query().Where(artifactfile.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ArtifactFileClient) GetX(ctx context.Context, id string) *ArtifactFile {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ArtifactFileClient) Hooks() []Hook {
+	return c.hooks.ArtifactFile
+}
+
+// Interceptors returns the client interceptors.
+func (c *ArtifactFileClient) Interceptors() []Interceptor {
+	return c.inters.ArtifactFile
+}
+
+func (c *ArtifactFileClient) mutate(ctx context.Context, m *ArtifactFileMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ArtifactFileCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ArtifactFileUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ArtifactFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ArtifactFileDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ArtifactFile mutation op: %q", m.Op())
+	}
+}
+
+// ArtifactMemberClient is a client for the ArtifactMember schema.
+type ArtifactMemberClient struct {
+	config
+}
+
+// NewArtifactMemberClient returns a client for the ArtifactMember from the given config.
+func NewArtifactMemberClient(c config) *ArtifactMemberClient {
+	return &ArtifactMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `artifactmember.Hooks(f(g(h())))`.
+func (c *ArtifactMemberClient) Use(hooks ...Hook) {
+	c.hooks.ArtifactMember = append(c.hooks.ArtifactMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `artifactmember.Intercept(f(g(h())))`.
+func (c *ArtifactMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ArtifactMember = append(c.inters.ArtifactMember, interceptors...)
+}
+
+// Create returns a builder for creating a ArtifactMember entity.
+func (c *ArtifactMemberClient) Create() *ArtifactMemberCreate {
+	mutation := newArtifactMemberMutation(c.config, OpCreate)
+	return &ArtifactMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ArtifactMember entities.
+func (c *ArtifactMemberClient) CreateBulk(builders ...*ArtifactMemberCreate) *ArtifactMemberCreateBulk {
+	return &ArtifactMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ArtifactMemberClient) MapCreateBulk(slice any, setFunc func(*ArtifactMemberCreate, int)) *ArtifactMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ArtifactMemberCreateBulk{err: fmt.Errorf("calling to ArtifactMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ArtifactMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ArtifactMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ArtifactMember.
+func (c *ArtifactMemberClient) Update() *ArtifactMemberUpdate {
+	mutation := newArtifactMemberMutation(c.config, OpUpdate)
+	return &ArtifactMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ArtifactMemberClient) UpdateOne(_m *ArtifactMember) *ArtifactMemberUpdateOne {
+	mutation := newArtifactMemberMutation(c.config, OpUpdateOne, withArtifactMember(_m))
+	return &ArtifactMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ArtifactMemberClient) UpdateOneID(id string) *ArtifactMemberUpdateOne {
+	mutation := newArtifactMemberMutation(c.config, OpUpdateOne, withArtifactMemberID(id))
+	return &ArtifactMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ArtifactMember.
+func (c *ArtifactMemberClient) Delete() *ArtifactMemberDelete {
+	mutation := newArtifactMemberMutation(c.config, OpDelete)
+	return &ArtifactMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ArtifactMemberClient) DeleteOne(_m *ArtifactMember) *ArtifactMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ArtifactMemberClient) DeleteOneID(id string) *ArtifactMemberDeleteOne {
+	builder := c.Delete().Where(artifactmember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ArtifactMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for ArtifactMember.
+func (c *ArtifactMemberClient) Query() *ArtifactMemberQuery {
+	return &ArtifactMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeArtifactMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ArtifactMember entity by its id.
+func (c *ArtifactMemberClient) Get(ctx context.Context, id string) (*ArtifactMember, error) {
+	return c.Query().Where(artifactmember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ArtifactMemberClient) GetX(ctx context.Context, id string) *ArtifactMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ArtifactMemberClient) Hooks() []Hook {
+	return c.hooks.ArtifactMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *ArtifactMemberClient) Interceptors() []Interceptor {
+	return c.inters.ArtifactMember
+}
+
+func (c *ArtifactMemberClient) mutate(ctx context.Context, m *ArtifactMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ArtifactMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ArtifactMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ArtifactMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ArtifactMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ArtifactMember mutation op: %q", m.Op())
+	}
+}
+
+// ArtifactVersionClient is a client for the ArtifactVersion schema.
+type ArtifactVersionClient struct {
+	config
+}
+
+// NewArtifactVersionClient returns a client for the ArtifactVersion from the given config.
+func NewArtifactVersionClient(c config) *ArtifactVersionClient {
+	return &ArtifactVersionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `artifactversion.Hooks(f(g(h())))`.
+func (c *ArtifactVersionClient) Use(hooks ...Hook) {
+	c.hooks.ArtifactVersion = append(c.hooks.ArtifactVersion, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `artifactversion.Intercept(f(g(h())))`.
+func (c *ArtifactVersionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ArtifactVersion = append(c.inters.ArtifactVersion, interceptors...)
+}
+
+// Create returns a builder for creating a ArtifactVersion entity.
+func (c *ArtifactVersionClient) Create() *ArtifactVersionCreate {
+	mutation := newArtifactVersionMutation(c.config, OpCreate)
+	return &ArtifactVersionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ArtifactVersion entities.
+func (c *ArtifactVersionClient) CreateBulk(builders ...*ArtifactVersionCreate) *ArtifactVersionCreateBulk {
+	return &ArtifactVersionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ArtifactVersionClient) MapCreateBulk(slice any, setFunc func(*ArtifactVersionCreate, int)) *ArtifactVersionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ArtifactVersionCreateBulk{err: fmt.Errorf("calling to ArtifactVersionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ArtifactVersionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ArtifactVersionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ArtifactVersion.
+func (c *ArtifactVersionClient) Update() *ArtifactVersionUpdate {
+	mutation := newArtifactVersionMutation(c.config, OpUpdate)
+	return &ArtifactVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ArtifactVersionClient) UpdateOne(_m *ArtifactVersion) *ArtifactVersionUpdateOne {
+	mutation := newArtifactVersionMutation(c.config, OpUpdateOne, withArtifactVersion(_m))
+	return &ArtifactVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ArtifactVersionClient) UpdateOneID(id string) *ArtifactVersionUpdateOne {
+	mutation := newArtifactVersionMutation(c.config, OpUpdateOne, withArtifactVersionID(id))
+	return &ArtifactVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ArtifactVersion.
+func (c *ArtifactVersionClient) Delete() *ArtifactVersionDelete {
+	mutation := newArtifactVersionMutation(c.config, OpDelete)
+	return &ArtifactVersionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ArtifactVersionClient) DeleteOne(_m *ArtifactVersion) *ArtifactVersionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ArtifactVersionClient) DeleteOneID(id string) *ArtifactVersionDeleteOne {
+	builder := c.Delete().Where(artifactversion.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ArtifactVersionDeleteOne{builder}
+}
+
+// Query returns a query builder for ArtifactVersion.
+func (c *ArtifactVersionClient) Query() *ArtifactVersionQuery {
+	return &ArtifactVersionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeArtifactVersion},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ArtifactVersion entity by its id.
+func (c *ArtifactVersionClient) Get(ctx context.Context, id string) (*ArtifactVersion, error) {
+	return c.Query().Where(artifactversion.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ArtifactVersionClient) GetX(ctx context.Context, id string) *ArtifactVersion {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ArtifactVersionClient) Hooks() []Hook {
+	return c.hooks.ArtifactVersion
+}
+
+// Interceptors returns the client interceptors.
+func (c *ArtifactVersionClient) Interceptors() []Interceptor {
+	return c.inters.ArtifactVersion
+}
+
+func (c *ArtifactVersionClient) mutate(ctx context.Context, m *ArtifactVersionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ArtifactVersionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ArtifactVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ArtifactVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ArtifactVersionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ArtifactVersion mutation op: %q", m.Op())
 	}
 }
 
@@ -1968,538 +2500,6 @@ func (c *ModelRateClient) mutate(ctx context.Context, m *ModelRateMutation) (Val
 	}
 }
 
-// PageClient is a client for the Page schema.
-type PageClient struct {
-	config
-}
-
-// NewPageClient returns a client for the Page from the given config.
-func NewPageClient(c config) *PageClient {
-	return &PageClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `page.Hooks(f(g(h())))`.
-func (c *PageClient) Use(hooks ...Hook) {
-	c.hooks.Page = append(c.hooks.Page, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `page.Intercept(f(g(h())))`.
-func (c *PageClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Page = append(c.inters.Page, interceptors...)
-}
-
-// Create returns a builder for creating a Page entity.
-func (c *PageClient) Create() *PageCreate {
-	mutation := newPageMutation(c.config, OpCreate)
-	return &PageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Page entities.
-func (c *PageClient) CreateBulk(builders ...*PageCreate) *PageCreateBulk {
-	return &PageCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *PageClient) MapCreateBulk(slice any, setFunc func(*PageCreate, int)) *PageCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &PageCreateBulk{err: fmt.Errorf("calling to PageClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*PageCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &PageCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Page.
-func (c *PageClient) Update() *PageUpdate {
-	mutation := newPageMutation(c.config, OpUpdate)
-	return &PageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *PageClient) UpdateOne(_m *Page) *PageUpdateOne {
-	mutation := newPageMutation(c.config, OpUpdateOne, withPage(_m))
-	return &PageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *PageClient) UpdateOneID(id string) *PageUpdateOne {
-	mutation := newPageMutation(c.config, OpUpdateOne, withPageID(id))
-	return &PageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Page.
-func (c *PageClient) Delete() *PageDelete {
-	mutation := newPageMutation(c.config, OpDelete)
-	return &PageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *PageClient) DeleteOne(_m *Page) *PageDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PageClient) DeleteOneID(id string) *PageDeleteOne {
-	builder := c.Delete().Where(page.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &PageDeleteOne{builder}
-}
-
-// Query returns a query builder for Page.
-func (c *PageClient) Query() *PageQuery {
-	return &PageQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypePage},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a Page entity by its id.
-func (c *PageClient) Get(ctx context.Context, id string) (*Page, error) {
-	return c.Query().Where(page.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *PageClient) GetX(ctx context.Context, id string) *Page {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *PageClient) Hooks() []Hook {
-	return c.hooks.Page
-}
-
-// Interceptors returns the client interceptors.
-func (c *PageClient) Interceptors() []Interceptor {
-	return c.inters.Page
-}
-
-func (c *PageClient) mutate(ctx context.Context, m *PageMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&PageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&PageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&PageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&PageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown Page mutation op: %q", m.Op())
-	}
-}
-
-// PageFileClient is a client for the PageFile schema.
-type PageFileClient struct {
-	config
-}
-
-// NewPageFileClient returns a client for the PageFile from the given config.
-func NewPageFileClient(c config) *PageFileClient {
-	return &PageFileClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `pagefile.Hooks(f(g(h())))`.
-func (c *PageFileClient) Use(hooks ...Hook) {
-	c.hooks.PageFile = append(c.hooks.PageFile, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `pagefile.Intercept(f(g(h())))`.
-func (c *PageFileClient) Intercept(interceptors ...Interceptor) {
-	c.inters.PageFile = append(c.inters.PageFile, interceptors...)
-}
-
-// Create returns a builder for creating a PageFile entity.
-func (c *PageFileClient) Create() *PageFileCreate {
-	mutation := newPageFileMutation(c.config, OpCreate)
-	return &PageFileCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of PageFile entities.
-func (c *PageFileClient) CreateBulk(builders ...*PageFileCreate) *PageFileCreateBulk {
-	return &PageFileCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *PageFileClient) MapCreateBulk(slice any, setFunc func(*PageFileCreate, int)) *PageFileCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &PageFileCreateBulk{err: fmt.Errorf("calling to PageFileClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*PageFileCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &PageFileCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for PageFile.
-func (c *PageFileClient) Update() *PageFileUpdate {
-	mutation := newPageFileMutation(c.config, OpUpdate)
-	return &PageFileUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *PageFileClient) UpdateOne(_m *PageFile) *PageFileUpdateOne {
-	mutation := newPageFileMutation(c.config, OpUpdateOne, withPageFile(_m))
-	return &PageFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *PageFileClient) UpdateOneID(id string) *PageFileUpdateOne {
-	mutation := newPageFileMutation(c.config, OpUpdateOne, withPageFileID(id))
-	return &PageFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for PageFile.
-func (c *PageFileClient) Delete() *PageFileDelete {
-	mutation := newPageFileMutation(c.config, OpDelete)
-	return &PageFileDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *PageFileClient) DeleteOne(_m *PageFile) *PageFileDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PageFileClient) DeleteOneID(id string) *PageFileDeleteOne {
-	builder := c.Delete().Where(pagefile.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &PageFileDeleteOne{builder}
-}
-
-// Query returns a query builder for PageFile.
-func (c *PageFileClient) Query() *PageFileQuery {
-	return &PageFileQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypePageFile},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a PageFile entity by its id.
-func (c *PageFileClient) Get(ctx context.Context, id string) (*PageFile, error) {
-	return c.Query().Where(pagefile.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *PageFileClient) GetX(ctx context.Context, id string) *PageFile {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *PageFileClient) Hooks() []Hook {
-	return c.hooks.PageFile
-}
-
-// Interceptors returns the client interceptors.
-func (c *PageFileClient) Interceptors() []Interceptor {
-	return c.inters.PageFile
-}
-
-func (c *PageFileClient) mutate(ctx context.Context, m *PageFileMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&PageFileCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&PageFileUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&PageFileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&PageFileDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown PageFile mutation op: %q", m.Op())
-	}
-}
-
-// PageMemberClient is a client for the PageMember schema.
-type PageMemberClient struct {
-	config
-}
-
-// NewPageMemberClient returns a client for the PageMember from the given config.
-func NewPageMemberClient(c config) *PageMemberClient {
-	return &PageMemberClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `pagemember.Hooks(f(g(h())))`.
-func (c *PageMemberClient) Use(hooks ...Hook) {
-	c.hooks.PageMember = append(c.hooks.PageMember, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `pagemember.Intercept(f(g(h())))`.
-func (c *PageMemberClient) Intercept(interceptors ...Interceptor) {
-	c.inters.PageMember = append(c.inters.PageMember, interceptors...)
-}
-
-// Create returns a builder for creating a PageMember entity.
-func (c *PageMemberClient) Create() *PageMemberCreate {
-	mutation := newPageMemberMutation(c.config, OpCreate)
-	return &PageMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of PageMember entities.
-func (c *PageMemberClient) CreateBulk(builders ...*PageMemberCreate) *PageMemberCreateBulk {
-	return &PageMemberCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *PageMemberClient) MapCreateBulk(slice any, setFunc func(*PageMemberCreate, int)) *PageMemberCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &PageMemberCreateBulk{err: fmt.Errorf("calling to PageMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*PageMemberCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &PageMemberCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for PageMember.
-func (c *PageMemberClient) Update() *PageMemberUpdate {
-	mutation := newPageMemberMutation(c.config, OpUpdate)
-	return &PageMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *PageMemberClient) UpdateOne(_m *PageMember) *PageMemberUpdateOne {
-	mutation := newPageMemberMutation(c.config, OpUpdateOne, withPageMember(_m))
-	return &PageMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *PageMemberClient) UpdateOneID(id string) *PageMemberUpdateOne {
-	mutation := newPageMemberMutation(c.config, OpUpdateOne, withPageMemberID(id))
-	return &PageMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for PageMember.
-func (c *PageMemberClient) Delete() *PageMemberDelete {
-	mutation := newPageMemberMutation(c.config, OpDelete)
-	return &PageMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *PageMemberClient) DeleteOne(_m *PageMember) *PageMemberDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PageMemberClient) DeleteOneID(id string) *PageMemberDeleteOne {
-	builder := c.Delete().Where(pagemember.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &PageMemberDeleteOne{builder}
-}
-
-// Query returns a query builder for PageMember.
-func (c *PageMemberClient) Query() *PageMemberQuery {
-	return &PageMemberQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypePageMember},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a PageMember entity by its id.
-func (c *PageMemberClient) Get(ctx context.Context, id string) (*PageMember, error) {
-	return c.Query().Where(pagemember.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *PageMemberClient) GetX(ctx context.Context, id string) *PageMember {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *PageMemberClient) Hooks() []Hook {
-	return c.hooks.PageMember
-}
-
-// Interceptors returns the client interceptors.
-func (c *PageMemberClient) Interceptors() []Interceptor {
-	return c.inters.PageMember
-}
-
-func (c *PageMemberClient) mutate(ctx context.Context, m *PageMemberMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&PageMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&PageMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&PageMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&PageMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown PageMember mutation op: %q", m.Op())
-	}
-}
-
-// PageVersionClient is a client for the PageVersion schema.
-type PageVersionClient struct {
-	config
-}
-
-// NewPageVersionClient returns a client for the PageVersion from the given config.
-func NewPageVersionClient(c config) *PageVersionClient {
-	return &PageVersionClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `pageversion.Hooks(f(g(h())))`.
-func (c *PageVersionClient) Use(hooks ...Hook) {
-	c.hooks.PageVersion = append(c.hooks.PageVersion, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `pageversion.Intercept(f(g(h())))`.
-func (c *PageVersionClient) Intercept(interceptors ...Interceptor) {
-	c.inters.PageVersion = append(c.inters.PageVersion, interceptors...)
-}
-
-// Create returns a builder for creating a PageVersion entity.
-func (c *PageVersionClient) Create() *PageVersionCreate {
-	mutation := newPageVersionMutation(c.config, OpCreate)
-	return &PageVersionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of PageVersion entities.
-func (c *PageVersionClient) CreateBulk(builders ...*PageVersionCreate) *PageVersionCreateBulk {
-	return &PageVersionCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *PageVersionClient) MapCreateBulk(slice any, setFunc func(*PageVersionCreate, int)) *PageVersionCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &PageVersionCreateBulk{err: fmt.Errorf("calling to PageVersionClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*PageVersionCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &PageVersionCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for PageVersion.
-func (c *PageVersionClient) Update() *PageVersionUpdate {
-	mutation := newPageVersionMutation(c.config, OpUpdate)
-	return &PageVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *PageVersionClient) UpdateOne(_m *PageVersion) *PageVersionUpdateOne {
-	mutation := newPageVersionMutation(c.config, OpUpdateOne, withPageVersion(_m))
-	return &PageVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *PageVersionClient) UpdateOneID(id string) *PageVersionUpdateOne {
-	mutation := newPageVersionMutation(c.config, OpUpdateOne, withPageVersionID(id))
-	return &PageVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for PageVersion.
-func (c *PageVersionClient) Delete() *PageVersionDelete {
-	mutation := newPageVersionMutation(c.config, OpDelete)
-	return &PageVersionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *PageVersionClient) DeleteOne(_m *PageVersion) *PageVersionDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PageVersionClient) DeleteOneID(id string) *PageVersionDeleteOne {
-	builder := c.Delete().Where(pageversion.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &PageVersionDeleteOne{builder}
-}
-
-// Query returns a query builder for PageVersion.
-func (c *PageVersionClient) Query() *PageVersionQuery {
-	return &PageVersionQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypePageVersion},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a PageVersion entity by its id.
-func (c *PageVersionClient) Get(ctx context.Context, id string) (*PageVersion, error) {
-	return c.Query().Where(pageversion.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *PageVersionClient) GetX(ctx context.Context, id string) *PageVersion {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *PageVersionClient) Hooks() []Hook {
-	return c.hooks.PageVersion
-}
-
-// Interceptors returns the client interceptors.
-func (c *PageVersionClient) Interceptors() []Interceptor {
-	return c.inters.PageVersion
-}
-
-func (c *PageVersionClient) mutate(ctx context.Context, m *PageVersionMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&PageVersionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&PageVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&PageVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&PageVersionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown PageVersion mutation op: %q", m.Op())
-	}
-}
-
 // PasswordClient is a client for the Password schema.
 type PasswordClient struct {
 	config
@@ -2795,6 +2795,139 @@ func (c *PluginGrantClient) mutate(ctx context.Context, m *PluginGrantMutation) 
 		return (&PluginGrantDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown PluginGrant mutation op: %q", m.Op())
+	}
+}
+
+// PluginPackageClient is a client for the PluginPackage schema.
+type PluginPackageClient struct {
+	config
+}
+
+// NewPluginPackageClient returns a client for the PluginPackage from the given config.
+func NewPluginPackageClient(c config) *PluginPackageClient {
+	return &PluginPackageClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pluginpackage.Hooks(f(g(h())))`.
+func (c *PluginPackageClient) Use(hooks ...Hook) {
+	c.hooks.PluginPackage = append(c.hooks.PluginPackage, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `pluginpackage.Intercept(f(g(h())))`.
+func (c *PluginPackageClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PluginPackage = append(c.inters.PluginPackage, interceptors...)
+}
+
+// Create returns a builder for creating a PluginPackage entity.
+func (c *PluginPackageClient) Create() *PluginPackageCreate {
+	mutation := newPluginPackageMutation(c.config, OpCreate)
+	return &PluginPackageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PluginPackage entities.
+func (c *PluginPackageClient) CreateBulk(builders ...*PluginPackageCreate) *PluginPackageCreateBulk {
+	return &PluginPackageCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PluginPackageClient) MapCreateBulk(slice any, setFunc func(*PluginPackageCreate, int)) *PluginPackageCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PluginPackageCreateBulk{err: fmt.Errorf("calling to PluginPackageClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PluginPackageCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PluginPackageCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PluginPackage.
+func (c *PluginPackageClient) Update() *PluginPackageUpdate {
+	mutation := newPluginPackageMutation(c.config, OpUpdate)
+	return &PluginPackageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PluginPackageClient) UpdateOne(_m *PluginPackage) *PluginPackageUpdateOne {
+	mutation := newPluginPackageMutation(c.config, OpUpdateOne, withPluginPackage(_m))
+	return &PluginPackageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PluginPackageClient) UpdateOneID(id string) *PluginPackageUpdateOne {
+	mutation := newPluginPackageMutation(c.config, OpUpdateOne, withPluginPackageID(id))
+	return &PluginPackageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PluginPackage.
+func (c *PluginPackageClient) Delete() *PluginPackageDelete {
+	mutation := newPluginPackageMutation(c.config, OpDelete)
+	return &PluginPackageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PluginPackageClient) DeleteOne(_m *PluginPackage) *PluginPackageDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PluginPackageClient) DeleteOneID(id string) *PluginPackageDeleteOne {
+	builder := c.Delete().Where(pluginpackage.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PluginPackageDeleteOne{builder}
+}
+
+// Query returns a query builder for PluginPackage.
+func (c *PluginPackageClient) Query() *PluginPackageQuery {
+	return &PluginPackageQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePluginPackage},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PluginPackage entity by its id.
+func (c *PluginPackageClient) Get(ctx context.Context, id string) (*PluginPackage, error) {
+	return c.Query().Where(pluginpackage.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PluginPackageClient) GetX(ctx context.Context, id string) *PluginPackage {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PluginPackageClient) Hooks() []Hook {
+	return c.hooks.PluginPackage
+}
+
+// Interceptors returns the client interceptors.
+func (c *PluginPackageClient) Interceptors() []Interceptor {
+	return c.inters.PluginPackage
+}
+
+func (c *PluginPackageClient) mutate(ctx context.Context, m *PluginPackageMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PluginPackageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PluginPackageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PluginPackageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PluginPackageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PluginPackage mutation op: %q", m.Op())
 	}
 }
 
@@ -3327,139 +3460,6 @@ func (c *RelayPairingOfferClient) mutate(ctx context.Context, m *RelayPairingOff
 		return (&RelayPairingOfferDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown RelayPairingOffer mutation op: %q", m.Op())
-	}
-}
-
-// ResourceArtifactClient is a client for the ResourceArtifact schema.
-type ResourceArtifactClient struct {
-	config
-}
-
-// NewResourceArtifactClient returns a client for the ResourceArtifact from the given config.
-func NewResourceArtifactClient(c config) *ResourceArtifactClient {
-	return &ResourceArtifactClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `resourceartifact.Hooks(f(g(h())))`.
-func (c *ResourceArtifactClient) Use(hooks ...Hook) {
-	c.hooks.ResourceArtifact = append(c.hooks.ResourceArtifact, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `resourceartifact.Intercept(f(g(h())))`.
-func (c *ResourceArtifactClient) Intercept(interceptors ...Interceptor) {
-	c.inters.ResourceArtifact = append(c.inters.ResourceArtifact, interceptors...)
-}
-
-// Create returns a builder for creating a ResourceArtifact entity.
-func (c *ResourceArtifactClient) Create() *ResourceArtifactCreate {
-	mutation := newResourceArtifactMutation(c.config, OpCreate)
-	return &ResourceArtifactCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of ResourceArtifact entities.
-func (c *ResourceArtifactClient) CreateBulk(builders ...*ResourceArtifactCreate) *ResourceArtifactCreateBulk {
-	return &ResourceArtifactCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *ResourceArtifactClient) MapCreateBulk(slice any, setFunc func(*ResourceArtifactCreate, int)) *ResourceArtifactCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &ResourceArtifactCreateBulk{err: fmt.Errorf("calling to ResourceArtifactClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*ResourceArtifactCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &ResourceArtifactCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for ResourceArtifact.
-func (c *ResourceArtifactClient) Update() *ResourceArtifactUpdate {
-	mutation := newResourceArtifactMutation(c.config, OpUpdate)
-	return &ResourceArtifactUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *ResourceArtifactClient) UpdateOne(_m *ResourceArtifact) *ResourceArtifactUpdateOne {
-	mutation := newResourceArtifactMutation(c.config, OpUpdateOne, withResourceArtifact(_m))
-	return &ResourceArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *ResourceArtifactClient) UpdateOneID(id string) *ResourceArtifactUpdateOne {
-	mutation := newResourceArtifactMutation(c.config, OpUpdateOne, withResourceArtifactID(id))
-	return &ResourceArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for ResourceArtifact.
-func (c *ResourceArtifactClient) Delete() *ResourceArtifactDelete {
-	mutation := newResourceArtifactMutation(c.config, OpDelete)
-	return &ResourceArtifactDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *ResourceArtifactClient) DeleteOne(_m *ResourceArtifact) *ResourceArtifactDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ResourceArtifactClient) DeleteOneID(id string) *ResourceArtifactDeleteOne {
-	builder := c.Delete().Where(resourceartifact.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &ResourceArtifactDeleteOne{builder}
-}
-
-// Query returns a query builder for ResourceArtifact.
-func (c *ResourceArtifactClient) Query() *ResourceArtifactQuery {
-	return &ResourceArtifactQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeResourceArtifact},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a ResourceArtifact entity by its id.
-func (c *ResourceArtifactClient) Get(ctx context.Context, id string) (*ResourceArtifact, error) {
-	return c.Query().Where(resourceartifact.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *ResourceArtifactClient) GetX(ctx context.Context, id string) *ResourceArtifact {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *ResourceArtifactClient) Hooks() []Hook {
-	return c.hooks.ResourceArtifact
-}
-
-// Interceptors returns the client interceptors.
-func (c *ResourceArtifactClient) Interceptors() []Interceptor {
-	return c.inters.ResourceArtifact
-}
-
-func (c *ResourceArtifactClient) mutate(ctx context.Context, m *ResourceArtifactMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&ResourceArtifactCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&ResourceArtifactUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&ResourceArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&ResourceArtifactDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown ResourceArtifact mutation op: %q", m.Op())
 	}
 }
 
@@ -4557,18 +4557,18 @@ func (c *VerificationCodeClient) mutate(ctx context.Context, m *VerificationCode
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
-		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate, Page,
-		PageFile, PageMember, PageVersion, Password, PluginGrant, RateWindow,
-		RelayHost, RelayPairing, RelayPairingOffer, ResourceArtifact,
+		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, BudgetEvent,
+		BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation, BudgetWindow,
+		ConfigRevision, Identity, Invite, Membership, ModelRate, Password, PluginGrant,
+		PluginPackage, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
 		ResourceSubmission, Team, TeamConfig, TeamProvider, UsageRequest, User,
 		VerificationCode []ent.Hook
 	}
 	inters struct {
-		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
-		BudgetWindow, ConfigRevision, Identity, Invite, Membership, ModelRate, Page,
-		PageFile, PageMember, PageVersion, Password, PluginGrant, RateWindow,
-		RelayHost, RelayPairing, RelayPairingOffer, ResourceArtifact,
+		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, BudgetEvent,
+		BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation, BudgetWindow,
+		ConfigRevision, Identity, Invite, Membership, ModelRate, Password, PluginGrant,
+		PluginPackage, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
 		ResourceSubmission, Team, TeamConfig, TeamProvider, UsageRequest, User,
 		VerificationCode []ent.Interceptor
 	}

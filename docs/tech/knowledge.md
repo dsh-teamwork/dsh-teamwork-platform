@@ -6,8 +6,7 @@ Where a team keeps what its business knows, as documents people and agents
 maintain together: Markdown in a tree of folders, owned by the team and
 readable by it, read by every member's agent as context with its sources
 cited, and changed by an agent only as a proposal a person accepts. It is a
-module of its own beside [pages](pages.md) (to be named artifacts, ADR
-0069), which are for showing work
+module of its own beside [artifacts](artifacts.md), which are for showing work
 ([ADR 0068](../adr/0068-knowledge-is-its-own-module.md)). The first version
 holds only what is certain and what nearly every team would use; everything
 else waits for real use to ask for it.
@@ -36,10 +35,10 @@ The first version, on a self-hosted server as on the hosted one:
   Lark or Notion; what this does better is being read and kept true by
   agents.
 - **Rich media.** A report, a deck, a dashboard or anything interactive is a
-  [page](pages.md); a document links to one.
+  [artifact](artifacts.md); a document links to one.
 - **Knowledge extracted from sessions without a person.** An agent proposes;
   it never writes a document directly, and nothing is extracted on its own.
-- **Anyone outside the team**, as for pages.
+- **Anyone outside the team**, as for artifacts.
 
 ## Terms
 
@@ -95,7 +94,7 @@ since people and agents already know them.
 | Backlinks | computed from links | The documents linking here, at the foot | Richer format |
 | Mentions | `@[Name](member-id)` | A mention, listed in the console | Working together |
 | A folder as a table | the front matter of its documents | A table, filtered and sorted by property | Working together |
-| An embedded page | `![[page:ID]]` | The page's card | Working together |
+| An embedded artifact | `![[artifact:ID]]` | The artifact's card | Working together |
 | Comments | not in the file: kept beside the version, anchored to a range | Comments in the margin | Working together |
 
 **Headings are stable anchors**, so a citation names the document, its
@@ -105,7 +104,7 @@ version and a heading, and still opens there after an edit elsewhere.
 a slash menu for its blocks; there is no source mode to learn. Saving is a
 new version. There is no real-time co-editing: an open editor shows who
 else has the document open, and a save on a stale version is refused and
-shown as a difference to reapply, as a page's `page_stale` is.
+shown as a difference to reapply, as an artifact's `artifact_stale` is.
 
 ## Architecture
 
@@ -130,11 +129,11 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
                   tells the agent where the copy is and how to cite
 ```
 
-- **`server/internal/knowledge`** is a service beside `internal/pages`, built
+- **`server/internal/knowledge`** is a service beside `internal/artifacts`, built
   the same way: the database, `artifactstore` (object kind `knowledge`,
   addressed by digest so identical attachments are stored once), and
   `team.Service` to re-read the caller's membership on every request.
-  Nothing in it is shared with `pages` by import; what is alike is alike by
+  Nothing in it is shared with `artifacts` by import; what is alike is alike by
   convention.
 - **The schema** (`internal/db/schema/knowledge.go`), ids nanoids set by the
   application, each table `Base`:
@@ -192,7 +191,7 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   `src/knowledge-tool.ts`: the tool **`teamwork_knowledge`**, with one action,
   `propose` (`documentId`, `baseVersion`, `note`, and `content` or a
   `directory` with `index.md` and its attachments, read only inside the
-  session's folder as `teamwork_page` reads). Reading needs no tool: the
+  session's folder as `teamwork_artifact` reads). Reading needs no tool: the
   agent uses its own file tools on the copy, and the preset context
   (`src/preset-context.ts`) says where the copy is, that it is read-only,
   how to cite, and to propose rather than edit. A stale proposal is answered
@@ -209,7 +208,7 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   `…/knowledge/objects/{digest}` on the member's session.
 - **Limits** (constants in the package, cheap to change): a document's text
   1 MiB, an attachment 20 MiB, a version's attachments 50 MiB, and a team's
-  knowledge objects 2 GiB, counted apart from its pages.
+  knowledge objects 2 GiB, counted apart from its artifacts.
 
 **Expensive to change**: the sync manifest and the local tree's layout, the
 citation format, the file format's conventions (see "Format"), and the
@@ -265,7 +264,7 @@ tables. Cheap: the limits, the console's screens, the editor library.
 3. **Richer format**: callouts and folding, diagrams, properties, templates
    and backlinks.
 4. **Working together**: mentions, comments, a folder as a table, embedded
-   pages, and full-text search for the console and the phone app.
+   artifacts, and full-text search for the console and the phone app.
 
 **After these, each designed when its turn comes**, not scheduled:
 

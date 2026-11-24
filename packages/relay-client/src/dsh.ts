@@ -19,7 +19,7 @@
 
 import { toolKey, visibleReasoning } from './conversation';
 import { remindersOf } from './schedule';
-import type { ConversationItem, FileTarget, Pending, PublishedPage, SessionChange, SessionState, SessionStatus, SessionSummary, SessionWorkspace, ToolResult } from './types';
+import type { ConversationItem, FileTarget, Pending, PublishedArtifact, SessionChange, SessionState, SessionStatus, SessionSummary, SessionWorkspace, ToolResult } from './types';
 
 type Json = Record<string, unknown>;
 const isObject = (value: unknown): value is Json => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -173,7 +173,7 @@ function toolResultOf(data: Json, message: Json): ToolResult {
   const clipped = body.length > TOOL_OUTPUT_LIMIT;
   const reason = typeof error.reason === 'string' && error.reason.trim() ? preview(error.reason, TOOL_OUTPUT_LIMIT) : undefined;
   const file = fileTarget(meta.path, meta.offset);
-  const page = publishedPage(meta);
+  const artifact = publishedArtifact(meta);
   return {
     // Keep the first screen and the status markers at the end, even if the call
     // is on an older page and the reader expands its result much later.
@@ -185,7 +185,7 @@ function toolResultOf(data: Json, message: Json): ToolResult {
     ...(typeof error.code === 'string' ? { code: error.code } : {}),
     ...(reason ? { reason } : {}),
     ...(file ? { file } : {}),
-    ...(page ? { page } : {}),
+    ...(artifact ? { artifact } : {}),
   };
 }
 
@@ -219,20 +219,20 @@ export function settleTool(call: Extract<ConversationItem, { kind: 'tool' }>, ou
   return { ...call, status, ...(file ? { file } : {}), ...(detail ? { detail } : {}) };
 }
 
-/** The page a `teamwork_page` result's `meta` names, when it names one completely. */
-function publishedPage(meta: unknown): PublishedPage | null {
-  if (!isObject(meta) || !isObject(meta.teamworkPage)) return null;
-  const p = meta.teamworkPage;
-  const kinds = ['html', 'markdown', 'svg'];
-  return typeof p.teamId === 'string' && typeof p.pageId === 'string' && typeof p.version === 'number' &&
-    typeof p.title === 'string' && typeof p.kind === 'string' && kinds.includes(p.kind)
-    ? { teamId: p.teamId, pageId: p.pageId, version: p.version, title: p.title, kind: p.kind as PublishedPage['kind'] }
+/** The artifact a `teamwork_artifact` result's `meta` names, when it names one completely. */
+function publishedArtifact(meta: unknown): PublishedArtifact | null {
+  if (!isObject(meta) || !isObject(meta.teamworkArtifact)) return null;
+  const a = meta.teamworkArtifact;
+  const kinds = ['html', 'svg'];
+  return typeof a.teamId === 'string' && typeof a.artifactId === 'string' && typeof a.version === 'number' &&
+    typeof a.title === 'string' && typeof a.kind === 'string' && kinds.includes(a.kind)
+    ? { teamId: a.teamId, artifactId: a.artifactId, version: a.version, title: a.title, kind: a.kind as PublishedArtifact['kind'] }
     : null;
 }
 
-export function toolPage(call: Extract<ConversationItem, { kind: 'tool' }>, outcome: ToolResult): Extract<ConversationItem, { kind: 'page' }> | undefined {
-  if (call.name === 'teamwork_page' && call.status === 'done' && outcome.page) {
-    return { kind: 'page', id: `page-${call.id}`, page: outcome.page };
+export function toolArtifact(call: Extract<ConversationItem, { kind: 'tool' }>, outcome: ToolResult): Extract<ConversationItem, { kind: 'artifact' }> | undefined {
+  if (call.name === 'teamwork_artifact' && call.status === 'done' && outcome.artifact) {
+    return { kind: 'artifact', id: `artifact-${call.id}`, artifact: outcome.artifact };
   }
 }
 
@@ -324,8 +324,8 @@ export function eventsOf(event: unknown, state: Pick<SessionState, 'items'>): Se
       const call = state.items.find((item) => item.kind === 'tool' && item.id === callId);
       if (!call || call.kind !== 'tool') return [{ type: 'item', item: { kind: 'tool-result', id: `result-${callId}`, callId, result } }];
       const settled = settleTool(call, result);
-      const page = toolPage(settled, result);
-      return [{ type: 'item', item: settled }, ...(page ? [{ type: 'item' as const, item: page }] : [])];
+      const artifact = toolArtifact(settled, result);
+      return [{ type: 'item', item: settled }, ...(artifact ? [{ type: 'item' as const, item: artifact }] : [])];
     }
     case 'turn/start':
       return [{ type: 'status', status: 'running' }];

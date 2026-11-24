@@ -8,6 +8,10 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifact"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetnotice"
@@ -17,11 +21,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/page"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagefile"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -70,34 +70,34 @@ func (s *Service) DeleteAccount(ctx context.Context, userID, confirm string) err
 		}
 		solo = append(solo, m.TeamID)
 	}
-	var artifacts []*ent.ResourceArtifact
-	var objects []pageObject
+	var packages []*ent.PluginPackage
+	var objects []artifactObject
 	for _, teamID := range solo {
 		gone, files, err := deleteTeam(ctx, tx.Client(), teamID)
 		if err != nil {
 			return err
 		}
-		artifacts = append(artifacts, gone...)
+		packages = append(packages, gone...)
 		objects = append(objects, files...)
 		if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.TeamDeleted, TeamID: teamID, UserID: userID, ActorID: userID}); err != nil {
 			return err
 		}
 	}
-	// Their private pages in other teams go with them, since nobody else can
-	// read them; pages they shared stay with their team, as their published
-	// versions do, and lists that named them forget them (docs/tech/pages.md).
-	private, err := tx.Page.Query().Where(page.OwnerID(userID), page.SharingEQ(page.SharingPrivate)).All(ctx)
+	// Their private artifacts in other teams go with them, since nobody else
+	// can read them; artifacts they shared stay with their team, as their published
+	// versions do, and lists that named them forget them (docs/tech/artifacts.md).
+	private, err := tx.Artifact.Query().Where(artifact.OwnerID(userID), artifact.SharingEQ(artifact.SharingPrivate)).All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, p := range private {
-		files, err := deletePages(ctx, tx.Client(), p.TeamID, []string{p.ID})
+		files, err := deleteArtifacts(ctx, tx.Client(), p.TeamID, []string{p.ID})
 		if err != nil {
 			return err
 		}
 		objects = append(objects, files...)
 	}
-	if _, err := tx.PageMember.Delete().Where(pagemember.UserID(userID)).Exec(ctx); err != nil {
+	if _, err := tx.ArtifactMember.Delete().Where(artifactmember.UserID(userID)).Exec(ctx); err != nil {
 		return err
 	}
 	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.AccountDeleted, UserID: userID, ActorID: userID}); err != nil {
@@ -110,7 +110,7 @@ func (s *Service) DeleteAccount(ctx context.Context, userID, confirm string) err
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	s.forgetStored(ctx, artifacts, objects)
+	s.forgetStored(ctx, packages, objects)
 	return nil
 }
 
@@ -145,7 +145,7 @@ func (s *Service) DeleteTeam(ctx context.Context, userID, teamID, confirm string
 	if strings.TrimSpace(confirm) != strings.TrimSpace(t.Name) {
 		return wire.E(http.StatusBadRequest, "confirmation_mismatch")
 	}
-	artifacts, objects, err := deleteTeam(ctx, tx.Client(), t.ID)
+	packages, objects, err := deleteTeam(ctx, tx.Client(), t.ID)
 	if err != nil {
 		return err
 	}
@@ -155,86 +155,87 @@ func (s *Service) DeleteTeam(ctx context.Context, userID, teamID, confirm string
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	s.forgetStored(ctx, artifacts, objects)
+	s.forgetStored(ctx, packages, objects)
 	return nil
 }
 
-// forgetStored deletes the stored bytes of deleted teams' artifacts and pages.
+// forgetStored deletes the stored bytes of deleted teams' packages and artifacts.
 // The rows are gone, so nothing reaches these bytes any more; a file left
 // behind by a failed delete is logged, not a failed deletion.
-func (s *Service) forgetStored(ctx context.Context, artifacts []*ent.ResourceArtifact, objects []pageObject) {
-	if s.Artifacts == nil {
+func (s *Service) forgetStored(ctx context.Context, packages []*ent.PluginPackage, objects []artifactObject) {
+	if s.Objects == nil {
 		return
 	}
 	ctx = context.WithoutCancel(ctx)
-	for _, a := range artifacts {
-		if err := s.Artifacts.Delete(ctx, a.TeamID, a.ID); err != nil {
-			slog.Warn("deleted team's artifact left in storage", "team", a.TeamID, "artifact", a.ID, "error", err)
+	for _, a := range packages {
+		if err := s.Objects.Delete(ctx, a.TeamID, a.ID); err != nil {
+			slog.Warn("deleted team's package left in storage", "team", a.TeamID, "package", a.ID, "error", err)
 		}
 	}
-	s.forgetPageObjects(ctx, objects)
+	s.forgetArtifactObjects(ctx, objects)
 }
 
-// pageObject is a page file's object in the store: teams/{team}/pages/{digest}.
-type pageObject struct{ team, digest string }
+// artifactObject is an artifact file's object in the store:
+// teams/{team}/pages/{digest}, the kind artifacts were first stored under.
+type artifactObject struct{ team, digest string }
 
-// deletePages removes pages of a team with their versions, files and members,
+// deleteArtifacts removes artifacts of a team with their versions, files and members,
 // and returns the objects their files named.
-func deletePages(ctx context.Context, db *ent.Client, teamID string, ids []string) ([]pageObject, error) {
-	versions, err := db.PageVersion.Query().Where(pageversion.PageIDIn(ids...)).IDs(ctx)
+func deleteArtifacts(ctx context.Context, db *ent.Client, teamID string, ids []string) ([]artifactObject, error) {
+	versions, err := db.ArtifactVersion.Query().Where(artifactversion.ArtifactIDIn(ids...)).IDs(ctx)
 	if err != nil {
 		return nil, err
 	}
 	var digests []string
-	if err := db.PageFile.Query().Where(pagefile.VersionIDIn(versions...)).Unique(true).Select(pagefile.FieldDigest).Scan(ctx, &digests); err != nil {
+	if err := db.ArtifactFile.Query().Where(artifactfile.VersionIDIn(versions...)).Unique(true).Select(artifactfile.FieldDigest).Scan(ctx, &digests); err != nil {
 		return nil, err
 	}
-	if _, err := db.PageMember.Delete().Where(pagemember.PageIDIn(ids...)).Exec(ctx); err != nil {
+	if _, err := db.ArtifactMember.Delete().Where(artifactmember.ArtifactIDIn(ids...)).Exec(ctx); err != nil {
 		return nil, err
 	}
-	if _, err := db.PageFile.Delete().Where(pagefile.VersionIDIn(versions...)).Exec(ctx); err != nil {
+	if _, err := db.ArtifactFile.Delete().Where(artifactfile.VersionIDIn(versions...)).Exec(ctx); err != nil {
 		return nil, err
 	}
-	if _, err := db.PageVersion.Delete().Where(pageversion.PageIDIn(ids...)).Exec(ctx); err != nil {
+	if _, err := db.ArtifactVersion.Delete().Where(artifactversion.ArtifactIDIn(ids...)).Exec(ctx); err != nil {
 		return nil, err
 	}
-	if _, err := db.Page.Delete().Where(page.IDIn(ids...)).Exec(ctx); err != nil {
+	if _, err := db.Artifact.Delete().Where(artifact.IDIn(ids...)).Exec(ctx); err != nil {
 		return nil, err
 	}
-	out := make([]pageObject, len(digests))
+	out := make([]artifactObject, len(digests))
 	for i, d := range digests {
-		out[i] = pageObject{teamID, d}
+		out[i] = artifactObject{teamID, d}
 	}
 	return out, nil
 }
 
-// forgetPageObjects deletes the objects no page file of their team still names.
+// forgetArtifactObjects deletes the objects no artifact file of their team still names.
 // A file left behind by a failed delete is logged, not a failed deletion.
-func (s *Service) forgetPageObjects(ctx context.Context, objects []pageObject) {
+func (s *Service) forgetArtifactObjects(ctx context.Context, objects []artifactObject) {
 	for _, o := range objects {
-		named, err := s.DB.PageFile.Query().Where(pagefile.TeamID(o.team), pagefile.Digest(o.digest)).Exist(ctx)
+		named, err := s.DB.ArtifactFile.Query().Where(artifactfile.TeamID(o.team), artifactfile.Digest(o.digest)).Exist(ctx)
 		if err != nil || named {
 			continue
 		}
-		if err := s.Artifacts.DeleteObject(ctx, o.team, "pages", o.digest); err != nil {
-			slog.Warn("deleted page's file left in storage", "team", o.team, "digest", o.digest, "error", err)
+		if err := s.Objects.DeleteObject(ctx, o.team, "pages", o.digest); err != nil {
+			slog.Warn("deleted artifact's file left in storage", "team", o.team, "digest", o.digest, "error", err)
 		}
 	}
 }
 
 // deleteTeam removes a team and every row that names it, and returns the
-// artifacts and page objects whose stored bytes the caller deletes once this
+// packages and artifact objects whose stored bytes the caller deletes once this
 // commits.
-func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.ResourceArtifact, []pageObject, error) {
-	artifacts, err := db.ResourceArtifact.Query().Where(resourceartifact.TeamID(teamID)).All(ctx)
+func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.PluginPackage, []artifactObject, error) {
+	packages, err := db.PluginPackage.Query().Where(pluginpackage.TeamID(teamID)).All(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	pageIDs, err := db.Page.Query().Where(page.TeamID(teamID)).IDs(ctx)
+	artifactIDs, err := db.Artifact.Query().Where(artifact.TeamID(teamID)).IDs(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	objects, err := deletePages(ctx, db, teamID, pageIDs)
+	objects, err := deleteArtifacts(ctx, db, teamID, artifactIDs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -258,7 +259,7 @@ func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.Reso
 		},
 		func() (int, error) { return db.ConfigRevision.Delete().Where(configrevision.TeamID(teamID)).Exec(ctx) },
 		func() (int, error) {
-			return db.ResourceArtifact.Delete().Where(resourceartifact.TeamID(teamID)).Exec(ctx)
+			return db.PluginPackage.Delete().Where(pluginpackage.TeamID(teamID)).Exec(ctx)
 		},
 	}
 	for _, step := range steps {
@@ -270,5 +271,5 @@ func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.Reso
 	if err := db.Team.DeleteOneID(teamID).Exec(ctx); err != nil {
 		return nil, nil, err
 	}
-	return artifacts, objects, nil
+	return packages, objects, nil
 }

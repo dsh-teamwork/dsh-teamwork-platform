@@ -5,7 +5,7 @@
 ## Context
 
 What an agent publishes from a session for people to see is called a page
-([`docs/tech/pages.md`](../tech/pages.md)), and "artifact" names the plugin
+([`docs/tech/artifacts.md`](../tech/artifacts.md), then `pages.md`), and "artifact" names the plugin
 archives a member submits and installed plugins download
 ([`docs/tech/team-assistant.md`](../tech/team-assistant.md), "Private plugin
 artifacts"). With knowledge beside it

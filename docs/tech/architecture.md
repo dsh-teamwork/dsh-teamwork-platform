@@ -32,7 +32,7 @@ site; the premium edition serves its cloud computers' DSH web there.
 New teams receive a built-in assistant preset in their creation transaction.
 It inherits the session model until an administrator selects a team model. The
 plugin exposes team-bound read/sync tools. The [team assistant plan](team-assistant.md)
-describes reviewed sharing, private artifacts, publication history and restoration.
+describes reviewed sharing, private packages, publication history and restoration.
 
 ```
 DSH + plugin ──Bearer──► server /api/configs, /api/llm/*  ──► ent ──► SQLite, Postgres or MySQL
@@ -102,15 +102,15 @@ the same team at their exact version, checked when the preset is written.
 
 
 Resource sharing adds `resource_submissions` (frozen proposals and decisions),
-`config_revisions` (immutable publication content) and `resource_artifacts`
-(private archive metadata). Artifact bytes live under the persistent data
+`config_revisions` (immutable publication content) and `plugin_packages`
+(private archive metadata). Package bytes live under the persistent data
 directory. Config writes, approval and history commit together; history is
 retained after deletion. The [team assistant reference](team-assistant.md)
 describes exact dependency pins, access checks, export and restoration.
 
 An account is deleted by its owner (ADR 0039): refused while it administers a
 team with others in it, until the role is handed over; a team it is alone in
-goes with it, rows and artifact bytes; elsewhere only the membership goes, and
+goes with it, rows and package bytes; elsewhere only the membership goes, and
 the team keeps its records under a former member. A team is deleted by its
 admin (ADR 0056), with everyone in it and the same rows.
 

@@ -2452,7 +2452,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/artifacts": {
+    "/teams/{teamId}/packages": {
         parameters: {
             query?: never;
             header?: never;
@@ -2479,13 +2479,13 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Private artifact metadata */
+                /** @description Private plugin package metadata */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ResourceArtifact"];
+                        "application/json": components["schemas"]["PluginPackage"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2497,7 +2497,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/artifacts/{id}": {
+    "/teams/{teamId}/packages/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2507,7 +2507,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Inspect an authorized artifact and its included files */
+        /** Inspect an authorized plugin package and its included files */
         get: {
             parameters: {
                 query?: never;
@@ -2520,13 +2520,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Private artifact metadata */
+                /** @description Private plugin package metadata */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ResourceArtifact"];
+                        "application/json": components["schemas"]["PluginPackage"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2540,7 +2540,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/artifacts/{id}/download": {
+    "/teams/{teamId}/packages/{id}/download": {
         parameters: {
             query?: never;
             header?: never;
@@ -2583,7 +2583,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages": {
+    "/teams/{teamId}/artifacts": {
         parameters: {
             query?: never;
             header?: never;
@@ -2592,7 +2592,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** The caller's own pages (mine), pages shared with them (shared), or every page of the team for an admin (all); newest version first, 50 at a time */
+        /** The caller's own artifacts (mine), artifacts shared with them (shared), or every artifact of the team for an admin (all); newest version first, 50 at a time */
         get: {
             parameters: {
                 query?: {
@@ -2613,7 +2613,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PageList"];
+                        "application/json": components["schemas"]["ArtifactList"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2621,7 +2621,7 @@ export interface paths {
         };
         put?: never;
         /**
-         * Publish a new page from a DSH session, private to its author (docs/tech/pages.md)
+         * Publish a new artifact from a DSH session, private to its author (docs/tech/artifacts.md)
          * @description Plugin or computer token.
          */
         post: {
@@ -2636,20 +2636,20 @@ export interface paths {
             requestBody: {
                 content: {
                     "multipart/form-data": {
-                        meta: components["schemas"]["PageUploadMeta"];
+                        meta: components["schemas"]["ArtifactUploadMeta"];
                     } & {
                         [key: string]: string;
                     };
                 };
             };
             responses: {
-                /** @description The page at version 1 */
+                /** @description The artifact at version 1 */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagePublished"];
+                        "application/json": components["schemas"]["ArtifactPublished"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2661,7 +2661,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}": {
+    "/teams/{teamId}/artifacts/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2671,7 +2671,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** A page the caller may read, with its versions; or, for the team's admin, the page without its content */
+        /** An artifact the caller may read, with its versions; or, for the team's admin, the artifact without its content */
         get: {
             parameters: {
                 query?: never;
@@ -2684,13 +2684,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The page */
+                /** @description The artifact */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PageDetail"];
+                        "application/json": components["schemas"]["ArtifactDetail"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2698,7 +2698,7 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete a page and every version; its owner or the team's admin */
+        /** Delete an artifact and every version; its owner or the team's admin */
         delete: {
             parameters: {
                 query?: never;
@@ -2723,7 +2723,7 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Rename a page; its owner's alone */
+        /** Rename an artifact; its owner's alone */
         patch: {
             parameters: {
                 query?: never;
@@ -2754,7 +2754,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}/sharing": {
+    "/teams/{teamId}/artifacts/{id}/sharing": {
         parameters: {
             query?: never;
             header?: never;
@@ -2765,7 +2765,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Set who may read a page; the owner sets any, the team's admin only narrows (page_sharing_widened otherwise) */
+        /** Set who may read an artifact; the owner sets any, the team's admin only narrows (artifact_sharing_widened otherwise) */
         put: {
             parameters: {
                 query?: never;
@@ -2803,7 +2803,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}/versions/{n}/restore": {
+    "/teams/{teamId}/artifacts/{id}/versions/{n}/restore": {
         parameters: {
             query?: never;
             header?: never;
@@ -2836,7 +2836,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagePublished"];
+                        "application/json": components["schemas"]["ArtifactPublished"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2848,7 +2848,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}/versions": {
+    "/teams/{teamId}/artifacts/{id}/versions": {
         parameters: {
             query?: never;
             header?: never;
@@ -2860,7 +2860,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Add a version on top of meta.baseVersion; page_stale when it is no longer current */
+        /** Add a version on top of meta.baseVersion; artifact_stale when it is no longer current */
         post: {
             parameters: {
                 query?: never;
@@ -2874,7 +2874,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "multipart/form-data": {
-                        meta: components["schemas"]["PageUploadMeta"];
+                        meta: components["schemas"]["ArtifactUploadMeta"];
                     } & {
                         [key: string]: string;
                     };
@@ -2887,7 +2887,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagePublished"];
+                        "application/json": components["schemas"]["ArtifactPublished"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2899,7 +2899,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}/versions/{n}/view": {
+    "/teams/{teamId}/artifacts/{id}/versions/{n}/view": {
         parameters: {
             query?: never;
             header?: never;
@@ -2932,7 +2932,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PageView"];
+                        "application/json": components["schemas"]["ArtifactView"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -3052,7 +3052,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Export a resource manifest and retained plugin artifacts; administrator only */
+        /** Export a resource manifest and retained plugin packages; administrator only */
         get: {
             parameters: {
                 query?: never;
@@ -3551,69 +3551,69 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        PageUploadMeta: {
+        ArtifactUploadMeta: {
             title?: string;
             /** @enum {string} */
-            kind: "html" | "markdown" | "svg";
+            kind: "html" | "svg";
             note?: string;
             sessionId?: string;
             computer?: string;
             baseVersion?: number;
         };
-        PagePublished: {
+        ArtifactPublished: {
             id: string;
             teamId: string;
             version: number;
             title: string;
             /** @enum {string} */
-            kind: "html" | "markdown" | "svg";
+            kind: "html" | "svg";
         };
-        PagePerson: {
+        ArtifactPerson: {
             id: string;
             name: string | null;
             email: string | null;
         };
-        PageSummary: {
+        ArtifactSummary: {
             id: string;
             title: string;
             /** @enum {string} */
-            kind: "html" | "markdown" | "svg";
+            kind: "html" | "svg";
             /** @enum {string} */
             sharing: "private" | "members" | "team";
-            owner: components["schemas"]["PagePerson"];
+            owner: components["schemas"]["ArtifactPerson"];
             currentVersion: number;
             /** Format: date-time */
             updatedAt: string;
-            updatedBy: components["schemas"]["PagePerson"];
+            updatedBy: components["schemas"]["ArtifactPerson"];
             /** @enum {string|null} */
             via: "you" | "team" | null;
         };
-        PageList: {
-            pages: components["schemas"]["PageSummary"][];
+        ArtifactList: {
+            artifacts: components["schemas"]["ArtifactSummary"][];
             next: string | null;
         };
-        PageDetail: {
+        ArtifactDetail: {
             id: string;
             title: string;
             /** @enum {string} */
-            kind: "html" | "markdown" | "svg";
+            kind: "html" | "svg";
             /** @enum {string} */
             sharing: "private" | "members" | "team";
-            owner: components["schemas"]["PagePerson"];
+            owner: components["schemas"]["ArtifactPerson"];
             currentVersion: number;
             /** Format: date-time */
             updatedAt: string;
-            updatedBy: components["schemas"]["PagePerson"];
+            updatedBy: components["schemas"]["ArtifactPerson"];
             /** @enum {string|null} */
             via: "you" | "team" | null;
             /** @enum {string} */
             access: "owner" | "reader" | "admin";
-            members: components["schemas"]["PagePerson"][];
-            versions: components["schemas"]["PageVersion"][];
+            members: components["schemas"]["ArtifactPerson"][];
+            versions: components["schemas"]["ArtifactVersion"][];
         };
-        PageVersion: {
+        ArtifactVersion: {
             number: number;
-            author: components["schemas"]["PagePerson"];
+            author: components["schemas"]["ArtifactPerson"];
             /** Format: date-time */
             createdAt: string;
             note: string;
@@ -3622,7 +3622,7 @@ export interface components {
             /** Format: int64 */
             size: number;
         };
-        PageView: {
+        ArtifactView: {
             url: string;
             /** Format: date-time */
             expiresAt: string;
@@ -4019,7 +4019,7 @@ export interface components {
             systemPrompt?: string;
         };
         PluginData: {
-            artifactId?: string;
+            packageId?: string;
             sha256?: string;
             package: string;
             version: string;
@@ -4120,7 +4120,7 @@ export interface components {
             /** Format: date-time */
             decidedAt: string | null;
         };
-        ResourceArtifact: {
+        PluginPackage: {
             id: string;
             package: string;
             version: string;

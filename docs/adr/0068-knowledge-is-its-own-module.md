@@ -5,7 +5,7 @@
 ## Context
 
 Pages ([ADR 0052](0052-pages-are-uploaded-when-made.md),
-[`docs/tech/pages.md`](../tech/pages.md)) are what an agent publishes from a
+[`docs/tech/artifacts.md`](../tech/artifacts.md)) are what an agent publishes from a
 session: a report, a deck, a dashboard, a diagram, in one of three kinds,
 `html`, `markdown` or `svg`. The hosted edition's positioning had them grow
 into the team's knowledge base as well: people writing and editing pages, an
@@ -47,7 +47,7 @@ version is this module rather than a second store.
 ## Consequences
 
 - Pages stay what they are: published by an agent, shown in a sandbox, never
-  edited in the browser. The non-goals of `pages.md` hold.
+  edited in the browser. The non-goals of `artifacts.md` hold.
 - Removing the `markdown` kind changes the `pages.kind` column (a migration),
   `api/openapi.yaml`, the server's Markdown rendering and its dependency, the
   relay client's page item and the plugin's `teamwork_page` tool. Nothing has

@@ -114,39 +114,39 @@ try {
  assert.equal(pending.state,'pending');
  await browser(`teams/${team.id}/submissions/${pending.id}/approve`,{revision:pending.revision});
  const synced=await client.sync();const shared=synced.teams[0].configs.find(c=>c.kind==='plugin'&&c.name==='Private fixture');assert(shared);
- const downloaded=await client.downloadArtifact(team.id,shared.data.artifactId,shared.data.sha256);
+ const downloaded=await client.downloadPackage(team.id,shared.data.packageId,shared.data.sha256);
  assert.deepEqual(await readFile(downloaded),await readFile(prepared.path));
  console.log('private plugin e2e ok: prepared, submitted, approved, synced and downloaded exact bytes');
 } finally {if(prepared)await rm(prepared.directory,{recursive:true,force:true});await rm(workspace,{recursive:true,force:true});}
 
-// A page, as the plugin's teamwork_page tool publishes one (docs/tech/pages.md): its own file collection and upload,
+// An artifact, as the plugin's teamwork_artifact tool publishes one (docs/tech/artifacts.md): its own file collection and upload,
 // then the browser opens both versions through view addresses, and finds the first unchanged.
-const pageSpace=mkdtempSync(join(tmpdir(),'teamwork-page-e2e-'));
+const artifactSpace=mkdtempSync(join(tmpdir(),'teamwork-artifact-e2e-'));
 try {
- const {pageFiles}=await import(pathToFileURL(join(PLUGIN,'lib/page-tool.js')).href);
- await mkdir(join(pageSpace,'report'));
- await writeFile(join(pageSpace,'report','index.html'),'<link rel="stylesheet" href="style.css"><h1>v1</h1>');
- await writeFile(join(pageSpace,'report','style.css'),'h1{color:red}');
+ const {artifactFiles}=await import(pathToFileURL(join(PLUGIN,'lib/artifact-tool.js')).href);
+ await mkdir(join(artifactSpace,'report'));
+ await writeFile(join(artifactSpace,'report','index.html'),'<link rel="stylesheet" href="style.css"><h1>v1</h1>');
+ await writeFile(join(artifactSpace,'report','style.css'),'h1{color:red}');
  const meta={kind:'html',note:'first',sessionId:'session-e2e',computer:'e2e'};
- const first=await client.publishPage(team.id,{...meta,title:'Q4 report'},await pageFiles(pageSpace,'html',undefined,'report'),new AbortController().signal);
+ const first=await client.publishArtifact(team.id,{...meta,title:'Q4 report'},await artifactFiles(artifactSpace,'html',undefined,'report'),new AbortController().signal);
  assert.equal(first.version,1);
- await writeFile(join(pageSpace,'report','index.html'),'<link rel="stylesheet" href="style.css"><h1>v2</h1>');
- const second=await client.publishPage(team.id,{...meta,pageId:first.id,baseVersion:1,note:'second'},await pageFiles(pageSpace,'html',undefined,'report'),new AbortController().signal);
+ await writeFile(join(artifactSpace,'report','index.html'),'<link rel="stylesheet" href="style.css"><h1>v2</h1>');
+ const second=await client.publishArtifact(team.id,{...meta,artifactId:first.id,baseVersion:1,note:'second'},await artifactFiles(artifactSpace,'html',undefined,'report'),new AbortController().signal);
  assert.equal(second.version,2);
- await assert.rejects(client.publishPage(team.id,{...meta,pageId:first.id,baseVersion:1},await pageFiles(pageSpace,'html',undefined,'report'),new AbortController().signal),e=>e.code==='page_stale');
+ await assert.rejects(client.publishArtifact(team.id,{...meta,artifactId:first.id,baseVersion:1},await artifactFiles(artifactSpace,'html',undefined,'report'),new AbortController().signal),e=>e.code==='artifact_stale');
  for (const [n,heading] of [[1,'v1'],[2,'v2']]) {
-  const view=await browser(`teams/${team.id}/pages/${first.id}/versions/${n}/view`,{});
-  const page=await fetch(view.url);
-  assert.equal(page.status,200);
-  assert.match(page.headers.get('content-security-policy'),/^sandbox allow-scripts /);
-  assert.ok((await page.text()).includes(`<h1>${heading}</h1>`));
+  const view=await browser(`teams/${team.id}/artifacts/${first.id}/versions/${n}/view`,{});
+  const served=await fetch(view.url);
+  assert.equal(served.status,200);
+  assert.match(served.headers.get('content-security-policy'),/^sandbox allow-scripts /);
+  assert.ok((await served.text()).includes(`<h1>${heading}</h1>`));
   assert.equal(await (await fetch(view.url+'style.css')).text(),'h1{color:red}');
  }
  // open: the plugin reads a version back, file for file, to change it.
- const opened=await client.readPage(team.id,first.id,1,undefined,new AbortController().signal);
+ const opened=await client.readArtifact(team.id,first.id,1,new AbortController().signal);
  assert.deepEqual(opened.map(f=>[f.path,new TextDecoder().decode(f.bytes)]).sort(),[['index.html','<link rel="stylesheet" href="style.css"><h1>v1</h1>'],['style.css','h1{color:red}']]);
- console.log('page e2e ok: published, versioned, refused a stale base, viewed both versions and opened one');
-} finally {await rm(pageSpace,{recursive:true,force:true});}
+ console.log('artifact e2e ok: published, versioned, refused a stale base, viewed both versions and opened one');
+} finally {await rm(artifactSpace,{recursive:true,force:true});}
 
 callback.close();
 console.log(`plugin e2e ok: signed in, synced ${snapshot.teams[0].configs.length} configuration, two calls through the gateway`);

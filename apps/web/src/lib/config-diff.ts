@@ -31,7 +31,7 @@ const ORDER = [
   'package',
   'version',
   'sha256',
-  'artifactId',
+  'packageId',
   'requiredTools',
   'optionalTools',
   'pluginDependencies',
