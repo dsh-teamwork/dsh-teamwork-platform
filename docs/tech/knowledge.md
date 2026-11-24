@@ -1,6 +1,6 @@
 # Knowledge
 
-> **Status:** Plan — direction decided (ADR 0068); the first step is two spikes · **Updated:** 2026-11-24
+> **Status:** Plan — both spikes done (see "Order of work"); the first version is next · **Updated:** 2026-11-24
 
 Where a team keeps what its business knows, as documents people and agents
 maintain together: Markdown in a tree of folders, owned by the team and
@@ -101,8 +101,13 @@ since people and agents already know them.
 version and a heading, and still opens there after an edit elsewhere.
 
 **Editing** is a WYSIWYG editor that reads and writes the Markdown above, with
-a slash menu for its blocks; there is no source mode to learn. Saving is a
-new version. There is no real-time co-editing: an open editor shows who
+a slash menu for its blocks; there is no source mode to learn. It is
+Milkdown, which keeps Markdown as its model; front matter is split off
+before the editor opens a document and put back on save, and `[[links]]`
+are a node of their own. The first save of a document written elsewhere
+normalises its syntax (table padding, list markers, escaping, hard breaks),
+recorded as a version of its own with the note "formatting"; every later
+save changes only what the person changed. Saving is a new version. There is no real-time co-editing: an open editor shows who
 else has the document open, and a save on a stale version is refused and
 shown as a difference to reapply, as an artifact's `artifact_stale` is.
 
@@ -194,14 +199,16 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   session's folder as `teamwork_artifact` reads). Reading needs no tool: the
   agent uses its own file tools on the copy, and the preset context
   (`src/preset-context.ts`) says where the copy is, that it is read-only,
-  how to cite, and to propose rather than edit. A stale proposal is answered
+  to search it with grep rather than list it whole, how to cite, to say so
+  when two documents disagree, and to propose rather than edit. A stale proposal is answered
   with the current version for the agent to reapply. The tool has no action
   that writes a version or changes access.
 - **The console** adds `knowledge` to Workspace's sections
   (`components/team/console-shell.tsx`), its pages under
   `apps/web/src/pages/team/knowledge/`, and its words under `knowledge.*` in
-  both locales. The editor is one component, `KnowledgeEditor`, whose library
-  the spike chooses; it reads and writes Markdown and nothing else.
+  both locales. The editor is one component, `KnowledgeEditor`, over
+  Milkdown (`@milkdown/kit` with its commonmark and gfm presets); it reads
+  and writes Markdown and nothing else.
 - **Rendering** is the console's, never the server's: the editor's read-only
   mode shows a document, and a document's text is never HTML, so it needs no
   sandbox origin. Its images and attachments load from
@@ -244,18 +251,44 @@ tables. Cheap: the limits, the console's screens, the editor library.
 
 ## Order of work
 
-1. **Two spikes, thrown away:**
-   - **Local sync:** sync a few hundred documents into a real DSH session's
-     folder and measure whether its agent finds and cites the right one
-     without a search tool, and how large a team's knowledge can grow
-     before a local copy stops being reasonable. If it fails, the first
-     version adds a search tool on the server.
-   - **The editor's round trip:** open real documents using every feature
-     of the first version in candidate WYSIWYG editors (Milkdown, TipTap),
-     edit one paragraph, save, and diff. Pass: the diff is that paragraph
-     alone. If no editor passes, the editor normalises a document once on
-     its first save, as a version of its own, and every later diff is
-     measured from it.
+1. **Two spikes, thrown away (done 2026-11-24).** Their code stayed out of
+   every repository.
+   - **Local sync passes; the first version needs no server search.** A
+     DeepSeek-generated knowledge base of a fictional 80-person company
+     (6 spaces, 305 Chinese documents with deliberately close facts) was
+     laid out as the plugin would sync it, and a real DSH headless agent
+     (`deepseek-flash`), told only where the copy is and how to cite,
+     answered 24 paraphrased questions and 3 the base cannot answer. It
+     answered 21 correctly and 1 in part, and cited the right document for
+     23. The 2 it got "wrong" were the base contradicting itself (a 7-day
+     and a 30-day cooling-off period in two documents); it cited the other
+     document and named the conflict. All 3 unanswerable questions were
+     declined, none invented. A question took a median of 12 tool calls,
+     29 seconds and 130k input tokens, mostly cached.
+   - **Size is a cost, not a limit.** At ten times the size (3050
+     documents) the same 10 questions were all answered and cited
+     correctly, at about twice the tool calls, 2.7 times the time and 4
+     times the input tokens. `grep` stays under 0.1 seconds even at 15250
+     documents (26 MB); what grows is what the agent reads. A generated
+     `INDEX.md` per team (paths and headings) saved only about a fifth of
+     the tokens and missed one answer, so it is left out. Server search
+     waits for the console, the phone and the Lark bot, or a team past a
+     few thousand documents.
+   - **Milkdown round-trips; TipTap does not.** Six real-style documents
+     covering every first-version feature, plus messy formatting, were
+     loaded, one paragraph typed into, and saved, in Milkdown 7.23 and
+     TipTap 3.35 with `@tiptap/markdown`. Out of the box both destroy
+     front matter and escape `[[links]]`. Milkdown, with front matter kept
+     outside the editor (a few lines) and a wikilink node (about 35 lines),
+     loses nothing: its first save only normalises syntax, and every second
+     save is exactly the typed paragraph. TipTap, after four such fixes,
+     still merges adjacent lists into one and keeps drifting on later
+     saves. Minified, Milkdown is about 140 kB gzip, TipTap 163 kB.
+   - **What the base contradicting itself means.** Agents surface conflicts
+     well, so a conflict is a signal worth keeping: review dates
+     ("After these") are the remedy, and the first version's preset
+     context tells the agent to name a conflict rather than pick a side
+     silently.
 2. **The first version**: spaces with their readers and editors, and folders; documents,
    attachments and versions, with comparison and restore; the editor with
    the first version's features; finding by title; the plugin's sync and
@@ -282,9 +315,10 @@ tables. Cheap: the limits, the console's screens, the editor library.
 
 ## Open questions
 
-None gates the first version. The spikes may change two of its parts: a
-server-side search tool if local sync fails, and a one-time normalisation if
-no editor round-trips cleanly.
+None gates the first version. The spikes settled both of its unknowns: no
+server-side search tool, and Milkdown with a one-time normalisation. Still
+to decide when it is built: how a `[[link]]`, an atom in the editor, is
+edited in place.
 
 ## How done is verified
 
