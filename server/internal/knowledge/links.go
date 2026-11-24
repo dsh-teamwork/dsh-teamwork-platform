@@ -33,7 +33,8 @@ var inlineCode = regexp.MustCompile("`[^`\n]*`")
 
 // linkedTitles is the document titles a text links to, `[[Title]]`,
 // `[[Title#Heading]]` or `[[Title|shown]]`, outside code; a link naming an
-// attachment (by its extension) or a heading of the text itself is left out.
+// attachment (by its extension), an artifact or a heading of the text itself
+// is left out.
 func linkedTitles(text string) []string {
 	var out []string
 	inFence := false
@@ -54,7 +55,7 @@ func linkedTitles(text string) []string {
 				target = target[:hash]
 			}
 			title := strings.TrimSpace(target)
-			if title != "" && !namesAttachment(title) {
+			if title != "" && !namesAttachment(title) && !strings.HasPrefix(title, ArtifactEmbed) {
 				out = append(out, title)
 			}
 		}
@@ -121,16 +122,8 @@ func (s *Service) backlinks(ctx context.Context, tree Tree, documentID, title st
 	// Only the current version of each document of a space the reader sees,
 	// and only one that mentions the title at all; which mention is a link
 	// that opens this document is decided below.
-	current := predicate.KnowledgeVersion(func(sel *sql.Selector) {
-		d := sql.Table(knowledgedocument.Table)
-		sel.Join(d).On(sel.C(knowledgeversion.FieldDocumentID), d.C(knowledgedocument.FieldID))
-		sel.Where(sql.And(
-			sql.ColumnsEQ(sel.C(knowledgeversion.FieldNumber), d.C(knowledgedocument.FieldCurrentVersion)),
-			sql.In(d.C(knowledgedocument.FieldSpaceID), ids...),
-		))
-	})
 	rows, err := s.DB.KnowledgeVersion.Query().
-		Where(current, knowledgeversion.DocumentIDNEQ(documentID), knowledgeversion.TextContainsFold(title)).
+		Where(currentIn(ids), knowledgeversion.DocumentIDNEQ(documentID), knowledgeversion.TextContainsFold(title)).
 		Select(knowledgeversion.FieldDocumentID, knowledgeversion.FieldText).All(ctx)
 	if err != nil {
 		return nil, err
@@ -163,3 +156,19 @@ func (s *Service) backlinks(ctx context.Context, tree Tree, documentID, title st
 	})
 	return out, nil
 }
+
+// currentIn keeps the current version of each document in the spaces ids.
+func currentIn(ids []any) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(func(sel *sql.Selector) {
+		d := sql.Table(knowledgedocument.Table)
+		sel.Join(d).On(sel.C(knowledgeversion.FieldDocumentID), d.C(knowledgedocument.FieldID))
+		sel.Where(sql.And(
+			sql.ColumnsEQ(sel.C(knowledgeversion.FieldNumber), d.C(knowledgedocument.FieldCurrentVersion)),
+			sql.In(d.C(knowledgedocument.FieldSpaceID), ids...),
+		))
+	})
+}
+
+// ArtifactEmbed opens the target of a link that embeds an artifact,
+// `![[artifact:{id}]]`, which links no document.
+const ArtifactEmbed = "artifact:"

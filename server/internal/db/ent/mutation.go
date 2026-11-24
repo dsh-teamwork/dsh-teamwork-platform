@@ -26,6 +26,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgecomment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -74,6 +75,7 @@ const (
 	TypeIdentity             = "Identity"
 	TypeInvite               = "Invite"
 	TypeKnowledgeAttachment  = "KnowledgeAttachment"
+	TypeKnowledgeComment     = "KnowledgeComment"
 	TypeKnowledgeDocument    = "KnowledgeDocument"
 	TypeKnowledgeFolder      = "KnowledgeFolder"
 	TypeKnowledgeProposal    = "KnowledgeProposal"
@@ -11712,6 +11714,936 @@ func (m *KnowledgeAttachmentMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *KnowledgeAttachmentMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown KnowledgeAttachment edge %s", name)
+}
+
+// KnowledgeCommentMutation represents an operation that mutates the KnowledgeComment nodes in the graph.
+type KnowledgeCommentMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	team_id       *string
+	document_id   *string
+	parent_id     *string
+	author_id     *string
+	version       *int
+	addversion    *int
+	quote         *string
+	anchor        *string
+	body          *string
+	resolved_by   *string
+	resolved_at   *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*KnowledgeComment, error)
+	predicates    []predicate.KnowledgeComment
+}
+
+var _ ent.Mutation = (*KnowledgeCommentMutation)(nil)
+
+// knowledgecommentOption allows management of the mutation configuration using functional options.
+type knowledgecommentOption func(*KnowledgeCommentMutation)
+
+// newKnowledgeCommentMutation creates new mutation for the KnowledgeComment entity.
+func newKnowledgeCommentMutation(c config, op Op, opts ...knowledgecommentOption) *KnowledgeCommentMutation {
+	m := &KnowledgeCommentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeKnowledgeComment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withKnowledgeCommentID sets the ID field of the mutation.
+func withKnowledgeCommentID(id string) knowledgecommentOption {
+	return func(m *KnowledgeCommentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *KnowledgeComment
+		)
+		m.oldValue = func(ctx context.Context) (*KnowledgeComment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().KnowledgeComment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withKnowledgeComment sets the old KnowledgeComment of the mutation.
+func withKnowledgeComment(node *KnowledgeComment) knowledgecommentOption {
+	return func(m *KnowledgeCommentMutation) {
+		m.oldValue = func(context.Context) (*KnowledgeComment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m KnowledgeCommentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m KnowledgeCommentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of KnowledgeComment entities.
+func (m *KnowledgeCommentMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *KnowledgeCommentMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *KnowledgeCommentMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().KnowledgeComment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *KnowledgeCommentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *KnowledgeCommentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *KnowledgeCommentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *KnowledgeCommentMutation) SetTeamID(s string) {
+	m.team_id = &s
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *KnowledgeCommentMutation) TeamID() (r string, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldTeamID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *KnowledgeCommentMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetDocumentID sets the "document_id" field.
+func (m *KnowledgeCommentMutation) SetDocumentID(s string) {
+	m.document_id = &s
+}
+
+// DocumentID returns the value of the "document_id" field in the mutation.
+func (m *KnowledgeCommentMutation) DocumentID() (r string, exists bool) {
+	v := m.document_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDocumentID returns the old "document_id" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldDocumentID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDocumentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDocumentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDocumentID: %w", err)
+	}
+	return oldValue.DocumentID, nil
+}
+
+// ResetDocumentID resets all changes to the "document_id" field.
+func (m *KnowledgeCommentMutation) ResetDocumentID() {
+	m.document_id = nil
+}
+
+// SetParentID sets the "parent_id" field.
+func (m *KnowledgeCommentMutation) SetParentID(s string) {
+	m.parent_id = &s
+}
+
+// ParentID returns the value of the "parent_id" field in the mutation.
+func (m *KnowledgeCommentMutation) ParentID() (r string, exists bool) {
+	v := m.parent_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldParentID returns the old "parent_id" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldParentID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldParentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldParentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldParentID: %w", err)
+	}
+	return oldValue.ParentID, nil
+}
+
+// ResetParentID resets all changes to the "parent_id" field.
+func (m *KnowledgeCommentMutation) ResetParentID() {
+	m.parent_id = nil
+}
+
+// SetAuthorID sets the "author_id" field.
+func (m *KnowledgeCommentMutation) SetAuthorID(s string) {
+	m.author_id = &s
+}
+
+// AuthorID returns the value of the "author_id" field in the mutation.
+func (m *KnowledgeCommentMutation) AuthorID() (r string, exists bool) {
+	v := m.author_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAuthorID returns the old "author_id" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldAuthorID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAuthorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAuthorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAuthorID: %w", err)
+	}
+	return oldValue.AuthorID, nil
+}
+
+// ResetAuthorID resets all changes to the "author_id" field.
+func (m *KnowledgeCommentMutation) ResetAuthorID() {
+	m.author_id = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *KnowledgeCommentMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *KnowledgeCommentMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *KnowledgeCommentMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *KnowledgeCommentMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *KnowledgeCommentMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
+// SetQuote sets the "quote" field.
+func (m *KnowledgeCommentMutation) SetQuote(s string) {
+	m.quote = &s
+}
+
+// Quote returns the value of the "quote" field in the mutation.
+func (m *KnowledgeCommentMutation) Quote() (r string, exists bool) {
+	v := m.quote
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldQuote returns the old "quote" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldQuote(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldQuote is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldQuote requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldQuote: %w", err)
+	}
+	return oldValue.Quote, nil
+}
+
+// ResetQuote resets all changes to the "quote" field.
+func (m *KnowledgeCommentMutation) ResetQuote() {
+	m.quote = nil
+}
+
+// SetAnchor sets the "anchor" field.
+func (m *KnowledgeCommentMutation) SetAnchor(s string) {
+	m.anchor = &s
+}
+
+// Anchor returns the value of the "anchor" field in the mutation.
+func (m *KnowledgeCommentMutation) Anchor() (r string, exists bool) {
+	v := m.anchor
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAnchor returns the old "anchor" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldAnchor(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAnchor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAnchor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAnchor: %w", err)
+	}
+	return oldValue.Anchor, nil
+}
+
+// ResetAnchor resets all changes to the "anchor" field.
+func (m *KnowledgeCommentMutation) ResetAnchor() {
+	m.anchor = nil
+}
+
+// SetBody sets the "body" field.
+func (m *KnowledgeCommentMutation) SetBody(s string) {
+	m.body = &s
+}
+
+// Body returns the value of the "body" field in the mutation.
+func (m *KnowledgeCommentMutation) Body() (r string, exists bool) {
+	v := m.body
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBody returns the old "body" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldBody(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBody requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
+	}
+	return oldValue.Body, nil
+}
+
+// ResetBody resets all changes to the "body" field.
+func (m *KnowledgeCommentMutation) ResetBody() {
+	m.body = nil
+}
+
+// SetResolvedBy sets the "resolved_by" field.
+func (m *KnowledgeCommentMutation) SetResolvedBy(s string) {
+	m.resolved_by = &s
+}
+
+// ResolvedBy returns the value of the "resolved_by" field in the mutation.
+func (m *KnowledgeCommentMutation) ResolvedBy() (r string, exists bool) {
+	v := m.resolved_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResolvedBy returns the old "resolved_by" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldResolvedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResolvedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResolvedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResolvedBy: %w", err)
+	}
+	return oldValue.ResolvedBy, nil
+}
+
+// ResetResolvedBy resets all changes to the "resolved_by" field.
+func (m *KnowledgeCommentMutation) ResetResolvedBy() {
+	m.resolved_by = nil
+}
+
+// SetResolvedAt sets the "resolved_at" field.
+func (m *KnowledgeCommentMutation) SetResolvedAt(t time.Time) {
+	m.resolved_at = &t
+}
+
+// ResolvedAt returns the value of the "resolved_at" field in the mutation.
+func (m *KnowledgeCommentMutation) ResolvedAt() (r time.Time, exists bool) {
+	v := m.resolved_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResolvedAt returns the old "resolved_at" field's value of the KnowledgeComment entity.
+// If the KnowledgeComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeCommentMutation) OldResolvedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResolvedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResolvedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResolvedAt: %w", err)
+	}
+	return oldValue.ResolvedAt, nil
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (m *KnowledgeCommentMutation) ClearResolvedAt() {
+	m.resolved_at = nil
+	m.clearedFields[knowledgecomment.FieldResolvedAt] = struct{}{}
+}
+
+// ResolvedAtCleared returns if the "resolved_at" field was cleared in this mutation.
+func (m *KnowledgeCommentMutation) ResolvedAtCleared() bool {
+	_, ok := m.clearedFields[knowledgecomment.FieldResolvedAt]
+	return ok
+}
+
+// ResetResolvedAt resets all changes to the "resolved_at" field.
+func (m *KnowledgeCommentMutation) ResetResolvedAt() {
+	m.resolved_at = nil
+	delete(m.clearedFields, knowledgecomment.FieldResolvedAt)
+}
+
+// Where appends a list predicates to the KnowledgeCommentMutation builder.
+func (m *KnowledgeCommentMutation) Where(ps ...predicate.KnowledgeComment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the KnowledgeCommentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *KnowledgeCommentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.KnowledgeComment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *KnowledgeCommentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *KnowledgeCommentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (KnowledgeComment).
+func (m *KnowledgeCommentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *KnowledgeCommentMutation) Fields() []string {
+	fields := make([]string, 0, 11)
+	if m.created_at != nil {
+		fields = append(fields, knowledgecomment.FieldCreatedAt)
+	}
+	if m.team_id != nil {
+		fields = append(fields, knowledgecomment.FieldTeamID)
+	}
+	if m.document_id != nil {
+		fields = append(fields, knowledgecomment.FieldDocumentID)
+	}
+	if m.parent_id != nil {
+		fields = append(fields, knowledgecomment.FieldParentID)
+	}
+	if m.author_id != nil {
+		fields = append(fields, knowledgecomment.FieldAuthorID)
+	}
+	if m.version != nil {
+		fields = append(fields, knowledgecomment.FieldVersion)
+	}
+	if m.quote != nil {
+		fields = append(fields, knowledgecomment.FieldQuote)
+	}
+	if m.anchor != nil {
+		fields = append(fields, knowledgecomment.FieldAnchor)
+	}
+	if m.body != nil {
+		fields = append(fields, knowledgecomment.FieldBody)
+	}
+	if m.resolved_by != nil {
+		fields = append(fields, knowledgecomment.FieldResolvedBy)
+	}
+	if m.resolved_at != nil {
+		fields = append(fields, knowledgecomment.FieldResolvedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *KnowledgeCommentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case knowledgecomment.FieldCreatedAt:
+		return m.CreatedAt()
+	case knowledgecomment.FieldTeamID:
+		return m.TeamID()
+	case knowledgecomment.FieldDocumentID:
+		return m.DocumentID()
+	case knowledgecomment.FieldParentID:
+		return m.ParentID()
+	case knowledgecomment.FieldAuthorID:
+		return m.AuthorID()
+	case knowledgecomment.FieldVersion:
+		return m.Version()
+	case knowledgecomment.FieldQuote:
+		return m.Quote()
+	case knowledgecomment.FieldAnchor:
+		return m.Anchor()
+	case knowledgecomment.FieldBody:
+		return m.Body()
+	case knowledgecomment.FieldResolvedBy:
+		return m.ResolvedBy()
+	case knowledgecomment.FieldResolvedAt:
+		return m.ResolvedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *KnowledgeCommentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case knowledgecomment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case knowledgecomment.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case knowledgecomment.FieldDocumentID:
+		return m.OldDocumentID(ctx)
+	case knowledgecomment.FieldParentID:
+		return m.OldParentID(ctx)
+	case knowledgecomment.FieldAuthorID:
+		return m.OldAuthorID(ctx)
+	case knowledgecomment.FieldVersion:
+		return m.OldVersion(ctx)
+	case knowledgecomment.FieldQuote:
+		return m.OldQuote(ctx)
+	case knowledgecomment.FieldAnchor:
+		return m.OldAnchor(ctx)
+	case knowledgecomment.FieldBody:
+		return m.OldBody(ctx)
+	case knowledgecomment.FieldResolvedBy:
+		return m.OldResolvedBy(ctx)
+	case knowledgecomment.FieldResolvedAt:
+		return m.OldResolvedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown KnowledgeComment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *KnowledgeCommentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case knowledgecomment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case knowledgecomment.FieldTeamID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case knowledgecomment.FieldDocumentID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDocumentID(v)
+		return nil
+	case knowledgecomment.FieldParentID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetParentID(v)
+		return nil
+	case knowledgecomment.FieldAuthorID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAuthorID(v)
+		return nil
+	case knowledgecomment.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
+	case knowledgecomment.FieldQuote:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetQuote(v)
+		return nil
+	case knowledgecomment.FieldAnchor:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAnchor(v)
+		return nil
+	case knowledgecomment.FieldBody:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBody(v)
+		return nil
+	case knowledgecomment.FieldResolvedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResolvedBy(v)
+		return nil
+	case knowledgecomment.FieldResolvedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResolvedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown KnowledgeComment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *KnowledgeCommentMutation) AddedFields() []string {
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, knowledgecomment.FieldVersion)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *KnowledgeCommentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case knowledgecomment.FieldVersion:
+		return m.AddedVersion()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *KnowledgeCommentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case knowledgecomment.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown KnowledgeComment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *KnowledgeCommentMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(knowledgecomment.FieldResolvedAt) {
+		fields = append(fields, knowledgecomment.FieldResolvedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *KnowledgeCommentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *KnowledgeCommentMutation) ClearField(name string) error {
+	switch name {
+	case knowledgecomment.FieldResolvedAt:
+		m.ClearResolvedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown KnowledgeComment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *KnowledgeCommentMutation) ResetField(name string) error {
+	switch name {
+	case knowledgecomment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case knowledgecomment.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case knowledgecomment.FieldDocumentID:
+		m.ResetDocumentID()
+		return nil
+	case knowledgecomment.FieldParentID:
+		m.ResetParentID()
+		return nil
+	case knowledgecomment.FieldAuthorID:
+		m.ResetAuthorID()
+		return nil
+	case knowledgecomment.FieldVersion:
+		m.ResetVersion()
+		return nil
+	case knowledgecomment.FieldQuote:
+		m.ResetQuote()
+		return nil
+	case knowledgecomment.FieldAnchor:
+		m.ResetAnchor()
+		return nil
+	case knowledgecomment.FieldBody:
+		m.ResetBody()
+		return nil
+	case knowledgecomment.FieldResolvedBy:
+		m.ResetResolvedBy()
+		return nil
+	case knowledgecomment.FieldResolvedAt:
+		m.ResetResolvedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown KnowledgeComment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *KnowledgeCommentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *KnowledgeCommentMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *KnowledgeCommentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *KnowledgeCommentMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *KnowledgeCommentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *KnowledgeCommentMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *KnowledgeCommentMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown KnowledgeComment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *KnowledgeCommentMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown KnowledgeComment edge %s", name)
 }
 
 // KnowledgeDocumentMutation represents an operation that mutates the KnowledgeDocument nodes in the graph.

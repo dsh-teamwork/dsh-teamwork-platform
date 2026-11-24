@@ -3623,6 +3623,293 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/knowledge/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** The documents the caller reads whose title or current text holds q, ignoring case; title matches first, at most 30 */
+        get: {
+            parameters: {
+                query: {
+                    q: string;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description What was found */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            results: components["schemas"]["KnowledgeFound"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/mentions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** The documents the caller reads whose current text mentions them, @[Name](their-id), newest change first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The documents */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            documents: components["schemas"]["KnowledgeFound"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/spaces/{id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** The documents directly in one folder of a space, or at its root, with their front matter, for a table of their properties */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Empty or absent for the space's root */
+                    folderId?: string;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The rows */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            rows: components["schemas"]["KnowledgeRow"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Every comment on a document the caller reads, oldest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The comments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            comments: components["schemas"]["KnowledgeComment"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        /** Open a thread on a quote of a version, or reply to one; a reader's, never an agent's */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description The thread a reply joins; empty to open one */
+                        parentId?: string;
+                        /** @description The version a thread is written on */
+                        version?: number;
+                        quote?: string;
+                        /** @description The slug of the heading above the quote */
+                        anchor?: string;
+                        body: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The comment */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeComment"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/comments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a comment, and a thread's replies with it; its author's or an editor's */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Resolve a thread, or open it again; its author's or an editor's */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        resolved: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Changed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        trace?: never;
+    };
     "/teams/{teamId}/knowledge/documents/{id}/attachments": {
         parameters: {
             query?: never;
@@ -4560,6 +4847,46 @@ export interface components {
             attachments: components["schemas"]["KnowledgeAttachment"][];
             /** @description The documents the caller reads whose current text links here */
             backlinks: components["schemas"]["KnowledgeBacklink"][];
+        };
+        KnowledgeFound: {
+            id: string;
+            title: string;
+            spaceId: string;
+            version: number;
+            titleMatch: boolean;
+            /** @description The heading above the line found; empty above the first */
+            heading: string;
+            /** @description The line found, at most 160 characters around it */
+            snippet: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        KnowledgeRow: {
+            id: string;
+            folderId: string;
+            title: string;
+            currentVersion: number;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description The current text's YAML front matter with its fences, or empty */
+            frontMatter: string;
+        };
+        KnowledgeComment: {
+            id: string;
+            /** @description Empty for a thread's first comment */
+            parentId: string;
+            version: number;
+            quote: string;
+            anchor: string;
+            body: string;
+            author: components["schemas"]["KnowledgePerson"];
+            /** Format: date-time */
+            createdAt: string;
+            resolvedBy: components["schemas"]["KnowledgePerson"] | null;
+            /** Format: date-time */
+            resolvedAt: string | null;
+            canResolve: boolean;
+            canDelete: boolean;
         };
         KnowledgeBacklink: {
             id: string;

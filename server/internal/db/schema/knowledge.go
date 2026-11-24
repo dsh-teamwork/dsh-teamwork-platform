@@ -153,3 +153,31 @@ func (KnowledgeAttachment) Fields() []ent.Field {
 func (KnowledgeAttachment) Indexes() []ent.Index {
 	return []ent.Index{index.Fields("document_id", "name").Unique(), index.Fields("team_id", "digest")}
 }
+
+// KnowledgeComment is a comment on a document, kept beside its versions
+// rather than in its text (docs/tech/knowledge.md, "Format"): a thread opens
+// on the words it quotes in the version it was written on, and its replies
+// name it as their parent.
+type KnowledgeComment struct{ ent.Schema }
+
+func (KnowledgeComment) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
+func (KnowledgeComment) Fields() []ent.Field {
+	return []ent.Field{
+		field.String("team_id").MaxLen(32).Immutable(),
+		field.String("document_id").MaxLen(32).Immutable(),
+		// parent_id is empty for a thread's first comment.
+		field.String("parent_id").MaxLen(32).Default("").Immutable(),
+		field.String("author_id").MaxLen(32).Immutable(),
+		// version, quote and anchor place a thread: the version it was
+		// written on, the words it is about, and the heading above them.
+		field.Int("version").Immutable(),
+		field.String("quote").MaxLen(runes(500)).Default("").Immutable(),
+		field.String("anchor").MaxLen(runes(200)).Default("").Immutable(),
+		field.Text("body").Immutable(),
+		field.String("resolved_by").MaxLen(32).Default(""),
+		field.Time("resolved_at").SchemaType(mysqlTime).Optional().Nillable(),
+	}
+}
+func (KnowledgeComment) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("document_id", "created_at"), index.Fields("author_id")}
+}

@@ -1470,6 +1470,127 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/KnowledgeProposalDetail' }
         default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/search:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: The documents the caller reads whose title or current text holds q, ignoring case; title matches first, at most 30
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 1, maxLength: 100 } }
+      responses:
+        '200':
+          description: What was found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results]
+                additionalProperties: false
+                properties:
+                  results: { type: array, items: { $ref: '#/components/schemas/KnowledgeFound' } }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/mentions:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: 'The documents the caller reads whose current text mentions them, @[Name](their-id), newest change first'
+      responses:
+        '200':
+          description: The documents
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [documents]
+                additionalProperties: false
+                properties:
+                  documents: { type: array, items: { $ref: '#/components/schemas/KnowledgeFound' } }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/spaces/{id}/documents:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: The documents directly in one folder of a space, or at its root, with their front matter, for a table of their properties
+      parameters:
+        - { name: folderId, in: query, schema: { type: string }, description: Empty or absent for the space's root }
+      responses:
+        '200':
+          description: The rows
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rows]
+                additionalProperties: false
+                properties:
+                  rows: { type: array, items: { $ref: '#/components/schemas/KnowledgeRow' } }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/documents/{id}/comments:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Every comment on a document the caller reads, oldest first
+      responses:
+        '200':
+          description: The comments
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [comments]
+                additionalProperties: false
+                properties:
+                  comments: { type: array, items: { $ref: '#/components/schemas/KnowledgeComment' } }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      summary: Open a thread on a quote of a version, or reply to one; a reader's, never an agent's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              additionalProperties: false
+              properties:
+                parentId: { type: string, description: The thread a reply joins; empty to open one }
+                version: { type: integer, description: The version a thread is written on }
+                quote: { type: string, maxLength: 500 }
+                anchor: { type: string, maxLength: 200, description: The slug of the heading above the quote }
+                body: { type: string, minLength: 1, maxLength: 4000 }
+      responses:
+        '201':
+          description: The comment
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeComment' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/comments/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      summary: Resolve a thread, or open it again; its author's or an editor's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolved]
+              additionalProperties: false
+              properties:
+                resolved: { type: boolean }
+      responses:
+        '204': { description: Changed }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      summary: Delete a comment, and a thread's replies with it; its author's or an editor's
+      responses:
+        '204': { description: Deleted }
+        default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/knowledge/documents/{id}/attachments:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -1919,6 +2040,49 @@ components:
         versions: { type: array, items: { $ref: '#/components/schemas/KnowledgeVersion' } }
         attachments: { type: array, items: { $ref: '#/components/schemas/KnowledgeAttachment' }, description: 'The files the document may name, every version alike' }
         backlinks: { type: array, items: { $ref: '#/components/schemas/KnowledgeBacklink' }, description: 'The documents the caller reads whose current text links here' }
+    KnowledgeFound:
+      type: object
+      required: [id, title, spaceId, version, titleMatch, heading, snippet, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        title: { type: string }
+        spaceId: { type: string }
+        version: { type: integer }
+        titleMatch: { type: boolean }
+        heading: { type: string, description: The heading above the line found; empty above the first }
+        snippet: { type: string, description: 'The line found, at most 160 characters around it' }
+        updatedAt: { type: string, format: date-time }
+    KnowledgeRow:
+      type: object
+      required: [id, folderId, title, currentVersion, updatedAt, frontMatter]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        folderId: { type: string }
+        title: { type: string }
+        currentVersion: { type: integer }
+        updatedAt: { type: string, format: date-time }
+        frontMatter: { type: string, description: 'The current text''s YAML front matter with its fences, or empty' }
+    KnowledgeComment:
+      type: object
+      required: [id, parentId, version, quote, anchor, body, author, createdAt, resolvedBy, resolvedAt, canResolve, canDelete]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        parentId: { type: string, description: Empty for a thread's first comment }
+        version: { type: integer }
+        quote: { type: string }
+        anchor: { type: string }
+        body: { type: string }
+        author: { $ref: '#/components/schemas/KnowledgePerson' }
+        createdAt: { type: string, format: date-time }
+        resolvedBy:
+          allOf: [{ $ref: '#/components/schemas/KnowledgePerson' }]
+          nullable: true
+        resolvedAt: { type: string, format: date-time, nullable: true }
+        canResolve: { type: boolean }
+        canDelete: { type: boolean }
     KnowledgeBacklink:
       type: object
       required: [id, title, spaceId]

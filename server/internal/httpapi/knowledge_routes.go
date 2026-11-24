@@ -170,6 +170,42 @@ func (s *Server) knowledgeRoutes(get, post func(string, handler), write func(str
 		return k.Propose(r.Context(), c, team(r), id(r), in)
 	})(s))
 
+	get("/api/teams/{teamId}/knowledge/search", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
+		found, err := k.Search(r.Context(), c, team(r), r.URL.Query().Get("q"))
+		return map[string]any{"results": found}, err
+	})(s))
+	get("/api/teams/{teamId}/knowledge/mentions", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
+		found, err := k.Mentions(r.Context(), c, team(r))
+		return map[string]any{"documents": found}, err
+	})(s))
+	get("/api/teams/{teamId}/knowledge/spaces/{id}/documents", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
+		rows, err := k.Rows(r.Context(), c, team(r), id(r), r.URL.Query().Get("folderId"))
+		return map[string]any{"rows": rows}, err
+	})(s))
+	get("/api/teams/{teamId}/knowledge/documents/{id}/comments", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
+		comments, err := k.Comments(r.Context(), c, team(r), id(r))
+		return map[string]any{"comments": comments}, err
+	})(s))
+	post("/api/teams/{teamId}/knowledge/documents/{id}/comments", knowledgeRoute(user, 201, func(r *http.Request, c knowledge.Caller) (any, error) {
+		var in knowledge.CommentInput
+		if err := decode(r, &in); err != nil {
+			return nil, err
+		}
+		return k.AddComment(r.Context(), c, team(r), id(r), in)
+	})(s))
+	write("PATCH", "/api/teams/{teamId}/knowledge/comments/{id}", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
+		var in struct {
+			Resolved bool `json:"resolved"`
+		}
+		if err := decode(r, &in); err != nil {
+			return nil, err
+		}
+		return nil, k.ResolveComment(r.Context(), c, team(r), id(r), in.Resolved)
+	})(s))
+	write("DELETE", "/api/teams/{teamId}/knowledge/comments/{id}", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
+		return nil, k.DeleteComment(r.Context(), c, team(r), id(r))
+	})(s))
+
 	post("/api/teams/{teamId}/knowledge/documents/{id}/attachments", func(w http.ResponseWriter, r *http.Request) error {
 		c, err := s.requirePlugin(r)
 		if err != nil {

@@ -48,6 +48,9 @@ type Invite func(*sql.Selector)
 // KnowledgeAttachment is the predicate function for knowledgeattachment builders.
 type KnowledgeAttachment func(*sql.Selector)
 
+// KnowledgeComment is the predicate function for knowledgecomment builders.
+type KnowledgeComment func(*sql.Selector)
+
 // KnowledgeDocument is the predicate function for knowledgedocument builders.
 type KnowledgeDocument func(*sql.Selector)
 

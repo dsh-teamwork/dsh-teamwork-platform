@@ -20,6 +20,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetwindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgecomment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -108,6 +109,14 @@ func (s *Service) DeleteAccount(ctx context.Context, userID, confirm string) err
 		return err
 	}
 	if _, err := tx.KnowledgeSpaceMember.Delete().Where(knowledgespacemember.UserID(userID)).Exec(ctx); err != nil {
+		return err
+	}
+	// Their comments go, and with a thread they opened its replies.
+	threads, err := tx.KnowledgeComment.Query().Where(knowledgecomment.AuthorID(userID), knowledgecomment.ParentID("")).IDs(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := tx.KnowledgeComment.Delete().Where(knowledgecomment.Or(knowledgecomment.AuthorID(userID), knowledgecomment.ParentIDIn(threads...))).Exec(ctx); err != nil {
 		return err
 	}
 	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.AccountDeleted, UserID: userID, ActorID: userID}); err != nil {
@@ -330,6 +339,9 @@ func deleteKnowledge(ctx context.Context, db *ent.Client, teamID string) ([]stri
 		},
 		func() (int, error) {
 			return db.KnowledgeProposal.Delete().Where(knowledgeproposal.TeamID(teamID)).Exec(ctx)
+		},
+		func() (int, error) {
+			return db.KnowledgeComment.Delete().Where(knowledgecomment.TeamID(teamID)).Exec(ctx)
 		},
 		func() (int, error) {
 			return db.KnowledgeDocument.Delete().Where(knowledgedocument.TeamID(teamID)).Exec(ctx)

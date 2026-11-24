@@ -204,6 +204,9 @@ func deleteSpace(ctx context.Context, db *ent.Client, spaceID string) ([]string,
 		if _, err := db.KnowledgeProposal.Delete().Where(knowledgeproposal.DocumentIDIn(docs...)).Exec(ctx); err != nil {
 			return nil, err
 		}
+		if err := deleteComments(ctx, db, docs); err != nil {
+			return nil, err
+		}
 		if _, err := db.KnowledgeDocument.Delete().Where(knowledgedocument.IDIn(docs...)).Exec(ctx); err != nil {
 			return nil, err
 		}

@@ -402,3 +402,103 @@ func TestKnowledgeTemplatesAreAFolderOfTheSpace(t *testing.T) {
 		}
 	})
 }
+
+func TestKnowledgeCommentsFollowTheDocument(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{})
+		teamID, admin, a, b, aID, _ := knowledgeTeam(t, e)
+		base := "/api/teams/" + teamID + "/knowledge"
+		space := must(t, admin.post(base+"/spaces", map[string]string{"name": "Runbooks"}), 201)["id"].(string)
+		must(t, admin.send("PUT", base+"/spaces/"+space+"/access", map[string]any{"reading": "members", "readers": []string{aID}, "editors": []string{}}), 200)
+		docID := must(t, admin.post(base+"/documents", map[string]any{"spaceId": space, "title": "Deploys", "text": "# Deploys\n\n## Freeze\n\nNo deploys on Friday.\n"}), 201)["id"].(string)
+		doc := base + "/documents/" + docID
+
+		// A reader opens a thread on a quote; an agent comments nothing; one who cannot read sees nothing.
+		thread := must(t, a.post(doc+"/comments", map[string]any{"version": 1, "quote": "No deploys on Friday", "anchor": "freeze", "body": "Even hotfixes?"}), 201)
+		if thread["canResolve"] != true || thread["canDelete"] != true || thread["quote"] != "No deploys on Friday" {
+			t.Fatalf("thread %v", thread)
+		}
+		threadID := thread["id"].(string)
+		refused(t, "an agent comments", e.pluginFor(a).post(doc+"/comments", map[string]any{"version": 1, "body": "x"}), 403, "knowledge_agent_proposes")
+		refused(t, "b reads comments", b.get(doc+"/comments"), 404, "knowledge_not_found")
+		refused(t, "a version the document lacks", a.post(doc+"/comments", map[string]any{"version": 2, "body": "x"}), 400, "invalid_request")
+		reply := must(t, admin.post(doc+"/comments", map[string]any{"parentId": threadID, "body": "Hotfixes are fine."}), 201)
+		if reply["version"].(float64) != 1 || reply["quote"] != "" || reply["canResolve"] != false {
+			t.Fatalf("reply %v", reply)
+		}
+		refused(t, "a reply to a reply", a.post(doc+"/comments", map[string]any{"parentId": reply["id"], "body": "x"}), 404, "knowledge_not_found")
+
+		// The author resolves their thread; the reader cannot delete the editor's reply.
+		refused(t, "a resolves a reply", a.send("PATCH", base+"/comments/"+reply["id"].(string), map[string]any{"resolved": true}), 409, "knowledge_comment_reply")
+		refused(t, "a deletes the editor's reply", a.send("DELETE", base+"/comments/"+reply["id"].(string), nil), 403, "knowledge_not_editor")
+		must(t, a.send("PATCH", base+"/comments/"+threadID, map[string]any{"resolved": true}), 204)
+		list := must(t, admin.get(doc+"/comments"), 200)["comments"].([]any)
+		if len(list) != 2 || list[0].(map[string]any)["resolvedBy"].(map[string]any)["id"] != aID {
+			t.Fatalf("comments %v", list)
+		}
+
+		// Deleting the thread takes its reply; deleting the document takes the rest.
+		must(t, admin.post(doc+"/comments", map[string]any{"version": 1, "body": "Whole document"}), 201)
+		must(t, a.send("DELETE", base+"/comments/"+threadID, nil), 204)
+		if got := must(t, admin.get(doc+"/comments"), 200)["comments"].([]any); len(got) != 1 {
+			t.Fatalf("after deleting the thread %v", got)
+		}
+		must(t, admin.send("DELETE", doc, nil), 204)
+		if n := d.Client.KnowledgeComment.Query().CountX(t.Context()); n != 0 {
+			t.Fatalf("%d comments outlived their document", n)
+		}
+	})
+}
+
+func TestKnowledgeSearchMentionsAndRows(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{})
+		teamID, admin, a, b, aID, bID := knowledgeTeam(t, e)
+		base := "/api/teams/" + teamID + "/knowledge"
+		open := must(t, admin.post(base+"/spaces", map[string]string{"name": "Handbook"}), 201)["id"].(string)
+		closed := must(t, admin.post(base+"/spaces", map[string]string{"name": "Private"}), 201)["id"].(string)
+		must(t, admin.send("PUT", base+"/spaces/"+closed+"/access", map[string]any{"reading": "members", "readers": []string{aID}, "editors": []string{}}), 200)
+		folder := must(t, admin.post(base+"/folders", map[string]string{"spaceId": open, "name": "Policies"}), 201)["id"].(string)
+		create := func(space, folderID, title, text string) string {
+			return must(t, admin.post(base+"/documents", map[string]any{"spaceId": space, "folderId": folderID, "title": title, "text": text}), 201)["id"].(string)
+		}
+		refunds := create(open, folder, "Refunds", "---\nowner: \"@[a](" + aID + ")\"\nstatus: current\n---\n\n# Refunds\n\n## Window\n\nA refund within THIRTY days; thirty is firm.\n")
+		create(open, folder, "Thirty-day trial", "# Trial\n\nNothing else.\n")
+		create(open, "", "Pricing", "# Pricing\n\nAsk @[b](" + bID + ") about discounts.\n")
+		create(closed, "", "Secret", "Thirty secrets, for @[b](" + bID + ").\n")
+
+		search := func(c *browser, q string) []any {
+			return must(t, c.get(base+"/search?q="+q), 200)["results"].([]any)
+		}
+		got := search(a, "thirty")
+		if len(got) != 3 {
+			t.Fatalf("a's search %v", got)
+		}
+		first, second := got[0].(map[string]any), got[1].(map[string]any)
+		if first["title"] != "Thirty-day trial" || first["titleMatch"] != true || second["id"] != refunds || second["heading"] != "Window" || second["snippet"] != "A refund within THIRTY days; thirty is firm." {
+			t.Fatalf("a's search ranks %v", got)
+		}
+		if got := search(b, "thirty"); len(got) != 2 {
+			t.Fatalf("b's search reaches the private space: %v", got)
+		}
+		refused(t, "an empty search", a.get(base+"/search?q=%20"), 400, "invalid_request")
+
+		// b is mentioned in two documents but reads one of them; a, as Refunds' owner, in one.
+		if got := must(t, b.get(base+"/mentions"), 200)["documents"].([]any); len(got) != 1 || got[0].(map[string]any)["title"] != "Pricing" || got[0].(map[string]any)["snippet"] != "Ask @[b]("+bID+") about discounts." {
+			t.Fatalf("b's mentions %v", got)
+		}
+		if got := must(t, a.get(base+"/mentions"), 200)["documents"].([]any); len(got) != 1 || got[0].(map[string]any)["id"] != refunds {
+			t.Fatalf("a's mentions %v", got)
+		}
+
+		// A folder's rows carry each document's front matter; the space's root is its own.
+		rows := must(t, b.get(base+"/spaces/"+open+"/documents?folderId="+folder), 200)["rows"].([]any)
+		if len(rows) != 2 || rows[0].(map[string]any)["frontMatter"] != "---\nowner: \"@[a]("+aID+")\"\nstatus: current\n---\n" || rows[1].(map[string]any)["frontMatter"] != "" {
+			t.Fatalf("rows %v", rows)
+		}
+		if root := must(t, b.get(base+"/spaces/"+open+"/documents"), 200)["rows"].([]any); len(root) != 1 {
+			t.Fatalf("root rows %v", root)
+		}
+		refused(t, "b's rows of the private space", b.get(base+"/spaces/"+closed+"/documents"), 404, "knowledge_not_found")
+	})
+}

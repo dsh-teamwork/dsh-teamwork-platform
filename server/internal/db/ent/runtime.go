@@ -19,6 +19,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgecomment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -791,6 +792,71 @@ func init() {
 	// knowledgeattachment.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	knowledgeattachment.IDValidator = func() func(string) error {
 		validators := knowledgeattachmentDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	knowledgecommentMixin := schema.KnowledgeComment{}.Mixin()
+	knowledgecommentMixinFields0 := knowledgecommentMixin[0].Fields()
+	_ = knowledgecommentMixinFields0
+	knowledgecommentFields := schema.KnowledgeComment{}.Fields()
+	_ = knowledgecommentFields
+	// knowledgecommentDescCreatedAt is the schema descriptor for created_at field.
+	knowledgecommentDescCreatedAt := knowledgecommentMixinFields0[1].Descriptor()
+	// knowledgecomment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	knowledgecomment.DefaultCreatedAt = knowledgecommentDescCreatedAt.Default.(func() time.Time)
+	// knowledgecommentDescTeamID is the schema descriptor for team_id field.
+	knowledgecommentDescTeamID := knowledgecommentFields[0].Descriptor()
+	// knowledgecomment.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	knowledgecomment.TeamIDValidator = knowledgecommentDescTeamID.Validators[0].(func(string) error)
+	// knowledgecommentDescDocumentID is the schema descriptor for document_id field.
+	knowledgecommentDescDocumentID := knowledgecommentFields[1].Descriptor()
+	// knowledgecomment.DocumentIDValidator is a validator for the "document_id" field. It is called by the builders before save.
+	knowledgecomment.DocumentIDValidator = knowledgecommentDescDocumentID.Validators[0].(func(string) error)
+	// knowledgecommentDescParentID is the schema descriptor for parent_id field.
+	knowledgecommentDescParentID := knowledgecommentFields[2].Descriptor()
+	// knowledgecomment.DefaultParentID holds the default value on creation for the parent_id field.
+	knowledgecomment.DefaultParentID = knowledgecommentDescParentID.Default.(string)
+	// knowledgecomment.ParentIDValidator is a validator for the "parent_id" field. It is called by the builders before save.
+	knowledgecomment.ParentIDValidator = knowledgecommentDescParentID.Validators[0].(func(string) error)
+	// knowledgecommentDescAuthorID is the schema descriptor for author_id field.
+	knowledgecommentDescAuthorID := knowledgecommentFields[3].Descriptor()
+	// knowledgecomment.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	knowledgecomment.AuthorIDValidator = knowledgecommentDescAuthorID.Validators[0].(func(string) error)
+	// knowledgecommentDescQuote is the schema descriptor for quote field.
+	knowledgecommentDescQuote := knowledgecommentFields[5].Descriptor()
+	// knowledgecomment.DefaultQuote holds the default value on creation for the quote field.
+	knowledgecomment.DefaultQuote = knowledgecommentDescQuote.Default.(string)
+	// knowledgecomment.QuoteValidator is a validator for the "quote" field. It is called by the builders before save.
+	knowledgecomment.QuoteValidator = knowledgecommentDescQuote.Validators[0].(func(string) error)
+	// knowledgecommentDescAnchor is the schema descriptor for anchor field.
+	knowledgecommentDescAnchor := knowledgecommentFields[6].Descriptor()
+	// knowledgecomment.DefaultAnchor holds the default value on creation for the anchor field.
+	knowledgecomment.DefaultAnchor = knowledgecommentDescAnchor.Default.(string)
+	// knowledgecomment.AnchorValidator is a validator for the "anchor" field. It is called by the builders before save.
+	knowledgecomment.AnchorValidator = knowledgecommentDescAnchor.Validators[0].(func(string) error)
+	// knowledgecommentDescResolvedBy is the schema descriptor for resolved_by field.
+	knowledgecommentDescResolvedBy := knowledgecommentFields[8].Descriptor()
+	// knowledgecomment.DefaultResolvedBy holds the default value on creation for the resolved_by field.
+	knowledgecomment.DefaultResolvedBy = knowledgecommentDescResolvedBy.Default.(string)
+	// knowledgecomment.ResolvedByValidator is a validator for the "resolved_by" field. It is called by the builders before save.
+	knowledgecomment.ResolvedByValidator = knowledgecommentDescResolvedBy.Validators[0].(func(string) error)
+	// knowledgecommentDescID is the schema descriptor for id field.
+	knowledgecommentDescID := knowledgecommentMixinFields0[0].Descriptor()
+	// knowledgecomment.DefaultID holds the default value on creation for the id field.
+	knowledgecomment.DefaultID = knowledgecommentDescID.Default.(func() string)
+	// knowledgecomment.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	knowledgecomment.IDValidator = func() func(string) error {
+		validators := knowledgecommentDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),

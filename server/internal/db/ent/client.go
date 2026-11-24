@@ -29,6 +29,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgecomment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -88,6 +89,8 @@ type Client struct {
 	Invite *InviteClient
 	// KnowledgeAttachment is the client for interacting with the KnowledgeAttachment builders.
 	KnowledgeAttachment *KnowledgeAttachmentClient
+	// KnowledgeComment is the client for interacting with the KnowledgeComment builders.
+	KnowledgeComment *KnowledgeCommentClient
 	// KnowledgeDocument is the client for interacting with the KnowledgeDocument builders.
 	KnowledgeDocument *KnowledgeDocumentClient
 	// KnowledgeFolder is the client for interacting with the KnowledgeFolder builders.
@@ -157,6 +160,7 @@ func (c *Client) init() {
 	c.Identity = NewIdentityClient(c.config)
 	c.Invite = NewInviteClient(c.config)
 	c.KnowledgeAttachment = NewKnowledgeAttachmentClient(c.config)
+	c.KnowledgeComment = NewKnowledgeCommentClient(c.config)
 	c.KnowledgeDocument = NewKnowledgeDocumentClient(c.config)
 	c.KnowledgeFolder = NewKnowledgeFolderClient(c.config)
 	c.KnowledgeProposal = NewKnowledgeProposalClient(c.config)
@@ -285,6 +289,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Identity:             NewIdentityClient(cfg),
 		Invite:               NewInviteClient(cfg),
 		KnowledgeAttachment:  NewKnowledgeAttachmentClient(cfg),
+		KnowledgeComment:     NewKnowledgeCommentClient(cfg),
 		KnowledgeDocument:    NewKnowledgeDocumentClient(cfg),
 		KnowledgeFolder:      NewKnowledgeFolderClient(cfg),
 		KnowledgeProposal:    NewKnowledgeProposalClient(cfg),
@@ -340,6 +345,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Identity:             NewIdentityClient(cfg),
 		Invite:               NewInviteClient(cfg),
 		KnowledgeAttachment:  NewKnowledgeAttachmentClient(cfg),
+		KnowledgeComment:     NewKnowledgeCommentClient(cfg),
 		KnowledgeDocument:    NewKnowledgeDocumentClient(cfg),
 		KnowledgeFolder:      NewKnowledgeFolderClient(cfg),
 		KnowledgeProposal:    NewKnowledgeProposalClient(cfg),
@@ -394,11 +400,12 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion, c.BudgetEvent,
 		c.BudgetGate, c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation,
 		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.KnowledgeAttachment,
-		c.KnowledgeDocument, c.KnowledgeFolder, c.KnowledgeProposal, c.KnowledgeSpace,
-		c.KnowledgeSpaceMember, c.KnowledgeVersion, c.Membership, c.ModelRate,
-		c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow, c.RelayHost,
-		c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
-		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
+		c.KnowledgeComment, c.KnowledgeDocument, c.KnowledgeFolder,
+		c.KnowledgeProposal, c.KnowledgeSpace, c.KnowledgeSpaceMember,
+		c.KnowledgeVersion, c.Membership, c.ModelRate, c.Password, c.PluginGrant,
+		c.PluginPackage, c.RateWindow, c.RelayHost, c.RelayPairing,
+		c.RelayPairingOffer, c.ResourceSubmission, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -411,11 +418,12 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion, c.BudgetEvent,
 		c.BudgetGate, c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation,
 		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.KnowledgeAttachment,
-		c.KnowledgeDocument, c.KnowledgeFolder, c.KnowledgeProposal, c.KnowledgeSpace,
-		c.KnowledgeSpaceMember, c.KnowledgeVersion, c.Membership, c.ModelRate,
-		c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow, c.RelayHost,
-		c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
-		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
+		c.KnowledgeComment, c.KnowledgeDocument, c.KnowledgeFolder,
+		c.KnowledgeProposal, c.KnowledgeSpace, c.KnowledgeSpaceMember,
+		c.KnowledgeVersion, c.Membership, c.ModelRate, c.Password, c.PluginGrant,
+		c.PluginPackage, c.RateWindow, c.RelayHost, c.RelayPairing,
+		c.RelayPairingOffer, c.ResourceSubmission, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -452,6 +460,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Invite.mutate(ctx, m)
 	case *KnowledgeAttachmentMutation:
 		return c.KnowledgeAttachment.mutate(ctx, m)
+	case *KnowledgeCommentMutation:
+		return c.KnowledgeComment.mutate(ctx, m)
 	case *KnowledgeDocumentMutation:
 		return c.KnowledgeDocument.mutate(ctx, m)
 	case *KnowledgeFolderMutation:
@@ -2392,6 +2402,139 @@ func (c *KnowledgeAttachmentClient) mutate(ctx context.Context, m *KnowledgeAtta
 		return (&KnowledgeAttachmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown KnowledgeAttachment mutation op: %q", m.Op())
+	}
+}
+
+// KnowledgeCommentClient is a client for the KnowledgeComment schema.
+type KnowledgeCommentClient struct {
+	config
+}
+
+// NewKnowledgeCommentClient returns a client for the KnowledgeComment from the given config.
+func NewKnowledgeCommentClient(c config) *KnowledgeCommentClient {
+	return &KnowledgeCommentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `knowledgecomment.Hooks(f(g(h())))`.
+func (c *KnowledgeCommentClient) Use(hooks ...Hook) {
+	c.hooks.KnowledgeComment = append(c.hooks.KnowledgeComment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `knowledgecomment.Intercept(f(g(h())))`.
+func (c *KnowledgeCommentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.KnowledgeComment = append(c.inters.KnowledgeComment, interceptors...)
+}
+
+// Create returns a builder for creating a KnowledgeComment entity.
+func (c *KnowledgeCommentClient) Create() *KnowledgeCommentCreate {
+	mutation := newKnowledgeCommentMutation(c.config, OpCreate)
+	return &KnowledgeCommentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KnowledgeComment entities.
+func (c *KnowledgeCommentClient) CreateBulk(builders ...*KnowledgeCommentCreate) *KnowledgeCommentCreateBulk {
+	return &KnowledgeCommentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *KnowledgeCommentClient) MapCreateBulk(slice any, setFunc func(*KnowledgeCommentCreate, int)) *KnowledgeCommentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &KnowledgeCommentCreateBulk{err: fmt.Errorf("calling to KnowledgeCommentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*KnowledgeCommentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &KnowledgeCommentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KnowledgeComment.
+func (c *KnowledgeCommentClient) Update() *KnowledgeCommentUpdate {
+	mutation := newKnowledgeCommentMutation(c.config, OpUpdate)
+	return &KnowledgeCommentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KnowledgeCommentClient) UpdateOne(_m *KnowledgeComment) *KnowledgeCommentUpdateOne {
+	mutation := newKnowledgeCommentMutation(c.config, OpUpdateOne, withKnowledgeComment(_m))
+	return &KnowledgeCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KnowledgeCommentClient) UpdateOneID(id string) *KnowledgeCommentUpdateOne {
+	mutation := newKnowledgeCommentMutation(c.config, OpUpdateOne, withKnowledgeCommentID(id))
+	return &KnowledgeCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KnowledgeComment.
+func (c *KnowledgeCommentClient) Delete() *KnowledgeCommentDelete {
+	mutation := newKnowledgeCommentMutation(c.config, OpDelete)
+	return &KnowledgeCommentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KnowledgeCommentClient) DeleteOne(_m *KnowledgeComment) *KnowledgeCommentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KnowledgeCommentClient) DeleteOneID(id string) *KnowledgeCommentDeleteOne {
+	builder := c.Delete().Where(knowledgecomment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KnowledgeCommentDeleteOne{builder}
+}
+
+// Query returns a query builder for KnowledgeComment.
+func (c *KnowledgeCommentClient) Query() *KnowledgeCommentQuery {
+	return &KnowledgeCommentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeKnowledgeComment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a KnowledgeComment entity by its id.
+func (c *KnowledgeCommentClient) Get(ctx context.Context, id string) (*KnowledgeComment, error) {
+	return c.Query().Where(knowledgecomment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KnowledgeCommentClient) GetX(ctx context.Context, id string) *KnowledgeComment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KnowledgeCommentClient) Hooks() []Hook {
+	return c.hooks.KnowledgeComment
+}
+
+// Interceptors returns the client interceptors.
+func (c *KnowledgeCommentClient) Interceptors() []Interceptor {
+	return c.inters.KnowledgeComment
+}
+
+func (c *KnowledgeCommentClient) mutate(ctx context.Context, m *KnowledgeCommentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&KnowledgeCommentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&KnowledgeCommentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&KnowledgeCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&KnowledgeCommentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown KnowledgeComment mutation op: %q", m.Op())
 	}
 }
 
@@ -5550,21 +5693,22 @@ type (
 	hooks struct {
 		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, BudgetEvent,
 		BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation, BudgetWindow,
-		ConfigRevision, Identity, Invite, KnowledgeAttachment, KnowledgeDocument,
-		KnowledgeFolder, KnowledgeProposal, KnowledgeSpace, KnowledgeSpaceMember,
-		KnowledgeVersion, Membership, ModelRate, Password, PluginGrant, PluginPackage,
-		RateWindow, RelayHost, RelayPairing, RelayPairingOffer, ResourceSubmission,
-		Team, TeamConfig, TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
+		ConfigRevision, Identity, Invite, KnowledgeAttachment, KnowledgeComment,
+		KnowledgeDocument, KnowledgeFolder, KnowledgeProposal, KnowledgeSpace,
+		KnowledgeSpaceMember, KnowledgeVersion, Membership, ModelRate, Password,
+		PluginGrant, PluginPackage, RateWindow, RelayHost, RelayPairing,
+		RelayPairingOffer, ResourceSubmission, Team, TeamConfig, TeamProvider,
+		UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
 		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, BudgetEvent,
 		BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation, BudgetWindow,
-		ConfigRevision, Identity, Invite, KnowledgeAttachment, KnowledgeDocument,
-		KnowledgeFolder, KnowledgeProposal, KnowledgeSpace, KnowledgeSpaceMember,
-		KnowledgeVersion, Membership, ModelRate, Password, PluginGrant, PluginPackage,
-		RateWindow, RelayHost, RelayPairing, RelayPairingOffer, ResourceSubmission,
-		Team, TeamConfig, TeamProvider, UsageRequest, User,
-		VerificationCode []ent.Interceptor
+		ConfigRevision, Identity, Invite, KnowledgeAttachment, KnowledgeComment,
+		KnowledgeDocument, KnowledgeFolder, KnowledgeProposal, KnowledgeSpace,
+		KnowledgeSpaceMember, KnowledgeVersion, Membership, ModelRate, Password,
+		PluginGrant, PluginPackage, RateWindow, RelayHost, RelayPairing,
+		RelayPairingOffer, ResourceSubmission, Team, TeamConfig, TeamProvider,
+		UsageRequest, User, VerificationCode []ent.Interceptor
 	}
 )
 

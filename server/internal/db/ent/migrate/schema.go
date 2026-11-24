@@ -427,6 +427,39 @@ var (
 			},
 		},
 	}
+	// KnowledgeCommentsColumns holds the columns for the "knowledge_comments" table.
+	KnowledgeCommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "document_id", Type: field.TypeString, Size: 32},
+		{Name: "parent_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "version", Type: field.TypeInt},
+		{Name: "quote", Type: field.TypeString, Size: 2000, Default: ""},
+		{Name: "anchor", Type: field.TypeString, Size: 800, Default: ""},
+		{Name: "body", Type: field.TypeString, Size: 2147483647},
+		{Name: "resolved_by", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "resolved_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// KnowledgeCommentsTable holds the schema information for the "knowledge_comments" table.
+	KnowledgeCommentsTable = &schema.Table{
+		Name:       "knowledge_comments",
+		Columns:    KnowledgeCommentsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeCommentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgecomment_document_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeCommentsColumns[3], KnowledgeCommentsColumns[1]},
+			},
+			{
+				Name:    "knowledgecomment_author_id",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeCommentsColumns[5]},
+			},
+		},
+	}
 	// KnowledgeDocumentsColumns holds the columns for the "knowledge_documents" table.
 	KnowledgeDocumentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -1066,6 +1099,7 @@ var (
 		IdentitiesTable,
 		InvitesTable,
 		KnowledgeAttachmentsTable,
+		KnowledgeCommentsTable,
 		KnowledgeDocumentsTable,
 		KnowledgeFoldersTable,
 		KnowledgeProposalsTable,
@@ -1147,6 +1181,10 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	KnowledgeAttachmentsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeCommentsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

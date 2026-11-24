@@ -26,6 +26,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgecomment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -122,6 +123,7 @@ func checkColumn(t, c string) error {
 			identity.Table:             identity.ValidColumn,
 			invite.Table:               invite.ValidColumn,
 			knowledgeattachment.Table:  knowledgeattachment.ValidColumn,
+			knowledgecomment.Table:     knowledgecomment.ValidColumn,
 			knowledgedocument.Table:    knowledgedocument.ValidColumn,
 			knowledgefolder.Table:      knowledgefolder.ValidColumn,
 			knowledgeproposal.Table:    knowledgeproposal.ValidColumn,

@@ -365,6 +365,9 @@ func (s *Service) Delete(ctx context.Context, c Caller, teamID, documentID strin
 	if _, err := tx.KnowledgeProposal.Delete().Where(knowledgeproposal.DocumentID(d.ID)).Exec(ctx); err != nil {
 		return err
 	}
+	if err := deleteComments(ctx, tx.Client(), []string{d.ID}); err != nil {
+		return err
+	}
 	digests, err := deleteAttachments(ctx, tx.Client(), []string{d.ID})
 	if err != nil {
 		return err
