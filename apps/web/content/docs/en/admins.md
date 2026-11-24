@@ -151,6 +151,7 @@ Under **Knowledge**, choose **New space** for each body of knowledge: a
 glossary, the product's rules, the runbooks. A new space is read by the whole
 team. Its menu adds folders and documents, and **Space settings** renames it,
 narrows reading to chosen members, names the members who edit it besides you,
-or deletes it with everything in it. Every member's agent reads the spaces its
+chooses the folder whose documents are its templates, or deletes it with
+everything in it. Every member's agent reads the spaces its
 member may read and proposes changes; a space's editors decide them under
 **Proposals**.

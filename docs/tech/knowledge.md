@@ -1,6 +1,6 @@
 # Knowledge
 
-> **Status:** Current — the first version is built; later steps are plan · **Updated:** 2026-11-24
+> **Status:** Current — the first version and the richer format are built; later steps are plan · **Updated:** 2026-11-24
 
 Where a team keeps what its business knows, as documents people and agents
 maintain together: Markdown in a tree of folders, owned by the team and
@@ -83,20 +83,20 @@ feature that cannot be written that way is a non-goal, not a later step. The
 extended syntax follows Obsidian's conventions rather than one of our own,
 since people and agents already know them.
 
-| Feature | In the file | What a person sees | When |
+| Feature | In the file | What a person sees | Status |
 | --- | --- | --- | --- |
-| Headings, lists, tables, code, quotes, task lists | GitHub-flavoured Markdown | Formatted text | First version |
-| Images and attachments | `![[diagram.png]]` embeds an image, `[[spec.pdf]]` links a file, by the attachment's name (see "Architecture") | The image; a file card | First version |
-| Links between documents | `[[Document]]` or `[[Document#Heading]]` | A link | First version |
-| Callouts and folding | `> [!warning] Title`, `> [!note]- Title` | A coloured box; a collapsible one | Richer format |
-| Diagrams | a `mermaid` code block | The diagram; an agent reads and edits its source | Richer format |
-| Properties | YAML front matter: `owner`, `status`, `tags`, `summary` | A row of properties under the title | Richer format |
-| Templates | ordinary documents in a templates folder | A choice when creating a document | Richer format |
-| Backlinks | computed from links | The documents linking here, at the foot | Richer format |
-| Mentions | `@[Name](member-id)` | A mention, listed in the console | Working together |
-| A folder as a table | the front matter of its documents | A table, filtered and sorted by property | Working together |
-| An embedded artifact | `![[artifact:ID]]` | The artifact's card | Working together |
-| Comments | not in the file: kept beside the version, anchored to a range | Comments in the margin | Working together |
+| Headings, lists, tables, code, quotes, task lists | GitHub-flavoured Markdown | Formatted text | Built |
+| Images and attachments | `![[diagram.png]]` embeds an image, `[[spec.pdf]]` links a file, by the attachment's name (see "Architecture") | The image; a file card | Built |
+| Links between documents | `[[Document]]` or `[[Document#Heading]]` | A link | Built |
+| Callouts and folding | `> [!warning] Title`; `-` after the kind folds it until opened, `+` lets it fold | A box coloured by its kind; a collapsible one | Built |
+| Diagrams | a `mermaid` code block | The diagram; an agent reads and edits its source | Built |
+| Properties | YAML front matter: `owner` (a member, `@[Name](member-id)`), `status`, `tags`, `summary` | A row of properties under the title | Built |
+| Templates | ordinary documents in the folder a space names for them; `{{title}}` and `{{date}}` are filled in | A choice when creating a document | Built |
+| Backlinks | computed from links | The documents linking here, at the foot | Built |
+| Mentions | `@[Name](member-id)` | A mention, listed in the console | Plan: working together |
+| A folder as a table | the front matter of its documents | A table, filtered and sorted by property | Plan: working together |
+| An embedded artifact | `![[artifact:ID]]` | The artifact's card | Plan: working together |
+| Comments | not in the file: kept beside the version, anchored to a range | Comments in the margin | Plan: working together |
 
 **Headings are stable anchors**, so a citation names the document, its
 version and a heading, and still opens there after an edit elsewhere.
@@ -108,7 +108,9 @@ before the editor opens a document and put back on save, and `[[links]]`
 are a node of their own. The first save of a document written elsewhere
 normalises its syntax (table padding, list markers, escaping, hard breaks),
 recorded as a version of its own with the note "formatting"; every later
-save changes only what the person changed. Saving is a new version. There is no real-time co-editing: an open editor shows who
+save changes only what the person changed. Typing `/` on an empty line
+lists the blocks to insert; properties are a form above the text that
+rewrites only the front matter keys that changed. Saving is a new version. There is no real-time co-editing: an open editor shows who
 else has the document open, and a save on a stale version is refused and
 shown as a difference to reapply, as an artifact's `artifact_stale` is.
 
@@ -146,7 +148,7 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
 
   | Table | Holds |
   | --- | --- |
-  | `knowledge_spaces` | `team_id`, `name` (unique in the team), `reading` (`team`, `members`), `created_by` |
+  | `knowledge_spaces` | `team_id`, `name` (unique in the team), `reading` (`team`, `members`), `created_by`, `templates_folder_id` (one of its folders, or empty) |
   | `knowledge_space_members` | `space_id`, `user_id`, `role` (`reader`, `editor`); readers kept only while `reading` is `members`, editors always |
   | `knowledge_folders` | `space_id`, `parent_id` (empty at the space's root), `name`, unique among its siblings |
   | `knowledge_documents` | `team_id`, `space_id`, `folder_id`, `title` (unique in its folder), `current_version` (moved by a conditional update), `updated_at` |
@@ -162,11 +164,11 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   | Route | Who | What |
   | --- | --- | --- |
   | `GET /api/teams/{teamId}/knowledge` | member, or their plugin | The spaces the caller reads, with their folders and documents |
-  | `POST …/knowledge/spaces`; `PATCH`, `DELETE …/spaces/{id}` | the team's admin creates; an editor renames and deletes | |
+  | `POST …/knowledge/spaces`; `PATCH`, `DELETE …/spaces/{id}` | the team's admin creates; an editor renames, names the templates folder, and deletes | Deleting the templates folder clears it |
   | `GET`, `PUT …/knowledge/spaces/{id}/access` | editor | Reading, readers and editors, replaced at once |
   | `POST …/knowledge/folders`; `PATCH`, `DELETE …/folders/{id}` | editor | A folder is deleted only empty |
   | `POST …/knowledge/documents` | editor | A new document and its version 1 |
-  | `GET …/knowledge/documents/{id}?version=` | reader, or their plugin | The document, its versions, and the text of one (the current one by default) |
+  | `GET …/knowledge/documents/{id}?version=` | reader, or their plugin | The document, its versions, the text of one (the current one by default), and its backlinks: the documents the caller reads whose current text links to it, resolved by title as the console resolves a link (`internal/knowledge/links.go`) |
   | `POST …/knowledge/documents/{id}/versions` | editor, never an agent | A new version on `baseVersion`; a stale one is `knowledge_stale` |
   | `PATCH`, `DELETE …/knowledge/documents/{id}` | editor | Rename, move within its space, delete |
   | `POST …/knowledge/documents/{id}/versions/{n}/restore` | editor | A new version copying `n` |
@@ -216,7 +218,13 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   both locales. The editor is one component, `KnowledgeEditor`, over
   Milkdown (`@milkdown/kit` with its commonmark and gfm presets), loaded
   with the knowledge page alone; it reads and writes Markdown and nothing
-  else. Rendering is the console's, never the server's: a document's text is
+  else. Callouts and diagrams are `components/knowledge-blocks.ts`: a
+  callout is a node read from its quote and written back as one, and a
+  `mermaid` block draws through Mermaid (`mermaid`, at its strict security
+  level), loaded the first time a diagram is drawn. The block menu is
+  `components/knowledge-slash.tsx`; properties are read and written with
+  `yaml` (`lib/knowledge-properties.ts`), which keeps every other key and
+  comment as written. Rendering is the console's, never the server's: a document's text is
   never HTML, so it needs no sandbox origin.
 - **Attachments** belong to a document, which names them by name in the
   Obsidian form: `![[diagram.png]]` embeds an image, `[[spec.pdf]]` links a
@@ -317,8 +325,8 @@ tables. Cheap: the limits, the console's screens, the editor library.
    proposals from members and agents, and the review screen with the
    difference; attachments, named by name, kept beside the document in the
    copy, and attached by the editor, a paste, a drop or the agent's tool.
-3. **Richer format**: callouts and folding, diagrams, properties, templates
-   and backlinks.
+3. **Richer format (built 2026-11-24)**: callouts and folding, diagrams,
+   properties, templates and backlinks, and the slash menu to insert blocks.
 4. **Working together**: mentions, comments, a folder as a table, embedded
    artifacts, and full-text search for the console and the phone app.
 
@@ -350,8 +358,10 @@ edited in place.
   and every agent's change are proposals, and neither changes a document
   until an editor accepts it; an accepted proposal on a stale version is
   refused; a member who left the team reads and proposes nothing.
-- **The format**: every first-version feature survives a round trip through
-  the editor unchanged (a fixture of each), and a rendered document and its
-  raw file say the same thing to a reader who reads only the file.
+- **The format**: every built feature survives a round trip through the
+  editor unchanged (a fixture of each, callouts and diagrams included,
+  `components/knowledge-editor.test.tsx`), properties change only their own
+  keys, and a rendered document and its raw file say the same thing to a
+  reader who reads only the file.
 - **End to end** (`server/e2e`): a real DSH session reads a synced document,
   cites it, and proposes a change that a second account accepts.

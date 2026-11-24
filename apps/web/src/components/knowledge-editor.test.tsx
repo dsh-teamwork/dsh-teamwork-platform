@@ -159,9 +159,10 @@ describe('the knowledge editor', () => {
   });
 
   it('narrows the block menu by either word, and offers files only with somewhere to put them', () => {
-    const name = (id: string) => (id === 'callout' ? '标注' : id);
+    // A name in the reader's language, here Chinese for callout.
+    const name = (id: string) => (id === 'callout' ? '\u6807\u6ce8' : id);
     expect(slashItems('mer', name, true)).toEqual(['diagram']);
-    expect(slashItems('标注', name, true)).toEqual(['callout']);
+    expect(slashItems('\u6807\u6ce8', name, true)).toEqual(['callout']);
     expect(slashItems('', name, false)).not.toContain('attach');
     expect(slashItems('image', name, true)).toEqual(['attach']);
   });

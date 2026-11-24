@@ -211,6 +211,21 @@ file, attach the new one under another name and point the text at it. A
 reader may attach files too; the text shows them once an editor accepts the
 proposal that names them.
 
+Type `/` on an empty line to insert a block: headings, lists and task lists,
+a quote, a **callout**, a code block, a **diagram**, a table, a divider, or an
+image or file. A callout is a box coloured by its kind (note, tip, warning,
+danger and others); while editing, its two choices set its kind and whether
+it folds, and a reader opens a folded one with its arrow. In the file it is
+the quote `> [!warning] Title`. A diagram is a `mermaid` code block: its source
+above, the drawing under it while you edit, and the drawing alone when read.
+
+**Properties** sit above the text while editing: the document's owner, a
+status, tags and a one-line summary, shown under the title when read and kept
+as the file's front matter, where agents read them too. A space with a
+templates folder offers its documents when you create a new one; `{{title}}`
+and `{{date}}` in a template become the new title and today's date. At the
+foot of a document, **Linked from** lists the documents that link to it.
+
 Your agent, in DSH on your computer or a cloud DSH, reads a synced, read-only
 copy of every space you may read, finds what it needs without being pointed
 at it, and cites the document and heading its answer rests on. An agent never

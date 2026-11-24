@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-24 — Knowledge's richer format: callouts, diagrams, properties, templates, backlinks
+
+- **What:** A knowledge document's text may hold Obsidian callouts (`> [!warning] Title`, `-` or `+` after the kind to fold it) and `mermaid` diagrams, which the console's editor shows as a coloured box and a drawn diagram and writes back exactly as typed; typing `/` on an empty line lists the blocks to insert. Its front matter's `owner` (a member, `@[Name](member-id)`), `status`, `tags` and `summary` are a row under the title and a form while editing that rewrites only the keys that changed. A space may name one of its folders as its templates (`templatesFolderId` on `PATCH /api/teams/{teamId}/knowledge/spaces/{id}` and in the tree), and a new document may start from one, `{{title}}` and `{{date}}` filled in. `KnowledgeDocument` carries `backlinks`, the documents the caller reads whose current text links to it. The console depends on `mermaid` 12.3.0, loaded only when a diagram is drawn, and `yaml` 2.8.2. The plugin's knowledge guide tells agents what these mean.
+- **Why:** Step 3 of `docs/tech/knowledge.md`: the formatting teams reach for in Lark and Notion that still reads as plain text to an agent.
+- **Breaking:** None.
+- **Upgrade:** The binary applies `20261124055431_knowledge_templates` (postgres `…055432`, mysql `…055433`), which adds `knowledge_spaces.templates_folder_id`.
+- **Refs:** `docs/tech/knowledge.md`, `apps/web/src/components/knowledge-blocks.ts`, `server/internal/knowledge/links.go`.
+
 ## 2026-11-24 — Knowledge attachments
 
 - **What:** A knowledge document has attachments, named in its text as `![[diagram.png]]` (an embed) or `[[spec.pdf]]` (a link): images, PDF, text, CSV, JSON, Office and zip files up to 20 MiB, uploaded by any reader or their agent (`POST /api/teams/{teamId}/knowledge/documents/{id}/attachments`) and served under a sandbox (`GET …/attachments/{name}`). A name keeps its bytes for the document's life. The bytes are team objects in the object store under the `knowledge` kind, held once by digest, at most 2 GiB a team, and deleted with the last document, space or team naming them. `KnowledgeDocument` and the sync manifest list them. The console attaches by a button, a paste or a drop and renders embeds and file links; the plugin 0.22.0 keeps them in `{title}.files/` beside each document and uploads the files a proposal names.
