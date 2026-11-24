@@ -4416,6 +4416,9 @@ export interface components {
             author: components["schemas"]["KnowledgePerson"];
             /** @enum {string} */
             source: "console" | "agent";
+            /** @description The computer an agent's accepted proposal came from; empty otherwise */
+            computer: string;
+            sessionId: string;
             note: string;
             /** Format: date-time */
             createdAt: string;

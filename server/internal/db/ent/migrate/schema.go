@@ -540,6 +540,8 @@ var (
 		{Name: "number", Type: field.TypeInt},
 		{Name: "author_id", Type: field.TypeString, Size: 32},
 		{Name: "source", Type: field.TypeEnum, Enums: []string{"console", "agent"}},
+		{Name: "computer", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "session_id", Type: field.TypeString, Size: 128, Default: ""},
 		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
 		{Name: "text", Type: field.TypeString, Size: 2147483647},
 	}

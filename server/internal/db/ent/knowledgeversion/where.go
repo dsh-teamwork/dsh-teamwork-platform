@@ -84,6 +84,16 @@ func AuthorID(v string) predicate.KnowledgeVersion {
 	return predicate.KnowledgeVersion(sql.FieldEQ(FieldAuthorID, v))
 }
 
+// Computer applies equality check predicate on the "computer" field. It's identical to ComputerEQ.
+func Computer(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldEQ(FieldComputer, v))
+}
+
+// SessionID applies equality check predicate on the "session_id" field. It's identical to SessionIDEQ.
+func SessionID(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldEQ(FieldSessionID, v))
+}
+
 // Note applies equality check predicate on the "note" field. It's identical to NoteEQ.
 func Note(v string) predicate.KnowledgeVersion {
 	return predicate.KnowledgeVersion(sql.FieldEQ(FieldNote, v))
@@ -322,6 +332,136 @@ func SourceIn(vs ...Source) predicate.KnowledgeVersion {
 // SourceNotIn applies the NotIn predicate on the "source" field.
 func SourceNotIn(vs ...Source) predicate.KnowledgeVersion {
 	return predicate.KnowledgeVersion(sql.FieldNotIn(FieldSource, vs...))
+}
+
+// ComputerEQ applies the EQ predicate on the "computer" field.
+func ComputerEQ(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldEQ(FieldComputer, v))
+}
+
+// ComputerNEQ applies the NEQ predicate on the "computer" field.
+func ComputerNEQ(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldNEQ(FieldComputer, v))
+}
+
+// ComputerIn applies the In predicate on the "computer" field.
+func ComputerIn(vs ...string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldIn(FieldComputer, vs...))
+}
+
+// ComputerNotIn applies the NotIn predicate on the "computer" field.
+func ComputerNotIn(vs ...string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldNotIn(FieldComputer, vs...))
+}
+
+// ComputerGT applies the GT predicate on the "computer" field.
+func ComputerGT(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldGT(FieldComputer, v))
+}
+
+// ComputerGTE applies the GTE predicate on the "computer" field.
+func ComputerGTE(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldGTE(FieldComputer, v))
+}
+
+// ComputerLT applies the LT predicate on the "computer" field.
+func ComputerLT(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldLT(FieldComputer, v))
+}
+
+// ComputerLTE applies the LTE predicate on the "computer" field.
+func ComputerLTE(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldLTE(FieldComputer, v))
+}
+
+// ComputerContains applies the Contains predicate on the "computer" field.
+func ComputerContains(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldContains(FieldComputer, v))
+}
+
+// ComputerHasPrefix applies the HasPrefix predicate on the "computer" field.
+func ComputerHasPrefix(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldHasPrefix(FieldComputer, v))
+}
+
+// ComputerHasSuffix applies the HasSuffix predicate on the "computer" field.
+func ComputerHasSuffix(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldHasSuffix(FieldComputer, v))
+}
+
+// ComputerEqualFold applies the EqualFold predicate on the "computer" field.
+func ComputerEqualFold(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldEqualFold(FieldComputer, v))
+}
+
+// ComputerContainsFold applies the ContainsFold predicate on the "computer" field.
+func ComputerContainsFold(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldContainsFold(FieldComputer, v))
+}
+
+// SessionIDEQ applies the EQ predicate on the "session_id" field.
+func SessionIDEQ(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldEQ(FieldSessionID, v))
+}
+
+// SessionIDNEQ applies the NEQ predicate on the "session_id" field.
+func SessionIDNEQ(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldNEQ(FieldSessionID, v))
+}
+
+// SessionIDIn applies the In predicate on the "session_id" field.
+func SessionIDIn(vs ...string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldIn(FieldSessionID, vs...))
+}
+
+// SessionIDNotIn applies the NotIn predicate on the "session_id" field.
+func SessionIDNotIn(vs ...string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldNotIn(FieldSessionID, vs...))
+}
+
+// SessionIDGT applies the GT predicate on the "session_id" field.
+func SessionIDGT(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldGT(FieldSessionID, v))
+}
+
+// SessionIDGTE applies the GTE predicate on the "session_id" field.
+func SessionIDGTE(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldGTE(FieldSessionID, v))
+}
+
+// SessionIDLT applies the LT predicate on the "session_id" field.
+func SessionIDLT(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldLT(FieldSessionID, v))
+}
+
+// SessionIDLTE applies the LTE predicate on the "session_id" field.
+func SessionIDLTE(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldLTE(FieldSessionID, v))
+}
+
+// SessionIDContains applies the Contains predicate on the "session_id" field.
+func SessionIDContains(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldContains(FieldSessionID, v))
+}
+
+// SessionIDHasPrefix applies the HasPrefix predicate on the "session_id" field.
+func SessionIDHasPrefix(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldHasPrefix(FieldSessionID, v))
+}
+
+// SessionIDHasSuffix applies the HasSuffix predicate on the "session_id" field.
+func SessionIDHasSuffix(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldHasSuffix(FieldSessionID, v))
+}
+
+// SessionIDEqualFold applies the EqualFold predicate on the "session_id" field.
+func SessionIDEqualFold(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldEqualFold(FieldSessionID, v))
+}
+
+// SessionIDContainsFold applies the ContainsFold predicate on the "session_id" field.
+func SessionIDContainsFold(v string) predicate.KnowledgeVersion {
+	return predicate.KnowledgeVersion(sql.FieldContainsFold(FieldSessionID, v))
 }
 
 // NoteEQ applies the EQ predicate on the "note" field.

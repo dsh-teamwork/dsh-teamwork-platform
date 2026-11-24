@@ -27,6 +27,10 @@ type KnowledgeVersion struct {
 	AuthorID string `json:"author_id,omitempty"`
 	// Source holds the value of the "source" field.
 	Source knowledgeversion.Source `json:"source,omitempty"`
+	// Computer holds the value of the "computer" field.
+	Computer string `json:"computer,omitempty"`
+	// SessionID holds the value of the "session_id" field.
+	SessionID string `json:"session_id,omitempty"`
 	// Note holds the value of the "note" field.
 	Note string `json:"note,omitempty"`
 	// Text holds the value of the "text" field.
@@ -41,7 +45,7 @@ func (*KnowledgeVersion) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case knowledgeversion.FieldNumber:
 			values[i] = new(sql.NullInt64)
-		case knowledgeversion.FieldID, knowledgeversion.FieldDocumentID, knowledgeversion.FieldAuthorID, knowledgeversion.FieldSource, knowledgeversion.FieldNote, knowledgeversion.FieldText:
+		case knowledgeversion.FieldID, knowledgeversion.FieldDocumentID, knowledgeversion.FieldAuthorID, knowledgeversion.FieldSource, knowledgeversion.FieldComputer, knowledgeversion.FieldSessionID, knowledgeversion.FieldNote, knowledgeversion.FieldText:
 			values[i] = new(sql.NullString)
 		case knowledgeversion.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -95,6 +99,18 @@ func (_m *KnowledgeVersion) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field source", values[i])
 			} else if value.Valid {
 				_m.Source = knowledgeversion.Source(value.String)
+			}
+		case knowledgeversion.FieldComputer:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field computer", values[i])
+			} else if value.Valid {
+				_m.Computer = value.String
+			}
+		case knowledgeversion.FieldSessionID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field session_id", values[i])
+			} else if value.Valid {
+				_m.SessionID = value.String
 			}
 		case knowledgeversion.FieldNote:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -158,6 +174,12 @@ func (_m *KnowledgeVersion) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("source=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Source))
+	builder.WriteString(", ")
+	builder.WriteString("computer=")
+	builder.WriteString(_m.Computer)
+	builder.WriteString(", ")
+	builder.WriteString("session_id=")
+	builder.WriteString(_m.SessionID)
 	builder.WriteString(", ")
 	builder.WriteString("note=")
 	builder.WriteString(_m.Note)

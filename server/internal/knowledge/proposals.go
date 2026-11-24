@@ -224,7 +224,7 @@ func (s *Service) Accept(ctx context.Context, c Caller, teamID, proposalID strin
 	if p.Source == knowledgeproposal.SourceAgent {
 		source = knowledgeversion.SourceAgent
 	}
-	err = s.write(ctx, d.ID, p.BaseVersion, p.AuthorID, source, p.Note, p.Text, func(tx *ent.Tx) error {
+	err = s.write(ctx, d.ID, p.BaseVersion, p.AuthorID, source, origin{p.Computer, p.SessionID}, p.Note, p.Text, func(tx *ent.Tx) error {
 		n, err := tx.KnowledgeProposal.Update().Where(knowledgeproposal.ID(p.ID), knowledgeproposal.StateEQ(knowledgeproposal.StatePending)).
 			SetState(knowledgeproposal.StateAccepted).SetDecidedBy(c.UserID).SetDecidedAt(s.now()).SetVersion(p.BaseVersion + 1).Save(ctx)
 		if err == nil && n == 0 {

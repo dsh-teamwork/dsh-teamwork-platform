@@ -1,4 +1,4 @@
-h1:MQWk0MuCcPuViwN4g1pPJGKcqtaAVFS3jJnooRXPNQw=
+h1:O8lf9ky10Eg6dOa2mTCSkdF9o2hAWa4xMcK5KnqH8gQ=
 20261114012021_init.sql h1:7aMctHhxb057QTwju3j9LpI2iv3Vez/BuMoxTHMB4EI=
 20261115041613_usage_metering.sql h1:Rkg0jgkA7I1QJQ8SkhysNt6nnLp3YuX+MrNuUF1Kxho=
 20261115044901_budget_reservations.sql h1:D/DAsynhhFDuP6cYY7OuArhmjeGvz6mCxw98WJPlT64=
@@ -22,4 +22,4 @@ h1:MQWk0MuCcPuViwN4g1pPJGKcqtaAVFS3jJnooRXPNQw=
 20261120070113_relay_host_plugin_version.sql h1:5EHAYBCD5KaGJT1kTTGugfV2bP6LnJ6eGACgbQVtVFI=
 20261123000000_remove_team_dsh.sql h1:zhJsUQVhzG/2aqDB7ydsTQwSdbFoUwnw0yuxCdFmcOI=
 20261124015141_artifacts_and_packages.sql h1:2KWQ3piUtdD2QFYidDt85vB88psYop/uMGgKAbIkobg=
-20261124034727_knowledge.sql h1:LInBLJzgxdxEzmSaNH8K75I33RxmvpxTQEudOfyJ9eI=
+20261124041758_knowledge.sql h1:Dvc8YNpiJVdFHtGlvr0rXuUAWOIif1J5lFd2Rmp8s9g=

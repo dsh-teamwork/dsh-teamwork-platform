@@ -25,6 +25,6 @@ CREATE UNIQUE INDEX "knowledgespacemember_space_id_user_id" ON "knowledge_space_
 -- Create index "knowledgespacemember_user_id" to table: "knowledge_space_members"
 CREATE INDEX "knowledgespacemember_user_id" ON "knowledge_space_members" ("user_id");
 -- Create "knowledge_versions" table
-CREATE TABLE "knowledge_versions" ("id" character varying NOT NULL, "created_at" timestamptz NOT NULL, "document_id" character varying NOT NULL, "number" bigint NOT NULL, "author_id" character varying NOT NULL, "source" character varying NOT NULL, "note" character varying NOT NULL DEFAULT '', "text" text NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE "knowledge_versions" ("id" character varying NOT NULL, "created_at" timestamptz NOT NULL, "document_id" character varying NOT NULL, "number" bigint NOT NULL, "author_id" character varying NOT NULL, "source" character varying NOT NULL, "computer" character varying NOT NULL DEFAULT '', "session_id" character varying NOT NULL DEFAULT '', "note" character varying NOT NULL DEFAULT '', "text" text NOT NULL, PRIMARY KEY ("id"));
 -- Create index "knowledgeversion_document_id_number" to table: "knowledge_versions"
 CREATE UNIQUE INDEX "knowledgeversion_document_id_number" ON "knowledge_versions" ("document_id", "number");

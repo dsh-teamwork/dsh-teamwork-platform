@@ -14385,6 +14385,8 @@ type KnowledgeVersionMutation struct {
 	addnumber     *int
 	author_id     *string
 	source        *knowledgeversion.Source
+	computer      *string
+	session_id    *string
 	note          *string
 	text          *string
 	clearedFields map[string]struct{}
@@ -14697,6 +14699,78 @@ func (m *KnowledgeVersionMutation) ResetSource() {
 	m.source = nil
 }
 
+// SetComputer sets the "computer" field.
+func (m *KnowledgeVersionMutation) SetComputer(s string) {
+	m.computer = &s
+}
+
+// Computer returns the value of the "computer" field in the mutation.
+func (m *KnowledgeVersionMutation) Computer() (r string, exists bool) {
+	v := m.computer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldComputer returns the old "computer" field's value of the KnowledgeVersion entity.
+// If the KnowledgeVersion object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeVersionMutation) OldComputer(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldComputer is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldComputer requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldComputer: %w", err)
+	}
+	return oldValue.Computer, nil
+}
+
+// ResetComputer resets all changes to the "computer" field.
+func (m *KnowledgeVersionMutation) ResetComputer() {
+	m.computer = nil
+}
+
+// SetSessionID sets the "session_id" field.
+func (m *KnowledgeVersionMutation) SetSessionID(s string) {
+	m.session_id = &s
+}
+
+// SessionID returns the value of the "session_id" field in the mutation.
+func (m *KnowledgeVersionMutation) SessionID() (r string, exists bool) {
+	v := m.session_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSessionID returns the old "session_id" field's value of the KnowledgeVersion entity.
+// If the KnowledgeVersion object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeVersionMutation) OldSessionID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSessionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSessionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSessionID: %w", err)
+	}
+	return oldValue.SessionID, nil
+}
+
+// ResetSessionID resets all changes to the "session_id" field.
+func (m *KnowledgeVersionMutation) ResetSessionID() {
+	m.session_id = nil
+}
+
 // SetNote sets the "note" field.
 func (m *KnowledgeVersionMutation) SetNote(s string) {
 	m.note = &s
@@ -14803,7 +14877,7 @@ func (m *KnowledgeVersionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *KnowledgeVersionMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, knowledgeversion.FieldCreatedAt)
 	}
@@ -14818,6 +14892,12 @@ func (m *KnowledgeVersionMutation) Fields() []string {
 	}
 	if m.source != nil {
 		fields = append(fields, knowledgeversion.FieldSource)
+	}
+	if m.computer != nil {
+		fields = append(fields, knowledgeversion.FieldComputer)
+	}
+	if m.session_id != nil {
+		fields = append(fields, knowledgeversion.FieldSessionID)
 	}
 	if m.note != nil {
 		fields = append(fields, knowledgeversion.FieldNote)
@@ -14843,6 +14923,10 @@ func (m *KnowledgeVersionMutation) Field(name string) (ent.Value, bool) {
 		return m.AuthorID()
 	case knowledgeversion.FieldSource:
 		return m.Source()
+	case knowledgeversion.FieldComputer:
+		return m.Computer()
+	case knowledgeversion.FieldSessionID:
+		return m.SessionID()
 	case knowledgeversion.FieldNote:
 		return m.Note()
 	case knowledgeversion.FieldText:
@@ -14866,6 +14950,10 @@ func (m *KnowledgeVersionMutation) OldField(ctx context.Context, name string) (e
 		return m.OldAuthorID(ctx)
 	case knowledgeversion.FieldSource:
 		return m.OldSource(ctx)
+	case knowledgeversion.FieldComputer:
+		return m.OldComputer(ctx)
+	case knowledgeversion.FieldSessionID:
+		return m.OldSessionID(ctx)
 	case knowledgeversion.FieldNote:
 		return m.OldNote(ctx)
 	case knowledgeversion.FieldText:
@@ -14913,6 +15001,20 @@ func (m *KnowledgeVersionMutation) SetField(name string, value ent.Value) error 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSource(v)
+		return nil
+	case knowledgeversion.FieldComputer:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetComputer(v)
+		return nil
+	case knowledgeversion.FieldSessionID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSessionID(v)
 		return nil
 	case knowledgeversion.FieldNote:
 		v, ok := value.(string)
@@ -15006,6 +15108,12 @@ func (m *KnowledgeVersionMutation) ResetField(name string) error {
 		return nil
 	case knowledgeversion.FieldSource:
 		m.ResetSource()
+		return nil
+	case knowledgeversion.FieldComputer:
+		m.ResetComputer()
+		return nil
+	case knowledgeversion.FieldSessionID:
+		m.ResetSessionID()
 		return nil
 	case knowledgeversion.FieldNote:
 		m.ResetNote()

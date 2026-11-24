@@ -61,6 +61,34 @@ func (_c *KnowledgeVersionCreate) SetSource(v knowledgeversion.Source) *Knowledg
 	return _c
 }
 
+// SetComputer sets the "computer" field.
+func (_c *KnowledgeVersionCreate) SetComputer(v string) *KnowledgeVersionCreate {
+	_c.mutation.SetComputer(v)
+	return _c
+}
+
+// SetNillableComputer sets the "computer" field if the given value is not nil.
+func (_c *KnowledgeVersionCreate) SetNillableComputer(v *string) *KnowledgeVersionCreate {
+	if v != nil {
+		_c.SetComputer(*v)
+	}
+	return _c
+}
+
+// SetSessionID sets the "session_id" field.
+func (_c *KnowledgeVersionCreate) SetSessionID(v string) *KnowledgeVersionCreate {
+	_c.mutation.SetSessionID(v)
+	return _c
+}
+
+// SetNillableSessionID sets the "session_id" field if the given value is not nil.
+func (_c *KnowledgeVersionCreate) SetNillableSessionID(v *string) *KnowledgeVersionCreate {
+	if v != nil {
+		_c.SetSessionID(*v)
+	}
+	return _c
+}
+
 // SetNote sets the "note" field.
 func (_c *KnowledgeVersionCreate) SetNote(v string) *KnowledgeVersionCreate {
 	_c.mutation.SetNote(v)
@@ -134,6 +162,14 @@ func (_c *KnowledgeVersionCreate) defaults() {
 		v := knowledgeversion.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
+	if _, ok := _c.mutation.Computer(); !ok {
+		v := knowledgeversion.DefaultComputer
+		_c.mutation.SetComputer(v)
+	}
+	if _, ok := _c.mutation.SessionID(); !ok {
+		v := knowledgeversion.DefaultSessionID
+		_c.mutation.SetSessionID(v)
+	}
 	if _, ok := _c.mutation.Note(); !ok {
 		v := knowledgeversion.DefaultNote
 		_c.mutation.SetNote(v)
@@ -174,6 +210,22 @@ func (_c *KnowledgeVersionCreate) check() error {
 	if v, ok := _c.mutation.Source(); ok {
 		if err := knowledgeversion.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "KnowledgeVersion.source": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Computer(); !ok {
+		return &ValidationError{Name: "computer", err: errors.New(`ent: missing required field "KnowledgeVersion.computer"`)}
+	}
+	if v, ok := _c.mutation.Computer(); ok {
+		if err := knowledgeversion.ComputerValidator(v); err != nil {
+			return &ValidationError{Name: "computer", err: fmt.Errorf(`ent: validator failed for field "KnowledgeVersion.computer": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.SessionID(); !ok {
+		return &ValidationError{Name: "session_id", err: errors.New(`ent: missing required field "KnowledgeVersion.session_id"`)}
+	}
+	if v, ok := _c.mutation.SessionID(); ok {
+		if err := knowledgeversion.SessionIDValidator(v); err != nil {
+			return &ValidationError{Name: "session_id", err: fmt.Errorf(`ent: validator failed for field "KnowledgeVersion.session_id": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.Note(); !ok {
@@ -247,6 +299,14 @@ func (_c *KnowledgeVersionCreate) createSpec() (*KnowledgeVersion, *sqlgraph.Cre
 	if value, ok := _c.mutation.Source(); ok {
 		_spec.SetField(knowledgeversion.FieldSource, field.TypeEnum, value)
 		_node.Source = value
+	}
+	if value, ok := _c.mutation.Computer(); ok {
+		_spec.SetField(knowledgeversion.FieldComputer, field.TypeString, value)
+		_node.Computer = value
+	}
+	if value, ok := _c.mutation.SessionID(); ok {
+		_spec.SetField(knowledgeversion.FieldSessionID, field.TypeString, value)
+		_node.SessionID = value
 	}
 	if value, ok := _c.mutation.Note(); ok {
 		_spec.SetField(knowledgeversion.FieldNote, field.TypeString, value)
@@ -339,6 +399,12 @@ func (u *KnowledgeVersionUpsertOne) UpdateNewValues() *KnowledgeVersionUpsertOne
 		}
 		if _, exists := u.create.mutation.Source(); exists {
 			s.SetIgnore(knowledgeversion.FieldSource)
+		}
+		if _, exists := u.create.mutation.Computer(); exists {
+			s.SetIgnore(knowledgeversion.FieldComputer)
+		}
+		if _, exists := u.create.mutation.SessionID(); exists {
+			s.SetIgnore(knowledgeversion.FieldSessionID)
 		}
 		if _, exists := u.create.mutation.Note(); exists {
 			s.SetIgnore(knowledgeversion.FieldNote)
@@ -574,6 +640,12 @@ func (u *KnowledgeVersionUpsertBulk) UpdateNewValues() *KnowledgeVersionUpsertBu
 			}
 			if _, exists := b.mutation.Source(); exists {
 				s.SetIgnore(knowledgeversion.FieldSource)
+			}
+			if _, exists := b.mutation.Computer(); exists {
+				s.SetIgnore(knowledgeversion.FieldComputer)
+			}
+			if _, exists := b.mutation.SessionID(); exists {
+				s.SetIgnore(knowledgeversion.FieldSessionID)
 			}
 			if _, exists := b.mutation.Note(); exists {
 				s.SetIgnore(knowledgeversion.FieldNote)

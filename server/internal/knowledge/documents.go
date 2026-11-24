@@ -24,6 +24,8 @@ type VersionView struct {
 	Number    int    `json:"number"`
 	Author    Person `json:"author"`
 	Source    string `json:"source"`
+	Computer  string `json:"computer"`
+	SessionID string `json:"sessionId"`
 	Note      string `json:"note"`
 	CreatedAt string `json:"createdAt"`
 }
@@ -151,7 +153,7 @@ func (s *Service) Get(ctx context.Context, c Caller, teamID, documentID string, 
 	}
 	rows, err := s.DB.KnowledgeVersion.Query().Where(knowledgeversion.DocumentID(d.ID)).
 		Order(ent.Desc(knowledgeversion.FieldNumber)).
-		Select(knowledgeversion.FieldID, knowledgeversion.FieldNumber, knowledgeversion.FieldAuthorID, knowledgeversion.FieldSource, knowledgeversion.FieldNote, knowledgeversion.FieldCreatedAt).
+		Select(knowledgeversion.FieldID, knowledgeversion.FieldNumber, knowledgeversion.FieldAuthorID, knowledgeversion.FieldSource, knowledgeversion.FieldComputer, knowledgeversion.FieldSessionID, knowledgeversion.FieldNote, knowledgeversion.FieldCreatedAt).
 		All(ctx)
 	if err != nil {
 		return Document{}, err
@@ -166,7 +168,7 @@ func (s *Service) Get(ctx context.Context, c Caller, teamID, documentID string, 
 	}
 	out := Document{DocumentSummary: summary(d), SpaceID: d.SpaceID, CanEdit: a.edit && !c.Agent, Version: n, Versions: make([]VersionView, 0, len(rows))}
 	for _, r := range rows {
-		out.Versions = append(out.Versions, VersionView{Number: r.Number, Author: people[r.AuthorID], Source: string(r.Source), Note: r.Note, CreatedAt: team.Time(r.CreatedAt)})
+		out.Versions = append(out.Versions, VersionView{Number: r.Number, Author: people[r.AuthorID], Source: string(r.Source), Computer: r.Computer, SessionID: r.SessionID, Note: r.Note, CreatedAt: team.Time(r.CreatedAt)})
 	}
 	v, err := s.DB.KnowledgeVersion.Query().Where(knowledgeversion.DocumentID(d.ID), knowledgeversion.Number(n)).Only(ctx)
 	if ent.IsNotFound(err) {
@@ -222,7 +224,7 @@ func (s *Service) AddVersion(ctx context.Context, c Caller, teamID, documentID s
 	if in.BaseVersion != d.CurrentVersion {
 		return Document{}, stale()
 	}
-	if err := s.write(ctx, d.ID, in.BaseVersion, c.UserID, knowledgeversion.SourceConsole, n, in.Text, nil); err != nil {
+	if err := s.write(ctx, d.ID, in.BaseVersion, c.UserID, knowledgeversion.SourceConsole, origin{}, n, in.Text, nil); err != nil {
 		return Document{}, err
 	}
 	return s.Get(ctx, c, teamID, d.ID, 0)
@@ -231,7 +233,10 @@ func (s *Service) AddVersion(ctx context.Context, c Caller, teamID, documentID s
 // write adds version base+1 by a conditional update of the document's
 // current version, in one transaction with after (an acceptance's own
 // update), so two writes on one base make exactly one version.
-func (s *Service) write(ctx context.Context, documentID string, base int, author string, source knowledgeversion.Source, n, body string, after func(*ent.Tx) error) error {
+// origin is where a version came from: an agent's computer and session.
+type origin struct{ computer, session string }
+
+func (s *Service) write(ctx context.Context, documentID string, base int, author string, source knowledgeversion.Source, from origin, n, body string, after func(*ent.Tx) error) error {
 	tx, err := s.DB.Tx(ctx)
 	if err != nil {
 		return err
@@ -247,7 +252,7 @@ func (s *Service) write(ctx context.Context, documentID string, base int, author
 		return stale()
 	}
 	if err := tx.KnowledgeVersion.Create().SetDocumentID(documentID).SetNumber(base + 1).SetAuthorID(author).
-		SetSource(source).SetNote(n).SetText(body).SetCreatedAt(at).Exec(ctx); err != nil {
+		SetSource(source).SetComputer(from.computer).SetSessionID(from.session).SetNote(n).SetText(body).SetCreatedAt(at).Exec(ctx); err != nil {
 		if ent.IsConstraintError(err) {
 			return stale()
 		}
@@ -280,7 +285,7 @@ func (s *Service) Restore(ctx context.Context, c Caller, teamID, documentID stri
 	if err != nil {
 		return Document{}, err
 	}
-	if err := s.write(ctx, d.ID, d.CurrentVersion, c.UserID, knowledgeversion.SourceConsole, "Restored version "+itoa(n), v.Text, nil); err != nil {
+	if err := s.write(ctx, d.ID, d.CurrentVersion, c.UserID, knowledgeversion.SourceConsole, origin{}, "Restored version "+itoa(n), v.Text, nil); err != nil {
 		return Document{}, err
 	}
 	return s.Get(ctx, c, teamID, d.ID, 0)

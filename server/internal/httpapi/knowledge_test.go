@@ -127,7 +127,7 @@ func TestKnowledgeChangesOnlyThroughAnEditor(t *testing.T) {
 		}
 		got := must(t, b.get(doc), 200)
 		top := got["versions"].([]any)[0].(map[string]any)
-		if got["text"] != "agent's" || top["source"] != "agent" || top["author"].(map[string]any)["id"] != aID {
+		if got["text"] != "agent's" || top["source"] != "agent" || top["computer"] != "MacBook" || top["sessionId"] != "s-1" || top["author"].(map[string]any)["id"] != aID {
 			t.Fatalf("after accepting %v", got)
 		}
 		refused(t, "accepting a stale proposal", a.post(base+"/proposals/"+fromB["id"].(string)+"/accept", nil), 409, "knowledge_stale")

@@ -1014,8 +1014,20 @@ func init() {
 	knowledgeversionDescAuthorID := knowledgeversionFields[2].Descriptor()
 	// knowledgeversion.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
 	knowledgeversion.AuthorIDValidator = knowledgeversionDescAuthorID.Validators[0].(func(string) error)
+	// knowledgeversionDescComputer is the schema descriptor for computer field.
+	knowledgeversionDescComputer := knowledgeversionFields[4].Descriptor()
+	// knowledgeversion.DefaultComputer holds the default value on creation for the computer field.
+	knowledgeversion.DefaultComputer = knowledgeversionDescComputer.Default.(string)
+	// knowledgeversion.ComputerValidator is a validator for the "computer" field. It is called by the builders before save.
+	knowledgeversion.ComputerValidator = knowledgeversionDescComputer.Validators[0].(func(string) error)
+	// knowledgeversionDescSessionID is the schema descriptor for session_id field.
+	knowledgeversionDescSessionID := knowledgeversionFields[5].Descriptor()
+	// knowledgeversion.DefaultSessionID holds the default value on creation for the session_id field.
+	knowledgeversion.DefaultSessionID = knowledgeversionDescSessionID.Default.(string)
+	// knowledgeversion.SessionIDValidator is a validator for the "session_id" field. It is called by the builders before save.
+	knowledgeversion.SessionIDValidator = knowledgeversionDescSessionID.Validators[0].(func(string) error)
 	// knowledgeversionDescNote is the schema descriptor for note field.
-	knowledgeversionDescNote := knowledgeversionFields[4].Descriptor()
+	knowledgeversionDescNote := knowledgeversionFields[6].Descriptor()
 	// knowledgeversion.DefaultNote holds the default value on creation for the note field.
 	knowledgeversion.DefaultNote = knowledgeversionDescNote.Default.(string)
 	// knowledgeversion.NoteValidator is a validator for the "note" field. It is called by the builders before save.

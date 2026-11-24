@@ -24,6 +24,10 @@ const (
 	FieldAuthorID = "author_id"
 	// FieldSource holds the string denoting the source field in the database.
 	FieldSource = "source"
+	// FieldComputer holds the string denoting the computer field in the database.
+	FieldComputer = "computer"
+	// FieldSessionID holds the string denoting the session_id field in the database.
+	FieldSessionID = "session_id"
 	// FieldNote holds the string denoting the note field in the database.
 	FieldNote = "note"
 	// FieldText holds the string denoting the text field in the database.
@@ -40,6 +44,8 @@ var Columns = []string{
 	FieldNumber,
 	FieldAuthorID,
 	FieldSource,
+	FieldComputer,
+	FieldSessionID,
 	FieldNote,
 	FieldText,
 }
@@ -61,6 +67,14 @@ var (
 	DocumentIDValidator func(string) error
 	// AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
 	AuthorIDValidator func(string) error
+	// DefaultComputer holds the default value on creation for the "computer" field.
+	DefaultComputer string
+	// ComputerValidator is a validator for the "computer" field. It is called by the builders before save.
+	ComputerValidator func(string) error
+	// DefaultSessionID holds the default value on creation for the "session_id" field.
+	DefaultSessionID string
+	// SessionIDValidator is a validator for the "session_id" field. It is called by the builders before save.
+	SessionIDValidator func(string) error
 	// DefaultNote holds the default value on creation for the "note" field.
 	DefaultNote string
 	// NoteValidator is a validator for the "note" field. It is called by the builders before save.
@@ -125,6 +139,16 @@ func ByAuthorID(opts ...sql.OrderTermOption) OrderOption {
 // BySource orders the results by the source field.
 func BySource(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSource, opts...).ToFunc()
+}
+
+// ByComputer orders the results by the computer field.
+func ByComputer(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldComputer, opts...).ToFunc()
+}
+
+// BySessionID orders the results by the session_id field.
+func BySessionID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSessionID, opts...).ToFunc()
 }
 
 // ByNote orders the results by the note field.

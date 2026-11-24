@@ -89,6 +89,9 @@ func (KnowledgeVersion) Fields() []ent.Field {
 		// source is where it came from: a person in the console, or an
 		// agent's proposal a person accepted.
 		field.Enum("source").Values("console", "agent").Immutable(),
+		// computer and session_id say where an agent's accepted proposal came from.
+		field.String("computer").MaxLen(runes(64)).Default("").Immutable(),
+		field.String("session_id").MaxLen(128).Default("").Immutable(),
 		field.String("note").MaxLen(runes(200)).Default("").Immutable(),
 		field.Text("text").Immutable(),
 	}

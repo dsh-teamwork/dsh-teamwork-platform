@@ -1844,12 +1844,14 @@ components:
         editors: { type: array, items: { type: string } }
     KnowledgeVersion:
       type: object
-      required: [number, author, source, note, createdAt]
+      required: [number, author, source, computer, sessionId, note, createdAt]
       additionalProperties: false
       properties:
         number: { type: integer }
         author: { $ref: '#/components/schemas/KnowledgePerson' }
         source: { type: string, enum: [console, agent] }
+        computer: { type: string, description: The computer an agent's accepted proposal came from; empty otherwise }
+        sessionId: { type: string }
         note: { type: string }
         createdAt: { type: string, format: date-time }
     KnowledgeDocument:
