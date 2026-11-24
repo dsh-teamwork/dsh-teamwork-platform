@@ -76,6 +76,8 @@ export type SessionStatus = 'running' | 'idle';
 
 /** The DSH workspace that lists a session: its id and title, its place among the workspaces and the session's among its sessions, both DSH's own order. */
 export interface SessionWorkspace {
+  /** Registered parent folders from root to nearest. Older hosts omit this. */
+  ancestors?: { id: string; title: string; index: number }[];
   id: string;
   title: string;
   index: number;
@@ -274,6 +276,7 @@ export interface RelayClient {
   listComputers(): Promise<Computer[]>;
   /** The member's own computers, paired with this device or not; none from a server too old to list them to an app. */
   listHosts(): Promise<OwnComputer[]>;
+  renameHost(hostId: string, name: string): Promise<void>;
   /**
    * Redeems the code a computer's Teamwork panel shows; the pairing then waits
    * for the member to confirm it on that computer. Rejects

@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** The binary applies `20261124015140_artifacts_and_packages` (mysql `…015141`): it renames the tables and their indexes in place, deletes the markdown kind's rows, rewrites `artifactId` to `packageId` in plugin configurations, their revisions and submissions, and `teamwork_page` to `teamwork_artifact` in presets. Release the plugin 0.20.0 with the server.
 - **Refs:** `docs/adr/0068-knowledge-is-its-own-module.md`, `docs/adr/0069-pages-become-artifacts.md`, `docs/tech/artifacts.md`, `docs/tech/team-assistant.md`.
 
+## 2026-11-23 — Session view options, in DSH's own order
+
+- **What:** My DSH and Cloud DSH put search and view options above New session. The options show archived sessions too or only them, group by workspace, as a workspace tree (each workspace under the registered folders that hold it) or in one list, and order by DSH's own order (the default) or the latest change; they are kept per member and computer in the browser. Archived sessions stay hidden except the open one. Running sessions pulse subtly, except with reduced motion. A verified, confirmed paired phone may rename its owner's computer (`PATCH /relay/hosts/{id}` with a Bearer token and `X-Device-Key`). `SessionWorkspace.ancestors` carries a workspace's registered parents from the plugin.
+- **Why:** Members find the same work across desktop, web and phone; the order is the computer's own, so none of them keeps a second one that drifts.
+- **Breaking:** None.
+- **Upgrade:** Update the desktop plugin to see nested workspace ancestry.
+- **Refs:** `packages/relay-client/src/session-view.ts`, `apps/web/src/pages/team/dsh-session.tsx`, `docs/tech/relay.md`.
+
 ## 2026-11-23 — A new team's assistant is prompted in its creator's language
 
 - **What:** Creating a team now writes its built-in assistant's prompt in the creator's language too, as its name and description already were (`server/internal/team/assistant.json`, `systemPrompt` per locale). The Chinese prompt says what the English one says, and both still ask the model to answer in each user's language. Existing teams keep the prompt they were given.

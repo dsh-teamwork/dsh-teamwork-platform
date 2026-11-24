@@ -6,8 +6,8 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, Lock, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, Square, X } from 'lucide-react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, Lock, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, SlidersHorizontal, Square, X } from 'lucide-react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -33,7 +33,8 @@ import {
   RelayError,
   rowsOf,
   searchSessions,
-  sessionGroups,
+  archiveFilters, sessionGroupings, workspaceRows, sessionSorts, visibleSessionGroups, orderedSessionGroups, readSessionView,
+  type SessionView,
   visibleConversationRows,
   type ModelSelection,
   type PinState,
@@ -165,24 +166,40 @@ export function useComputer(computerId: string) {
 }
 
 /**
- * A computer's sessions in the column: a new session and a search above them, then the sessions grouped as DSH's own
- * sidebar groups them (`sessionGroups`: each workspace in DSH's order, then Ungrouped, pinned first in each), each
- * group folding away under its name; while searching, the matches in one list instead. Archived sessions are hidden
- * until asked for, and then shown in their groups; the open one stays listed either way. `unavailable` says why none
+ * A computer's sessions in the column: a search and the view options, a new session, then the sessions as the view
+ * options arrange them (`SessionView`: by default each workspace in DSH's order, then Ungrouped, pinned first in each),
+ * each group folding away under its name; while searching, the matches in one list instead. The options are kept per
+ * member and computer in this browser. Archived sessions follow the archive filter, except that the open one stays
+ * listed. `unavailable` says why none
  * can be listed yet (the computer offline, not paired, locked), and nothing can be started or searched meanwhile.
  * Each row has DSH's own actions that fit a browser (pin, rename, copy its id, archive), once the computer's plugin
  * marks its list (`SessionSummary.marks`); an older one offers only the copy.
  */
-export function SessionList({ computerId, base, unavailable, sessions, sessionId, onPick }: { computerId: string; base: string; unavailable?: string; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void }) {
+type SessionListProps = { computerId: string; base: string; unavailable?: string; sessions: SessionSummary[] | null; sessionId: string; onPick: () => void };
+export function SessionList(props: SessionListProps) {
+  const { me } = useTeam();
+  const storageKey = 'dsh.session-view:' + JSON.stringify([me, props.base, props.computerId]);
+  return <ComputerSessionList key={storageKey} storageKey={storageKey} {...props} />;
+}
+
+function ComputerSessionList({ computerId, base, unavailable, sessions, sessionId, onPick, storageKey }: SessionListProps & { storageKey: string }) {
   const t = useTranslations('team.dsh');
+  const [view, setView] = useState(() => {
+    try { return readSessionView(localStorage.getItem(storageKey)); } catch { return readSessionView(null); }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(view)); } catch { /* Storage is optional in a private tab. */ }
+  }, [view, storageKey]);
   const [query, setQuery] = useState('');
-  const [showArchived, setShowArchived] = useState(false);
   const [folded, setFolded] = useState<ReadonlySet<string>>(new Set());
-  const list = sessions ?? [];
-  const archived = list.filter((s) => s.marks?.archived).length;
-  // The open session stays listed when it is archived and the rest are not.
-  const listed = showArchived ? list : list.filter((s) => !s.marks?.archived || s.id === sessionId);
+  const visible = useMemo(() => visibleSessionGroups(orderedSessionGroups(sessions ?? [], view), view.filter, sessionId), [sessions, view, sessionId]);
+  const listed = visible.flatMap((group) => group.sessions);
   const item = (s: SessionSummary) => <SessionRow key={s.id} computerId={computerId} base={base} session={s} open={s.id === sessionId} onPick={onPick} />;
+  const options = [
+    { key: 'filter', label: 'filterBy', values: archiveFilters },
+    { key: 'grouping', label: 'groupBy', values: sessionGroupings },
+    { key: 'sort', label: 'orderBy', values: sessionSorts },
+  ] as const;
   const fold = (key: string) => setFolded((was) => {
     const next = new Set(was);
     if (!next.delete(key)) next.add(key);
@@ -191,6 +208,35 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
   const found = query.trim() ? searchSessions(listed, query, true) : null;
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
+      <div className="flex items-center gap-0.5">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('search')} aria-label={t('search')} disabled={!!unavailable} className="h-8 pl-8 text-sm" />
+        </div>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <Button type="button" size="icon" variant="ghost" className="size-8" disabled={!!unavailable} aria-label={t('viewOptions')} title={t('viewOptions')}>
+              <SlidersHorizontal className="size-4" />
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content align="end" sideOffset={4} className="z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-44 overflow-y-auto rounded-lg border bg-card p-1 text-card-foreground shadow-lg">
+              {options.map((option, index) => (
+                <DropdownMenu.RadioGroup key={option.key} value={view[option.key]} aria-label={t(option.label)}
+                  onValueChange={(value) => setView({ ...view, [option.key]: value })}>
+                  {index > 0 && <DropdownMenu.Separator className="-mx-1 my-1 h-px bg-border" />}
+                  <DropdownMenu.Label className="px-2 py-1.5 text-xs text-muted-foreground">{t(option.label)}</DropdownMenu.Label>
+                  {option.values.map((value) => (
+                    <DropdownMenu.RadioItem key={value} value={value} className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent">
+                      {t(value)}<DropdownMenu.ItemIndicator><Check className="size-4" /></DropdownMenu.ItemIndicator>
+                    </DropdownMenu.RadioItem>
+                  ))}
+                </DropdownMenu.RadioGroup>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      </div>
       {unavailable ? (
         <Button type="button" size="sm" disabled>
           <Plus className="size-4" aria-hidden />
@@ -204,10 +250,6 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
           </Link>
         </Button>
       )}
-      <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-        <Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('search')} aria-label={t('search')} disabled={!!unavailable} className="h-8 pl-8 text-sm" />
-      </div>
       <nav aria-label={t('sessions')} className="scrollbar-quiet -mx-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1 pb-2">
         {unavailable ? (
           <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{unavailable}</p>
@@ -215,13 +257,14 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
           found.length === 0 ? <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noMatches')}</p> : found.map(item)
         ) : (
           <>
-            {sessions !== null && listed.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t('noSessions')}</p>}
-            {sessionGroups(listed, true).map((group) => {
+            {sessions !== null && listed.length === 0 && <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t(view.filter === 'only' ? 'noArchived' : 'noSessions')}</p>}
+            {workspaceRows(visible, view.grouping, folded).map((group) => {
+              if (view.grouping === 'flat') return <div key="flat">{group.sessions.map(item)}</div>;
               const key = group.workspace?.id ?? '';
               const name = group.workspace?.title ?? t('ungrouped');
               const open = !folded.has(key);
               return (
-                <div key={key} className="flex flex-col gap-0.5">
+                <div key={key} style={{ marginInlineStart: Math.min(group.depth, 8) * 12 }} className={cn('flex flex-col gap-0.5', group.depth > 0 && 'border-s ps-1')}>
                   <button
                     type="button"
                     onClick={() => fold(key)}
@@ -238,12 +281,6 @@ export function SessionList({ computerId, base, unavailable, sessions, sessionId
               );
             })}
           </>
-        )}
-        {!unavailable && archived > 0 && (
-          <button type="button" aria-pressed={showArchived} onClick={() => setShowArchived(!showArchived)} className={cn(row, 'mt-1 gap-2 text-xs text-muted-foreground')}>
-            <Archive className="size-3.5" aria-hidden />
-            {t(showArchived ? 'hideArchived' : 'showArchived', { count: archived })}
-          </button>
         )}
       </nav>
     </div>
@@ -322,7 +359,7 @@ function SessionRow({ computerId, base, session: s, open, onPick }: { computerId
         {s.pending && <Dot className="bg-signal" label={t('waiting')} />}
         {s.marks?.pinned && <Pin className="size-3.5 shrink-0 text-muted-foreground" aria-label={t('actions.pinned')} />}
         <span className="min-w-0 flex-1 truncate">{title}</span>
-        <span className="shrink-0 text-xs font-normal text-muted-foreground">
+        <span className={cn('shrink-0 text-xs font-normal text-muted-foreground', s.status === 'running' && !s.pending && 'session-running-label')}>
           {s.status === 'running' ? t('running') : format.relativeTime(new Date(s.updatedAt), new Date())}
         </span>
       </Link>

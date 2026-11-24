@@ -3422,11 +3422,14 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Rename one of the member's own computers; the name holds when it connects again (the web console only) */
+        /** Rename an owned computer from the web console or a confirmed paired handset */
         patch: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Required with a Bearer token */
+                    "X-Device-Key"?: string;
+                };
                 path: {
                     id: string;
                 };

@@ -157,7 +157,7 @@ The tables:
 
 - `relay_hosts`: `id`, `user_id`, `client_id`, `name`, `dsh_version`, `os`,
   `last_seen_at`, `created_at`. `name` is the one the computer announced on its
-  first connection, or the one its owner gave it since in the console
+  first connection, or the one its owner gave it in the console or on a confirmed paired phone
   (`PATCH /relay/hosts/{id}`); a later announcement does not change it.
 - `relay_pairing_offers`: `code_hash`, `host_id`, `expires_at`,
   `used_at`. Each code is stored as an HMAC, as the sign-in codes are.
