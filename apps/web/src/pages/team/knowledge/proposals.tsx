@@ -4,8 +4,10 @@
  * The list holds those to the spaces the reader edits and the reader's own,
  * pending first; an agent's carries its computer, and one on a version that
  * is no longer current is marked stale. Opening one shows its difference
- * from the version it started from; an editor accepts it as the next
- * version or declines it with a reason, and its author may withdraw it.
+ * from the version it started from, a text difference, and the files its
+ * text names, resolved against the document's attachments, those it names
+ * newly marked; an editor accepts it as the next version or declines it
+ * with a reason, and its author may withdraw it.
  */
 
 import { ArrowLeft, Check, Undo2, X } from 'lucide-react';
@@ -21,9 +23,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { api, ApiError, type Schemas, type Team } from '@/lib/api';
+import { attachmentNamesIn } from '@/lib/knowledge-format';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 
+import { AttachmentList } from './attachments';
 import { SourceBadge } from './history';
 import { personName, useNote } from './shared';
 
@@ -210,9 +214,21 @@ function ProposalDetail({ team, me, proposalId, onChanged }: { team: Team; me: s
         </p>
       )}
       <KnowledgeDiff before={p.baseText} after={p.text} beforeLabel={t('baseLabel', { n: p.baseVersion })} afterLabel={t('proposedLabel')} />
+      <ProposalAttachments teamId={team.id} proposal={p} />
       {declining && <DeclineDialog busy={busy} onClose={() => setDeclining(false)} onDecline={(reason) => void decide('decline', reason)} />}
     </section>
   );
+}
+
+/** The files a proposal's text names, from its document's attachments; a name its base did not give is marked new, and one with no file missing. */
+function ProposalAttachments({ teamId, proposal }: { teamId: string; proposal: Detail }) {
+  const t = useTranslations('team.knowledge.attachments');
+  const names = attachmentNamesIn(proposal.text);
+  const doc = useApi<Schemas['KnowledgeDocument']>(names.length ? `teams/${encodeURIComponent(teamId)}/knowledge/documents/${encodeURIComponent(proposal.documentId)}` : null);
+  if (names.length === 0 || !doc.data) return null;
+  const before = new Set(attachmentNamesIn(proposal.baseText));
+  const rows = names.map((name) => ({ name, file: doc.data?.attachments.find((a) => a.name === name), tag: before.has(name) ? undefined : t('newInProposal') }));
+  return <AttachmentList teamId={teamId} documentId={proposal.documentId} title={t('proposalTitle')} rows={rows} />;
 }
 
 function DeclineDialog({ busy, onClose, onDecline }: { busy: boolean; onClose: () => void; onDecline: (reason: string) => void }) {

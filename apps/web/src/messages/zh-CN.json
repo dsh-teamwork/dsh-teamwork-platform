@@ -1473,6 +1473,30 @@
         "added": "新增：",
         "removed": "删除："
       },
+      "attachments": {
+        "title": "附件",
+        "attach": "附加文件",
+        "uploading": "正在上传 {name}…",
+        "attached": "已附加 {name}",
+        "named": "正文中已引用",
+        "unnamed": "正文未引用",
+        "missing": "未上传",
+        "newInProposal": "此提议新引用",
+        "download": "下载 {name}",
+        "proposalTitle": "引用的文件",
+        "editingNote": "点“附加文件”、粘贴或拖入文件，即可把它加到这里并插入光标处：![[文件名]] 显示图片，[[文件名]] 链接其他文件。文件名一经上传，在文档存在期间始终对应同一份内容。",
+        "renameTitle": "这个名字已被占用",
+        "renameNote": "这篇文档已有另一个名为 {name} 的文件。文件名在文档存在期间始终对应同一份内容，请换个名字附加这个文件。",
+        "nameLabel": "文件名",
+        "nameInvalid": "请保留允许的扩展名，且不要包含 [ ] | # ^ / \\。",
+        "attachAs": "附加",
+        "skip": "跳过这个文件",
+        "errors": {
+          "type": "无法附加 {name}：只能附加图片、PDF、文本、CSV、JSON、Word、Excel、PowerPoint 和 zip 文件。",
+          "tooLarge": "{name} 超过 20 MiB，单个文件最多 20 MiB。",
+          "invalid": "无法附加 {name}：请检查文件类型，并确认文件名不含 [ ] | # ^。"
+        }
+      },
       "settings": {
         "title": "{name} 设置",
         "note": "团队管理员和空间的创建者始终可以编辑。",
@@ -1840,7 +1864,9 @@
     "knowledge_member_not_in_team": "你选的某位成员已不在团队中。",
     "knowledge_too_large": "文档太大：正文最多 1 MiB。",
     "knowledge_not_author": "只有提议人可以撤回修改提议。",
-    "knowledge_agent_proposes": "智能体只能提出修改。"
+    "knowledge_agent_proposes": "智能体只能提出修改。",
+    "knowledge_team_full": "团队的附件已达 2 GiB 上限。请先删除带有不再需要的文件的文档。",
+    "knowledge_storage_unavailable": "这台服务器没有配置文件存储，无法附加文件。"
   },
   "docs": {
     "title": "文档",

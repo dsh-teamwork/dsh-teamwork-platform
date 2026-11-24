@@ -11,6 +11,11 @@
  * person typed, reads the current version and offers the difference before
  * they save again on top of it; nothing they typed is dropped, and leaving
  * the page with unsaved changes asks first.
+ *
+ * While editing, Attach, a paste or a drop uploads a file to the document
+ * and puts `![[name]]` (an image) or `[[name]]` at the cursor. Every version,
+ * the current one or an old one, draws its embeds from the document's
+ * attachments, listed under the text with which ones it names.
  */
 
 import { ArrowLeft, Copy, FolderInput, History, Pencil, Trash2, Type } from 'lucide-react';
@@ -20,7 +25,7 @@ import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import { KnowledgeDiff } from '@/components/knowledge-diff';
-import { KnowledgeEditor, type KnowledgeEditorHandle } from '@/components/knowledge-editor';
+import { KnowledgeEditor, type AttachmentResolver, type KnowledgeEditorHandle } from '@/components/knowledge-editor';
 import { Field } from '@/components/team/field';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
@@ -28,10 +33,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api, ApiError, type Schemas, type Team } from '@/lib/api';
-import { planSave, splitFrontMatter } from '@/lib/knowledge-format';
+import { attachmentUrl, isAttachmentName, isImageName, parseWikiTarget, planSave, splitFrontMatter } from '@/lib/knowledge-format';
 import { findDocument, folderPaths, resolveWikiLink, type KnowledgeTree } from '@/lib/knowledge-tree';
 import { useApi } from '@/lib/use-api';
 
+import { AttachButton, AttachmentList, shownInline, useAttach, useFileSize, type Attachment } from './attachments';
 import { CompareView, HistoryList, SourceBadge } from './history';
 import { ActionMenu, NameDialog, personName } from './shared';
 
@@ -88,6 +94,39 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
     [tree, spaceId, documentId, page],
   );
   const body = useMemo(() => (doc ? splitFrontMatter(doc.text).body : ''), [doc]);
+
+  // The document's files: what it was read with, and what this page uploaded since. A ref as well, so a link
+  // inserted right after its upload already draws the file.
+  const [added, setAdded] = useState<Attachment[]>([]);
+  const files = useMemo(() => {
+    const byName = new Map<string, Attachment>();
+    for (const a of [...(doc?.attachments ?? []), ...added]) byName.set(a.name, a);
+    return byName;
+  }, [doc, added]);
+  const known = useRef(files);
+  known.current = files;
+  const size = useFileSize();
+  const attachment = useCallback<AttachmentResolver>(
+    (name) => {
+      const file = known.current.get(name);
+      return file ? { href: attachmentUrl(team.id, documentId, name), inline: shownInline(file.contentType), size: size(file.size) } : null;
+    },
+    // `size` words in the reader's language, which does not change while the page is open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [team.id, documentId],
+  );
+  const [linked, setLinked] = useState<string[]>([]);
+  const { attach, busy: attaching, dialog: attachDialog } = useAttach({
+    teamId: team.id,
+    documentId,
+    known: () => [...known.current.keys()],
+    onAttached: (file) => {
+      known.current = new Map(known.current).set(file.name, file);
+      setAdded((list) => [...list.filter((a) => a.name !== file.name), file]);
+      editor.current?.insert(file.name, isImageName(file.name));
+      editor.current?.redraw();
+    },
+  });
   const current = doc && doc.version === doc.currentVersion;
 
   const edit = useCallback((d: Doc) => {
@@ -255,6 +294,7 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
         </div>
         {editing ? (
           <div className="flex flex-wrap items-center gap-2">
+            <AttachButton busy={attaching} onFiles={(chosen) => void attach(chosen, false)} />
             <Button variant="outline" size="sm" disabled={saving} onClick={cancel}>{t('cancel')}</Button>
             <Button size="sm" disabled={saving || (editing.conflict && !editing.conflict.rebased)} onClick={() => setAsking('note')}>
               {doc.canEdit ? t('save') : t('propose')}
@@ -342,6 +382,9 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
           body={editing ? editing.body : body}
           readOnly={!editing}
           resolve={resolve}
+          attachment={attachment}
+          onLinks={setLinked}
+          onFiles={editing ? (dropped, pasted) => void attach(dropped, pasted) : undefined}
           onNavigate={(href) => void navigate(href)}
           label={doc.title}
           onReady={(normalisedBody) => {
@@ -351,6 +394,8 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
           className={editing ? 'min-h-[50vh] rounded-lg border px-5 py-4' : undefined}
         />
       )}
+      {!showHistory && !compare && <DocumentAttachments teamId={team.id} documentId={documentId} files={files} linked={linked} editing={!!editing} />}
+      {attachDialog}
 
       {asking === 'note' && editing && (
         <SaveDialog proposal={!doc.canEdit} busy={saving} onClose={() => setAsking(null)} onSave={(text) => void save(text)} />
@@ -447,5 +492,20 @@ function MoveDialog({ folders, from, onClose, submit }: { folders: { id: string;
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** The document's files under its text, and the names the text gives that no file has; which ones the text names is read as it is edited. */
+function DocumentAttachments({ teamId, documentId, files, linked, editing }: { teamId: string; documentId: string; files: Map<string, Attachment>; linked: string[]; editing: boolean }) {
+  const t = useTranslations('team.knowledge.attachments');
+  const named = new Set(linked.map((raw) => parseWikiTarget(raw).title).filter(isAttachmentName));
+  const rows = [
+    ...[...files.values()].map((file) => ({ name: file.name, file, tag: named.has(file.name) ? t('named') : t('unnamed') })),
+    ...[...named].filter((name) => !files.has(name)).map((name) => ({ name })),
+  ];
+  return (
+    <AttachmentList teamId={teamId} documentId={documentId} title={t('title')} rows={rows}>
+      {editing && <p className="text-xs text-muted-foreground">{t('editingNote')}</p>}
+    </AttachmentList>
   );
 }

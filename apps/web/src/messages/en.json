@@ -1473,6 +1473,30 @@
         "added": "Added: ",
         "removed": "Removed: "
       },
+      "attachments": {
+        "title": "Attachments",
+        "attach": "Attach",
+        "uploading": "Uploading {name}…",
+        "attached": "Attached {name}",
+        "named": "In the text",
+        "unnamed": "Not in the text",
+        "missing": "Not uploaded",
+        "newInProposal": "New in this proposal",
+        "download": "Download {name}",
+        "proposalTitle": "Files it names",
+        "editingNote": "Attach, paste or drop a file to add it here and put it at the cursor: ![[name]] shows an image, [[name]] links any other file. A file's name keeps its contents for as long as the document exists.",
+        "renameTitle": "That name is taken",
+        "renameNote": "This document already has a different file named {name}. A name keeps its contents for as long as the document exists, so attach this file under another name.",
+        "nameLabel": "File name",
+        "nameInvalid": "Keep an allowed extension, and leave out [ ] | # ^ / \\.",
+        "attachAs": "Attach",
+        "skip": "Skip this file",
+        "errors": {
+          "type": "{name} cannot be attached: only images, PDF, text, CSV, JSON, Word, Excel, PowerPoint and zip files can.",
+          "tooLarge": "{name} is larger than 20 MiB, the most one file may be.",
+          "invalid": "{name} cannot be attached: check its type, and that its name has none of [ ] | # ^."
+        }
+      },
       "settings": {
         "title": "{name} settings",
         "note": "The team's admins and whoever created the space always edit it.",
@@ -1840,7 +1864,9 @@
     "knowledge_member_not_in_team": "Someone you chose is no longer in the team.",
     "knowledge_too_large": "The document is too large: its text may be at most 1 MiB.",
     "knowledge_not_author": "Only its author can withdraw a proposal.",
-    "knowledge_agent_proposes": "An agent can only propose changes."
+    "knowledge_agent_proposes": "An agent can only propose changes.",
+    "knowledge_team_full": "The team's attachments have reached their 2 GiB. Delete documents with files you no longer need first.",
+    "knowledge_storage_unavailable": "This server has no file storage set up, so files cannot be attached."
   },
   "docs": {
     "title": "Docs",

@@ -3,7 +3,10 @@
  * read-only or editing alike. Loaded with the editor only, so the console's
  * main stylesheet does not carry it. Every colour is a token (docs/design.md):
  * a link to another document is navy, as links are, and one whose title no
- * document has is struck through in the destructive colour.
+ * document has is struck through in the destructive colour. An attachment's
+ * image is drawn in the text; any other file is a small card with lucide's
+ * file icon, its name and size; one never uploaded is dashed in the
+ * destructive colour, embed or card alike.
  */
 
 .knowledge-document {
@@ -98,6 +101,60 @@
   color: var(--destructive);
   text-decoration-style: dashed;
   text-decoration-color: var(--destructive);
+}
+.knowledge-document .knowledge-embed {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+}
+.knowledge-document .knowledge-embed img {
+  display: block;
+}
+.knowledge-document a.knowledge-file,
+.knowledge-document .knowledge-embed-broken {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.05em 0.5em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-size: 0.925em;
+  line-height: 1.6;
+  text-decoration: none;
+  vertical-align: baseline;
+}
+.knowledge-document a.knowledge-file:hover {
+  background: var(--accent);
+}
+.knowledge-document a.knowledge-file::before,
+.knowledge-document .knowledge-embed-broken::before {
+  content: '';
+  flex: none;
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  mask: var(--knowledge-icon) center / contain no-repeat;
+  --knowledge-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3C/svg%3E");
+}
+.knowledge-document .knowledge-embed-broken::before {
+  --knowledge-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='2' x2='22' y1='2' y2='22'/%3E%3Cpath d='M10.41 10.41a2 2 0 1 1-2.83-2.83'/%3E%3Cline x1='13.5' x2='6' y1='13.5' y2='21'/%3E%3Cline x1='18' x2='21' y1='12' y2='15'/%3E%3Cpath d='M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59'/%3E%3Cpath d='M21 15V5a2 2 0 0 0-2-2H9'/%3E%3C/svg%3E");
+}
+.knowledge-document .knowledge-file-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.knowledge-document .knowledge-file-size {
+  flex: none;
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.knowledge-document a.knowledge-file-broken,
+.knowledge-document .knowledge-embed-broken {
+  border-style: dashed;
+  border-color: var(--destructive);
+  color: var(--destructive);
 }
 .knowledge-document code {
   padding: 0.1em 0.35em;

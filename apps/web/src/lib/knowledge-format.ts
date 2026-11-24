@@ -80,3 +80,73 @@ export function planSave(stored: string, normalised: string, edited: string, not
     { text: edited, note },
   ];
 }
+
+/**
+ * Every extension an attachment may have (docs/tech/knowledge.md,
+ * "Attachments"), as the server allows them: a `[[name.ext]]` with one of
+ * these names a file of the document, any other names a document.
+ */
+export const ATTACHMENT_EXTENSIONS: ReadonlySet<string> = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg', 'pdf', 'txt', 'csv', 'json', 'docx', 'xlsx', 'pptx', 'zip']);
+const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg']);
+
+/** The largest attachment the server stores, 20 MiB. */
+export const MAX_ATTACHMENT = 20 << 20;
+
+const extension = (name: string) => {
+  const dot = name.lastIndexOf('.');
+  return dot > 0 ? name.slice(dot + 1).toLowerCase() : '';
+};
+
+/** Whether a link's target names an attachment: an allowed extension, in any case. */
+export function isAttachmentName(name: string): boolean {
+  return ATTACHMENT_EXTENSIONS.has(extension(name.trim()));
+}
+
+/** Whether an attachment's name is an image's, which `![[name]]` draws. */
+export function isImageName(name: string): boolean {
+  return IMAGE_EXTENSIONS.has(extension(name.trim()));
+}
+
+/** The attachments a text names, `![[name]]` or `[[name]]`, each once, in the order they first appear. */
+export function attachmentNamesIn(text: string): string[] {
+  const names = new Set<string>();
+  for (const m of text.matchAll(WIKILINK)) {
+    const { title } = parseWikiTarget(m[1]);
+    if (isAttachmentName(title)) names.add(title);
+  }
+  return [...names];
+}
+
+/** Where a browser reads an attachment, on the session cookie. */
+export function attachmentUrl(teamId: string, documentId: string, name: string): string {
+  return `/api/teams/${encodeURIComponent(teamId)}/knowledge/documents/${encodeURIComponent(documentId)}/attachments/${encodeURIComponent(name)}`;
+}
+
+/**
+ * A file's name made one a link can hold: trimmed, and each character a
+ * `[[link]]` or a path cannot hold (`[ ] | # ^ / \` and control characters)
+ * replaced by a hyphen.
+ */
+export function attachmentNameOf(fileName: string): string {
+  // eslint-disable-next-line no-control-regex
+  return fileName.replace(/[[\]|#^/\\\u0000-\u001f\u007f]/g, '-').trim();
+}
+
+/** The name of a pasted image, as Obsidian names one: `Pasted image 20261124153012.png`. */
+export function pastedName(at: Date, ext: string): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `Pasted image ${at.getFullYear()}${p(at.getMonth() + 1)}${p(at.getDate())}${p(at.getHours())}${p(at.getMinutes())}${p(at.getSeconds())}.${ext}`;
+}
+
+/** A name for a file whose name is taken: `diagram (2).png`, or the next number no name in `taken` has. */
+export function suggestAttachmentName(name: string, taken: Iterable<string>): string {
+  const used = new Set(taken);
+  used.add(name);
+  const dot = name.lastIndexOf('.');
+  const stem = (dot > 0 ? name.slice(0, dot) : name).replace(/ \(\d+\)$/, '');
+  const ext = dot > 0 ? name.slice(dot) : '';
+  for (let n = 2; ; n++) {
+    const next = `${stem} (${n})${ext}`;
+    if (!used.has(next)) return next;
+  }
+}

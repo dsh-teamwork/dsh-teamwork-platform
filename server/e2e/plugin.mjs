@@ -148,8 +148,9 @@ try {
  console.log('artifact e2e ok: published, versioned, refused a stale base, viewed both versions and opened one');
 } finally {await rm(artifactSpace,{recursive:true,force:true});}
 
-// Knowledge (docs/tech/knowledge.md): the plugin's KnowledgeSync writes the read-only copy, and its teamwork_knowledge tool
-// proposes a change that leaves the document as it was until the admin accepts it.
+// Knowledge (docs/tech/knowledge.md): the plugin's KnowledgeSync writes the read-only copy, attachments beside each
+// document, and its teamwork_knowledge tool proposes a change, with the files it names, that leaves the document as it
+// was until the admin accepts it.
 const knowledgeSpace=mkdtempSync(join(tmpdir(),'teamwork-knowledge-e2e-'));
 try {
  const {KnowledgeSync}=await import(pathToFileURL(join(PLUGIN,'lib/knowledge-sync.js')).href);
@@ -157,12 +158,19 @@ try {
  const space=await browser(`teams/${team.id}/knowledge/spaces`,{name:'Handbook'});
  const folder=await browser(`teams/${team.id}/knowledge/folders`,{spaceId:space.id,parentId:'',name:'Ops'});
  const created=await browser(`teams/${team.id}/knowledge/documents`,{spaceId:space.id,folderId:folder.id,title:'Runbook',text:'# Runbook\n\n## Restart\n\nRun the restart script.\n',note:'first'});
+ // The admin attaches a diagram; the browser helper speaks JSON only, so the upload goes through the admin's plugin client.
+ const diagram=Buffer.from('\x89PNG\r\n\x1a\ndiagram','latin1');
+ const uploaded=await client.attachKnowledge(team.id,created.id,'diagram.png',diagram,new AbortController().signal);
+ assert.deepEqual(uploaded,{name:'diagram.png',contentType:'image/png',size:diagram.length});
  const knowledge=new KnowledgeSync(client);
  await knowledge.restore();
  await knowledge.sync();
  const file=join(knowledge.root,'Core','Handbook','Ops','Runbook.md');
  assert.equal(await readFile(file,'utf8'),`---\nknowledge: ${created.id}@1\n---\n# Runbook\n\n## Restart\n\nRun the restart script.\n`);
  assert.equal((await stat(file)).mode&0o777,0o444);
+ const files=join(knowledge.root,'Core','Handbook','Ops','Runbook.files');
+ assert.deepEqual(await readFile(join(files,'diagram.png')),diagram);
+ assert.equal((await stat(join(files,'diagram.png'))).mode&0o777,0o444);
 
  // The agent copies the synced file into its workspace, changes it, and proposes it through the tool.
  let tool;
@@ -194,7 +202,24 @@ try {
 
  await knowledge.sync();
  assert.equal(await readFile(file,'utf8'),`---\nknowledge: ${created.id}@2\n---\n${pending.text}`);
- console.log('knowledge e2e ok: synced read-only, proposed through the tool, unchanged until accepted, stale answered, version 2 synced');
+
+ // The agent proposes text naming the admin's diagram and a chart of its own, which the tool uploads first.
+ const chart=Buffer.from('\x89PNG\r\n\x1a\nchart','latin1');
+ await writeFile(join(knowledgeSpace,'chart.png'),chart);
+ const withChart=`${pending.text}\n![[diagram.png]]\n\n![[chart.png]]\n`;
+ const charted=await tool.execute({action:'propose',documentId:created.id,baseVersion:2,note:'Add the chart',content:withChart,attachments:['chart.png']},exec);
+ assert.deepEqual(charted.attachments,['chart.png']);
+ // Another file under the diagram's name is refused before anything is proposed, and the agent is told to rename it.
+ await mkdir(join(knowledgeSpace,'other'));
+ await writeFile(join(knowledgeSpace,'other','diagram.png'),chart);
+ await assert.rejects(tool.execute({action:'propose',documentId:created.id,baseVersion:2,note:'Replace',content:'![[diagram.png]]',attachments:['other/diagram.png']},exec),/already has a different file named diagram\.png/);
+ await browser(`teams/${team.id}/knowledge/proposals/${charted.proposalId}/accept`,{});
+ await knowledge.sync();
+ assert.equal(await readFile(file,'utf8'),`---\nknowledge: ${created.id}@3\n---\n${withChart}`);
+ assert.deepEqual(await readFile(join(files,'diagram.png')),diagram);
+ assert.deepEqual(await readFile(join(files,'chart.png')),chart);
+ assert.equal((await stat(join(files,'chart.png'))).mode&0o777,0o444);
+ console.log('knowledge e2e ok: synced read-only with attachments, proposed through the tool with a new attachment, unchanged until accepted, stale answered, versions 2 and 3 synced');
 } finally {await rm(knowledgeSpace,{recursive:true,force:true});}
 
 callback.close();

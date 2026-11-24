@@ -200,6 +200,17 @@ your version shows only your change.
 If you read a space but do not edit it, **Edit** still works: your save
 becomes a **proposal** instead of a version.
 
+While editing, **Attach** adds a file to the document and puts it at the
+cursor; pasting or dropping a file does the same. An image is written
+`![[diagram.png]]` and shown in the text, any other file `[[spec.pdf]]` and
+shown as a link to it: images, PDF, text, CSV, JSON, Word, Excel, PowerPoint
+and zip files, up to 20 MiB each. The files are listed under the text, with
+the ones it names marked. **A file's name keeps its contents for as long as
+the document exists**, so every version shows what it showed; to change a
+file, attach the new one under another name and point the text at it. A
+reader may attach files too; the text shows them once an editor accepts the
+proposal that names them.
+
 Your agent, in DSH on your computer or a cloud DSH, reads a synced, read-only
 copy of every space you may read, finds what it needs without being pointed
 at it, and cites the document and heading its answer rests on. An agent never

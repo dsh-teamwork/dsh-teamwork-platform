@@ -80,3 +80,16 @@ export async function uploadPackage<T>(teamId:string,file:File):Promise<T>{
  const response=await fetch(`/api/teams/${encodeURIComponent(teamId)}/packages`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/octet-stream'},body:file});
  await checkResponse(response);return response.json() as Promise<T>;
 }
+
+/**
+ * Uploads one file to a knowledge document as the attachment `name`
+ * (`POST …/documents/{id}/attachments`, multipart, part `file`). `created`
+ * is false when the document already held the same bytes under that name.
+ */
+export async function uploadAttachment(teamId: string, documentId: string, file: Blob, name: string): Promise<{ attachment: Schemas['KnowledgeAttachment']; created: boolean }> {
+  const form = new FormData();
+  form.append('file', file, name);
+  const response = await fetch(`/api/teams/${encodeURIComponent(teamId)}/knowledge/documents/${encodeURIComponent(documentId)}/attachments`, { method: 'POST', credentials: 'same-origin', body: form });
+  await checkResponse(response);
+  return { attachment: (await response.json()) as Schemas['KnowledgeAttachment'], created: response.status === 201 };
+}

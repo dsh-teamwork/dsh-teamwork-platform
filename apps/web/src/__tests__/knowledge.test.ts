@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
 import { diffStats, diffText, foldDiff } from '@/lib/knowledge-diff';
-import { FORMATTING_NOTE, headingSlug, joinFrontMatter, parseWikiTarget, planSave, splitFrontMatter } from '@/lib/knowledge-format';
+import {
+  attachmentNameOf,
+  attachmentNamesIn,
+  attachmentUrl,
+  FORMATTING_NOTE,
+  headingSlug,
+  isAttachmentName,
+  isImageName,
+  joinFrontMatter,
+  parseWikiTarget,
+  pastedName,
+  planSave,
+  splitFrontMatter,
+  suggestAttachmentName,
+} from '@/lib/knowledge-format';
 import { findDocument, folderPaths, nestSpace, resolveWikiLink, type KnowledgeSpace, type KnowledgeTree } from '@/lib/knowledge-tree';
 
 const at = '2026-11-24T00:00:00Z';
@@ -69,6 +83,41 @@ describe('links between documents', () => {
   it('point at the document itself for a bare heading, and nowhere for an unknown title', () => {
     expect(resolveWikiLink(tree, '#Steps', { spaceId: 'ops', documentId: 'd2' })).toEqual({ documentId: 'd2', anchor: 'steps', label: 'Steps' });
     expect(resolveWikiLink(tree, 'Nobody wrote this', { spaceId: 'ops', documentId: 'd2' })).toBeNull();
+  });
+});
+
+describe('attachments', () => {
+  it('are told from a document link by an allowed extension, in any case', () => {
+    for (const name of ['diagram.png', 'Photo.JPG', 'a.jpeg', 'spec.pdf', 'data.csv', 'deck.pptx', 'all.zip', 'icon.svg']) expect(isAttachmentName(name)).toBe(true);
+    for (const name of ['Pricing', 'Release 1.2', 'notes.md', 'movie.mp4', '.png', 'png']) expect(isAttachmentName(name)).toBe(false);
+    expect(['a.png', 'b.WEBP', 'c.avif', 'd.svg'].every(isImageName)).toBe(true);
+    expect(['a.pdf', 'b.txt', 'Pricing'].some(isImageName)).toBe(false);
+  });
+
+  it('are the names a text gives them, embedded or linked, each once', () => {
+    const text = '![[diagram.png]] and [[spec.pdf|the spec]], [[Pricing]], [[Glossary#Terms]], again [[diagram.png]] and [[data.csv]]';
+    expect(attachmentNamesIn(text)).toEqual(['diagram.png', 'spec.pdf', 'data.csv']);
+  });
+
+  it('are read from their document by an encoded name', () => {
+    expect(attachmentUrl('t 1', 'd/1', 'Q3 plan #2 (final).pdf')).toBe('/api/teams/t%201/knowledge/documents/d%2F1/attachments/Q3%20plan%20%232%20(final).pdf');
+    expect(attachmentUrl('t', 'd', '\u67b6\u6784\u56fe.png')).toBe('/api/teams/t/knowledge/documents/d/attachments/%E6%9E%B6%E6%9E%84%E5%9B%BE.png');
+  });
+
+  it('keep a file name a link can hold', () => {
+    expect(attachmentNameOf(' plan [v2] | draft #1^.pdf ')).toBe('plan -v2- - draft -1-.pdf');
+    expect(attachmentNameOf('a/b\\c.png')).toBe('a-b-c.png');
+  });
+
+  it('name a pasted image as Obsidian does', () => {
+    expect(pastedName(new Date(2026, 10, 4, 9, 5, 7), 'png')).toBe('Pasted image 20261104090507.png');
+  });
+
+  it('offer the next free numbered name when a name is taken', () => {
+    expect(suggestAttachmentName('diagram.png', ['diagram.png'])).toBe('diagram (2).png');
+    expect(suggestAttachmentName('diagram.png', ['diagram.png', 'diagram (2).png', 'diagram (3).png'])).toBe('diagram (4).png');
+    expect(suggestAttachmentName('diagram (2).png', ['diagram.png', 'diagram (2).png'])).toBe('diagram (3).png');
+    expect(suggestAttachmentName('archive.tar.zip', [])).toBe('archive.tar (2).zip');
   });
 });
 
