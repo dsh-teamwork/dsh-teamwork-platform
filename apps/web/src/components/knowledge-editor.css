@@ -282,8 +282,9 @@
   color: var(--foreground);
   font-size: 0.75rem;
 }
-.knowledge-editing .knowledge-callout {
-  padding-inline-end: 16rem;
+.knowledge-editing .knowledge-callout-title {
+  min-height: 1.75rem;
+  padding-inline-end: 15rem;
 }
 .knowledge-document .knowledge-callout-toggle {
   width: 1.5rem;
@@ -300,8 +301,9 @@
 .knowledge-document .knowledge-callout.is-folded .knowledge-callout-toggle {
   transform: rotate(-90deg);
 }
-.knowledge-document .knowledge-callout:has(.knowledge-callout-toggle) {
-  padding-inline-end: 2.5rem;
+.knowledge-document .knowledge-callout:has(.knowledge-callout-toggle) .knowledge-callout-title,
+.knowledge-document .knowledge-callout:has(.knowledge-callout-toggle) .knowledge-callout-label {
+  padding-inline-end: 2rem;
 }
 
 /*
@@ -334,4 +336,13 @@
 }
 .knowledge-document .knowledge-diagram.is-reading:has(> .is-error) > pre {
   display: block;
+}
+@media (max-width: 640px) {
+  .knowledge-editing .knowledge-callout-controls {
+    position: static;
+    margin-bottom: 0.35rem;
+  }
+  .knowledge-editing .knowledge-callout-title {
+    padding-inline-end: 0;
+  }
 }

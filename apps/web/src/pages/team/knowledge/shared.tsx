@@ -61,7 +61,7 @@ export function ActionMenu({ label, items, className }: { label: string; items: 
  * Asks for one name and submits it; the dialog stays open, with the failure
  * worded under the field, until `submit` succeeds.
  */
-export function NameDialog({ title, description, label, initial = '', max, action, submit, onClose }: {
+export function NameDialog({ title, description, label, initial = '', max, action, submit, onClose, children }: {
   title: string;
   description?: string;
   label: string;
@@ -70,6 +70,8 @@ export function NameDialog({ title, description, label, initial = '', max, actio
   action: string;
   submit: (name: string) => Promise<unknown>;
   onClose: () => void;
+  /** More of the form, under the name. */
+  children?: ReactNode;
 }) {
   const t = useTranslations('team.knowledge');
   const word = useTeamError();
@@ -104,6 +106,7 @@ export function NameDialog({ title, description, label, initial = '', max, actio
           <Field id="knowledge-name" label={label} error={invalid ? t('nameSlash') : failed} hint={t('nameHint', { max })}>
             <Input id="knowledge-name" value={name} maxLength={max} autoFocus onChange={(e) => setName(e.target.value)} />
           </Field>
+          {children}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>{t('cancel')}</Button>
             <Button type="submit" disabled={busy || !trimmed || invalid || trimmed === initial}>{action}</Button>

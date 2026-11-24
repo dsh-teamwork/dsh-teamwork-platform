@@ -187,3 +187,14 @@ export function knownCalloutKind(kind: string): CalloutKind | null {
 
 /** A code block of this language is drawn as a diagram, its source still the text. */
 export const DIAGRAM_LANGUAGE = 'mermaid';
+
+/**
+ * A template's text as a new document starts with it: `{{title}}` becomes the
+ * new document's title and `{{date}}` today's date (`2026-11-24`), as
+ * Obsidian's core templates fill them; any other text is kept as written.
+ */
+export function fillTemplate(text: string, title: string, today: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  const date = `${today.getFullYear()}-${p(today.getMonth() + 1)}-${p(today.getDate())}`;
+  return text.replace(/\{\{\s*(title|date)\s*\}\}/g, (_m, key: string) => (key === 'title' ? title : date));
+}

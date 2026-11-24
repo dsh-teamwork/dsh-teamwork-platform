@@ -1,8 +1,9 @@
 /**
  * A space's settings, an editor's (docs/tech/knowledge.md, "Rules"): its
  * name, who reads it (the whole team, or chosen members) and who edits it
- * besides its creator and the team's admins, who always do; and deleting it
- * with everything in it.
+ * besides its creator and the team's admins, who always do; the folder its
+ * templates are in, whose documents a new document may start from; and
+ * deleting it with everything in it.
  */
 
 import { Check, Search, Trash2, Users, UsersRound, X } from 'lucide-react';
@@ -15,8 +16,9 @@ import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { api, type Schemas, type Team } from '@/lib/api';
-import type { KnowledgeSpace } from '@/lib/knowledge-tree';
+import { folderPaths, type KnowledgeSpace } from '@/lib/knowledge-tree';
 import { cn } from '@/lib/utils';
 
 type Access = Schemas['KnowledgeAccess'];
@@ -32,6 +34,7 @@ export function SpaceSettingsDialog({ team, space, onClose, onChanged, onDeleted
   const word = useTeamError();
   const base = `teams/${encodeURIComponent(team.id)}/knowledge/spaces/${encodeURIComponent(space.id)}`;
   const [name, setName] = useState(space.name);
+  const [templates, setTemplates] = useState(space.templatesFolderId);
   const [access, setAccess] = useState<Access | null>(null);
   const [loadFailed, setLoadFailed] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -58,7 +61,11 @@ export function SpaceSettingsDialog({ team, space, onClose, onChanged, onDeleted
     setBusy(true);
     setFailed(null);
     try {
-      if (name.trim() !== space.name) await api(base, { method: 'PATCH', body: { name: name.trim() } });
+      const patch = {
+        ...(name.trim() !== space.name ? { name: name.trim() } : {}),
+        ...(templates !== space.templatesFolderId ? { templatesFolderId: templates } : {}),
+      };
+      if (Object.keys(patch).length > 0) await api(base, { method: 'PATCH', body: patch });
       await api(`${base}/access`, { method: 'PUT', body: access.reading === 'team' ? { ...access, readers: [] } : access });
       toast.success(t('saved'));
       onChanged();
@@ -99,6 +106,16 @@ export function SpaceSettingsDialog({ team, space, onClose, onChanged, onDeleted
         </DialogHeader>
         <Field id="space-name" label={t('name')}>
           <Input id="space-name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
+        </Field>
+        <Field id="space-templates" label={t('templates')} hint={t('templatesNote')}>
+          <Select
+            id="space-templates"
+            label={t('templates')}
+            value={templates}
+            options={[{ value: '', label: t('noTemplates') }, ...folderPaths(space).map((f) => ({ value: f.id, label: f.path.join(' / ') }))]}
+            change={setTemplates}
+            className="w-full"
+          />
         </Field>
         {loadFailed ? (
           <p role="alert" className="text-sm text-destructive">{loadFailed}</p>

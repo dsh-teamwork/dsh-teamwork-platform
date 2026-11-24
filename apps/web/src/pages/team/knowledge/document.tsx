@@ -16,6 +16,10 @@
  * and puts `![[name]]` (an image) or `[[name]]` at the cursor. Every version,
  * the current one or an old one, draws its embeds from the document's
  * attachments, listed under the text with which ones it names.
+ *
+ * Its properties are a row under the title, and a form while editing that
+ * rewrites the front matter the save carries; the documents linking to it
+ * are listed at its foot.
  */
 
 import { ArrowLeft, Copy, FolderInput, History, Pencil, Trash2, Type } from 'lucide-react';
@@ -34,11 +38,13 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api, ApiError, type Schemas, type Team } from '@/lib/api';
 import { attachmentUrl, isAttachmentName, isImageName, parseWikiTarget, planSave, splitFrontMatter } from '@/lib/knowledge-format';
+import { readProperties, writeProperties } from '@/lib/knowledge-properties';
 import { findDocument, folderPaths, resolveWikiLink, type KnowledgeTree } from '@/lib/knowledge-tree';
 import { useApi } from '@/lib/use-api';
 
 import { AttachButton, AttachmentList, shownInline, useAttach, useFileSize, type Attachment } from './attachments';
 import { CompareView, HistoryList, SourceBadge } from './history';
+import { PropertiesForm, PropertiesRow } from './properties';
 import { ActionMenu, NameDialog, personName } from './shared';
 
 type Doc = Schemas['KnowledgeDocument'];
@@ -94,7 +100,10 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
     },
     [tree, spaceId, documentId, page],
   );
-  const body = useMemo(() => (doc ? splitFrontMatter(doc.text).body : ''), [doc]);
+  const { body, properties } = useMemo(() => {
+    const split = splitFrontMatter(doc?.text ?? '');
+    return { body: split.body, properties: readProperties(split.frontMatter) };
+  }, [doc]);
 
   // The document's files: what it was read with, and what this page uploaded since. A ref as well, so a link
   // inserted right after its upload already draws the file.
@@ -334,7 +343,15 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
         )}
       </header>
 
+      {!editing && !showHistory && !compare && properties && <PropertiesRow team={team} properties={properties} />}
       {editing && !doc.canEdit && <p className="rounded-lg border px-4 py-3 text-sm text-muted-foreground">{t('readerEditing')}</p>}
+      {editing && (
+        <PropertiesForm
+          team={team}
+          properties={readProperties(editing.frontMatter)}
+          onChange={(next) => setEditing((e) => (e ? { ...e, frontMatter: writeProperties(e.frontMatter, next) } : e))}
+        />
+      )}
       {editing?.conflict && (
         <div role="alert" className="flex flex-col gap-3 rounded-lg border border-l-[3px] border-l-signal px-4 py-3 text-sm">
           <p>
@@ -397,6 +414,7 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
         />
       )}
       {!showHistory && !compare && <DocumentAttachments teamId={team.id} documentId={documentId} files={files} linked={linked} editing={!!editing} />}
+      {!editing && !showHistory && !compare && <Backlinks tree={tree} page={page} links={doc.backlinks} />}
       {attachDialog}
 
       {asking === 'note' && editing && (
@@ -509,5 +527,25 @@ function DocumentAttachments({ teamId, documentId, files, linked, editing }: { t
     <AttachmentList teamId={teamId} documentId={documentId} title={t('title')} rows={rows}>
       {editing && <p className="text-xs text-muted-foreground">{t('editingNote')}</p>}
     </AttachmentList>
+  );
+}
+
+/** The documents linking here, each with its space, or nothing when none does. */
+function Backlinks({ tree, page, links }: { tree: KnowledgeTree; page: string; links: Doc['backlinks'] }) {
+  const t = useTranslations('team.knowledge.document');
+  if (links.length === 0) return null;
+  const spaces = new Map(tree.spaces.map((s) => [s.id, s.name]));
+  return (
+    <section className="flex flex-col gap-2 border-t pt-4">
+      <h2 className="text-sm font-medium">{t('backlinks', { n: links.length })}</h2>
+      <ul className="flex flex-col gap-1 text-sm">
+        {links.map((link) => (
+          <li key={link.id}>
+            <Link to={`${page}/${link.id}`} className="underline-offset-4 hover:underline">{link.title}</Link>
+            <span className="text-muted-foreground"> · {spaces.get(link.spaceId) ?? ''}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

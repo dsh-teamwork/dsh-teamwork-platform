@@ -1523,7 +1523,10 @@
         "delete": "Delete space",
         "deleteConfirm": "Delete \"{name}\" with its {documents, plural, one {# document} other {# documents}}, every version and every proposal? This cannot be undone.",
         "deleted": "Deleted {name}",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "templates": "Templates folder",
+        "noTemplates": "No templates",
+        "templatesNote": "A new document in any space may start from a document in this folder."
       },
       "history": {
         "title": "History",
@@ -1588,7 +1591,8 @@
         "restoreConfirm": "Restore version {n}? It is copied as a new version; nothing is lost.",
         "restored": "Version {n} restored",
         "toCurrent": "Read the current version",
-        "backToHistory": "Back to history"
+        "backToHistory": "Back to history",
+        "backlinks": "Linked from {n, plural, one {# document} other {# documents}}"
       },
       "proposals": {
         "title": "Proposals",
@@ -1671,6 +1675,21 @@
           "divider": "Divider",
           "attach": "Image or file"
         }
+      },
+      "template": "Start from",
+      "templateHint": "'{{title}}' and '{{date}}' in a template become the new title and today's date.",
+      "blank": "A blank document",
+      "properties": {
+        "title": "Properties",
+        "owner": "Owner",
+        "noOwner": "No owner",
+        "status": "Status",
+        "statusPlaceholder": "Draft, current, outdated…",
+        "tags": "Tags",
+        "tagsHint": "Separated by commas.",
+        "summary": "Summary",
+        "summaryPlaceholder": "One line an agent reads before the text",
+        "unreadable": "This document's front matter is not a list of properties, so it is kept exactly as written."
       }
     }
   },

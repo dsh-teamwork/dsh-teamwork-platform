@@ -163,7 +163,7 @@ export function SlashMenu({ items, active, top, left, onPick, onHover }: {
       role="listbox"
       aria-label={t('label')}
       style={{ top: top + 4, left }}
-      className="fixed z-50 flex max-h-72 w-56 flex-col overflow-y-auto rounded-lg border bg-popover p-1 text-sm text-popover-foreground shadow-md"
+      className="fixed z-50 flex max-h-72 w-56 flex-col overflow-y-auto rounded-lg border bg-card p-1 text-sm text-card-foreground shadow-lg"
       // The editor keeps the focus, so typing still narrows the list.
       onMouseDown={(event) => event.preventDefault()}
     >

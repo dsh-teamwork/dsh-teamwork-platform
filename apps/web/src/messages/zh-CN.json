@@ -1523,7 +1523,10 @@
         "delete": "删除空间",
         "deleteConfirm": "删除「{name}」及其中的 {documents} 篇文档、所有版本和修改提议？此操作无法撤销。",
         "deleted": "已删除 {name}",
-        "cancel": "取消"
+        "cancel": "取消",
+        "templates": "模板文件夹",
+        "noTemplates": "不使用模板",
+        "templatesNote": "任何空间中的新文档都可以从此文件夹中的文档开始。"
       },
       "history": {
         "title": "历史版本",
@@ -1588,7 +1591,8 @@
         "restoreConfirm": "恢复版本 {n}？它会被复制为一个新版本，不会丢失任何内容。",
         "restored": "已恢复版本 {n}",
         "toCurrent": "查看当前版本",
-        "backToHistory": "返回历史版本"
+        "backToHistory": "返回历史版本",
+        "backlinks": "被 {n} 篇文档引用"
       },
       "proposals": {
         "title": "修改提议",
@@ -1671,6 +1675,21 @@
           "divider": "分割线",
           "attach": "图片或文件"
         }
+      },
+      "template": "从模板开始",
+      "templateHint": "模板中的 '{{title}}' 和 '{{date}}' 会替换为新标题和今天的日期。",
+      "blank": "空白文档",
+      "properties": {
+        "title": "属性",
+        "owner": "负责人",
+        "noOwner": "无负责人",
+        "status": "状态",
+        "statusPlaceholder": "草稿、生效、已过时……",
+        "tags": "标签",
+        "tagsHint": "用逗号分隔。",
+        "summary": "摘要",
+        "summaryPlaceholder": "智能体读正文前先读的一句话",
+        "unreadable": "此文档的前置信息不是属性列表，将按原样保留。"
       }
     }
   },

@@ -2,8 +2,8 @@
  * The knowledge page's first column: the spaces the reader reads, each with
  * its folders nested and its documents, found by title; the proposals
  * waiting on the reader; and, for an editor, making and naming what is in a
- * space. The team's admin alone makes a space (docs/tech/knowledge.md,
- * "Rules").
+ * space, a new document from a template when a space has a templates folder.
+ * The team's admin alone makes a space (docs/tech/knowledge.md, "Rules").
  */
 
 import { ChevronRight, FilePlus, FileText, Folder, FolderPlus, GitPullRequestArrow, Lock, Pencil, Plus, Search, Settings, Trash2 } from 'lucide-react';
@@ -12,10 +12,13 @@ import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
 
+import { Field } from '@/components/team/field';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { api, type Schemas, type Team } from '@/lib/api';
+import { fillTemplate } from '@/lib/knowledge-format';
 import { nestSpace, type FolderNode, type KnowledgeDocumentSummary, type KnowledgeSpace, type KnowledgeTree } from '@/lib/knowledge-tree';
 import { cn } from '@/lib/utils';
 
@@ -221,16 +224,14 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
         />
       )}
       {naming?.kind === 'document' && (
-        <NameDialog
-          title={t('newDocumentTitle', { space: naming.space.name })}
-          description={t('newDocumentNote')}
-          label={t('documentTitle')}
-          max={120}
-          action={t('create')}
+        <NewDocumentDialog
+          spaces={tree?.spaces ?? []}
+          space={naming.space}
           onClose={() => setNaming(null)}
-          submit={async (title) => {
+          submit={async (title, template) => {
+            const text = template ? fillTemplate((await api<Schemas['KnowledgeDocument']>(`${base}/documents/${encodeURIComponent(template)}`)).text, title, new Date()) : `# ${title}\n`;
             const created = await api<Schemas['KnowledgeDocument']>(`${base}/documents`, {
-              body: { spaceId: naming.space.id, folderId: naming.folderId, title, text: `# ${title}\n` },
+              body: { spaceId: naming.space.id, folderId: naming.folderId, title, text },
             });
             await reload();
             // A new document opens ready to write in.
@@ -251,5 +252,40 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
         />
       )}
     </aside>
+  );
+}
+
+/**
+ * Names a new document, and, when any space the reader sees has a templates
+ * folder, which of its documents to start from: the new space's own first,
+ * then the others', by space.
+ */
+function NewDocumentDialog({ spaces, space, submit, onClose }: {
+  spaces: KnowledgeSpace[];
+  space: KnowledgeSpace;
+  submit: (title: string, template: string) => Promise<unknown>;
+  onClose: () => void;
+}) {
+  const t = useTranslations('team.knowledge');
+  const [template, setTemplate] = useState('');
+  const templates = [space, ...spaces.filter((s) => s.id !== space.id)]
+    .filter((s) => s.templatesFolderId)
+    .flatMap((s) => s.documents.filter((d) => d.folderId === s.templatesFolderId).map((d) => ({ value: d.id, label: s.id === space.id ? d.title : `${s.name} / ${d.title}` })));
+  return (
+    <NameDialog
+      title={t('newDocumentTitle', { space: space.name })}
+      description={t('newDocumentNote')}
+      label={t('documentTitle')}
+      max={120}
+      action={t('create')}
+      onClose={onClose}
+      submit={(title) => submit(title, template)}
+    >
+      {templates.length > 0 && (
+        <Field id="knowledge-template" label={t('template')} hint={t('templateHint')}>
+          <Select id="knowledge-template" label={t('template')} value={template} options={[{ value: '', label: t('blank') }, ...templates]} change={setTemplate} className="w-full" />
+        </Field>
+      )}
+    </NameDialog>
   );
 }

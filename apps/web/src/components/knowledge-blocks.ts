@@ -280,10 +280,10 @@ export const calloutInputRule = $inputRule((ctx) => new InputRule(/^\[!([A-Za-z]
   return tr.setSelection(TextSelection.create(tr.doc, from + 2));
 }));
 
-/** An empty callout of a kind in place of the empty paragraph the cursor is in, its title ready to type. */
+/** An empty callout of a kind in place of the empty paragraph the cursor is in, its title ready to type; Enter in the title starts its body. */
 export function insertCallout(view: EditorView, ctx: Ctx, kind = 'note') {
   const { $from } = view.state.selection;
-  const callout = calloutNode.type(ctx).create({ kind, fold: '' }, [calloutTitleNode.type(ctx).create(), paragraphSchema.type(ctx).create()]);
+  const callout = calloutNode.type(ctx).create({ kind, fold: '' }, [calloutTitleNode.type(ctx).create()]);
   const from = $from.before();
   const tr = view.state.tr.replaceWith(from, $from.after(), callout);
   view.dispatch(tr.setSelection(TextSelection.create(tr.doc, from + 2)).scrollIntoView());
