@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Current — the `markdown` kind is still to be removed (ADR 0068), and the sandbox to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-24
+> **Status:** Current — to be renamed artifacts (ADR 0069) and the `markdown` kind removed (ADR 0068), and the sandbox to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-24
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -79,9 +79,11 @@ the hosted one:
   every mention of it below; formatted text is
   [knowledge](knowledge.md)'s. The console calls it a page in both languages
   ("Pages"; in Chinese "shared pages", the entry's purpose), and so does the
-  code. "Artifact" already names plugin archives here
-  (`server/internal/artifactstore`, `/api/teams/{teamId}/artifacts`, which
-  installed plugins call), so pages never use it.
+  code. [ADR 0069](../adr/0069-pages-become-artifacts.md) renames pages
+  artifacts, in code and in the console's English, once plugin archives,
+  which hold "artifact" today (`server/internal/artifactstore`,
+  `/api/teams/{teamId}/artifacts`), become packages; this document becomes
+  `artifacts.md` with that change.
 - **Version**: an immutable set of files, numbered from 1, with its author,
   the session it came from and a one-line note.
 - **Sharing**: one of three, set on the page by a person:

@@ -6,7 +6,8 @@ Where a team keeps what its business knows, as documents people and agents
 maintain together: Markdown in a tree of folders, owned by the team and
 readable by it, read by every member's agent as context with its sources
 cited, and changed by an agent only as a proposal a person accepts. It is a
-module of its own beside [pages](pages.md), which are for showing work
+module of its own beside [pages](pages.md) (to be named artifacts, ADR
+0069), which are for showing work
 ([ADR 0068](../adr/0068-knowledge-is-its-own-module.md)). The first version
 holds only what is certain and what nearly every team would use; everything
 else waits for real use to ask for it.
@@ -51,8 +52,12 @@ The names below are the code's as well as the docs', in every repository.
   and editors). A team has any number; what is below a space follows it.
 - **Folder**: any folder inside a space, for order only; it carries no
   access of its own.
-- **Document**: one Markdown file with a title, in a space or a folder. Never
-  "doc", "note" or "page" in code: "page" is [pages](pages.md)'.
+- **Document**: one Markdown file with a title, in a space or a folder.
+  Always "document" in code, never "doc", "note" or "page"
+  ([ADR 0069](../adr/0069-pages-become-artifacts.md)). To people and agents
+  both words work: the plugin's tool descriptions and the preset context say
+  "documents (pages)", so an agent asked for the team's page on a subject
+  looks in knowledge.
 - **Version**: an immutable copy of a document's text and attachments,
   numbered from 1, with its author, a one-line note, and where it came from
   (the console, or an agent's session).
