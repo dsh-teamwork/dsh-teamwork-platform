@@ -1,6 +1,6 @@
 # Team assistant and shared resources
 
-> **Status:** Current · **Updated:** 2026-11-20
+> **Status:** Current · **Updated:** 2026-11-24
 
 New teams receive a Teamwork assistant. Members submit presets and private
 plugin packages, administrators approve their exact contents, and every

@@ -1,6 +1,6 @@
 # Self-hosting the community server
 
-> **Status:** Current · **Updated:** 2026-11-19
+> **Status:** Current · **Updated:** 2026-11-24
 
 Run a community instance, connect a member's DSH, and retain the database,
 private plugin bytes and secrets across upgrades.
