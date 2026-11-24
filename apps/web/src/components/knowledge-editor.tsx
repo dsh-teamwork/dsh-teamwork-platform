@@ -10,10 +10,13 @@
  * extension); both are the same node with an `embed` flag, so each is written
  * back exactly as typed. A file pasted or dropped while editing goes to the
  * page, which uploads it and inserts its link at the cursor. Lists are
- * written with `-`, as most hand-written Markdown is. Callouts and diagrams
- * are components/knowledge-blocks.ts, and typing `/` on an empty line opens
- * the block menu (components/knowledge-slash.tsx). Milkdown loads with the
- * knowledge page only, never in the console's main bundle.
+ * written with `-`, as most hand-written Markdown is. Callouts, diagrams and
+ * mentions are components/knowledge-blocks.ts; typing `/` on an empty line
+ * opens the block menu and `@` the members (components/knowledge-slash.tsx).
+ * `![[artifact:{id}]]` embeds an artifact's card. While reading, comments
+ * mark the words they quote (components/knowledge-comments.ts), and words
+ * selected are offered to comment on. Milkdown loads with the knowledge page
+ * only, never in the console's main bundle.
  */
 
 import '@milkdown/kit/prose/view/style/prosemirror.css';
@@ -30,11 +33,26 @@ import { $inputRule, $node, $prose, $remark, $view, getMarkdown } from '@milkdow
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
-import { headingSlug, isAttachmentName, isImageName, knownCalloutKind, parseWikiTarget, WIKILINK } from '@/lib/knowledge-format';
+import { ARTIFACT_EMBED, headingSlug, isAttachmentName, isImageName, knownCalloutKind, parseWikiTarget, WIKILINK } from '@/lib/knowledge-format';
 import { cn } from '@/lib/utils';
 
-import { calloutInputRule, calloutNode, calloutTitleNode, calloutView, codeBlockView, remarkCallout, stringifyCallout, type BlockWords } from './knowledge-blocks';
-import { runSlash, slashItems, SlashMenu, slashPlugin, type SlashItemId, type SlashOpen } from './knowledge-slash';
+import {
+  calloutInputRule,
+  calloutNode,
+  calloutTitleNode,
+  calloutView,
+  codeBlockView,
+  mentionNode,
+  mentionView,
+  remarkCallout,
+  remarkMention,
+  stringifyCallout,
+  stringifyMention,
+  type BlockWords,
+  type MemberResolver,
+} from './knowledge-blocks';
+import { commentsPlugin, refreshComments, selectedQuote, type CommentMark, type Quote } from './knowledge-comments';
+import { insertMention, mentionItems, runSlash, slashItems, SlashMenu, slashPlugin, type Mentionable, type SlashItemId, type SlashOpen } from './knowledge-slash';
 
 /** Where a `[[link]]` goes: a console path, or null for a title no document has (a broken link). */
 export type WikiResolver = (raw: string) => string | null;
@@ -47,6 +65,9 @@ export type AttachmentResolver = (name: string) => {
   /** Its size, worded for the reader. */
   size: string;
 } | null;
+
+/** An artifact a document embeds, `![[artifact:{id}]]`, as its card shows it: where it opens, its title, and a line under it, all worded by the page. */
+export type ArtifactResolver = (id: string) => { href: string; title: string; note: string; missing: boolean };
 
 interface MdNode {
   type: string;
@@ -86,10 +107,19 @@ function splitWikiLinks(node: MdNode) {
 const remarkWikiLink = $remark('remarkWikiLink', () => () => (tree: unknown) => splitWikiLinks(tree as MdNode));
 
 /** What a link draws as. Which element it is depends on its text alone (an image embed is a span, the rest links), so a redraw keeps the element. */
-function drawWikiLink(raw: string, embed: boolean, resolve: WikiResolver, attachment: AttachmentResolver): DOMOutputSpec {
+function drawWikiLink(raw: string, embed: boolean, { resolve, attachment, artifact }: Resolvers): DOMOutputSpec {
   const { title, label } = parseWikiTarget(raw);
   const shown = label || raw;
   const own = { 'data-wikilink': raw, ...(embed ? { 'data-embed': 'true' } : {}) };
+  if (title.startsWith(ARTIFACT_EMBED)) {
+    const card = artifact(title.slice(ARTIFACT_EMBED.length));
+    return [
+      'a',
+      { ...own, href: card.missing ? '#' : card.href, class: card.missing ? 'knowledge-artifact knowledge-artifact-missing' : 'knowledge-artifact' },
+      ['span', { class: 'knowledge-artifact-title' }, card.title],
+      ['span', { class: 'knowledge-artifact-note' }, card.note],
+    ];
+  }
   if (isAttachmentName(title)) {
     const file = attachment(title);
     if (embed && isImageName(title)) {
@@ -112,6 +142,7 @@ function drawWikiLink(raw: string, embed: boolean, resolve: WikiResolver, attach
 interface Resolvers {
   resolve: WikiResolver;
   attachment: AttachmentResolver;
+  artifact: ArtifactResolver;
 }
 
 /** The node, with where each link goes read through `resolvers` as it is drawn. */
@@ -122,7 +153,7 @@ function wikiLinkNode(resolvers: { current: Resolvers }) {
     atom: true,
     attrs: { target: { default: '' }, embed: { default: false } },
     parseDOM: [{ tag: '[data-wikilink]', getAttrs: (dom) => ({ target: (dom as HTMLElement).getAttribute('data-wikilink') ?? '', embed: (dom as HTMLElement).hasAttribute('data-embed') }) }],
-    toDOM: (node) => drawWikiLink(String(node.attrs.target), node.attrs.embed === true, resolvers.current.resolve, resolvers.current.attachment),
+    toDOM: (node) => drawWikiLink(String(node.attrs.target), node.attrs.embed === true, resolvers.current),
     parseMarkdown: {
       match: (node) => node.type === 'wikiLink',
       runner: (state, node, type) => {
@@ -146,7 +177,7 @@ function wikiLinkNode(resolvers: { current: Resolvers }) {
  */
 function wikiLinkView(node: ReturnType<typeof wikiLinkNode>, resolvers: { current: Resolvers }, views: Set<() => void>) {
   return $view(node, () => (pmNode) => {
-    const draw = () => DOMSerializer.renderSpec(document, drawWikiLink(String(pmNode.attrs.target), pmNode.attrs.embed === true, resolvers.current.resolve, resolvers.current.attachment)).dom as HTMLElement;
+    const draw = () => DOMSerializer.renderSpec(document, drawWikiLink(String(pmNode.attrs.target), pmNode.attrs.embed === true, resolvers.current)).dom as HTMLElement;
     const dom = draw();
     const redraw = () => {
       const fresh = draw();
@@ -169,6 +200,9 @@ function linkTargets(doc: ProseNode): string[] {
   });
   return [...targets];
 }
+
+const noArtifact: ArtifactResolver = (id) => ({ href: '#', title: id, note: '', missing: true });
+const noMember: MemberResolver = () => null;
 
 export interface KnowledgeEditorHandle {
   /** The body as Markdown, as it would be saved now. */
@@ -195,15 +229,35 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
   onFiles?: (files: File[], pasted: boolean) => void;
   /** Asks for files to attach where the cursor is, from the block menu; without it the menu offers none. */
   onAttach?: () => void;
+  /** What an embedded artifact's card shows; without it, every one is a card that opens nothing. */
+  artifact?: ArtifactResolver;
+  /** Asks for an artifact to embed where the cursor is; without it the block menu offers none. */
+  onArtifact?: () => void;
+  /** The members `@` offers to mention, and who a mention is now. */
+  members?: Mentionable[];
+  member?: MemberResolver;
+  /** The threads to mark while reading, and the one open beside the text. */
+  comments?: CommentMark[];
+  activeComment?: string;
+  /** Which threads' words this text holds, as it opens and whenever that changes. */
+  onCommentsPlaced?: (ids: string[]) => void;
+  /** A marked thread was clicked. */
+  onCommentClick?: (id: string) => void;
+  /** Words selected while reading, to comment on, or null once none are. */
+  onQuote?: (quote: Quote | null) => void;
   className?: string;
   label?: string;
-}>(function KnowledgeEditor({ body, readOnly, resolve, attachment, onNavigate, onReady, onLinks, onFiles, onAttach, className, label }, ref) {
+}>(function KnowledgeEditor({ body, readOnly, resolve, attachment, onNavigate, onReady, onLinks, onFiles, onAttach, artifact = noArtifact, onArtifact, members = [], member = noMember, comments = [], activeComment = '', onCommentsPlaced, onCommentClick, onQuote, className, label }, ref) {
   const t = useTranslations('team.knowledge.editor');
   const root = useRef<HTMLDivElement>(null);
   const editor = useRef<Editor | null>(null);
   const linkNode = useRef<ReturnType<typeof wikiLinkNode> | null>(null);
   const views = useRef(new Set<() => void>());
-  const resolvers = useRef<Resolvers>({ resolve, attachment });
+  const resolvers = useRef<Resolvers>({ resolve, attachment, artifact });
+  const memberOf = useRef(member);
+  const marks = useRef({ comments, active: activeComment });
+  const placed = useRef(onCommentsPlaced);
+  const chooseArtifact = useRef(onArtifact);
   const navigate = useRef(onNavigate);
   const ready = useRef(onReady);
   const links = useRef(onLinks);
@@ -222,7 +276,10 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
   });
   const words = useRef<BlockWords>(blockWords());
   useEffect(() => {
-    resolvers.current = { resolve, attachment };
+    resolvers.current = { resolve, attachment, artifact };
+    memberOf.current = member;
+    placed.current = onCommentsPlaced;
+    chooseArtifact.current = onArtifact;
     navigate.current = onNavigate;
     ready.current = onReady;
     links.current = onLinks;
@@ -231,18 +288,26 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
     words.current = blockWords();
   });
 
-  // The block menu: where it is open, which item is chosen, and which `/` was dismissed with Escape.
+  // The menus: where one is open, which item is chosen, and which `/` or `@` was dismissed with Escape.
   const [slash, setSlash] = useState<SlashOpen | null>(null);
   const [active, setActive] = useState(0);
   const dismissed = useRef(-1);
   const shownSlash = useRef<SlashOpen | null>(null);
   const slashName = (id: SlashItemId) => t(`slash.${id}`);
-  const items = slash ? slashItems(slash.query, slashName, !!onAttach) : [];
+  const blocks = slash?.kind === 'block' ? slashItems(slash.query, slashName, { attach: !!onAttach, artifact: !!onArtifact }) : [];
+  const people = slash?.kind === 'mention' ? mentionItems(slash.query, members) : [];
+  const items = slash?.kind === 'mention' ? people.map((m) => ({ key: m.id, label: m.name })) : blocks.map((id) => ({ key: id, label: slashName(id) }));
   const menu = useRef({ slash, items, active });
-  const pick = (id: SlashItemId) => {
+  const pick = (index: number) => {
     const open = menu.current.slash;
     if (!open) return;
-    editor.current?.action((ctx) => runSlash(ctx, open, id, () => attachFiles.current?.()));
+    if (open.kind === 'mention') {
+      const chosen = people[index];
+      if (chosen) editor.current?.action((ctx) => insertMention(ctx, open, chosen));
+    } else {
+      const id = blocks[index];
+      if (id) editor.current?.action((ctx) => runSlash(ctx, open, id, () => attachFiles.current?.(), () => chooseArtifact.current?.()));
+    }
     setSlash(null);
   };
   const slashKeys = useRef<(event: KeyboardEvent) => boolean>(() => false);
@@ -261,7 +326,7 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
       return true;
     }
     if (event.key === 'Enter' || event.key === 'Tab') {
-      pick(shown[Math.min(at, shown.length - 1)]);
+      pick(Math.min(at, shown.length - 1));
       return true;
     }
     return false;
@@ -283,10 +348,32 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
       });
     },
     redraw: () => {
-      resolvers.current = { resolve, attachment };
+      resolvers.current = { resolve, attachment, artifact };
       for (const draw of views.current) draw();
     },
-  }), [body, resolve, attachment]);
+  }), [body, resolve, attachment, artifact]);
+
+  // The threads are marked again when they, or the one open, change.
+  const commentKey = `${activeComment}\n${comments.map((c) => `${c.id}\t${c.quote}`).join('\n')}`;
+  useEffect(() => {
+    marks.current = { comments, active: activeComment };
+    editor.current?.action((ctx) => refreshComments(ctx.get(editorViewCtx)));
+    // commentKey says everything the marks depend on.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commentKey]);
+
+  // Words selected while reading are offered to comment on.
+  const quoted = useRef(onQuote);
+  useEffect(() => {
+    quoted.current = onQuote;
+  });
+  useEffect(() => {
+    const host = root.current;
+    if (!readOnly || !host || !onQuote) return;
+    const changed = () => quoted.current?.(selectedQuote(host));
+    document.addEventListener('selectionchange', changed);
+    return () => document.removeEventListener('selectionchange', changed);
+  }, [readOnly, onQuote]);
 
   // One editor for one body and mode: switching between reading and editing makes a new one, so what is
   // shown is always the text as loaded.
@@ -356,6 +443,7 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
             ...options.handlers,
             wikiLink: (node: MdNode) => `${node.embed ? '!' : ''}[[${node.target ?? ''}]]`,
             callout: stringifyCallout as never,
+            mention: stringifyMention as never,
           },
         }));
       })
@@ -363,6 +451,10 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
       .use(gfm)
       .use(history)
       .use(remarkCallout)
+      .use(remarkMention)
+      .use(mentionNode)
+      .use(mentionView(memberOf))
+      .use(commentsPlugin(marks, placed))
       .use(calloutTitleNode)
       .use(calloutNode)
       .use(calloutView(words))
@@ -396,6 +488,8 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
   // A link inside the console opens without a reload; one to another site, or to a file shown in the browser,
   // opens beside it, and any other file downloads. While editing, a click places the cursor instead.
   function click(event: React.MouseEvent) {
+    const mark = (event.target as Element).closest('[data-comment]');
+    if (mark && readOnly) onCommentClick?.(mark.getAttribute('data-comment') ?? '');
     const link = (event.target as Element).closest('a[href]');
     if (!link || !readOnly) {
       if (link) event.preventDefault();
@@ -415,7 +509,18 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
   return (
     <>
       <div ref={root} onClick={click} className={cn('knowledge-editor', !readOnly && 'knowledge-editing', className)} />
-      {slash && <SlashMenu items={items} active={active} top={slash.top} left={slash.left} onPick={pick} onHover={setActive} />}
+      {slash && (
+        <SlashMenu
+          label={slash.kind === 'mention' ? t('mention.label') : t('slash.label')}
+          empty={slash.kind === 'mention' ? t('mention.empty') : t('slash.empty')}
+          items={items}
+          active={active}
+          top={slash.top}
+          left={slash.left}
+          onPick={pick}
+          onHover={setActive}
+        />
+      )}
     </>
   );
 });

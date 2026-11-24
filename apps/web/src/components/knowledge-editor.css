@@ -346,3 +346,76 @@
     padding-inline-end: 0;
   }
 }
+
+/*
+ * A mention: the member's name on a faint brand ground, the reader's own a
+ * little stronger, one who has left the team struck through. An embedded
+ * artifact is a card with lucide's layout icon, its title and kind; one the
+ * reader cannot open is dashed. The words a comment quotes are underlined in
+ * amber, the open thread's on a faint amber ground.
+ */
+.knowledge-document .knowledge-mention {
+  padding: 0 0.2em;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--brand) 9%, transparent);
+  color: var(--foreground);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.knowledge-document .knowledge-mention.is-me {
+  background: color-mix(in oklch, var(--brand) 20%, transparent);
+}
+.knowledge-document .knowledge-mention.is-gone {
+  color: var(--muted-foreground);
+  text-decoration: line-through;
+}
+.knowledge-document a.knowledge-artifact {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.2em 0.6em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  text-decoration: none;
+}
+.knowledge-document a.knowledge-artifact[data-embed] {
+  display: flex;
+  width: 100%;
+  padding: 0.75rem 1rem;
+}
+.knowledge-document a.knowledge-artifact::before {
+  content: '';
+  flex: none;
+  align-self: center;
+  width: 1.1em;
+  height: 1.1em;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Cpath d='M3 9h18'/%3E%3Cpath d='M9 21V9'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.knowledge-document a.knowledge-artifact:hover {
+  background: var(--accent);
+}
+.knowledge-document .knowledge-artifact-title {
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.knowledge-document .knowledge-artifact-note {
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.knowledge-document a.knowledge-artifact-missing {
+  border-style: dashed;
+  color: var(--muted-foreground);
+}
+.knowledge-document .knowledge-comment-mark {
+  text-decoration: underline 2px;
+  text-decoration-color: var(--signal);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.knowledge-document .knowledge-comment-mark.is-active {
+  background: color-mix(in oklch, var(--signal) 22%, transparent);
+}

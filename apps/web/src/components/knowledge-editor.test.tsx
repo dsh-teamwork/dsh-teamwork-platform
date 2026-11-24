@@ -8,7 +8,7 @@ import { joinFrontMatter, splitFrontMatter } from '@/lib/knowledge-format';
 import messages from '@/messages/en.json';
 
 import { KnowledgeEditor, type KnowledgeEditorHandle } from './knowledge-editor';
-import { slashItems } from './knowledge-slash';
+import { mentionItems, slashItems } from './knowledge-slash';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 // jsdom lays nothing out; ProseMirror measures the cursor to scroll it into view after an insert.
@@ -105,8 +105,16 @@ afterEach(() => {
   host = null;
 });
 
+/** Working together's syntax (docs/tech/knowledge.md, "Format"), written as the editor writes it. */
+const TOGETHER = `Ask @[ada@example.com](user1) or @[Bo](u2gone), not <me@example.com>.
+
+![[artifact:a1]]
+
+See the [[artifact:a2|report]] and [a link](https://example.com).
+`;
+
 /** Opens `body` in the editor and answers what it would save with no edit. */
-async function open(body: string, readOnly = false): Promise<{ normalised: string; handle: KnowledgeEditorHandle; html: string }> {
+async function open(body: string, readOnly = false, extra: Record<string, unknown> = {}): Promise<{ normalised: string; handle: KnowledgeEditorHandle; html: string }> {
   host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
@@ -120,7 +128,8 @@ async function open(body: string, readOnly = false): Promise<{ normalised: strin
       resolve: (raw) => (raw.startsWith('Pricing') ? '/teams/t/knowledge/doc1' : null),
       attachment: (name) => (FILES.includes(name) ? { href: `/files/${encodeURIComponent(name)}`, inline: !name.endsWith('.csv'), size: '12 KB' } : null),
       onNavigate: () => undefined,
-      onReady: (text) => {
+      ...extra,
+      onReady: (text: string) => {
         normalised = text;
       },
     }) }));
@@ -158,13 +167,46 @@ describe('the knowledge editor', () => {
     expect(html).toContain('<option value="-">Foldable, folded</option>');
   });
 
+  it('saves mentions and embedded artifacts as written', async () => {
+    const { normalised } = await open(TOGETHER);
+    expect(normalised).toBe(TOGETHER);
+  });
+
+  it('shows a mention as the team names the member now, and an artifact as its card', async () => {
+    const { html } = await open(TOGETHER, true, {
+      member: (id: string) => (id === 'user1' ? { name: 'Ada Lovelace', me: true } : null),
+      artifact: (id: string) => (id === 'a1' ? { href: '/teams/t/artifacts/a1', title: 'Latency report', note: 'HTML', missing: false } : { href: '#', title: 'An artifact you cannot open', note: '', missing: true }),
+    });
+    expect(html).toContain('<span class="knowledge-mention is-me" data-mention="user1">@Ada Lovelace</span>');
+    expect(html).toContain('<span class="knowledge-mention is-gone" data-mention="u2gone">@Bo</span>');
+    expect(html).toMatch(/<a data-wikilink="artifact:a1" data-embed="true" href="\/teams\/t\/artifacts\/a1" class="knowledge-artifact"><span class="knowledge-artifact-title">Latency report<\/span><span class="knowledge-artifact-note">HTML<\/span><\/a>/);
+    expect(html).toContain('class="knowledge-artifact knowledge-artifact-missing"');
+  });
+
+  it('marks the words a thread quotes, within one block, and says which it placed', async () => {
+    let placed: string[] = [];
+    const { html } = await open('# Deploys\n\nNo deploys on **Friday** at all.\n', true, {
+      comments: [{ id: 'c1', quote: 'deploys on Friday' }, { id: 'c2', quote: 'words this version lacks' }],
+      activeComment: 'c1',
+      onCommentsPlaced: (ids: string[]) => {
+        placed = ids;
+      },
+    });
+    expect(placed).toEqual(['c1']);
+    expect(html).toContain('<span data-comment="c1" class="knowledge-comment-mark is-active">deploys on </span><strong><span data-comment="c1" class="knowledge-comment-mark is-active">Friday</span></strong>');
+  });
+
+  it('finds a member to mention by name', () => {
+    expect(mentionItems('ada', [{ id: 'user1', name: 'ada@example.com' }, { id: 'u2', name: 'bo@example.com' }])).toEqual([{ id: 'user1', name: 'ada@example.com' }]);
+  });
+
   it('narrows the block menu by either word, and offers files only with somewhere to put them', () => {
     // A name in the reader's language, here Chinese for callout.
     const name = (id: string) => (id === 'callout' ? '\u6807\u6ce8' : id);
-    expect(slashItems('mer', name, true)).toEqual(['diagram']);
-    expect(slashItems('\u6807\u6ce8', name, true)).toEqual(['callout']);
-    expect(slashItems('', name, false)).not.toContain('attach');
-    expect(slashItems('image', name, true)).toEqual(['attach']);
+    expect(slashItems('mer', name, { attach: true, artifact: true })).toEqual(['diagram']);
+    expect(slashItems('\u6807\u6ce8', name, { attach: true, artifact: true })).toEqual(['callout']);
+    expect(slashItems('', name, { attach: false, artifact: false })).not.toContain('attach');
+    expect(slashItems('image', name, { attach: true, artifact: false })).toEqual(['attach']);
   });
 
   it('saves a document in its own syntax unchanged', async () => {

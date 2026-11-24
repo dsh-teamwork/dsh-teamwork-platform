@@ -4,10 +4,13 @@
  * waiting on the reader; and, for an editor, making and naming what is in a
  * space, a new document from a template when a space has a templates folder.
  * The team's admin alone makes a space (docs/tech/knowledge.md, "Rules").
+ * The find box filters the tree by title and, a moment after typing stops,
+ * lists the documents whose text holds the words; Mentions lists those that
+ * name the reader; any folder opens as a table of its documents' properties.
  */
 
-import { ChevronRight, FilePlus, FileText, Folder, FolderPlus, GitPullRequestArrow, Lock, Pencil, Plus, Search, Settings, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { AtSign, ChevronRight, FilePlus, FileText, Folder, FolderPlus, GitPullRequestArrow, Lock, Pencil, Plus, Search, Settings, Table2, TextSearch, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
@@ -18,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api, type Schemas, type Team } from '@/lib/api';
-import { fillTemplate } from '@/lib/knowledge-format';
+import { fillTemplate, headingSlug, readableLine } from '@/lib/knowledge-format';
 import { nestSpace, type FolderNode, type KnowledgeDocumentSummary, type KnowledgeSpace, type KnowledgeTree } from '@/lib/knowledge-tree';
 import { cn } from '@/lib/utils';
 
@@ -32,14 +35,15 @@ type Naming =
   | { kind: 'document'; space: KnowledgeSpace; folderId: string }
   | { kind: 'renameFolder'; folder: Schemas['KnowledgeFolder'] };
 
-export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposalsOpen, pending }: {
+export function KnowledgeTreePanel({ team, tree, error, reload, openId, open, pending }: {
   team: Team;
   tree?: KnowledgeTree;
   error?: unknown;
   reload: () => Promise<unknown>;
   /** The open document. */
   openId: string;
-  proposalsOpen: boolean;
+  /** Which of the lists above the tree is open, if one is. */
+  open: 'proposals' | 'mentions' | '';
   /** Proposals waiting on this reader's decision. */
   pending: number;
 }) {
@@ -53,6 +57,8 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
   const base = `teams/${encodeURIComponent(team.id)}/knowledge`;
   const page = `/teams/${team.id}/knowledge`;
   const searching = query.trim() !== '';
+  // What the tree already shows by its title is not listed again.
+  const found = useTextSearch(base, query)?.filter((f) => !f.titleMatch) ?? null;
 
   const toggle = (id: string) => setFolded((was) => {
     const next = new Set(was);
@@ -94,17 +100,20 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
             <Folder className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <span className="min-w-0 flex-1 truncate">{node.folder.name}</span>
           </button>
-          {space.canEdit && (
-            <ActionMenu
-              label={t('folderActions', { name: node.folder.name })}
-              items={[
-                { label: t('newDocument'), icon: <FilePlus className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'document', space, folderId: node.folder.id }) },
-                { label: t('newFolder'), icon: <FolderPlus className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'folder', space, parentId: node.folder.id }) },
-                { label: t('rename'), icon: <Pencil className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'renameFolder', folder: node.folder }) },
-                { label: t('deleteFolder'), icon: <Trash2 className="size-4" aria-hidden />, onSelect: () => void deleteFolder(node.folder), destructive: true },
-              ]}
-            />
-          )}
+          <ActionMenu
+            label={t('folderActions', { name: node.folder.name })}
+            items={[
+              { label: t('openTable'), icon: <Table2 className="size-4" aria-hidden />, onSelect: () => void navigate(`${page}/table/${space.id}/${node.folder.id}`) },
+              ...(space.canEdit
+                ? [
+                    { label: t('newDocument'), icon: <FilePlus className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'document', space, folderId: node.folder.id }) },
+                    { label: t('newFolder'), icon: <FolderPlus className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'folder', space, parentId: node.folder.id }) },
+                    { label: t('rename'), icon: <Pencil className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'renameFolder', folder: node.folder }) },
+                    { label: t('deleteFolder'), icon: <Trash2 className="size-4" aria-hidden />, onSelect: () => void deleteFolder(node.folder), destructive: true },
+                  ]
+                : []),
+            ]}
+          />
         </div>
         {open && (
           <>
@@ -134,8 +143,8 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
       </div>
       <Link
         to={`${page}/proposals`}
-        aria-current={proposalsOpen ? 'page' : undefined}
-        className={cn('flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm', proposalsOpen ? 'bg-accent font-medium' : 'hover:bg-accent/50')}
+        aria-current={open === 'proposals' ? 'page' : undefined}
+        className={cn('flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm', open === 'proposals' ? 'bg-accent font-medium' : 'hover:bg-accent/50')}
       >
         <GitPullRequestArrow className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <span className="min-w-0 flex-1 truncate">{t('proposals.title')}</span>
@@ -147,6 +156,14 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
           </span>
         )}
       </Link>
+      <Link
+        to={`${page}/mentions`}
+        aria-current={open === 'mentions' ? 'page' : undefined}
+        className={cn('-mt-2 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm', open === 'mentions' ? 'bg-accent font-medium' : 'hover:bg-accent/50')}
+      >
+        <AtSign className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <span className="min-w-0 flex-1 truncate">{t('mentions.title')}</span>
+      </Link>
       <div className="relative">
         <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" aria-hidden />
         <Input className="pl-8" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('find')} aria-label={t('find')} />
@@ -154,7 +171,7 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
       <nav aria-label={t('title')} className="scrollbar-quiet flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
         {error ? <p className="px-2.5 text-sm text-destructive">{word(error)}</p> : null}
         {tree && tree.spaces.length === 0 && <p className="px-2.5 text-sm text-muted-foreground">{t(tree.canCreateSpace ? 'noSpacesAdmin' : 'noSpaces')}</p>}
-        {searching && tree && shown.length === 0 && <p className="px-2.5 text-sm text-muted-foreground">{t('noMatch')}</p>}
+        {searching && tree && shown.length === 0 && (found?.length ?? 0) === 0 && <p className="px-2.5 text-sm text-muted-foreground">{t('noMatch')}</p>}
         {shown.map((node) => (
           <section key={node.space.id} className="flex flex-col gap-0.5">
             <div className="flex items-center gap-1 px-1">
@@ -162,16 +179,19 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
                 <span className="truncate">{node.space.name}</span>
                 {node.space.reading === 'members' && <Lock className="size-3 shrink-0" aria-label={t('restricted')} />}
               </h2>
-              {node.space.canEdit && (
-                <ActionMenu
-                  label={t('spaceActions', { name: node.space.name })}
-                  items={[
-                    { label: t('newDocument'), icon: <FilePlus className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'document', space: node.space, folderId: '' }) },
-                    { label: t('newFolder'), icon: <FolderPlus className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'folder', space: node.space, parentId: '' }) },
-                    { label: t('spaceSettings'), icon: <Settings className="size-4" aria-hidden />, onSelect: () => setSettings(node.space) },
-                  ]}
-                />
-              )}
+              <ActionMenu
+                label={t('spaceActions', { name: node.space.name })}
+                items={[
+                  { label: t('openTable'), icon: <Table2 className="size-4" aria-hidden />, onSelect: () => void navigate(`${page}/table/${node.space.id}`) },
+                  ...(node.space.canEdit
+                    ? [
+                        { label: t('newDocument'), icon: <FilePlus className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'document', space: node.space, folderId: '' }) },
+                        { label: t('newFolder'), icon: <FolderPlus className="size-4" aria-hidden />, onSelect: () => setNaming({ kind: 'folder', space: node.space, parentId: '' }) },
+                        { label: t('spaceSettings'), icon: <Settings className="size-4" aria-hidden />, onSelect: () => setSettings(node.space) },
+                      ]
+                    : []),
+                ]}
+              />
             </div>
             {node.folders.map((f) => folder(node.space, f, 0))}
             {node.documents.map((d) => documentLink(d, 0))}
@@ -180,6 +200,24 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, proposal
             )}
           </section>
         ))}
+        {searching && found && found.length > 0 && (
+          <section className="flex flex-col gap-0.5" aria-label={t('inText')}>
+            <h2 className="flex items-center gap-1.5 px-1 py-1 text-xs font-medium text-muted-foreground">
+              <TextSearch className="size-3.5" aria-hidden />
+              {t('inText')}
+            </h2>
+            {found.map((f) => (
+              <Link
+                key={f.id}
+                to={`${page}/${f.id}${f.heading ? `#${encodeURIComponent(headingSlug(f.heading))}` : ''}`}
+                className={cn('flex flex-col gap-0.5 rounded-md px-2 py-1.5 text-sm', f.id === openId ? 'bg-accent' : 'hover:bg-accent/50')}
+              >
+                <span className="truncate font-medium">{f.title}</span>
+                {f.snippet && <span className="line-clamp-2 text-xs text-muted-foreground">{readableLine(f.snippet, (id) => team.members.find((m) => m.userId === id)?.email ?? null)}</span>}
+              </Link>
+            ))}
+          </section>
+        )}
       </nav>
       {naming?.kind === 'space' && (
         <NameDialog
@@ -288,4 +326,28 @@ function NewDocumentDialog({ spaces, space, submit, onClose }: {
       )}
     </NameDialog>
   );
+}
+
+/**
+ * The documents whose text holds the query, asked a moment after typing
+ * stops, or null while there is no answer for the query as it is.
+ */
+function useTextSearch(base: string, query: string): Schemas['KnowledgeFound'][] | null {
+  const q = query.trim();
+  const [found, setFound] = useState<{ q: string; results: Schemas['KnowledgeFound'][] } | null>(null);
+  useEffect(() => {
+    if (!q) return;
+    let live = true;
+    const timer = setTimeout(() => {
+      api<{ results: Schemas['KnowledgeFound'][] }>(`${base}/search?q=${encodeURIComponent(q)}`).then(
+        (r) => live && setFound({ q, results: r.results }),
+        () => live && setFound({ q, results: [] }),
+      );
+    }, 250);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [base, q]);
+  return found && found.q === q ? found.results : null;
 }

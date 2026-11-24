@@ -38,3 +38,11 @@ describe("a knowledge document's properties", () => {
     expect(parseOwner(' Ops team ')).toEqual({ id: '', name: 'Ops team' });
   });
 });
+
+describe('a line of a document as a list shows it', () => {
+  it('reads mentions as names and links as their words', async () => {
+    const { readableLine } = await import('@/lib/knowledge-format');
+    const nameOf = (id: string) => (id === 'user1' ? 'ada@example.com' : null);
+    expect(readableLine('Ask @[Ada](user1) or @[Bo](gone2) about [[Pricing#Tiers|tiers]] and ![[chart.png]].', nameOf)).toBe('Ask @ada@example.com or @Bo about tiers and chart.png.');
+  });
+});

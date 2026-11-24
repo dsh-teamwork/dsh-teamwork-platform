@@ -1,9 +1,10 @@
 /**
- * The knowledge editor's slash menu (docs/tech/knowledge.md, "Format"):
- * typing `/` at the start of an empty line lists the blocks a document can
- * hold, narrowed as more is typed, by the English word or the reader's.
- * Arrow keys move, Enter or Tab inserts, Escape leaves the `/` as typed. The
- * chosen block replaces the `/` and what follows it.
+ * The knowledge editor's menus (docs/tech/knowledge.md, "Format"): typing
+ * `/` at the start of an empty line lists the blocks a document can hold,
+ * narrowed as more is typed, by the English word or the reader's; typing `@`
+ * after a space lists the team's members to mention. Arrow keys move, Enter
+ * or Tab inserts, Escape leaves what was typed. The choice replaces the `/`
+ * or `@` and what follows it.
  */
 
 import type { Ctx } from '@milkdown/kit/ctx';
@@ -21,15 +22,15 @@ import { Plugin } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import { $prose } from '@milkdown/kit/utils';
 import { useEffect, useRef } from 'react';
-import { useTranslations } from 'use-intl';
 
 import { DIAGRAM_LANGUAGE } from '@/lib/knowledge-format';
 import { cn } from '@/lib/utils';
 
-import { insertCallout } from './knowledge-blocks';
+import { insertCallout, mentionNode } from './knowledge-blocks';
 
-/** Where the menu is open: the `/` and what follows it, and where to draw it. */
+/** Where a menu is open: the `/` or `@` and what follows it, and where to draw it. */
 export interface SlashOpen {
+  kind: 'block' | 'mention';
   from: number;
   to: number;
   query: string;
@@ -54,6 +55,7 @@ const ITEMS = [
   { id: 'table', words: 'table grid' },
   { id: 'divider', words: 'divider rule hr line' },
   { id: 'attach', words: 'image file attachment upload picture' },
+  { id: 'artifact', words: 'artifact embed report page dashboard' },
 ] as const;
 
 export type SlashItemId = (typeof ITEMS)[number]['id'];
@@ -63,12 +65,40 @@ export function findSlash(view: EditorView): SlashOpen | null {
   const { selection } = view.state;
   if (!view.editable || !selection.empty) return null;
   const { $from } = selection;
-  if ($from.parent.type.name !== 'paragraph') return null;
-  const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '￼');
-  const match = /^\/([^\s/]{0,24})$/.exec(before);
-  if (!match) return null;
-  const coords = view.coordsAtPos($from.start());
-  return { from: $from.start(), to: selection.from, query: match[1], left: coords.left, top: coords.bottom };
+  const parent = $from.parent;
+  if (!parent.isTextblock || parent.type.spec.code) return null;
+  const before = parent.textBetween(0, $from.parentOffset, undefined, '￼');
+  const block = parent.type.name === 'paragraph' ? /^\/([^\s/]{0,24})$/.exec(before) : null;
+  if (block) {
+    const coords = view.coordsAtPos($from.start());
+    return { kind: 'block', from: $from.start(), to: selection.from, query: block[1], left: coords.left, top: coords.bottom };
+  }
+  const mention = /(?:^|[\s(])@([^\s@[\]()]{0,40})$/.exec(before);
+  if (!mention) return null;
+  const from = selection.from - mention[1].length - 1;
+  const coords = view.coordsAtPos(from);
+  return { kind: 'mention', from, to: selection.from, query: mention[1], left: coords.left, top: coords.bottom };
+}
+
+/** A member as a mention names them. */
+export interface Mentionable {
+  id: string;
+  name: string;
+}
+
+/** Puts a mention of a member where the `@` and its query were, and a space after it. */
+export function insertMention(ctx: Ctx, open: SlashOpen, member: Mentionable) {
+  const view = ctx.get(editorViewCtx);
+  const node = mentionNode.type(ctx).create({ id: member.id, name: member.name.replace(/[[\]\n]/g, '') });
+  const tr = view.state.tr.replaceWith(open.from, open.to, node);
+  view.dispatch(tr.insertText(' ').scrollIntoView());
+  view.focus();
+}
+
+/** The members a query keeps, by name, at most eight. */
+export function mentionItems(query: string, members: Mentionable[]): Mentionable[] {
+  const q = query.toLocaleLowerCase();
+  return members.filter((m) => m.name.toLocaleLowerCase().includes(q)).slice(0, 8);
 }
 
 /** The plugin that reports the menu's state and gives its keys to `keys` first. */
@@ -83,7 +113,7 @@ export function slashPlugin(report: (open: SlashOpen | null) => void, keys: { cu
 }
 
 /** Runs an item where the menu was open, the `/` and its query first removed. */
-export function runSlash(ctx: Ctx, open: SlashOpen, id: SlashItemId, attach?: () => void) {
+export function runSlash(ctx: Ctx, open: SlashOpen, id: SlashItemId, attach?: () => void, artifact?: () => void) {
   const view = ctx.get(editorViewCtx);
   const commands = ctx.get(commandsCtx);
   view.dispatch(view.state.tr.delete(open.from, open.to));
@@ -133,26 +163,30 @@ export function runSlash(ctx: Ctx, open: SlashOpen, id: SlashItemId, attach?: ()
     case 'attach':
       attach?.();
       break;
+    case 'artifact':
+      artifact?.();
+      break;
   }
   view.focus();
 }
 
-/** The items a query keeps, by either language, in their order. */
-export function slashItems(query: string, name: (id: SlashItemId) => string, canAttach: boolean): SlashItemId[] {
+/** The items a query keeps, by either language, in their order; files and artifacts only where the page can choose one. */
+export function slashItems(query: string, name: (id: SlashItemId) => string, can: { attach: boolean; artifact: boolean }): SlashItemId[] {
   const q = query.toLocaleLowerCase();
-  return ITEMS.filter((item) => (item.id !== 'attach' || canAttach) && (!q || `${item.words} ${name(item.id)}`.toLocaleLowerCase().includes(q))).map((item) => item.id);
+  return ITEMS.filter((item) => (item.id !== 'attach' || can.attach) && (item.id !== 'artifact' || can.artifact) && (!q || `${item.words} ${name(item.id)}`.toLocaleLowerCase().includes(q))).map((item) => item.id);
 }
 
-/** The menu, drawn where the `/` is. */
-export function SlashMenu({ items, active, top, left, onPick, onHover }: {
-  items: SlashItemId[];
+/** A menu, drawn where the `/` or `@` is. */
+export function SlashMenu({ label, empty, items, active, top, left, onPick, onHover }: {
+  label: string;
+  empty: string;
+  items: { key: string; label: string }[];
   active: number;
   top: number;
   left: number;
-  onPick: (id: SlashItemId) => void;
+  onPick: (index: number) => void;
   onHover: (index: number) => void;
 }) {
-  const t = useTranslations('team.knowledge.editor.slash');
   const list = useRef<HTMLDivElement>(null);
   useEffect(() => {
     list.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
@@ -161,26 +195,26 @@ export function SlashMenu({ items, active, top, left, onPick, onHover }: {
     <div
       ref={list}
       role="listbox"
-      aria-label={t('label')}
+      aria-label={label}
       style={{ top: top + 4, left }}
       className="fixed z-50 flex max-h-72 w-56 flex-col overflow-y-auto rounded-lg border bg-card p-1 text-sm text-card-foreground shadow-lg"
       // The editor keeps the focus, so typing still narrows the list.
       onMouseDown={(event) => event.preventDefault()}
     >
       {items.length === 0 ? (
-        <p className="px-2 py-1.5 text-muted-foreground">{t('empty')}</p>
+        <p className="px-2 py-1.5 text-muted-foreground">{empty}</p>
       ) : (
-        items.map((id, i) => (
+        items.map((item, i) => (
           <button
-            key={id}
+            key={item.key}
             type="button"
             role="option"
             aria-selected={i === active}
             onMouseEnter={() => onHover(i)}
-            onClick={() => onPick(id)}
-            className={cn('rounded-md px-2 py-1.5 text-start', i === active && 'bg-accent text-accent-foreground')}
+            onClick={() => onPick(i)}
+            className={cn('truncate rounded-md px-2 py-1.5 text-start', i === active && 'bg-accent text-accent-foreground')}
           >
-            {t(id)}
+            {item.label}
           </button>
         ))
       )}

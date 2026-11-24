@@ -1592,7 +1592,9 @@
         "restored": "Version {n} restored",
         "toCurrent": "Read the current version",
         "backToHistory": "Back to history",
-        "backlinks": "Linked from {n, plural, one {# document} other {# documents}}"
+        "backlinks": "Linked from {n, plural, one {# document} other {# documents}}",
+        "comments": "Comments",
+        "commentsCount": "{n, plural, one {# comment} other {# comments}}"
       },
       "proposals": {
         "title": "Proposals",
@@ -1673,7 +1675,12 @@
           "diagram": "Diagram",
           "table": "Table",
           "divider": "Divider",
-          "attach": "Image or file"
+          "attach": "Image or file",
+          "artifact": "Artifact"
+        },
+        "mention": {
+          "label": "Mention a member",
+          "empty": "No member matches"
         }
       },
       "template": "Start from",
@@ -1690,6 +1697,56 @@
         "summary": "Summary",
         "summaryPlaceholder": "One line an agent reads before the text",
         "unreadable": "This document's front matter is not a list of properties, so it is kept exactly as written."
+      },
+      "openTable": "Open as a table",
+      "inText": "In the text",
+      "mentions": {
+        "title": "Mentions",
+        "note": "Documents that mention you, or name you their owner, newest change first.",
+        "none": "No document mentions you yet.",
+        "owner": "You are its owner."
+      },
+      "table": {
+        "title": "Title",
+        "updated": "Updated",
+        "note": "Each document directly in this folder, with the properties its front matter gives.",
+        "filter": "Filter",
+        "anyStatus": "Any status",
+        "anyTag": "Any tag",
+        "empty": "This folder holds no documents.",
+        "noMatch": "No document matches."
+      },
+      "comments": {
+        "title": "Comments",
+        "titleCount": "{n, plural, =0 {Comments} one {# open comment} other {# open comments}}",
+        "comment": "Comment",
+        "close": "Close comments",
+        "wholeDocument": "On the whole document",
+        "notHere": "The words it quotes are not in this version; it was written on version {n}.",
+        "delete": "Delete",
+        "deleteThreadConfirm": "Delete this comment and its replies?",
+        "deleteReplyConfirm": "Delete this reply?",
+        "resolvedBy": "Resolved by {name}",
+        "resolve": "Resolve",
+        "reopen": "Reopen",
+        "none": "No open comments. Select words in the text to comment on them.",
+        "showResolved": "Show {n, plural, one {# resolved} other {# resolved}}",
+        "hideResolved": "Hide resolved",
+        "placeholder": "Write a comment",
+        "placeholderDocument": "Comment on the whole document",
+        "cancel": "Cancel",
+        "send": "Send",
+        "reply": "Reply"
+      },
+      "artifacts": {
+        "missing": "An artifact you cannot open",
+        "loading": "Loading…",
+        "pickTitle": "Embed an artifact",
+        "pickNote": "Readers see its card; only those it is shared with can open it.",
+        "find": "Find by title",
+        "none": "No artifact of yours or shared with you.",
+        "cancel": "Cancel",
+        "embed": "Embed"
       }
     }
   },

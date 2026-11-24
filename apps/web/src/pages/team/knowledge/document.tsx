@@ -19,16 +19,20 @@
  *
  * Its properties are a row under the title, and a form while editing that
  * rewrites the front matter the save carries; the documents linking to it
- * are listed at its foot.
+ * are listed at its foot. `@` mentions a member and the block menu embeds an
+ * artifact (./embed-artifact.tsx). Comments open beside the text
+ * (./comments.tsx), marking the words each thread quotes.
  */
 
-import { ArrowLeft, Copy, FolderInput, History, Pencil, Trash2, Type } from 'lucide-react';
+import { ArrowLeft, Copy, FolderInput, History, MessageSquare, Pencil, Trash2, Type } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useBlocker, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import { KnowledgeDiff } from '@/components/knowledge-diff';
+import type { MemberResolver } from '@/components/knowledge-blocks';
+import type { Quote } from '@/components/knowledge-comments';
 import { KnowledgeEditor, type AttachmentResolver, type KnowledgeEditorHandle } from '@/components/knowledge-editor';
 import { Field } from '@/components/team/field';
 import { useTeamError } from '@/components/team/use-mutation';
@@ -37,12 +41,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api, ApiError, type Schemas, type Team } from '@/lib/api';
-import { attachmentUrl, isAttachmentName, isImageName, parseWikiTarget, planSave, splitFrontMatter } from '@/lib/knowledge-format';
+import { ARTIFACT_EMBED, attachmentUrl, isAttachmentName, isImageName, parseWikiTarget, planSave, splitFrontMatter } from '@/lib/knowledge-format';
 import { readProperties, writeProperties } from '@/lib/knowledge-properties';
 import { findDocument, folderPaths, resolveWikiLink, type KnowledgeTree } from '@/lib/knowledge-tree';
 import { useApi } from '@/lib/use-api';
+import { cn } from '@/lib/utils';
 
 import { AttachButton, AttachmentList, shownInline, useAttach, useFileSize, type Attachment } from './attachments';
+import { CommentsPanel, QuoteButton, threadsOf, type Comment } from './comments';
+import { ArtifactPicker, useArtifactCards } from './embed-artifact';
 import { CompareView, HistoryList, SourceBadge } from './history';
 import { PropertiesForm, PropertiesRow } from './properties';
 import { ActionMenu, NameDialog, personName } from './shared';
@@ -64,8 +71,10 @@ interface Editing {
   conflict?: { current: Doc; mine: string; rebased: boolean };
 }
 
-export function DocumentView({ team, tree, documentId, onTreeChanged }: {
+export function DocumentView({ team, me, tree, documentId, onTreeChanged }: {
   team: Team;
+  /** The reader's user id, whose mentions are marked. */
+  me: string;
   tree: KnowledgeTree;
   documentId: string;
   onTreeChanged: () => Promise<unknown>;
@@ -126,6 +135,27 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
     [team.id, documentId],
   );
   const [linked, setLinked] = useState<string[]>([]);
+  const artifact = useArtifactCards(team.id, linked, () => editor.current?.redraw());
+  const [pickingArtifact, setPickingArtifact] = useState(false);
+  const members = useMemo(() => team.members.map((m) => ({ id: m.userId, name: m.email ?? m.userId })), [team.members]);
+  const member = useCallback<MemberResolver>(
+    (id) => {
+      const found = team.members.find((m) => m.userId === id);
+      return found ? { name: found.email ?? found.userId, me: id === me } : null;
+    },
+    [team.members, me],
+  );
+
+  // Comments: open beside the text or not, the thread in view, the words selected and those a new thread is on.
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const comments = useApi<{ comments: Comment[] }>(`${path}/comments`);
+  const threads = useMemo(() => threadsOf(comments.data?.comments ?? []), [comments.data]);
+  const marks = useMemo(() => threads.filter((th) => !th.head.resolvedAt && th.head.quote).map((th) => ({ id: th.head.id, quote: th.head.quote })), [threads]);
+  const [placed, setPlaced] = useState<ReadonlySet<string>>(new Set());
+  const [activeComment, setActiveComment] = useState('');
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [draft, setDraft] = useState<Quote | null>(null);
+  const openCount = threads.filter((th) => !th.head.resolvedAt).length;
   const { attach, busy: attaching, dialog: attachDialog } = useAttach({
     teamId: team.id,
     documentId,
@@ -318,6 +348,12 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
                 {t('edit')}
               </Button>
             )}
+            {!showHistory && !compare && (
+              <Button size="sm" variant={commentsOpen ? 'secondary' : 'outline'} onClick={() => setCommentsOpen(!commentsOpen)} aria-pressed={commentsOpen}>
+                <MessageSquare className="size-4" aria-hidden />
+                {openCount > 0 ? t('commentsCount', { n: openCount }) : t('comments')}
+              </Button>
+            )}
             <Button size="sm" variant={showHistory ? 'secondary' : 'outline'} onClick={() => viewing(showHistory ? {} : { history: '' })}>
               <History className="size-4" aria-hidden />
               {t('history')}
@@ -394,6 +430,7 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
           )}
         </div>
       ) : (
+        <div className={cn('grid min-w-0 gap-6', commentsOpen && !editing && 'xl:grid-cols-[minmax(0,1fr)_18rem]')}>
         <KnowledgeEditor
           key={editing ? 'edit' : `read-${doc.version}`}
           ref={editor}
@@ -404,6 +441,18 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
           onLinks={setLinked}
           onFiles={editing ? (dropped, pasted) => void attach(dropped, pasted) : undefined}
           onAttach={editing ? () => picker.current?.click() : undefined}
+          artifact={artifact}
+          onArtifact={editing ? () => setPickingArtifact(true) : undefined}
+          members={members}
+          member={member}
+          comments={editing ? [] : marks}
+          activeComment={commentsOpen ? activeComment : ''}
+          onCommentsPlaced={(ids) => setPlaced(new Set(ids))}
+          onCommentClick={(id) => {
+            setCommentsOpen(true);
+            setActiveComment(id);
+          }}
+          onQuote={editing ? undefined : setQuote}
           onNavigate={(href) => void navigate(href)}
           label={doc.title}
           onReady={(normalisedBody) => {
@@ -411,6 +460,42 @@ export function DocumentView({ team, tree, documentId, onTreeChanged }: {
             setEditing((e) => (e && !e.conflict ? { ...e, normalised: e.frontMatter + normalisedBody } : e));
           }}
           className={editing ? 'min-h-[50vh] rounded-lg border px-5 py-4' : undefined}
+        />
+        {commentsOpen && !editing && (
+          <CommentsPanel
+            path={path}
+            version={doc.version}
+            comments={comments.data?.comments ?? []}
+            placed={placed}
+            active={activeComment}
+            draft={draft}
+            onActivate={setActiveComment}
+            onDraftDone={() => setDraft(null)}
+            onChanged={comments.reload}
+            onClose={() => setCommentsOpen(false)}
+          />
+        )}
+        </div>
+      )}
+      {quote && !editing && (
+        <QuoteButton
+          quote={quote}
+          onComment={() => {
+            setDraft(quote);
+            setCommentsOpen(true);
+            setQuote(null);
+            window.getSelection()?.removeAllRanges();
+          }}
+        />
+      )}
+      {pickingArtifact && (
+        <ArtifactPicker
+          teamId={team.id}
+          onClose={() => setPickingArtifact(false)}
+          onPick={(id) => {
+            setPickingArtifact(false);
+            editor.current?.insert(`${ARTIFACT_EMBED}${id}`, true);
+          }}
         />
       )}
       {!showHistory && !compare && <DocumentAttachments teamId={team.id} documentId={documentId} files={files} linked={linked} editing={!!editing} />}

@@ -198,3 +198,18 @@ export function fillTemplate(text: string, title: string, today: Date): string {
   const date = `${today.getFullYear()}-${p(today.getMonth() + 1)}-${p(today.getDate())}`;
   return text.replace(/\{\{\s*(title|date)\s*\}\}/g, (_m, key: string) => (key === 'title' ? title : date));
 }
+
+/** What `![[artifact:{id}]]` starts with: an embedded artifact's card, which links no document (server/internal/knowledge, ArtifactEmbed). */
+export const ARTIFACT_EMBED = 'artifact:';
+
+/**
+ * A line of a document as a list shows it beside its title: a mention as
+ * `@` and the name `nameOf` gives its member (the one it was written with for
+ * someone no longer known), and a `[[link]]` or `![[embed]]` as the words it
+ * shows.
+ */
+export function readableLine(line: string, nameOf: (id: string) => string | null): string {
+  return line
+    .replace(/@\[([^\]\n]*)\]\(([\w-]+)\)/g, (_m, name: string, id: string) => `@${nameOf(id) ?? name}`)
+    .replace(/!?\[\[([^[\]\n]+)\]\]/g, (_m, raw: string) => parseWikiTarget(raw).label || raw);
+}

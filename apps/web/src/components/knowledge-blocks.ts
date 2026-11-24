@@ -1,6 +1,6 @@
 /**
- * The richer format's blocks in the knowledge editor (docs/tech/knowledge.md,
- * "Format"), each still plain text in the file:
+ * The richer format's blocks and mentions in the knowledge editor
+ * (docs/tech/knowledge.md, "Format"), each still plain text in the file:
  *
  * - **Callouts**, Obsidian's `> [!kind] Title` quotes, `-` or `+` after the
  *   kind to fold one. A remark plugin reads such a quote into a `callout`
@@ -10,6 +10,8 @@
  * - **Diagrams**, a `mermaid` code block, drawn under its source while
  *   editing and in its place while reading. Mermaid loads the first time a
  *   diagram is drawn, never with the editor.
+ * - **Mentions**, `@[Name](member-id)`, shown as the team names the member
+ *   now; typing `@` lists the members (components/knowledge-slash.tsx).
  *
  * Each draws through a node view that reads its words and whether the editor
  * is editable as it draws, so a reader's view and an editor's share one
@@ -41,6 +43,10 @@ interface MdNode {
   value?: string;
   kind?: string;
   fold?: string;
+  id?: string;
+  name?: string;
+  url?: string;
+  title?: string | null;
   children?: MdNode[];
 }
 
@@ -370,5 +376,85 @@ export function codeBlockView(words: { current: BlockWords }) {
       ignoreMutation: (mutation) => preview.contains(mutation.target),
       destroy: () => clearTimeout(timer),
     };
+  });
+}
+
+/**
+ * A mention of a member, `@[Name](member-id)` (docs/tech/knowledge.md,
+ * "Format"). Remark reads it as `@` followed by a link whose address is the
+ * id; this plugin joins the two into a `mention`, and the stringify handler
+ * writes it back as written. The name is the one it was written with, kept
+ * so the file reads without the console; the console shows the member as the
+ * team names them now.
+ */
+const MEMBER_ID = /^[\w-]{4,64}$/;
+
+/** A node's text, every child's joined. */
+function plain(node: MdNode): string {
+  return node.value ?? (node.children ?? []).map(plain).join('');
+}
+
+function readMentions(node: MdNode) {
+  if (!node.children) return;
+  const out: MdNode[] = [];
+  for (const child of node.children) {
+    const before = out.at(-1);
+    if (child.type === 'link' && MEMBER_ID.test(child.url ?? '') && !child.title && before?.type === 'text' && before.value?.endsWith('@')) {
+      // The name as written, an email that gfm made a link of included.
+      const name = plain(child);
+      before.value = before.value.slice(0, -1);
+      if (!before.value) out.pop();
+      out.push({ type: 'mention', id: child.url, name });
+      continue;
+    }
+    readMentions(child);
+    out.push(child);
+  }
+  node.children = out;
+}
+
+export const remarkMention = $remark('remarkMention', () => () => (tree: unknown) => readMentions(tree as MdNode));
+
+/** Writes a mention back as `@[Name](id)`. */
+export function stringifyMention(node: MdNode): string {
+  return `@[${(node.name ?? '').replace(/[[\]\n]/g, '')}](${node.id ?? ''})`;
+}
+
+export const mentionNode = $node('mention', () => ({
+  group: 'inline',
+  inline: true,
+  atom: true,
+  attrs: { id: { default: '' }, name: { default: '' } },
+  parseDOM: [{ tag: 'span[data-mention]', getAttrs: (dom) => ({ id: (dom as HTMLElement).dataset.mention ?? '', name: (dom as HTMLElement).dataset.name ?? '' }) }],
+  toDOM: (node) => ['span', { class: 'knowledge-mention', 'data-mention': node.attrs.id, 'data-name': node.attrs.name }, `@${String(node.attrs.name)}`],
+  parseMarkdown: {
+    match: (node) => node.type === 'mention',
+    runner: (state, node, type) => {
+      const md = node as unknown as MdNode;
+      state.addNode(type, { id: md.id ?? '', name: md.name ?? '' });
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'mention',
+    runner: (state, node) => {
+      state.addNode('mention', undefined, undefined, { id: node.attrs.id, name: node.attrs.name });
+    },
+  },
+}));
+
+/** Who a mention is to the reader: the team's name for them now, or null for someone no longer in it; and whether it is the reader. */
+export type MemberResolver = (id: string) => { name: string; me: boolean } | null;
+
+/** Mentions drawn as the team names each member now, the reader's own marked. */
+export function mentionView(members: { current: MemberResolver }) {
+  return $view(mentionNode, () => (node) => {
+    const dom = document.createElement('span');
+    dom.className = 'knowledge-mention';
+    dom.dataset.mention = String(node.attrs.id);
+    const who = members.current(String(node.attrs.id));
+    dom.textContent = `@${who?.name ?? String(node.attrs.name)}`;
+    dom.classList.toggle('is-me', who?.me === true);
+    dom.classList.toggle('is-gone', who === null);
+    return { dom, ignoreMutation: () => true };
   });
 }
