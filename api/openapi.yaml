@@ -1211,6 +1211,313 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ArtifactView' }
         default: { $ref: '#/components/responses/Error' }
+  /knowledge:
+    get:
+      summary: The knowledge the caller reads in every team, for the plugin's read-only copy (docs/tech/knowledge.md)
+      responses:
+        '200':
+          description: The sync manifest
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeManifest' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: The spaces of a team the caller reads, with their folders and documents
+      responses:
+        '200':
+          description: The tree
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeTree' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/spaces:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Create a space, read by the whole team; the team's admin's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KnowledgeName' }
+      responses:
+        '201':
+          description: The space
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeSpace' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/spaces/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      summary: Rename a space; an editor's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KnowledgeName' }
+      responses:
+        '204': { description: Renamed }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      summary: Delete a space with everything in it; an editor's
+      responses:
+        '204': { description: Deleted }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/spaces/{id}/access:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Who reads and who edits a space, besides its creator and the team's admins; an editor's
+      responses:
+        '200':
+          description: The access
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeAccess' }
+        default: { $ref: '#/components/responses/Error' }
+    put:
+      summary: Replace a space's access at once; an editor's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KnowledgeAccess' }
+      responses:
+        '200':
+          description: The access
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeAccess' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/folders:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Create a folder in a space; an editor's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [spaceId, name]
+              properties:
+                spaceId: { type: string }
+                parentId: { type: string }
+                name: { type: string, minLength: 1, maxLength: 80 }
+      responses:
+        '201':
+          description: The folder
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeFolder' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/folders/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      summary: Rename a folder; an editor's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KnowledgeName' }
+      responses:
+        '204': { description: Renamed }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      summary: Delete an empty folder (knowledge_folder_not_empty otherwise); an editor's
+      responses:
+        '204': { description: Deleted }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/documents:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Create a document and its version 1; an editor's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [spaceId, title, text]
+              properties:
+                spaceId: { type: string }
+                folderId: { type: string }
+                title: { type: string, minLength: 1, maxLength: 120 }
+                text: { type: string }
+                note: { type: string, maxLength: 200 }
+      responses:
+        '201':
+          description: The document
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeDocument' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/documents/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: A document the caller reads, with its versions and the text of one (the current one by default)
+      parameters:
+        - { name: version, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: The document
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeDocument' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      summary: Rename a document or move it to another folder of its space; an editor's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, minLength: 1, maxLength: 120 }
+                folderId: { type: string }
+      responses:
+        '200':
+          description: The document
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeDocument' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      summary: Delete a document with its versions and proposals; an editor's
+      responses:
+        '204': { description: Deleted }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/documents/{id}/versions:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Save a new version on top of baseVersion (knowledge_stale when it is no longer current); an editor's, never an agent's
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baseVersion, text]
+              properties:
+                baseVersion: { type: integer, minimum: 1 }
+                text: { type: string }
+                note: { type: string, maxLength: 200 }
+      responses:
+        '201':
+          description: The document at its new version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeDocument' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/documents/{id}/versions/{n}/restore:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: n, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    post:
+      summary: Add a version copying version n; an editor's
+      responses:
+        '201':
+          description: The document at its new version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeDocument' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/documents/{id}/proposals:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Propose a change on top of baseVersion; any reader's, and the only change an agent makes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baseVersion, text]
+              properties:
+                baseVersion: { type: integer, minimum: 1 }
+                text: { type: string }
+                note: { type: string, maxLength: 200 }
+                computer: { type: string, maxLength: 64 }
+                sessionId: { type: string, maxLength: 128 }
+      responses:
+        '201':
+          description: The proposal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeProposalDetail' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/proposals:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Proposals to the spaces the caller edits, and their own, newest first
+      parameters:
+        - { name: state, in: query, schema: { type: string, enum: [pending, accepted, declined, withdrawn] } }
+      responses:
+        '200':
+          description: The proposals
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposals]
+                additionalProperties: false
+                properties:
+                  proposals: { type: array, items: { $ref: '#/components/schemas/KnowledgeProposal' } }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/proposals/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: One proposal with its text and the text it started from
+      responses:
+        '200':
+          description: The proposal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeProposalDetail' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/proposals/{id}/{action}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: action, in: path, required: true, schema: { type: string, enum: [accept, decline, withdraw] } }
+    post:
+      summary: Accept (a new version under its author's name), decline with a reason (an editor's), or withdraw (its author's) a pending proposal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 500 }
+      responses:
+        '200':
+          description: The proposal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeProposalDetail' }
+        default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/history:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -1478,6 +1785,168 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
   schemas:
+    KnowledgeName:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+    KnowledgePerson:
+      type: object
+      required: [id, name, email]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        name: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+    KnowledgeFolder:
+      type: object
+      required: [id, parentId, name]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        parentId: { type: string, description: Empty at the space's root }
+        name: { type: string }
+    KnowledgeDocumentSummary:
+      type: object
+      required: [id, folderId, title, currentVersion, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        folderId: { type: string, description: Empty at the space's root }
+        title: { type: string }
+        currentVersion: { type: integer }
+        updatedAt: { type: string, format: date-time }
+    KnowledgeSpace:
+      type: object
+      required: [id, name, reading, canEdit, folders, documents]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        name: { type: string }
+        reading: { type: string, enum: [team, members] }
+        canEdit: { type: boolean }
+        folders: { type: array, items: { $ref: '#/components/schemas/KnowledgeFolder' } }
+        documents: { type: array, items: { $ref: '#/components/schemas/KnowledgeDocumentSummary' } }
+    KnowledgeTree:
+      type: object
+      required: [canCreateSpace, spaces]
+      additionalProperties: false
+      properties:
+        canCreateSpace: { type: boolean }
+        spaces: { type: array, items: { $ref: '#/components/schemas/KnowledgeSpace' } }
+    KnowledgeAccess:
+      type: object
+      required: [reading, readers, editors]
+      additionalProperties: false
+      properties:
+        reading: { type: string, enum: [team, members] }
+        readers: { type: array, items: { type: string }, description: Member ids; kept only while reading is members }
+        editors: { type: array, items: { type: string } }
+    KnowledgeVersion:
+      type: object
+      required: [number, author, source, note, createdAt]
+      additionalProperties: false
+      properties:
+        number: { type: integer }
+        author: { $ref: '#/components/schemas/KnowledgePerson' }
+        source: { type: string, enum: [console, agent] }
+        note: { type: string }
+        createdAt: { type: string, format: date-time }
+    KnowledgeDocument:
+      type: object
+      required: [id, folderId, title, currentVersion, updatedAt, spaceId, canEdit, version, text, versions]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        folderId: { type: string }
+        title: { type: string }
+        currentVersion: { type: integer }
+        updatedAt: { type: string, format: date-time }
+        spaceId: { type: string }
+        canEdit: { type: boolean }
+        version: { type: integer, description: The version whose text this is }
+        text: { type: string }
+        versions: { type: array, items: { $ref: '#/components/schemas/KnowledgeVersion' } }
+    KnowledgeProposal:
+      type: object
+      required: [id, documentId, documentTitle, spaceId, baseVersion, author, source, computer, sessionId, note, state, stale, canDecide, reason, version, createdAt, decidedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        documentId: { type: string }
+        documentTitle: { type: string }
+        spaceId: { type: string }
+        baseVersion: { type: integer }
+        author: { $ref: '#/components/schemas/KnowledgePerson' }
+        source: { type: string, enum: [console, agent] }
+        computer: { type: string }
+        sessionId: { type: string }
+        note: { type: string }
+        state: { type: string, enum: [pending, accepted, declined, withdrawn] }
+        stale: { type: boolean, description: Pending on a version that is no longer current }
+        canDecide: { type: boolean }
+        reason: { type: string }
+        version: { type: integer, description: The version an acceptance made; 0 otherwise }
+        createdAt: { type: string, format: date-time }
+        decidedAt: { type: string, format: date-time, nullable: true }
+    KnowledgeProposalDetail:
+      type: object
+      required: [id, documentId, documentTitle, spaceId, baseVersion, author, source, computer, sessionId, note, state, stale, canDecide, reason, version, createdAt, decidedAt, text, baseText]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        documentId: { type: string }
+        documentTitle: { type: string }
+        spaceId: { type: string }
+        baseVersion: { type: integer }
+        author: { $ref: '#/components/schemas/KnowledgePerson' }
+        source: { type: string, enum: [console, agent] }
+        computer: { type: string }
+        sessionId: { type: string }
+        note: { type: string }
+        state: { type: string, enum: [pending, accepted, declined, withdrawn] }
+        stale: { type: boolean, description: Pending on a version that is no longer current }
+        canDecide: { type: boolean }
+        reason: { type: string }
+        version: { type: integer, description: The version an acceptance made; 0 otherwise }
+        createdAt: { type: string, format: date-time }
+        decidedAt: { type: string, format: date-time, nullable: true }
+        text: { type: string }
+        baseText: { type: string, description: The text of the version it started from }
+    KnowledgeManifest:
+      type: object
+      required: [teams]
+      additionalProperties: false
+      properties:
+        teams:
+          type: array
+          items:
+            type: object
+            required: [teamId, teamName, spaces]
+            additionalProperties: false
+            properties:
+              teamId: { type: string }
+              teamName: { type: string }
+              spaces:
+                type: array
+                items:
+                  type: object
+                  required: [id, name, documents]
+                  additionalProperties: false
+                  properties:
+                    id: { type: string }
+                    name: { type: string }
+                    documents:
+                      type: array
+                      items:
+                        type: object
+                        required: [id, folders, title, version]
+                        additionalProperties: false
+                        properties:
+                          id: { type: string }
+                          folders: { type: array, items: { type: string }, description: Folder names from the space's root down }
+                          title: { type: string }
+                          version: { type: integer }
     ArtifactUploadMeta:
       type: object
       required: [kind]

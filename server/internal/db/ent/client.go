@@ -28,6 +28,12 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespace"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespacemember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
@@ -79,6 +85,18 @@ type Client struct {
 	Identity *IdentityClient
 	// Invite is the client for interacting with the Invite builders.
 	Invite *InviteClient
+	// KnowledgeDocument is the client for interacting with the KnowledgeDocument builders.
+	KnowledgeDocument *KnowledgeDocumentClient
+	// KnowledgeFolder is the client for interacting with the KnowledgeFolder builders.
+	KnowledgeFolder *KnowledgeFolderClient
+	// KnowledgeProposal is the client for interacting with the KnowledgeProposal builders.
+	KnowledgeProposal *KnowledgeProposalClient
+	// KnowledgeSpace is the client for interacting with the KnowledgeSpace builders.
+	KnowledgeSpace *KnowledgeSpaceClient
+	// KnowledgeSpaceMember is the client for interacting with the KnowledgeSpaceMember builders.
+	KnowledgeSpaceMember *KnowledgeSpaceMemberClient
+	// KnowledgeVersion is the client for interacting with the KnowledgeVersion builders.
+	KnowledgeVersion *KnowledgeVersionClient
 	// Membership is the client for interacting with the Membership builders.
 	Membership *MembershipClient
 	// ModelRate is the client for interacting with the ModelRate builders.
@@ -135,6 +153,12 @@ func (c *Client) init() {
 	c.ConfigRevision = NewConfigRevisionClient(c.config)
 	c.Identity = NewIdentityClient(c.config)
 	c.Invite = NewInviteClient(c.config)
+	c.KnowledgeDocument = NewKnowledgeDocumentClient(c.config)
+	c.KnowledgeFolder = NewKnowledgeFolderClient(c.config)
+	c.KnowledgeProposal = NewKnowledgeProposalClient(c.config)
+	c.KnowledgeSpace = NewKnowledgeSpaceClient(c.config)
+	c.KnowledgeSpaceMember = NewKnowledgeSpaceMemberClient(c.config)
+	c.KnowledgeVersion = NewKnowledgeVersionClient(c.config)
 	c.Membership = NewMembershipClient(c.config)
 	c.ModelRate = NewModelRateClient(c.config)
 	c.Password = NewPasswordClient(c.config)
@@ -241,37 +265,43 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		Artifact:           NewArtifactClient(cfg),
-		ArtifactFile:       NewArtifactFileClient(cfg),
-		ArtifactMember:     NewArtifactMemberClient(cfg),
-		ArtifactVersion:    NewArtifactVersionClient(cfg),
-		BudgetEvent:        NewBudgetEventClient(cfg),
-		BudgetGate:         NewBudgetGateClient(cfg),
-		BudgetNotice:       NewBudgetNoticeClient(cfg),
-		BudgetPolicy:       NewBudgetPolicyClient(cfg),
-		BudgetReservation:  NewBudgetReservationClient(cfg),
-		BudgetWindow:       NewBudgetWindowClient(cfg),
-		ConfigRevision:     NewConfigRevisionClient(cfg),
-		Identity:           NewIdentityClient(cfg),
-		Invite:             NewInviteClient(cfg),
-		Membership:         NewMembershipClient(cfg),
-		ModelRate:          NewModelRateClient(cfg),
-		Password:           NewPasswordClient(cfg),
-		PluginGrant:        NewPluginGrantClient(cfg),
-		PluginPackage:      NewPluginPackageClient(cfg),
-		RateWindow:         NewRateWindowClient(cfg),
-		RelayHost:          NewRelayHostClient(cfg),
-		RelayPairing:       NewRelayPairingClient(cfg),
-		RelayPairingOffer:  NewRelayPairingOfferClient(cfg),
-		ResourceSubmission: NewResourceSubmissionClient(cfg),
-		Team:               NewTeamClient(cfg),
-		TeamConfig:         NewTeamConfigClient(cfg),
-		TeamProvider:       NewTeamProviderClient(cfg),
-		UsageRequest:       NewUsageRequestClient(cfg),
-		User:               NewUserClient(cfg),
-		VerificationCode:   NewVerificationCodeClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		Artifact:             NewArtifactClient(cfg),
+		ArtifactFile:         NewArtifactFileClient(cfg),
+		ArtifactMember:       NewArtifactMemberClient(cfg),
+		ArtifactVersion:      NewArtifactVersionClient(cfg),
+		BudgetEvent:          NewBudgetEventClient(cfg),
+		BudgetGate:           NewBudgetGateClient(cfg),
+		BudgetNotice:         NewBudgetNoticeClient(cfg),
+		BudgetPolicy:         NewBudgetPolicyClient(cfg),
+		BudgetReservation:    NewBudgetReservationClient(cfg),
+		BudgetWindow:         NewBudgetWindowClient(cfg),
+		ConfigRevision:       NewConfigRevisionClient(cfg),
+		Identity:             NewIdentityClient(cfg),
+		Invite:               NewInviteClient(cfg),
+		KnowledgeDocument:    NewKnowledgeDocumentClient(cfg),
+		KnowledgeFolder:      NewKnowledgeFolderClient(cfg),
+		KnowledgeProposal:    NewKnowledgeProposalClient(cfg),
+		KnowledgeSpace:       NewKnowledgeSpaceClient(cfg),
+		KnowledgeSpaceMember: NewKnowledgeSpaceMemberClient(cfg),
+		KnowledgeVersion:     NewKnowledgeVersionClient(cfg),
+		Membership:           NewMembershipClient(cfg),
+		ModelRate:            NewModelRateClient(cfg),
+		Password:             NewPasswordClient(cfg),
+		PluginGrant:          NewPluginGrantClient(cfg),
+		PluginPackage:        NewPluginPackageClient(cfg),
+		RateWindow:           NewRateWindowClient(cfg),
+		RelayHost:            NewRelayHostClient(cfg),
+		RelayPairing:         NewRelayPairingClient(cfg),
+		RelayPairingOffer:    NewRelayPairingOfferClient(cfg),
+		ResourceSubmission:   NewResourceSubmissionClient(cfg),
+		Team:                 NewTeamClient(cfg),
+		TeamConfig:           NewTeamConfigClient(cfg),
+		TeamProvider:         NewTeamProviderClient(cfg),
+		UsageRequest:         NewUsageRequestClient(cfg),
+		User:                 NewUserClient(cfg),
+		VerificationCode:     NewVerificationCodeClient(cfg),
 	}, nil
 }
 
@@ -289,37 +319,43 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		Artifact:           NewArtifactClient(cfg),
-		ArtifactFile:       NewArtifactFileClient(cfg),
-		ArtifactMember:     NewArtifactMemberClient(cfg),
-		ArtifactVersion:    NewArtifactVersionClient(cfg),
-		BudgetEvent:        NewBudgetEventClient(cfg),
-		BudgetGate:         NewBudgetGateClient(cfg),
-		BudgetNotice:       NewBudgetNoticeClient(cfg),
-		BudgetPolicy:       NewBudgetPolicyClient(cfg),
-		BudgetReservation:  NewBudgetReservationClient(cfg),
-		BudgetWindow:       NewBudgetWindowClient(cfg),
-		ConfigRevision:     NewConfigRevisionClient(cfg),
-		Identity:           NewIdentityClient(cfg),
-		Invite:             NewInviteClient(cfg),
-		Membership:         NewMembershipClient(cfg),
-		ModelRate:          NewModelRateClient(cfg),
-		Password:           NewPasswordClient(cfg),
-		PluginGrant:        NewPluginGrantClient(cfg),
-		PluginPackage:      NewPluginPackageClient(cfg),
-		RateWindow:         NewRateWindowClient(cfg),
-		RelayHost:          NewRelayHostClient(cfg),
-		RelayPairing:       NewRelayPairingClient(cfg),
-		RelayPairingOffer:  NewRelayPairingOfferClient(cfg),
-		ResourceSubmission: NewResourceSubmissionClient(cfg),
-		Team:               NewTeamClient(cfg),
-		TeamConfig:         NewTeamConfigClient(cfg),
-		TeamProvider:       NewTeamProviderClient(cfg),
-		UsageRequest:       NewUsageRequestClient(cfg),
-		User:               NewUserClient(cfg),
-		VerificationCode:   NewVerificationCodeClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		Artifact:             NewArtifactClient(cfg),
+		ArtifactFile:         NewArtifactFileClient(cfg),
+		ArtifactMember:       NewArtifactMemberClient(cfg),
+		ArtifactVersion:      NewArtifactVersionClient(cfg),
+		BudgetEvent:          NewBudgetEventClient(cfg),
+		BudgetGate:           NewBudgetGateClient(cfg),
+		BudgetNotice:         NewBudgetNoticeClient(cfg),
+		BudgetPolicy:         NewBudgetPolicyClient(cfg),
+		BudgetReservation:    NewBudgetReservationClient(cfg),
+		BudgetWindow:         NewBudgetWindowClient(cfg),
+		ConfigRevision:       NewConfigRevisionClient(cfg),
+		Identity:             NewIdentityClient(cfg),
+		Invite:               NewInviteClient(cfg),
+		KnowledgeDocument:    NewKnowledgeDocumentClient(cfg),
+		KnowledgeFolder:      NewKnowledgeFolderClient(cfg),
+		KnowledgeProposal:    NewKnowledgeProposalClient(cfg),
+		KnowledgeSpace:       NewKnowledgeSpaceClient(cfg),
+		KnowledgeSpaceMember: NewKnowledgeSpaceMemberClient(cfg),
+		KnowledgeVersion:     NewKnowledgeVersionClient(cfg),
+		Membership:           NewMembershipClient(cfg),
+		ModelRate:            NewModelRateClient(cfg),
+		Password:             NewPasswordClient(cfg),
+		PluginGrant:          NewPluginGrantClient(cfg),
+		PluginPackage:        NewPluginPackageClient(cfg),
+		RateWindow:           NewRateWindowClient(cfg),
+		RelayHost:            NewRelayHostClient(cfg),
+		RelayPairing:         NewRelayPairingClient(cfg),
+		RelayPairingOffer:    NewRelayPairingOfferClient(cfg),
+		ResourceSubmission:   NewResourceSubmissionClient(cfg),
+		Team:                 NewTeamClient(cfg),
+		TeamConfig:           NewTeamConfigClient(cfg),
+		TeamProvider:         NewTeamProviderClient(cfg),
+		UsageRequest:         NewUsageRequestClient(cfg),
+		User:                 NewUserClient(cfg),
+		VerificationCode:     NewVerificationCodeClient(cfg),
 	}, nil
 }
 
@@ -351,9 +387,11 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion, c.BudgetEvent,
 		c.BudgetGate, c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation,
-		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.Membership,
-		c.ModelRate, c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow,
-		c.RelayHost, c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
+		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.KnowledgeDocument,
+		c.KnowledgeFolder, c.KnowledgeProposal, c.KnowledgeSpace,
+		c.KnowledgeSpaceMember, c.KnowledgeVersion, c.Membership, c.ModelRate,
+		c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow, c.RelayHost,
+		c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
 		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
@@ -366,9 +404,11 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion, c.BudgetEvent,
 		c.BudgetGate, c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation,
-		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.Membership,
-		c.ModelRate, c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow,
-		c.RelayHost, c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
+		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.KnowledgeDocument,
+		c.KnowledgeFolder, c.KnowledgeProposal, c.KnowledgeSpace,
+		c.KnowledgeSpaceMember, c.KnowledgeVersion, c.Membership, c.ModelRate,
+		c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow, c.RelayHost,
+		c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
 		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
@@ -404,6 +444,18 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Identity.mutate(ctx, m)
 	case *InviteMutation:
 		return c.Invite.mutate(ctx, m)
+	case *KnowledgeDocumentMutation:
+		return c.KnowledgeDocument.mutate(ctx, m)
+	case *KnowledgeFolderMutation:
+		return c.KnowledgeFolder.mutate(ctx, m)
+	case *KnowledgeProposalMutation:
+		return c.KnowledgeProposal.mutate(ctx, m)
+	case *KnowledgeSpaceMutation:
+		return c.KnowledgeSpace.mutate(ctx, m)
+	case *KnowledgeSpaceMemberMutation:
+		return c.KnowledgeSpaceMember.mutate(ctx, m)
+	case *KnowledgeVersionMutation:
+		return c.KnowledgeVersion.mutate(ctx, m)
 	case *MembershipMutation:
 		return c.Membership.mutate(ctx, m)
 	case *ModelRateMutation:
@@ -2199,6 +2251,804 @@ func (c *InviteClient) mutate(ctx context.Context, m *InviteMutation) (Value, er
 		return (&InviteDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Invite mutation op: %q", m.Op())
+	}
+}
+
+// KnowledgeDocumentClient is a client for the KnowledgeDocument schema.
+type KnowledgeDocumentClient struct {
+	config
+}
+
+// NewKnowledgeDocumentClient returns a client for the KnowledgeDocument from the given config.
+func NewKnowledgeDocumentClient(c config) *KnowledgeDocumentClient {
+	return &KnowledgeDocumentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `knowledgedocument.Hooks(f(g(h())))`.
+func (c *KnowledgeDocumentClient) Use(hooks ...Hook) {
+	c.hooks.KnowledgeDocument = append(c.hooks.KnowledgeDocument, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `knowledgedocument.Intercept(f(g(h())))`.
+func (c *KnowledgeDocumentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.KnowledgeDocument = append(c.inters.KnowledgeDocument, interceptors...)
+}
+
+// Create returns a builder for creating a KnowledgeDocument entity.
+func (c *KnowledgeDocumentClient) Create() *KnowledgeDocumentCreate {
+	mutation := newKnowledgeDocumentMutation(c.config, OpCreate)
+	return &KnowledgeDocumentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KnowledgeDocument entities.
+func (c *KnowledgeDocumentClient) CreateBulk(builders ...*KnowledgeDocumentCreate) *KnowledgeDocumentCreateBulk {
+	return &KnowledgeDocumentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *KnowledgeDocumentClient) MapCreateBulk(slice any, setFunc func(*KnowledgeDocumentCreate, int)) *KnowledgeDocumentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &KnowledgeDocumentCreateBulk{err: fmt.Errorf("calling to KnowledgeDocumentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*KnowledgeDocumentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &KnowledgeDocumentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KnowledgeDocument.
+func (c *KnowledgeDocumentClient) Update() *KnowledgeDocumentUpdate {
+	mutation := newKnowledgeDocumentMutation(c.config, OpUpdate)
+	return &KnowledgeDocumentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KnowledgeDocumentClient) UpdateOne(_m *KnowledgeDocument) *KnowledgeDocumentUpdateOne {
+	mutation := newKnowledgeDocumentMutation(c.config, OpUpdateOne, withKnowledgeDocument(_m))
+	return &KnowledgeDocumentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KnowledgeDocumentClient) UpdateOneID(id string) *KnowledgeDocumentUpdateOne {
+	mutation := newKnowledgeDocumentMutation(c.config, OpUpdateOne, withKnowledgeDocumentID(id))
+	return &KnowledgeDocumentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KnowledgeDocument.
+func (c *KnowledgeDocumentClient) Delete() *KnowledgeDocumentDelete {
+	mutation := newKnowledgeDocumentMutation(c.config, OpDelete)
+	return &KnowledgeDocumentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KnowledgeDocumentClient) DeleteOne(_m *KnowledgeDocument) *KnowledgeDocumentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KnowledgeDocumentClient) DeleteOneID(id string) *KnowledgeDocumentDeleteOne {
+	builder := c.Delete().Where(knowledgedocument.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KnowledgeDocumentDeleteOne{builder}
+}
+
+// Query returns a query builder for KnowledgeDocument.
+func (c *KnowledgeDocumentClient) Query() *KnowledgeDocumentQuery {
+	return &KnowledgeDocumentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeKnowledgeDocument},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a KnowledgeDocument entity by its id.
+func (c *KnowledgeDocumentClient) Get(ctx context.Context, id string) (*KnowledgeDocument, error) {
+	return c.Query().Where(knowledgedocument.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KnowledgeDocumentClient) GetX(ctx context.Context, id string) *KnowledgeDocument {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KnowledgeDocumentClient) Hooks() []Hook {
+	return c.hooks.KnowledgeDocument
+}
+
+// Interceptors returns the client interceptors.
+func (c *KnowledgeDocumentClient) Interceptors() []Interceptor {
+	return c.inters.KnowledgeDocument
+}
+
+func (c *KnowledgeDocumentClient) mutate(ctx context.Context, m *KnowledgeDocumentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&KnowledgeDocumentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&KnowledgeDocumentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&KnowledgeDocumentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&KnowledgeDocumentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown KnowledgeDocument mutation op: %q", m.Op())
+	}
+}
+
+// KnowledgeFolderClient is a client for the KnowledgeFolder schema.
+type KnowledgeFolderClient struct {
+	config
+}
+
+// NewKnowledgeFolderClient returns a client for the KnowledgeFolder from the given config.
+func NewKnowledgeFolderClient(c config) *KnowledgeFolderClient {
+	return &KnowledgeFolderClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `knowledgefolder.Hooks(f(g(h())))`.
+func (c *KnowledgeFolderClient) Use(hooks ...Hook) {
+	c.hooks.KnowledgeFolder = append(c.hooks.KnowledgeFolder, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `knowledgefolder.Intercept(f(g(h())))`.
+func (c *KnowledgeFolderClient) Intercept(interceptors ...Interceptor) {
+	c.inters.KnowledgeFolder = append(c.inters.KnowledgeFolder, interceptors...)
+}
+
+// Create returns a builder for creating a KnowledgeFolder entity.
+func (c *KnowledgeFolderClient) Create() *KnowledgeFolderCreate {
+	mutation := newKnowledgeFolderMutation(c.config, OpCreate)
+	return &KnowledgeFolderCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KnowledgeFolder entities.
+func (c *KnowledgeFolderClient) CreateBulk(builders ...*KnowledgeFolderCreate) *KnowledgeFolderCreateBulk {
+	return &KnowledgeFolderCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *KnowledgeFolderClient) MapCreateBulk(slice any, setFunc func(*KnowledgeFolderCreate, int)) *KnowledgeFolderCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &KnowledgeFolderCreateBulk{err: fmt.Errorf("calling to KnowledgeFolderClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*KnowledgeFolderCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &KnowledgeFolderCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KnowledgeFolder.
+func (c *KnowledgeFolderClient) Update() *KnowledgeFolderUpdate {
+	mutation := newKnowledgeFolderMutation(c.config, OpUpdate)
+	return &KnowledgeFolderUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KnowledgeFolderClient) UpdateOne(_m *KnowledgeFolder) *KnowledgeFolderUpdateOne {
+	mutation := newKnowledgeFolderMutation(c.config, OpUpdateOne, withKnowledgeFolder(_m))
+	return &KnowledgeFolderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KnowledgeFolderClient) UpdateOneID(id string) *KnowledgeFolderUpdateOne {
+	mutation := newKnowledgeFolderMutation(c.config, OpUpdateOne, withKnowledgeFolderID(id))
+	return &KnowledgeFolderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KnowledgeFolder.
+func (c *KnowledgeFolderClient) Delete() *KnowledgeFolderDelete {
+	mutation := newKnowledgeFolderMutation(c.config, OpDelete)
+	return &KnowledgeFolderDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KnowledgeFolderClient) DeleteOne(_m *KnowledgeFolder) *KnowledgeFolderDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KnowledgeFolderClient) DeleteOneID(id string) *KnowledgeFolderDeleteOne {
+	builder := c.Delete().Where(knowledgefolder.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KnowledgeFolderDeleteOne{builder}
+}
+
+// Query returns a query builder for KnowledgeFolder.
+func (c *KnowledgeFolderClient) Query() *KnowledgeFolderQuery {
+	return &KnowledgeFolderQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeKnowledgeFolder},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a KnowledgeFolder entity by its id.
+func (c *KnowledgeFolderClient) Get(ctx context.Context, id string) (*KnowledgeFolder, error) {
+	return c.Query().Where(knowledgefolder.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KnowledgeFolderClient) GetX(ctx context.Context, id string) *KnowledgeFolder {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KnowledgeFolderClient) Hooks() []Hook {
+	return c.hooks.KnowledgeFolder
+}
+
+// Interceptors returns the client interceptors.
+func (c *KnowledgeFolderClient) Interceptors() []Interceptor {
+	return c.inters.KnowledgeFolder
+}
+
+func (c *KnowledgeFolderClient) mutate(ctx context.Context, m *KnowledgeFolderMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&KnowledgeFolderCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&KnowledgeFolderUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&KnowledgeFolderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&KnowledgeFolderDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown KnowledgeFolder mutation op: %q", m.Op())
+	}
+}
+
+// KnowledgeProposalClient is a client for the KnowledgeProposal schema.
+type KnowledgeProposalClient struct {
+	config
+}
+
+// NewKnowledgeProposalClient returns a client for the KnowledgeProposal from the given config.
+func NewKnowledgeProposalClient(c config) *KnowledgeProposalClient {
+	return &KnowledgeProposalClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `knowledgeproposal.Hooks(f(g(h())))`.
+func (c *KnowledgeProposalClient) Use(hooks ...Hook) {
+	c.hooks.KnowledgeProposal = append(c.hooks.KnowledgeProposal, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `knowledgeproposal.Intercept(f(g(h())))`.
+func (c *KnowledgeProposalClient) Intercept(interceptors ...Interceptor) {
+	c.inters.KnowledgeProposal = append(c.inters.KnowledgeProposal, interceptors...)
+}
+
+// Create returns a builder for creating a KnowledgeProposal entity.
+func (c *KnowledgeProposalClient) Create() *KnowledgeProposalCreate {
+	mutation := newKnowledgeProposalMutation(c.config, OpCreate)
+	return &KnowledgeProposalCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KnowledgeProposal entities.
+func (c *KnowledgeProposalClient) CreateBulk(builders ...*KnowledgeProposalCreate) *KnowledgeProposalCreateBulk {
+	return &KnowledgeProposalCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *KnowledgeProposalClient) MapCreateBulk(slice any, setFunc func(*KnowledgeProposalCreate, int)) *KnowledgeProposalCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &KnowledgeProposalCreateBulk{err: fmt.Errorf("calling to KnowledgeProposalClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*KnowledgeProposalCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &KnowledgeProposalCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KnowledgeProposal.
+func (c *KnowledgeProposalClient) Update() *KnowledgeProposalUpdate {
+	mutation := newKnowledgeProposalMutation(c.config, OpUpdate)
+	return &KnowledgeProposalUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KnowledgeProposalClient) UpdateOne(_m *KnowledgeProposal) *KnowledgeProposalUpdateOne {
+	mutation := newKnowledgeProposalMutation(c.config, OpUpdateOne, withKnowledgeProposal(_m))
+	return &KnowledgeProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KnowledgeProposalClient) UpdateOneID(id string) *KnowledgeProposalUpdateOne {
+	mutation := newKnowledgeProposalMutation(c.config, OpUpdateOne, withKnowledgeProposalID(id))
+	return &KnowledgeProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KnowledgeProposal.
+func (c *KnowledgeProposalClient) Delete() *KnowledgeProposalDelete {
+	mutation := newKnowledgeProposalMutation(c.config, OpDelete)
+	return &KnowledgeProposalDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KnowledgeProposalClient) DeleteOne(_m *KnowledgeProposal) *KnowledgeProposalDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KnowledgeProposalClient) DeleteOneID(id string) *KnowledgeProposalDeleteOne {
+	builder := c.Delete().Where(knowledgeproposal.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KnowledgeProposalDeleteOne{builder}
+}
+
+// Query returns a query builder for KnowledgeProposal.
+func (c *KnowledgeProposalClient) Query() *KnowledgeProposalQuery {
+	return &KnowledgeProposalQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeKnowledgeProposal},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a KnowledgeProposal entity by its id.
+func (c *KnowledgeProposalClient) Get(ctx context.Context, id string) (*KnowledgeProposal, error) {
+	return c.Query().Where(knowledgeproposal.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KnowledgeProposalClient) GetX(ctx context.Context, id string) *KnowledgeProposal {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KnowledgeProposalClient) Hooks() []Hook {
+	return c.hooks.KnowledgeProposal
+}
+
+// Interceptors returns the client interceptors.
+func (c *KnowledgeProposalClient) Interceptors() []Interceptor {
+	return c.inters.KnowledgeProposal
+}
+
+func (c *KnowledgeProposalClient) mutate(ctx context.Context, m *KnowledgeProposalMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&KnowledgeProposalCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&KnowledgeProposalUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&KnowledgeProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&KnowledgeProposalDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown KnowledgeProposal mutation op: %q", m.Op())
+	}
+}
+
+// KnowledgeSpaceClient is a client for the KnowledgeSpace schema.
+type KnowledgeSpaceClient struct {
+	config
+}
+
+// NewKnowledgeSpaceClient returns a client for the KnowledgeSpace from the given config.
+func NewKnowledgeSpaceClient(c config) *KnowledgeSpaceClient {
+	return &KnowledgeSpaceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `knowledgespace.Hooks(f(g(h())))`.
+func (c *KnowledgeSpaceClient) Use(hooks ...Hook) {
+	c.hooks.KnowledgeSpace = append(c.hooks.KnowledgeSpace, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `knowledgespace.Intercept(f(g(h())))`.
+func (c *KnowledgeSpaceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.KnowledgeSpace = append(c.inters.KnowledgeSpace, interceptors...)
+}
+
+// Create returns a builder for creating a KnowledgeSpace entity.
+func (c *KnowledgeSpaceClient) Create() *KnowledgeSpaceCreate {
+	mutation := newKnowledgeSpaceMutation(c.config, OpCreate)
+	return &KnowledgeSpaceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KnowledgeSpace entities.
+func (c *KnowledgeSpaceClient) CreateBulk(builders ...*KnowledgeSpaceCreate) *KnowledgeSpaceCreateBulk {
+	return &KnowledgeSpaceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *KnowledgeSpaceClient) MapCreateBulk(slice any, setFunc func(*KnowledgeSpaceCreate, int)) *KnowledgeSpaceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &KnowledgeSpaceCreateBulk{err: fmt.Errorf("calling to KnowledgeSpaceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*KnowledgeSpaceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &KnowledgeSpaceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KnowledgeSpace.
+func (c *KnowledgeSpaceClient) Update() *KnowledgeSpaceUpdate {
+	mutation := newKnowledgeSpaceMutation(c.config, OpUpdate)
+	return &KnowledgeSpaceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KnowledgeSpaceClient) UpdateOne(_m *KnowledgeSpace) *KnowledgeSpaceUpdateOne {
+	mutation := newKnowledgeSpaceMutation(c.config, OpUpdateOne, withKnowledgeSpace(_m))
+	return &KnowledgeSpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KnowledgeSpaceClient) UpdateOneID(id string) *KnowledgeSpaceUpdateOne {
+	mutation := newKnowledgeSpaceMutation(c.config, OpUpdateOne, withKnowledgeSpaceID(id))
+	return &KnowledgeSpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KnowledgeSpace.
+func (c *KnowledgeSpaceClient) Delete() *KnowledgeSpaceDelete {
+	mutation := newKnowledgeSpaceMutation(c.config, OpDelete)
+	return &KnowledgeSpaceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KnowledgeSpaceClient) DeleteOne(_m *KnowledgeSpace) *KnowledgeSpaceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KnowledgeSpaceClient) DeleteOneID(id string) *KnowledgeSpaceDeleteOne {
+	builder := c.Delete().Where(knowledgespace.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KnowledgeSpaceDeleteOne{builder}
+}
+
+// Query returns a query builder for KnowledgeSpace.
+func (c *KnowledgeSpaceClient) Query() *KnowledgeSpaceQuery {
+	return &KnowledgeSpaceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeKnowledgeSpace},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a KnowledgeSpace entity by its id.
+func (c *KnowledgeSpaceClient) Get(ctx context.Context, id string) (*KnowledgeSpace, error) {
+	return c.Query().Where(knowledgespace.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KnowledgeSpaceClient) GetX(ctx context.Context, id string) *KnowledgeSpace {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KnowledgeSpaceClient) Hooks() []Hook {
+	return c.hooks.KnowledgeSpace
+}
+
+// Interceptors returns the client interceptors.
+func (c *KnowledgeSpaceClient) Interceptors() []Interceptor {
+	return c.inters.KnowledgeSpace
+}
+
+func (c *KnowledgeSpaceClient) mutate(ctx context.Context, m *KnowledgeSpaceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&KnowledgeSpaceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&KnowledgeSpaceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&KnowledgeSpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&KnowledgeSpaceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown KnowledgeSpace mutation op: %q", m.Op())
+	}
+}
+
+// KnowledgeSpaceMemberClient is a client for the KnowledgeSpaceMember schema.
+type KnowledgeSpaceMemberClient struct {
+	config
+}
+
+// NewKnowledgeSpaceMemberClient returns a client for the KnowledgeSpaceMember from the given config.
+func NewKnowledgeSpaceMemberClient(c config) *KnowledgeSpaceMemberClient {
+	return &KnowledgeSpaceMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `knowledgespacemember.Hooks(f(g(h())))`.
+func (c *KnowledgeSpaceMemberClient) Use(hooks ...Hook) {
+	c.hooks.KnowledgeSpaceMember = append(c.hooks.KnowledgeSpaceMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `knowledgespacemember.Intercept(f(g(h())))`.
+func (c *KnowledgeSpaceMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.KnowledgeSpaceMember = append(c.inters.KnowledgeSpaceMember, interceptors...)
+}
+
+// Create returns a builder for creating a KnowledgeSpaceMember entity.
+func (c *KnowledgeSpaceMemberClient) Create() *KnowledgeSpaceMemberCreate {
+	mutation := newKnowledgeSpaceMemberMutation(c.config, OpCreate)
+	return &KnowledgeSpaceMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KnowledgeSpaceMember entities.
+func (c *KnowledgeSpaceMemberClient) CreateBulk(builders ...*KnowledgeSpaceMemberCreate) *KnowledgeSpaceMemberCreateBulk {
+	return &KnowledgeSpaceMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *KnowledgeSpaceMemberClient) MapCreateBulk(slice any, setFunc func(*KnowledgeSpaceMemberCreate, int)) *KnowledgeSpaceMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &KnowledgeSpaceMemberCreateBulk{err: fmt.Errorf("calling to KnowledgeSpaceMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*KnowledgeSpaceMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &KnowledgeSpaceMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KnowledgeSpaceMember.
+func (c *KnowledgeSpaceMemberClient) Update() *KnowledgeSpaceMemberUpdate {
+	mutation := newKnowledgeSpaceMemberMutation(c.config, OpUpdate)
+	return &KnowledgeSpaceMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KnowledgeSpaceMemberClient) UpdateOne(_m *KnowledgeSpaceMember) *KnowledgeSpaceMemberUpdateOne {
+	mutation := newKnowledgeSpaceMemberMutation(c.config, OpUpdateOne, withKnowledgeSpaceMember(_m))
+	return &KnowledgeSpaceMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KnowledgeSpaceMemberClient) UpdateOneID(id string) *KnowledgeSpaceMemberUpdateOne {
+	mutation := newKnowledgeSpaceMemberMutation(c.config, OpUpdateOne, withKnowledgeSpaceMemberID(id))
+	return &KnowledgeSpaceMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KnowledgeSpaceMember.
+func (c *KnowledgeSpaceMemberClient) Delete() *KnowledgeSpaceMemberDelete {
+	mutation := newKnowledgeSpaceMemberMutation(c.config, OpDelete)
+	return &KnowledgeSpaceMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KnowledgeSpaceMemberClient) DeleteOne(_m *KnowledgeSpaceMember) *KnowledgeSpaceMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KnowledgeSpaceMemberClient) DeleteOneID(id string) *KnowledgeSpaceMemberDeleteOne {
+	builder := c.Delete().Where(knowledgespacemember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KnowledgeSpaceMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for KnowledgeSpaceMember.
+func (c *KnowledgeSpaceMemberClient) Query() *KnowledgeSpaceMemberQuery {
+	return &KnowledgeSpaceMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeKnowledgeSpaceMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a KnowledgeSpaceMember entity by its id.
+func (c *KnowledgeSpaceMemberClient) Get(ctx context.Context, id string) (*KnowledgeSpaceMember, error) {
+	return c.Query().Where(knowledgespacemember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KnowledgeSpaceMemberClient) GetX(ctx context.Context, id string) *KnowledgeSpaceMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KnowledgeSpaceMemberClient) Hooks() []Hook {
+	return c.hooks.KnowledgeSpaceMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *KnowledgeSpaceMemberClient) Interceptors() []Interceptor {
+	return c.inters.KnowledgeSpaceMember
+}
+
+func (c *KnowledgeSpaceMemberClient) mutate(ctx context.Context, m *KnowledgeSpaceMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&KnowledgeSpaceMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&KnowledgeSpaceMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&KnowledgeSpaceMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&KnowledgeSpaceMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown KnowledgeSpaceMember mutation op: %q", m.Op())
+	}
+}
+
+// KnowledgeVersionClient is a client for the KnowledgeVersion schema.
+type KnowledgeVersionClient struct {
+	config
+}
+
+// NewKnowledgeVersionClient returns a client for the KnowledgeVersion from the given config.
+func NewKnowledgeVersionClient(c config) *KnowledgeVersionClient {
+	return &KnowledgeVersionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `knowledgeversion.Hooks(f(g(h())))`.
+func (c *KnowledgeVersionClient) Use(hooks ...Hook) {
+	c.hooks.KnowledgeVersion = append(c.hooks.KnowledgeVersion, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `knowledgeversion.Intercept(f(g(h())))`.
+func (c *KnowledgeVersionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.KnowledgeVersion = append(c.inters.KnowledgeVersion, interceptors...)
+}
+
+// Create returns a builder for creating a KnowledgeVersion entity.
+func (c *KnowledgeVersionClient) Create() *KnowledgeVersionCreate {
+	mutation := newKnowledgeVersionMutation(c.config, OpCreate)
+	return &KnowledgeVersionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KnowledgeVersion entities.
+func (c *KnowledgeVersionClient) CreateBulk(builders ...*KnowledgeVersionCreate) *KnowledgeVersionCreateBulk {
+	return &KnowledgeVersionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *KnowledgeVersionClient) MapCreateBulk(slice any, setFunc func(*KnowledgeVersionCreate, int)) *KnowledgeVersionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &KnowledgeVersionCreateBulk{err: fmt.Errorf("calling to KnowledgeVersionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*KnowledgeVersionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &KnowledgeVersionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KnowledgeVersion.
+func (c *KnowledgeVersionClient) Update() *KnowledgeVersionUpdate {
+	mutation := newKnowledgeVersionMutation(c.config, OpUpdate)
+	return &KnowledgeVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KnowledgeVersionClient) UpdateOne(_m *KnowledgeVersion) *KnowledgeVersionUpdateOne {
+	mutation := newKnowledgeVersionMutation(c.config, OpUpdateOne, withKnowledgeVersion(_m))
+	return &KnowledgeVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KnowledgeVersionClient) UpdateOneID(id string) *KnowledgeVersionUpdateOne {
+	mutation := newKnowledgeVersionMutation(c.config, OpUpdateOne, withKnowledgeVersionID(id))
+	return &KnowledgeVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KnowledgeVersion.
+func (c *KnowledgeVersionClient) Delete() *KnowledgeVersionDelete {
+	mutation := newKnowledgeVersionMutation(c.config, OpDelete)
+	return &KnowledgeVersionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KnowledgeVersionClient) DeleteOne(_m *KnowledgeVersion) *KnowledgeVersionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KnowledgeVersionClient) DeleteOneID(id string) *KnowledgeVersionDeleteOne {
+	builder := c.Delete().Where(knowledgeversion.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KnowledgeVersionDeleteOne{builder}
+}
+
+// Query returns a query builder for KnowledgeVersion.
+func (c *KnowledgeVersionClient) Query() *KnowledgeVersionQuery {
+	return &KnowledgeVersionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeKnowledgeVersion},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a KnowledgeVersion entity by its id.
+func (c *KnowledgeVersionClient) Get(ctx context.Context, id string) (*KnowledgeVersion, error) {
+	return c.Query().Where(knowledgeversion.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KnowledgeVersionClient) GetX(ctx context.Context, id string) *KnowledgeVersion {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KnowledgeVersionClient) Hooks() []Hook {
+	return c.hooks.KnowledgeVersion
+}
+
+// Interceptors returns the client interceptors.
+func (c *KnowledgeVersionClient) Interceptors() []Interceptor {
+	return c.inters.KnowledgeVersion
+}
+
+func (c *KnowledgeVersionClient) mutate(ctx context.Context, m *KnowledgeVersionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&KnowledgeVersionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&KnowledgeVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&KnowledgeVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&KnowledgeVersionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown KnowledgeVersion mutation op: %q", m.Op())
 	}
 }
 
@@ -4559,17 +5409,20 @@ type (
 	hooks struct {
 		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, BudgetEvent,
 		BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation, BudgetWindow,
-		ConfigRevision, Identity, Invite, Membership, ModelRate, Password, PluginGrant,
-		PluginPackage, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
-		ResourceSubmission, Team, TeamConfig, TeamProvider, UsageRequest, User,
-		VerificationCode []ent.Hook
+		ConfigRevision, Identity, Invite, KnowledgeDocument, KnowledgeFolder,
+		KnowledgeProposal, KnowledgeSpace, KnowledgeSpaceMember, KnowledgeVersion,
+		Membership, ModelRate, Password, PluginGrant, PluginPackage, RateWindow,
+		RelayHost, RelayPairing, RelayPairingOffer, ResourceSubmission, Team,
+		TeamConfig, TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
 		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, BudgetEvent,
 		BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation, BudgetWindow,
-		ConfigRevision, Identity, Invite, Membership, ModelRate, Password, PluginGrant,
-		PluginPackage, RateWindow, RelayHost, RelayPairing, RelayPairingOffer,
-		ResourceSubmission, Team, TeamConfig, TeamProvider, UsageRequest, User,
+		ConfigRevision, Identity, Invite, KnowledgeDocument, KnowledgeFolder,
+		KnowledgeProposal, KnowledgeSpace, KnowledgeSpaceMember, KnowledgeVersion,
+		Membership, ModelRate, Password, PluginGrant, PluginPackage, RateWindow,
+		RelayHost, RelayPairing, RelayPairingOffer, ResourceSubmission, Team,
+		TeamConfig, TeamProvider, UsageRequest, User,
 		VerificationCode []ent.Interceptor
 	}
 )

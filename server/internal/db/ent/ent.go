@@ -25,6 +25,12 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespace"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespacemember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
@@ -101,35 +107,41 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			artifact.Table:           artifact.ValidColumn,
-			artifactfile.Table:       artifactfile.ValidColumn,
-			artifactmember.Table:     artifactmember.ValidColumn,
-			artifactversion.Table:    artifactversion.ValidColumn,
-			budgetevent.Table:        budgetevent.ValidColumn,
-			budgetgate.Table:         budgetgate.ValidColumn,
-			budgetnotice.Table:       budgetnotice.ValidColumn,
-			budgetpolicy.Table:       budgetpolicy.ValidColumn,
-			budgetreservation.Table:  budgetreservation.ValidColumn,
-			budgetwindow.Table:       budgetwindow.ValidColumn,
-			configrevision.Table:     configrevision.ValidColumn,
-			identity.Table:           identity.ValidColumn,
-			invite.Table:             invite.ValidColumn,
-			membership.Table:         membership.ValidColumn,
-			modelrate.Table:          modelrate.ValidColumn,
-			password.Table:           password.ValidColumn,
-			plugingrant.Table:        plugingrant.ValidColumn,
-			pluginpackage.Table:      pluginpackage.ValidColumn,
-			ratewindow.Table:         ratewindow.ValidColumn,
-			relayhost.Table:          relayhost.ValidColumn,
-			relaypairing.Table:       relaypairing.ValidColumn,
-			relaypairingoffer.Table:  relaypairingoffer.ValidColumn,
-			resourcesubmission.Table: resourcesubmission.ValidColumn,
-			team.Table:               team.ValidColumn,
-			teamconfig.Table:         teamconfig.ValidColumn,
-			teamprovider.Table:       teamprovider.ValidColumn,
-			usagerequest.Table:       usagerequest.ValidColumn,
-			user.Table:               user.ValidColumn,
-			verificationcode.Table:   verificationcode.ValidColumn,
+			artifact.Table:             artifact.ValidColumn,
+			artifactfile.Table:         artifactfile.ValidColumn,
+			artifactmember.Table:       artifactmember.ValidColumn,
+			artifactversion.Table:      artifactversion.ValidColumn,
+			budgetevent.Table:          budgetevent.ValidColumn,
+			budgetgate.Table:           budgetgate.ValidColumn,
+			budgetnotice.Table:         budgetnotice.ValidColumn,
+			budgetpolicy.Table:         budgetpolicy.ValidColumn,
+			budgetreservation.Table:    budgetreservation.ValidColumn,
+			budgetwindow.Table:         budgetwindow.ValidColumn,
+			configrevision.Table:       configrevision.ValidColumn,
+			identity.Table:             identity.ValidColumn,
+			invite.Table:               invite.ValidColumn,
+			knowledgedocument.Table:    knowledgedocument.ValidColumn,
+			knowledgefolder.Table:      knowledgefolder.ValidColumn,
+			knowledgeproposal.Table:    knowledgeproposal.ValidColumn,
+			knowledgespace.Table:       knowledgespace.ValidColumn,
+			knowledgespacemember.Table: knowledgespacemember.ValidColumn,
+			knowledgeversion.Table:     knowledgeversion.ValidColumn,
+			membership.Table:           membership.ValidColumn,
+			modelrate.Table:            modelrate.ValidColumn,
+			password.Table:             password.ValidColumn,
+			plugingrant.Table:          plugingrant.ValidColumn,
+			pluginpackage.Table:        pluginpackage.ValidColumn,
+			ratewindow.Table:           ratewindow.ValidColumn,
+			relayhost.Table:            relayhost.ValidColumn,
+			relaypairing.Table:         relaypairing.ValidColumn,
+			relaypairingoffer.Table:    relaypairingoffer.ValidColumn,
+			resourcesubmission.Table:   resourcesubmission.ValidColumn,
+			team.Table:                 team.ValidColumn,
+			teamconfig.Table:           teamconfig.ValidColumn,
+			teamprovider.Table:         teamprovider.ValidColumn,
+			usagerequest.Table:         usagerequest.ValidColumn,
+			user.Table:                 user.ValidColumn,
+			verificationcode.Table:     verificationcode.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

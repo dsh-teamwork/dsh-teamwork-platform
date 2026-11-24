@@ -397,6 +397,165 @@ var (
 			},
 		},
 	}
+	// KnowledgeDocumentsColumns holds the columns for the "knowledge_documents" table.
+	KnowledgeDocumentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "space_id", Type: field.TypeString, Size: 32},
+		{Name: "folder_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "title", Type: field.TypeString, Size: 480},
+		{Name: "current_version", Type: field.TypeInt},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// KnowledgeDocumentsTable holds the schema information for the "knowledge_documents" table.
+	KnowledgeDocumentsTable = &schema.Table{
+		Name:       "knowledge_documents",
+		Columns:    KnowledgeDocumentsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeDocumentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgedocument_space_id_folder_id_title",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeDocumentsColumns[3], KnowledgeDocumentsColumns[4], KnowledgeDocumentsColumns[5]},
+			},
+			{
+				Name:    "knowledgedocument_team_id_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeDocumentsColumns[2], KnowledgeDocumentsColumns[7]},
+			},
+		},
+	}
+	// KnowledgeFoldersColumns holds the columns for the "knowledge_folders" table.
+	KnowledgeFoldersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "space_id", Type: field.TypeString, Size: 32},
+		{Name: "parent_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "name", Type: field.TypeString, Size: 320},
+	}
+	// KnowledgeFoldersTable holds the schema information for the "knowledge_folders" table.
+	KnowledgeFoldersTable = &schema.Table{
+		Name:       "knowledge_folders",
+		Columns:    KnowledgeFoldersColumns,
+		PrimaryKey: []*schema.Column{KnowledgeFoldersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgefolder_space_id_parent_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeFoldersColumns[2], KnowledgeFoldersColumns[3], KnowledgeFoldersColumns[4]},
+			},
+		},
+	}
+	// KnowledgeProposalsColumns holds the columns for the "knowledge_proposals" table.
+	KnowledgeProposalsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "document_id", Type: field.TypeString, Size: 32},
+		{Name: "base_version", Type: field.TypeInt},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"console", "agent"}},
+		{Name: "computer", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "session_id", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
+		{Name: "text", Type: field.TypeString, Size: 2147483647},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"pending", "accepted", "declined", "withdrawn"}, Default: "pending"},
+		{Name: "decided_by", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "decided_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "reason", Type: field.TypeString, Size: 2000, Default: ""},
+		{Name: "version", Type: field.TypeInt, Default: 0},
+	}
+	// KnowledgeProposalsTable holds the schema information for the "knowledge_proposals" table.
+	KnowledgeProposalsTable = &schema.Table{
+		Name:       "knowledge_proposals",
+		Columns:    KnowledgeProposalsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeProposalsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgeproposal_team_id_state_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeProposalsColumns[2], KnowledgeProposalsColumns[11], KnowledgeProposalsColumns[1]},
+			},
+			{
+				Name:    "knowledgeproposal_document_id_state",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeProposalsColumns[3], KnowledgeProposalsColumns[11]},
+			},
+		},
+	}
+	// KnowledgeSpacesColumns holds the columns for the "knowledge_spaces" table.
+	KnowledgeSpacesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "name", Type: field.TypeString, Size: 320},
+		{Name: "reading", Type: field.TypeEnum, Enums: []string{"team", "members"}, Default: "team"},
+		{Name: "created_by", Type: field.TypeString, Size: 32},
+	}
+	// KnowledgeSpacesTable holds the schema information for the "knowledge_spaces" table.
+	KnowledgeSpacesTable = &schema.Table{
+		Name:       "knowledge_spaces",
+		Columns:    KnowledgeSpacesColumns,
+		PrimaryKey: []*schema.Column{KnowledgeSpacesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgespace_team_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeSpacesColumns[2], KnowledgeSpacesColumns[3]},
+			},
+		},
+	}
+	// KnowledgeSpaceMembersColumns holds the columns for the "knowledge_space_members" table.
+	KnowledgeSpaceMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "space_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"reader", "editor"}},
+	}
+	// KnowledgeSpaceMembersTable holds the schema information for the "knowledge_space_members" table.
+	KnowledgeSpaceMembersTable = &schema.Table{
+		Name:       "knowledge_space_members",
+		Columns:    KnowledgeSpaceMembersColumns,
+		PrimaryKey: []*schema.Column{KnowledgeSpaceMembersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgespacemember_space_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeSpaceMembersColumns[2], KnowledgeSpaceMembersColumns[3]},
+			},
+			{
+				Name:    "knowledgespacemember_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeSpaceMembersColumns[3]},
+			},
+		},
+	}
+	// KnowledgeVersionsColumns holds the columns for the "knowledge_versions" table.
+	KnowledgeVersionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "document_id", Type: field.TypeString, Size: 32},
+		{Name: "number", Type: field.TypeInt},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"console", "agent"}},
+		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
+		{Name: "text", Type: field.TypeString, Size: 2147483647},
+	}
+	// KnowledgeVersionsTable holds the schema information for the "knowledge_versions" table.
+	KnowledgeVersionsTable = &schema.Table{
+		Name:       "knowledge_versions",
+		Columns:    KnowledgeVersionsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeVersionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgeversion_document_id_number",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeVersionsColumns[2], KnowledgeVersionsColumns[3]},
+			},
+		},
+	}
 	// MembershipsColumns holds the columns for the "memberships" table.
 	MembershipsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -873,6 +1032,12 @@ var (
 		ConfigRevisionsTable,
 		IdentitiesTable,
 		InvitesTable,
+		KnowledgeDocumentsTable,
+		KnowledgeFoldersTable,
+		KnowledgeProposalsTable,
+		KnowledgeSpacesTable,
+		KnowledgeSpaceMembersTable,
+		KnowledgeVersionsTable,
 		MembershipsTable,
 		ModelRatesTable,
 		PasswordsTable,
@@ -944,6 +1109,30 @@ func init() {
 	}
 	InvitesTable.ForeignKeys[0].RefTable = TeamsTable
 	InvitesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeDocumentsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeFoldersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeProposalsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeSpacesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeSpaceMembersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeVersionsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

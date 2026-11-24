@@ -165,6 +165,78 @@ func (f InviteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.InviteMutation", m)
 }
 
+// The KnowledgeDocumentFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeDocument mutator.
+type KnowledgeDocumentFunc func(context.Context, *ent.KnowledgeDocumentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeDocumentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeDocumentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeDocumentMutation", m)
+}
+
+// The KnowledgeFolderFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeFolder mutator.
+type KnowledgeFolderFunc func(context.Context, *ent.KnowledgeFolderMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeFolderFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeFolderMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeFolderMutation", m)
+}
+
+// The KnowledgeProposalFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeProposal mutator.
+type KnowledgeProposalFunc func(context.Context, *ent.KnowledgeProposalMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeProposalFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeProposalMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeProposalMutation", m)
+}
+
+// The KnowledgeSpaceFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeSpace mutator.
+type KnowledgeSpaceFunc func(context.Context, *ent.KnowledgeSpaceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeSpaceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeSpaceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeSpaceMutation", m)
+}
+
+// The KnowledgeSpaceMemberFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeSpaceMember mutator.
+type KnowledgeSpaceMemberFunc func(context.Context, *ent.KnowledgeSpaceMemberMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeSpaceMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeSpaceMemberMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeSpaceMemberMutation", m)
+}
+
+// The KnowledgeVersionFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeVersion mutator.
+type KnowledgeVersionFunc func(context.Context, *ent.KnowledgeVersionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeVersionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeVersionMutation", m)
+}
+
 // The MembershipFunc type is an adapter to allow the use of ordinary
 // function as Membership mutator.
 type MembershipFunc func(context.Context, *ent.MembershipMutation) (ent.Value, error)

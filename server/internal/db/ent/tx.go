@@ -40,6 +40,18 @@ type Tx struct {
 	Identity *IdentityClient
 	// Invite is the client for interacting with the Invite builders.
 	Invite *InviteClient
+	// KnowledgeDocument is the client for interacting with the KnowledgeDocument builders.
+	KnowledgeDocument *KnowledgeDocumentClient
+	// KnowledgeFolder is the client for interacting with the KnowledgeFolder builders.
+	KnowledgeFolder *KnowledgeFolderClient
+	// KnowledgeProposal is the client for interacting with the KnowledgeProposal builders.
+	KnowledgeProposal *KnowledgeProposalClient
+	// KnowledgeSpace is the client for interacting with the KnowledgeSpace builders.
+	KnowledgeSpace *KnowledgeSpaceClient
+	// KnowledgeSpaceMember is the client for interacting with the KnowledgeSpaceMember builders.
+	KnowledgeSpaceMember *KnowledgeSpaceMemberClient
+	// KnowledgeVersion is the client for interacting with the KnowledgeVersion builders.
+	KnowledgeVersion *KnowledgeVersionClient
 	// Membership is the client for interacting with the Membership builders.
 	Membership *MembershipClient
 	// ModelRate is the client for interacting with the ModelRate builders.
@@ -216,6 +228,12 @@ func (tx *Tx) init() {
 	tx.ConfigRevision = NewConfigRevisionClient(tx.config)
 	tx.Identity = NewIdentityClient(tx.config)
 	tx.Invite = NewInviteClient(tx.config)
+	tx.KnowledgeDocument = NewKnowledgeDocumentClient(tx.config)
+	tx.KnowledgeFolder = NewKnowledgeFolderClient(tx.config)
+	tx.KnowledgeProposal = NewKnowledgeProposalClient(tx.config)
+	tx.KnowledgeSpace = NewKnowledgeSpaceClient(tx.config)
+	tx.KnowledgeSpaceMember = NewKnowledgeSpaceMemberClient(tx.config)
+	tx.KnowledgeVersion = NewKnowledgeVersionClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
 	tx.ModelRate = NewModelRateClient(tx.config)
 	tx.Password = NewPasswordClient(tx.config)

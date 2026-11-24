@@ -22,6 +22,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/knowledge"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/objectstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
@@ -84,6 +85,7 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	srv.Mailer = o.mailer
 	srv.Subdomains = o.subdomains
 	srv.Artifacts = &artifacts.Service{DB: d.Client, Store: teams.Objects, Team: teams, Sealer: authn.Sealer, ContentURL: contentURL}
+	srv.Knowledge = &knowledge.Service{DB: d.Client, Team: teams}
 	if o.gatewayClient != nil {
 		srv.Gateway.Client = o.gatewayClient
 	}

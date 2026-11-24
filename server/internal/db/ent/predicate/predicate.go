@@ -45,6 +45,24 @@ type Identity func(*sql.Selector)
 // Invite is the predicate function for invite builders.
 type Invite func(*sql.Selector)
 
+// KnowledgeDocument is the predicate function for knowledgedocument builders.
+type KnowledgeDocument func(*sql.Selector)
+
+// KnowledgeFolder is the predicate function for knowledgefolder builders.
+type KnowledgeFolder func(*sql.Selector)
+
+// KnowledgeProposal is the predicate function for knowledgeproposal builders.
+type KnowledgeProposal func(*sql.Selector)
+
+// KnowledgeSpace is the predicate function for knowledgespace builders.
+type KnowledgeSpace func(*sql.Selector)
+
+// KnowledgeSpaceMember is the predicate function for knowledgespacemember builders.
+type KnowledgeSpaceMember func(*sql.Selector)
+
+// KnowledgeVersion is the predicate function for knowledgeversion builders.
+type KnowledgeVersion func(*sql.Selector)
+
 // Membership is the predicate function for membership builders.
 type Membership func(*sql.Selector)
 

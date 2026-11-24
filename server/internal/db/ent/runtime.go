@@ -18,6 +18,12 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespace"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespacemember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
@@ -731,6 +737,296 @@ func init() {
 	// invite.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	invite.IDValidator = func() func(string) error {
 		validators := inviteDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	knowledgedocumentMixin := schema.KnowledgeDocument{}.Mixin()
+	knowledgedocumentMixinFields0 := knowledgedocumentMixin[0].Fields()
+	_ = knowledgedocumentMixinFields0
+	knowledgedocumentFields := schema.KnowledgeDocument{}.Fields()
+	_ = knowledgedocumentFields
+	// knowledgedocumentDescCreatedAt is the schema descriptor for created_at field.
+	knowledgedocumentDescCreatedAt := knowledgedocumentMixinFields0[1].Descriptor()
+	// knowledgedocument.DefaultCreatedAt holds the default value on creation for the created_at field.
+	knowledgedocument.DefaultCreatedAt = knowledgedocumentDescCreatedAt.Default.(func() time.Time)
+	// knowledgedocumentDescTeamID is the schema descriptor for team_id field.
+	knowledgedocumentDescTeamID := knowledgedocumentFields[0].Descriptor()
+	// knowledgedocument.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	knowledgedocument.TeamIDValidator = knowledgedocumentDescTeamID.Validators[0].(func(string) error)
+	// knowledgedocumentDescSpaceID is the schema descriptor for space_id field.
+	knowledgedocumentDescSpaceID := knowledgedocumentFields[1].Descriptor()
+	// knowledgedocument.SpaceIDValidator is a validator for the "space_id" field. It is called by the builders before save.
+	knowledgedocument.SpaceIDValidator = knowledgedocumentDescSpaceID.Validators[0].(func(string) error)
+	// knowledgedocumentDescFolderID is the schema descriptor for folder_id field.
+	knowledgedocumentDescFolderID := knowledgedocumentFields[2].Descriptor()
+	// knowledgedocument.DefaultFolderID holds the default value on creation for the folder_id field.
+	knowledgedocument.DefaultFolderID = knowledgedocumentDescFolderID.Default.(string)
+	// knowledgedocument.FolderIDValidator is a validator for the "folder_id" field. It is called by the builders before save.
+	knowledgedocument.FolderIDValidator = knowledgedocumentDescFolderID.Validators[0].(func(string) error)
+	// knowledgedocumentDescTitle is the schema descriptor for title field.
+	knowledgedocumentDescTitle := knowledgedocumentFields[3].Descriptor()
+	// knowledgedocument.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	knowledgedocument.TitleValidator = knowledgedocumentDescTitle.Validators[0].(func(string) error)
+	// knowledgedocumentDescUpdatedAt is the schema descriptor for updated_at field.
+	knowledgedocumentDescUpdatedAt := knowledgedocumentFields[5].Descriptor()
+	// knowledgedocument.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	knowledgedocument.DefaultUpdatedAt = knowledgedocumentDescUpdatedAt.Default.(func() time.Time)
+	// knowledgedocumentDescID is the schema descriptor for id field.
+	knowledgedocumentDescID := knowledgedocumentMixinFields0[0].Descriptor()
+	// knowledgedocument.DefaultID holds the default value on creation for the id field.
+	knowledgedocument.DefaultID = knowledgedocumentDescID.Default.(func() string)
+	// knowledgedocument.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	knowledgedocument.IDValidator = func() func(string) error {
+		validators := knowledgedocumentDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	knowledgefolderMixin := schema.KnowledgeFolder{}.Mixin()
+	knowledgefolderMixinFields0 := knowledgefolderMixin[0].Fields()
+	_ = knowledgefolderMixinFields0
+	knowledgefolderFields := schema.KnowledgeFolder{}.Fields()
+	_ = knowledgefolderFields
+	// knowledgefolderDescCreatedAt is the schema descriptor for created_at field.
+	knowledgefolderDescCreatedAt := knowledgefolderMixinFields0[1].Descriptor()
+	// knowledgefolder.DefaultCreatedAt holds the default value on creation for the created_at field.
+	knowledgefolder.DefaultCreatedAt = knowledgefolderDescCreatedAt.Default.(func() time.Time)
+	// knowledgefolderDescSpaceID is the schema descriptor for space_id field.
+	knowledgefolderDescSpaceID := knowledgefolderFields[0].Descriptor()
+	// knowledgefolder.SpaceIDValidator is a validator for the "space_id" field. It is called by the builders before save.
+	knowledgefolder.SpaceIDValidator = knowledgefolderDescSpaceID.Validators[0].(func(string) error)
+	// knowledgefolderDescParentID is the schema descriptor for parent_id field.
+	knowledgefolderDescParentID := knowledgefolderFields[1].Descriptor()
+	// knowledgefolder.DefaultParentID holds the default value on creation for the parent_id field.
+	knowledgefolder.DefaultParentID = knowledgefolderDescParentID.Default.(string)
+	// knowledgefolder.ParentIDValidator is a validator for the "parent_id" field. It is called by the builders before save.
+	knowledgefolder.ParentIDValidator = knowledgefolderDescParentID.Validators[0].(func(string) error)
+	// knowledgefolderDescName is the schema descriptor for name field.
+	knowledgefolderDescName := knowledgefolderFields[2].Descriptor()
+	// knowledgefolder.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	knowledgefolder.NameValidator = knowledgefolderDescName.Validators[0].(func(string) error)
+	// knowledgefolderDescID is the schema descriptor for id field.
+	knowledgefolderDescID := knowledgefolderMixinFields0[0].Descriptor()
+	// knowledgefolder.DefaultID holds the default value on creation for the id field.
+	knowledgefolder.DefaultID = knowledgefolderDescID.Default.(func() string)
+	// knowledgefolder.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	knowledgefolder.IDValidator = func() func(string) error {
+		validators := knowledgefolderDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	knowledgeproposalMixin := schema.KnowledgeProposal{}.Mixin()
+	knowledgeproposalMixinFields0 := knowledgeproposalMixin[0].Fields()
+	_ = knowledgeproposalMixinFields0
+	knowledgeproposalFields := schema.KnowledgeProposal{}.Fields()
+	_ = knowledgeproposalFields
+	// knowledgeproposalDescCreatedAt is the schema descriptor for created_at field.
+	knowledgeproposalDescCreatedAt := knowledgeproposalMixinFields0[1].Descriptor()
+	// knowledgeproposal.DefaultCreatedAt holds the default value on creation for the created_at field.
+	knowledgeproposal.DefaultCreatedAt = knowledgeproposalDescCreatedAt.Default.(func() time.Time)
+	// knowledgeproposalDescTeamID is the schema descriptor for team_id field.
+	knowledgeproposalDescTeamID := knowledgeproposalFields[0].Descriptor()
+	// knowledgeproposal.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	knowledgeproposal.TeamIDValidator = knowledgeproposalDescTeamID.Validators[0].(func(string) error)
+	// knowledgeproposalDescDocumentID is the schema descriptor for document_id field.
+	knowledgeproposalDescDocumentID := knowledgeproposalFields[1].Descriptor()
+	// knowledgeproposal.DocumentIDValidator is a validator for the "document_id" field. It is called by the builders before save.
+	knowledgeproposal.DocumentIDValidator = knowledgeproposalDescDocumentID.Validators[0].(func(string) error)
+	// knowledgeproposalDescAuthorID is the schema descriptor for author_id field.
+	knowledgeproposalDescAuthorID := knowledgeproposalFields[3].Descriptor()
+	// knowledgeproposal.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	knowledgeproposal.AuthorIDValidator = knowledgeproposalDescAuthorID.Validators[0].(func(string) error)
+	// knowledgeproposalDescComputer is the schema descriptor for computer field.
+	knowledgeproposalDescComputer := knowledgeproposalFields[5].Descriptor()
+	// knowledgeproposal.DefaultComputer holds the default value on creation for the computer field.
+	knowledgeproposal.DefaultComputer = knowledgeproposalDescComputer.Default.(string)
+	// knowledgeproposal.ComputerValidator is a validator for the "computer" field. It is called by the builders before save.
+	knowledgeproposal.ComputerValidator = knowledgeproposalDescComputer.Validators[0].(func(string) error)
+	// knowledgeproposalDescSessionID is the schema descriptor for session_id field.
+	knowledgeproposalDescSessionID := knowledgeproposalFields[6].Descriptor()
+	// knowledgeproposal.DefaultSessionID holds the default value on creation for the session_id field.
+	knowledgeproposal.DefaultSessionID = knowledgeproposalDescSessionID.Default.(string)
+	// knowledgeproposal.SessionIDValidator is a validator for the "session_id" field. It is called by the builders before save.
+	knowledgeproposal.SessionIDValidator = knowledgeproposalDescSessionID.Validators[0].(func(string) error)
+	// knowledgeproposalDescNote is the schema descriptor for note field.
+	knowledgeproposalDescNote := knowledgeproposalFields[7].Descriptor()
+	// knowledgeproposal.DefaultNote holds the default value on creation for the note field.
+	knowledgeproposal.DefaultNote = knowledgeproposalDescNote.Default.(string)
+	// knowledgeproposal.NoteValidator is a validator for the "note" field. It is called by the builders before save.
+	knowledgeproposal.NoteValidator = knowledgeproposalDescNote.Validators[0].(func(string) error)
+	// knowledgeproposalDescDecidedBy is the schema descriptor for decided_by field.
+	knowledgeproposalDescDecidedBy := knowledgeproposalFields[10].Descriptor()
+	// knowledgeproposal.DefaultDecidedBy holds the default value on creation for the decided_by field.
+	knowledgeproposal.DefaultDecidedBy = knowledgeproposalDescDecidedBy.Default.(string)
+	// knowledgeproposal.DecidedByValidator is a validator for the "decided_by" field. It is called by the builders before save.
+	knowledgeproposal.DecidedByValidator = knowledgeproposalDescDecidedBy.Validators[0].(func(string) error)
+	// knowledgeproposalDescReason is the schema descriptor for reason field.
+	knowledgeproposalDescReason := knowledgeproposalFields[12].Descriptor()
+	// knowledgeproposal.DefaultReason holds the default value on creation for the reason field.
+	knowledgeproposal.DefaultReason = knowledgeproposalDescReason.Default.(string)
+	// knowledgeproposal.ReasonValidator is a validator for the "reason" field. It is called by the builders before save.
+	knowledgeproposal.ReasonValidator = knowledgeproposalDescReason.Validators[0].(func(string) error)
+	// knowledgeproposalDescVersion is the schema descriptor for version field.
+	knowledgeproposalDescVersion := knowledgeproposalFields[13].Descriptor()
+	// knowledgeproposal.DefaultVersion holds the default value on creation for the version field.
+	knowledgeproposal.DefaultVersion = knowledgeproposalDescVersion.Default.(int)
+	// knowledgeproposalDescID is the schema descriptor for id field.
+	knowledgeproposalDescID := knowledgeproposalMixinFields0[0].Descriptor()
+	// knowledgeproposal.DefaultID holds the default value on creation for the id field.
+	knowledgeproposal.DefaultID = knowledgeproposalDescID.Default.(func() string)
+	// knowledgeproposal.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	knowledgeproposal.IDValidator = func() func(string) error {
+		validators := knowledgeproposalDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	knowledgespaceMixin := schema.KnowledgeSpace{}.Mixin()
+	knowledgespaceMixinFields0 := knowledgespaceMixin[0].Fields()
+	_ = knowledgespaceMixinFields0
+	knowledgespaceFields := schema.KnowledgeSpace{}.Fields()
+	_ = knowledgespaceFields
+	// knowledgespaceDescCreatedAt is the schema descriptor for created_at field.
+	knowledgespaceDescCreatedAt := knowledgespaceMixinFields0[1].Descriptor()
+	// knowledgespace.DefaultCreatedAt holds the default value on creation for the created_at field.
+	knowledgespace.DefaultCreatedAt = knowledgespaceDescCreatedAt.Default.(func() time.Time)
+	// knowledgespaceDescTeamID is the schema descriptor for team_id field.
+	knowledgespaceDescTeamID := knowledgespaceFields[0].Descriptor()
+	// knowledgespace.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	knowledgespace.TeamIDValidator = knowledgespaceDescTeamID.Validators[0].(func(string) error)
+	// knowledgespaceDescName is the schema descriptor for name field.
+	knowledgespaceDescName := knowledgespaceFields[1].Descriptor()
+	// knowledgespace.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	knowledgespace.NameValidator = knowledgespaceDescName.Validators[0].(func(string) error)
+	// knowledgespaceDescCreatedBy is the schema descriptor for created_by field.
+	knowledgespaceDescCreatedBy := knowledgespaceFields[3].Descriptor()
+	// knowledgespace.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	knowledgespace.CreatedByValidator = knowledgespaceDescCreatedBy.Validators[0].(func(string) error)
+	// knowledgespaceDescID is the schema descriptor for id field.
+	knowledgespaceDescID := knowledgespaceMixinFields0[0].Descriptor()
+	// knowledgespace.DefaultID holds the default value on creation for the id field.
+	knowledgespace.DefaultID = knowledgespaceDescID.Default.(func() string)
+	// knowledgespace.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	knowledgespace.IDValidator = func() func(string) error {
+		validators := knowledgespaceDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	knowledgespacememberMixin := schema.KnowledgeSpaceMember{}.Mixin()
+	knowledgespacememberMixinFields0 := knowledgespacememberMixin[0].Fields()
+	_ = knowledgespacememberMixinFields0
+	knowledgespacememberFields := schema.KnowledgeSpaceMember{}.Fields()
+	_ = knowledgespacememberFields
+	// knowledgespacememberDescCreatedAt is the schema descriptor for created_at field.
+	knowledgespacememberDescCreatedAt := knowledgespacememberMixinFields0[1].Descriptor()
+	// knowledgespacemember.DefaultCreatedAt holds the default value on creation for the created_at field.
+	knowledgespacemember.DefaultCreatedAt = knowledgespacememberDescCreatedAt.Default.(func() time.Time)
+	// knowledgespacememberDescSpaceID is the schema descriptor for space_id field.
+	knowledgespacememberDescSpaceID := knowledgespacememberFields[0].Descriptor()
+	// knowledgespacemember.SpaceIDValidator is a validator for the "space_id" field. It is called by the builders before save.
+	knowledgespacemember.SpaceIDValidator = knowledgespacememberDescSpaceID.Validators[0].(func(string) error)
+	// knowledgespacememberDescUserID is the schema descriptor for user_id field.
+	knowledgespacememberDescUserID := knowledgespacememberFields[1].Descriptor()
+	// knowledgespacemember.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	knowledgespacemember.UserIDValidator = knowledgespacememberDescUserID.Validators[0].(func(string) error)
+	// knowledgespacememberDescID is the schema descriptor for id field.
+	knowledgespacememberDescID := knowledgespacememberMixinFields0[0].Descriptor()
+	// knowledgespacemember.DefaultID holds the default value on creation for the id field.
+	knowledgespacemember.DefaultID = knowledgespacememberDescID.Default.(func() string)
+	// knowledgespacemember.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	knowledgespacemember.IDValidator = func() func(string) error {
+		validators := knowledgespacememberDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	knowledgeversionMixin := schema.KnowledgeVersion{}.Mixin()
+	knowledgeversionMixinFields0 := knowledgeversionMixin[0].Fields()
+	_ = knowledgeversionMixinFields0
+	knowledgeversionFields := schema.KnowledgeVersion{}.Fields()
+	_ = knowledgeversionFields
+	// knowledgeversionDescCreatedAt is the schema descriptor for created_at field.
+	knowledgeversionDescCreatedAt := knowledgeversionMixinFields0[1].Descriptor()
+	// knowledgeversion.DefaultCreatedAt holds the default value on creation for the created_at field.
+	knowledgeversion.DefaultCreatedAt = knowledgeversionDescCreatedAt.Default.(func() time.Time)
+	// knowledgeversionDescDocumentID is the schema descriptor for document_id field.
+	knowledgeversionDescDocumentID := knowledgeversionFields[0].Descriptor()
+	// knowledgeversion.DocumentIDValidator is a validator for the "document_id" field. It is called by the builders before save.
+	knowledgeversion.DocumentIDValidator = knowledgeversionDescDocumentID.Validators[0].(func(string) error)
+	// knowledgeversionDescAuthorID is the schema descriptor for author_id field.
+	knowledgeversionDescAuthorID := knowledgeversionFields[2].Descriptor()
+	// knowledgeversion.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	knowledgeversion.AuthorIDValidator = knowledgeversionDescAuthorID.Validators[0].(func(string) error)
+	// knowledgeversionDescNote is the schema descriptor for note field.
+	knowledgeversionDescNote := knowledgeversionFields[4].Descriptor()
+	// knowledgeversion.DefaultNote holds the default value on creation for the note field.
+	knowledgeversion.DefaultNote = knowledgeversionDescNote.Default.(string)
+	// knowledgeversion.NoteValidator is a validator for the "note" field. It is called by the builders before save.
+	knowledgeversion.NoteValidator = knowledgeversionDescNote.Validators[0].(func(string) error)
+	// knowledgeversionDescID is the schema descriptor for id field.
+	knowledgeversionDescID := knowledgeversionMixinFields0[0].Descriptor()
+	// knowledgeversion.DefaultID holds the default value on creation for the id field.
+	knowledgeversion.DefaultID = knowledgeversionDescID.Default.(func() string)
+	// knowledgeversion.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	knowledgeversion.IDValidator = func() func(string) error {
+		validators := knowledgeversionDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),

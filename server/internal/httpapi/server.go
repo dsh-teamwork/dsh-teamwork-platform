@@ -15,6 +15,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/knowledge"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
@@ -32,6 +33,7 @@ type Server struct {
 	Gateway         *gateway.Gateway
 	Usage           *usage.Service
 	Artifacts       *artifacts.Service
+	Knowledge       *knowledge.Service
 	Mailer          auth.Mailer  // where SMTP_URL is set
 	Google          *auth.Google // where the Google door is configured
 	Web             http.Handler
@@ -145,6 +147,9 @@ func (s *Server) Handler() http.Handler {
 		post("/api/locale", s.chooseLocale)
 		get("/api/configs", s.configs)
 		post("/api/llm/chat/completions", s.completions)
+		if s.Knowledge != nil {
+			s.knowledgeRoutes(get, post, write)
+		}
 		if s.Artifacts != nil {
 			post("/api/teams/{teamId}/artifacts", s.createArtifact)
 			post("/api/teams/{teamId}/artifacts/{id}/versions", s.addArtifactVersion)

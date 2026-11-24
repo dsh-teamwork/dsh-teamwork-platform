@@ -32,6 +32,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/knowledge"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/objectstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
@@ -207,6 +208,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	}
 	if cfg.ServiceRole != "manage" {
 		srv.Artifacts = &artifacts.Service{DB: client, Store: teams.Objects, Team: teams, Sealer: authn.Sealer, ContentURL: cfg.ContentURL}
+		srv.Knowledge = &knowledge.Service{DB: client, Team: teams}
 	}
 	if !cfg.Passwords() {
 		mail := auth.SMTP{URL: cfg.SMTPURL, From: cfg.EmailFrom}

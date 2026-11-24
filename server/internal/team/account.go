@@ -19,6 +19,12 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetreservation"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetwindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespace"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespacemember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
@@ -98,6 +104,9 @@ func (s *Service) DeleteAccount(ctx context.Context, userID, confirm string) err
 		objects = append(objects, files...)
 	}
 	if _, err := tx.ArtifactMember.Delete().Where(artifactmember.UserID(userID)).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := tx.KnowledgeSpaceMember.Delete().Where(knowledgespacemember.UserID(userID)).Exec(ctx); err != nil {
 		return err
 	}
 	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.AccountDeleted, UserID: userID, ActorID: userID}); err != nil {
@@ -243,6 +252,9 @@ func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.Plug
 	if err != nil {
 		return nil, nil, err
 	}
+	if err := deleteKnowledge(ctx, db, teamID); err != nil {
+		return nil, nil, err
+	}
 	steps := []func() (int, error){
 		func() (int, error) {
 			return db.BudgetReservation.Delete().Where(budgetreservation.WindowIDIn(windows...)).Exec(ctx)
@@ -272,4 +284,42 @@ func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.Plug
 		return nil, nil, err
 	}
 	return packages, objects, nil
+}
+
+// deleteKnowledge removes a team's knowledge (docs/tech/knowledge.md): its
+// spaces with their members and folders, and its documents with their
+// versions and proposals.
+func deleteKnowledge(ctx context.Context, db *ent.Client, teamID string) error {
+	docs, err := db.KnowledgeDocument.Query().Where(knowledgedocument.TeamID(teamID)).IDs(ctx)
+	if err != nil {
+		return err
+	}
+	spaces, err := db.KnowledgeSpace.Query().Where(knowledgespace.TeamID(teamID)).IDs(ctx)
+	if err != nil {
+		return err
+	}
+	steps := []func() (int, error){
+		func() (int, error) {
+			return db.KnowledgeVersion.Delete().Where(knowledgeversion.DocumentIDIn(docs...)).Exec(ctx)
+		},
+		func() (int, error) {
+			return db.KnowledgeProposal.Delete().Where(knowledgeproposal.TeamID(teamID)).Exec(ctx)
+		},
+		func() (int, error) {
+			return db.KnowledgeDocument.Delete().Where(knowledgedocument.TeamID(teamID)).Exec(ctx)
+		},
+		func() (int, error) {
+			return db.KnowledgeFolder.Delete().Where(knowledgefolder.SpaceIDIn(spaces...)).Exec(ctx)
+		},
+		func() (int, error) {
+			return db.KnowledgeSpaceMember.Delete().Where(knowledgespacemember.SpaceIDIn(spaces...)).Exec(ctx)
+		},
+		func() (int, error) { return db.KnowledgeSpace.Delete().Where(knowledgespace.TeamID(teamID)).Exec(ctx) },
+	}
+	for _, step := range steps {
+		if _, err := step(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
