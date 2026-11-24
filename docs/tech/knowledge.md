@@ -1,6 +1,6 @@
 # Knowledge
 
-> **Status:** Current — the first version is built but for attachments; later steps are plan · **Updated:** 2026-11-24
+> **Status:** Current — the first version is built; later steps are plan · **Updated:** 2026-11-24
 
 Where a team keeps what its business knows, as documents people and agents
 maintain together: Markdown in a tree of folders, owned by the team and
@@ -86,7 +86,7 @@ since people and agents already know them.
 | Feature | In the file | What a person sees | When |
 | --- | --- | --- | --- |
 | Headings, lists, tables, code, quotes, task lists | GitHub-flavoured Markdown | Formatted text | First version |
-| Images and attachments | to be decided with the copy's layout (see "Architecture") | Inline, or a file card | Next slice |
+| Images and attachments | `![[diagram.png]]` embeds an image, `[[spec.pdf]]` links a file, by the attachment's name (see "Architecture") | The image; a file card | First version |
 | Links between documents | `[[Document]]` or `[[Document#Heading]]` | A link | First version |
 | Callouts and folding | `> [!warning] Title`, `> [!note]- Title` | A coloured box; a collapsible one | Richer format |
 | Diagrams | a `mermaid` code block | The diagram; an agent reads and edits its source | Richer format |
@@ -150,7 +150,8 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   | `knowledge_space_members` | `space_id`, `user_id`, `role` (`reader`, `editor`); readers kept only while `reading` is `members`, editors always |
   | `knowledge_folders` | `space_id`, `parent_id` (empty at the space's root), `name`, unique among its siblings |
   | `knowledge_documents` | `team_id`, `space_id`, `folder_id`, `title` (unique in its folder), `current_version` (moved by a conditional update), `updated_at` |
-  | `knowledge_versions` | `document_id`, `number`, `author_id`, `source` (`console`, `agent`), `note`, `text` |
+  | `knowledge_versions` | `document_id`, `number`, `author_id`, `source` (`console`, `agent`), `computer` and `session_id` (an agent's accepted proposal's), `note`, `text` |
+  | `knowledge_attachments` | `team_id`, `document_id`, `name` (unique in its document), `content_type`, `size`, `digest` (its object), `created_by` |
   | `knowledge_proposals` | `team_id`, `document_id`, `base_version`, `author_id`, `source`, `computer`, `session_id`, `note`, `text`, `state`, `decided_by`, `decided_at`, `reason`, and the `version` an acceptance made |
 
   A team's deletion removes all of it (`internal/team/account.go`); an
@@ -172,6 +173,8 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   | `POST …/knowledge/documents/{id}/proposals` | reader, or their plugin | A proposal on `baseVersion` |
   | `GET …/knowledge/proposals?state=`, `GET …/proposals/{id}` | member | Proposals to the spaces the caller edits, and their own; one with its text and its base's |
   | `POST …/knowledge/proposals/{id}/accept`, `…/decline`, `…/withdraw` | editor; withdraw, its author | Accepting a stale proposal is `knowledge_stale` and leaves it pending |
+  | `POST …/knowledge/documents/{id}/attachments` | reader, or their plugin | One file (multipart, part `file`); the same name and bytes again is 200, other bytes `knowledge_name_taken` |
+  | `GET …/knowledge/documents/{id}/attachments/{name}` | reader, or their plugin | Its bytes, sandboxed; an image or PDF inline, anything else downloaded |
   | `GET /api/knowledge` | plugin or computer token | The sync manifest, every team the token reaches |
 
   Errors are `wire.Error` codes: `knowledge_not_found` (404, also for what
@@ -215,11 +218,24 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   with the knowledge page alone; it reads and writes Markdown and nothing
   else. Rendering is the console's, never the server's: a document's text is
   never HTML, so it needs no sandbox origin.
-- **Limits** (constants, cheap to change): a document's text 1 MiB.
-
-**Not in this version**: attachments. How a document names one (a relative
-path or an Obsidian embed) and where the copy keeps it are decided together,
-with the object store under them, in the next slice.
+- **Attachments** belong to a document, which names them by name in the
+  Obsidian form: `![[diagram.png]]` embeds an image, `[[spec.pdf]]` links a
+  file, and an extension the server allows (png, jpg, gif, webp, avif, svg,
+  pdf, txt, csv, json, docx, xlsx, pptx, zip) tells one from a link to a
+  document. A name, once uploaded, keeps its bytes for the document's life,
+  so every version shows what it showed, and renaming or moving the
+  document breaks no embed. Any reader, or their agent, may upload: a file
+  does nothing until an editor's version names it. The bytes are objects of
+  the team, `teams/{team}/knowledge/{digest}` in the object store, held
+  once however many documents name them; the last document, space or team
+  that names one forgets it. They are served under a sandbox with
+  `nosniff`, so an SVG's script never runs as the member viewing it. The
+  manifest lists each document's attachments with their digests; the copy
+  keeps them in `{title}.files/` beside the document, and the tool uploads
+  the files a proposal names before proposing it.
+- **Limits** (constants, cheap to change): a document's text 1 MiB, an
+  attachment 20 MiB, a team's attachments 2 GiB, counted apart from its
+  artifacts.
 
 **Expensive to change**: the sync manifest and the local tree's layout, the
 citation format, the file format's conventions (see "Format"), and the
@@ -293,13 +309,14 @@ tables. Cheap: the limits, the console's screens, the editor library.
      ("After these") are the remedy, and the first version's preset
      context tells the agent to name a conflict rather than pick a side
      silently.
-2. **The first version (built 2026-11-24, but for attachments)**: spaces
+2. **The first version (built 2026-11-24)**: spaces
    with their readers and editors, and folders; documents and versions,
    with comparison and restore; the Milkdown editor with the first
    version's features, front matter kept outside it and `[[links]]`
    resolved by title; finding by title; the plugin's sync and citations;
    proposals from members and agents, and the review screen with the
-   difference. Attachments are the next slice.
+   difference; attachments, named by name, kept beside the document in the
+   copy, and attached by the editor, a paste, a drop or the agent's tool.
 3. **Richer format**: callouts and folding, diagrams, properties, templates
    and backlinks.
 4. **Working together**: mentions, comments, a folder as a table, embedded

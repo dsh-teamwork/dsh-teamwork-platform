@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-24 — Knowledge attachments
+
+- **What:** A knowledge document has attachments, named in its text as `![[diagram.png]]` (an embed) or `[[spec.pdf]]` (a link): images, PDF, text, CSV, JSON, Office and zip files up to 20 MiB, uploaded by any reader or their agent (`POST /api/teams/{teamId}/knowledge/documents/{id}/attachments`) and served under a sandbox (`GET …/attachments/{name}`). A name keeps its bytes for the document's life. The bytes are team objects in the object store under the `knowledge` kind, held once by digest, at most 2 GiB a team, and deleted with the last document, space or team naming them. `KnowledgeDocument` and the sync manifest list them. The console attaches by a button, a paste or a drop and renders embeds and file links; the plugin 0.22.0 keeps them in `{title}.files/` beside each document and uploads the files a proposal names.
+- **Why:** The first version of knowledge named attachments; this completes it.
+- **Breaking:** None.
+- **Upgrade:** The binary applies `20261124045734_knowledge_attachments` (postgres `…045735`, mysql `…045736`). A self-hosted server keeps the bytes in its existing object store (`ARTIFACT_STORAGE_PROVIDER`), so a backup of that store now holds knowledge too.
+- **Refs:** `server/internal/knowledge/attachments.go`, `docs/tech/knowledge.md`.
+
 ## 2026-11-24 — Knowledge, first version: the server, the console and the plugin
 
 - **What:** The server holds a team's knowledge (`docs/tech/knowledge.md`): spaces (`knowledge_spaces`, read by the team or by chosen members, `knowledge_space_members` naming readers and editors), folders, documents of Markdown text with immutable versions (`knowledge_versions`), and proposals (`knowledge_proposals`). The team's admin creates a space; its creator, the admins and its editors write documents, rename, move, delete and restore; a reader's change, and every change a plugin or computer token makes, is a proposal an editor accepts (a new version under its author's name) or declines with a reason. Routes are under `/api/teams/{teamId}/knowledge` (the tree, spaces and their access, folders, documents and versions, proposals), and `GET /api/knowledge` is the plugin's sync manifest of every document its member reads. A team's deletion takes its knowledge with it.

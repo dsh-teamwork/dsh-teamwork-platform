@@ -96,7 +96,9 @@ settings and follow the verified offline migration in
 [team assistant storage](../tech/team-assistant.md#private-plugin-packages).
 The service never falls back to local disk after S3 is explicitly selected.
 The database keeps package metadata; a database backup alone cannot recreate
-private archives.
+private archives. The same store keeps the files of artifacts
+(`teams/{teamId}/pages/…`) and knowledge attachments
+(`teams/{teamId}/knowledge/…`), so back it up with the database.
 
 Both providers organize retained objects as `teams/{teamId}/plugins/{packageId}.tgz`;
 an edition that stores its own objects adds `teams/{teamId}/{kind}/{id}` beside them.
