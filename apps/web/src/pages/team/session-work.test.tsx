@@ -6,7 +6,7 @@ import { rowsOf, snapshotOf } from '@dsh-teamwork/relay-client';
 import fixture from '../../../../../packages/relay-client/src/__tests__/fixtures/execution-records.json';
 import messages from '@/messages/en.json';
 import thinkingFixture from '../../../../../packages/relay-client/src/__tests__/fixtures/thinking-deliverables.json';
-import { DeliverableCard, SessionSteps, WorkToggle } from './session-work';
+import { SessionSteps, TurnFiles, turnTails, WorkToggle } from './session-work';
 
 describe('session execution records', () => {
   it('renders the shared fixture with collapsed groups, file links, exit status and bounded output', () => {
@@ -35,7 +35,7 @@ describe('session execution records', () => {
     const html = renderToStaticMarkup(
       <IntlProvider locale="en" timeZone="UTC" messages={messages}>
         <SessionSteps row={group} />
-        <DeliverableCard row={artifact} openFile={vi.fn()} />
+        <TurnFiles delivered={[artifact]} changed={[]} openFile={vi.fn()} />
       </IntlProvider>,
     );
     expect(html).toContain('Thinking details');
@@ -43,5 +43,29 @@ describe('session execution records', () => {
     expect(html).not.toContain('Opaque provider signature');
     expect(html).toContain('Workspace check report');
     expect(html).not.toMatch(/<button[^>]* disabled=""/);
+  });
+});
+
+describe('turn tails', () => {
+  const steps = (id: string, turn: number) => ({ kind: 'steps' as const, id, entries: [{ kind: 'tool' as const, id, name: 'write', summary: 'a.ts', status: 'done' as const, turn }], count: 1, status: 'done' as const });
+  const delivered = (id: string, turn: number) => ({ kind: 'deliverable' as const, id, turn, file: { path: `${id}.pdf` } });
+
+  it("puts a turn's changed and delivered files after its last row, before the next message", () => {
+    const entries = turnTails([
+      { kind: 'user', id: 'u1', text: 'go' },
+      steps('s1', 1),
+      { kind: 'assistant', id: 'a1', text: 'done' },
+      delivered('d1', 1),
+      delivered('d2', 1),
+      { kind: 'user', id: 'u2', text: 'again' },
+      steps('s2', 2),
+    ], new Set([1]), new Map([[1, ['a.ts']], [2, ['b.ts']]]));
+    expect(entries.map((e) => (e.kind === 'row' ? e.row.id : `tail${e.turn}:${e.delivered.map((d) => d.id).join(',')}:${e.changed.join(',')}`)))
+      .toEqual(['u1', 's1', 'a1', 'tail1:d1,d2:a.ts', 'u2', 's2']);
+  });
+
+  it('shows what a turn changed only once it has ended', () => {
+    const entries = turnTails([steps('s1', 1)], new Set(), new Map([[1, ['a.ts']]]));
+    expect(entries.every((e) => e.kind === 'row')).toBe(true);
   });
 });

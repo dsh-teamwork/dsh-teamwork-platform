@@ -19,10 +19,10 @@ export default function SessionDocumentPreview({ data, workbook }: { data: Uint8
     if (!loaded) return;
     const style = getComputedStyle(document.documentElement);
     const token = (name: string) => style.getPropertyValue(`--${name}`).trim();
-    const theme = { scheme, ground: token('muted'), surface: token('background'), ink: token('foreground'), line: token('border') };
+    const theme = { scheme, ground: token('document-ground'), surface: token('card'), ink: token('foreground'), line: token('border') };
     const payload: DocumentPayload = workbook
       ? { workbook, data: data.slice(), labels: { loading: t('workbook.loading'), failed: t('workbook.failed'), truncated: t('workbook.truncated'), empty: t('workbook.empty') } }
-      : { workbook, data: data.slice(), theme, labels: { zoomIn: t('pdf.zoomIn'), zoomOut: t('pdf.zoomOut'), loading: t('pdf.loading'), failed: t('pdf.failed') } };
+      : { workbook, data: data.slice(), theme, labels: { zoomIn: t('pdf.zoomIn'), zoomOut: t('pdf.zoomOut'), zoom: t('pdf.zoom'), fitWidth: t('pdf.fitWidth'), loading: t('pdf.loading'), failed: t('pdf.failed') } };
     // The frame has no origin to name; only this frame is addressed, and the bytes are moved, not copied.
     frame.current?.contentWindow?.postMessage(payload, '*', [(payload.data as Uint8Array).buffer]);
   }, [loaded, data, workbook, scheme, t]);

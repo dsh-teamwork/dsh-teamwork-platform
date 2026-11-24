@@ -387,11 +387,18 @@ symbolic link leaves it (the plugin's `src/phone-files.ts`); DSH's own
 lists at most 500 entries, a search returns at most 200 names, a file its
 first 256 KiB as text, and a binary one is `teamwork/not_text`.
 `teamwork/configuration`'s `files` says the plugin answers them. The console
-opens them from a session's **Files** button as its right column (the phone as
-a full-screen sheet): the session's changes, which the client reads from its
-own write and edit tool calls (`touchedFiles`), and every folder, searchable,
-each text file shown with its line numbers. A file the conversation names
-opens there too: a read, write or edit step's file, a reply's inline code that
+shows them in the session's right sidebar, laid out and used as DSH's own
+(`apps/web/src/pages/team/session-sidebar.tsx`; the phone shows them as a
+full-screen sheet): a column beside the conversation, resized from its edge,
+folded away or filling the window, with tabs in one or two panes, kept per
+session in the browser (`session-sidebar-state.ts`). Its Files tab is the
+working directory as a tree, searchable by name; a file's tab has its absolute
+path above it and draws it by kind (`session-files.tsx`): a document in the
+preview below, Markdown rendered, HTML in a frame that runs no script and
+fetches nothing, code coloured by Shiki with its line numbers, anything else as
+text. Each turn's end lists the files it changed, read from its own write and
+edit tool calls, and the files it delivered. A file the conversation names
+opens in a tab too: a read, write or edit step's file, a reply's inline code that
 reads as a path, and a reply's link to a local file (`fileReference`: a folder
 path or a file name with an extension, `file://` allowed, `:line` opening it at
 that line; a web address, a package name or a command is not a file).
@@ -416,8 +423,10 @@ no eval. An agent's file is untrusted, so the console shows that page in an
 iframe sandboxed without same-origin and posts the bytes to it, and the App
 loads the same page, with the bytes embedded, into a WebView over a local
 file; neither runs a document where a session cookie or a relay key lives.
-A PDF is drawn as one scrolling column of pages, fitted to the width, each page
-rendered only while it is near the view. The page cannot read the console's
+A PDF is drawn as DSH draws one: a scrolling column of pages fitted to the
+width, each page rendered, with its text selectable, only while it is near the
+view, and a zoom control floating at the bottom (fit width, 25% to 400%,
+Ctrl+wheel and a pinch around the pointer). The page cannot read the console's
 stylesheet, so the console posts the colours its theme tokens resolve to with
 the bytes, and posts again when the theme changes; the App passes none and gets
 the light theme.

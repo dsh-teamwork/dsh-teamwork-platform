@@ -79,10 +79,15 @@ its first message; leave them as they are for the computer's defaults. Once
 the first message is sent, the session opens in place.
 The folder starts as this team's default workspace on that computer, which
 you set in DSH's Teamwork panel under **My teams**.
-**Files**, beside a session's title, opens its working directory at the
-right, read only: the files the session wrote or edited, and every folder,
-searchable by file name, each text file shown with its line numbers. A file
-the conversation names opens there when you click it: a step's file, a path in
+A session's sidebar, laid out and used as DSH's own, opens at the right from
+the button beside its title (Ctrl+Shift+B): a column you widen from its edge,
+fold away or fill the window with, holding tabs in one or two panes and kept
+for each session in this browser. Its Files tab shows the working directory as
+a tree, read only and searchable by file name. A file opens in a tab under its
+path: Markdown rendered, HTML drawn without running anything, code coloured
+with its line numbers. At the end of each reply, cards list the files the
+session changed and the files it delivered. A file the conversation names
+opens there when you click it: a step's file, a path in
 a reply (at its line, for `src/app.ts:42`), a link to a local file or a file
 the agent presented at the end of its reply. PDFs and Excel workbooks (up to
 16 MiB) open as a preview, every page of a PDF in one scrolling column fitted to

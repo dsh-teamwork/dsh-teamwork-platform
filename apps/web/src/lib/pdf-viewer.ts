@@ -1,31 +1,60 @@
-import { getDocument, GlobalWorkerOptions, type PDFDocumentProxy, type RenderTask } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { getDocument, GlobalWorkerOptions, TextLayer, type PDFDocumentProxy, type RenderTask } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import workerSource from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?raw';
 
 export interface PdfLabels {
   zoomOut: string;
   zoomIn: string;
+  /** The zoom menu's name, read out with its value. */
+  zoom: string;
+  fitWidth: string;
   failed: string;
   loading: string;
 }
 
 /**
  * The host's theme, as the colours its tokens resolve to: the sandboxed page cannot read the host's stylesheet, so
- * the host reads them for it (`--muted`, `--background`, `--foreground`, `--border` on the console).
+ * the host reads them for it (`--document-ground`, `--card`, `--foreground`, `--border` on the console).
  */
 export interface PdfTheme {
   scheme: 'light' | 'dark';
   /** Around and between the pages. */
   ground: string;
-  /** The toolbar. */
+  /** The zoom control. */
   surface: string;
   ink: string;
   line: string;
 }
 
 /** Until a host passes its own (the App): the light theme the viewer always had. */
-const FALLBACK: PdfTheme = { scheme: 'light', ground: '#e8eaed', surface: '#fff', ink: '#202124', line: '#c6c8cc' };
+const FALLBACK: PdfTheme = { scheme: 'light', ground: '#ebeef2', surface: '#fff', ink: '#202124', line: '#c6c8cc' };
 
+/** DSH's document preview (`ui-sidebar-documentpreview` pdf body, `ui-primitives` zoom): gaps, steps and timings. */
 const GAP = 12;
+const STEP = 0.25;
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 4;
+const PRESETS = [0.25, 0.5, 1, 1.5, 2];
+/** The control shows while the pointer is this near the bottom, and hides this long after it leaves. */
+const REVEAL_BAND = 72;
+const HIDE_AFTER = 420;
+/** A pinch or Ctrl+wheel redraws the pages this long after it stops; until then they stretch. */
+const SETTLE = 120;
+
+/** pdf.js's text layer, flattened from its `pdf_viewer.css`: transparent text over the canvas, for selecting. */
+const TEXT_LAYER_CSS = `
+.textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;letter-spacing:normal;word-spacing:normal;text-size-adjust:none;-webkit-text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:CanvasText;z-index:0;color-scheme:only light;--min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size))}
+.textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%;user-select:text;-webkit-user-select:text}
+.textLayer > :not(.markedContent),.textLayer .markedContent span:not(.markedContent){z-index:1;--font-height:0;font-size:calc(var(--text-scale-factor) * var(--font-height));--scale-x:1;--rotate:0deg;transform:rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv))}
+.textLayer .markedContent{display:contents}
+.textLayer ::selection{background:rgb(0 100 255 / .25);color:transparent}
+.textLayer br::selection{background:transparent}
+.textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:0;cursor:default;user-select:none;-webkit-user-select:none}
+.textLayer.selecting .endOfContent{top:0}
+.zoom button{font:inherit;color:inherit;background:transparent;border:0;border-radius:6px;cursor:pointer;height:24px;display:flex;align-items:center;justify-content:center}
+.zoom button:hover:not(:disabled){background:var(--hover)}
+.zoom button:disabled{opacity:.4;cursor:default}
+.menu button{width:100%;justify-content:flex-start;padding:0 10px;height:28px;white-space:nowrap}
+`;
 
 /** One page's place in the column: sized before it is drawn, drawn only while near the view. */
 interface Slot {
@@ -37,44 +66,100 @@ interface Slot {
   /** The layout it was last drawn for; another layout draws it again. */
   drawn: number;
   job?: RenderTask;
+  text?: HTMLDivElement;
 }
 
 /**
- * A read-only viewer, mounted only inside the sandboxed preview document (src/lib/document-viewer.ts): every page in
- * one scrolling column, fitted to the width at 100%, each drawn as it comes near the view and dropped as it leaves.
+ * A read-only viewer, mounted only inside the sandboxed preview document (src/lib/document-viewer.ts), as DSH's own:
+ * every page in one scrolling column, fitted to the width until zoomed, each drawn as it comes near the view and
+ * dropped as it leaves, its text selectable; a zoom control floats at the bottom, shown as the pointer nears it.
  */
 export function mountPdfViewer(host: HTMLElement, data: Uint8Array, labels: PdfLabels, theme: PdfTheme = FALLBACK): () => void {
-    host.replaceChildren();
-  host.style.cssText = `display:flex;flex-direction:column;height:100%;min-height:0;color:${theme.ink};background:${theme.ground};font:13px system-ui;color-scheme:${theme.scheme}`;
-  const toolbar = document.createElement('div');
-  toolbar.style.cssText = `display:flex;align-items:center;justify-content:flex-end;gap:.25rem;padding:.3rem .5rem;background:${theme.surface};border-bottom:1px solid ${theme.line}`;
-  const status = document.createElement('span');
-  status.setAttribute('role', 'status');
-  status.style.cssText = 'flex:1;font-variant-numeric:tabular-nums;opacity:.75';
+  host.replaceChildren();
+  host.style.cssText = `position:relative;display:flex;flex-direction:column;height:100%;min-height:0;color:${theme.ink};background:${theme.ground};font:12px system-ui;color-scheme:${theme.scheme}`;
+  const style = document.createElement('style');
+  style.textContent = TEXT_LAYER_CSS;
   const content = document.createElement('div');
   content.style.cssText = `flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:${GAP}px;padding:${GAP}px`;
-  host.append(toolbar, content);
-
-  const button = (text: string, label: string, action: () => void) => {
-    const control = document.createElement('button');
-    control.type = 'button';
-    control.textContent = text;
-    control.title = label;
-    control.setAttribute('aria-label', label);
-    control.style.cssText = `font:inherit;font-size:16px;line-height:1;width:1.9rem;height:1.9rem;color:inherit;border:1px solid ${theme.line};border-radius:.375rem;background:transparent;cursor:pointer`;
-    control.onclick = action;
-    return control;
-  };
-  const out = button('−', labels.zoomOut, () => setZoom(zoom / 1.25));
-  const into = button('+', labels.zoomIn, () => setZoom(zoom * 1.25));
-  toolbar.append(status, out, into);
+  const status = document.createElement('div');
+  status.setAttribute('role', 'status');
+  status.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.7;pointer-events:none';
   status.textContent = labels.loading;
-  out.disabled = into.disabled = true;
+
+  // The zoom control: out, the value with its menu, in.
+  const control = document.createElement('div');
+  control.className = 'zoom';
+  control.style.cssText = `--hover:color-mix(in srgb, ${theme.ink} 8%, transparent);position:absolute;left:50%;bottom:14px;display:flex;align-items:center;gap:2px;padding:4px 6px;border-radius:10px;background:${theme.surface};border:.5px solid ${theme.line};box-shadow:0 4px 16px rgb(0 0 0 / .14);transform:translate(-50%,8px);opacity:0;pointer-events:none;transition:opacity 160ms,transform 160ms`;
+  const button = (text: string, label: string, action: () => void) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = text;
+    b.title = label;
+    b.setAttribute('aria-label', label);
+    b.style.cssText = 'width:24px;font-size:15px';
+    b.onclick = action;
+    return b;
+  };
+  const out = button('−', labels.zoomOut, () => stepZoom(-1));
+  const into = button('+', labels.zoomIn, () => stepZoom(1));
+  const value = document.createElement('button');
+  value.type = 'button';
+  value.setAttribute('aria-haspopup', 'menu');
+  value.style.cssText = 'min-width:58px;padding:0 6px;font-variant-numeric:tabular-nums';
+  const menu = document.createElement('div');
+  menu.className = 'menu';
+  menu.setAttribute('role', 'menu');
+  menu.style.cssText = `position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);display:none;flex-direction:column;padding:4px;min-width:120px;border-radius:10px;background:${theme.surface};border:.5px solid ${theme.line};box-shadow:0 4px 16px rgb(0 0 0 / .14)`;
+  const choices: [string, number | 'fit'][] = [[labels.fitWidth, 'fit'], ...PRESETS.map((p): [string, number] => [`${Math.round(p * 100)}%`, p])];
+  for (const [text, choice] of choices) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.setAttribute('role', 'menuitem');
+    item.textContent = text;
+    item.onclick = () => {
+      closeMenu();
+      if (choice === 'fit') setZoom('fit');
+      else setZoom(choice);
+    };
+    menu.append(item);
+  }
+  const closeMenu = () => { menu.style.display = 'none'; value.setAttribute('aria-expanded', 'false'); };
+  value.onclick = () => {
+    const opening = menu.style.display === 'none';
+    menu.style.display = opening ? 'flex' : 'none';
+    value.setAttribute('aria-expanded', String(opening));
+  };
+  control.append(out, value, into, menu);
+  host.append(style, content, status, control);
+
+  // Shown while the pointer is near the bottom, hidden a moment after it leaves; always shown to a touch screen.
+  let hideTimer = 0;
+  const showControl = (shown: boolean) => {
+    clearTimeout(hideTimer);
+    const apply = () => {
+      control.style.opacity = shown ? '1' : '0';
+      control.style.transform = shown ? 'translate(-50%,0)' : 'translate(-50%,8px)';
+      control.style.pointerEvents = shown ? 'auto' : 'none';
+      if (!shown) closeMenu();
+    };
+    if (shown) apply();
+    else hideTimer = window.setTimeout(apply, HIDE_AFTER);
+  };
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const pointer = (event: PointerEvent) => {
+    if (event.pointerType !== 'mouse') return;
+    const box = host.getBoundingClientRect();
+    showControl(box.bottom - event.clientY <= REVEAL_BAND || control.contains(event.target as Node) || menu.style.display !== 'none');
+  };
+  const leave = () => { if (menu.style.display === 'none') showControl(false); };
+  host.addEventListener('pointermove', pointer);
+  host.addEventListener('pointerleave', leave);
 
   let active = true;
   let pdf: PDFDocumentProxy | undefined;
   let slots: Slot[] = [];
-  let zoom = 1;
+  /** `fit` follows the width; a number is the scale itself, 1 being the page's own size. */
+  let zoom: number | 'fit' = 'fit';
   let scale = 1;
   let layout = 0;
   let width = 0;
@@ -82,57 +167,69 @@ export function mountPdfViewer(host: HTMLElement, data: Uint8Array, labels: PdfL
   GlobalWorkerOptions.workerSrc = workerUrl;
   const loading = getDocument({ data, useWasm: false });
 
-  const fail = () => { if (active) status.textContent = labels.failed; };
+  const fail = () => {
+    if (!active) return;
+    status.textContent = labels.failed;
+    status.style.display = 'flex';
+  };
 
-  /** Where the reader is: the page across the middle of the view, and how far down it. */
-  function reading(): { index: number; within: number } {
-    // At either end, that end's page: a short last page may never reach the middle.
-    if (content.scrollTop + content.clientHeight >= content.scrollHeight - 1) return { index: slots.length - 1, within: 0 };
-    if (content.scrollTop <= 0) return { index: 0, within: 0 };
-    const middle = content.scrollTop + content.clientHeight / 2;
-    for (let index = 0; index < slots.length; index++) {
-      const box = slots[index].box;
-      if (box.offsetTop + box.offsetHeight + GAP / 2 >= middle) {
-        return { index, within: Math.max(0, (content.scrollTop - box.offsetTop) / Math.max(1, box.offsetHeight)) };
-      }
-    }
-    return { index: Math.max(0, slots.length - 1), within: 0 };
-  }
+  const fitScale = () => Math.max(1, width - 2 * GAP) / (slots[0]?.width ?? 1);
 
   function report() {
-    if (!pdf || !active) return;
-    status.textContent = `${reading().index + 1} / ${pdf.numPages} · ${Math.round(zoom * 100)}%`;
-  }
-
-  /** Sizes every page for the width and zoom in force, keeping the reader on the page they were reading. */
-  function relayout() {
-    if (!slots.length) return;
-    const keep = width ? reading() : null;
-    width = content.clientWidth;
-    scale = (Math.max(1, width - 2 * GAP) / slots[0].width) * zoom;
-    layout++;
-    for (const slot of slots) {
-      slot.job?.cancel();
-      size(slot);
-    }
-    if (keep && keep.index + keep.within > 0) {
-      const anchor = slots[keep.index].box;
-      content.scrollTop = anchor.offsetTop + keep.within * anchor.offsetHeight;
-    }
-    for (const slot of slots) if (slot.near) void draw(slot);
-    out.disabled = zoom <= .5;
-    into.disabled = zoom >= 3;
-    report();
+    const percent = Math.round(scale * 100);
+    value.textContent = zoom === 'fit' ? labels.fitWidth : `${percent}%`;
+    value.setAttribute('aria-label', `${labels.zoom}: ${zoom === 'fit' ? labels.fitWidth : `${percent}%`}`);
+    out.disabled = scale <= MIN_ZOOM + 1e-6;
+    into.disabled = scale >= MAX_ZOOM - 1e-6;
   }
 
   function size(slot: Slot) {
     slot.box.style.width = Math.round(slot.width * scale) + 'px';
     slot.box.style.height = Math.round(slot.height * scale) + 'px';
+    slot.box.style.setProperty('--total-scale-factor', String(scale));
   }
 
-  function setZoom(next: number) {
-    zoom = Math.min(3, Math.max(.5, next));
-    relayout();
+  /**
+   * Sizes every page for the scale in force. `anchor` is a point of the view (the pointer, or the centre) that stays
+   * on the same spot of the document; `redraw` false leaves the old drawings stretched until the zoom settles.
+   */
+  function relayout(anchor?: { x: number; y: number }, redraw = true) {
+    if (!slots.length) return;
+    const before = scale;
+    const point = anchor ?? { x: content.clientWidth / 2, y: content.clientHeight / 2 };
+    const docX = content.scrollLeft + point.x;
+    const docY = content.scrollTop + point.y;
+    width = content.clientWidth;
+    scale = zoom === 'fit' ? fitScale() : zoom;
+    for (const slot of slots) size(slot);
+    if (before !== scale && before > 0) {
+      const ratio = scale / before;
+      content.scrollLeft = docX * ratio - point.x;
+      content.scrollTop = docY * ratio - point.y;
+    }
+    report();
+    if (redraw) settle();
+  }
+
+  /** Every near page drawn again at the scale in force. */
+  function settle() {
+    layout++;
+    for (const slot of slots) {
+      slot.job?.cancel();
+      if (slot.near) void draw(slot);
+    }
+  }
+
+  function setZoom(next: number | 'fit', anchor?: { x: number; y: number }, redraw = true) {
+    zoom = next === 'fit' ? 'fit' : Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
+    relayout(anchor, redraw);
+  }
+
+  /** A step of 25%, to the next multiple of it, as DSH's buttons step. */
+  function stepZoom(direction: 1 | -1) {
+    const steps = scale / STEP;
+    const next = direction > 0 ? Math.floor(steps + 1e-6) + 1 : Math.ceil(steps - 1e-6) - 1;
+    setZoom(next * STEP);
   }
 
   async function draw(slot: Slot) {
@@ -154,12 +251,21 @@ export function mountPdfViewer(host: HTMLElement, data: Uint8Array, labels: PdfL
       const buffer = document.createElement('canvas');
       buffer.width = Math.max(1, Math.ceil(viewport.width));
       buffer.height = Math.max(1, Math.ceil(viewport.height));
-      buffer.style.cssText = 'display:block;width:100%;height:100%';
+      buffer.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
       slot.job = page.render({ canvas: buffer, viewport });
       await slot.job.promise;
       if (!active || id !== layout || !slot.near) return void (slot.drawn = 0);
       // The new drawing replaces the old one only once it is complete, so a zoom never flashes a blank page.
-      slot.box.replaceChildren(buffer);
+      slot.box.querySelector('canvas')?.remove();
+      slot.box.prepend(buffer);
+      // The text is laid once per page; its size follows `--total-scale-factor`, so a zoom needs no new layer.
+      if (!slot.text) {
+        const layer = document.createElement('div');
+        layer.className = 'textLayer';
+        slot.text = layer;
+        slot.box.append(layer);
+        await new TextLayer({ textContentSource: page.streamTextContent(), container: layer, viewport: page.getViewport({ scale: 1 }) }).render().catch(() => {});
+      }
     } catch (error) {
       slot.drawn = 0;
       if ((error as { name?: string })?.name !== 'RenderingCancelledException') fail();
@@ -176,18 +282,25 @@ export function mountPdfViewer(host: HTMLElement, data: Uint8Array, labels: PdfL
       } else {
         slot.job?.cancel();
         slot.drawn = 0;
+        slot.text = undefined;
         slot.box.replaceChildren();
       }
     }
   }, { root: content, rootMargin: '100% 0px' });
 
-  let frame = 0;
-  const scrolled = () => {
-    if (frame) return;
-    frame = requestAnimationFrame(() => { frame = 0; report(); });
+  // Ctrl+wheel and a trackpad's pinch zoom around the pointer; the pages redraw once it settles.
+  let settleTimer = 0;
+  const wheel = (event: WheelEvent) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    const box = content.getBoundingClientRect();
+    setZoom(scale * Math.exp(-event.deltaY * 0.01), { x: event.clientX - box.left, y: event.clientY - box.top }, false);
+    clearTimeout(settleTimer);
+    settleTimer = window.setTimeout(settle, SETTLE);
   };
-  content.addEventListener('scroll', scrolled, { passive: true });
-  const resize = new ResizeObserver(() => { if (content.clientWidth !== width) relayout(); });
+  content.addEventListener('wheel', wheel, { passive: false });
+  // A hidden tab measures nothing: its layout waits for it to be shown again, so its place is kept.
+  const resize = new ResizeObserver(() => { if (content.clientWidth > 0 && content.clientWidth !== width && zoom === 'fit') relayout(); });
 
   void (async () => {
     try {
@@ -197,13 +310,14 @@ export function mountPdfViewer(host: HTMLElement, data: Uint8Array, labels: PdfL
       if (!active) return;
       slots = Array.from({ length: pdf.numPages }, () => {
         const box = document.createElement('div');
-        // A page is paper whatever the theme, as the document draws it.
         // `margin:auto` rather than centring the column: a page zoomed wider than the view still scrolls to its left edge.
-        box.style.cssText = `flex-shrink:0;margin:0 auto;background:white;outline:1px solid ${theme.line};box-shadow:0 1px 3px rgb(0 0 0 / .2)`;
+        box.style.cssText = `position:relative;flex-shrink:0;margin:0 auto;background:white;box-shadow:0 0 0 .5px ${theme.line},0 2px 10px rgb(0 0 0 / .12)`;
         content.append(box);
         return { box, width: first.width, height: first.height, near: false, drawn: 0 };
       });
+      status.style.display = 'none';
       relayout();
+      if (coarse) showControl(true);
       for (const slot of slots) near.observe(slot.box);
       resize.observe(content);
     } catch {
@@ -215,7 +329,8 @@ export function mountPdfViewer(host: HTMLElement, data: Uint8Array, labels: PdfL
     active = false;
     near.disconnect();
     resize.disconnect();
-    cancelAnimationFrame(frame);
+    clearTimeout(hideTimer);
+    clearTimeout(settleTimer);
     for (const slot of slots) slot.job?.cancel();
     void loading.destroy().catch(() => {}).finally(() => {
       URL.revokeObjectURL(workerUrl);
