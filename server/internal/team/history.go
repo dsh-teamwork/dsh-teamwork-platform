@@ -99,7 +99,7 @@ type BackupManifest struct {
 	Format       int                 `json:"format"`
 	Resource     RevisionView        `json:"resource"`
 	Dependencies []PluginVersionView `json:"dependencies"`
-	Artifacts    []ArtifactView      `json:"artifacts"`
+	Packages     []PackageView       `json:"packages"`
 }
 
 func (s *Service) ExportRevision(ctx context.Context, userID, teamID, id string) (BackupManifest, []string, error) {
@@ -107,17 +107,17 @@ func (s *Service) ExportRevision(ctx context.Context, userID, teamID, id string)
 	if err != nil {
 		return BackupManifest{}, nil, err
 	}
-	artifactIDs := []string{}
+	packageIDs := []string{}
 	dependencies := []PluginVersionView{}
-	metadata := []ArtifactView{}
+	metadata := []PackageView{}
 	var preset wire.PresetData
 	var plugin wire.PluginData
 	if row.Kind == configrevision.KindPlugin {
 		if err := json.Unmarshal(row.Data, &plugin); err != nil {
 			return BackupManifest{}, nil, err
 		}
-		if plugin.ArtifactID != "" {
-			artifactIDs = append(artifactIDs, plugin.ArtifactID)
+		if plugin.PackageID != "" {
+			packageIDs = append(packageIDs, plugin.PackageID)
 		}
 	}
 	if row.Kind == configrevision.KindPreset {
@@ -130,27 +130,27 @@ func (s *Service) ExportRevision(ctx context.Context, userID, teamID, id string)
 				return BackupManifest{}, nil, err
 			}
 			dependencies = append(dependencies, PluginVersionView{ConfigID: pin.PluginConfigID, Name: name, Data: *data})
-			if data.ArtifactID != "" {
-				artifactIDs = append(artifactIDs, data.ArtifactID)
+			if data.PackageID != "" {
+				packageIDs = append(packageIDs, data.PackageID)
 			}
 		}
 	}
 	seen := map[string]bool{}
 	unique := []string{}
-	for _, artifactID := range artifactIDs {
-		if seen[artifactID] {
+	for _, packageID := range packageIDs {
+		if seen[packageID] {
 			continue
 		}
-		seen[artifactID] = true
-		artifact, err := s.Artifact(ctx, userID, teamID, artifactID)
+		seen[packageID] = true
+		pkg, err := s.Package(ctx, userID, teamID, packageID)
 		if err != nil {
 			return BackupManifest{}, nil, err
 		}
-		if err := s.checkArtifact(ctx, teamID, &wire.PluginData{Package: artifact.Package, Version: artifact.Version, ArtifactID: artifact.ID, SHA256: artifact.Sha256}); err != nil {
+		if err := s.checkPackage(ctx, teamID, &wire.PluginData{Package: pkg.Package, Version: pkg.Version, PackageID: pkg.ID, SHA256: pkg.Sha256}); err != nil {
 			return BackupManifest{}, nil, err
 		}
-		metadata = append(metadata, artifactView(artifact))
-		unique = append(unique, artifactID)
+		metadata = append(metadata, packageView(pkg))
+		unique = append(unique, packageID)
 	}
-	return BackupManifest{Format: 1, Resource: revisionView(row), Dependencies: dependencies, Artifacts: metadata}, unique, nil
+	return BackupManifest{Format: 1, Resource: revisionView(row), Dependencies: dependencies, Packages: metadata}, unique, nil
 }

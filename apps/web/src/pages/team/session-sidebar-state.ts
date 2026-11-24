@@ -5,14 +5,14 @@
  * per session in this browser (`loadSidebar`), as DSH keeps it per session.
  */
 
-import type { PublishedPage } from '@dsh-teamwork/relay-client';
+import type { PublishedArtifact } from '@dsh-teamwork/relay-client';
 
-/** The start page (DSH's guide), the workspace's files, one file at `line`, or a page the agent published. */
+/** The start page (DSH's guide), the workspace's files, one file at `line`, or an artifact the agent published. */
 export type TabContent =
   | { kind: 'start' }
   | { kind: 'files' }
   | { kind: 'file'; path: string; line?: number }
-  | { kind: 'page'; page: PublishedPage };
+  | { kind: 'artifact'; artifact: PublishedArtifact };
 
 export type Tab = TabContent & { id: string };
 
@@ -52,7 +52,7 @@ export function emptySidebar(): SidebarState {
 function identity(content: TabContent): string {
   switch (content.kind) {
     case 'file': return `file:${content.path}`;
-    case 'page': return `page:${content.page.teamId}:${content.page.pageId}`;
+    case 'artifact': return `artifact:${content.artifact.teamId}:${content.artifact.artifactId}`;
     default: return content.kind;
   }
 }
@@ -255,7 +255,7 @@ function validTab(tab: unknown): tab is Tab {
     case 'start':
     case 'files': return true;
     case 'file': return typeof value.path === 'string' && (value.line === undefined || typeof value.line === 'number');
-    case 'page': return !!value.page && typeof (value.page as PublishedPage).pageId === 'string' && typeof (value.page as PublishedPage).teamId === 'string';
+    case 'artifact': return !!value.artifact && typeof (value.artifact as PublishedArtifact).artifactId === 'string' && typeof (value.artifact as PublishedArtifact).teamId === 'string';
     default: return false;
   }
 }

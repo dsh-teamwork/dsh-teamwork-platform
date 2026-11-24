@@ -1,0 +1,2 @@
+-- Create "knowledge_attachments" table
+CREATE TABLE `knowledge_attachments` (`id` varchar(32) NOT NULL, `created_at` datetime(6) NOT NULL, `team_id` varchar(32) NOT NULL, `document_id` varchar(32) NOT NULL, `name` varchar(480) NOT NULL, `content_type` varchar(100) NOT NULL, `size` bigint NOT NULL, `digest` varchar(32) NOT NULL, `created_by` varchar(32) NOT NULL, PRIMARY KEY (`id`), UNIQUE INDEX `knowledgeattachment_document_id_name` (`document_id`, `name`), INDEX `knowledgeattachment_team_id_digest` (`team_id`, `digest`)) CHARSET utf8mb4 COLLATE utf8mb4_bin;

@@ -12,6 +12,10 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifact"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetnotice"
@@ -21,19 +25,23 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgecomment"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespace"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespacemember"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/page"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagefile"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pagemember"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pageversion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/password"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/ratewindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairingoffer"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
@@ -101,35 +109,43 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			budgetevent.Table:        budgetevent.ValidColumn,
-			budgetgate.Table:         budgetgate.ValidColumn,
-			budgetnotice.Table:       budgetnotice.ValidColumn,
-			budgetpolicy.Table:       budgetpolicy.ValidColumn,
-			budgetreservation.Table:  budgetreservation.ValidColumn,
-			budgetwindow.Table:       budgetwindow.ValidColumn,
-			configrevision.Table:     configrevision.ValidColumn,
-			identity.Table:           identity.ValidColumn,
-			invite.Table:             invite.ValidColumn,
-			membership.Table:         membership.ValidColumn,
-			modelrate.Table:          modelrate.ValidColumn,
-			page.Table:               page.ValidColumn,
-			pagefile.Table:           pagefile.ValidColumn,
-			pagemember.Table:         pagemember.ValidColumn,
-			pageversion.Table:        pageversion.ValidColumn,
-			password.Table:           password.ValidColumn,
-			plugingrant.Table:        plugingrant.ValidColumn,
-			ratewindow.Table:         ratewindow.ValidColumn,
-			relayhost.Table:          relayhost.ValidColumn,
-			relaypairing.Table:       relaypairing.ValidColumn,
-			relaypairingoffer.Table:  relaypairingoffer.ValidColumn,
-			resourceartifact.Table:   resourceartifact.ValidColumn,
-			resourcesubmission.Table: resourcesubmission.ValidColumn,
-			team.Table:               team.ValidColumn,
-			teamconfig.Table:         teamconfig.ValidColumn,
-			teamprovider.Table:       teamprovider.ValidColumn,
-			usagerequest.Table:       usagerequest.ValidColumn,
-			user.Table:               user.ValidColumn,
-			verificationcode.Table:   verificationcode.ValidColumn,
+			artifact.Table:             artifact.ValidColumn,
+			artifactfile.Table:         artifactfile.ValidColumn,
+			artifactmember.Table:       artifactmember.ValidColumn,
+			artifactversion.Table:      artifactversion.ValidColumn,
+			budgetevent.Table:          budgetevent.ValidColumn,
+			budgetgate.Table:           budgetgate.ValidColumn,
+			budgetnotice.Table:         budgetnotice.ValidColumn,
+			budgetpolicy.Table:         budgetpolicy.ValidColumn,
+			budgetreservation.Table:    budgetreservation.ValidColumn,
+			budgetwindow.Table:         budgetwindow.ValidColumn,
+			configrevision.Table:       configrevision.ValidColumn,
+			identity.Table:             identity.ValidColumn,
+			invite.Table:               invite.ValidColumn,
+			knowledgeattachment.Table:  knowledgeattachment.ValidColumn,
+			knowledgecomment.Table:     knowledgecomment.ValidColumn,
+			knowledgedocument.Table:    knowledgedocument.ValidColumn,
+			knowledgefolder.Table:      knowledgefolder.ValidColumn,
+			knowledgeproposal.Table:    knowledgeproposal.ValidColumn,
+			knowledgespace.Table:       knowledgespace.ValidColumn,
+			knowledgespacemember.Table: knowledgespacemember.ValidColumn,
+			knowledgeversion.Table:     knowledgeversion.ValidColumn,
+			membership.Table:           membership.ValidColumn,
+			modelrate.Table:            modelrate.ValidColumn,
+			password.Table:             password.ValidColumn,
+			plugingrant.Table:          plugingrant.ValidColumn,
+			pluginpackage.Table:        pluginpackage.ValidColumn,
+			ratewindow.Table:           ratewindow.ValidColumn,
+			relayhost.Table:            relayhost.ValidColumn,
+			relaypairing.Table:         relaypairing.ValidColumn,
+			relaypairingoffer.Table:    relaypairingoffer.ValidColumn,
+			resourcesubmission.Table:   resourcesubmission.ValidColumn,
+			team.Table:                 team.ValidColumn,
+			teamconfig.Table:           teamconfig.ValidColumn,
+			teamprovider.Table:         teamprovider.ValidColumn,
+			usagerequest.Table:         usagerequest.ValidColumn,
+			user.Table:                 user.ValidColumn,
+			verificationcode.Table:     verificationcode.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

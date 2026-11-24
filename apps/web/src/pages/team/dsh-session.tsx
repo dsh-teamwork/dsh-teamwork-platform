@@ -45,8 +45,8 @@ import {
   type SessionState,
   type SessionSummary,
 } from '@dsh-teamwork/relay-client';
-import type { PublishedPage } from '@dsh-teamwork/relay-client';
-import { KIND_ICON, PageViewer } from '@/components/page-viewer';
+import type { PublishedArtifact } from '@dsh-teamwork/relay-client';
+import { KIND_ICON, ArtifactViewer } from '@/components/artifact-viewer';
 import { PresetAvatar } from '@/components/preset-avatar';
 import { ProviderMark } from '@/components/provider-mark';
 import { Button } from '@/components/ui/button';
@@ -502,7 +502,7 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
   const [sidebar, changeSidebar] = useSidebarState(id ? `${computerId}.${id}` : null);
   // A file the conversation names opens in a tab of the sidebar, where the computer's plugin can read it.
   const openFile = config?.files && id ? (target: FileTarget) => changeSidebar((s) => openTab(s, { kind: 'file', path: target.path, line: target.line })) : undefined;
-  const openPage = (page: PublishedPage) => changeSidebar((s) => openTab(s, { kind: 'page', page }));
+  const openArtifact = (artifact: PublishedArtifact) => changeSidebar((s) => openTab(s, { kind: 'artifact', artifact }));
 
   useEffect(() => (id ? relay.follow(computerId, id, (event) => setState((s) => applySessionEvent(s, event))) : undefined), [relay, computerId, id]);
 
@@ -621,8 +621,8 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
                 ))}
                 {row.text && <p className="rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>}
               </div>
-            ) : row.kind === 'page' ? (
-              <PageCard key={row.id} page={row.page} onOpen={() => openPage(row.page)} />
+            ) : row.kind === 'artifact' ? (
+              <ArtifactCard key={row.id} artifact={row.artifact} onOpen={() => openArtifact(row.artifact)} />
             ) : row.kind === 'assistant' ? (
               <div key={row.id} className="min-w-0">
                 <SessionMarkdown text={row.text} openFile={row.streaming ? undefined : openFile} />
@@ -675,10 +675,10 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
           change={changeSidebar}
           canBrowse={!!config?.files}
           body={({ tab, pane, reload, onReload }) => {
-            if (tab.kind === 'page') {
+            if (tab.kind === 'artifact') {
               return (
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
-                  <PageViewer key={`${tab.page.pageId}-${tab.page.version}`} teamId={tab.page.teamId} pageId={tab.page.pageId} version={tab.page.version} />
+                  <ArtifactViewer key={`${tab.artifact.artifactId}-${tab.artifact.version}`} teamId={tab.artifact.teamId} artifactId={tab.artifact.artifactId} version={tab.artifact.version} />
                 </div>
               );
             }
@@ -1306,16 +1306,16 @@ export function PinGate({ computerId, state, lockedHint, enterHint }: { computer
 }
 
 
-/** A page the agent published in this conversation: a card that opens it. */
-function PageCard({ page, onOpen }: { page: PublishedPage; onOpen: () => void }) {
-  const t = useTranslations('team.pages');
-  const Icon = KIND_ICON[page.kind];
+/** An artifact the agent published in this conversation: a card that opens it. */
+function ArtifactCard({ artifact, onOpen }: { artifact: PublishedArtifact; onOpen: () => void }) {
+  const t = useTranslations('team.artifacts');
+  const Icon = KIND_ICON[artifact.kind];
   return (
     <button type="button" onClick={onOpen} className="flex max-w-md items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors hover:border-ring">
       <Icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
       <span className="flex min-w-0 flex-col">
-        <span className="truncate font-medium">{page.title}</span>
-        <span className="text-xs text-muted-foreground">{t('cardNote', { n: page.version })}</span>
+        <span className="truncate font-medium">{artifact.title}</span>
+        <span className="text-xs text-muted-foreground">{t('cardNote', { n: artifact.version })}</span>
       </span>
     </button>
   );

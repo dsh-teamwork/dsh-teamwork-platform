@@ -58,6 +58,8 @@ or the hosted service, kept with the closed edition rather than here.
 - [0065](0065-native-web-sessions-and-shell.md) — native Web runs in a same-origin shell, with idle sessions the computer can end.
 - [0066 — A paired device manages its computer's automation tasks](0066-a-paired-device-manages-its-computers-automation-tasks.md) — `schedule/*` passed on for a personal computer, refused on a shared DSH.
 - [0067 — Team DSH is removed](0067-team-dsh-is-removed.md) — shared DSHs, host tokens and the shared archive go; the relay serves a member's own computers.
+- [0068 — Knowledge is its own module](0068-knowledge-is-its-own-module.md) — kept-together documents beside pages; pages keep html and svg.
+- [0069 — Pages become artifacts](0069-pages-become-artifacts.md) — plugin archives become packages; knowledge documents stay documents in code.
 
 The template:
 

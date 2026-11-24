@@ -127,11 +127,26 @@ jobs:
         run: pnpm build
 
       # The DSH plugin, unchanged, against the Go server on all three
-      # databases: sign in on loopback, sync, call a model (server/e2e).
+      # databases: sign in on loopback, sync, call a model (server/e2e). A
+      # branch is tested with the plugin's branch of the same name where the
+      # plugin has one, since work that spans both repositories changes both
+      # at once; otherwise with the plugin's main.
+      - name: Choose the plugin's branch
+        id: plugin
+        run: |
+          branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          if git ls-remote --exit-code --heads https://github.com/dsh-teamwork/dsh-teamwork "$branch" >/dev/null; then
+            echo "ref=$branch" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Plugin branch: $(grep ref= "$GITHUB_OUTPUT" | tail -1)"
+
       - name: Check out the plugin
         uses: actions/checkout@v4
         with:
           repository: dsh-teamwork/dsh-teamwork
+          ref: ${{ steps.plugin.outputs.ref }}
           path: _plugin
 
       # Every Go module with an e2e directory runs it: the open server's, or

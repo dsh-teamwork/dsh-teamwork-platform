@@ -118,7 +118,7 @@ func (s *Server) requireUser(r *http.Request) (*caller, error) {
 
 // requirePlugin is requireUser for the routes a DSH plugin needs, which also
 // accept a computer token (ADR 0038): the configuration it syncs, the model
-// gateway, and publishing and viewing pages (docs/tech/pages.md). Every other
+// gateway, and publishing and viewing artifacts (docs/tech/artifacts.md). Every other
 // route calls requireUser, where it does not open.
 func (s *Server) requirePlugin(r *http.Request) (*caller, error) {
 	token := bearerToken(r.Header.Get("Authorization"))

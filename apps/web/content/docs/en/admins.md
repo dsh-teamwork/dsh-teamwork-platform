@@ -94,7 +94,7 @@ To manage picture input, edit a BYOK model and set **Image understanding**.
   research analyst or presentation master) or a blank preset, and give it an
   avatar, which members see beside it in the console and the phone app. The
   presentation master plans a talk, writes the slides and their speaker notes,
-  and publishes the deck as a page that presents full screen and exports to PDF
+  and publishes the deck as an artifact that presents full screen and exports to PDF
   and an editable PowerPoint file. The research analyst reads primary sources
   and publishes a report with numbered citations, gaps and dated sources, which
   prints to PDF and saves as Markdown. For web search a member chooses
@@ -144,3 +144,14 @@ call by member and model and exports it as CSV.
 Members can submit presets and plugins. Under **Review**, compare
 the proposed contents with what is live, then approve to publish or reject with
 a reason.
+
+## 7. Share what the team knows
+
+Under **Knowledge**, choose **New space** (in the sidebar beneath Knowledge, or on its overview) for each body of knowledge: a
+glossary, the product's rules, the runbooks. A new space is read by the whole
+team. Its menu adds folders and documents, and **Space settings** renames it,
+narrows reading to chosen members, names the members who edit it besides you,
+chooses the folder whose documents are its templates, or deletes it with
+everything in it. Every member's agent reads the spaces its
+member may read and proposes changes; a space's editors decide them under
+**Proposals**.

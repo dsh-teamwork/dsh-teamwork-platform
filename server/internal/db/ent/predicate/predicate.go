@@ -6,6 +6,18 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Artifact is the predicate function for artifact builders.
+type Artifact func(*sql.Selector)
+
+// ArtifactFile is the predicate function for artifactfile builders.
+type ArtifactFile func(*sql.Selector)
+
+// ArtifactMember is the predicate function for artifactmember builders.
+type ArtifactMember func(*sql.Selector)
+
+// ArtifactVersion is the predicate function for artifactversion builders.
+type ArtifactVersion func(*sql.Selector)
+
 // BudgetEvent is the predicate function for budgetevent builders.
 type BudgetEvent func(*sql.Selector)
 
@@ -33,29 +45,44 @@ type Identity func(*sql.Selector)
 // Invite is the predicate function for invite builders.
 type Invite func(*sql.Selector)
 
+// KnowledgeAttachment is the predicate function for knowledgeattachment builders.
+type KnowledgeAttachment func(*sql.Selector)
+
+// KnowledgeComment is the predicate function for knowledgecomment builders.
+type KnowledgeComment func(*sql.Selector)
+
+// KnowledgeDocument is the predicate function for knowledgedocument builders.
+type KnowledgeDocument func(*sql.Selector)
+
+// KnowledgeFolder is the predicate function for knowledgefolder builders.
+type KnowledgeFolder func(*sql.Selector)
+
+// KnowledgeProposal is the predicate function for knowledgeproposal builders.
+type KnowledgeProposal func(*sql.Selector)
+
+// KnowledgeSpace is the predicate function for knowledgespace builders.
+type KnowledgeSpace func(*sql.Selector)
+
+// KnowledgeSpaceMember is the predicate function for knowledgespacemember builders.
+type KnowledgeSpaceMember func(*sql.Selector)
+
+// KnowledgeVersion is the predicate function for knowledgeversion builders.
+type KnowledgeVersion func(*sql.Selector)
+
 // Membership is the predicate function for membership builders.
 type Membership func(*sql.Selector)
 
 // ModelRate is the predicate function for modelrate builders.
 type ModelRate func(*sql.Selector)
 
-// Page is the predicate function for page builders.
-type Page func(*sql.Selector)
-
-// PageFile is the predicate function for pagefile builders.
-type PageFile func(*sql.Selector)
-
-// PageMember is the predicate function for pagemember builders.
-type PageMember func(*sql.Selector)
-
-// PageVersion is the predicate function for pageversion builders.
-type PageVersion func(*sql.Selector)
-
 // Password is the predicate function for password builders.
 type Password func(*sql.Selector)
 
 // PluginGrant is the predicate function for plugingrant builders.
 type PluginGrant func(*sql.Selector)
+
+// PluginPackage is the predicate function for pluginpackage builders.
+type PluginPackage func(*sql.Selector)
 
 // RateWindow is the predicate function for ratewindow builders.
 type RateWindow func(*sql.Selector)
@@ -68,9 +95,6 @@ type RelayPairing func(*sql.Selector)
 
 // RelayPairingOffer is the predicate function for relaypairingoffer builders.
 type RelayPairingOffer func(*sql.Selector)
-
-// ResourceArtifact is the predicate function for resourceartifact builders.
-type ResourceArtifact func(*sql.Selector)
 
 // ResourceSubmission is the predicate function for resourcesubmission builders.
 type ResourceSubmission func(*sql.Selector)

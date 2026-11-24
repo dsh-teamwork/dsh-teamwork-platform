@@ -78,7 +78,7 @@ dsh web
 - 完整运维备份需包含数据库、私有插件文件和生成的密钥。资源导出不能替代完整服务器备份。
 - 实例管理员由 `ADMIN_EMAILS` 明确指定，与团队成员身份独立，通过获授权账号访问 `/manage`。`SERVICE_ROLE` 支持合并、用户和管理进程；提供插件文件的多个进程需要访问同一份保留数据。
 
-两种存储均使用 `teams/{teamId}/plugins/{artifactId}.tgz`。启动时会校验并复制数据库引用的旧平铺文件，再对外提供成员服务，保留原文件；`--migrate-artifact-paths` 可离线执行该过程。升级或回滚前请阅读[存储迁移说明](docs/tech/team-assistant.md#private-plugin-artifacts)。
+两种存储均使用 `teams/{teamId}/plugins/{packageId}.tgz`。启动时会校验并复制数据库引用的旧平铺文件，再对外提供成员服务，保留原文件；`--migrate-artifact-paths` 可离线执行该过程。升级或回滚前请阅读[存储迁移说明](docs/tech/team-assistant.md#private-plugin-packages)。
 
 [文档索引](docs/README.md)（英文）提供架构、团队资源契约、使用量核算、存储和管理说明。
 

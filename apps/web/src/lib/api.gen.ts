@@ -2452,7 +2452,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/artifacts": {
+    "/teams/{teamId}/packages": {
         parameters: {
             query?: never;
             header?: never;
@@ -2479,13 +2479,13 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Private artifact metadata */
+                /** @description Private plugin package metadata */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ResourceArtifact"];
+                        "application/json": components["schemas"]["PluginPackage"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2497,7 +2497,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/artifacts/{id}": {
+    "/teams/{teamId}/packages/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2507,7 +2507,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Inspect an authorized artifact and its included files */
+        /** Inspect an authorized plugin package and its included files */
         get: {
             parameters: {
                 query?: never;
@@ -2520,13 +2520,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Private artifact metadata */
+                /** @description Private plugin package metadata */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ResourceArtifact"];
+                        "application/json": components["schemas"]["PluginPackage"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2540,7 +2540,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/artifacts/{id}/download": {
+    "/teams/{teamId}/packages/{id}/download": {
         parameters: {
             query?: never;
             header?: never;
@@ -2583,7 +2583,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages": {
+    "/teams/{teamId}/artifacts": {
         parameters: {
             query?: never;
             header?: never;
@@ -2592,7 +2592,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** The caller's own pages (mine), pages shared with them (shared), or every page of the team for an admin (all); newest version first, 50 at a time */
+        /** The caller's own artifacts (mine), artifacts shared with them (shared), or every artifact of the team for an admin (all); newest version first, 50 at a time */
         get: {
             parameters: {
                 query?: {
@@ -2613,7 +2613,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PageList"];
+                        "application/json": components["schemas"]["ArtifactList"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2621,7 +2621,7 @@ export interface paths {
         };
         put?: never;
         /**
-         * Publish a new page from a DSH session, private to its author (docs/tech/pages.md)
+         * Publish a new artifact from a DSH session, private to its author (docs/tech/artifacts.md)
          * @description Plugin or computer token.
          */
         post: {
@@ -2636,20 +2636,20 @@ export interface paths {
             requestBody: {
                 content: {
                     "multipart/form-data": {
-                        meta: components["schemas"]["PageUploadMeta"];
+                        meta: components["schemas"]["ArtifactUploadMeta"];
                     } & {
                         [key: string]: string;
                     };
                 };
             };
             responses: {
-                /** @description The page at version 1 */
+                /** @description The artifact at version 1 */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagePublished"];
+                        "application/json": components["schemas"]["ArtifactPublished"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2661,7 +2661,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}": {
+    "/teams/{teamId}/artifacts/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2671,7 +2671,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** A page the caller may read, with its versions; or, for the team's admin, the page without its content */
+        /** An artifact the caller may read, with its versions; or, for the team's admin, the artifact without its content */
         get: {
             parameters: {
                 query?: never;
@@ -2684,13 +2684,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The page */
+                /** @description The artifact */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PageDetail"];
+                        "application/json": components["schemas"]["ArtifactDetail"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2698,7 +2698,7 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete a page and every version; its owner or the team's admin */
+        /** Delete an artifact and every version; its owner or the team's admin */
         delete: {
             parameters: {
                 query?: never;
@@ -2723,7 +2723,7 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Rename a page; its owner's alone */
+        /** Rename an artifact; its owner's alone */
         patch: {
             parameters: {
                 query?: never;
@@ -2754,7 +2754,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}/sharing": {
+    "/teams/{teamId}/artifacts/{id}/sharing": {
         parameters: {
             query?: never;
             header?: never;
@@ -2765,7 +2765,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Set who may read a page; the owner sets any, the team's admin only narrows (page_sharing_widened otherwise) */
+        /** Set who may read an artifact; the owner sets any, the team's admin only narrows (artifact_sharing_widened otherwise) */
         put: {
             parameters: {
                 query?: never;
@@ -2803,7 +2803,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}/versions/{n}/restore": {
+    "/teams/{teamId}/artifacts/{id}/versions/{n}/restore": {
         parameters: {
             query?: never;
             header?: never;
@@ -2836,7 +2836,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagePublished"];
+                        "application/json": components["schemas"]["ArtifactPublished"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2848,7 +2848,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}/versions": {
+    "/teams/{teamId}/artifacts/{id}/versions": {
         parameters: {
             query?: never;
             header?: never;
@@ -2860,7 +2860,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Add a version on top of meta.baseVersion; page_stale when it is no longer current */
+        /** Add a version on top of meta.baseVersion; artifact_stale when it is no longer current */
         post: {
             parameters: {
                 query?: never;
@@ -2874,7 +2874,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "multipart/form-data": {
-                        meta: components["schemas"]["PageUploadMeta"];
+                        meta: components["schemas"]["ArtifactUploadMeta"];
                     } & {
                         [key: string]: string;
                     };
@@ -2887,7 +2887,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagePublished"];
+                        "application/json": components["schemas"]["ArtifactPublished"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -2899,7 +2899,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/teams/{teamId}/pages/{id}/versions/{n}/view": {
+    "/teams/{teamId}/artifacts/{id}/versions/{n}/view": {
         parameters: {
             query?: never;
             header?: never;
@@ -2932,7 +2932,1226 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PageView"];
+                        "application/json": components["schemas"]["ArtifactView"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/knowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The knowledge the caller reads in every team, for the plugin's read-only copy (docs/tech/knowledge.md) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The sync manifest */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeManifest"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** The spaces of a team the caller reads, with their folders and documents */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The tree */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeTree"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/spaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a space, read by the whole team; the team's admin's */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["KnowledgeName"];
+                };
+            };
+            responses: {
+                /** @description The space */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeSpace"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/spaces/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a space with everything in it; an editor's */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Rename a space or name its templates folder; an editor's */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        /** @description A folder of the space, or empty for no templates */
+                        templatesFolderId?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Changed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/spaces/{id}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Who reads and who edits a space, besides its creator and the team's admins; an editor's */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The access */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeAccess"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        /** Replace a space's access at once; an editor's */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["KnowledgeAccess"];
+                };
+            };
+            responses: {
+                /** @description The access */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeAccess"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a folder in a space; an editor's */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        spaceId: string;
+                        parentId?: string;
+                        name: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The folder */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeFolder"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/folders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an empty folder (knowledge_folder_not_empty otherwise); an editor's */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Rename a folder; an editor's */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["KnowledgeName"];
+                };
+            };
+            responses: {
+                /** @description Renamed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a document and its version 1; an editor's */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        spaceId: string;
+                        folderId?: string;
+                        title: string;
+                        text: string;
+                        note?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The document */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeDocument"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** A document the caller reads, with its versions and the text of one (the current one by default) */
+        get: {
+            parameters: {
+                query?: {
+                    version?: number;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The document */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeDocument"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a document with its versions and proposals; an editor's */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Rename a document or move it to another folder of its space; an editor's */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        title?: string;
+                        folderId?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The document */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeDocument"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save a new version on top of baseVersion (knowledge_stale when it is no longer current); an editor's, never an agent's */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        baseVersion: number;
+                        text: string;
+                        note?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The document at its new version */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeDocument"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}/versions/{n}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+                n: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a version copying version n; an editor's */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                    n: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The document at its new version */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeDocument"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}/proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose a change on top of baseVersion; any reader's, and the only change an agent makes */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        baseVersion: number;
+                        text: string;
+                        note?: string;
+                        computer?: string;
+                        sessionId?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The proposal */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeProposalDetail"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** The documents the caller reads whose title or current text holds q, ignoring case; title matches first, at most 30 */
+        get: {
+            parameters: {
+                query: {
+                    q: string;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description What was found */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            results: components["schemas"]["KnowledgeFound"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/mentions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** The documents the caller reads whose current text mentions them, @[Name](their-id), newest change first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The documents */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            documents: components["schemas"]["KnowledgeFound"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/spaces/{id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** The documents directly in one folder of a space, or at its root, with their front matter, for a table of their properties */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Empty or absent for the space's root */
+                    folderId?: string;
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The rows */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            rows: components["schemas"]["KnowledgeRow"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Every comment on a document the caller reads, oldest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The comments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            comments: components["schemas"]["KnowledgeComment"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        /** Open a thread on a quote of a version, or reply to one; a reader's, never an agent's */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description The thread a reply joins; empty to open one */
+                        parentId?: string;
+                        /** @description The version a thread is written on */
+                        version?: number;
+                        quote?: string;
+                        /** @description The slug of the heading above the quote */
+                        anchor?: string;
+                        body: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The comment */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeComment"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/comments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a comment, and a thread's replies with it; its author's or an editor's */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Resolve a thread, or open it again; its author's or an editor's */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        resolved: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Changed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Attach a file to a document the caller reads (any reader, or their plugin); the same name with the same bytes is the same attachment, with other bytes knowledge_name_taken */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /**
+                         * Format: binary
+                         * @description Its file name is the attachment's name
+                         */
+                        file: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The attachment, already held */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeAttachment"];
+                    };
+                };
+                /** @description The attachment, stored */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeAttachment"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}/attachments/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        /** An attachment's bytes, under a sandbox; an image or PDF inline, anything else as a download */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The file */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/octet-stream": string;
+                    };
+                };
+                /** @description Unchanged */
+                304: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Proposals to the spaces the caller edits, and their own, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    state?: "pending" | "accepted" | "declined" | "withdrawn";
+                };
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The proposals */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            proposals: components["schemas"]["KnowledgeProposal"][];
+                        };
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/proposals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** One proposal with its text and the text it started from */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The proposal */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeProposalDetail"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/proposals/{id}/{action}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+                action: "accept" | "decline" | "withdraw";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept (a new version under its author's name), decline with a reason (an editor's), or withdraw (its author's) a pending proposal */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                    action: "accept" | "decline" | "withdraw";
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The proposal */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeProposalDetail"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -3052,7 +4271,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Export a resource manifest and retained plugin artifacts; administrator only */
+        /** Export a resource manifest and retained plugin packages; administrator only */
         get: {
             parameters: {
                 query?: never;
@@ -3554,69 +4773,273 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        PageUploadMeta: {
+        KnowledgeName: {
+            name: string;
+        };
+        KnowledgePerson: {
+            id: string;
+            name: string | null;
+            email: string | null;
+        };
+        KnowledgeFolder: {
+            id: string;
+            /** @description Empty at the space's root */
+            parentId: string;
+            name: string;
+        };
+        KnowledgeDocumentSummary: {
+            id: string;
+            /** @description Empty at the space's root */
+            folderId: string;
+            title: string;
+            currentVersion: number;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        KnowledgeSpace: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            reading: "team" | "members";
+            canEdit: boolean;
+            /** @description The folder whose documents a new document may start from; empty for none */
+            templatesFolderId: string;
+            folders: components["schemas"]["KnowledgeFolder"][];
+            documents: components["schemas"]["KnowledgeDocumentSummary"][];
+        };
+        KnowledgeTree: {
+            canCreateSpace: boolean;
+            spaces: components["schemas"]["KnowledgeSpace"][];
+        };
+        KnowledgeAccess: {
+            /** @enum {string} */
+            reading: "team" | "members";
+            /** @description Member ids; kept only while reading is members */
+            readers: string[];
+            editors: string[];
+        };
+        KnowledgeVersion: {
+            number: number;
+            author: components["schemas"]["KnowledgePerson"];
+            /** @enum {string} */
+            source: "console" | "agent";
+            /** @description The computer an agent's accepted proposal came from; empty otherwise */
+            computer: string;
+            sessionId: string;
+            note: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        KnowledgeDocument: {
+            id: string;
+            folderId: string;
+            title: string;
+            currentVersion: number;
+            /** Format: date-time */
+            updatedAt: string;
+            spaceId: string;
+            canEdit: boolean;
+            /** @description The version whose text this is */
+            version: number;
+            text: string;
+            versions: components["schemas"]["KnowledgeVersion"][];
+            /** @description The files the document may name, every version alike */
+            attachments: components["schemas"]["KnowledgeAttachment"][];
+            /** @description The documents the caller reads whose current text links here */
+            backlinks: components["schemas"]["KnowledgeBacklink"][];
+        };
+        KnowledgeFound: {
+            id: string;
+            title: string;
+            spaceId: string;
+            version: number;
+            titleMatch: boolean;
+            /** @description The heading above the line found; empty above the first */
+            heading: string;
+            /** @description The line found, at most 160 characters around it */
+            snippet: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        KnowledgeRow: {
+            id: string;
+            folderId: string;
+            title: string;
+            currentVersion: number;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description The current text's YAML front matter with its fences, or empty */
+            frontMatter: string;
+        };
+        KnowledgeComment: {
+            id: string;
+            /** @description Empty for a thread's first comment */
+            parentId: string;
+            version: number;
+            quote: string;
+            anchor: string;
+            body: string;
+            author: components["schemas"]["KnowledgePerson"];
+            /** Format: date-time */
+            createdAt: string;
+            resolvedBy: components["schemas"]["KnowledgePerson"] | null;
+            /** Format: date-time */
+            resolvedAt: string | null;
+            canResolve: boolean;
+            canDelete: boolean;
+        };
+        KnowledgeBacklink: {
+            id: string;
+            title: string;
+            spaceId: string;
+        };
+        KnowledgeAttachment: {
+            /** @description Named in the text as ![[name]] (an embed) or [[name]] (a link) */
+            name: string;
+            contentType: string;
+            /** Format: int64 */
+            size: number;
+        };
+        KnowledgeProposal: {
+            id: string;
+            documentId: string;
+            documentTitle: string;
+            spaceId: string;
+            baseVersion: number;
+            author: components["schemas"]["KnowledgePerson"];
+            /** @enum {string} */
+            source: "console" | "agent";
+            computer: string;
+            sessionId: string;
+            note: string;
+            /** @enum {string} */
+            state: "pending" | "accepted" | "declined" | "withdrawn";
+            /** @description Pending on a version that is no longer current */
+            stale: boolean;
+            canDecide: boolean;
+            reason: string;
+            /** @description The version an acceptance made; 0 otherwise */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+        };
+        KnowledgeProposalDetail: {
+            id: string;
+            documentId: string;
+            documentTitle: string;
+            spaceId: string;
+            baseVersion: number;
+            author: components["schemas"]["KnowledgePerson"];
+            /** @enum {string} */
+            source: "console" | "agent";
+            computer: string;
+            sessionId: string;
+            note: string;
+            /** @enum {string} */
+            state: "pending" | "accepted" | "declined" | "withdrawn";
+            /** @description Pending on a version that is no longer current */
+            stale: boolean;
+            canDecide: boolean;
+            reason: string;
+            /** @description The version an acceptance made; 0 otherwise */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            text: string;
+            /** @description The text of the version it started from */
+            baseText: string;
+        };
+        KnowledgeManifest: {
+            teams: {
+                teamId: string;
+                teamName: string;
+                spaces: {
+                    id: string;
+                    name: string;
+                    documents: {
+                        id: string;
+                        /** @description Folder names from the space's root down */
+                        folders: string[];
+                        title: string;
+                        version: number;
+                        attachments: {
+                            name: string;
+                            /** Format: int64 */
+                            size: number;
+                            /** @description Changes only when the bytes do */
+                            digest: string;
+                        }[];
+                    }[];
+                }[];
+            }[];
+        };
+        ArtifactUploadMeta: {
             title?: string;
             /** @enum {string} */
-            kind: "html" | "markdown" | "svg";
+            kind: "html" | "svg";
             note?: string;
             sessionId?: string;
             computer?: string;
             baseVersion?: number;
         };
-        PagePublished: {
+        ArtifactPublished: {
             id: string;
             teamId: string;
             version: number;
             title: string;
             /** @enum {string} */
-            kind: "html" | "markdown" | "svg";
+            kind: "html" | "svg";
         };
-        PagePerson: {
+        ArtifactPerson: {
             id: string;
             name: string | null;
             email: string | null;
         };
-        PageSummary: {
+        ArtifactSummary: {
             id: string;
             title: string;
             /** @enum {string} */
-            kind: "html" | "markdown" | "svg";
+            kind: "html" | "svg";
             /** @enum {string} */
             sharing: "private" | "members" | "team";
-            owner: components["schemas"]["PagePerson"];
+            owner: components["schemas"]["ArtifactPerson"];
             currentVersion: number;
             /** Format: date-time */
             updatedAt: string;
-            updatedBy: components["schemas"]["PagePerson"];
+            updatedBy: components["schemas"]["ArtifactPerson"];
             /** @enum {string|null} */
             via: "you" | "team" | null;
         };
-        PageList: {
-            pages: components["schemas"]["PageSummary"][];
+        ArtifactList: {
+            artifacts: components["schemas"]["ArtifactSummary"][];
             next: string | null;
         };
-        PageDetail: {
+        ArtifactDetail: {
             id: string;
             title: string;
             /** @enum {string} */
-            kind: "html" | "markdown" | "svg";
+            kind: "html" | "svg";
             /** @enum {string} */
             sharing: "private" | "members" | "team";
-            owner: components["schemas"]["PagePerson"];
+            owner: components["schemas"]["ArtifactPerson"];
             currentVersion: number;
             /** Format: date-time */
             updatedAt: string;
-            updatedBy: components["schemas"]["PagePerson"];
+            updatedBy: components["schemas"]["ArtifactPerson"];
             /** @enum {string|null} */
             via: "you" | "team" | null;
             /** @enum {string} */
             access: "owner" | "reader" | "admin";
-            members: components["schemas"]["PagePerson"][];
-            versions: components["schemas"]["PageVersion"][];
+            members: components["schemas"]["ArtifactPerson"][];
+            versions: components["schemas"]["ArtifactVersion"][];
         };
-        PageVersion: {
+        ArtifactVersion: {
             number: number;
-            author: components["schemas"]["PagePerson"];
+            author: components["schemas"]["ArtifactPerson"];
             /** Format: date-time */
             createdAt: string;
             note: string;
@@ -3625,7 +5048,7 @@ export interface components {
             /** Format: int64 */
             size: number;
         };
-        PageView: {
+        ArtifactView: {
             url: string;
             /** Format: date-time */
             expiresAt: string;
@@ -4022,7 +5445,7 @@ export interface components {
             systemPrompt?: string;
         };
         PluginData: {
-            artifactId?: string;
+            packageId?: string;
             sha256?: string;
             package: string;
             version: string;
@@ -4123,7 +5546,7 @@ export interface components {
             /** Format: date-time */
             decidedAt: string | null;
         };
-        ResourceArtifact: {
+        PluginPackage: {
             id: string;
             package: string;
             version: string;

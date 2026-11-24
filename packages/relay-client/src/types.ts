@@ -138,7 +138,7 @@ export interface ToolResult {
   reason?: string;
   reasonClipped?: true;
   file?: FileTarget;
-  page?: PublishedPage;
+  artifact?: PublishedArtifact;
 }
 
 export type ConversationItem =
@@ -150,21 +150,21 @@ export type ConversationItem =
   /** A result whose call was outside the loaded history window. */
   | { kind: 'tool-result'; id: string; callId: string; result: ToolResult }
   | { kind: 'turn-end'; id: string; turn: number; completed: boolean }
-  /** A page the agent published with `teamwork_page` (the platform's docs/tech/pages.md), after the tool that did. */
-  | { kind: 'page'; id: string; page: PublishedPage }
+  /** An artifact the agent published with `teamwork_artifact` (the platform's docs/tech/artifacts.md), after the tool that did. */
+  | { kind: 'artifact'; id: string; artifact: PublishedArtifact }
   /**
    * A turn that ended in an error: DSH's own message, which the screen shows,
    * and `noModel` when the session had no model to call, which it explains.
    */
   | { kind: 'failed'; id: string; message: string; noModel: boolean };
 
-/** What `teamwork_page` reports, in its result's `meta.teamworkPage`. */
-export interface PublishedPage {
+/** What `teamwork_artifact` reports, in its result's `meta.teamworkArtifact`. */
+export interface PublishedArtifact {
   teamId: string;
-  pageId: string;
+  artifactId: string;
   version: number;
   title: string;
-  kind: 'html' | 'markdown' | 'svg';
+  kind: 'html' | 'svg';
 }
 
 /** Something the agent is waiting on the member for. At most one at a time. */

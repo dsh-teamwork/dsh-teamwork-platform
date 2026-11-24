@@ -197,7 +197,7 @@ function Row({ name, detail, mono = false, icon, onOpen }: { name: string; detai
 }
 
 /** What a member has no use for: the mark drawn beside the name, and where the package's archive is kept. */
-const HIDDEN = new Set(['name', 'avatar', 'artifactId', 'sha256']);
+const HIDDEN = new Set(['name', 'avatar', 'packageId', 'sha256']);
 
 /** A preset or plugin in full, each field as the review shows it (lib/config-diff.ts reads the values). */
 function Details({ config, names, action, onClose }: { config: Preset | Plugin; names: ReadonlyMap<string, string>; action?: ReactNode; onClose: () => void }) {

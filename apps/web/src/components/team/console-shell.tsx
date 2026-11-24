@@ -25,7 +25,10 @@ import {
   History,
   House,
   Laptop,
+  LibraryBig,
   Layers,
+  Lock,
+  Plus,
   Shapes,
   LayoutDashboard,
   LayoutGrid,
@@ -47,9 +50,10 @@ import { AccountRow } from '@/components/account';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { api, type Schemas, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamPage } from '@/lib/edition';
+import { knowledgeNav, publishKnowledgeNav, useKnowledgeNav } from '@/lib/knowledge-nav';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'pages';
+type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'artifacts' | 'knowledge';
 
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
@@ -112,6 +116,58 @@ function MyDshNav({ teamId, current, onNavigate }: SubnavProps) {
 }
 
 /**
+ * Knowledge's spaces under its entry (lib/knowledge-nav.ts), each opening its
+ * documents beside the sidebar, the open one selected; for the team's admin,
+ * New space after them. Away from the knowledge page the tree is read once.
+ */
+function KnowledgeNav({ teamId, current, onNavigate }: SubnavProps) {
+  const t = useTranslations('team');
+  const nav = useKnowledgeNav();
+  const ours = nav?.teamId === teamId ? nav : null;
+  useEffect(() => {
+    if (ours) return;
+    let live = true;
+    api<Schemas['KnowledgeTree']>(`teams/${encodeURIComponent(teamId)}/knowledge`).then(
+      (tree) => {
+        // The knowledge page may have published meanwhile, with the space it shows.
+        if (!live || knowledgeNav()?.teamId === teamId) return;
+        publishKnowledgeNav({ teamId, spaces: tree.spaces.map((s) => ({ id: s.id, name: s.name, reading: s.reading })), canCreateSpace: tree.canCreateSpace, current: '' });
+      },
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [teamId, ours]);
+  if (!ours) return null;
+  // Selected only while the knowledge page is open.
+  const open = current === null ? '' : ours.current;
+  return (
+    <>
+      {ours.spaces.map((space) => (
+        <Link
+          key={space.id}
+          to={`/teams/${teamId}/knowledge/spaces/${space.id}`}
+          onClick={onNavigate}
+          aria-current={open === space.id ? 'page' : undefined}
+          title={space.name}
+          className={cn(item, 'gap-2 py-1', open === space.id && selected)}
+        >
+          <span className="min-w-0 truncate">{space.name}</span>
+          {space.reading === 'members' && <Lock className="size-3 shrink-0 text-muted-foreground" aria-label={t('knowledge.restricted')} />}
+        </Link>
+      ))}
+      {ours.canCreateSpace && (
+        <Link to={`/teams/${teamId}/knowledge?newSpace`} onClick={onNavigate} className={cn(item, 'gap-2 py-1 text-muted-foreground hover:text-foreground')}>
+          <Plus className="size-3.5 shrink-0" aria-hidden />
+          <span className="min-w-0 truncate">{t('knowledge.newSpace')}</span>
+        </Link>
+      )}
+    </>
+  );
+}
+
+/**
  * The console's pages, in their groups: each page's path below `/teams/{teamId}` and its icon.
  * Workspace is everyone's; the admin's pages split by what they look after: what the
  * team publishes to its members' DSHs, and who is in it and what they spend. A page that
@@ -126,8 +182,11 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       // Always listed, so a new member finds it before connecting; the same computers in every team. An edition's
       // DSH (the hosted service's cloud DSH) follows it.
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, subnav: MyDshNav, editions: true },
-      // What agents published (docs/tech/pages.md); in every team, always listed.
-      { path: 'pages', key: 'pages', icon: Shapes, fill: true },
+      // What agents published (docs/tech/artifacts.md); in every team, always listed.
+      { path: 'artifacts', key: 'artifacts', icon: Shapes, fill: true },
+      // What the team knows, as documents people and agents keep (docs/tech/knowledge.md); in every team.
+      // Its spaces fold out beneath it.
+      { path: 'knowledge', key: 'knowledge', icon: LibraryBig, fill: true, subnav: KnowledgeNav },
       { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
     ],

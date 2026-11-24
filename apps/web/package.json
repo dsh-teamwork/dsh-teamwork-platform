@@ -22,9 +22,12 @@
   "dependencies": {
     "@dsh-teamwork/relay-client": "workspace:*",
     "@dsh-teamwork/shared": "workspace:*",
+    "@milkdown/kit": "7.23.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "diff": "9.0.0",
     "lucide-react": "^0.561.0",
+    "mermaid": "12.3.0",
     "pdfjs-dist": "6.5.438",
     "posthog-js": "^1.434.17",
     "radix-ui": "^1.4.3",
@@ -37,7 +40,8 @@
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.5.0",
     "use-intl": "^4.14.7",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "yaml": "2.8.2"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
@@ -49,6 +53,7 @@
     "eslint": "9.39.5",
     "eslint-plugin-react-hooks": "7.0.1",
     "globals": "^17.14.0",
+    "jsdom": "30.1.3",
     "openapi-typescript": "^7.13.0",
     "satori": "0.18.3",
     "sharp": "^0.35.4",

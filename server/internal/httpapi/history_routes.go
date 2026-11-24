@@ -88,11 +88,11 @@ func (s *Server) exportRevision(w http.ResponseWriter, r *http.Request) error {
 		}
 	}()
 	for _, id := range ids {
-		row, e := s.Team.Artifact(r.Context(), c.user.ID, r.PathValue("teamId"), id)
+		row, e := s.Team.Package(r.Context(), c.user.ID, r.PathValue("teamId"), id)
 		if e != nil {
 			return e
 		}
-		f, e := s.Team.ArtifactFile(r.Context(), row)
+		f, e := s.Team.PackageFile(r.Context(), row)
 		if e != nil {
 			return e
 		}
@@ -118,7 +118,7 @@ func (s *Server) exportRevision(w http.ResponseWriter, r *http.Request) error {
 		if e != nil {
 			return e
 		}
-		if e := tw.WriteHeader(&tar.Header{Name: "artifacts/" + ids[i] + ".tgz", Mode: 0600, Size: stat.Size()}); e != nil {
+		if e := tw.WriteHeader(&tar.Header{Name: "packages/" + ids[i] + ".tgz", Mode: 0600, Size: stat.Size()}); e != nil {
 			return e
 		}
 		if _, e := io.Copy(tw, f); e != nil {

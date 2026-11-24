@@ -15,7 +15,7 @@ import { createPortal } from 'react-dom';
 import { useTranslations } from 'use-intl';
 
 import { baseName, FileTypeIcon } from '@/components/file-type-icon';
-import { KIND_ICON } from '@/components/page-viewer';
+import { KIND_ICON } from '@/components/artifact-viewer';
 import { cn } from '@/lib/utils';
 import {
   closeOtherTabs, closeTab, closeTabsToRight, emptySidebar, loadSidebar, MAX_PANES, moveTab, openTab, saveSidebar, selectTab, setFullscreen, setOpen, setRatio, splitPane,
@@ -441,15 +441,15 @@ function tabTitle(tab: Tab, t: ReturnType<typeof useTranslations<'team.dsh.sideb
     case 'start': return t('start');
     case 'files': return t('files');
     case 'file': return baseName(tab.path) || tab.path;
-    case 'page': return tab.page.title;
+    case 'artifact': return tab.artifact.title;
   }
 }
 
 function TabIcon({ tab }: { tab: Tab }) {
   if (tab.kind === 'file') return <FileTypeIcon path={tab.path} size={16} />;
   if (tab.kind === 'files') return <FileTypeIcon kind="folder" size={16} />;
-  if (tab.kind === 'page') {
-    const Icon = KIND_ICON[tab.page.kind];
+  if (tab.kind === 'artifact') {
+    const Icon = KIND_ICON[tab.artifact.kind];
     return <Icon className="size-4 shrink-0" aria-hidden />;
   }
   return null;

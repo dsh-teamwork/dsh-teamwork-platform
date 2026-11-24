@@ -1,6 +1,6 @@
 # Team assistant and shared resources
 
-> **Status:** Current · **Updated:** 2026-11-20
+> **Status:** Current · **Updated:** 2026-11-24
 
 New teams receive a Teamwork assistant. Members submit presets and private
 plugin packages, administrators approve their exact contents, and every
@@ -10,9 +10,9 @@ restoration. Sharing is restricted to the selected team's members.
 ## Ownership and provisioning
 
 The community server owns authorization, submissions, publication history and
-private artifacts. The console provides editing, review and history pages.
+private packages. The console provides editing, review and history pages.
 The DSH plugin owns local inspection, package preparation, authenticated
-artifact download and host-approved assistant tools. Closed editions reuse
+package download and host-approved assistant tools. Closed editions reuse
 these features through their merged community server.
 
 Team creation writes the team, founding membership, built-in assistant and its
@@ -97,12 +97,12 @@ queue), and the console's review page opens on that queue for an admin and on
 the member's own submissions otherwise; each row shows its change field by
 field against the live version (`apps/web/src/lib/config-diff.ts`). Every API
 request rechecks current membership and required role. An outsider receives
-the same team-not-found response as for a nonexistent team. Artifact ownership
+the same team-not-found response as for a nonexistent team. Package ownership
 is checked before a pending package can be attached to a proposal.
 
 Approval conditionally transitions the pending revision, checks the current
 config base version and same-team dependencies, updates the live config,
-records immutable history and exposes its private artifact in one transaction.
+records immutable history and exposes its private package in one transaction.
 Failure rolls everything back. Repeated approval returns the committed
 outcome without publishing again. Competing updates cannot overwrite a newer
 live revision. Administrators' direct config writes use this same publication
@@ -114,29 +114,29 @@ pre-existing configs get a legacy baseline before their first edit or deletion,
 without inventing an approver. The built-in identity survives restoration.
 Live deletion retains history.
 
-## Private plugin artifacts
+## Private plugin packages
 
 A local plugin is an npm-compatible archive stored privately through the
 local-directory or S3 provider, not public web assets or public npm. An existing
 public npm package can still be shared by exact package name/version.
 
-`server/internal/artifactstore` owns byte storage in both editions (ADRs 0033 and 0034).
+`server/internal/objectstore` owns byte storage in both editions (ADRs 0033 and 0034).
 Community deployments default to `<data>/artifacts`; all member processes in
 an S3 deployment use the same private bucket. Relative keys are
-`teams/{teamId}/plugins/{artifactId}.tgz`, independent of team names or filenames.
+`teams/{teamId}/plugins/{packageId}.tgz`, independent of team names or filenames.
 An edition keeps its own objects in the same store under `teams/{teamId}/{kind}/{id}`
 (`edition.Host.Objects`, ADR 0042), never under `plugins`.
 Both IDs are validated; the team comes from authorized database metadata.
 No bucket URL or credential reaches
-the client. Management-only processes do not initialize artifact storage.
+the client. Management-only processes do not initialize package storage.
 
-Before serving, member/combined processes scan database artifacts in bounded
+Before serving, member/combined processes scan database packages in bounded
 batches, verify current objects and copy missing team-scoped objects from the
-old `<artifactId>.tgz` layout. Copies are checked against the database size and
+old `<packageId>.tgz` layout. Copies are checked against the database size and
 SHA-256 before and after writing. An existing corrupt destination, corrupt or
 missing source, or storage error stops startup; no older copy overwrites a
 conflicting destination. Sources and database records are retained. The pass
-is safe to repeat and logs `artifact paths verified` with its verified row count.
+is safe to repeat and logs `package paths verified` with its verified row count.
 It reads all referenced bytes, so startup time grows with the retained data.
 
 For an offline preflight, use the same database, secrets and storage settings
@@ -172,23 +172,23 @@ use the OS temporary directory and are removed after use. The root HTTP
 healthcheck does not continuously probe the bucket.
 
 To migrate an existing local installation, stop all writing instances and take
-a consistent database and artifact-directory backup. Run the matching binary
+a consistent database and storage-directory backup. Run the matching binary
 with the same database/secrets, S3 environment variables and
 `--data <existing-data> --migrate-artifacts`. The command exits without serving,
 reads either local layout, writes team-scoped keys and verifies source and destination size and
-SHA-256. Missing or corrupt bytes abort with the artifact ID. It is safe to retry;
+SHA-256. Missing or corrupt bytes abort with the package ID. It is safe to retry;
 source files and metadata are never deleted. Only switch all member instances to
 S3 after a successful run. Verify an authenticated download and backup export,
-then repeat the download after a restart. If no artifact rows exist, no byte
+then repeat the download after a restart. If no package rows exist, no byte
 migration is needed. Preserve source backups until recovery has been tested.
 
 To roll back after S3 has accepted new uploads, stop writers and copy **all**
-current bucket objects back to the local artifact directory, preserving keys;
+current bucket objects back to the local package directory, preserving keys;
 verify the database digests before selecting `local`. Merely changing the provider
 would make newer archives unavailable. Storage is not replicated automatically.
 Rolling back to a binary from before ADR 0034 additionally requires verified
-flat copies of **every** current `teams/{teamId}/plugins/{artifactId}.tgz`
-object at `<artifactId>.tgz`, including uploads made after the upgrade. Stop
+flat copies of **every** current `teams/{teamId}/plugins/{packageId}.tgz`
+object at `<packageId>.tgz`, including uploads made after the upgrade. Stop
 writes while preparing those copies and retain the scoped objects.
 
 Limits are 10 MiB compressed, 64 MiB expanded and 2000 archive entries. Local
@@ -231,21 +231,21 @@ last day into the start of the next.
 
 Administrators export an individual historical resource as `manifest.json`
 plus its referenced private plugin archives in a gzip tar backup. The manifest
-includes the historical content, exact plugin dependencies, artifact metadata
+includes the historical content, exact plugin dependencies, package metadata
 and digests. External npm dependencies remain versioned references, not mirrored
 registry contents. Provider keys, login credentials and whole local profiles
 are not included.
 
 Restoration creates a new review draft against the caller's explicit current
-base version, after reference and artifact checks. Submission and approval are
+base version, after reference and package checks. Submission and approval are
 still required. The resulting publication increments history; it does not
 rewrite old rows, silently install/downgrade a plugin, or mutate a started
-conversation. Missing models, dependencies or artifacts fail explicitly.
+conversation. Missing models, dependencies or packages fail explicitly.
 A deleted resource can be restored under its original logical identity.
 
-All approved versions and artifacts are retained. This application history is
+All approved versions and packages are retained. This application history is
 not protection from losing the database or disk: infrastructure backups must
-capture the database and artifact directory or S3 bucket consistently and preserve the
+capture the database and package directory or S3 bucket consistently and preserve the
 configured signing/encryption secrets securely. A full data-directory backup
 includes generated `secrets.json`; tenant resource exports never do. A
 stopped-server copy/restart recovery check verifies the retained state. Cross-team sharing, automatic
@@ -261,8 +261,8 @@ it. The plugin also validates synced current and pinned historical data.
 | --- | --- |
 | `GET/POST /submissions`, `GET/PUT /submissions/{id}` | Authorized listing, draft creation, detail and revision-checked edits |
 | `POST /submissions/{id}/{submit,withdraw,approve,reject}` | Explicit state transitions and transactional publication |
-| `POST /artifacts` | Bounded private upload |
-| `GET /artifacts/{id}`, `GET /artifacts/{id}/download` | Authorized metadata and immutable bytes |
+| `POST /packages` | Bounded private upload |
+| `GET /packages/{id}`, `GET /packages/{id}/download` | Authorized metadata and immutable bytes |
 | `GET /history` | Filtered immutable publication history |
 | `POST /history/{id}/restore` | Administrator creates a restore draft |
 | `GET /history/{id}/export` | Administrator exports a resource and retained private dependencies |
@@ -275,4 +275,4 @@ unit tests inspect actual npm output without running scripts. Real DSH tests
 exercise inherited models, scoped tools, denied approval and archive installation.
 Chromium exercises member submission/update, administrator approval and the
 history page at desktop/mobile widths. Recovery is also tested with a real
-binary, stopped database/artifact copy and restart from the copy.
+binary, stopped database/storage copy and restart from the copy.

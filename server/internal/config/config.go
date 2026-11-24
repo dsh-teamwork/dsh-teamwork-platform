@@ -35,11 +35,11 @@ type Config struct {
 	Port        int
 	AppURL      string // the public origin, without a trailing slash
 	// ContentURL (CONTENT_URL) is the origin pages are served from
-	// (docs/tech/pages.md): another site than AppURL's, or AppURL itself.
-	ContentURL           string
-	DatabaseURL          string
-	MigrateArtifacts     bool // copy and verify local archives into configured S3, then exit
-	MigrateArtifactPaths bool // copy flat keys to team-scoped paths in the current store, then exit
+	// (docs/tech/artifacts.md): another site than AppURL's, or AppURL itself.
+	ContentURL          string
+	DatabaseURL         string
+	MigratePackages     bool // copy and verify local archives into configured S3, then exit
+	MigratePackagePaths bool // copy flat keys to team-scoped paths in the current store, then exit
 
 	AuthSecret         string // signs sessions, tokens and the setup link
 	ProviderKeysSecret []byte // 32 bytes; seals provider keys
@@ -82,16 +82,16 @@ func Load(args []string, env func(string) string) (Config, error) {
 	data := fl.String("data", filepath.Join(home, ".dsh-teamwork"), "data directory: the SQLite database and generated secrets")
 	host := fl.String("host", "", "address to listen on (default 127.0.0.1; HOST)")
 	port := fl.Int("port", 0, "port to listen on (default 3800; PORT)")
-	migrateArtifacts := fl.Bool("migrate-artifacts", false, "copy local artifacts to configured S3, verify every database digest, then exit without serving")
-	migratePaths := fl.Bool("migrate-artifact-paths", false, "migrate flat artifact keys to team-scoped paths in the configured store, verify, then exit")
+	migratePackages := fl.Bool("migrate-artifacts", false, "copy local plugin packages to configured S3, verify every database digest, then exit without serving")
+	migratePaths := fl.Bool("migrate-artifact-paths", false, "migrate flat plugin package keys to team-scoped paths in the configured store, verify, then exit")
 	if err := fl.Parse(args); err != nil {
 		return Config{}, err
 	}
 	c := Config{
 		ServiceRole:           strings.TrimSpace(env("SERVICE_ROLE")),
 		DataDir:               *data,
-		MigrateArtifacts:      *migrateArtifacts,
-		MigrateArtifactPaths:  *migratePaths,
+		MigratePackages:       *migratePackages,
+		MigratePackagePaths:   *migratePaths,
 		Host:                  first(*host, env("HOST"), "127.0.0.1"),
 		DatabaseURL:           strings.TrimSpace(env("DATABASE_URL")),
 		AllowPrivateProviders: strings.TrimSpace(env("ALLOW_PRIVATE_PROVIDERS")) == "true",
@@ -113,8 +113,8 @@ func Load(args []string, env func(string) string) (Config, error) {
 		}
 		c.ReviewEmail, c.ReviewCode = email, code
 	}
-	if c.MigrateArtifacts && c.MigrateArtifactPaths {
-		return Config{}, errors.New("choose only one artifact migration command")
+	if c.MigratePackages && c.MigratePackagePaths {
+		return Config{}, errors.New("choose only one package migration command")
 	}
 	if c.ServiceRole == "" {
 		c.ServiceRole = "combined"
@@ -248,7 +248,7 @@ func displayHost(h string) string {
 // contentOrigin is why content cannot be served from origin, or nil: it is
 // an origin (no path), https unless on loopback, and on a registrable domain
 // of its own, since a subdomain of APP_URL's shares the site its cookies are
-// sent to (docs/tech/pages.md, "The view address").
+// sent to (docs/tech/artifacts.md, "The view address").
 func contentOrigin(origin, appURL string) error {
 	u, err := url.Parse(origin)
 	if err != nil || u.Host == "" || (u.Path != "" && u.Path != "/") || u.RawQuery != "" || u.Fragment != "" || u.User != nil {

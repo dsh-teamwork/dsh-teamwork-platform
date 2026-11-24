@@ -8,7 +8,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/objectstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
 
@@ -62,16 +62,16 @@ func TestHistoryRestorePublishesNewVersionAndRetainsDeletedIdentity(t *testing.T
 		}
 	})
 }
-func TestBackupContainsExactPrivateArtifact(t *testing.T) {
-	eachArtifactStore(t, func(t *testing.T, store artifactstore.Store) {
+func TestBackupContainsExactPrivatePackage(t *testing.T) {
+	eachPackageStore(t, func(t *testing.T, store objectstore.Store) {
 		testdb.Each(t, func(t *testing.T, d *testdb.DB) {
-			e := start(t, d, options{artifacts: store})
+			e := start(t, d, options{objects: store})
 			admin := e.admin("admin@x.io")
 			teamID := newTeam(t, admin, "Backup")
 			base := "/api/teams/" + teamID
 			archive := pluginArchive(t, "")
-			a := must(t, admin.post(base+"/artifacts", string(archive)), 200)
-			c := must(t, admin.post(base+"/configs", map[string]any{"kind": "plugin", "name": "Private", "data": map[string]any{"package": a["package"], "version": a["version"], "artifactId": a["id"], "sha256": a["sha256"]}}), 201)
+			a := must(t, admin.post(base+"/packages", string(archive)), 200)
+			c := must(t, admin.post(base+"/configs", map[string]any{"kind": "plugin", "name": "Private", "data": map[string]any{"package": a["package"], "version": a["version"], "packageId": a["id"], "sha256": a["sha256"]}}), 201)
 			history := jsonArray(t, admin.get(base+"/history?configId="+c["id"].(string)))
 			r := history[0].(map[string]any)
 			download := admin.get(base + "/history/" + r["id"].(string) + "/export")
@@ -113,7 +113,7 @@ func TestBackupContainsExactPrivateArtifact(t *testing.T) {
 			if err := store.Put(t.Context(), teamID, a["id"].(string), bytes.NewReader(bad), int64(len(bad))); err != nil {
 				t.Fatal(err)
 			}
-			refused(t, "corrupt export", admin.get(base+"/history/"+r["id"].(string)+"/export"), 409, "artifact_mismatch")
+			refused(t, "corrupt export", admin.get(base+"/history/"+r["id"].(string)+"/export"), 409, "package_mismatch")
 		})
 	})
 }
