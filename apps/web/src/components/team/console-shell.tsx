@@ -25,6 +25,7 @@ import {
   History,
   House,
   Laptop,
+  LibraryBig,
   Layers,
   Shapes,
   LayoutDashboard,
@@ -49,7 +50,7 @@ import { api, type Schemas, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'artifacts';
+type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'artifacts' | 'knowledge';
 
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
@@ -128,6 +129,8 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       { path: 'my-dsh', key: 'myDsh', icon: Laptop, fill: true, subnav: MyDshNav, editions: true },
       // What agents published (docs/tech/artifacts.md); in every team, always listed.
       { path: 'artifacts', key: 'artifacts', icon: Shapes, fill: true },
+      // What the team knows, as documents people and agents keep (docs/tech/knowledge.md); in every team.
+      { path: 'knowledge', key: 'knowledge', icon: LibraryBig, fill: true },
       { path: 'resources', key: 'resources', icon: BookOpen },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
     ],

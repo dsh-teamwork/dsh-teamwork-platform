@@ -5,12 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
-## 2026-11-24 — Knowledge: spaces, documents, versions and proposals on the server
+## 2026-11-24 — Knowledge, first version: the server, the console and the plugin
 
 - **What:** The server holds a team's knowledge (`docs/tech/knowledge.md`): spaces (`knowledge_spaces`, read by the team or by chosen members, `knowledge_space_members` naming readers and editors), folders, documents of Markdown text with immutable versions (`knowledge_versions`), and proposals (`knowledge_proposals`). The team's admin creates a space; its creator, the admins and its editors write documents, rename, move, delete and restore; a reader's change, and every change a plugin or computer token makes, is a proposal an editor accepts (a new version under its author's name) or declines with a reason. Routes are under `/api/teams/{teamId}/knowledge` (the tree, spaces and their access, folders, documents and versions, proposals), and `GET /api/knowledge` is the plugin's sync manifest of every document its member reads. A team's deletion takes its knowledge with it.
-- **Why:** The first version of knowledge (ADR 0068), starting with the rules every client depends on.
+- **Console:** Workspace gains **Knowledge**: the tree with a title filter, spaces and their access, folders, documents read and edited in Milkdown (`@milkdown/kit` 7.23.0, loaded with the page alone; front matter kept outside the editor, `[[links]]` resolved by title, headings anchored by slug), history with comparison (`diff` 9.0.0) and restore, and proposals with their difference, accepted, declined or withdrawn. A reader's save is a proposal; a save on a stale version keeps the text and shows the difference. The first save that would reformat a document stores the reformatting as a version of its own, noted "Formatting". Preset tools gain `teamwork_knowledge`. The members' and admins' `/docs` pages describe it.
+- **Plugin:** `@dsh-teamwork/dsh-teamwork` 0.21.0 keeps a read-only copy of the knowledge its member reads, tells every session where it is and how to cite it, and proposes changes with `teamwork_knowledge`; `server/e2e` drives it end to end.
+- **Why:** The first version of knowledge (ADR 0068); attachments follow.
 - **Breaking:** None.
-- **Upgrade:** The binary applies `20261124034726_knowledge` (mysql `…034727`), which creates the six tables.
+- **Upgrade:** The binary applies `20261124041756_knowledge` (postgres `…041757`, mysql `…041758`), which creates the six tables.
 - **Refs:** `server/internal/knowledge`, `server/internal/httpapi/knowledge_routes.go`, `api/openapi.yaml`, `docs/tech/knowledge.md`.
 
 ## 2026-11-24 — Pages become artifacts, plugin archives become packages, and the markdown kind goes

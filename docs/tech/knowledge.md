@@ -1,6 +1,6 @@
 # Knowledge
 
-> **Status:** Plan — both spikes done (see "Order of work"); the first version is next · **Updated:** 2026-11-24
+> **Status:** Current — the first version is built but for attachments; later steps are plan · **Updated:** 2026-11-24
 
 Where a team keeps what its business knows, as documents people and agents
 maintain together: Markdown in a tree of folders, owned by the team and
@@ -70,7 +70,8 @@ The names below are the code's as well as the docs', in every repository.
   proposals. **Reader**: a member who may read a space and propose to it.
 - **Sync**: the plugin's read-only local copy of what its member may read.
 - **Citation**: `knowledge:{documentId}@{version}#{anchor}`, where the anchor
-  is a heading's slug; the console opens it at
+  is the slug of the nearest heading above the fact (lower case, spaces as
+  hyphens); the console opens it at
   `/teams/{teamId}/knowledge/{documentId}?version={n}#{anchor}`.
 
 ## Format
@@ -85,7 +86,7 @@ since people and agents already know them.
 | Feature | In the file | What a person sees | When |
 | --- | --- | --- | --- |
 | Headings, lists, tables, code, quotes, task lists | GitHub-flavoured Markdown | Formatted text | First version |
-| Images and attachments | a relative link to a file kept beside the document | Inline, or a file card | First version |
+| Images and attachments | to be decided with the copy's layout (see "Architecture") | Inline, or a file card | Next slice |
 | Links between documents | `[[Document]]` or `[[Document#Heading]]` | A link | First version |
 | Callouts and folding | `> [!warning] Title`, `> [!note]- Title` | A coloured box; a collapsible one | Richer format |
 | Diagrams | a `mermaid` code block | The diagram; an agent reads and edits its source | Richer format |
@@ -122,100 +123,103 @@ apps/web          Knowledge in Workspace: the tree, a document, the editor,
       ▼
 server/internal/knowledge   every rule: access, versions, proposals,
                   limits, the sync manifest; internal/httpapi maps routes
-      │                                   │
-      ▼                                   ▼
-the database (knowledge_*)        artifactstore objects:
-                                  teams/{team}/knowledge/{digest}
+      │
+      ▼
+the database (knowledge_*), the text of every version included
       ▲
-      │  GET /api/knowledge, …/knowledge/objects/{digest},
+      │  GET /api/knowledge, GET …/knowledge/documents/{id},
       │  POST …/knowledge/documents/{id}/proposals   (plugin or computer token)
 dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
-                  the teamwork_knowledge tool proposes; the preset context
-                  tells the agent where the copy is and how to cite
+                  the teamwork_knowledge tool proposes; the session's
+                  system prompt tells the agent where the copy is and how to cite
 ```
 
-- **`server/internal/knowledge`** is a service beside `internal/artifacts`, built
-  the same way: the database, `artifactstore` (object kind `knowledge`,
-  addressed by digest so identical attachments are stored once), and
-  `team.Service` to re-read the caller's membership on every request.
-  Nothing in it is shared with `artifacts` by import; what is alike is alike by
-  convention.
+- **`server/internal/knowledge`** is a service beside `internal/artifacts`,
+  over the database and `team.Service`, which re-reads the caller's
+  membership on every request. Nothing in it is shared with `artifacts` by
+  import. A caller is `Agent` when it holds a plugin or computer token: such
+  a caller reads and proposes, and every other change answers
+  `knowledge_agent_proposes`.
 - **The schema** (`internal/db/schema/knowledge.go`), ids nanoids set by the
-  application, each table `Base`:
+  application, each table `Base`. A version's text is a column: at most
+  1 MiB, and the copy and the console read it whole.
 
   | Table | Holds |
   | --- | --- |
-  | `knowledge_spaces` | `team_id`, `name`, `reading` (`team`, `members`), `created_by` |
-  | `knowledge_space_members` | `space_id`, `user_id`, `role` (`reader`, `editor`); readers listed only while `reading` is `members`, editors always |
-  | `knowledge_folders` | `space_id`, `parent_id` (empty at the space's root), `name` |
-  | `knowledge_documents` | `team_id`, `space_id`, `folder_id`, `title`, `current_version` (moved by a conditional update), `updated_at` |
-  | `knowledge_versions` | `document_id`, `number`, `author_id`, `source` (`console`, `agent`), `computer`, `session_id`, `note`, `digest` (the text's object), `size` |
-  | `knowledge_files` | `version_id`, `team_id`, `path`, `content_type`, `size`, `digest`: a version's attachments |
-  | `knowledge_proposals` | `document_id`, `base_version`, `author_id`, `source`, `computer`, `session_id`, `note`, `digest`, `state`, `decided_by`, `decided_at`, `reason`, and the version an acceptance made |
+  | `knowledge_spaces` | `team_id`, `name` (unique in the team), `reading` (`team`, `members`), `created_by` |
+  | `knowledge_space_members` | `space_id`, `user_id`, `role` (`reader`, `editor`); readers kept only while `reading` is `members`, editors always |
+  | `knowledge_folders` | `space_id`, `parent_id` (empty at the space's root), `name`, unique among its siblings |
+  | `knowledge_documents` | `team_id`, `space_id`, `folder_id`, `title` (unique in its folder), `current_version` (moved by a conditional update), `updated_at` |
+  | `knowledge_versions` | `document_id`, `number`, `author_id`, `source` (`console`, `agent`), `note`, `text` |
+  | `knowledge_proposals` | `team_id`, `document_id`, `base_version`, `author_id`, `source`, `computer`, `session_id`, `note`, `text`, `state`, `decided_by`, `decided_at`, `reason`, and the `version` an acceptance made |
 
-  A proposal's attachments are `knowledge_files` rows of its own (a
-  `proposal_id` beside `version_id`, exactly one set), copied onto the
-  version an acceptance makes.
+  A team's deletion removes all of it (`internal/team/account.go`); an
+  account's removes the member's places in spaces.
 - **Routes** (`internal/httpapi/knowledge_routes.go`, all in
-  `api/openapi.yaml`):
+  `api/openapi.yaml`, JSON bodies):
 
   | Route | Who | What |
   | --- | --- | --- |
-  | `GET /api/teams/{teamId}/knowledge` | session | The spaces the caller reads, with their folders and documents |
-  | `POST /api/teams/{teamId}/knowledge/spaces`, `PATCH`/`DELETE …/spaces/{id}`, `PUT …/spaces/{id}/members` | an admin creates; an editor renames, sets access, deletes | |
-  | `POST …/knowledge/folders`, `PATCH`/`DELETE …/folders/{id}` | editor | |
+  | `GET /api/teams/{teamId}/knowledge` | member, or their plugin | The spaces the caller reads, with their folders and documents |
+  | `POST …/knowledge/spaces`; `PATCH`, `DELETE …/spaces/{id}` | the team's admin creates; an editor renames and deletes | |
+  | `GET`, `PUT …/knowledge/spaces/{id}/access` | editor | Reading, readers and editors, replaced at once |
+  | `POST …/knowledge/folders`; `PATCH`, `DELETE …/folders/{id}` | editor | A folder is deleted only empty |
   | `POST …/knowledge/documents` | editor | A new document and its version 1 |
-  | `GET …/knowledge/documents/{id}` | reader | The document, its versions, and the text and file list of `?version=` (the current one by default) |
-  | `POST …/knowledge/documents/{id}/versions` | editor | A new version on `baseVersion`; a stale one is `knowledge_stale` |
-  | `PATCH`/`DELETE …/knowledge/documents/{id}` | editor | Rename, move within its space, delete |
+  | `GET …/knowledge/documents/{id}?version=` | reader, or their plugin | The document, its versions, and the text of one (the current one by default) |
+  | `POST …/knowledge/documents/{id}/versions` | editor, never an agent | A new version on `baseVersion`; a stale one is `knowledge_stale` |
+  | `PATCH`, `DELETE …/knowledge/documents/{id}` | editor | Rename, move within its space, delete |
   | `POST …/knowledge/documents/{id}/versions/{n}/restore` | editor | A new version copying `n` |
-  | `POST …/knowledge/documents/{id}/proposals` | reader, or a plugin or computer token's member | A proposal on `baseVersion` |
-  | `GET …/knowledge/proposals?state=pending` | session | Proposals to the spaces the caller edits, or the caller's own |
-  | `POST …/knowledge/proposals/{id}/accept`, `…/decline`, `…/withdraw` | editor; withdraw, its author | Accepting a stale proposal is `knowledge_stale` |
-  | `GET …/knowledge/objects/{digest}` | reader of a version naming it | One text or attachment |
+  | `POST …/knowledge/documents/{id}/proposals` | reader, or their plugin | A proposal on `baseVersion` |
+  | `GET …/knowledge/proposals?state=`, `GET …/proposals/{id}` | member | Proposals to the spaces the caller edits, and their own; one with its text and its base's |
+  | `POST …/knowledge/proposals/{id}/accept`, `…/decline`, `…/withdraw` | editor; withdraw, its author | Accepting a stale proposal is `knowledge_stale` and leaves it pending |
   | `GET /api/knowledge` | plugin or computer token | The sync manifest, every team the token reaches |
 
-  Uploads are `multipart/form-data` like a page's: a `meta` part (JSON), the
-  text as `index.md`, and each attachment under its path. Errors are
-  `wire.Error` codes: `knowledge_not_found` (404, also for what the caller
-  may not read), `knowledge_not_editor` (403), `knowledge_stale` (409),
-  `knowledge_too_large` (413), `knowledge_invalid` (400).
+  Errors are `wire.Error` codes: `knowledge_not_found` (404, also for what
+  the caller may not read), `knowledge_not_editor` and
+  `knowledge_agent_proposes` (403), `knowledge_stale`,
+  `knowledge_name_taken`, `knowledge_folder_not_empty` and
+  `knowledge_proposal_decided` (409), `knowledge_too_large` (413),
+  `knowledge_member_not_in_team` (400).
 - **The sync manifest** is the one format other machines keep, so it is the
-  part most expensive to change: per team, each space, folder and document
-  the member may read, with its path, current version, and the digests of
-  its text and attachments. The plugin fetches only digests it lacks and
-  writes, replacing atomically, the tree
-  `teamwork-knowledge/{team}/{space}/{folder…}/{title}.md` beside its cache,
-  attachments beside each document under `{title}.files/`, every file
-  read-only, and a document's id and version in its front matter as
-  `knowledge: {documentId}@{version}`, which the sync adds and a
-  proposal's text has removed before it is stored. What the member may no longer read is
-  deleted from disk on the next sync. It runs with the configuration sync
-  (`ConfigSync`, the same interval and the same single flight).
-- **The plugin** gains `src/knowledge-sync.ts` (`KnowledgeSync`) and
-  `src/knowledge-tool.ts`: the tool **`teamwork_knowledge`**, with one action,
-  `propose` (`documentId`, `baseVersion`, `note`, and `content` or a
-  `directory` with `index.md` and its attachments, read only inside the
-  session's folder as `teamwork_artifact` reads). Reading needs no tool: the
-  agent uses its own file tools on the copy, and the preset context
-  (`src/preset-context.ts`) says where the copy is, that it is read-only,
-  to search it with grep rather than list it whole, how to cite, to say so
-  when two documents disagree, and to propose rather than edit. A stale proposal is answered
-  with the current version for the agent to reapply. The tool has no action
-  that writes a version or changes access.
+  part most expensive to change: per team, each space the member reads and
+  each document in it, with its id, the folder names above it, its title and
+  its current version. The plugin (`src/knowledge-sync.ts`) keeps
+  `<cache>.knowledge.json`, which version of each document is on disk and
+  where, fetches only new and changed documents, six at a time, and writes
+  them atomically into `teamwork-knowledge/{team}/{space}/{folder…}/{title}.md`
+  beside its cache (`~/.dsh/dsh-teamwork/teamwork-knowledge` by default),
+  every file read-only, its first front matter line
+  `knowledge: {documentId}@{version}`. Names are made safe on every file
+  system, and two that still collide get the document's id. A renamed or
+  moved document is moved; what the member no longer reads, and anything the
+  state does not name, is deleted. It runs in the configuration sync's
+  flight (`ConfigSync`), and its failure never fails that sync; signing out
+  removes the copy and its state.
+- **The plugin's tool** `teamwork_knowledge` (`src/knowledge-tool.ts`) has
+  one action, `propose`: `documentId`, `baseVersion`, a one-line `note`, and
+  `content` or a `path` inside the session's folder (followed links
+  included, at most 1 MiB). It strips the `knowledge:` line, and refuses one
+  naming another document or version. A stale proposal is answered with the
+  current version and its text, for the agent to reapply. It has no action
+  that writes a version or changes access. Reading needs no tool: a system
+  prompt section in every session (`knowledgeGuide` in
+  `src/preset-context.ts`) names the copy's absolute path, says it is
+  read-only, to grep it rather than list it, to cite, to name a conflict and
+  an answer it does not hold, and to change a document only by proposing,
+  and calls the documents "documents (pages)".
 - **The console** adds `knowledge` to Workspace's sections
   (`components/team/console-shell.tsx`), its pages under
   `apps/web/src/pages/team/knowledge/`, and its words under `knowledge.*` in
   both locales. The editor is one component, `KnowledgeEditor`, over
-  Milkdown (`@milkdown/kit` with its commonmark and gfm presets); it reads
-  and writes Markdown and nothing else.
-- **Rendering** is the console's, never the server's: the editor's read-only
-  mode shows a document, and a document's text is never HTML, so it needs no
-  sandbox origin. Its images and attachments load from
-  `…/knowledge/objects/{digest}` on the member's session.
-- **Limits** (constants in the package, cheap to change): a document's text
-  1 MiB, an attachment 20 MiB, a version's attachments 50 MiB, and a team's
-  knowledge objects 2 GiB, counted apart from its artifacts.
+  Milkdown (`@milkdown/kit` with its commonmark and gfm presets), loaded
+  with the knowledge page alone; it reads and writes Markdown and nothing
+  else. Rendering is the console's, never the server's: a document's text is
+  never HTML, so it needs no sandbox origin.
+- **Limits** (constants, cheap to change): a document's text 1 MiB.
+
+**Not in this version**: attachments. How a document names one (a relative
+path or an Obsidian embed) and where the copy keeps it are decided together,
+with the object store under them, in the next slice.
 
 **Expensive to change**: the sync manifest and the local tree's layout, the
 citation format, the file format's conventions (see "Format"), and the
@@ -289,11 +293,13 @@ tables. Cheap: the limits, the console's screens, the editor library.
      ("After these") are the remedy, and the first version's preset
      context tells the agent to name a conflict rather than pick a side
      silently.
-2. **The first version**: spaces with their readers and editors, and folders; documents,
-   attachments and versions, with comparison and restore; the editor with
-   the first version's features; finding by title; the plugin's sync and
-   citations; proposals from members and agents, and the review screen with
-   the difference.
+2. **The first version (built 2026-11-24, but for attachments)**: spaces
+   with their readers and editors, and folders; documents and versions,
+   with comparison and restore; the Milkdown editor with the first
+   version's features, front matter kept outside it and `[[links]]`
+   resolved by title; finding by title; the plugin's sync and citations;
+   proposals from members and agents, and the review screen with the
+   difference. Attachments are the next slice.
 3. **Richer format**: callouts and folding, diagrams, properties, templates
    and backlinks.
 4. **Working together**: mentions, comments, a folder as a table, embedded

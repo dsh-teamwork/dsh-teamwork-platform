@@ -176,6 +176,42 @@ In the mobile app, tap an artifact card to open a bottom sheet that takes up abo
 80% of the screen. Tap the browser icon in the top right to open the same
 version in your browser. Tap **Close** to return to the conversation.
 
+## Knowledge
+
+**Knowledge** under Workspace is where the team keeps what it knows: a
+glossary, the product's rules, a runbook, as documents in spaces and folders.
+Find a document by its title in the box at the top. A document is Markdown,
+shown formatted; `[[Another document]]` or `[[Another document#A heading]]`
+links to the document with that title in the team, and a title no document has
+shows as a broken link.
+
+Each space says who reads it: the whole team, or chosen members. Its
+**editors** (the team's admin, whoever created the space, and the members it
+names) choose **Edit**, change the text and **Save** it with an optional
+one-line note; every save is a new version. **History** lists every version
+with its author, where it came from and its note, opens any one, compares it
+with the one before it, and lets an editor restore it as a new version. If
+someone saved while you were editing, your text stays on screen: compare it
+with theirs, then continue on their version and save again. The first time
+the console saves a document written elsewhere, it may tidy its Markdown
+syntax; that is saved first as a version of its own, noted **Formatting**, so
+your version shows only your change.
+
+If you read a space but do not edit it, **Edit** still works: your save
+becomes a **proposal** instead of a version.
+
+Your agent, in DSH on your computer or a cloud DSH, reads a synced, read-only
+copy of every space you may read, finds what it needs without being pointed
+at it, and cites the document and heading its answer rests on. An agent never
+changes a document itself, even in an editor's session: it proposes a change.
+**Proposals** at the top of Knowledge lists those to spaces you edit, with a
+count of the ones waiting on you, and your own. Open one to see what it
+changes; an editor **Accepts** it, which makes it the next version under its
+author's name, or **Declines** it with a reason, and its author can
+**Withdraw** it. A proposal made on a version that has since changed is
+**stale** and cannot be accepted; its author proposes again on the current
+version.
+
 ## More than one team
 
 You can be in several teams. The plugin syncs all of them; the team selector in

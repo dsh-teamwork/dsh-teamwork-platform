@@ -51,4 +51,5 @@ export const DSH_TOOLS = [
   'ask_user_question',
   'skill',
   'teamwork_artifact',
+  'teamwork_knowledge',
 ] as const;

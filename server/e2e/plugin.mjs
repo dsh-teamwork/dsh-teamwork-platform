@@ -5,7 +5,7 @@
 // provider; see docs/tech/go-server.md, phase 1.
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
-import { mkdir,writeFile,readFile,rm } from 'node:fs/promises';
+import { mkdir,writeFile,readFile,rm,stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -147,6 +147,55 @@ try {
  assert.deepEqual(opened.map(f=>[f.path,new TextDecoder().decode(f.bytes)]).sort(),[['index.html','<link rel="stylesheet" href="style.css"><h1>v1</h1>'],['style.css','h1{color:red}']]);
  console.log('artifact e2e ok: published, versioned, refused a stale base, viewed both versions and opened one');
 } finally {await rm(artifactSpace,{recursive:true,force:true});}
+
+// Knowledge (docs/tech/knowledge.md): the plugin's KnowledgeSync writes the read-only copy, and its teamwork_knowledge tool
+// proposes a change that leaves the document as it was until the admin accepts it.
+const knowledgeSpace=mkdtempSync(join(tmpdir(),'teamwork-knowledge-e2e-'));
+try {
+ const {KnowledgeSync}=await import(pathToFileURL(join(PLUGIN,'lib/knowledge-sync.js')).href);
+ const {registerKnowledgeTool}=await import(pathToFileURL(join(PLUGIN,'lib/knowledge-tool.js')).href);
+ const space=await browser(`teams/${team.id}/knowledge/spaces`,{name:'Handbook'});
+ const folder=await browser(`teams/${team.id}/knowledge/folders`,{spaceId:space.id,parentId:'',name:'Ops'});
+ const created=await browser(`teams/${team.id}/knowledge/documents`,{spaceId:space.id,folderId:folder.id,title:'Runbook',text:'# Runbook\n\n## Restart\n\nRun the restart script.\n',note:'first'});
+ const knowledge=new KnowledgeSync(client);
+ await knowledge.restore();
+ await knowledge.sync();
+ const file=join(knowledge.root,'Core','Handbook','Ops','Runbook.md');
+ assert.equal(await readFile(file,'utf8'),`---\nknowledge: ${created.id}@1\n---\n# Runbook\n\n## Restart\n\nRun the restart script.\n`);
+ assert.equal((await stat(file)).mode&0o777,0o444);
+
+ // The agent copies the synced file into its workspace, changes it, and proposes it through the tool.
+ let tool;
+ registerKnowledgeTool({effect:f=>f(),tools:{register:t=>{tool=t;return()=>{};}}},{client,knowledge});
+ const copy=join(knowledgeSpace,'Runbook.md');
+ await writeFile(copy,(await readFile(file,'utf8')).replace('Run the restart script.','Drain traffic first, then run the restart script.'));
+ const exec={agent:{session:{header:{id:'session-e2e',cwd:knowledgeSpace}}},signal:new AbortController().signal};
+ const proposed=await tool.execute({action:'propose',documentId:created.id,baseVersion:1,note:'Drain first',path:'Runbook.md'},exec);
+ assert.equal(proposed.teamId,team.id);
+ assert.equal(proposed.baseVersion,1);
+ const unchanged=await browser(`teams/${team.id}/knowledge/documents/${created.id}`);
+ assert.equal(unchanged.currentVersion,1);
+ assert.equal(unchanged.text,'# Runbook\n\n## Restart\n\nRun the restart script.\n');
+ const pending=await browser(`teams/${team.id}/knowledge/proposals/${proposed.proposalId}`);
+ assert.equal(pending.source,'agent');
+ assert.equal(pending.state,'pending');
+ assert.equal(pending.text,'# Runbook\n\n## Restart\n\nDrain traffic first, then run the restart script.\n');
+
+ await browser(`teams/${team.id}/knowledge/proposals/${proposed.proposalId}/accept`,{});
+ const accepted=await browser(`teams/${team.id}/knowledge/documents/${created.id}`);
+ assert.equal(accepted.currentVersion,2);
+ assert.equal(accepted.text,pending.text);
+
+ // The same base is stale now: the tool answers with version 2 and its text, for the agent to reapply.
+ const stale=await tool.execute({action:'propose',documentId:created.id,baseVersion:1,note:'Again',content:'# Runbook\n'},exec);
+ assert.equal(stale.stale,true);
+ assert.equal(stale.version,2);
+ assert.equal(stale.text,pending.text);
+
+ await knowledge.sync();
+ assert.equal(await readFile(file,'utf8'),`---\nknowledge: ${created.id}@2\n---\n${pending.text}`);
+ console.log('knowledge e2e ok: synced read-only, proposed through the tool, unchanged until accepted, stale answered, version 2 synced');
+} finally {await rm(knowledgeSpace,{recursive:true,force:true});}
 
 callback.close();
 console.log(`plugin e2e ok: signed in, synced ${snapshot.teams[0].configs.length} configuration, two calls through the gateway`);
