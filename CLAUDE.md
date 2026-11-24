@@ -279,7 +279,8 @@ end-to-end test is `go test -tags e2e ./e2e` in `server/`, against
 
 **CI runs on a push to `main`** — a merge — **and on every pull request**, plus
 by hand from the Actions tab: the gate above, the plugin's end-to-end test in
-every Go module that has one. A private edition such as premium, whose Actions
+every Go module that has one (against the plugin's branch of the same name
+where it has one, else its `main`). A private edition such as premium, whose Actions
 minutes are billed, skips pull requests and runs only on a merge into `main` and
 by hand; its pull requests rely on the pre-push gate, which there refuses to
 push unless `TEST_POSTGRES_URL` and `MIGRATE_DEV_POSTGRES` are set and the
