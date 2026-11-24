@@ -38,6 +38,7 @@
   --signal: oklch(0.765 0.14 73);
   --success: oklch(0.527 0.137 150);
   --mark-plate: oklch(0.953 0.003 286);
+  --document-ground: oklch(0.948 0.006 255);
   --border: oklch(0.932 0.003 286);
   --input: oklch(0.887 0.007 286);
   --ring: oklch(0.452 0.124 270);
@@ -64,6 +65,7 @@
   --signal: oklch(0.807 0.137 78);
   --success: oklch(0.84 0.149 155);
   --mark-plate: oklch(0.92 0.003 286);
+  --document-ground: oklch(0.12 0.003 286);
   --border: oklch(0.287 0.007 286);
   --input: oklch(0.351 0.01 286);
   --ring: oklch(0.766 0.095 271);
@@ -718,4 +720,41 @@ body:has(.tide-story) {
   .session-running-label {
     animation: session-running-pulse 3s ease-in-out infinite;
   }
+}
+
+/* A session's right sidebar (src/pages/team/session-sidebar.tsx), drawn as DSH's own (ui-dockkit). */
+.session-sidebar-strip {
+  scrollbar-width: none;
+  --fade-start: 0px;
+  --fade-end: 0px;
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+}
+.session-sidebar-strip::-webkit-scrollbar { display: none; }
+.session-sidebar-strip[data-fade-start] { --fade-start: 24px; }
+.session-sidebar-strip[data-fade-end] { --fade-end: 24px; }
+
+/* A title never ends in an ellipsis: when it is wider than its chip, its last 16px fade. */
+.session-sidebar-chip-title { mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent); }
+
+/* A tab revealed while already in view glows once. */
+@keyframes session-sidebar-flash {
+  0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
+  35% { box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--brand) 55%, transparent), inset 0 0 24px color-mix(in oklab, var(--brand) 18%, transparent); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .session-sidebar-flash { animation: session-sidebar-flash 0.6s ease-in-out; }
+}
+
+/* Code in a session's sidebar (src/lib/highlight.ts): Shiki's two themes, the one in force picked here. */
+.shiki-token { color: var(--shiki-light); }
+.dark .shiki-token { color: var(--shiki-dark); }
+
+/* The line a file was opened at: a band that holds, then fades, as DSH's does. */
+@keyframes session-line-band {
+  0%, 30% { background: color-mix(in oklab, var(--brand) 14%, transparent); }
+  100% { background: transparent; }
+}
+.session-line-band { animation: session-line-band 2s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .session-line-band { animation: none; background: color-mix(in oklab, var(--brand) 14%, transparent); }
 }

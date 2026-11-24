@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-23
+> **Status:** Current · **Updated:** 2026-11-24
 
 The DSH Teamwork visual system — the whale mark, the black-and-white palette with its two accents, type, spacing and icons — and the file in code that owns each part.
 
@@ -119,6 +119,7 @@ Both declare the same scale; the console adds three outcome colours.
 | `--signal` | `oklch(0.765 0.14 73)` | `oklch(0.807 0.137 78)` | Amber: attention, as a dot or a line, never text |
 | `--success` | `oklch(0.527 0.137 150)` | `oklch(0.84 0.149 155)` | Green: a computer is online, as a dot and the word beside it |
 | `--mark-plate` | `oklch(0.953 0.003 286)` | `oklch(0.92 0.003 286)` | The tile under a provider's mark: light in both themes |
+| `--document-ground` | `oklch(0.948 0.006 255)` | `oklch(0.12 0.003 286)` | Around and between a previewed document's pages, as DSH's document preview |
 | `--border` | `oklch(0.932 0.003 286)` | `oklch(0.287 0.007 286)` | Hairlines |
 | `--input` | `oklch(0.887 0.007 286)` | `oklch(0.351 0.01 286)` | Field and outline-button border |
 | `--ring` | `oklch(0.452 0.124 270)` | `oklch(0.766 0.095 271)` | Focus ring (`outline-ring/50` on everything): navy |
@@ -174,6 +175,17 @@ colour": they are the maker's artwork, kept as data, never a token and never
 used for anything else. An unknown provider shows two initials on a
 `--secondary` tile. A mark never stands without the name beside it.
 
+**A file is shown by its kind, in DSH's own glyphs and colours.** A session's
+sidebar, its file tree and the files a turn changed or delivered draw each file
+as DSH does: a sheet with a folded corner in its kind's colour and a white mark
+(PDF red, a deck amber, Word blue, a sheet green, Markdown, HTML and code blue,
+an image violet, a folder amber, anything else grey), ported from DeepSeek
+Harness (MIT, `NOTICE`) into `apps/web/src/components/file-type-icon.tsx`, so a
+member moving between DSH and the console reads the same files the same way.
+Those colours are the second exception to "never a literal colour": DSH's
+artwork, kept as data, the same in both themes, never a token and never used
+for anything but a file's kind. A file is never named by its icon alone.
+
 ### Preset avatars
 
 A preset's face is one of a fixed library of avatars,
@@ -205,9 +217,10 @@ a person or a character, which at this size reads as clip art.
 
 - **Never a literal colour.** No Tailwind palette step (`text-gray-600`,
   `text-green-600`) in a page and no hex in a component; a colour is a token.
-  Three exceptions: the share card and the preset avatars, which render
-  outside the stylesheet and use the hexes their sources name, and Google's
-  four-colour G on the sign-in button, whose colours Google's branding fixes.
+  Four exceptions: the share card and the preset avatars, which render
+  outside the stylesheet and use the hexes their sources name, Google's
+  four-colour G on the sign-in button, whose colours Google's branding fixes,
+  and a file's kind, drawn in DSH's colours (Icons, above).
 - **`--brand` is not `--accent`.** `accent` is the subtle hover surface every
   shadcn-shaped primitive uses, so a brand colour there tints every hover. Brand
   chrome opts in with `bg-brand` / `text-brand`.

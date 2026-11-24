@@ -6,7 +6,7 @@
  * provides another `SessionClient` (`SessionClientContext`): an edition's server may reach a computer itself.
  */
 
-import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, FolderOpen, Loader, Lock, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, SlidersHorizontal, Square, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, Brain, Check, ChevronDown, ChevronRight, Copy, Ellipsis, FileText, Folder, Loader, Lock, MessagesSquare, Paperclip, PencilLine, Pin, PinOff, Plus, Search, Server, ShieldAlert, ShieldCheck, SlidersHorizontal, Square, X } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import { Link } from 'react-router';
@@ -58,9 +58,11 @@ import { relayFor } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
-import { SessionFiles, type FileTarget } from './session-files';
+import { FileView, FilesPage, type FileTarget } from './session-files';
+import { openTab, setOpen } from './session-sidebar-state';
+import { SessionSidebar, SidebarOpenButton, SidebarSlotContext, useSidebarState } from './session-sidebar';
 import { SessionMarkdown } from './session-markdown';
-import { DeliverableCard, SessionSteps, WorkToggle } from './session-work';
+import { changedFilesByTurn, SessionSteps, TurnFiles, turnTails, WorkToggle } from './session-work';
 import { ReminderNote, SessionTasks, useTasks } from './dsh-tasks';
 
 /** What the session parts speak to: a computer's sessions and its PIN. */
@@ -104,9 +106,25 @@ export function Dot({ className, label }: { className: string; label?: string })
 export function DshColumns({ header, list, children }: { header: ReactNode; list: (onPick: () => void) => ReactNode; children: ReactNode }) {
   const t = useTranslations('team.dsh');
   const [menu, setMenu] = useState(false);
+  const row = useRef<HTMLDivElement>(null);
+  const aside = useRef<HTMLElement>(null);
+  const [slot, setSlot] = useState<HTMLDivElement | null>(null);
+  // The room the conversation and a session's sidebar share: the row, less the column of sessions beside it.
+  const [room, setRoom] = useState(0);
+  useEffect(() => {
+    const measure = () => {
+      if (!row.current || !aside.current) return;
+      const beside = getComputedStyle(row.current).flexDirection === 'row' ? aside.current.offsetWidth : 0;
+      setRoom(row.current.clientWidth - beside);
+    };
+    const observer = new ResizeObserver(measure);
+    if (row.current) observer.observe(row.current);
+    measure();
+    return () => observer.disconnect();
+  }, []);
   return (
-    <div className="flex min-w-0 flex-1 flex-col md:flex-row">
-      <aside className="flex flex-col gap-3 border-b px-4 py-4 md:sticky md:top-0 md:h-dvh md:w-72 md:shrink-0 md:border-r md:border-b-0 md:px-3">
+    <div ref={row} className="flex min-w-0 flex-1 flex-col md:flex-row">
+      <aside ref={aside} className="flex flex-col gap-3 border-b px-4 py-4 md:sticky md:top-0 md:h-dvh md:w-72 md:shrink-0 md:border-r md:border-b-0 md:px-3">
         <div className="flex items-start gap-2.5 md:px-1">
           <div className="min-w-0 flex-1">{header}</div>
           <Button type="button" variant="outline" size="sm" className="md:hidden" aria-expanded={menu} onClick={() => setMenu(!menu)}>
@@ -119,8 +137,13 @@ export function DshColumns({ header, list, children }: { header: ReactNode; list
           {list(() => setMenu(false))}
         </div>
       </aside>
-      {/* A session's files panel (session-files.tsx) takes the right of a wide screen: the conversation moves over for it. */}
-      <section className="mx-auto flex w-full max-w-4xl min-w-0 flex-1 flex-col gap-5 px-4 pt-6 md:px-8 md:pt-6 md:has-[[data-files-panel]]:mr-[min(36rem,45vw)]">{children}</section>
+      <SidebarSlotContext.Provider value={{ slot, room }}>
+        <div className="flex min-w-0 flex-1">
+          <section className="mx-auto flex w-full max-w-4xl min-w-0 flex-1 flex-col gap-5 px-4 pt-6 md:px-8 md:pt-6">{children}</section>
+        </div>
+        {/* A session's sidebar (session-sidebar.tsx) is drawn here, beside the conversation, which moves over for it. */}
+        <div ref={setSlot} className="contents" />
+      </SidebarSlotContext.Provider>
     </div>
   );
 }
@@ -475,11 +498,11 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
   const [sent, setSent] = useState('');
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-  const [openArtifact, setOpenArtifact] = useState<PublishedArtifact | null>(null);
-  const [filesOpen, setFilesOpen] = useState(false);
-  const [fileOpened, setFileOpened] = useState<FileTarget | null>(null);
-  // A file the conversation names opens in the files column, where the computer's plugin can read it.
-  const openFile = config?.files && id ? (target: FileTarget) => { setFileOpened(target); setFilesOpen(true); } : undefined;
+  // The session's right sidebar, kept per session in this browser, as DSH keeps its own.
+  const [sidebar, changeSidebar] = useSidebarState(id ? `${computerId}.${id}` : null);
+  // A file the conversation names opens in a tab of the sidebar, where the computer's plugin can read it.
+  const openFile = config?.files && id ? (target: FileTarget) => changeSidebar((s) => openTab(s, { kind: 'file', path: target.path, line: target.line })) : undefined;
+  const openArtifact = (artifact: PublishedArtifact) => changeSidebar((s) => openTab(s, { kind: 'artifact', artifact }));
 
   useEffect(() => (id ? relay.follow(computerId, id, (event) => setState((s) => applySessionEvent(s, event))) : undefined), [relay, computerId, id]);
 
@@ -487,6 +510,9 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
   const workKey = (work: string) => JSON.stringify([id, work]);
   const isWorkOpen = (work: string) => openedWork.has(workKey(work));
   const rows = rowsOf(state.items);
+  // Each turn's files, gathered at its end once it ends (`turnTails`).
+  const endedTurns = useMemo(() => new Set(state.items.flatMap((item) => (item.kind === 'turn-end' ? [item.turn] : []))), [state.items]);
+  const changedTurns = useMemo(() => changedFilesByTurn(state.items), [state.items]);
   const toggleWork = (work: string) => setOpenedWork((open) => {
     const next = new Set(open);
     const key = workKey(work);
@@ -551,12 +577,7 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
           <div className="flex items-start gap-2">
             <h2 className="min-w-0 flex-1 text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{id ? title : t('newTitle')}</h2>
             {id && tasks && <SessionTasks computerId={computerId} tasks={taskList} items={state.items} sessionId={id} base={tasks} />}
-            {id && config?.files && (
-              <Button type="button" variant="outline" size="sm" aria-expanded={filesOpen} onClick={() => setFilesOpen(!filesOpen)}>
-                <FolderOpen aria-hidden />
-                {t('browse.open')}
-              </Button>
-            )}
+            {id && !sidebar.open && <SidebarOpenButton onOpen={() => changeSidebar((s) => setOpen(s, true))} />}
           </div>
           {current && (
             <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground" title={current.cwd}>
@@ -579,8 +600,10 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
           {rows.length === 0 && sent && (
             <p className="ml-auto max-w-[85%] rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{sent}</p>
           )}
-          {visibleConversationRows(rows, isWorkOpen).map((row) =>
-            row.kind === 'user' ? (
+          {turnTails(visibleConversationRows(rows, isWorkOpen), endedTurns, changedTurns).map((entry) => {
+            if (entry.kind === 'tail') return <TurnFiles key={`tail-${entry.turn}`} delivered={entry.delivered} changed={entry.changed} openFile={openFile} />;
+            const row = entry.row;
+            return row.kind === 'user' ? (
               <div key={row.id} className="ml-auto flex max-w-[85%] flex-col items-end gap-1.5">
                 {row.attachments?.length ? (
                   <ul className="flex flex-wrap justify-end gap-2">
@@ -599,9 +622,7 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
                 {row.text && <p className="rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{row.text}</p>}
               </div>
             ) : row.kind === 'artifact' ? (
-              <ArtifactCard key={row.id} artifact={row.artifact} onOpen={() => setOpenArtifact(row.artifact)} />
-            ) : row.kind === 'deliverable' ? (
-              <DeliverableCard key={row.id} row={row} openFile={openFile} />
+              <ArtifactCard key={row.id} artifact={row.artifact} onOpen={() => openArtifact(row.artifact)} />
             ) : row.kind === 'assistant' ? (
               <div key={row.id} className="min-w-0">
                 <SessionMarkdown text={row.text} openFile={row.streaming ? undefined : openFile} />
@@ -613,10 +634,10 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
               </p>
             ) : row.kind === 'work' ? (
               <WorkToggle key={row.id} count={row.count} open={isWorkOpen(row.id)} onToggle={() => toggleWork(row.id)} />
-            ) : (
+            ) : row.kind === 'steps' ? (
               <SessionSteps key={row.id} row={row} openFile={openFile} />
-            ),
-          )}
+            ) : null;
+          })}
           {(isThinking(rows, running) || (rows.length === 0 && sent && !failed)) && (
             <p role="status" className="flex items-center gap-2 text-muted-foreground">
               <Loader className="size-4 animate-spin" aria-hidden />
@@ -646,17 +667,32 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
             </div>
           )}
           {state.closed && <p role="alert" className="text-destructive">{word(new RelayError(state.closed))}</p>}
-          {filesOpen && id && (
-            <SessionFiles client={relay} computerId={computerId} sessionId={id} items={state.items} word={word}
-              opened={fileOpened} onOpen={setFileOpened} onClose={() => { setFilesOpen(false); setFileOpened(null); }} />
-          )}
-          {openArtifact && (
-            // Beside the conversation on a wide screen, over it on a narrow one (docs/tech/artifacts.md, "The clients").
-            <aside className="fixed inset-y-0 right-0 z-40 flex w-full flex-col overflow-y-auto border-l bg-background p-4 shadow-xl xl:w-[min(60rem,55vw)]">
-              <ArtifactViewer key={`${openArtifact.artifactId}-${openArtifact.version}`} teamId={openArtifact.teamId} artifactId={openArtifact.artifactId} version={openArtifact.version} onClose={() => setOpenArtifact(null)} />
-            </aside>
-          )}
         </div>
+      )}
+      {id && (
+        <SessionSidebar
+          state={sidebar}
+          change={changeSidebar}
+          canBrowse={!!config?.files}
+          body={({ tab, pane, reload, onReload }) => {
+            if (tab.kind === 'artifact') {
+              return (
+                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+                  <ArtifactViewer key={`${tab.artifact.artifactId}-${tab.artifact.version}`} teamId={tab.artifact.teamId} artifactId={tab.artifact.artifactId} version={tab.artifact.version} />
+                </div>
+              );
+            }
+            if (tab.kind === 'files') {
+              return <FilesPage client={relay} computerId={computerId} sessionId={id} root={current?.cwd} word={word} reload={reload} onReload={onReload}
+                onOpen={(path) => changeSidebar((s) => openTab(s, { kind: 'file', path }, { pane: pane.id }))} />;
+            }
+            if (tab.kind === 'file') {
+              return <FileView client={relay} computerId={computerId} sessionId={id} root={current?.cwd} path={tab.path} line={tab.line} word={word} reload={reload} onReload={onReload}
+                onOpen={(path) => changeSidebar((s) => openTab(s, { kind: 'file', path }, { replace: true, pane: pane.id }))} />;
+            }
+            return null;
+          }}
+        />
       )}
       {/* One composer in both places, so what is typed survives the move from the centre to the foot. */}
       <div className={cn('flex flex-col gap-1', hero ? 'my-auto pb-[10vh]' : 'sticky bottom-0 mt-auto bg-background pt-2 pb-4')}>

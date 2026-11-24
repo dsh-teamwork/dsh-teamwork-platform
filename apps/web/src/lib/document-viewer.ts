@@ -4,11 +4,12 @@
  * console posts them to its iframe, again for each file it opens. Nothing here can reach the console or the network:
  * the document has no origin of its own and a CSP that allows no requests.
  */
-import { mountPdfViewer, type PdfLabels } from './pdf-viewer';
+import { mountPdfViewer, type PdfLabels, type PdfTheme } from './pdf-viewer';
 import { mountWorkbookViewer, type WorkbookLabels } from './workbook-viewer';
 
 export type DocumentPayload =
-  | { workbook: false; data: Uint8Array | string; labels: PdfLabels }
+  // The App names fewer controls than the console: what it leaves out is shown in English until it names them.
+  | { workbook: false; data: Uint8Array | string; labels: Omit<PdfLabels, 'zoom' | 'fitWidth'> & Partial<PdfLabels>; theme?: PdfTheme }
   | { workbook: true; data: Uint8Array | string; labels: WorkbookLabels };
 
 const viewer = document.getElementById('viewer')!;
@@ -19,7 +20,7 @@ function show(payload: DocumentPayload) {
   dispose = undefined;
   const bytes = typeof payload.data === 'string' ? Uint8Array.from(atob(payload.data), (c) => c.charCodeAt(0)) : payload.data;
   try {
-    dispose = payload.workbook ? mountWorkbookViewer(viewer, bytes, payload.labels) : mountPdfViewer(viewer, bytes, payload.labels);
+    dispose = payload.workbook ? mountWorkbookViewer(viewer, bytes, payload.labels) : mountPdfViewer(viewer, bytes, { zoom: 'Zoom', fitWidth: 'Fit width', ...payload.labels }, payload.theme);
   } catch {
     viewer.textContent = payload.labels.failed;
   }
