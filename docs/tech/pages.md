@@ -1,6 +1,6 @@
 # Pages
 
-> **Status:** Current — the sandbox is still to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-23
+> **Status:** Current — the `markdown` kind is still to be removed (ADR 0068), and the sandbox to be checked on Safari, Firefox and the phones' WebViews · **Updated:** 2026-11-24
 
 How a page an agent makes in a DSH session (a report, a deck, a dashboard, a
 diagram) becomes something a team can open, keep and improve, and the order
@@ -11,7 +11,10 @@ whole team, and never with anyone outside the team; the console shows it
 beside the conversation that made it and under **Pages** in the sidebar,
 served from an origin of its own (`CONTENT_URL`, `artifacts.dshteam.work` on the hosted
 service) in a sandbox, so its scripts can never act as the person viewing it.
-Every edition has it; the hosted edition adds the phone app.
+Every edition has it; the hosted edition adds the phone app. Pages are for
+showing work; what a team keeps and maintains together as text is
+[knowledge](knowledge.md), a module of its own
+([ADR 0068](../adr/0068-knowledge-is-its-own-module.md)).
 
 ## Contents
 
@@ -59,6 +62,9 @@ the hosted one:
   today. This is the one exception to the relay's "storing session content"
   ([relay.md](relay.md), "Non-goals of this plan"), changed with the first
   code.
+- **A knowledge base.** Documents a team keeps true together, in folders,
+  edited in the browser and read by agents as context, are
+  [knowledge](knowledge.md), not pages.
 - **A web host.** Limits are a page's, not a site's, and nothing runs on the
   server.
 - **Notifications.** A page shared with someone appears in their list; no
@@ -67,8 +73,11 @@ the hosted one:
 ## Terms
 
 - **Page**: a titled, versioned thing one team owns, of one kind: `html` (an
-  entry `index.html` and the files it loads), `markdown` (one `index.md`) or
-  `svg` (one `index.svg`). The console calls it a page in both languages
+  entry `index.html` and the files it loads) or `svg` (one `index.svg`). The
+  `markdown` kind (one `index.md`, rendered by the server) is still accepted
+  until the change that removes it lands, with the Markdown rendering and
+  every mention of it below; formatted text is
+  [knowledge](knowledge.md)'s. The console calls it a page in both languages
   ("Pages"; in Chinese "shared pages", the entry's purpose), and so does the
   code. "Artifact" already names plugin archives here
   (`server/internal/artifactstore`, `/api/teams/{teamId}/artifacts`, which
