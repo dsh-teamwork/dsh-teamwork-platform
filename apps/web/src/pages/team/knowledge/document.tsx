@@ -322,7 +322,15 @@ export function DocumentView({ team, me, tree, documentId, onTreeChanged }: {
         <div className="flex min-w-48 flex-1 flex-col gap-1">
           {/* The title closes the path: a document's text usually opens with it as a heading already. */}
           <h1 className="text-sm [overflow-wrap:anywhere]">
-            <span className="text-muted-foreground">{[space?.name, ...(folder?.path ?? []), ''].filter((s) => s !== undefined).join(' / ')}</span>
+            <span className="text-muted-foreground">
+              {space && (
+                <>
+                  <Link to={`${page}/spaces/${space.id}`} className="hover:text-foreground hover:underline">{space.name}</Link>
+                  {' / '}
+                </>
+              )}
+              {[...(folder?.path ?? []), ''].join(' / ')}
+            </span>
             <span className="font-medium">{doc.title}</span>
           </h1>
           {latest && (

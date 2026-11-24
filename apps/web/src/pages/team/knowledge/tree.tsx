@@ -1,15 +1,16 @@
 /**
- * The knowledge page's first column: the spaces the reader reads, each with
- * its folders nested and its documents, found by title; the proposals
- * waiting on the reader; and, for an editor, making and naming what is in a
- * space, a new document from a template when a space has a templates folder.
- * The team's admin alone makes a space (docs/tech/knowledge.md, "Rules").
+ * The knowledge page's first column: the space open in the sidebar, or every
+ * space the reader reads, each with its folders nested and its documents,
+ * found by title; the proposals waiting on the reader; and, for an editor,
+ * making and naming what is in a space, a new document from a template when a
+ * space has a templates folder. Spaces themselves are listed and made from the
+ * sidebar and the overview (./index.tsx).
  * The find box filters the tree by title and, a moment after typing stops,
  * lists the documents whose text holds the words; Mentions lists those that
  * name the reader; any folder opens as a table of its documents' properties.
  */
 
-import { AtSign, ChevronRight, FilePlus, FileText, Folder, FolderPlus, GitPullRequestArrow, Lock, Pencil, Plus, Search, Settings, Table2, TextSearch, Trash2 } from 'lucide-react';
+import { AtSign, ChevronRight, FilePlus, FileText, Folder, FolderPlus, GitPullRequestArrow, Lock, Pencil, Search, Settings, Table2, TextSearch, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -17,7 +18,6 @@ import { useTranslations } from 'use-intl';
 
 import { Field } from '@/components/team/field';
 import { useTeamError } from '@/components/team/use-mutation';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api, type Schemas, type Team } from '@/lib/api';
@@ -30,16 +30,17 @@ import { SpaceSettingsDialog } from './space-settings';
 
 /** What a name dialog is open for. */
 type Naming =
-  | { kind: 'space' }
   | { kind: 'folder'; space: KnowledgeSpace; parentId: string }
   | { kind: 'document'; space: KnowledgeSpace; folderId: string }
   | { kind: 'renameFolder'; folder: Schemas['KnowledgeFolder'] };
 
-export function KnowledgeTreePanel({ team, tree, error, reload, openId, open, pending }: {
+export function KnowledgeTreePanel({ team, tree, error, reload, spaceId, openId, open, pending }: {
   team: Team;
   tree?: KnowledgeTree;
   error?: unknown;
   reload: () => Promise<unknown>;
+  /** The space open in the sidebar, whose contents alone the tree shows; empty for every space. */
+  spaceId: string;
   /** The open document. */
   openId: string;
   /** Which of the lists above the tree is open, if one is. */
@@ -126,7 +127,8 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, open, pe
   };
 
   const nested = (tree?.spaces ?? []).map((space) => nestSpace(space, query));
-  const shown = searching ? nested.filter((n) => n.documents.length > 0 || n.folders.length > 0) : nested;
+  // One space while one is open; every space while finding, so a title in another space is found too.
+  const shown = searching ? nested.filter((n) => n.documents.length > 0 || n.folders.length > 0) : spaceId ? nested.filter((n) => n.space.id === spaceId) : nested;
 
   return (
     <aside className="flex flex-col gap-3 border-b px-4 py-4 md:sticky md:top-0 md:h-dvh md:w-80 md:shrink-0 md:border-r md:border-b-0 md:px-3">
@@ -134,12 +136,6 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, open, pe
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight">
           <Link to={page}>{t('title')}</Link>
         </h1>
-        {tree?.canCreateSpace && (
-          <Button size="sm" variant="outline" onClick={() => setNaming({ kind: 'space' })}>
-            <Plus className="size-4" aria-hidden />
-            {t('newSpace')}
-          </Button>
-        )}
       </div>
       <Link
         to={`${page}/proposals`}
@@ -219,21 +215,6 @@ export function KnowledgeTreePanel({ team, tree, error, reload, openId, open, pe
           </section>
         )}
       </nav>
-      {naming?.kind === 'space' && (
-        <NameDialog
-          title={t('newSpaceTitle')}
-          description={t('newSpaceNote')}
-          label={t('spaceName')}
-          max={80}
-          action={t('create')}
-          onClose={() => setNaming(null)}
-          submit={async (name) => {
-            await api(`${base}/spaces`, { body: { name } });
-            toast.success(t('spaceCreated', { name }));
-            await reload();
-          }}
-        />
-      )}
       {naming?.kind === 'folder' && (
         <NameDialog
           title={t('newFolderTitle', { space: naming.space.name })}

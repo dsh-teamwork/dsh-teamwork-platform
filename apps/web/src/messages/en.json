@@ -1747,6 +1747,13 @@
         "none": "No artifact of yours or shared with you.",
         "cancel": "Cancel",
         "embed": "Embed"
+      },
+      "overview": {
+        "readTeam": "The whole team reads it",
+        "readMembers": "Chosen members read it",
+        "holds": "{documents, plural, one {# document} other {# documents}} · {folders, plural, =0 {no folders} one {# folder} other {# folders}}",
+        "changed": "changed {when}",
+        "recent": "Recently changed"
       }
     }
   },

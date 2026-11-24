@@ -147,7 +147,7 @@ a reason.
 
 ## 7. Share what the team knows
 
-Under **Knowledge**, choose **New space** for each body of knowledge: a
+Under **Knowledge**, choose **New space** (in the sidebar beneath Knowledge, or on its overview) for each body of knowledge: a
 glossary, the product's rules, the runbooks. A new space is read by the whole
 team. Its menu adds folders and documents, and **Space settings** renames it,
 narrows reading to chosen members, names the members who edit it besides you,

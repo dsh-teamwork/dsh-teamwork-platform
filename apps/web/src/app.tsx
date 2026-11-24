@@ -132,6 +132,7 @@ export function mountWeb({ routes = [], teamPages = [], models, security }: WebE
       { path: 'artifacts/:artifactId?', element: <ArtifactsPage /> },
       { path: 'knowledge/proposals/:proposalId?', element: <KnowledgePage view="proposals" /> },
       { path: 'knowledge/mentions', element: <KnowledgePage view="mentions" /> },
+      { path: 'knowledge/spaces/:spaceId', element: <KnowledgePage view="space" /> },
       { path: 'knowledge/table/:spaceId/:folderId?', element: <KnowledgePage view="table" /> },
       { path: 'knowledge/:documentId?', element: <KnowledgePage /> },
     ],

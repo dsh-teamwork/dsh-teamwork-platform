@@ -220,7 +220,11 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   an answer it does not hold, and to change a document only by proposing,
   and calls the documents "documents (pages)".
 - **The console** adds `knowledge` to Workspace's sections
-  (`components/team/console-shell.tsx`), its pages under
+  (`components/team/console-shell.tsx`), with the spaces the reader reads
+  folded out beneath it as they are under My DSH; the knowledge page tells
+  the sidebar which is open (`lib/knowledge-nav.ts`). Knowledge opens on an
+  overview of the spaces, a space on its own page and its tree alone; the
+  admin creates a space from the sidebar or the overview. Its pages are under
   `apps/web/src/pages/team/knowledge/`, and its words under `knowledge.*` in
   both locales. The editor is one component, `KnowledgeEditor`, over
   Milkdown (`@milkdown/kit` with its commonmark and gfm presets), loaded

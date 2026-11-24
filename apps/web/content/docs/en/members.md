@@ -180,7 +180,9 @@ version in your browser. Tap **Close** to return to the conversation.
 
 **Knowledge** under Workspace is where the team keeps what it knows: a
 glossary, the product's rules, a runbook, as documents in spaces and folders.
-Find a document by its title in the box at the top. A document is Markdown,
+Its spaces are listed beneath it in the sidebar: Knowledge itself opens an
+overview of them, and a space opens its own folders and documents, the most
+recently changed first. Find a document by its title in the box at the top. A document is Markdown,
 shown formatted; `[[Another document]]` or `[[Another document#A heading]]`
 links to the document with that title in the team, and a title no document has
 shows as a broken link.

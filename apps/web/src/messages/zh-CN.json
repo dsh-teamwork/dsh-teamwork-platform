@@ -1747,6 +1747,13 @@
         "none": "没有你的或共享给你的共享页面。",
         "cancel": "取消",
         "embed": "嵌入"
+      },
+      "overview": {
+        "readTeam": "全队可读",
+        "readMembers": "指定成员可读",
+        "holds": "{documents} 篇文档 · {folders, plural, =0 {没有文件夹} other {# 个文件夹}}",
+        "changed": "{when}更新",
+        "recent": "最近更新"
       }
     }
   },

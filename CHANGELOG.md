@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-24 — Knowledge's spaces in the sidebar
+
+- **What:** The console's sidebar lists the knowledge spaces a member reads beneath Knowledge, as My DSH lists computers, the open one selected, and New space for the team's admin. Knowledge opens on an overview of its spaces (who reads each, what it holds, when it changed); a space opens its own page, `/teams/{teamId}/knowledge/spaces/{spaceId}`, with its most recently changed documents, and the tree beside it shows that space alone except while finding. A document's path links back to its space.
+- **Why:** Spaces carry access and were hard to tell apart from folders in one tree.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/lib/knowledge-nav.ts`, `apps/web/src/pages/team/knowledge/spaces.tsx`, `docs/tech/knowledge.md`.
+
 ## 2026-11-24 — Knowledge, working together: comments, mentions, search, tables, embedded artifacts
 
 - **What:** Readers comment on a knowledge document beside its text (`knowledge_comments`): a thread quotes words of a version, with the heading above them, takes replies, and is resolved by its author or an editor; agents never comment, and comments are not in the text or the plugin's copy (`GET`, `POST /api/teams/{teamId}/knowledge/documents/{id}/comments`, `PATCH`, `DELETE …/knowledge/comments/{id}`). `@[Name](member-id)` mentions a member, `@` in the editor lists them, and `GET …/knowledge/mentions` lists the documents naming the caller. `GET …/knowledge/search?q=` finds the documents a member reads by title or text, with the line found, shown under the console's find box. `GET …/knowledge/spaces/{id}/documents?folderId=` gives a folder's documents with their front matter, which the console shows as a table filtered and sorted by property. `![[artifact:{id}]]` embeds an artifact's card, which only those it is shared with can open; the block menu chooses one. The plugin's knowledge guide names mentions and embeds.
