@@ -7,7 +7,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourceartifact"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -46,8 +46,8 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 		}
 		if in.Plugin != nil {
 			var old wire.PluginData
-			if json.Unmarshal(current.Data, &old) == nil && old.Package == in.Plugin.Package && old.Version == in.Plugin.Version && (old.ArtifactID != in.Plugin.ArtifactID || old.SHA256 != in.Plugin.SHA256) {
-				return nil, wire.E(http.StatusConflict, "artifact_version_exists")
+			if json.Unmarshal(current.Data, &old) == nil && old.Package == in.Plugin.Package && old.Version == in.Plugin.Version && (old.PackageID != in.Plugin.PackageID || old.SHA256 != in.Plugin.SHA256) {
+				return nil, wire.E(http.StatusConflict, "package_version_exists")
 			}
 		}
 		if current.Version != base {
@@ -102,8 +102,8 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 			return nil, conflict(err, wire.ConfigExists)
 		}
 	}
-	if in.Plugin != nil && in.Plugin.ArtifactID != "" {
-		if _, err := s.DB.ResourceArtifact.Update().Where(resourceartifact.ID(in.Plugin.ArtifactID), resourceartifact.TeamID(teamID)).SetPublished(true).Save(ctx); err != nil {
+	if in.Plugin != nil && in.Plugin.PackageID != "" {
+		if _, err := s.DB.PluginPackage.Update().Where(pluginpackage.ID(in.Plugin.PackageID), pluginpackage.TeamID(teamID)).SetPublished(true).Save(ctx); err != nil {
 			return nil, err
 		}
 	}

@@ -11,10 +11,11 @@ import (
 	"strings"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifacts"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/pages"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/knowledge"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/usage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
@@ -31,7 +32,8 @@ type Server struct {
 	Team            *team.Service
 	Gateway         *gateway.Gateway
 	Usage           *usage.Service
-	Pages           *pages.Service
+	Artifacts       *artifacts.Service
+	Knowledge       *knowledge.Service
 	Mailer          auth.Mailer  // where SMTP_URL is set
 	Google          *auth.Google // where the Google door is configured
 	Web             http.Handler
@@ -131,9 +133,9 @@ func (s *Server) Handler() http.Handler {
 		get("/api/teams/{teamId}/history", s.history)
 		post("/api/teams/{teamId}/history/{id}/restore", s.restoreRevision)
 		get("/api/teams/{teamId}/history/{id}/export", s.exportRevision)
-		post("/api/teams/{teamId}/artifacts", s.uploadArtifact)
-		get("/api/teams/{teamId}/artifacts/{id}", s.artifactInfo)
-		get("/api/teams/{teamId}/artifacts/{id}/download", s.downloadArtifact)
+		post("/api/teams/{teamId}/packages", s.uploadPackage)
+		get("/api/teams/{teamId}/packages/{id}", s.packageInfo)
+		get("/api/teams/{teamId}/packages/{id}/download", s.downloadPackage)
 		get("/api/teams/{teamId}/submissions/{id}", s.getSubmission)
 		get("/api/teams/{teamId}/submissions", s.listSubmissions)
 		post("/api/teams/{teamId}/submissions", s.saveSubmission)
@@ -145,17 +147,20 @@ func (s *Server) Handler() http.Handler {
 		post("/api/locale", s.chooseLocale)
 		get("/api/configs", s.configs)
 		post("/api/llm/chat/completions", s.completions)
-		if s.Pages != nil {
-			post("/api/teams/{teamId}/pages", s.createPage)
-			post("/api/teams/{teamId}/pages/{id}/versions", s.addPageVersion)
-			get("/api/teams/{teamId}/pages", s.listPages)
-			get("/api/teams/{teamId}/pages/{id}", s.getPage)
-			post("/api/teams/{teamId}/pages/{id}/versions/{n}/view", s.viewPage)
-			write("PATCH", "/api/teams/{teamId}/pages/{id}", s.renamePage)
-			write("PUT", "/api/teams/{teamId}/pages/{id}/sharing", s.sharePage)
-			post("/api/teams/{teamId}/pages/{id}/versions/{n}/restore", s.restorePage)
-			write("DELETE", "/api/teams/{teamId}/pages/{id}", s.deletePage)
-			mux.HandleFunc("GET /p/", s.sitePages)
+		if s.Knowledge != nil {
+			s.knowledgeRoutes(get, post, write)
+		}
+		if s.Artifacts != nil {
+			post("/api/teams/{teamId}/artifacts", s.createArtifact)
+			post("/api/teams/{teamId}/artifacts/{id}/versions", s.addArtifactVersion)
+			get("/api/teams/{teamId}/artifacts", s.listArtifacts)
+			get("/api/teams/{teamId}/artifacts/{id}", s.getArtifact)
+			post("/api/teams/{teamId}/artifacts/{id}/versions/{n}/view", s.viewArtifact)
+			write("PATCH", "/api/teams/{teamId}/artifacts/{id}", s.renameArtifact)
+			write("PUT", "/api/teams/{teamId}/artifacts/{id}/sharing", s.shareArtifact)
+			post("/api/teams/{teamId}/artifacts/{id}/versions/{n}/restore", s.restoreArtifact)
+			write("DELETE", "/api/teams/{teamId}/artifacts/{id}", s.deleteArtifact)
+			mux.HandleFunc("GET /a/", s.siteArtifacts)
 		}
 
 	}

@@ -34,7 +34,9 @@ const SignInPage = lazy(() => import('@/pages/sign-in').then((m) => ({ default: 
 const TeamLayout = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.TeamLayout })));
 const TeamMembersPage = lazy(() => import('@/pages/team/members').then((m) => ({ default: m.TeamMembersPage })));
 const TeamModelsPage = lazy(() => import('@/pages/team/models').then((m) => ({ default: m.TeamModelsPage })));
-const TeamPagesPage = lazy(() => import('@/pages/team/team-pages').then((m) => ({ default: m.TeamPagesPage })));
+const ArtifactsPage = lazy(() => import('@/pages/team/artifacts').then((m) => ({ default: m.ArtifactsPage })));
+// Knowledge brings its editor, Milkdown, which no other page loads.
+const KnowledgePage = lazy(() => import('@/pages/team/knowledge').then((m) => ({ default: m.KnowledgePage })));
 const TeamMyUsagePage = lazy(() => import('@/pages/team/my-usage').then((m) => ({ default: m.TeamMyUsagePage })));
 const TeamHomePage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamHomePage })));
 const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamOverviewPage })));
@@ -127,7 +129,12 @@ export function mountWeb({ routes = [], teamPages = [], models, security }: WebE
       { path: 'my-dsh/:hostId/settings', element: <MyDshPage settings /> },
       { path: 'my-dsh/:hostId/tasks/:taskId?', element: <MyDshPage tasks /> },
       { path: 'my-dsh/:hostId?/:sessionId?', element: <MyDshPage /> },
-      { path: 'pages/:pageId?', element: <TeamPagesPage /> },
+      { path: 'artifacts/:artifactId?', element: <ArtifactsPage /> },
+      { path: 'knowledge/proposals/:proposalId?', element: <KnowledgePage view="proposals" /> },
+      { path: 'knowledge/mentions', element: <KnowledgePage view="mentions" /> },
+      { path: 'knowledge/spaces/:spaceId', element: <KnowledgePage view="space" /> },
+      { path: 'knowledge/table/:spaceId/:folderId?', element: <KnowledgePage view="table" /> },
+      { path: 'knowledge/:documentId?', element: <KnowledgePage /> },
     ],
     own(false),
   );

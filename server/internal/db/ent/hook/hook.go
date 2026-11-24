@@ -9,6 +9,54 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 )
 
+// The ArtifactFunc type is an adapter to allow the use of ordinary
+// function as Artifact mutator.
+type ArtifactFunc func(context.Context, *ent.ArtifactMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ArtifactFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ArtifactMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactMutation", m)
+}
+
+// The ArtifactFileFunc type is an adapter to allow the use of ordinary
+// function as ArtifactFile mutator.
+type ArtifactFileFunc func(context.Context, *ent.ArtifactFileMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ArtifactFileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ArtifactFileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactFileMutation", m)
+}
+
+// The ArtifactMemberFunc type is an adapter to allow the use of ordinary
+// function as ArtifactMember mutator.
+type ArtifactMemberFunc func(context.Context, *ent.ArtifactMemberMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ArtifactMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ArtifactMemberMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactMemberMutation", m)
+}
+
+// The ArtifactVersionFunc type is an adapter to allow the use of ordinary
+// function as ArtifactVersion mutator.
+type ArtifactVersionFunc func(context.Context, *ent.ArtifactVersionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ArtifactVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ArtifactVersionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactVersionMutation", m)
+}
+
 // The BudgetEventFunc type is an adapter to allow the use of ordinary
 // function as BudgetEvent mutator.
 type BudgetEventFunc func(context.Context, *ent.BudgetEventMutation) (ent.Value, error)
@@ -117,6 +165,102 @@ func (f InviteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.InviteMutation", m)
 }
 
+// The KnowledgeAttachmentFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeAttachment mutator.
+type KnowledgeAttachmentFunc func(context.Context, *ent.KnowledgeAttachmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeAttachmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeAttachmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeAttachmentMutation", m)
+}
+
+// The KnowledgeCommentFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeComment mutator.
+type KnowledgeCommentFunc func(context.Context, *ent.KnowledgeCommentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeCommentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeCommentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeCommentMutation", m)
+}
+
+// The KnowledgeDocumentFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeDocument mutator.
+type KnowledgeDocumentFunc func(context.Context, *ent.KnowledgeDocumentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeDocumentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeDocumentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeDocumentMutation", m)
+}
+
+// The KnowledgeFolderFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeFolder mutator.
+type KnowledgeFolderFunc func(context.Context, *ent.KnowledgeFolderMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeFolderFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeFolderMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeFolderMutation", m)
+}
+
+// The KnowledgeProposalFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeProposal mutator.
+type KnowledgeProposalFunc func(context.Context, *ent.KnowledgeProposalMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeProposalFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeProposalMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeProposalMutation", m)
+}
+
+// The KnowledgeSpaceFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeSpace mutator.
+type KnowledgeSpaceFunc func(context.Context, *ent.KnowledgeSpaceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeSpaceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeSpaceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeSpaceMutation", m)
+}
+
+// The KnowledgeSpaceMemberFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeSpaceMember mutator.
+type KnowledgeSpaceMemberFunc func(context.Context, *ent.KnowledgeSpaceMemberMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeSpaceMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeSpaceMemberMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeSpaceMemberMutation", m)
+}
+
+// The KnowledgeVersionFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeVersion mutator.
+type KnowledgeVersionFunc func(context.Context, *ent.KnowledgeVersionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeVersionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeVersionMutation", m)
+}
+
 // The MembershipFunc type is an adapter to allow the use of ordinary
 // function as Membership mutator.
 type MembershipFunc func(context.Context, *ent.MembershipMutation) (ent.Value, error)
@@ -141,54 +285,6 @@ func (f ModelRateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ModelRateMutation", m)
 }
 
-// The PageFunc type is an adapter to allow the use of ordinary
-// function as Page mutator.
-type PageFunc func(context.Context, *ent.PageMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f PageFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.PageMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PageMutation", m)
-}
-
-// The PageFileFunc type is an adapter to allow the use of ordinary
-// function as PageFile mutator.
-type PageFileFunc func(context.Context, *ent.PageFileMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f PageFileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.PageFileMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PageFileMutation", m)
-}
-
-// The PageMemberFunc type is an adapter to allow the use of ordinary
-// function as PageMember mutator.
-type PageMemberFunc func(context.Context, *ent.PageMemberMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f PageMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.PageMemberMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PageMemberMutation", m)
-}
-
-// The PageVersionFunc type is an adapter to allow the use of ordinary
-// function as PageVersion mutator.
-type PageVersionFunc func(context.Context, *ent.PageVersionMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f PageVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.PageVersionMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PageVersionMutation", m)
-}
-
 // The PasswordFunc type is an adapter to allow the use of ordinary
 // function as Password mutator.
 type PasswordFunc func(context.Context, *ent.PasswordMutation) (ent.Value, error)
@@ -211,6 +307,18 @@ func (f PluginGrantFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PluginGrantMutation", m)
+}
+
+// The PluginPackageFunc type is an adapter to allow the use of ordinary
+// function as PluginPackage mutator.
+type PluginPackageFunc func(context.Context, *ent.PluginPackageMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PluginPackageFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PluginPackageMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PluginPackageMutation", m)
 }
 
 // The RateWindowFunc type is an adapter to allow the use of ordinary
@@ -259,18 +367,6 @@ func (f RelayPairingOfferFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RelayPairingOfferMutation", m)
-}
-
-// The ResourceArtifactFunc type is an adapter to allow the use of ordinary
-// function as ResourceArtifact mutator.
-type ResourceArtifactFunc func(context.Context, *ent.ResourceArtifactMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ResourceArtifactFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ResourceArtifactMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ResourceArtifactMutation", m)
 }
 
 // The ResourceSubmissionFunc type is an adapter to allow the use of ordinary

@@ -116,11 +116,11 @@ func (s *Service) SaveSubmission(ctx context.Context, userID, teamID, id string,
 	if _, err := local.RequireMembership(ctx, userID, teamID, false); err != nil {
 		return SubmissionView{}, err
 	}
-	if in.Config.Plugin != nil && in.Config.Plugin.ArtifactID != "" {
-		if _, err := local.Artifact(ctx, userID, teamID, in.Config.Plugin.ArtifactID); err != nil {
+	if in.Config.Plugin != nil && in.Config.Plugin.PackageID != "" {
+		if _, err := local.Package(ctx, userID, teamID, in.Config.Plugin.PackageID); err != nil {
 			return SubmissionView{}, err
 		}
-		if err := local.checkArtifact(ctx, teamID, in.Config.Plugin); err != nil {
+		if err := local.checkPackage(ctx, teamID, in.Config.Plugin); err != nil {
 			return SubmissionView{}, err
 		}
 	}

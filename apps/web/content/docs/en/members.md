@@ -50,8 +50,8 @@ team's resources, your usage, budgets, members, or what is waiting for review.
 Describe a preset you want and it drafts the whole thing (persona, method,
 model and tools), shows it to you, and submits it for review once you agree.
 An admin can have it create or change presets, review submissions, or turn a
-month's usage into a page. It suggests what to do next from what it finds.
-Anything it would change still asks for your approval, and a page it publishes
+month's usage into an artifact. It suggests what to do next from what it finds.
+Anything it would change still asks for your approval, and an artifact it publishes
 stays yours until you share it.
 
 ## Work on your own DSH from the browser
@@ -154,27 +154,106 @@ resize photos to fit 512 KiB per image and 1.5 MiB of images per message, then
 transfer them in chunks. The phone app also supports selecting several photos
 from the library and taking a photo with the camera.
 
-## Pages your agent publishes
+## Artifacts your agent publishes
 
 Ask the agent in a session for a report, a deck, a dashboard or a diagram, and
 to publish it. It appears as a card in the conversation; the card opens the
-page beside the conversation, and **Pages** under Workspace lists every page
+artifact beside the conversation, and **Artifacts** under Workspace lists every artifact
 you published in this team, newest first, with its versions. Asking the agent
-for a change adds a version; the earlier ones stay. A page starts private to
+for a change adds a version; the earlier ones stay. An artifact starts private to
 you, and the agent cannot share it. **Share** offers **Only me**, **Specific
-members** and **Everyone in the team**; nobody outside the team can open a
-page. Whoever can read a page sees it under **Shared with me** and can ask
+members** and **Everyone in the team**; nobody outside the team can open an
+artifact. Whoever can read an artifact sees it under **Shared with me** and can ask
 their own agent to change it, which adds a version under their name. As the
-owner you can also rename a page, restore an earlier version, or delete it.
-The team's admin sees every page under **All** and can narrow who reads one or
-delete it, but reads its content only if it is shared with them. Pages run in
-a sandbox on their own address, so a page cannot act as you in Teamwork. A page
+owner you can also rename an artifact, restore an earlier version, or delete it.
+The team's admin sees every artifact under **All** and can narrow who reads one or
+delete it, but reads its content only if it is shared with them. Artifacts run in
+a sandbox on their own address, so an artifact cannot act as you in Teamwork. An artifact
 may still go full screen and save a file it makes, such as a deck's PDF or
 PowerPoint export; your browser shows each download.
 
-In the mobile app, tap a page card to open a bottom sheet that takes up about
+In the mobile app, tap an artifact card to open a bottom sheet that takes up about
 80% of the screen. Tap the browser icon in the top right to open the same
 version in your browser. Tap **Close** to return to the conversation.
+
+## Knowledge
+
+**Knowledge** under Workspace is where the team keeps what it knows: a
+glossary, the product's rules, a runbook, as documents in spaces and folders.
+Its spaces are listed beneath it in the sidebar: Knowledge itself opens an
+overview of them, and a space opens its own folders and documents, the most
+recently changed first. Find a document by its title in the box at the top. A document is Markdown,
+shown formatted; `[[Another document]]` or `[[Another document#A heading]]`
+links to the document with that title in the team, and a title no document has
+shows as a broken link.
+
+Each space says who reads it: the whole team, or chosen members. Its
+**editors** (the team's admin, whoever created the space, and the members it
+names) choose **Edit**, change the text and **Save** it with an optional
+one-line note; every save is a new version. **History** lists every version
+with its author, where it came from and its note, opens any one, compares it
+with the one before it, and lets an editor restore it as a new version. If
+someone saved while you were editing, your text stays on screen: compare it
+with theirs, then continue on their version and save again. The first time
+the console saves a document written elsewhere, it may tidy its Markdown
+syntax; that is saved first as a version of its own, noted **Formatting**, so
+your version shows only your change.
+
+If you read a space but do not edit it, **Edit** still works: your save
+becomes a **proposal** instead of a version.
+
+While editing, **Attach** adds a file to the document and puts it at the
+cursor; pasting or dropping a file does the same. An image is written
+`![[diagram.png]]` and shown in the text, any other file `[[spec.pdf]]` and
+shown as a link to it: images, PDF, text, CSV, JSON, Word, Excel, PowerPoint
+and zip files, up to 20 MiB each. The files are listed under the text, with
+the ones it names marked. **A file's name keeps its contents for as long as
+the document exists**, so every version shows what it showed; to change a
+file, attach the new one under another name and point the text at it. A
+reader may attach files too; the text shows them once an editor accepts the
+proposal that names them.
+
+Type `/` on an empty line to insert a block: headings, lists and task lists,
+a quote, a **callout**, a code block, a **diagram**, a table, a divider, or an
+image or file. A callout is a box coloured by its kind (note, tip, warning,
+danger and others); while editing, its two choices set its kind and whether
+it folds, and a reader opens a folded one with its arrow. In the file it is
+the quote `> [!warning] Title`. A diagram is a `mermaid` code block: its source
+above, the drawing under it while you edit, and the drawing alone when read.
+
+**Properties** sit above the text while editing: the document's owner, a
+status, tags and a one-line summary, shown under the title when read and kept
+as the file's front matter, where agents read them too. A space with a
+templates folder offers its documents when you create a new one; `{{title}}`
+and `{{date}}` in a template become the new title and today's date. At the
+foot of a document, **Linked from** lists the documents that link to it.
+
+**Comments** sit beside the text. Select words while reading and choose
+**Comment** to open a thread on them; the words stay underlined while the
+thread is open, and a thread whose words a later version no longer holds says
+so. Anyone who reads the space may comment and reply; the thread's author or
+an editor **Resolves** it. Comments are never part of the document, and agents
+do not read them.
+
+Type `@` to mention a member; **Mentions** at the top of Knowledge lists the
+documents that mention you or name you their owner. The find box finds a
+document by its title and, under **In the text**, by the words in it. A
+folder's menu opens it **as a table**: each document with its owner, status,
+tags and summary, filtered by words, status or tag and sorted by any column.
+The block menu's **Artifact** embeds one of your artifacts as a card; a reader
+opens it only if it is shared with them.
+
+Your agent, in DSH on your computer or a cloud DSH, reads a synced, read-only
+copy of every space you may read, finds what it needs without being pointed
+at it, and cites the document and heading its answer rests on. An agent never
+changes a document itself, even in an editor's session: it proposes a change.
+**Proposals** at the top of Knowledge lists those to spaces you edit, with a
+count of the ones waiting on you, and your own. Open one to see what it
+changes; an editor **Accepts** it, which makes it the next version under its
+author's name, or **Declines** it with a reason, and its author can
+**Withdraw** it. A proposal made on a version that has since changed is
+**stale** and cannot be accepted; its author proposes again on the current
+version.
 
 ## More than one team
 

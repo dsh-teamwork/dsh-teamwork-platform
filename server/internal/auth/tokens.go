@@ -26,17 +26,17 @@ const (
 	// (ADR 0038): one member, one team, at most ComputerTTL, and accepted only
 	// by GET /api/configs and the model gateway.
 	ComputerBearer Purpose = "dsh-teamwork.computer"
-	// PageView is a page's view address (docs/tech/pages.md, "The view
-	// address"): one reader, one version of one page, at most PageViewTTL. It
+	// ArtifactView is an artifact's view address (docs/tech/artifacts.md, "The view
+	// address"): one reader, one version of one artifact, at most ArtifactViewTTL. It
 	// opens nothing but the files that version serves under /p/.
-	PageView Purpose = "dsh-teamwork.page-view"
+	ArtifactView Purpose = "dsh-teamwork.artifact-view"
 )
 
 // ComputerTTL is the longest a computer token lives; its host renews it.
 const ComputerTTL = time.Hour
 
-// PageViewTTL is how long a page's view address lives.
-const PageViewTTL = time.Hour
+// ArtifactViewTTL is how long an artifact's view address lives.
+const ArtifactViewTTL = time.Hour
 
 // SessionTTL is how long a browser session lasts. It cannot be revoked before
 // it expires — the price of having no session table; team access is still
@@ -63,7 +63,7 @@ type Claims struct {
 	Next      string `json:"next,omitempty"`      // an OAuth round trip's return path
 	Team      string `json:"team,omitempty"`      // a computer token's one team
 	Host      string `json:"host,omitempty"`      // a computer token's computer or session, for the record
-	Page      string `json:"page,omitempty"`      // a view address's page
+	Artifact  string `json:"artifact,omitempty"`  // a view address's artifact
 	Version   int    `json:"ver,omitempty"`       // a view address's version of it
 	Grant     string `json:"grant,omitempty"`     // a plugin or app token's grant (ADR 0060)
 	Iat       int64  `json:"iat"`

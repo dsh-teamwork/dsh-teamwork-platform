@@ -1,0 +1,421 @@
+/*
+ * A knowledge document as the editor draws it (components/knowledge-editor.tsx),
+ * read-only or editing alike. Loaded with the editor only, so the console's
+ * main stylesheet does not carry it. Every colour is a token (docs/design.md):
+ * a link to another document is navy, as links are, and one whose title no
+ * document has is struck through in the destructive colour. An attachment's
+ * image is drawn in the text; any other file is a small card with lucide's
+ * file icon, its name and size; one never uploaded is dashed in the
+ * destructive colour, embed or card alike.
+ */
+
+.knowledge-document {
+  color: var(--foreground);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  outline: none;
+}
+.knowledge-document > :first-child {
+  margin-top: 0;
+}
+.knowledge-document h1,
+.knowledge-document h2,
+.knowledge-document h3,
+.knowledge-document h4,
+.knowledge-document h5,
+.knowledge-document h6 {
+  font-weight: 600;
+  line-height: 1.3;
+  scroll-margin-top: 1.5rem;
+}
+.knowledge-document h1 {
+  margin: 0 0 1rem;
+  font-size: 1.875rem;
+  letter-spacing: -0.01em;
+}
+.knowledge-document h2 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.375rem;
+}
+.knowledge-document h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.125rem;
+}
+.knowledge-document :is(h4, h5, h6) {
+  margin: 1.25rem 0 0.5rem;
+}
+.knowledge-document :is(p, ul, ol, blockquote, pre, table) {
+  margin: 0.75rem 0;
+}
+.knowledge-document :is(ul, ol) {
+  padding-inline-start: 1.5rem;
+}
+.knowledge-document ul {
+  list-style: disc;
+}
+.knowledge-document ol {
+  list-style: decimal;
+}
+.knowledge-document li > :is(p, ul, ol) {
+  margin: 0.15rem 0;
+}
+.knowledge-document li[data-item-type='task'] {
+  position: relative;
+  list-style: none;
+}
+.knowledge-document li[data-item-type='task']::before {
+  content: '';
+  position: absolute;
+  top: 0.4em;
+  inset-inline-start: -1.4rem;
+  width: 0.95em;
+  height: 0.95em;
+  border: 1.5px solid var(--input);
+  border-radius: var(--radius-sm);
+}
+.knowledge-document li[data-item-type='task'][data-checked='true']::before {
+  border-color: var(--foreground);
+  background: var(--foreground);
+  /* Filled, with a ring of the ground inside its border. */
+  box-shadow: inset 0 0 0 2px var(--background);
+}
+.knowledge-document li[data-item-type='task'][data-checked='true'] {
+  color: var(--muted-foreground);
+  text-decoration: line-through;
+  text-decoration-color: var(--border);
+}
+.knowledge-document strong {
+  font-weight: 600;
+}
+.knowledge-document a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--brand) 40%, transparent);
+  text-underline-offset: 3px;
+}
+.dark .knowledge-document a {
+  color: var(--ring);
+  text-decoration-color: color-mix(in oklch, var(--ring) 40%, transparent);
+}
+.knowledge-document a.knowledge-wikilink-broken {
+  color: var(--destructive);
+  text-decoration-style: dashed;
+  text-decoration-color: var(--destructive);
+}
+.knowledge-document .knowledge-embed {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+}
+.knowledge-document .knowledge-embed img {
+  display: block;
+}
+.knowledge-document a.knowledge-file,
+.knowledge-document .knowledge-embed-broken {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.05em 0.5em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-size: 0.925em;
+  line-height: 1.6;
+  text-decoration: none;
+  vertical-align: baseline;
+}
+.knowledge-document a.knowledge-file:hover {
+  background: var(--accent);
+}
+.knowledge-document a.knowledge-file::before,
+.knowledge-document .knowledge-embed-broken::before {
+  content: '';
+  flex: none;
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  mask: var(--knowledge-icon) center / contain no-repeat;
+  --knowledge-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3C/svg%3E");
+}
+.knowledge-document .knowledge-embed-broken::before {
+  --knowledge-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='2' x2='22' y1='2' y2='22'/%3E%3Cpath d='M10.41 10.41a2 2 0 1 1-2.83-2.83'/%3E%3Cline x1='13.5' x2='6' y1='13.5' y2='21'/%3E%3Cline x1='18' x2='21' y1='12' y2='15'/%3E%3Cpath d='M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59'/%3E%3Cpath d='M21 15V5a2 2 0 0 0-2-2H9'/%3E%3C/svg%3E");
+}
+.knowledge-document .knowledge-file-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.knowledge-document .knowledge-file-size {
+  flex: none;
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.knowledge-document a.knowledge-file-broken,
+.knowledge-document .knowledge-embed-broken {
+  border-style: dashed;
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+.knowledge-document code {
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+.knowledge-document pre {
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  background: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.knowledge-document pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+.knowledge-document blockquote {
+  padding-inline-start: 1rem;
+  border-inline-start: 3px solid var(--border);
+  color: var(--muted-foreground);
+}
+.knowledge-document hr {
+  margin: 1.75rem 0;
+  border-top: 1px solid var(--border);
+}
+.knowledge-document table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.925em;
+}
+.knowledge-document :is(th, td) {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+.knowledge-document :is(th, td) p {
+  margin: 0;
+}
+.knowledge-document th {
+  background: var(--muted);
+  font-weight: 600;
+}
+.knowledge-document img {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+}
+.knowledge-editing .knowledge-document {
+  min-height: 45vh;
+}
+.knowledge-editing .ProseMirror-selectednode {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
+/*
+ * A callout (components/knowledge-blocks.ts): a line in its kind's colour, a
+ * faint ground of the same, and its title in the text's own colour, since
+ * amber is never text. Its controls sit at the top right; folded, it shows
+ * its title alone.
+ */
+.knowledge-document .knowledge-callout {
+  --callout: var(--brand);
+  position: relative;
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.9rem;
+  border-inline-start: 3px solid var(--callout);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--callout) 7%, transparent);
+}
+.dark .knowledge-document .knowledge-callout[data-family='brand'] {
+  --callout: var(--ring);
+}
+.knowledge-document .knowledge-callout[data-family='success'] {
+  --callout: var(--success);
+}
+.knowledge-document .knowledge-callout[data-family='signal'] {
+  --callout: var(--signal);
+}
+.knowledge-document .knowledge-callout[data-family='destructive'] {
+  --callout: var(--destructive);
+}
+.knowledge-document .knowledge-callout[data-family='muted'] {
+  --callout: var(--muted-foreground);
+}
+.knowledge-document .knowledge-callout-label {
+  display: none;
+  font-weight: 600;
+}
+.knowledge-document .knowledge-callout.is-untitled > .knowledge-callout-label {
+  display: block;
+}
+.knowledge-document .knowledge-callout-title {
+  font-weight: 600;
+}
+.knowledge-document:not([contenteditable='true']) .knowledge-callout.is-untitled > .knowledge-callout-body > .knowledge-callout-title {
+  display: none;
+}
+.knowledge-document .knowledge-callout-body > :is(p, ul, ol, blockquote, pre, table, .knowledge-callout, .knowledge-diagram) {
+  margin: 0.4rem 0 0;
+}
+.knowledge-document .knowledge-callout.is-folded > .knowledge-callout-body > :not(:first-child) {
+  display: none;
+}
+.knowledge-document .knowledge-callout-controls {
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-end: 0.6rem;
+  display: flex;
+  gap: 0.35rem;
+}
+.knowledge-document .knowledge-callout-controls select {
+  padding: 0.05rem 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.75rem;
+}
+.knowledge-editing .knowledge-callout-title {
+  min-height: 1.75rem;
+  padding-inline-end: 15rem;
+}
+.knowledge-document .knowledge-callout-toggle {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+  background: currentColor;
+  color: var(--muted-foreground);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 1rem no-repeat;
+  transition: transform 120ms;
+}
+.knowledge-document .knowledge-callout-toggle:hover {
+  color: var(--foreground);
+}
+.knowledge-document .knowledge-callout.is-folded .knowledge-callout-toggle {
+  transform: rotate(-90deg);
+}
+.knowledge-document .knowledge-callout:has(.knowledge-callout-toggle) .knowledge-callout-title,
+.knowledge-document .knowledge-callout:has(.knowledge-callout-toggle) .knowledge-callout-label {
+  padding-inline-end: 2rem;
+}
+
+/*
+ * A diagram (a `mermaid` code block): its source above its drawing while
+ * editing, the drawing alone while reading. One whose source cannot be drawn
+ * says so in the destructive colour.
+ */
+.knowledge-document .knowledge-diagram {
+  margin: 0.75rem 0;
+}
+.knowledge-document .knowledge-diagram > pre {
+  margin: 0 0 0.5rem;
+}
+.knowledge-document .knowledge-diagram.is-reading > pre {
+  display: none;
+}
+.knowledge-document .knowledge-diagram-preview {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+.knowledge-document .knowledge-diagram-preview svg {
+  max-width: 100%;
+  height: auto;
+}
+.knowledge-document .knowledge-diagram-preview.is-error {
+  justify-content: flex-start;
+  color: var(--destructive);
+  font-size: 0.875rem;
+}
+.knowledge-document .knowledge-diagram.is-reading:has(> .is-error) > pre {
+  display: block;
+}
+@media (max-width: 640px) {
+  .knowledge-editing .knowledge-callout-controls {
+    position: static;
+    margin-bottom: 0.35rem;
+  }
+  .knowledge-editing .knowledge-callout-title {
+    padding-inline-end: 0;
+  }
+}
+
+/*
+ * A mention: the member's name on a faint brand ground, the reader's own a
+ * little stronger, one who has left the team struck through. An embedded
+ * artifact is a card with lucide's layout icon, its title and kind; one the
+ * reader cannot open is dashed. The words a comment quotes are underlined in
+ * amber, the open thread's on a faint amber ground.
+ */
+.knowledge-document .knowledge-mention {
+  padding: 0 0.2em;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--brand) 9%, transparent);
+  color: var(--foreground);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.knowledge-document .knowledge-mention.is-me {
+  background: color-mix(in oklch, var(--brand) 20%, transparent);
+}
+.knowledge-document .knowledge-mention.is-gone {
+  color: var(--muted-foreground);
+  text-decoration: line-through;
+}
+.knowledge-document a.knowledge-artifact {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.2em 0.6em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  text-decoration: none;
+}
+.knowledge-document a.knowledge-artifact[data-embed] {
+  display: flex;
+  width: 100%;
+  padding: 0.75rem 1rem;
+}
+.knowledge-document a.knowledge-artifact::before {
+  content: '';
+  flex: none;
+  align-self: center;
+  width: 1.1em;
+  height: 1.1em;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Cpath d='M3 9h18'/%3E%3Cpath d='M9 21V9'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.knowledge-document a.knowledge-artifact:hover {
+  background: var(--accent);
+}
+.knowledge-document .knowledge-artifact-title {
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.knowledge-document .knowledge-artifact-note {
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.knowledge-document a.knowledge-artifact-missing {
+  border-style: dashed;
+  color: var(--muted-foreground);
+}
+.knowledge-document .knowledge-comment-mark {
+  text-decoration: underline 2px;
+  text-decoration-color: var(--signal);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.knowledge-document .knowledge-comment-mark.is-active {
+  background: color-mix(in oklch, var(--signal) 22%, transparent);
+}

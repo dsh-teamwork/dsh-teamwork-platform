@@ -127,7 +127,7 @@ func TestServiceRoleValidation(t *testing.T) {
 	}
 }
 
-// Pages are served from CONTENT_URL only where it is another site than
+// Artifacts are served from CONTENT_URL only where it is another site than
 // APP_URL's: a subdomain would share the site the console's cookies go to.
 func TestContentURLIsASiteOfItsOwn(t *testing.T) {
 	load := func(content string) (Config, error) {
@@ -143,7 +143,7 @@ func TestContentURLIsASiteOfItsOwn(t *testing.T) {
 	if c, err := load("https://artifacts.dshteam.work"); err != nil || c.ContentURL != "https://artifacts.dshteam.work" {
 		t.Fatalf("a subdomain of another site: %q %v", c.ContentURL, err)
 	}
-	for _, bad := range []string{"https://pages.dshteamwork.com", "https://dshteamwork.com", "http://dshteam.work", "https://dshteam.work/p", "dshteam.work"} {
+	for _, bad := range []string{"https://pages.dshteamwork.com", "https://dshteamwork.com", "http://dshteam.work", "https://dshteam.work/a", "dshteam.work"} {
 		if _, err := load(bad); err == nil {
 			t.Errorf("CONTENT_URL %q was accepted", bad)
 		}

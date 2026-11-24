@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { api, uploadArtifact, type Schemas, type Team, type TeamConfig } from '@/lib/api';
+import { api, uploadPackage, type Schemas, type Team, type TeamConfig } from '@/lib/api';
 import { inspectPluginArchive, type PluginPreview } from '@/lib/plugin-archive';
 import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
@@ -513,12 +513,12 @@ export function PluginDialog({ teamId, configs, reload, onClose }: { teamId: str
               if (!plugin) return;
               const existing = plugins.find((c) => c.id === target);
               const ok = await run(async () => {
-                const artifact = await uploadArtifact<Schemas['ResourceArtifact']>(teamId, plugin.file);
-                if (artifact.sha256 !== plugin.preview.sha256) throw Error('Artifact mismatch');
+                const pkg = await uploadPackage<Schemas['PluginPackage']>(teamId, plugin.file);
+                if (pkg.sha256 !== plugin.preview.sha256) throw Error('Package mismatch');
                 const config = {
                   kind: 'plugin',
                   name: existing?.name ?? plugin.preview.package,
-                  data: { package: artifact.package, version: artifact.version, artifactId: artifact.id, sha256: artifact.sha256, description: note },
+                  data: { package: pkg.package, version: pkg.version, packageId: pkg.id, sha256: pkg.sha256, description: note },
                 };
                 const draft = await api<Submission>(`teams/${teamId}/submissions`, { body: { config, configId: existing?.id, baseVersion: existing?.version ?? 0, note } });
                 await api(`teams/${teamId}/submissions/${draft.id}/submit`, { body: { revision: draft.revision } });

@@ -17,12 +17,13 @@ import (
 	"testing"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifactstore"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifacts"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/httpapi"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/pages"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/knowledge"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/objectstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/web"
@@ -45,7 +46,7 @@ type options struct {
 	lookup        func(ctx context.Context, host string) ([]netip.Addr, error)
 	web           fs.FS        // a console build to serve, as web.New takes it
 	gatewayClient *http.Client // deterministic protocol replay, never a paid upstream
-	artifacts     artifactstore.Store
+	objects       objectstore.Store
 	contentURL    string // CONTENT_URL; APP_URL's own origin when empty
 	subdomains    map[string]http.Handler
 	review        [2]string // REVIEW_SIGN_IN's address and code
@@ -65,9 +66,9 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	authn := &auth.Service{DB: d.Client, Sealer: auth.NewSealer(secret, nil), Secret: secret,
 		ReviewEmail: o.review[0], ReviewCode: o.review[1]}
 	teams := &team.Service{DB: d.Client, Keys: keys, Network: network, Auth: authn, Passwords: o.smtp == ""}
-	teams.Artifacts = o.artifacts
-	if teams.Artifacts == nil {
-		teams.Artifacts = artifactstore.Local{Dir: t.TempDir()}
+	teams.Objects = o.objects
+	if teams.Objects == nil {
+		teams.Objects = objectstore.Local{Dir: t.TempDir()}
 	}
 	ts := httptest.NewUnstartedServer(nil)
 	appURL := "http://" + ts.Listener.Addr().String()
@@ -83,7 +84,8 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	}
 	srv.Mailer = o.mailer
 	srv.Subdomains = o.subdomains
-	srv.Pages = &pages.Service{DB: d.Client, Store: teams.Artifacts, Team: teams, Sealer: authn.Sealer, ContentURL: contentURL}
+	srv.Artifacts = &artifacts.Service{DB: d.Client, Store: teams.Objects, Team: teams, Sealer: authn.Sealer, ContentURL: contentURL}
+	srv.Knowledge = &knowledge.Service{DB: d.Client, Team: teams, Store: teams.Objects}
 	if o.gatewayClient != nil {
 		srv.Gateway.Client = o.gatewayClient
 	}

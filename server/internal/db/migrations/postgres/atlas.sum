@@ -1,4 +1,4 @@
-h1:Wtx983pWdkiBeiLcccCyHk8xDYm6DTlTTx9wcIsDIe8=
+h1:Kl4wsufz0B+dRom2/hRsGYbmBVcrJIVd7waUVELyRVY=
 20261114012021_init.sql h1:iMOUyNDjsoN2pj1dEAgWtcpU2a5fByVlZgoCXiaOC0s=
 20261115041609_usage_metering.sql h1:hmiNJMr1kxsgtgVBku/vxrvrU1Hqyzw2Q0wEosNSm30=
 20261115044856_budget_reservations.sql h1:4ZPHNOx9bCw/rSuKnOs0NRy2fMJfOBPyohDlmcPtQUI=
@@ -21,3 +21,8 @@ h1:Wtx983pWdkiBeiLcccCyHk8xDYm6DTlTTx9wcIsDIe8=
 20261120050622_plugin_grants.sql h1:XMr4nzYjVjy6VSdvQsqtCBS7Rl0WUXjABQ0fQcqr4dM=
 20261120070026_relay_host_plugin_version.sql h1:Z8Wb8MhOMlmFfCE6UNTbc4E9DwHfAp3SxHnjnn6nvgg=
 20261123000000_remove_team_dsh.sql h1:LUtqgwuXw2KRrFonZs/aZKdB9qzXypKRQzzTFZb37C0=
+20261124015140_artifacts_and_packages.sql h1:9czF/W4fSgcFrQRloCLzKhvdCAjN8/shAH0L92TP1g8=
+20261124041757_knowledge.sql h1:UX2AV0EClpqwcMoWsMg+Ydp82iwVjaXR97wy0rKOWo0=
+20261124045735_knowledge_attachments.sql h1:gSbO/SqlB5gAWmNqPtVj3Onf9bvVDuhzHUUrFoxvdXM=
+20261124055432_knowledge_templates.sql h1:HLd8RONA3+UEXhM6rRuJq+g/LkEovIBf9ihhbugkMEI=
+20261124063144_knowledge_comments.sql h1:9auOYLeEZG2fKiqZiyay2tSVobPTbdDmnPssMutbN9U=

@@ -14,6 +14,14 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Artifact is the client for interacting with the Artifact builders.
+	Artifact *ArtifactClient
+	// ArtifactFile is the client for interacting with the ArtifactFile builders.
+	ArtifactFile *ArtifactFileClient
+	// ArtifactMember is the client for interacting with the ArtifactMember builders.
+	ArtifactMember *ArtifactMemberClient
+	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
+	ArtifactVersion *ArtifactVersionClient
 	// BudgetEvent is the client for interacting with the BudgetEvent builders.
 	BudgetEvent *BudgetEventClient
 	// BudgetGate is the client for interacting with the BudgetGate builders.
@@ -32,22 +40,32 @@ type Tx struct {
 	Identity *IdentityClient
 	// Invite is the client for interacting with the Invite builders.
 	Invite *InviteClient
+	// KnowledgeAttachment is the client for interacting with the KnowledgeAttachment builders.
+	KnowledgeAttachment *KnowledgeAttachmentClient
+	// KnowledgeComment is the client for interacting with the KnowledgeComment builders.
+	KnowledgeComment *KnowledgeCommentClient
+	// KnowledgeDocument is the client for interacting with the KnowledgeDocument builders.
+	KnowledgeDocument *KnowledgeDocumentClient
+	// KnowledgeFolder is the client for interacting with the KnowledgeFolder builders.
+	KnowledgeFolder *KnowledgeFolderClient
+	// KnowledgeProposal is the client for interacting with the KnowledgeProposal builders.
+	KnowledgeProposal *KnowledgeProposalClient
+	// KnowledgeSpace is the client for interacting with the KnowledgeSpace builders.
+	KnowledgeSpace *KnowledgeSpaceClient
+	// KnowledgeSpaceMember is the client for interacting with the KnowledgeSpaceMember builders.
+	KnowledgeSpaceMember *KnowledgeSpaceMemberClient
+	// KnowledgeVersion is the client for interacting with the KnowledgeVersion builders.
+	KnowledgeVersion *KnowledgeVersionClient
 	// Membership is the client for interacting with the Membership builders.
 	Membership *MembershipClient
 	// ModelRate is the client for interacting with the ModelRate builders.
 	ModelRate *ModelRateClient
-	// Page is the client for interacting with the Page builders.
-	Page *PageClient
-	// PageFile is the client for interacting with the PageFile builders.
-	PageFile *PageFileClient
-	// PageMember is the client for interacting with the PageMember builders.
-	PageMember *PageMemberClient
-	// PageVersion is the client for interacting with the PageVersion builders.
-	PageVersion *PageVersionClient
 	// Password is the client for interacting with the Password builders.
 	Password *PasswordClient
 	// PluginGrant is the client for interacting with the PluginGrant builders.
 	PluginGrant *PluginGrantClient
+	// PluginPackage is the client for interacting with the PluginPackage builders.
+	PluginPackage *PluginPackageClient
 	// RateWindow is the client for interacting with the RateWindow builders.
 	RateWindow *RateWindowClient
 	// RelayHost is the client for interacting with the RelayHost builders.
@@ -56,8 +74,6 @@ type Tx struct {
 	RelayPairing *RelayPairingClient
 	// RelayPairingOffer is the client for interacting with the RelayPairingOffer builders.
 	RelayPairingOffer *RelayPairingOfferClient
-	// ResourceArtifact is the client for interacting with the ResourceArtifact builders.
-	ResourceArtifact *ResourceArtifactClient
 	// ResourceSubmission is the client for interacting with the ResourceSubmission builders.
 	ResourceSubmission *ResourceSubmissionClient
 	// Team is the client for interacting with the Team builders.
@@ -203,6 +219,10 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Artifact = NewArtifactClient(tx.config)
+	tx.ArtifactFile = NewArtifactFileClient(tx.config)
+	tx.ArtifactMember = NewArtifactMemberClient(tx.config)
+	tx.ArtifactVersion = NewArtifactVersionClient(tx.config)
 	tx.BudgetEvent = NewBudgetEventClient(tx.config)
 	tx.BudgetGate = NewBudgetGateClient(tx.config)
 	tx.BudgetNotice = NewBudgetNoticeClient(tx.config)
@@ -212,19 +232,23 @@ func (tx *Tx) init() {
 	tx.ConfigRevision = NewConfigRevisionClient(tx.config)
 	tx.Identity = NewIdentityClient(tx.config)
 	tx.Invite = NewInviteClient(tx.config)
+	tx.KnowledgeAttachment = NewKnowledgeAttachmentClient(tx.config)
+	tx.KnowledgeComment = NewKnowledgeCommentClient(tx.config)
+	tx.KnowledgeDocument = NewKnowledgeDocumentClient(tx.config)
+	tx.KnowledgeFolder = NewKnowledgeFolderClient(tx.config)
+	tx.KnowledgeProposal = NewKnowledgeProposalClient(tx.config)
+	tx.KnowledgeSpace = NewKnowledgeSpaceClient(tx.config)
+	tx.KnowledgeSpaceMember = NewKnowledgeSpaceMemberClient(tx.config)
+	tx.KnowledgeVersion = NewKnowledgeVersionClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
 	tx.ModelRate = NewModelRateClient(tx.config)
-	tx.Page = NewPageClient(tx.config)
-	tx.PageFile = NewPageFileClient(tx.config)
-	tx.PageMember = NewPageMemberClient(tx.config)
-	tx.PageVersion = NewPageVersionClient(tx.config)
 	tx.Password = NewPasswordClient(tx.config)
 	tx.PluginGrant = NewPluginGrantClient(tx.config)
+	tx.PluginPackage = NewPluginPackageClient(tx.config)
 	tx.RateWindow = NewRateWindowClient(tx.config)
 	tx.RelayHost = NewRelayHostClient(tx.config)
 	tx.RelayPairing = NewRelayPairingClient(tx.config)
 	tx.RelayPairingOffer = NewRelayPairingOfferClient(tx.config)
-	tx.ResourceArtifact = NewResourceArtifactClient(tx.config)
 	tx.ResourceSubmission = NewResourceSubmissionClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.TeamConfig = NewTeamConfigClient(tx.config)
@@ -241,7 +265,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: BudgetEvent.QueryXXX(), the query will be executed
+// applies a query, for example: Artifact.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

@@ -9,6 +9,116 @@ import (
 )
 
 var (
+	// ArtifactsColumns holds the columns for the "artifacts" table.
+	ArtifactsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "owner_id", Type: field.TypeString, Size: 32},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"html", "svg"}},
+		{Name: "title", Type: field.TypeString, Size: 480},
+		{Name: "sharing", Type: field.TypeEnum, Enums: []string{"private", "members", "team"}, Default: "private"},
+		{Name: "current_version", Type: field.TypeInt},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// ArtifactsTable holds the schema information for the "artifacts" table.
+	ArtifactsTable = &schema.Table{
+		Name:       "artifacts",
+		Columns:    ArtifactsColumns,
+		PrimaryKey: []*schema.Column{ArtifactsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "artifact_team_id_owner_id_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{ArtifactsColumns[2], ArtifactsColumns[3], ArtifactsColumns[8]},
+			},
+			{
+				Name:    "artifact_team_id_sharing_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{ArtifactsColumns[2], ArtifactsColumns[6], ArtifactsColumns[8]},
+			},
+		},
+	}
+	// ArtifactFilesColumns holds the columns for the "artifact_files" table.
+	ArtifactFilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "version_id", Type: field.TypeString, Size: 32},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "path", Type: field.TypeString, Size: 255},
+		{Name: "content_type", Type: field.TypeString, Size: 100},
+		{Name: "size", Type: field.TypeInt64},
+		{Name: "digest", Type: field.TypeString, Size: 32},
+	}
+	// ArtifactFilesTable holds the schema information for the "artifact_files" table.
+	ArtifactFilesTable = &schema.Table{
+		Name:       "artifact_files",
+		Columns:    ArtifactFilesColumns,
+		PrimaryKey: []*schema.Column{ArtifactFilesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "artifactfile_version_id_path",
+				Unique:  true,
+				Columns: []*schema.Column{ArtifactFilesColumns[2], ArtifactFilesColumns[4]},
+			},
+			{
+				Name:    "artifactfile_team_id_digest",
+				Unique:  false,
+				Columns: []*schema.Column{ArtifactFilesColumns[3], ArtifactFilesColumns[7]},
+			},
+		},
+	}
+	// ArtifactMembersColumns holds the columns for the "artifact_members" table.
+	ArtifactMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "artifact_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "added_by", Type: field.TypeString, Size: 32},
+	}
+	// ArtifactMembersTable holds the schema information for the "artifact_members" table.
+	ArtifactMembersTable = &schema.Table{
+		Name:       "artifact_members",
+		Columns:    ArtifactMembersColumns,
+		PrimaryKey: []*schema.Column{ArtifactMembersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "artifactmember_artifact_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{ArtifactMembersColumns[2], ArtifactMembersColumns[3]},
+			},
+			{
+				Name:    "artifactmember_user_id_artifact_id",
+				Unique:  false,
+				Columns: []*schema.Column{ArtifactMembersColumns[3], ArtifactMembersColumns[2]},
+			},
+		},
+	}
+	// ArtifactVersionsColumns holds the columns for the "artifact_versions" table.
+	ArtifactVersionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "artifact_id", Type: field.TypeString, Size: 32},
+		{Name: "number", Type: field.TypeInt},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "computer", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "session_id", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
+		{Name: "size", Type: field.TypeInt64},
+	}
+	// ArtifactVersionsTable holds the schema information for the "artifact_versions" table.
+	ArtifactVersionsTable = &schema.Table{
+		Name:       "artifact_versions",
+		Columns:    ArtifactVersionsColumns,
+		PrimaryKey: []*schema.Column{ArtifactVersionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "artifactversion_artifact_id_number",
+				Unique:  true,
+				Columns: []*schema.Column{ArtifactVersionsColumns[2], ArtifactVersionsColumns[3]},
+			},
+		},
+	}
 	// BudgetEventsColumns holds the columns for the "budget_events" table.
 	BudgetEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -287,6 +397,231 @@ var (
 			},
 		},
 	}
+	// KnowledgeAttachmentsColumns holds the columns for the "knowledge_attachments" table.
+	KnowledgeAttachmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "document_id", Type: field.TypeString, Size: 32},
+		{Name: "name", Type: field.TypeString, Size: 480},
+		{Name: "content_type", Type: field.TypeString, Size: 100},
+		{Name: "size", Type: field.TypeInt64},
+		{Name: "digest", Type: field.TypeString, Size: 32},
+		{Name: "created_by", Type: field.TypeString, Size: 32},
+	}
+	// KnowledgeAttachmentsTable holds the schema information for the "knowledge_attachments" table.
+	KnowledgeAttachmentsTable = &schema.Table{
+		Name:       "knowledge_attachments",
+		Columns:    KnowledgeAttachmentsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeAttachmentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgeattachment_document_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeAttachmentsColumns[3], KnowledgeAttachmentsColumns[4]},
+			},
+			{
+				Name:    "knowledgeattachment_team_id_digest",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeAttachmentsColumns[2], KnowledgeAttachmentsColumns[7]},
+			},
+		},
+	}
+	// KnowledgeCommentsColumns holds the columns for the "knowledge_comments" table.
+	KnowledgeCommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "document_id", Type: field.TypeString, Size: 32},
+		{Name: "parent_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "version", Type: field.TypeInt},
+		{Name: "quote", Type: field.TypeString, Size: 2000, Default: ""},
+		{Name: "anchor", Type: field.TypeString, Size: 800, Default: ""},
+		{Name: "body", Type: field.TypeString, Size: 2147483647},
+		{Name: "resolved_by", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "resolved_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// KnowledgeCommentsTable holds the schema information for the "knowledge_comments" table.
+	KnowledgeCommentsTable = &schema.Table{
+		Name:       "knowledge_comments",
+		Columns:    KnowledgeCommentsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeCommentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgecomment_document_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeCommentsColumns[3], KnowledgeCommentsColumns[1]},
+			},
+			{
+				Name:    "knowledgecomment_author_id",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeCommentsColumns[5]},
+			},
+		},
+	}
+	// KnowledgeDocumentsColumns holds the columns for the "knowledge_documents" table.
+	KnowledgeDocumentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "space_id", Type: field.TypeString, Size: 32},
+		{Name: "folder_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "title", Type: field.TypeString, Size: 480},
+		{Name: "current_version", Type: field.TypeInt},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+	}
+	// KnowledgeDocumentsTable holds the schema information for the "knowledge_documents" table.
+	KnowledgeDocumentsTable = &schema.Table{
+		Name:       "knowledge_documents",
+		Columns:    KnowledgeDocumentsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeDocumentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgedocument_space_id_folder_id_title",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeDocumentsColumns[3], KnowledgeDocumentsColumns[4], KnowledgeDocumentsColumns[5]},
+			},
+			{
+				Name:    "knowledgedocument_team_id_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeDocumentsColumns[2], KnowledgeDocumentsColumns[7]},
+			},
+		},
+	}
+	// KnowledgeFoldersColumns holds the columns for the "knowledge_folders" table.
+	KnowledgeFoldersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "space_id", Type: field.TypeString, Size: 32},
+		{Name: "parent_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "name", Type: field.TypeString, Size: 320},
+	}
+	// KnowledgeFoldersTable holds the schema information for the "knowledge_folders" table.
+	KnowledgeFoldersTable = &schema.Table{
+		Name:       "knowledge_folders",
+		Columns:    KnowledgeFoldersColumns,
+		PrimaryKey: []*schema.Column{KnowledgeFoldersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgefolder_space_id_parent_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeFoldersColumns[2], KnowledgeFoldersColumns[3], KnowledgeFoldersColumns[4]},
+			},
+		},
+	}
+	// KnowledgeProposalsColumns holds the columns for the "knowledge_proposals" table.
+	KnowledgeProposalsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "document_id", Type: field.TypeString, Size: 32},
+		{Name: "base_version", Type: field.TypeInt},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"console", "agent"}},
+		{Name: "computer", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "session_id", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
+		{Name: "text", Type: field.TypeString, Size: 2147483647},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"pending", "accepted", "declined", "withdrawn"}, Default: "pending"},
+		{Name: "decided_by", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "decided_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "reason", Type: field.TypeString, Size: 2000, Default: ""},
+		{Name: "version", Type: field.TypeInt, Default: 0},
+	}
+	// KnowledgeProposalsTable holds the schema information for the "knowledge_proposals" table.
+	KnowledgeProposalsTable = &schema.Table{
+		Name:       "knowledge_proposals",
+		Columns:    KnowledgeProposalsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeProposalsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgeproposal_team_id_state_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeProposalsColumns[2], KnowledgeProposalsColumns[11], KnowledgeProposalsColumns[1]},
+			},
+			{
+				Name:    "knowledgeproposal_document_id_state",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeProposalsColumns[3], KnowledgeProposalsColumns[11]},
+			},
+		},
+	}
+	// KnowledgeSpacesColumns holds the columns for the "knowledge_spaces" table.
+	KnowledgeSpacesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "name", Type: field.TypeString, Size: 320},
+		{Name: "reading", Type: field.TypeEnum, Enums: []string{"team", "members"}, Default: "team"},
+		{Name: "created_by", Type: field.TypeString, Size: 32},
+		{Name: "templates_folder_id", Type: field.TypeString, Size: 32, Default: ""},
+	}
+	// KnowledgeSpacesTable holds the schema information for the "knowledge_spaces" table.
+	KnowledgeSpacesTable = &schema.Table{
+		Name:       "knowledge_spaces",
+		Columns:    KnowledgeSpacesColumns,
+		PrimaryKey: []*schema.Column{KnowledgeSpacesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgespace_team_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeSpacesColumns[2], KnowledgeSpacesColumns[3]},
+			},
+		},
+	}
+	// KnowledgeSpaceMembersColumns holds the columns for the "knowledge_space_members" table.
+	KnowledgeSpaceMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "space_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"reader", "editor"}},
+	}
+	// KnowledgeSpaceMembersTable holds the schema information for the "knowledge_space_members" table.
+	KnowledgeSpaceMembersTable = &schema.Table{
+		Name:       "knowledge_space_members",
+		Columns:    KnowledgeSpaceMembersColumns,
+		PrimaryKey: []*schema.Column{KnowledgeSpaceMembersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgespacemember_space_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeSpaceMembersColumns[2], KnowledgeSpaceMembersColumns[3]},
+			},
+			{
+				Name:    "knowledgespacemember_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeSpaceMembersColumns[3]},
+			},
+		},
+	}
+	// KnowledgeVersionsColumns holds the columns for the "knowledge_versions" table.
+	KnowledgeVersionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "document_id", Type: field.TypeString, Size: 32},
+		{Name: "number", Type: field.TypeInt},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"console", "agent"}},
+		{Name: "computer", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "session_id", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
+		{Name: "text", Type: field.TypeString, Size: 2147483647},
+	}
+	// KnowledgeVersionsTable holds the schema information for the "knowledge_versions" table.
+	KnowledgeVersionsTable = &schema.Table{
+		Name:       "knowledge_versions",
+		Columns:    KnowledgeVersionsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeVersionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgeversion_document_id_number",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeVersionsColumns[2], KnowledgeVersionsColumns[3]},
+			},
+		},
+	}
 	// MembershipsColumns holds the columns for the "memberships" table.
 	MembershipsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -356,116 +691,6 @@ var (
 			},
 		},
 	}
-	// PagesColumns holds the columns for the "pages" table.
-	PagesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "team_id", Type: field.TypeString, Size: 32},
-		{Name: "owner_id", Type: field.TypeString, Size: 32},
-		{Name: "kind", Type: field.TypeEnum, Enums: []string{"html", "markdown", "svg"}},
-		{Name: "title", Type: field.TypeString, Size: 480},
-		{Name: "sharing", Type: field.TypeEnum, Enums: []string{"private", "members", "team"}, Default: "private"},
-		{Name: "current_version", Type: field.TypeInt},
-		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-	}
-	// PagesTable holds the schema information for the "pages" table.
-	PagesTable = &schema.Table{
-		Name:       "pages",
-		Columns:    PagesColumns,
-		PrimaryKey: []*schema.Column{PagesColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "page_team_id_owner_id_updated_at",
-				Unique:  false,
-				Columns: []*schema.Column{PagesColumns[2], PagesColumns[3], PagesColumns[8]},
-			},
-			{
-				Name:    "page_team_id_sharing_updated_at",
-				Unique:  false,
-				Columns: []*schema.Column{PagesColumns[2], PagesColumns[6], PagesColumns[8]},
-			},
-		},
-	}
-	// PageFilesColumns holds the columns for the "page_files" table.
-	PageFilesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "version_id", Type: field.TypeString, Size: 32},
-		{Name: "team_id", Type: field.TypeString, Size: 32},
-		{Name: "path", Type: field.TypeString, Size: 255},
-		{Name: "content_type", Type: field.TypeString, Size: 100},
-		{Name: "size", Type: field.TypeInt64},
-		{Name: "digest", Type: field.TypeString, Size: 32},
-	}
-	// PageFilesTable holds the schema information for the "page_files" table.
-	PageFilesTable = &schema.Table{
-		Name:       "page_files",
-		Columns:    PageFilesColumns,
-		PrimaryKey: []*schema.Column{PageFilesColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "pagefile_version_id_path",
-				Unique:  true,
-				Columns: []*schema.Column{PageFilesColumns[2], PageFilesColumns[4]},
-			},
-			{
-				Name:    "pagefile_team_id_digest",
-				Unique:  false,
-				Columns: []*schema.Column{PageFilesColumns[3], PageFilesColumns[7]},
-			},
-		},
-	}
-	// PageMembersColumns holds the columns for the "page_members" table.
-	PageMembersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "page_id", Type: field.TypeString, Size: 32},
-		{Name: "user_id", Type: field.TypeString, Size: 32},
-		{Name: "added_by", Type: field.TypeString, Size: 32},
-	}
-	// PageMembersTable holds the schema information for the "page_members" table.
-	PageMembersTable = &schema.Table{
-		Name:       "page_members",
-		Columns:    PageMembersColumns,
-		PrimaryKey: []*schema.Column{PageMembersColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "pagemember_page_id_user_id",
-				Unique:  true,
-				Columns: []*schema.Column{PageMembersColumns[2], PageMembersColumns[3]},
-			},
-			{
-				Name:    "pagemember_user_id_page_id",
-				Unique:  false,
-				Columns: []*schema.Column{PageMembersColumns[3], PageMembersColumns[2]},
-			},
-		},
-	}
-	// PageVersionsColumns holds the columns for the "page_versions" table.
-	PageVersionsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "page_id", Type: field.TypeString, Size: 32},
-		{Name: "number", Type: field.TypeInt},
-		{Name: "author_id", Type: field.TypeString, Size: 32},
-		{Name: "computer", Type: field.TypeString, Size: 256, Default: ""},
-		{Name: "session_id", Type: field.TypeString, Size: 128, Default: ""},
-		{Name: "note", Type: field.TypeString, Size: 800, Default: ""},
-		{Name: "size", Type: field.TypeInt64},
-	}
-	// PageVersionsTable holds the schema information for the "page_versions" table.
-	PageVersionsTable = &schema.Table{
-		Name:       "page_versions",
-		Columns:    PageVersionsColumns,
-		PrimaryKey: []*schema.Column{PageVersionsColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "pageversion_page_id_number",
-				Unique:  true,
-				Columns: []*schema.Column{PageVersionsColumns[2], PageVersionsColumns[3]},
-			},
-		},
-	}
 	// PasswordsColumns holds the columns for the "passwords" table.
 	PasswordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -515,6 +740,37 @@ var (
 				Name:    "plugingrant_user_id",
 				Unique:  false,
 				Columns: []*schema.Column{PluginGrantsColumns[4]},
+			},
+		},
+	}
+	// PluginPackagesColumns holds the columns for the "plugin_packages" table.
+	PluginPackagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "author_id", Type: field.TypeString, Size: 32},
+		{Name: "package", Type: field.TypeString, Size: 214},
+		{Name: "version", Type: field.TypeString, Size: 100},
+		{Name: "sha256", Type: field.TypeString, Size: 64},
+		{Name: "size", Type: field.TypeInt64},
+		{Name: "files", Type: field.TypeJSON},
+		{Name: "published", Type: field.TypeBool, Default: false},
+	}
+	// PluginPackagesTable holds the schema information for the "plugin_packages" table.
+	PluginPackagesTable = &schema.Table{
+		Name:       "plugin_packages",
+		Columns:    PluginPackagesColumns,
+		PrimaryKey: []*schema.Column{PluginPackagesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pluginpackage_team_id_package_version",
+				Unique:  true,
+				Columns: []*schema.Column{PluginPackagesColumns[2], PluginPackagesColumns[4], PluginPackagesColumns[5]},
+			},
+			{
+				Name:    "pluginpackage_team_id_author_id",
+				Unique:  false,
+				Columns: []*schema.Column{PluginPackagesColumns[2], PluginPackagesColumns[3]},
 			},
 		},
 	}
@@ -608,37 +864,6 @@ var (
 				Name:    "relay_pairing_offers_host",
 				Unique:  false,
 				Columns: []*schema.Column{RelayPairingOffersColumns[2]},
-			},
-		},
-	}
-	// ResourceArtifactsColumns holds the columns for the "resource_artifacts" table.
-	ResourceArtifactsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
-		{Name: "team_id", Type: field.TypeString, Size: 32},
-		{Name: "author_id", Type: field.TypeString, Size: 32},
-		{Name: "package", Type: field.TypeString, Size: 214},
-		{Name: "version", Type: field.TypeString, Size: 100},
-		{Name: "sha256", Type: field.TypeString, Size: 64},
-		{Name: "size", Type: field.TypeInt64},
-		{Name: "files", Type: field.TypeJSON},
-		{Name: "published", Type: field.TypeBool, Default: false},
-	}
-	// ResourceArtifactsTable holds the schema information for the "resource_artifacts" table.
-	ResourceArtifactsTable = &schema.Table{
-		Name:       "resource_artifacts",
-		Columns:    ResourceArtifactsColumns,
-		PrimaryKey: []*schema.Column{ResourceArtifactsColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "resourceartifact_team_id_package_version",
-				Unique:  true,
-				Columns: []*schema.Column{ResourceArtifactsColumns[2], ResourceArtifactsColumns[4], ResourceArtifactsColumns[5]},
-			},
-			{
-				Name:    "resourceartifact_team_id_author_id",
-				Unique:  false,
-				Columns: []*schema.Column{ResourceArtifactsColumns[2], ResourceArtifactsColumns[3]},
 			},
 		},
 	}
@@ -860,6 +1085,10 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ArtifactsTable,
+		ArtifactFilesTable,
+		ArtifactMembersTable,
+		ArtifactVersionsTable,
 		BudgetEventsTable,
 		BudgetGatesTable,
 		BudgetNoticesTable,
@@ -869,19 +1098,23 @@ var (
 		ConfigRevisionsTable,
 		IdentitiesTable,
 		InvitesTable,
+		KnowledgeAttachmentsTable,
+		KnowledgeCommentsTable,
+		KnowledgeDocumentsTable,
+		KnowledgeFoldersTable,
+		KnowledgeProposalsTable,
+		KnowledgeSpacesTable,
+		KnowledgeSpaceMembersTable,
+		KnowledgeVersionsTable,
 		MembershipsTable,
 		ModelRatesTable,
-		PagesTable,
-		PageFilesTable,
-		PageMembersTable,
-		PageVersionsTable,
 		PasswordsTable,
 		PluginGrantsTable,
+		PluginPackagesTable,
 		RateWindowsTable,
 		RelayHostsTable,
 		RelayPairingsTable,
 		RelayPairingOffersTable,
-		ResourceArtifactsTable,
 		ResourceSubmissionsTable,
 		TeamsTable,
 		TeamConfigsTable,
@@ -893,6 +1126,22 @@ var (
 )
 
 func init() {
+	ArtifactsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	ArtifactFilesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	ArtifactMembersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	ArtifactVersionsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
 	BudgetEventsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
@@ -931,6 +1180,38 @@ func init() {
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}
+	KnowledgeAttachmentsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeCommentsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeDocumentsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeFoldersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeProposalsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeSpacesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeSpaceMembersTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeVersionsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
 	MembershipsTable.ForeignKeys[0].RefTable = TeamsTable
 	MembershipsTable.ForeignKeys[1].RefTable = UsersTable
 	MembershipsTable.Annotation = &entsql.Annotation{
@@ -941,22 +1222,6 @@ func init() {
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}
-	PagesTable.Annotation = &entsql.Annotation{
-		Charset:   "utf8mb4",
-		Collation: "utf8mb4_bin",
-	}
-	PageFilesTable.Annotation = &entsql.Annotation{
-		Charset:   "utf8mb4",
-		Collation: "utf8mb4_bin",
-	}
-	PageMembersTable.Annotation = &entsql.Annotation{
-		Charset:   "utf8mb4",
-		Collation: "utf8mb4_bin",
-	}
-	PageVersionsTable.Annotation = &entsql.Annotation{
-		Charset:   "utf8mb4",
-		Collation: "utf8mb4_bin",
-	}
 	PasswordsTable.ForeignKeys[0].RefTable = UsersTable
 	PasswordsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
@@ -964,6 +1229,10 @@ func init() {
 	}
 	PluginGrantsTable.ForeignKeys[0].RefTable = UsersTable
 	PluginGrantsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	PluginPackagesTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}
@@ -980,10 +1249,6 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	RelayPairingOffersTable.Annotation = &entsql.Annotation{
-		Charset:   "utf8mb4",
-		Collation: "utf8mb4_bin",
-	}
-	ResourceArtifactsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

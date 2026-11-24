@@ -1,6 +1,6 @@
 # Self-hosting the community server
 
-> **Status:** Current · **Updated:** 2026-11-19
+> **Status:** Current · **Updated:** 2026-11-24
 
 Run a community instance, connect a member's DSH, and retain the database,
 private plugin bytes and secrets across upgrades.
@@ -58,7 +58,7 @@ configuration file.
 | Setting | Purpose |
 | --- | --- |
 | `APP_URL` | The exact origin members open and browsers use for authorization. |
-| `CONTENT_URL` | Optional origin agents' pages are served from, on a domain of its own pointed at this server; absent means `APP_URL`, sandboxed. |
+| `CONTENT_URL` | Optional origin agents' artifacts are served from, on a domain of its own pointed at this server; absent means `APP_URL`, sandboxed. |
 | `HOST`, `PORT` | Source binary listener; Compose fixes its internal listener. |
 | `DATABASE_URL` | Optional Postgres, MySQL or SQLite URL; absent means local SQLite. |
 | `SMTP_URL`, `AUTH_EMAIL_FROM` | Email sign-in codes instead of password-only sign-in. |
@@ -84,21 +84,23 @@ under the provider secret. Private provider addresses and plain HTTP require
 networks. Use `false` on an instance shared with untrusted people. Provider
 address policy is separate from the plugin's HTTPS requirement.
 
-## Retain private artifacts
+## Retain private packages
 
 The default `ARTIFACT_STORAGE_PROVIDER=local` stores archives under the data
 directory's `artifacts/`, or `ARTIFACT_LOCAL_DIR` if specified. A disposable
-container directory is not retained storage. Multiple artifact-serving processes
+container directory is not retained storage. Multiple package-serving processes
 must read the same bytes; independent volumes do not provide a shared store.
 
 For S3-compatible private storage, configure the supported `ARTIFACT_S3_*`
 settings and follow the verified offline migration in
-[team assistant storage](../tech/team-assistant.md#private-plugin-artifacts).
+[team assistant storage](../tech/team-assistant.md#private-plugin-packages).
 The service never falls back to local disk after S3 is explicitly selected.
-The database keeps artifact metadata; a database backup alone cannot recreate
-private archives.
+The database keeps package metadata; a database backup alone cannot recreate
+private archives. The same store keeps the files of artifacts
+(`teams/{teamId}/pages/…`) and knowledge attachments
+(`teams/{teamId}/knowledge/…`), so back it up with the database.
 
-Both providers organize retained objects as `teams/{teamId}/plugins/{artifactId}.tgz`;
+Both providers organize retained objects as `teams/{teamId}/plugins/{packageId}.tgz`;
 an edition that stores its own objects adds `teams/{teamId}/{kind}/{id}` beside them.
 Before a member process serves, startup verifies referenced bytes and copies
 missing scoped objects from the old flat layout, retaining sources. The offline
@@ -131,7 +133,7 @@ continue to use the host's own update and approval flow.
 ## Upgrade and recover
 
 Before an upgrade, stop writers and capture a consistent backup of the database,
-private artifact directory or bucket, and generated/encryption/signing secrets.
+private package directory or bucket, and generated/encryption/signing secrets.
 Use the database's supported backup mechanism and retain all archive objects
 referenced by that snapshot. Keep the deployment configuration securely too.
 A console resource export is scoped to team resources, not a full operator backup.
@@ -143,6 +145,6 @@ Do not rotate signing or provider-key secrets as part of a routine upgrade.
 
 Before rolling back a binary, check whether its schema and accounting invariants
 still support the database. Migrations are never edited or reversed manually;
-prefer a forward fix. Restore a full database-and-artifact snapshot only with
+prefer a forward fix. Restore a full database-and-storage snapshot only with
 writers stopped and with the understanding that later writes will be lost.
 The storage migration's rollback procedure also requires all retained objects.

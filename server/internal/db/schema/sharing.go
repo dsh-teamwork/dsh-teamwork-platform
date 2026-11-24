@@ -44,11 +44,11 @@ func (ConfigRevision) Indexes() []ent.Index {
 	return []ent.Index{index.Fields("team_id", "config_id", "version").Unique(), index.Fields("team_id", "created_at")}
 }
 
-// ResourceArtifact describes immutable bytes stored outside the public web root.
-type ResourceArtifact struct{ ent.Schema }
+// PluginPackage describes immutable bytes stored outside the public web root.
+type PluginPackage struct{ ent.Schema }
 
-func (ResourceArtifact) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
-func (ResourceArtifact) Fields() []ent.Field {
+func (PluginPackage) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
+func (PluginPackage) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("team_id").MaxLen(32).Immutable(), field.String("author_id").MaxLen(32).Immutable(),
 		field.String("package").MaxLen(214).Immutable(), field.String("version").MaxLen(100).Immutable(),
@@ -56,6 +56,6 @@ func (ResourceArtifact) Fields() []ent.Field {
 		field.JSON("files", []string{}).Immutable(), field.Bool("published").Default(false),
 	}
 }
-func (ResourceArtifact) Indexes() []ent.Index {
+func (PluginPackage) Indexes() []ent.Index {
 	return []ent.Index{index.Fields("team_id", "package", "version").Unique(), index.Fields("team_id", "author_id")}
 }

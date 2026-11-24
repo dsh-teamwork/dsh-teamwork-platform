@@ -15,7 +15,7 @@ type ProcessEntry = Tool | Reasoning;
 export type Row =
   | Extract<ConversationItem, { kind: 'user' }>
   | Omit<Extract<ConversationItem, { kind: 'assistant' }>, 'reasoning' | 'turn'>
-  | Extract<ConversationItem, { kind: 'page' }>
+  | Extract<ConversationItem, { kind: 'artifact' }>
   | Deliverable
   | Extract<ConversationItem, { kind: 'failed' }>
   | { kind: 'work'; id: string; count: number }
