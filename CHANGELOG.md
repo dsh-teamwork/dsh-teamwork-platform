@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-24 — Knowledge is "knowledge documents" in Chinese
+
+- **What:** The Chinese console, its `/docs` pages and the plugin's Chinese guide call Knowledge "knowledge documents" rather than "knowledge base"; English is unchanged.
+- **Why:** The module holds documents people keep together, and the name says so.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/messages/zh-CN.json`, `docs/tech/knowledge.md`.
+
 ## 2026-11-24 — Knowledge's spaces in the sidebar
 
 - **What:** The console's sidebar lists the knowledge spaces a member reads beneath Knowledge, as My DSH lists computers, the open one selected, and New space for the team's admin. Knowledge opens on an overview of its spaces (who reads each, what it holds, when it changed); a space opens its own page, `/teams/{teamId}/knowledge/spaces/{spaceId}`, with its most recently changed documents, and the tree beside it shows that space alone except while finding. A document's path links back to its space.

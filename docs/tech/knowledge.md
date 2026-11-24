@@ -45,7 +45,7 @@ The first version, on a self-hosted server as on the hosted one:
 The names below are the code's as well as the docs', in every repository.
 
 - **Knowledge**: the module, and a team's whole tree. The console calls it
-  "Knowledge" (in Chinese "knowledge base"). Package `knowledge`, tables
+  "Knowledge" (in Chinese "knowledge documents"). Package `knowledge`, tables
   `knowledge_*`, routes under `/knowledge`.
 - **Space**: a top-level folder, the one thing that carries access (readers
   and editors). A team has any number; what is below a space follows it.

@@ -572,7 +572,7 @@
       "submissions": "我的提交",
       "myDsh": "我的 DSH",
       "artifacts": "共享页面",
-      "knowledge": "知识库"
+      "knowledge": "知识文档"
     },
     "switcher": {
       "label": "切换团队",
@@ -723,7 +723,7 @@
       "ask_user_question": "向用户提问",
       "skill": "调用技能",
       "teamwork_artifact": "发布页面",
-      "teamwork_knowledge": "提议修改知识库文档"
+      "teamwork_knowledge": "提议修改知识文档"
     },
     "avatars": {
       "assistant": "团队助理",
@@ -1427,7 +1427,7 @@
       }
     },
     "knowledge": {
-      "title": "知识库",
+      "title": "知识文档",
       "formattingNote": "格式整理",
       "nameSlash": "名称不能包含斜杠。",
       "nameHint": "最多 {max} 个字符。",
@@ -1463,7 +1463,7 @@
       "agent": "智能体",
       "agentOn": "{computer} 上的智能体",
       "emptyTitle": "团队知道的事，集中放在一处",
-      "emptyHow": "知识库把文档放在空间和文件夹里：术语表、产品规则、操作手册。在左侧选择一篇，或按标题查找。写 [[文档标题]] 就能链接到另一篇文档。",
+      "emptyHow": "知识文档按空间和文件夹整理：术语表、产品规则、操作手册。在左侧选择一篇，或按标题查找。写 [[文档标题]] 就能链接到另一篇文档。",
       "emptyAgents": "每位成员的智能体都会读取一份同步副本，范围是该成员能读的空间，并注明回答依据的文档。智能体从不直接修改文档：它只提出修改，由空间的编辑者接受或拒绝。",
       "diff": {
         "between": "{before} → {after}",
@@ -1976,7 +1976,7 @@
     "provider_address_unresolved": "找不到这个主机，请检查地址。",
     "provider_key_rejected": "提供商拒绝了这个 API 密钥，请检查它是否完整、是否仍然有效。",
     "model_metadata_unavailable": "无法读取公开模型目录。请重试，或手动填写。",
-    "knowledge_not_found": "知识库里没有这项内容，或你没有所在空间的阅读权限。",
+    "knowledge_not_found": "知识文档里没有这项内容，或你没有所在空间的阅读权限。",
     "knowledge_not_editor": "只有此空间的编辑者可以这样做。",
     "knowledge_stale": "打开后文档已有新版本。请加载当前版本后重试。",
     "knowledge_name_taken": "这里已有同名的内容。",
