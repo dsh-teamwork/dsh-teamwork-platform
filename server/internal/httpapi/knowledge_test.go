@@ -274,6 +274,20 @@ func TestKnowledgeAttachmentsKeepTheirBytes(t *testing.T) {
 			t.Fatalf("served %d %q %v", res.StatusCode, got, res.Header)
 		}
 
+		// A PDF is shown inline without a sandbox, which Chromium's viewer
+		// refuses; an SVG, which can hold script, keeps one.
+		for name, sandboxed := range map[string]bool{"spec.pdf": false, "icon.svg": true} {
+			must(t, attach(t, e, b.client, browserHeader, doc+"/attachments", name, []byte("<x/>")), 201)
+			res, err := b.client.Get(e.url + doc + "/attachments/" + name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			res.Body.Close()
+			if has := strings.HasPrefix(res.Header.Get("Content-Security-Policy"), "sandbox"); has != sandboxed || !strings.HasPrefix(res.Header.Get("Content-Disposition"), "inline") {
+				t.Fatalf("%s served with %v", name, res.Header)
+			}
+		}
+
 		// Narrowed away from b, the file is as hidden as the document.
 		must(t, admin.send("PUT", base+"/spaces/"+space+"/access", map[string]any{"reading": "members", "readers": []string{}, "editors": []string{}}), 200)
 		if res, _ := b.client.Get(e.url + doc + "/attachments/flow.png"); res.StatusCode != 404 {
@@ -282,7 +296,7 @@ func TestKnowledgeAttachmentsKeepTheirBytes(t *testing.T) {
 
 		// Deleting the document forgets the bytes no other document names.
 		objects, _ := filepath.Glob(filepath.Join(store.Dir, "teams", teamID, "knowledge", "*"))
-		if len(objects) != 1 {
+		if len(objects) != 2 { // the PNG, and the PDF and SVG holding the same bytes
 			t.Fatalf("stored %v", objects)
 		}
 		must(t, admin.send("DELETE", doc, nil), 204)

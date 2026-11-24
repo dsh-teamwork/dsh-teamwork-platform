@@ -225,8 +225,8 @@ func (s *Server) knowledgeRoutes(get, post func(string, handler), write func(str
 
 // serveAttachment writes an attachment's bytes as a file of its own type that
 // a browser runs nothing in: an image or a PDF shown inline, anything else
-// downloaded, and every one under a sandbox, so an SVG's script never runs
-// as the member viewing it. Membership is re-read on every request, so it
+// downloaded, and every one but a PDF under a sandbox, so an SVG's script
+// never runs as the member viewing it. Membership is re-read on every request, so it
 // is cached only by a browser that revalidates.
 func serveAttachment(w http.ResponseWriter, r *http.Request, a knowledge.Attachment, body io.Reader, digest string) {
 	h := w.Header()
@@ -234,7 +234,12 @@ func serveAttachment(w http.ResponseWriter, r *http.Request, a knowledge.Attachm
 	h.Set("ETag", etag)
 	h.Set("Cache-Control", "private, no-cache")
 	h.Set("X-Content-Type-Options", "nosniff")
-	h.Set("Content-Security-Policy", "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'")
+	// A PDF is shown by the browser's own viewer, which runs none of the
+	// file's script and which Chromium refuses to start in a sandboxed
+	// document; every other type is sandboxed, an SVG above all.
+	if a.ContentType != "application/pdf" {
+		h.Set("Content-Security-Policy", "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'")
+	}
 	if r.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)
 		return
