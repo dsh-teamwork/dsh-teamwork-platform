@@ -125,7 +125,8 @@ Both declare the same scale; the console adds three outcome colours.
 | `--ring` | `oklch(0.452 0.124 270)` | `oklch(0.766 0.095 271)` | Focus ring (`outline-ring/50` on everything): navy |
 
 The operator console (`apps/manage`) also has these, `--success` with the
-same values as above:
+same values as above; the web app has `--warning` too, for a session's
+document preview that lacks fonts:
 
 | Token | Light | Dark |
 | --- | --- | --- |

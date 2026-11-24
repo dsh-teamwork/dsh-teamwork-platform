@@ -12,7 +12,9 @@ export type TabContent =
   | { kind: 'start' }
   | { kind: 'files' }
   | { kind: 'file'; path: string; line?: number }
-  | { kind: 'artifact'; artifact: PublishedArtifact };
+  | { kind: 'artifact'; artifact: PublishedArtifact }
+  /** What a turn changed, DSH's review of it, opened at the file `index` of its list. */
+  | { kind: 'changes'; seq: number; turn: number; index?: number };
 
 export type Tab = TabContent & { id: string };
 
@@ -53,6 +55,7 @@ function identity(content: TabContent): string {
   switch (content.kind) {
     case 'file': return `file:${content.path}`;
     case 'artifact': return `artifact:${content.artifact.teamId}:${content.artifact.artifactId}`;
+    case 'changes': return `changes:${content.seq}`;
     default: return content.kind;
   }
 }
@@ -255,6 +258,7 @@ function validTab(tab: unknown): tab is Tab {
     case 'start':
     case 'files': return true;
     case 'file': return typeof value.path === 'string' && (value.line === undefined || typeof value.line === 'number');
+    case 'changes': return typeof value.seq === 'number' && typeof value.turn === 'number' && (value.index === undefined || typeof value.index === 'number');
     case 'artifact': return !!value.artifact && typeof (value.artifact as PublishedArtifact).artifactId === 'string' && typeof (value.artifact as PublishedArtifact).teamId === 'string';
     default: return false;
   }

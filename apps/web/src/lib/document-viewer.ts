@@ -8,8 +8,7 @@ import { mountPdfViewer, type PdfLabels, type PdfTheme } from './pdf-viewer';
 import { mountWorkbookViewer, type WorkbookLabels } from './workbook-viewer';
 
 export type DocumentPayload =
-  // The App names fewer controls than the console: what it leaves out is shown in English until it names them.
-  | { workbook: false; data: Uint8Array | string; labels: Omit<PdfLabels, 'zoom' | 'fitWidth'> & Partial<PdfLabels>; theme?: PdfTheme }
+  | { workbook: false; data: Uint8Array | string; labels: PdfLabels; theme?: PdfTheme }
   | { workbook: true; data: Uint8Array | string; labels: WorkbookLabels };
 
 const viewer = document.getElementById('viewer')!;
@@ -20,7 +19,7 @@ function show(payload: DocumentPayload) {
   dispose = undefined;
   const bytes = typeof payload.data === 'string' ? Uint8Array.from(atob(payload.data), (c) => c.charCodeAt(0)) : payload.data;
   try {
-    dispose = payload.workbook ? mountWorkbookViewer(viewer, bytes, payload.labels) : mountPdfViewer(viewer, bytes, { zoom: 'Zoom', fitWidth: 'Fit width', ...payload.labels }, payload.theme);
+    dispose = payload.workbook ? mountWorkbookViewer(viewer, bytes, payload.labels) : mountPdfViewer(viewer, bytes, payload.labels, payload.theme);
   } catch {
     viewer.textContent = payload.labels.failed;
   }

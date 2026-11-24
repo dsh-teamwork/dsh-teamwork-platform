@@ -149,6 +149,28 @@ describe('a computer\'s sessions over any link', () => {
     unfollow();
   });
 
+  it('reads a text file a page at a time, asks for what a turn changed, and passes on missing fonts', async () => {
+    const { link } = fakeLink();
+    const call = vi.fn<DshLink['call']>(async (_computer, method, args) => {
+      const request = (args as { request: Record<string, unknown> }).request;
+      if (method === 'teamwork/readFile') {
+        return request.offset ? { path: 'a.md', text: 'tail', bytes: 8, truncated: false, offset: 4, version: 'v1' }
+          : { path: 'a.md', text: 'head', bytes: 8, truncated: true, offset: 0, next: 4, version: 'v1' };
+      }
+      if (method === 'teamwork/changes') return { turn: 2, total: 1, added: 3, deleted: 1, files: [{ path: 'a.md', display: 'a.md', added: 3, deleted: 1 }] };
+      if (method === 'teamwork/readDocument') return { offset: 0, size: 3, version: 'r', data: base64(new Uint8Array([1, 2, 3])), missingFonts: ['Microsoft YaHei'] };
+      throw new Error(method);
+    });
+    const sessions = createDshSessions({ ...link, call }, { locale: () => 'en', nextId: () => 'id' });
+    const head = await sessions.readFile('c', 's1', 'a.md');
+    expect(head).toMatchObject({ text: 'head', next: 4, version: 'v1' });
+    expect(await sessions.readFile('c', 's1', 'a.md', { offset: head.next!, version: head.version! })).toMatchObject({ text: 'tail' });
+    expect(call).toHaveBeenLastCalledWith('c', 'teamwork/readFile', { request: { sessionId: 's1', path: 'a.md', offset: 4, version: 'v1' } });
+    expect(await sessions.turnChanges('c', 's1', 9)).toMatchObject({ turn: 2, added: 3, files: [{ display: 'a.md' }] });
+    expect(call).toHaveBeenLastCalledWith('c', 'teamwork/changes', { request: { sessionId: 's1', seq: 9 } });
+    expect((await sessions.readDocument('c', 's1', 'deck.pptx')).missingFonts).toEqual(['Microsoft YaHei']);
+  });
+
   it('reassembles PDF ranges, rejects changed versions, and stops reading after cancellation', async () => {
     const { link } = fakeLink();
     const full = new Uint8Array(128 * 1024 + 5).fill(32);
@@ -161,9 +183,10 @@ describe('a computer\'s sessions over any link', () => {
       return { offset, size: full.length, version: 'stable', data: base64(full.subarray(offset, offset + 128 * 1024)) };
     });
     const sessions = createDshSessions({ ...link, call }, { locale: () => 'en', nextId: () => 'id' });
-    const received = await sessions.readDocument('cloud', 's1', 'report.pdf');
+    const { bytes: received, missingFonts } = await sessions.readDocument('cloud', 's1', 'report.pdf');
     expect(received).toHaveLength(full.length);
     expect(received.every((byte, index) => byte === full[index])).toBe(true);
+    expect(missingFonts).toEqual([]);
     expect(call).toHaveBeenCalledTimes(2);
 
     const controller = new AbortController();

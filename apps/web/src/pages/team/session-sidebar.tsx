@@ -442,12 +442,14 @@ function tabTitle(tab: Tab, t: ReturnType<typeof useTranslations<'team.dsh.sideb
     case 'files': return t('files');
     case 'file': return baseName(tab.path) || tab.path;
     case 'artifact': return tab.artifact.title;
+    case 'changes': return t('changesTitle', { turn: tab.turn });
   }
 }
 
 function TabIcon({ tab }: { tab: Tab }) {
   if (tab.kind === 'file') return <FileTypeIcon path={tab.path} size={16} />;
   if (tab.kind === 'files') return <FileTypeIcon kind="folder" size={16} />;
+  if (tab.kind === 'changes') return <FileTypeIcon kind="code" size={16} />;
   if (tab.kind === 'artifact') {
     const Icon = KIND_ICON[tab.artifact.kind];
     return <Icon className="size-4 shrink-0" aria-hidden />;

@@ -3,23 +3,28 @@
  * (`ui-sidebar-files` and `ui-sidebar-documentpreview` in DeepSeek Harness): the Files tab, a tree of the working
  * directory searchable by name, and a file's tab, its path bar above it (the absolute path with the name in full ink,
  * the renderer, wrapping, reload and the tree beside it) and its body by kind: a PDF, an Office file or a workbook in
- * the sandboxed preview, Markdown rendered, HTML in a frame that runs nothing, code coloured with its line numbers,
- * anything else as text. The plugin reads them under that directory alone; nothing here writes.
+ * the sandboxed preview, an image as it is, Markdown rendered, HTML in a frame that runs nothing, code coloured with
+ * its line numbers, anything else as text, a long text a page at a time. A file that changes on the computer is read
+ * again where the reader is. A turn's changes open as DSH's review of them (`ChangesReview`). The plugin reads them
+ * under that directory alone; nothing here writes.
  */
 
-import { Check, ChevronDown, Copy, Eye, EyeOff, FolderClosed, FolderOpen, RefreshCw, Search, WrapText, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Copy, Eye, EyeOff, FolderClosed, FolderOpen, RefreshCw, Search, TriangleAlert, WrapText, X } from 'lucide-react';
 import { ContextMenu, DropdownMenu } from 'radix-ui';
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import type { ThemedToken } from 'shiki';
 import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
 
-import { documentPreviewKind, RelayError, type FileText as Text, type FolderListing } from '@dsh-teamwork/relay-client';
+import {
+  documentPreviewKind, RelayError, type DocumentBytes, type FileDiff, type FileText as Text, type FolderListing, type TurnChanges,
+} from '@dsh-teamwork/relay-client';
 import { baseName, classifyFileType, FileTypeIcon } from '@/components/file-type-icon';
 import { highlight } from '@/lib/highlight';
 import { cn } from '@/lib/utils';
 import { SessionMarkdown } from './session-markdown';
 import { IconButton } from './session-sidebar';
+import { DiffLines, LineCounts } from './session-work';
 
 const SessionDocumentPreview = lazy(() => import('./session-document-preview'));
 
@@ -27,8 +32,11 @@ const SessionDocumentPreview = lazy(() => import('./session-document-preview'));
 export interface FilesClient {
   listFiles(computerId: string, sessionId: string, path: string): Promise<FolderListing>;
   searchFiles(computerId: string, sessionId: string, query: string): Promise<{ matches: string[]; truncated: boolean }>;
-  readDocument(computerId: string, sessionId: string, path: string, signal?: AbortSignal): Promise<Uint8Array>;
-  readFile(computerId: string, sessionId: string, path: string): Promise<Text>;
+  readDocument(computerId: string, sessionId: string, path: string, signal?: AbortSignal): Promise<DocumentBytes>;
+  readFile(computerId: string, sessionId: string, path: string, page?: { offset: number; version: string }): Promise<Text>;
+  statFile(computerId: string, sessionId: string, path: string): Promise<{ version: string; bytes: number }>;
+  turnChanges(computerId: string, sessionId: string, seq: number): Promise<TurnChanges>;
+  changeDiff(computerId: string, sessionId: string, seq: number, index: number): Promise<FileDiff>;
 }
 
 /** A file to show, from the tree or from the conversation; `line` is where to open it. */
@@ -336,14 +344,23 @@ export function FilesPage({ reload, onReload, onOpen, ...source }: Source & { re
 // ---------------------------------------------------------------------------------------------------------------
 // A file
 
-type View = 'pdf' | 'workbook' | 'markdown' | 'html' | 'code' | 'text';
+type View = 'pdf' | 'workbook' | 'image' | 'markdown' | 'html' | 'code' | 'text';
 
-/** Kinds no renderer here reads: the plugin sends text and documents, not these. */
-const BINARY = /\.(png|jpe?g|gif|webp|bmp|ico|tiff?|heic|heif|avif|mp4|mov|m4v|webm|mkv|avi|mp3|wav|flac|ogg|m4a|zip|tar|gz|tgz|bz2|xz|7z|rar|exe|dll|so|dylib|bin|o|a|class|jar|wasm|ttf|otf|woff2?|eot|psd|ai|sketch|fig|sqlite|db|key|pages|numbers)$/i;
-const IMAGE = /\.(png|jpe?g|gif|webp|bmp|ico|tiff?|heic|heif|avif)$/i;
+/** Kinds no renderer here reads: the plugin sends text, documents and images, not these. */
+const BINARY = /\.(tiff?|heic|heif|mp4|mov|m4v|webm|mkv|avi|mp3|wav|flac|ogg|m4a|zip|tar|gz|tgz|bz2|xz|7z|rar|exe|dll|so|dylib|bin|o|a|class|jar|wasm|ttf|otf|woff2?|eot|psd|ai|sketch|fig|sqlite|db|key|pages|numbers)$/i;
+/** Images the plugin sends as they are (from 0.23.0), by their extension's media type. */
+const IMAGES: Record<string, string> = {
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+  ico: 'image/x-icon', svg: 'image/svg+xml', avif: 'image/avif',
+};
+const imageType = (path: string) => IMAGES[/\.([a-z]+)$/i.exec(path)?.[1]?.toLowerCase() ?? ''];
+
+/** How often a shown file's version is asked, to read it again when it changes on the computer. */
+const WATCH_MS = 4000;
 
 /** The renderers that can draw `path`, the first being the one it opens in. */
 function viewsOf(path: string): View[] {
+  if (imageType(path)) return /\.svg$/i.test(path) ? ['image', 'code'] : ['image'];
   const document = documentPreviewKind(path);
   if (document) return [document];
   const kind = classifyFileType(path);
@@ -369,11 +386,17 @@ export function FileView({ path, line, reload, onReload, onOpen, ...source }: So
   const [navigator, setNavigator] = useState(false);
   const wraps = view === 'code' || view === 'text';
   const binary = BINARY.test(path);
+  const [fonts, setFonts] = useState<string[]>([]);
+  const box = useRef<HTMLDivElement>(null);
+  const watch = useFileWatch(source, path, box);
+  // A body reads its file again in place, keeping where the reader is, on a reload or a change on the computer.
+  const refresh = reload + watch.changes;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div ref={box} className="flex min-h-0 flex-1 flex-col">
       <Bar>
         <PathLabel path={absolute(source.root, path)} />
+        {fonts.length > 0 && <FontNotice fonts={fonts} />}
         {views.length > 1 && (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger className="flex h-7 max-w-40 shrink-0 items-center gap-1 rounded-lg px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
@@ -402,14 +425,20 @@ export function FileView({ path, line, reload, onReload, onOpen, ...source }: So
           {navigator ? <FolderOpen className="size-[15px]" aria-hidden /> : <FolderClosed className="size-[15px]" aria-hidden />}
         </IconButton>
       </Bar>
+      {watch.gone && (
+        <div role="status" className="flex shrink-0 items-center gap-2 border-b-[0.5px] border-border bg-muted px-4 py-1.5 text-xs text-muted-foreground">
+          <span className="flex-1">{t('fileGone')}</span>
+          <button type="button" onClick={onReload} className="rounded-md px-2 py-0.5 text-foreground hover:bg-accent">{t('reloadNow')}</button>
+        </div>
+      )}
       <Navigated open={navigator} onClose={() => setNavigator(false)}
         tree={<FileTree source={source} current={path} hidden={false} query="" reload={reload} onOpen={(next) => onOpen(next)} />}>
         {binary ? (
-          <Notice path={path} message={IMAGE.test(path) ? t('imageUnsupported') : t('unsupported')} />
-        ) : view === 'pdf' || view === 'workbook' ? (
-          <DocumentBody key={reload} source={source} path={path} workbook={view === 'workbook'} />
+          <Notice path={path} message={t('unsupported')} />
+        ) : view === 'pdf' || view === 'workbook' || view === 'image' ? (
+          <DocumentBody source={source} path={path} kind={view} refresh={refresh} onFonts={setFonts} />
         ) : (
-          <TextBody key={reload} source={source} path={path} line={line} view={view} wrap={wrap} />
+          <TextBody source={source} path={path} line={line} view={view} wrap={wrap} refresh={refresh} />
         )}
       </Navigated>
     </div>
@@ -480,33 +509,117 @@ function Navigated({ open, onClose, tree, children }: { open: boolean; onClose: 
   );
 }
 
-/** A PDF, an Office file the computer turns into one, or a workbook, read whole and drawn in the sandboxed preview. */
-function DocumentBody({ source, path, workbook }: { source: Source; path: string; workbook: boolean }) {
+/**
+ * Asks the computer for a shown file's version every few seconds while the page and its tab are in view: `changes`
+ * counts the times it changed, and `gone` says it was deleted or moved. A plugin from before 0.23.0 cannot say, and
+ * is not asked again.
+ */
+function useFileWatch(source: Source, path: string, box: { current: HTMLElement | null }) {
+  const { client, computerId, sessionId } = source;
+  const [state, setState] = useState({ changes: 0, gone: false });
+  useEffect(() => {
+    let live = true;
+    let known: string | undefined;
+    let timer: ReturnType<typeof setTimeout>;
+    const ask = async () => {
+      // A hidden tab has no box on the page; a hidden page is not read.
+      if (document.visibilityState === 'visible' && box.current?.offsetParent) {
+        try {
+          const { version } = await client.statFile(computerId, sessionId, path);
+          if (!live) return;
+          if (known !== undefined && version !== known) setState((s) => ({ changes: s.changes + 1, gone: false }));
+          else setState((s) => (s.gone ? { ...s, gone: false } : s));
+          known = version;
+        } catch (error) {
+          if (!live) return;
+          if (error instanceof RelayError && error.code === 'configuration_unsupported') return;
+          if (error instanceof RelayError && error.code === 'not_found') setState((s) => (s.gone ? s : { ...s, gone: true }));
+        }
+      }
+      if (live) timer = setTimeout(() => void ask(), WATCH_MS);
+    };
+    void ask();
+    return () => { live = false; clearTimeout(timer); };
+  }, [client, computerId, sessionId, path, box]);
+  return state;
+}
+
+/** The font families the computer's Office Kit lacked to render this file: DSH's warning, its list a click away. */
+function FontNotice({ fonts }: { fonts: string[] }) {
+  const t = useTranslations('team.dsh.sidebar');
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger aria-label={t('fontsMissing', { count: fonts.length })} title={t('fontsMissing', { count: fonts.length })}
+        className="flex size-7 shrink-0 items-center justify-center rounded-lg text-warning hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-accent">
+        <TriangleAlert className="size-[15px]" aria-hidden />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content align="end" sideOffset={4} className="z-50 w-[min(340px,calc(100vw-24px))] rounded-lg border bg-card p-4 text-[13px] text-card-foreground shadow-lg">
+          <p className="font-medium">{t('fontsMissing', { count: fonts.length })}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t('fontsHint')}</p>
+          <ul className="mt-2 flex flex-col gap-0.5 font-mono text-xs">
+            {fonts.map((font) => <li key={font} className="truncate">{font}</li>)}
+          </ul>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
+/**
+ * A PDF, an Office file the computer turns into one, a workbook or an image, read whole: a document drawn in the
+ * sandboxed preview, an image as itself. Read again on `refresh`, the old one staying until the new one is here.
+ */
+function DocumentBody({ source, path, kind, refresh, onFonts }: { source: Source; path: string; kind: 'pdf' | 'workbook' | 'image'; refresh: number; onFonts: (fonts: string[]) => void }) {
+  const t = useTranslations('team.dsh.sidebar');
   const { client, computerId, sessionId, word } = source;
-  const [bytes, setBytes] = useState<Uint8Array | null>(null);
-  const [failed, setFailed] = useState<string | null>(null);
+  const [document, setDocument] = useState<DocumentBytes | null>(null);
+  const [failed, setFailed] = useState<{ message: string; retry: boolean } | null>(null);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
     const controller = new AbortController();
-    setBytes(null);
     setFailed(null);
-    client.readDocument(computerId, sessionId, path, controller.signal).then((read) => { if (live) setBytes(read); }, (error) => { if (live) setFailed(word(error)); });
+    client.readDocument(computerId, sessionId, path, controller.signal).then(
+      (read) => { if (!live) return; setDocument(read); onFonts(read.missingFonts); },
+      (error) => {
+        if (!live) return;
+        // A plugin from before images refuses one as a file type it does not preview.
+        const old = kind === 'image' && error instanceof RelayError && (error.code === 'file_type' || error.code === 'preview_unsupported');
+        setFailed(old ? { message: t('imageNeedsPlugin'), retry: false } : { message: word(error), retry: true });
+      },
+    );
     return () => { live = false; controller.abort(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `word` is a fresh closure each render.
-  }, [client, computerId, sessionId, path, attempt]);
-  if (failed) return <Notice path={path} message={failed} retry={() => setAttempt(attempt + 1)} />;
-  if (!bytes) return <Loading />;
-  return <Suspense fallback={<Loading />}><SessionDocumentPreview data={bytes} workbook={workbook} /></Suspense>;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `word`, `t` and `onFonts` are fresh closures each render.
+  }, [client, computerId, sessionId, path, attempt, refresh]);
+  if (failed && !document) return <Notice path={path} message={failed.message} retry={failed.retry ? () => setAttempt(attempt + 1) : undefined} />;
+  if (!document) return <Loading />;
+  if (kind === 'image') return <ImageBody bytes={document.bytes} path={path} />;
+  return <Suspense fallback={<Loading />}><SessionDocumentPreview data={document.bytes} workbook={kind === 'workbook'} /></Suspense>;
 }
 
-/** A text file in the chosen renderer: Markdown, HTML, coloured code or plain text, `line` scrolled to and banded. */
-function TextBody({ source, path, line, view, wrap }: { source: Source; path: string; line?: number; view: View; wrap: boolean }) {
+/** An image fitted to the width and never enlarged past its own size, scrolled when zoomed past the pane. */
+function ImageBody({ bytes, path }: { bytes: Uint8Array; path: string }) {
+  const url = useMemo(() => URL.createObjectURL(new Blob([bytes.slice()], { type: imageType(path) ?? 'application/octet-stream' })), [bytes, path]);
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  return (
+    <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto p-3">
+      <img src={url} alt={baseName(path)} className="max-w-full rounded-xl" />
+    </div>
+  );
+}
+
+/**
+ * A text file in the chosen renderer: Markdown, HTML, coloured code or plain text, `line` scrolled to and banded. A
+ * long file comes a page at a time, the next as the reader reaches the end; `refresh` reads it again in place.
+ */
+function TextBody({ source, path, line, view, wrap, refresh }: { source: Source; path: string; line?: number; view: View; wrap: boolean; refresh: number }) {
   const t = useTranslations('team.dsh.sidebar');
   const { client, computerId, sessionId, word } = source;
   const [file, setFile] = useState<Text | null>(null);
   const [failed, setFailed] = useState<{ message: string; text: boolean } | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [more, setMore] = useState<'idle' | 'loading'>('idle');
   useEffect(() => {
     let live = true;
     setFailed(null);
@@ -516,13 +629,46 @@ function TextBody({ source, path, line, view, wrap }: { source: Source; path: st
     );
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `word` is a fresh closure each render.
-  }, [client, computerId, sessionId, path, attempt]);
-  if (failed) return failed.text ? <Notice path={path} message={failed.message} retry={() => setAttempt(attempt + 1)} /> : <Notice path={path} message={t('unsupported')} />;
+  }, [client, computerId, sessionId, path, attempt, refresh]);
+  const loadMore = useCallback(() => {
+    if (!file?.next || !file.version || more === 'loading') return;
+    setMore('loading');
+    client.readFile(computerId, sessionId, path, { offset: file.next, version: file.version }).then(
+      (page) => { setFile((f) => (f && f.next === page.offset ? { ...page, text: f.text + page.text, offset: 0 } : f)); setMore('idle'); },
+      // The file changed under the pages: it is read again from its start.
+      () => { setMore('idle'); setAttempt((n) => n + 1); },
+    );
+  }, [client, computerId, sessionId, path, file, more]);
+  if (failed && !file) return failed.text ? <Notice path={path} message={failed.message} retry={() => setAttempt(attempt + 1)} /> : <Notice path={path} message={t('unsupported')} />;
   if (!file) return <Loading />;
-  const note = file.truncated && <p className="border-t-[0.5px] border-border px-3 py-2 text-xs text-muted-foreground">{t('truncated')}</p>;
+  const note = file.truncated && (file.next
+    ? <LoadMore shown={file.next} total={file.bytes} loading={more === 'loading'} onMore={loadMore} />
+    : <p className="border-t-[0.5px] border-border px-3 py-2 text-xs text-muted-foreground">{t('truncated')}</p>);
   if (view === 'markdown') return <MarkdownBody text={file.text} note={note} />;
   if (view === 'html') return <HtmlBody text={file.text} title={baseName(path)} />;
   return <LinesBody text={file.text} path={path} line={line} code={view === 'code'} wrap={wrap} note={note} />;
+}
+
+/** The end of a page of a long file: how much is shown, a button for the next page, and the next page when it comes into view. */
+function LoadMore({ shown, total, loading, onMore }: { shown: number; total: number; loading: boolean; onMore: () => void }) {
+  const t = useTranslations('team.dsh.sidebar');
+  const end = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = end.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => { if (entry?.isIntersecting) onMore(); });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onMore]);
+  const kb = (bytes: number) => Math.round(bytes / 1024);
+  return (
+    <div ref={end} className="flex items-center gap-3 border-t-[0.5px] border-border px-3 py-2 text-xs text-muted-foreground">
+      <span className="flex-1">{t('pageShown', { shown: kb(shown), total: kb(total) })}</span>
+      <button type="button" disabled={loading} onClick={onMore} className="rounded-md px-2 py-0.5 text-foreground hover:bg-accent disabled:opacity-60">
+        {loading ? t('loading') : t('loadMore')}
+      </button>
+    </div>
+  );
 }
 
 /** A Markdown file rendered, its front matter as a box of keys and values above it. */
@@ -571,8 +717,12 @@ function LinesBody({ text, path, line, code, wrap, note }: { text: string; path:
     void highlight(text, path).then((result) => { if (live) setColoured(result); }, () => {});
     return () => { live = false; };
   }, [code, text, path]);
+  // The line is scrolled to once; a file read again later stays where the reader is.
+  const scrolledTo = useRef<number | undefined>(undefined);
   useEffect(() => {
-    marked.current?.scrollIntoView({ block: 'center' });
+    if (!marked.current || scrolledTo.current === line) return;
+    marked.current.scrollIntoView({ block: 'center' });
+    scrolledTo.current = line;
   }, [line, text]);
   const copy = () => {
     void navigator.clipboard.writeText(text).then(() => toast.success(t('copied')), () => toast.error(t('copyFailed')));
@@ -602,5 +752,99 @@ function LinesBody({ text, path, line, code, wrap, note }: { text: string; path:
       </div>
       {note}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// A turn's changes
+
+/**
+ * DSH's review of what one turn changed: the totals, then every file with its counts, each opening to DSH's
+ * comparison of it. The file the review was opened at starts open and in view; a file's name opens it in a tab.
+ */
+export function ChangesReview({ seq, index, onOpenFile, ...source }: Source & { seq: number; index?: number; onOpenFile: (path: string) => void }) {
+  const t = useTranslations('team.dsh.sidebar');
+  const { client, computerId, sessionId, word } = source;
+  const [summary, setSummary] = useState<TurnChanges | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [open, setOpen] = useState<ReadonlySet<number>>(() => new Set(index === undefined ? [] : [index]));
+  const [opened, setOpened] = useState(index);
+  // Opened again at another file, the review opens that one too.
+  if (index !== opened) {
+    setOpened(index);
+    if (index !== undefined) setOpen(new Set([...open, index]));
+  }
+  useEffect(() => {
+    let live = true;
+    setFailed(null);
+    client.turnChanges(computerId, sessionId, seq).then((read) => { if (live) setSummary(read); }, (error) => { if (live) setFailed(word(error)); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `word` is a fresh closure each render.
+  }, [client, computerId, sessionId, seq, attempt]);
+  if (failed) return <Notice path="changes.diff" message={failed} retry={() => setAttempt(attempt + 1)} />;
+  if (!summary) return <Loading />;
+  const toggle = (i: number) => {
+    const next = new Set(open);
+    if (next.has(i)) next.delete(i); else next.add(i);
+    setOpen(next);
+  };
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <Bar>
+        <span className="flex-1 text-xs text-muted-foreground">{t('changesSummary', { count: summary.total })}</span>
+        <LineCounts added={summary.added} deleted={summary.deleted} />
+      </Bar>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {summary.files.map((file, i) => (
+          <ChangedFile key={file.path} file={file} open={open.has(i)} focus={i === index} onToggle={() => toggle(i)}
+            onOpenFile={() => onOpenFile(file.path)} load={() => client.changeDiff(computerId, sessionId, seq, i)} />
+        ))}
+        {summary.total > summary.files.length && (
+          <p className="px-4 py-2 text-xs text-muted-foreground">{t('changesMore', { count: summary.total - summary.files.length })}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChangedFile({ file, open, focus, onToggle, onOpenFile, load }: {
+  file: TurnChanges['files'][number];
+  open: boolean;
+  focus: boolean;
+  onToggle: () => void;
+  onOpenFile: () => void;
+  load: () => Promise<FileDiff>;
+}) {
+  const t = useTranslations('team.dsh.sidebar');
+  const [diff, setDiff] = useState<FileDiff | { failed: true } | null>(null);
+  const box = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!open || diff) return;
+    let live = true;
+    load().then((read) => { if (live) setDiff(read); }, () => { if (live) setDiff({ failed: true }); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `load` is a fresh closure each render.
+  }, [open, diff]);
+  useEffect(() => { if (focus) box.current?.scrollIntoView({ block: 'start' }); }, [focus]);
+  return (
+    <section ref={box} className="border-b-[0.5px] border-border">
+      <div className="sticky top-0 z-10 flex items-center gap-1.5 bg-background px-2 py-1.5">
+        <button type="button" aria-expanded={open} onClick={onToggle} aria-label={file.display}
+          className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent">
+          <ChevronRight className={cn('size-3.5 transition-transform', open && 'rotate-90')} aria-hidden />
+        </button>
+        <FileTypeIcon path={file.display} size={14} />
+        <button type="button" onClick={onOpenFile} title={file.display} className="min-w-0 flex-1 truncate text-start font-mono text-xs hover:underline">
+          {file.display}
+        </button>
+        {!file.binary && !file.oversized && <LineCounts added={file.added} deleted={file.deleted} />}
+      </div>
+      {open && (
+        <div className="overflow-x-auto pb-2">
+          {!diff ? <Loading /> : 'failed' in diff ? <p className="px-4 py-2 text-xs text-muted-foreground">{t('diffUnavailable')}</p> : <DiffLines diff={diff} />}
+        </div>
+      )}
+    </section>
   );
 }

@@ -95,6 +95,8 @@ export function rowsOf(items: readonly ConversationItem[]): Row[] {
         break;
       }
       case 'tool-result':
+      // A turn's changes are drawn with its end by the client that asks for them, not as a row of their own.
+      case 'changes':
         break;
       default:
         if (item.kind === 'user') inputs++;

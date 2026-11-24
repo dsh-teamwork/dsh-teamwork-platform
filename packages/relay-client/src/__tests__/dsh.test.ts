@@ -22,6 +22,7 @@ import {
   streamEventsOf,
   waitingOf,
 } from '../dsh';
+import { rowsOf } from '../conversation';
 import { applySessionEvent } from '../session';
 import type { SessionState, SessionSummary } from '../types';
 
@@ -185,6 +186,13 @@ it('keeps file-only desktop messages visible in history', () => {
       },
     },
   ]);
+});
+
+it("notes a turn's changes by their sequence, which the phone's rows leave out", () => {
+  const change = eventsOf({ type: 'workspace/changes', seq: 41, data: { turn: 3 } }, { items: [] });
+  expect(change).toEqual([{ type: 'item', item: { kind: 'changes', id: 'seq-41', turn: 3, seq: 41 } }]);
+  expect(eventsOf({ type: 'workspace/changes', seq: 42, data: { turn: 0 } }, { items: [] })).toEqual([]);
+  expect(rowsOf([{ kind: 'changes', id: 'seq-41', turn: 3, seq: 41 }])).toEqual([]);
 });
 
 it('shows a turn that failed, and says when it had no model', () => {

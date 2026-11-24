@@ -323,6 +323,7 @@ use, so DSH sees each phone as a separate client.
     `session/state`, `session/page`, `session/cancel`, `session/modelCatalog`,
     `teamwork/configuration`, `teamwork/selectModel`, `teamwork/selectPermission`,
     `teamwork/listFiles`, `teamwork/searchFiles`, `teamwork/readFile`, `teamwork/readDocument`,
+    `teamwork/statFile`, `teamwork/changes`, `teamwork/changeDiff`,
     `userQuestions/answer`, `$events/result`, and the list's actions:
     `session/rename`, `workspace/pinSession`, `workspace/unpinSession`,
     `workspace/archiveSession`, `workspace/unarchiveSession`; and a
@@ -379,13 +380,32 @@ bar, and a new session's choice is applied once it is created.
 
 **A session's files** are read, never written: `teamwork/listFiles`
 (`{ sessionId, path }`), `teamwork/searchFiles` (`{ sessionId, query }`, by
-file name) and `teamwork/readFile` (`{ sessionId, path }`), which the plugin
-answers itself under the session's working directory, every path resolved to
-its real path first so that neither `..`, an absolute path elsewhere nor a
-symbolic link leaves it (the plugin's `src/phone-files.ts`); DSH's own
-`workspaceFiles` reads beyond the workspace and is not passed on. A folder
-lists at most 500 entries, a search returns at most 200 names, a file its
-first 256 KiB as text, and a binary one is `teamwork/not_text`.
+file name), `teamwork/readFile` (`{ sessionId, path, offset?, version? }`) and
+`teamwork/statFile` (`{ sessionId, path }`), which the plugin answers itself
+under the session's working directory, every path resolved to its real path
+first so that neither `..`, an absolute path elsewhere nor a symbolic link
+leaves it (the plugin's `src/phone-files.ts`); DSH's own `workspaceFiles`
+reads beyond the workspace and is not passed on. A folder lists at most 500
+entries, a search returns at most 200 names, and a binary file is
+`teamwork/not_text`. A text file comes 256 KiB a page, cut between
+characters, with the file's `version` and the `next` page's offset; a later
+page of another version is `invalid_request`, and the console reads the next
+page as the reader reaches the end. `statFile` answers the same version, which
+the console asks for every four seconds while a file's tab is in view, reading
+the file again in place when it moves and saying when the file is gone. A
+plugin from before 0.23.0 sends the first page alone and cannot be asked for a
+version.
+
+**What a turn changed** is DSH's own record (its `workspaceChanges` service),
+which a `workspace/changes` event announces once the turn ends; the client
+keeps the event's turn and sequence as a `changes` item that `rowsOf` leaves
+out. `teamwork/changes` (`{ sessionId, seq }`) answers the turn's files with
+their added and deleted lines, and `teamwork/changeDiff` (`{ sessionId, seq,
+index }`) DSH's comparison of one of them, cut to fit one message; the plugin
+compares only a file under the session's working directory. The console draws
+them as DSH does: at the turn's end, a card with the totals and a row per file
+(its comparison floating under it after half a second), opening a review tab
+in the sidebar with every file's comparison.
 `teamwork/configuration`'s `files` says the plugin answers them. The console
 shows them in the session's right sidebar, laid out and used as DSH's own
 (`apps/web/src/pages/team/session-sidebar.tsx`; the phone shows them as a
@@ -394,10 +414,10 @@ folded away or filling the window, with tabs in one or two panes, kept per
 session in the browser (`session-sidebar-state.ts`). Its Files tab is the
 working directory as a tree, searchable by name; a file's tab has its absolute
 path above it and draws it by kind (`session-files.tsx`): a document in the
-preview below, Markdown rendered, HTML in a frame that runs no script and
-fetches nothing, code coloured by Shiki with its line numbers, anything else as
-text. Each turn's end lists the files it changed, read from its own write and
-edit tool calls, and the files it delivered. A file the conversation names
+preview below, an image as it is, Markdown rendered, HTML in a frame that runs
+no script and fetches nothing, code coloured by Shiki with its line numbers,
+anything else as text. Each turn's end lists the files it changed (below) and
+the files it delivered. A file the conversation names
 opens in a tab too: a read, write or edit step's file, a reply's inline code that
 reads as a path, and a reply's link to a local file (`fileReference`: a folder
 path or a file name with an extension, `file://` allowed, `:line` opening it at
@@ -412,8 +432,11 @@ Source documents and converted previews are each limited to 16 MiB; an empty
 one is `document_empty`. Word and PowerPoint use the computer's DSH Office Kit
 to produce PDF bytes; each range asks the kit again, and the kit's own cache
 (by source version and content) answers every range after the first without
-converting again. Without the kit the answer is `preview_unavailable`. PDF and Excel read
-the original bytes. A plugin from before 0.19.6 refuses the method, which the
+converting again, and answers the font families the render lacked
+(`missingFonts`), which the console lists behind a warning in the path bar.
+Without the kit the answer is `preview_unavailable`. PDF, Excel and, from
+plugin 0.23.0, images (png, jpg, gif, webp, bmp, ico, svg, avif) read the
+original bytes; an older plugin refuses an image as `file_type`. A plugin from before 0.19.6 refuses the method, which the
 client reports as `preview_unsupported`. Closing the viewer stops requesting
 further ranges. Text files keep the line-numbered reader above.
 

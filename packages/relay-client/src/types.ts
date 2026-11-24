@@ -111,13 +111,53 @@ export interface FolderListing {
   truncated: boolean;
 }
 
-/** A text file of a session's working directory, cut at 256 KiB (`truncated`); `bytes` is its whole size. */
+/**
+ * A page of a text file of a session's working directory, 256 KiB at most, from byte `offset`; `bytes` is the whole
+ * file's size. `truncated` says more follows, from `next`. `version` is the file's, for asking the following page of
+ * the same file and noticing a change (`statFile`); a plugin from before 0.23.0 sends neither and reads only the start.
+ */
 export interface FileText {
   path: string;
   text: string;
   bytes: number;
   truncated: boolean;
+  offset?: number;
+  next?: number;
+  version?: string;
 }
+
+/** A previewable file's bytes; `missingFonts` are the font families the computer's Office Kit lacked to render it. */
+export interface DocumentBytes {
+  bytes: Uint8Array;
+  missingFonts: string[];
+}
+
+/** What one turn changed, as DSH records it (the plugin's `teamwork/changes`): the files with their line counts. */
+export interface TurnChanges {
+  turn: number;
+  /** Every changed file, past the 200 listed. */
+  total: number;
+  added: number;
+  deleted: number;
+  files: { path: string; display: string; added: number; deleted: number; binary?: boolean; oversized?: boolean }[];
+}
+
+/** DSH's comparison of one changed file before and after its turn (`teamwork/changeDiff`). */
+export type FileDiff =
+  | {
+    kind: 'text';
+    path: string;
+    display: string;
+    /** Whether the file existed before the turn, and after it. */
+    before: boolean;
+    after: boolean;
+    /** Every line shown replaced: DSH's comparison ran out of time. */
+    coarse: boolean;
+    /** Cut to fit one message. */
+    truncated: boolean;
+    hunks: { oldStart: number; oldLines: number; newStart: number; newLines: number; lines: string[] }[];
+  }
+  | { kind: 'binary' | 'oversized'; path: string; display: string };
 
 export type ToolStatus = 'running' | 'done' | 'failed' | 'denied' | 'stopped';
 
@@ -146,6 +186,8 @@ export type ConversationItem =
   | { kind: 'user'; id: string; text: string; attachments?: { attachmentId: string; name: string; bytes: number }[]; reminders?: Reminder[] }
   | { kind: 'assistant'; id: string; text: string; reasoning?: string; turn?: number; streaming?: true; interrupted?: true }
   | { kind: 'deliverable'; id: string; turn: number; file: FileTarget; description?: string }
+  /** DSH summarised what a turn changed (`workspace/changes`); `seq` asks the computer for it (`turnChanges`). */
+  | { kind: 'changes'; id: string; turn: number; seq: number }
   | { kind: 'tool'; id: string; name: string; summary: string; status: ToolStatus; turn?: number; file?: FileTarget; background?: true; detail?: ToolDetail }
   /** A result whose call was outside the loaded history window. */
   | { kind: 'tool-result'; id: string; callId: string; result: ToolResult }
@@ -338,14 +380,23 @@ export interface RelayClient {
   listFiles(computerId: string, sessionId: string, path: string): Promise<FolderListing>;
   /** Files under a session's working directory whose name holds `query`, nearest first. */
   searchFiles(computerId: string, sessionId: string, query: string): Promise<{ matches: string[]; truncated: boolean }>;
-  /** A text file under a session's working directory: its first 256 KiB; a binary one is refused as `not_text`. */
-  readFile(computerId: string, sessionId: string, path: string): Promise<FileText>;
   /**
-   * A PDF or workbook under a session's working directory, or a Word or PowerPoint file as the PDF the computer's
-   * Office Kit renders: its bytes, read in versioned 128 KiB ranges, at most 16 MiB. A plugin from before previews is
+   * A page of a text file under a session's working directory: its first 256 KiB, or the page from `page.offset` of
+   * `page.version`, which another version of the file refuses as `invalid_request`; a binary one is `not_text`.
+   */
+  readFile(computerId: string, sessionId: string, path: string, page?: { offset: number; version: string }): Promise<FileText>;
+  /** A file's version and size, to notice a change; a plugin from before 0.23.0 is `configuration_unsupported`. */
+  statFile(computerId: string, sessionId: string, path: string): Promise<{ version: string; bytes: number }>;
+  /** What the turn a `changes` item names changed; `configuration_unsupported` from a plugin before 0.23.0. */
+  turnChanges(computerId: string, sessionId: string, seq: number): Promise<TurnChanges>;
+  /** DSH's comparison of one file of a turn's changes, by its place in `turnChanges`' files. */
+  changeDiff(computerId: string, sessionId: string, seq: number, index: number): Promise<FileDiff>;
+  /**
+   * A PDF, a workbook or (from plugin 0.23.0) an image under a session's working directory, or a Word or PowerPoint
+   * file as the PDF the computer's Office Kit renders: its bytes, read in versioned 128 KiB ranges, at most 16 MiB. A plugin from before previews is
    * `preview_unsupported`; `signal` stops asking for further ranges.
    */
-  readDocument(computerId: string, sessionId: string, path: string, signal?: AbortSignal): Promise<Uint8Array>;
+  readDocument(computerId: string, sessionId: string, path: string, signal?: AbortSignal): Promise<DocumentBytes>;
   /** Switches an idle session's permission preset (one of `configuration`'s `permissions`), and returns the one now in force. */
   selectPermission(computerId: string, sessionId: string, preset: string): Promise<string>;
   /** Stops the agent's current turn; what it already did stays. */
