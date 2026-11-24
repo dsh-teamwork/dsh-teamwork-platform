@@ -81,13 +81,11 @@ func (s *Server) knowledgeRoutes(get, post func(string, handler), write func(str
 		return k.CreateSpace(r.Context(), c, team(r), in.Name)
 	})(s))
 	write("PATCH", "/api/teams/{teamId}/knowledge/spaces/{id}", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
-		var in struct {
-			Name string `json:"name"`
-		}
+		var in knowledge.SpacePatch
 		if err := decode(r, &in); err != nil {
 			return nil, err
 		}
-		return nil, k.RenameSpace(r.Context(), c, team(r), id(r), in.Name)
+		return nil, k.UpdateSpace(r.Context(), c, team(r), id(r), in)
 	})(s))
 	write("DELETE", "/api/teams/{teamId}/knowledge/spaces/{id}", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
 		return nil, k.DeleteSpace(r.Context(), c, team(r), id(r))

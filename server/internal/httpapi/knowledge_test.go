@@ -323,3 +323,82 @@ func TestKnowledgeAttachmentsStayWithinTheTeamQuota(t *testing.T) {
 		must(t, attach(t, e, admin.client, h, doc+"/attachments", "c.txt", []byte("12345")), 201)
 	})
 }
+
+func backlinkTitles(t *testing.T, r response) []string {
+	t.Helper()
+	out := []string{}
+	for _, l := range must(t, r, 200)["backlinks"].([]any) {
+		out = append(out, l.(map[string]any)["title"].(string))
+	}
+	return out
+}
+
+func TestKnowledgeBacklinksAreTheLinksAReaderSees(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{})
+		teamID, admin, a, b, aID, _ := knowledgeTeam(t, e)
+		base := "/api/teams/" + teamID + "/knowledge"
+		handbook := must(t, admin.post(base+"/spaces", map[string]string{"name": "Handbook"}), 201)["id"].(string)
+		private := must(t, admin.post(base+"/spaces", map[string]string{"name": "Private"}), 201)["id"].(string)
+		must(t, admin.send("PUT", base+"/spaces/"+private+"/access", map[string]any{"reading": "members", "readers": []string{aID}, "editors": []string{}}), 200)
+		create := func(space, title, text string) string {
+			return must(t, admin.post(base+"/documents", map[string]any{"spaceId": space, "title": title, "text": text}), 201)["id"].(string)
+		}
+		pricing := create(handbook, "Pricing", "# Pricing\n\n## Tiers\n")
+		create(handbook, "Plans", "See [[Pricing#Tiers|the tiers]].\n")
+		create(handbook, "Code", "```\n[[Pricing]]\n```\n\nAnd `[[Pricing]]` is code.\n")
+		create(handbook, "Files", "[[Pricing.pdf]] is a file, [[Pricing sheet]] another document.\n")
+		create(private, "Secret", "Our [[pricing]] is secret.\n")
+		old := create(handbook, "Old", "Was [[Pricing]].\n")
+		must(t, admin.post(base+"/documents/"+old+"/versions", map[string]any{"baseVersion": 1, "text": "Is nothing now.\n"}), 201)
+
+		if got := backlinkTitles(t, a.get(base+"/documents/"+pricing)); strings.Join(got, ",") != "Plans,Secret" {
+			t.Fatalf("a's backlinks %v", got)
+		}
+		// b reads no Private document, so no link from one.
+		if got := backlinkTitles(t, b.get(base+"/documents/"+pricing)); strings.Join(got, ",") != "Plans" {
+			t.Fatalf("b's backlinks %v", got)
+		}
+		// A title two documents have opens the one in the link's own space.
+		create(private, "Pricing", "Private prices.\n")
+		if got := backlinkTitles(t, a.get(base+"/documents/"+pricing)); strings.Join(got, ",") != "Plans" {
+			t.Fatalf("a's backlinks once Private has its own Pricing %v", got)
+		}
+	})
+}
+
+func TestKnowledgeTemplatesAreAFolderOfTheSpace(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{})
+		teamID, admin, _, b, _, _ := knowledgeTeam(t, e)
+		base := "/api/teams/" + teamID + "/knowledge"
+		space := must(t, admin.post(base+"/spaces", map[string]string{"name": "Runbooks"}), 201)["id"].(string)
+		other := must(t, admin.post(base+"/spaces", map[string]string{"name": "Other"}), 201)["id"].(string)
+		folder := must(t, admin.post(base+"/folders", map[string]string{"spaceId": space, "name": "Templates"}), 201)["id"].(string)
+		elsewhere := must(t, admin.post(base+"/folders", map[string]string{"spaceId": other, "name": "Templates"}), 201)["id"].(string)
+
+		refused(t, "a reader names the templates folder", b.send("PATCH", base+"/spaces/"+space, map[string]any{"templatesFolderId": folder}), 403, "knowledge_not_editor")
+		refused(t, "another space's folder", admin.send("PATCH", base+"/spaces/"+space, map[string]any{"templatesFolderId": elsewhere}), 404, "knowledge_not_found")
+		must(t, admin.send("PATCH", base+"/spaces/"+space, map[string]any{"templatesFolderId": folder}), 204)
+		templates := func() string {
+			for _, sp := range must(t, b.get(base), 200)["spaces"].([]any) {
+				if s := sp.(map[string]any); s["id"] == space {
+					return s["templatesFolderId"].(string)
+				}
+			}
+			return "?"
+		}
+		if got := templates(); got != folder {
+			t.Fatalf("templates folder %q", got)
+		}
+		// Renaming keeps it, and deleting the folder clears it.
+		must(t, admin.send("PATCH", base+"/spaces/"+space, map[string]any{"name": "Ops"}), 204)
+		if got := templates(); got != folder {
+			t.Fatalf("templates folder after a rename %q", got)
+		}
+		must(t, admin.send("DELETE", base+"/folders/"+folder, nil), 204)
+		if got := templates(); got != "" {
+			t.Fatalf("templates folder after its deletion %q", got)
+		}
+	})
+}

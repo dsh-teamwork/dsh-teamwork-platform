@@ -56,6 +56,20 @@ func (_u *KnowledgeSpaceUpdate) SetNillableReading(v *knowledgespace.Reading) *K
 	return _u
 }
 
+// SetTemplatesFolderID sets the "templates_folder_id" field.
+func (_u *KnowledgeSpaceUpdate) SetTemplatesFolderID(v string) *KnowledgeSpaceUpdate {
+	_u.mutation.SetTemplatesFolderID(v)
+	return _u
+}
+
+// SetNillableTemplatesFolderID sets the "templates_folder_id" field if the given value is not nil.
+func (_u *KnowledgeSpaceUpdate) SetNillableTemplatesFolderID(v *string) *KnowledgeSpaceUpdate {
+	if v != nil {
+		_u.SetTemplatesFolderID(*v)
+	}
+	return _u
+}
+
 // Mutation returns the KnowledgeSpaceMutation object of the builder.
 func (_u *KnowledgeSpaceUpdate) Mutation() *KnowledgeSpaceMutation {
 	return _u.mutation
@@ -100,6 +114,11 @@ func (_u *KnowledgeSpaceUpdate) check() error {
 			return &ValidationError{Name: "reading", err: fmt.Errorf(`ent: validator failed for field "KnowledgeSpace.reading": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.TemplatesFolderID(); ok {
+		if err := knowledgespace.TemplatesFolderIDValidator(v); err != nil {
+			return &ValidationError{Name: "templates_folder_id", err: fmt.Errorf(`ent: validator failed for field "KnowledgeSpace.templates_folder_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -126,6 +145,9 @@ func (_u *KnowledgeSpaceUpdate) sqlSave(ctx context.Context) (_node int, err err
 	}
 	if value, ok := _u.mutation.Reading(); ok {
 		_spec.SetField(knowledgespace.FieldReading, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.TemplatesFolderID(); ok {
+		_spec.SetField(knowledgespace.FieldTemplatesFolderID, field.TypeString, value)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
@@ -173,6 +195,20 @@ func (_u *KnowledgeSpaceUpdateOne) SetReading(v knowledgespace.Reading) *Knowled
 func (_u *KnowledgeSpaceUpdateOne) SetNillableReading(v *knowledgespace.Reading) *KnowledgeSpaceUpdateOne {
 	if v != nil {
 		_u.SetReading(*v)
+	}
+	return _u
+}
+
+// SetTemplatesFolderID sets the "templates_folder_id" field.
+func (_u *KnowledgeSpaceUpdateOne) SetTemplatesFolderID(v string) *KnowledgeSpaceUpdateOne {
+	_u.mutation.SetTemplatesFolderID(v)
+	return _u
+}
+
+// SetNillableTemplatesFolderID sets the "templates_folder_id" field if the given value is not nil.
+func (_u *KnowledgeSpaceUpdateOne) SetNillableTemplatesFolderID(v *string) *KnowledgeSpaceUpdateOne {
+	if v != nil {
+		_u.SetTemplatesFolderID(*v)
 	}
 	return _u
 }
@@ -234,6 +270,11 @@ func (_u *KnowledgeSpaceUpdateOne) check() error {
 			return &ValidationError{Name: "reading", err: fmt.Errorf(`ent: validator failed for field "KnowledgeSpace.reading": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.TemplatesFolderID(); ok {
+		if err := knowledgespace.TemplatesFolderIDValidator(v); err != nil {
+			return &ValidationError{Name: "templates_folder_id", err: fmt.Errorf(`ent: validator failed for field "KnowledgeSpace.templates_folder_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -277,6 +318,9 @@ func (_u *KnowledgeSpaceUpdateOne) sqlSave(ctx context.Context) (_node *Knowledg
 	}
 	if value, ok := _u.mutation.Reading(); ok {
 		_spec.SetField(knowledgespace.FieldReading, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.TemplatesFolderID(); ok {
+		_spec.SetField(knowledgespace.FieldTemplatesFolderID, field.TypeString, value)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	_node = &KnowledgeSpace{config: _u.config}

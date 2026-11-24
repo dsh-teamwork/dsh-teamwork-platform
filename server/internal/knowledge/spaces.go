@@ -35,12 +35,15 @@ type DocumentSummary struct {
 
 // SpaceView is a space the caller reads, with what is in it.
 type SpaceView struct {
-	ID        string            `json:"id"`
-	Name      string            `json:"name"`
-	Reading   string            `json:"reading"`
-	CanEdit   bool              `json:"canEdit"`
-	Folders   []FolderView      `json:"folders"`
-	Documents []DocumentSummary `json:"documents"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Reading string `json:"reading"`
+	CanEdit bool   `json:"canEdit"`
+	// TemplatesFolderID is the folder whose documents a new document may
+	// start from, or empty.
+	TemplatesFolderID string            `json:"templatesFolderId"`
+	Folders           []FolderView      `json:"folders"`
+	Documents         []DocumentSummary `json:"documents"`
 }
 
 // Tree is a team's knowledge as one member may read it.
@@ -79,7 +82,7 @@ func (s *Service) Tree(ctx context.Context, c Caller, teamID string) (Tree, erro
 }
 
 func (s *Service) spaceView(ctx context.Context, a access, agent bool) (SpaceView, error) {
-	v := SpaceView{ID: a.space.ID, Name: a.space.Name, Reading: string(a.space.Reading), CanEdit: a.edit && !agent, Folders: []FolderView{}, Documents: []DocumentSummary{}}
+	v := SpaceView{ID: a.space.ID, Name: a.space.Name, Reading: string(a.space.Reading), CanEdit: a.edit && !agent, TemplatesFolderID: a.space.TemplatesFolderID, Folders: []FolderView{}, Documents: []DocumentSummary{}}
 	folders, err := s.DB.KnowledgeFolder.Query().Where(knowledgefolder.SpaceID(a.space.ID)).Order(ent.Asc(knowledgefolder.FieldName)).All(ctx)
 	if err != nil {
 		return v, err
@@ -128,16 +131,33 @@ func (s *Service) CreateSpace(ctx context.Context, c Caller, teamID, spaceName s
 	return SpaceView{ID: sp.ID, Name: sp.Name, Reading: string(sp.Reading), CanEdit: true, Folders: []FolderView{}, Documents: []DocumentSummary{}}, nil
 }
 
-// RenameSpace renames a space; an editor's.
-func (s *Service) RenameSpace(ctx context.Context, c Caller, teamID, spaceID, spaceName string) error {
+// SpacePatch renames a space, or names the folder its templates are in
+// (empty for none).
+type SpacePatch struct {
+	Name              *string `json:"name"`
+	TemplatesFolderID *string `json:"templatesFolderId"`
+}
+
+// UpdateSpace changes a space's name or its templates folder; an editor's.
+func (s *Service) UpdateSpace(ctx context.Context, c Caller, teamID, spaceID string, in SpacePatch) error {
 	if _, err := s.editing(ctx, c, teamID, spaceID); err != nil {
 		return err
 	}
-	n, err := name(spaceName, 80, "name")
-	if err != nil {
-		return err
+	u := s.DB.KnowledgeSpace.UpdateOneID(spaceID)
+	if in.Name != nil {
+		n, err := name(*in.Name, 80, "name")
+		if err != nil {
+			return err
+		}
+		u.SetName(n)
 	}
-	err = s.DB.KnowledgeSpace.UpdateOneID(spaceID).SetName(n).Exec(ctx)
+	if in.TemplatesFolderID != nil {
+		if err := s.inFolder(ctx, spaceID, *in.TemplatesFolderID); err != nil {
+			return err
+		}
+		u.SetTemplatesFolderID(*in.TemplatesFolderID)
+	}
+	err := u.Exec(ctx)
 	if ent.IsConstraintError(err) {
 		return taken()
 	}
@@ -391,5 +411,17 @@ func (s *Service) DeleteFolder(ctx context.Context, c Caller, teamID, folderID s
 	if inside {
 		return wire.E(http.StatusConflict, "knowledge_folder_not_empty")
 	}
-	return s.DB.KnowledgeFolder.DeleteOneID(folderID).Exec(ctx)
+	tx, err := s.DB.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	// A space whose templates were in it has none.
+	if err := tx.KnowledgeSpace.Update().Where(knowledgespace.TemplatesFolderID(folderID)).SetTemplatesFolderID("").Exec(ctx); err != nil {
+		return err
+	}
+	if err := tx.KnowledgeFolder.DeleteOneID(folderID).Exec(ctx); err != nil {
+		return err
+	}
+	return tx.Commit()
 }

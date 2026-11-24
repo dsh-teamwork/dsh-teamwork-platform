@@ -26,8 +26,10 @@ type KnowledgeSpace struct {
 	// Reading holds the value of the "reading" field.
 	Reading knowledgespace.Reading `json:"reading,omitempty"`
 	// CreatedBy holds the value of the "created_by" field.
-	CreatedBy    string `json:"created_by,omitempty"`
-	selectValues sql.SelectValues
+	CreatedBy string `json:"created_by,omitempty"`
+	// TemplatesFolderID holds the value of the "templates_folder_id" field.
+	TemplatesFolderID string `json:"templates_folder_id,omitempty"`
+	selectValues      sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -35,7 +37,7 @@ func (*KnowledgeSpace) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case knowledgespace.FieldID, knowledgespace.FieldTeamID, knowledgespace.FieldName, knowledgespace.FieldReading, knowledgespace.FieldCreatedBy:
+		case knowledgespace.FieldID, knowledgespace.FieldTeamID, knowledgespace.FieldName, knowledgespace.FieldReading, knowledgespace.FieldCreatedBy, knowledgespace.FieldTemplatesFolderID:
 			values[i] = new(sql.NullString)
 		case knowledgespace.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -90,6 +92,12 @@ func (_m *KnowledgeSpace) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.CreatedBy = value.String
 			}
+		case knowledgespace.FieldTemplatesFolderID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field templates_folder_id", values[i])
+			} else if value.Valid {
+				_m.TemplatesFolderID = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -140,6 +148,9 @@ func (_m *KnowledgeSpace) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("created_by=")
 	builder.WriteString(_m.CreatedBy)
+	builder.WriteString(", ")
+	builder.WriteString("templates_folder_id=")
+	builder.WriteString(_m.TemplatesFolderID)
 	builder.WriteByte(')')
 	return builder.String()
 }

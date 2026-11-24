@@ -522,6 +522,7 @@ var (
 		{Name: "name", Type: field.TypeString, Size: 320},
 		{Name: "reading", Type: field.TypeEnum, Enums: []string{"team", "members"}, Default: "team"},
 		{Name: "created_by", Type: field.TypeString, Size: 32},
+		{Name: "templates_folder_id", Type: field.TypeString, Size: 32, Default: ""},
 	}
 	// KnowledgeSpacesTable holds the schema information for the "knowledge_spaces" table.
 	KnowledgeSpacesTable = &schema.Table{

@@ -69,6 +69,20 @@ func (_c *KnowledgeSpaceCreate) SetCreatedBy(v string) *KnowledgeSpaceCreate {
 	return _c
 }
 
+// SetTemplatesFolderID sets the "templates_folder_id" field.
+func (_c *KnowledgeSpaceCreate) SetTemplatesFolderID(v string) *KnowledgeSpaceCreate {
+	_c.mutation.SetTemplatesFolderID(v)
+	return _c
+}
+
+// SetNillableTemplatesFolderID sets the "templates_folder_id" field if the given value is not nil.
+func (_c *KnowledgeSpaceCreate) SetNillableTemplatesFolderID(v *string) *KnowledgeSpaceCreate {
+	if v != nil {
+		_c.SetTemplatesFolderID(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *KnowledgeSpaceCreate) SetID(v string) *KnowledgeSpaceCreate {
 	_c.mutation.SetID(v)
@@ -126,6 +140,10 @@ func (_c *KnowledgeSpaceCreate) defaults() {
 		v := knowledgespace.DefaultReading
 		_c.mutation.SetReading(v)
 	}
+	if _, ok := _c.mutation.TemplatesFolderID(); !ok {
+		v := knowledgespace.DefaultTemplatesFolderID
+		_c.mutation.SetTemplatesFolderID(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := knowledgespace.DefaultID()
 		_c.mutation.SetID(v)
@@ -167,6 +185,14 @@ func (_c *KnowledgeSpaceCreate) check() error {
 	if v, ok := _c.mutation.CreatedBy(); ok {
 		if err := knowledgespace.CreatedByValidator(v); err != nil {
 			return &ValidationError{Name: "created_by", err: fmt.Errorf(`ent: validator failed for field "KnowledgeSpace.created_by": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.TemplatesFolderID(); !ok {
+		return &ValidationError{Name: "templates_folder_id", err: errors.New(`ent: missing required field "KnowledgeSpace.templates_folder_id"`)}
+	}
+	if v, ok := _c.mutation.TemplatesFolderID(); ok {
+		if err := knowledgespace.TemplatesFolderIDValidator(v); err != nil {
+			return &ValidationError{Name: "templates_folder_id", err: fmt.Errorf(`ent: validator failed for field "KnowledgeSpace.templates_folder_id": %w`, err)}
 		}
 	}
 	if v, ok := _c.mutation.ID(); ok {
@@ -229,6 +255,10 @@ func (_c *KnowledgeSpaceCreate) createSpec() (*KnowledgeSpace, *sqlgraph.CreateS
 	if value, ok := _c.mutation.CreatedBy(); ok {
 		_spec.SetField(knowledgespace.FieldCreatedBy, field.TypeString, value)
 		_node.CreatedBy = value
+	}
+	if value, ok := _c.mutation.TemplatesFolderID(); ok {
+		_spec.SetField(knowledgespace.FieldTemplatesFolderID, field.TypeString, value)
+		_node.TemplatesFolderID = value
 	}
 	return _node, _spec
 }
@@ -303,6 +333,18 @@ func (u *KnowledgeSpaceUpsert) SetReading(v knowledgespace.Reading) *KnowledgeSp
 // UpdateReading sets the "reading" field to the value that was provided on create.
 func (u *KnowledgeSpaceUpsert) UpdateReading() *KnowledgeSpaceUpsert {
 	u.SetExcluded(knowledgespace.FieldReading)
+	return u
+}
+
+// SetTemplatesFolderID sets the "templates_folder_id" field.
+func (u *KnowledgeSpaceUpsert) SetTemplatesFolderID(v string) *KnowledgeSpaceUpsert {
+	u.Set(knowledgespace.FieldTemplatesFolderID, v)
+	return u
+}
+
+// UpdateTemplatesFolderID sets the "templates_folder_id" field to the value that was provided on create.
+func (u *KnowledgeSpaceUpsert) UpdateTemplatesFolderID() *KnowledgeSpaceUpsert {
+	u.SetExcluded(knowledgespace.FieldTemplatesFolderID)
 	return u
 }
 
@@ -388,6 +430,20 @@ func (u *KnowledgeSpaceUpsertOne) SetReading(v knowledgespace.Reading) *Knowledg
 func (u *KnowledgeSpaceUpsertOne) UpdateReading() *KnowledgeSpaceUpsertOne {
 	return u.Update(func(s *KnowledgeSpaceUpsert) {
 		s.UpdateReading()
+	})
+}
+
+// SetTemplatesFolderID sets the "templates_folder_id" field.
+func (u *KnowledgeSpaceUpsertOne) SetTemplatesFolderID(v string) *KnowledgeSpaceUpsertOne {
+	return u.Update(func(s *KnowledgeSpaceUpsert) {
+		s.SetTemplatesFolderID(v)
+	})
+}
+
+// UpdateTemplatesFolderID sets the "templates_folder_id" field to the value that was provided on create.
+func (u *KnowledgeSpaceUpsertOne) UpdateTemplatesFolderID() *KnowledgeSpaceUpsertOne {
+	return u.Update(func(s *KnowledgeSpaceUpsert) {
+		s.UpdateTemplatesFolderID()
 	})
 }
 
@@ -640,6 +696,20 @@ func (u *KnowledgeSpaceUpsertBulk) SetReading(v knowledgespace.Reading) *Knowled
 func (u *KnowledgeSpaceUpsertBulk) UpdateReading() *KnowledgeSpaceUpsertBulk {
 	return u.Update(func(s *KnowledgeSpaceUpsert) {
 		s.UpdateReading()
+	})
+}
+
+// SetTemplatesFolderID sets the "templates_folder_id" field.
+func (u *KnowledgeSpaceUpsertBulk) SetTemplatesFolderID(v string) *KnowledgeSpaceUpsertBulk {
+	return u.Update(func(s *KnowledgeSpaceUpsert) {
+		s.SetTemplatesFolderID(v)
+	})
+}
+
+// UpdateTemplatesFolderID sets the "templates_folder_id" field to the value that was provided on create.
+func (u *KnowledgeSpaceUpsertBulk) UpdateTemplatesFolderID() *KnowledgeSpaceUpsertBulk {
+	return u.Update(func(s *KnowledgeSpaceUpsert) {
+		s.UpdateTemplatesFolderID()
 	})
 }
 

@@ -14082,18 +14082,19 @@ func (m *KnowledgeProposalMutation) ResetEdge(name string) error {
 // KnowledgeSpaceMutation represents an operation that mutates the KnowledgeSpace nodes in the graph.
 type KnowledgeSpaceMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	created_at    *time.Time
-	team_id       *string
-	name          *string
-	reading       *knowledgespace.Reading
-	created_by    *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*KnowledgeSpace, error)
-	predicates    []predicate.KnowledgeSpace
+	op                  Op
+	typ                 string
+	id                  *string
+	created_at          *time.Time
+	team_id             *string
+	name                *string
+	reading             *knowledgespace.Reading
+	created_by          *string
+	templates_folder_id *string
+	clearedFields       map[string]struct{}
+	done                bool
+	oldValue            func(context.Context) (*KnowledgeSpace, error)
+	predicates          []predicate.KnowledgeSpace
 }
 
 var _ ent.Mutation = (*KnowledgeSpaceMutation)(nil)
@@ -14380,6 +14381,42 @@ func (m *KnowledgeSpaceMutation) ResetCreatedBy() {
 	m.created_by = nil
 }
 
+// SetTemplatesFolderID sets the "templates_folder_id" field.
+func (m *KnowledgeSpaceMutation) SetTemplatesFolderID(s string) {
+	m.templates_folder_id = &s
+}
+
+// TemplatesFolderID returns the value of the "templates_folder_id" field in the mutation.
+func (m *KnowledgeSpaceMutation) TemplatesFolderID() (r string, exists bool) {
+	v := m.templates_folder_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplatesFolderID returns the old "templates_folder_id" field's value of the KnowledgeSpace entity.
+// If the KnowledgeSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeSpaceMutation) OldTemplatesFolderID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplatesFolderID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplatesFolderID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplatesFolderID: %w", err)
+	}
+	return oldValue.TemplatesFolderID, nil
+}
+
+// ResetTemplatesFolderID resets all changes to the "templates_folder_id" field.
+func (m *KnowledgeSpaceMutation) ResetTemplatesFolderID() {
+	m.templates_folder_id = nil
+}
+
 // Where appends a list predicates to the KnowledgeSpaceMutation builder.
 func (m *KnowledgeSpaceMutation) Where(ps ...predicate.KnowledgeSpace) {
 	m.predicates = append(m.predicates, ps...)
@@ -14414,7 +14451,7 @@ func (m *KnowledgeSpaceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *KnowledgeSpaceMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, knowledgespace.FieldCreatedAt)
 	}
@@ -14429,6 +14466,9 @@ func (m *KnowledgeSpaceMutation) Fields() []string {
 	}
 	if m.created_by != nil {
 		fields = append(fields, knowledgespace.FieldCreatedBy)
+	}
+	if m.templates_folder_id != nil {
+		fields = append(fields, knowledgespace.FieldTemplatesFolderID)
 	}
 	return fields
 }
@@ -14448,6 +14488,8 @@ func (m *KnowledgeSpaceMutation) Field(name string) (ent.Value, bool) {
 		return m.Reading()
 	case knowledgespace.FieldCreatedBy:
 		return m.CreatedBy()
+	case knowledgespace.FieldTemplatesFolderID:
+		return m.TemplatesFolderID()
 	}
 	return nil, false
 }
@@ -14467,6 +14509,8 @@ func (m *KnowledgeSpaceMutation) OldField(ctx context.Context, name string) (ent
 		return m.OldReading(ctx)
 	case knowledgespace.FieldCreatedBy:
 		return m.OldCreatedBy(ctx)
+	case knowledgespace.FieldTemplatesFolderID:
+		return m.OldTemplatesFolderID(ctx)
 	}
 	return nil, fmt.Errorf("unknown KnowledgeSpace field %s", name)
 }
@@ -14510,6 +14554,13 @@ func (m *KnowledgeSpaceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCreatedBy(v)
+		return nil
+	case knowledgespace.FieldTemplatesFolderID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplatesFolderID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown KnowledgeSpace field %s", name)
@@ -14574,6 +14625,9 @@ func (m *KnowledgeSpaceMutation) ResetField(name string) error {
 		return nil
 	case knowledgespace.FieldCreatedBy:
 		m.ResetCreatedBy()
+		return nil
+	case knowledgespace.FieldTemplatesFolderID:
+		m.ResetTemplatesFolderID()
 		return nil
 	}
 	return fmt.Errorf("unknown KnowledgeSpace field %s", name)

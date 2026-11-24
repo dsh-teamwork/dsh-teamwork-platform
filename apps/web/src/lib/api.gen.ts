@@ -3105,7 +3105,7 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Rename a space; an editor's */
+        /** Rename a space or name its templates folder; an editor's */
         patch: {
             parameters: {
                 query?: never;
@@ -3118,11 +3118,15 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["KnowledgeName"];
+                    "application/json": {
+                        name?: string;
+                        /** @description A folder of the space, or empty for no templates */
+                        templatesFolderId?: string;
+                    };
                 };
             };
             responses: {
-                /** @description Renamed */
+                /** @description Changed */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -4511,6 +4515,8 @@ export interface components {
             /** @enum {string} */
             reading: "team" | "members";
             canEdit: boolean;
+            /** @description The folder whose documents a new document may start from; empty for none */
+            templatesFolderId: string;
             folders: components["schemas"]["KnowledgeFolder"][];
             documents: components["schemas"]["KnowledgeDocumentSummary"][];
         };
@@ -4552,6 +4558,13 @@ export interface components {
             versions: components["schemas"]["KnowledgeVersion"][];
             /** @description The files the document may name, every version alike */
             attachments: components["schemas"]["KnowledgeAttachment"][];
+            /** @description The documents the caller reads whose current text links here */
+            backlinks: components["schemas"]["KnowledgeBacklink"][];
+        };
+        KnowledgeBacklink: {
+            id: string;
+            title: string;
+            spaceId: string;
         };
         KnowledgeAttachment: {
             /** @description Named in the text as ![[name]] (an embed) or [[name]] (a link) */

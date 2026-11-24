@@ -1255,14 +1255,19 @@ paths:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     patch:
-      summary: Rename a space; an editor's
+      summary: Rename a space or name its templates folder; an editor's
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/KnowledgeName' }
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name: { type: string }
+                templatesFolderId: { type: string, description: 'A folder of the space, or empty for no templates' }
       responses:
-        '204': { description: Renamed }
+        '204': { description: Changed }
         default: { $ref: '#/components/responses/Error' }
     delete:
       summary: Delete a space with everything in it; an editor's
@@ -1860,13 +1865,14 @@ components:
         updatedAt: { type: string, format: date-time }
     KnowledgeSpace:
       type: object
-      required: [id, name, reading, canEdit, folders, documents]
+      required: [id, name, reading, canEdit, templatesFolderId, folders, documents]
       additionalProperties: false
       properties:
         id: { type: string }
         name: { type: string }
         reading: { type: string, enum: [team, members] }
         canEdit: { type: boolean }
+        templatesFolderId: { type: string, description: 'The folder whose documents a new document may start from; empty for none' }
         folders: { type: array, items: { $ref: '#/components/schemas/KnowledgeFolder' } }
         documents: { type: array, items: { $ref: '#/components/schemas/KnowledgeDocumentSummary' } }
     KnowledgeTree:
@@ -1898,7 +1904,7 @@ components:
         createdAt: { type: string, format: date-time }
     KnowledgeDocument:
       type: object
-      required: [id, folderId, title, currentVersion, updatedAt, spaceId, canEdit, version, text, versions, attachments]
+      required: [id, folderId, title, currentVersion, updatedAt, spaceId, canEdit, version, text, versions, attachments, backlinks]
       additionalProperties: false
       properties:
         id: { type: string }
@@ -1912,6 +1918,15 @@ components:
         text: { type: string }
         versions: { type: array, items: { $ref: '#/components/schemas/KnowledgeVersion' } }
         attachments: { type: array, items: { $ref: '#/components/schemas/KnowledgeAttachment' }, description: 'The files the document may name, every version alike' }
+        backlinks: { type: array, items: { $ref: '#/components/schemas/KnowledgeBacklink' }, description: 'The documents the caller reads whose current text links here' }
+    KnowledgeBacklink:
+      type: object
+      required: [id, title, spaceId]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        title: { type: string }
+        spaceId: { type: string }
     KnowledgeAttachment:
       type: object
       required: [name, contentType, size]

@@ -24,6 +24,8 @@ const (
 	FieldReading = "reading"
 	// FieldCreatedBy holds the string denoting the created_by field in the database.
 	FieldCreatedBy = "created_by"
+	// FieldTemplatesFolderID holds the string denoting the templates_folder_id field in the database.
+	FieldTemplatesFolderID = "templates_folder_id"
 	// Table holds the table name of the knowledgespace in the database.
 	Table = "knowledge_spaces"
 )
@@ -36,6 +38,7 @@ var Columns = []string{
 	FieldName,
 	FieldReading,
 	FieldCreatedBy,
+	FieldTemplatesFolderID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -57,6 +60,10 @@ var (
 	NameValidator func(string) error
 	// CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
 	CreatedByValidator func(string) error
+	// DefaultTemplatesFolderID holds the default value on creation for the "templates_folder_id" field.
+	DefaultTemplatesFolderID string
+	// TemplatesFolderIDValidator is a validator for the "templates_folder_id" field. It is called by the builders before save.
+	TemplatesFolderIDValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -120,4 +127,9 @@ func ByReading(opts ...sql.OrderTermOption) OrderOption {
 // ByCreatedBy orders the results by the created_by field.
 func ByCreatedBy(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedBy, opts...).ToFunc()
+}
+
+// ByTemplatesFolderID orders the results by the templates_folder_id field.
+func ByTemplatesFolderID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTemplatesFolderID, opts...).ToFunc()
 }

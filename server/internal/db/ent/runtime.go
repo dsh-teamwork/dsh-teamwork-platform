@@ -994,6 +994,12 @@ func init() {
 	knowledgespaceDescCreatedBy := knowledgespaceFields[3].Descriptor()
 	// knowledgespace.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
 	knowledgespace.CreatedByValidator = knowledgespaceDescCreatedBy.Validators[0].(func(string) error)
+	// knowledgespaceDescTemplatesFolderID is the schema descriptor for templates_folder_id field.
+	knowledgespaceDescTemplatesFolderID := knowledgespaceFields[4].Descriptor()
+	// knowledgespace.DefaultTemplatesFolderID holds the default value on creation for the templates_folder_id field.
+	knowledgespace.DefaultTemplatesFolderID = knowledgespaceDescTemplatesFolderID.Default.(string)
+	// knowledgespace.TemplatesFolderIDValidator is a validator for the "templates_folder_id" field. It is called by the builders before save.
+	knowledgespace.TemplatesFolderIDValidator = knowledgespaceDescTemplatesFolderID.Validators[0].(func(string) error)
 	// knowledgespaceDescID is the schema descriptor for id field.
 	knowledgespaceDescID := knowledgespaceMixinFields0[0].Descriptor()
 	// knowledgespace.DefaultID holds the default value on creation for the id field.

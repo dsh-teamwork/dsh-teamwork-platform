@@ -19,6 +19,9 @@ func (KnowledgeSpace) Fields() []ent.Field {
 		// knowledge_space_members names.
 		field.Enum("reading").Values("team", "members").Default("team"),
 		field.String("created_by").MaxLen(32).Immutable(),
+		// templates_folder_id is the folder of the space whose documents a
+		// new document may start from, or empty for none.
+		field.String("templates_folder_id").MaxLen(32).Default(""),
 	}
 }
 func (KnowledgeSpace) Indexes() []ent.Index {

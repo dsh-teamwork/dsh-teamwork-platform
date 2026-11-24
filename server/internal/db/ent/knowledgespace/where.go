@@ -84,6 +84,11 @@ func CreatedBy(v string) predicate.KnowledgeSpace {
 	return predicate.KnowledgeSpace(sql.FieldEQ(FieldCreatedBy, v))
 }
 
+// TemplatesFolderID applies equality check predicate on the "templates_folder_id" field. It's identical to TemplatesFolderIDEQ.
+func TemplatesFolderID(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldEQ(FieldTemplatesFolderID, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.KnowledgeSpace {
 	return predicate.KnowledgeSpace(sql.FieldEQ(FieldCreatedAt, v))
@@ -337,6 +342,71 @@ func CreatedByEqualFold(v string) predicate.KnowledgeSpace {
 // CreatedByContainsFold applies the ContainsFold predicate on the "created_by" field.
 func CreatedByContainsFold(v string) predicate.KnowledgeSpace {
 	return predicate.KnowledgeSpace(sql.FieldContainsFold(FieldCreatedBy, v))
+}
+
+// TemplatesFolderIDEQ applies the EQ predicate on the "templates_folder_id" field.
+func TemplatesFolderIDEQ(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldEQ(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDNEQ applies the NEQ predicate on the "templates_folder_id" field.
+func TemplatesFolderIDNEQ(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldNEQ(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDIn applies the In predicate on the "templates_folder_id" field.
+func TemplatesFolderIDIn(vs ...string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldIn(FieldTemplatesFolderID, vs...))
+}
+
+// TemplatesFolderIDNotIn applies the NotIn predicate on the "templates_folder_id" field.
+func TemplatesFolderIDNotIn(vs ...string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldNotIn(FieldTemplatesFolderID, vs...))
+}
+
+// TemplatesFolderIDGT applies the GT predicate on the "templates_folder_id" field.
+func TemplatesFolderIDGT(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldGT(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDGTE applies the GTE predicate on the "templates_folder_id" field.
+func TemplatesFolderIDGTE(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldGTE(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDLT applies the LT predicate on the "templates_folder_id" field.
+func TemplatesFolderIDLT(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldLT(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDLTE applies the LTE predicate on the "templates_folder_id" field.
+func TemplatesFolderIDLTE(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldLTE(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDContains applies the Contains predicate on the "templates_folder_id" field.
+func TemplatesFolderIDContains(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldContains(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDHasPrefix applies the HasPrefix predicate on the "templates_folder_id" field.
+func TemplatesFolderIDHasPrefix(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldHasPrefix(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDHasSuffix applies the HasSuffix predicate on the "templates_folder_id" field.
+func TemplatesFolderIDHasSuffix(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldHasSuffix(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDEqualFold applies the EqualFold predicate on the "templates_folder_id" field.
+func TemplatesFolderIDEqualFold(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldEqualFold(FieldTemplatesFolderID, v))
+}
+
+// TemplatesFolderIDContainsFold applies the ContainsFold predicate on the "templates_folder_id" field.
+func TemplatesFolderIDContainsFold(v string) predicate.KnowledgeSpace {
+	return predicate.KnowledgeSpace(sql.FieldContainsFold(FieldTemplatesFolderID, v))
 }
 
 // And groups predicates with the AND operator between them.

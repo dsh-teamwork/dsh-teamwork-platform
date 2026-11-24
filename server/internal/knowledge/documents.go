@@ -42,6 +42,9 @@ type Document struct {
 	Versions []VersionView `json:"versions"`
 	// Attachments are the files the document may name, every version alike.
 	Attachments []Attachment `json:"attachments"`
+	// Backlinks are the documents the caller reads whose current text links
+	// here, whichever version is asked for.
+	Backlinks []Backlink `json:"backlinks"`
 }
 
 // DocumentInput makes a document.
@@ -182,6 +185,13 @@ func (s *Service) Get(ctx context.Context, c Caller, teamID, documentID string, 
 	}
 	out.Text = v.Text
 	if out.Attachments, err = s.attachments(ctx, d.ID); err != nil {
+		return Document{}, err
+	}
+	tree, err := s.Tree(ctx, c, teamID)
+	if err != nil {
+		return Document{}, err
+	}
+	if out.Backlinks, err = s.backlinks(ctx, tree, d.ID, d.Title); err != nil {
 		return Document{}, err
 	}
 	return out, nil
