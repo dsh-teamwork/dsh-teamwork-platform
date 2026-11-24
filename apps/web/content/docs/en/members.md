@@ -85,8 +85,11 @@ fold away or fill the window with, holding tabs in one or two panes and kept
 for each session in this browser. Its Files tab shows the working directory as
 a tree, read only and searchable by file name. A file opens in a tab under its
 path: Markdown rendered, HTML drawn without running anything, code coloured
-with its line numbers. At the end of each reply, cards list the files the
-session changed and the files it delivered. A file the conversation names
+with its line numbers, an image as it is; a long text loads more as you reach
+its end, and a file that changes on the computer is read again where you are.
+At the end of each reply, cards list the files the session changed, with the
+lines added and removed (rest on one to see its comparison, click to review
+them all), and the files it delivered. A file the conversation names
 opens there when you click it: a step's file, a path in
 a reply (at its line, for `src/app.ts:42`), a link to a local file or a file
 the agent presented at the end of its reply. PDFs and Excel workbooks (up to
@@ -94,7 +97,8 @@ the agent presented at the end of its reply. PDFs and Excel workbooks (up to
 the panel and each sheet of a workbook on its own tab, drawn in a sandbox
 that cannot act as you; Word and PowerPoint files open the same way when the
 computer's DSH has Office Kit. It reaches nothing outside that directory, and
-needs DSH Teamwork 0.16.0 or later on the computer, 0.19.6 for the previews.
+needs DSH Teamwork 0.16.0 or later on the computer, 0.19.6 for the previews,
+and 0.23.0 for images, long texts, changes and the cards of what changed.
 Beside the paperclip, the permission menu sets what the agent may do on that
 computer: **Read only**, **Workspace write** or **Full access**, as in DSH;
 full access asks you to confirm first.

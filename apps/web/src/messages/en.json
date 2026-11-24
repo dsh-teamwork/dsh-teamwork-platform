@@ -1224,15 +1224,30 @@
         "loading": "Loading…",
         "retry": "Retry",
         "unsupported": "This kind of file cannot be previewed here.",
-        "imageUnsupported": "Images cannot be previewed in the browser yet.",
-        "truncated": "The file is large; only its first 256 KB is shown."
+        "truncated": "The file is large; only its first 256 KB is shown.",
+        "changesTitle": "Turn {turn} changes",
+        "fileGone": "This file was deleted or moved on the computer.",
+        "reloadNow": "Reload now",
+        "fontsMissing": "{count, plural, one {# font missing} other {# fonts missing}}",
+        "fontsHint": "The computer rendered this file without them, so text may look different from the original.",
+        "imageNeedsPlugin": "Update DSH Teamwork on this computer to 0.23.0 or later to preview images.",
+        "pageShown": "Showing {shown} KB of {total} KB",
+        "loadMore": "Load more",
+        "changesSummary": "{count, plural, one {# file changed} other {# files changed}}",
+        "changesMore": "{count} more not listed",
+        "diffUnavailable": "This comparison is not available."
       },
       "filesAll": "All {count} files",
       "filesCollapse": "Show fewer",
       "file": "File",
       "previewInSidebar": "Preview in sidebar",
       "edited": "Edited",
-      "filesChanged": "{count} files changed"
+      "filesChanged": "{count} files changed",
+      "diffBinary": "Binary file: no lines to compare.",
+      "diffOversized": "Too large to compare.",
+      "diffSame": "No line changed.",
+      "diffTruncated": "The comparison is cut here: it is too long to show whole.",
+      "diffCoarse": "Shown as replaced throughout: the comparison took too long."
     },
     "myDsh": {
       "title": "My DSH",

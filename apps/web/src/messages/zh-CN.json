@@ -1224,15 +1224,30 @@
         "loading": "正在加载…",
         "retry": "重试",
         "unsupported": "这类文件无法在这里预览。",
-        "imageUnsupported": "暂时还不能在浏览器里预览图片。",
-        "truncated": "文件较大，只显示前 256 KB。"
+        "truncated": "文件较大，只显示前 256 KB。",
+        "changesTitle": "第 {turn} 轮改动",
+        "fileGone": "这个文件已在电脑上被删除或移动。",
+        "reloadNow": "重新加载",
+        "fontsMissing": "缺少 {count} 种字体",
+        "fontsHint": "电脑渲染这个文件时没有这些字体，显示效果可能和原文件不同。",
+        "imageNeedsPlugin": "请把这台电脑上的 DSH Teamwork 更新到 0.23.0 或以上，才能预览图片。",
+        "pageShown": "已显示 {shown} KB，共 {total} KB",
+        "loadMore": "加载更多",
+        "changesSummary": "改动了 {count} 个文件",
+        "changesMore": "还有 {count} 个未列出",
+        "diffUnavailable": "无法显示这个文件的对比。"
       },
       "filesAll": "全部 {count} 个文件",
       "filesCollapse": "收起",
       "file": "文件",
       "previewInSidebar": "在侧栏预览",
       "edited": "已编辑",
-      "filesChanged": "改动了 {count} 个文件"
+      "filesChanged": "改动了 {count} 个文件",
+      "diffBinary": "二进制文件，没有可对比的行。",
+      "diffOversized": "文件太大，无法对比。",
+      "diffSame": "没有行被改动。",
+      "diffTruncated": "对比太长，只显示到这里。",
+      "diffCoarse": "对比耗时过长，全部显示为替换。"
     },
     "myDsh": {
       "title": "我的 DSH",

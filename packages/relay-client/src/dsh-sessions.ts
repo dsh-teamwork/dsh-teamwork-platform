@@ -61,6 +61,9 @@ export type DshSessions = Pick<
   | 'searchFiles'
   | 'readFile'
   | 'readDocument'
+  | 'statFile'
+  | 'turnChanges'
+  | 'changeDiff'
   | 'uploadCapabilities'
   | 'startUpload'
   | 'uploadChunk'
@@ -414,9 +417,11 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
     async readDocument(computerId, sessionId, path, signal) {
       const chunkSize = 128 * 1024;
       const schema = z.object({ version: z.string().min(1).max(128), size: z.number().int().positive().max(16 * 1024 * 1024),
-        offset: z.number().int().nonnegative(), data: z.string().min(1).max(Math.ceil(chunkSize / 3) * 4) });
+        offset: z.number().int().nonnegative(), data: z.string().min(1).max(Math.ceil(chunkSize / 3) * 4),
+        missingFonts: z.string().max(200).array().max(50).optional() });
       let result: Uint8Array | undefined;
       let version: string | undefined;
+      let missingFonts: string[] = [];
       let offset = 0;
       do {
         signal?.throwIfAborted();
@@ -432,6 +437,7 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
         const chunk = response.data;
         result ??= new Uint8Array(chunk.size);
         version ??= chunk.version;
+        if (chunk.missingFonts) missingFonts = chunk.missingFonts;
         if (chunk.offset !== offset || chunk.version !== version || chunk.size !== result.length) throw new RelayError('unavailable');
         let data: Uint8Array;
         try { data = unbase64(chunk.data); } catch { throw new RelayError('unavailable'); }
@@ -439,10 +445,35 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
         result.set(data, offset);
         offset += data.length;
       } while (offset < result.length);
-      return result;
+      return { bytes: result, missingFonts };
     },
-    async readFile(computerId, sessionId, path) {
-      return z.object({ path: z.string(), text: z.string(), bytes: z.number(), truncated: z.boolean() }).parse(await call(computerId, 'teamwork/readFile', { request: { sessionId, path } }));
+    async readFile(computerId, sessionId, path, page) {
+      return z.object({
+        path: z.string(), text: z.string(), bytes: z.number(), truncated: z.boolean(),
+        offset: z.number().int().nonnegative().optional(), next: z.number().int().positive().optional(), version: z.string().max(128).optional(),
+      }).parse(await call(computerId, 'teamwork/readFile', { request: { sessionId, path, ...(page ? { offset: page.offset, version: page.version } : {}) } }));
+    },
+    async statFile(computerId, sessionId, path) {
+      return z.object({ version: z.string().min(1).max(128), bytes: z.number().int().nonnegative() })
+        .parse(await call(computerId, 'teamwork/statFile', { request: { sessionId, path } }));
+    },
+    async turnChanges(computerId, sessionId, seq) {
+      const count = z.number().int().nonnegative();
+      return z.object({
+        turn: count, total: count, added: count, deleted: count,
+        files: z.object({ path: z.string().max(4096), display: z.string().max(4096), added: count, deleted: count, binary: z.boolean().optional(), oversized: z.boolean().optional() }).array().max(200),
+      }).parse(await call(computerId, 'teamwork/changes', { request: { sessionId, seq } }));
+    },
+    async changeDiff(computerId, sessionId, seq, index) {
+      const count = z.number().int().nonnegative();
+      const named = { path: z.string().max(4096), display: z.string().max(4096) };
+      return z.discriminatedUnion('kind', [
+        z.object({
+          kind: z.literal('text'), ...named, before: z.boolean(), after: z.boolean(), coarse: z.boolean(), truncated: z.boolean(),
+          hunks: z.object({ oldStart: count, oldLines: count, newStart: count, newLines: count, lines: z.string().array() }).array(),
+        }),
+        z.object({ kind: z.enum(['binary', 'oversized']), ...named }),
+      ]).parse(await call(computerId, 'teamwork/changeDiff', { request: { sessionId, seq, index } }));
     },
 
     async selectPermission(computerId, sessionId, preset) {

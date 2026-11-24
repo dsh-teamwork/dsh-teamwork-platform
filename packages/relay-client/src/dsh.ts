@@ -290,6 +290,12 @@ export function eventsOf(event: unknown, state: Pick<SessionState, 'items'>): Se
         ...(data.interrupted === true ? { interrupted: true } : {}),
       } }] : [];
     }
+    case 'workspace/changes': {
+      // The summary stays on the computer; the client asks for it by the event's sequence (`turnChanges`).
+      const turn = data.turn;
+      if (typeof turn !== 'number' || !Number.isSafeInteger(turn) || turn < 1 || typeof event.seq !== 'number') return [];
+      return [{ type: 'item', item: { kind: 'changes', id, turn, seq: event.seq } }];
+    }
     case 'deliverables/presented': {
       const { turn, callId, files } = data;
       if (typeof turn !== 'number' || !Number.isSafeInteger(turn) || turn < 1 || typeof callId !== 'string' || !callId || !Array.isArray(files)) return [];

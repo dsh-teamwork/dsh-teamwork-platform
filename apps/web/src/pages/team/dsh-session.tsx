@@ -58,11 +58,11 @@ import { relayFor } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
-import { FileView, FilesPage, type FileTarget } from './session-files';
+import { ChangesReview, FileView, FilesPage, type FileTarget } from './session-files';
 import { openTab, setOpen } from './session-sidebar-state';
 import { SessionSidebar, SidebarOpenButton, SidebarSlotContext, useSidebarState } from './session-sidebar';
 import { SessionMarkdown } from './session-markdown';
-import { changedFilesByTurn, SessionSteps, TurnFiles, turnTails, WorkToggle } from './session-work';
+import { changesByTurn, SessionSteps, TurnFiles, turnTails, WorkToggle, type ChangesSource } from './session-work';
 import { ReminderNote, SessionTasks, useTasks } from './dsh-tasks';
 
 /** What the session parts speak to: a computer's sessions and its PIN. */
@@ -70,7 +70,7 @@ export type SessionClient = Pick<
   RelayClient,
   | 'listSessions' | 'watchSessions' | 'follow' | 'older' | 'createSession' | 'configuration' | 'selectModel'
   | 'uploadCapabilities' | 'startUpload' | 'uploadChunk' | 'finishUpload' | 'cancelUpload' | 'cancel' | 'prompt' | 'answer'
-  | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission' | 'listFiles' | 'searchFiles' | 'readFile' | 'readDocument'
+  | 'renameSession' | 'pinSession' | 'archiveSession' | 'selectPermission' | 'listFiles' | 'searchFiles' | 'readFile' | 'readDocument' | 'statFile' | 'turnChanges' | 'changeDiff'
   | 'watchPin' | 'unlock' | 'setPin'
   | 'listTasks' | 'watchTasks' | 'createTask' | 'updateTask' | 'deleteTask' | 'runTask' | 'taskHistory'
 >;
@@ -512,7 +512,13 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
   const rows = rowsOf(state.items);
   // Each turn's files, gathered at its end once it ends (`turnTails`).
   const endedTurns = useMemo(() => new Set(state.items.flatMap((item) => (item.kind === 'turn-end' ? [item.turn] : []))), [state.items]);
-  const changedTurns = useMemo(() => changedFilesByTurn(state.items), [state.items]);
+  const changedTurns = useMemo(() => changesByTurn(state.items), [state.items]);
+  // A turn's changes come from the computer's own record of them, and open as its review in the sidebar.
+  const changes = useMemo<ChangesSource | undefined>(() => (config?.files && id ? {
+    load: (seq) => relay.turnChanges(computerId, id, seq),
+    diff: (seq, index) => relay.changeDiff(computerId, id, seq, index),
+    open: (seq, turn, index) => changeSidebar((s) => openTab(s, { kind: 'changes', seq, turn, index })),
+  } : undefined), [config?.files, id, relay, computerId, changeSidebar]);
   const toggleWork = (work: string) => setOpenedWork((open) => {
     const next = new Set(open);
     const key = workKey(work);
@@ -601,7 +607,7 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
             <p className="ml-auto max-w-[85%] rounded-2xl bg-secondary px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{sent}</p>
           )}
           {turnTails(visibleConversationRows(rows, isWorkOpen), endedTurns, changedTurns).map((entry) => {
-            if (entry.kind === 'tail') return <TurnFiles key={`tail-${entry.turn}`} delivered={entry.delivered} changed={entry.changed} openFile={openFile} />;
+            if (entry.kind === 'tail') return <TurnFiles key={`tail-${entry.turn}`} turn={entry.turn} delivered={entry.delivered} changes={entry.changes} source={changes} openFile={openFile} />;
             const row = entry.row;
             return row.kind === 'user' ? (
               <div key={row.id} className="ml-auto flex max-w-[85%] flex-col items-end gap-1.5">
@@ -685,6 +691,10 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
             if (tab.kind === 'files') {
               return <FilesPage client={relay} computerId={computerId} sessionId={id} root={current?.cwd} word={word} reload={reload} onReload={onReload}
                 onOpen={(path) => changeSidebar((s) => openTab(s, { kind: 'file', path }, { pane: pane.id }))} />;
+            }
+            if (tab.kind === 'changes') {
+              return <ChangesReview client={relay} computerId={computerId} sessionId={id} root={current?.cwd} word={word} seq={tab.seq} index={tab.index}
+                onOpenFile={(path) => changeSidebar((s) => openTab(s, { kind: 'file', path }, { pane: pane.id }))} />;
             }
             if (tab.kind === 'file') {
               return <FileView client={relay} computerId={computerId} sessionId={id} root={current?.cwd} path={tab.path} line={tab.line} word={word} reload={reload} onReload={onReload}
