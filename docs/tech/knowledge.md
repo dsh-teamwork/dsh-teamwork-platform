@@ -26,15 +26,58 @@ The smallest useful version, on a self-hosted server as on the hosted one:
 
 ## Non-goals
 
-- **A general document editor.** No blocks, databases, embeds or real-time
-  co-editing; teams that want them keep Lark or Notion, and knowledge may be
-  imported from them later. What it does better is being read and kept true
-  by agents.
-- **Rich media.** A report, a deck or a dashboard is a [page](pages.md); a
-  document may link to one.
+- **What has no plain-text form** (see "Format"): real-time co-editing and
+  its cursors, synced or transcluded blocks, whiteboards and free canvases,
+  database formulas, relations, rollups, boards and calendars, multi-column
+  layout, and HTML or scripts inside a document. Teams that want them keep
+  Lark or Notion, and knowledge may be imported from them later; what it
+  does better is being read and kept true by agents.
+- **Rich media.** A report, a deck, a dashboard or anything interactive is a
+  [page](pages.md); a document embeds or links to one.
 - **Knowledge extracted from sessions without a person.** An agent proposes;
   it never writes a document directly.
 - **Anyone outside the team**, as for pages.
+
+## Format
+
+**The rule: every feature has a plain-text form in the file that still reads
+when it is not rendered.** People see something close to Lark or Notion; an
+agent reads the same file as text, with nothing hidden from it and nothing
+to convert. A feature that cannot be written that way is a non-goal, not a
+later step. The extended syntax follows Obsidian's conventions rather than
+one of our own, since people and agents already know them.
+
+| Feature | In the file | What a person sees | Step |
+| --- | --- | --- | --- |
+| Headings, lists, tables, code, task lists | GitHub-flavoured Markdown | Formatted text | 2 |
+| Callouts | `> [!warning] Title` | A coloured box | 2 |
+| Folding | `> [!note]- Title` (Obsidian's folded callout) | A collapsible section | 2 |
+| Diagrams | a `mermaid` code block | The diagram; an agent reads and edits its source | 2 |
+| Images and attachments | a relative link to a file kept beside the document | Inline, or a file card | 2 |
+| Links between documents | `[[Document]]` or `[[Document#Heading]]` | A link, and backlinks at the foot of the target | 2 |
+| Properties | YAML front matter (below) | A row of properties under the title | 2 |
+| Templates | ordinary documents in a templates folder | A choice when creating a document | 2 |
+| Mentions | `@[Name](member-id)` | A mention, and a notification | 4 |
+| A folder as a table | the front matter of its documents | A table of them, filtered and sorted by property | 4 |
+| An embedded page | `![[page:ID]]` | The page's card or preview | 4 |
+| Comments | not in the file: kept beside the version, anchored to a range | Comments in the margin | 5 |
+
+**Front matter** carries what a person filters by and an agent decides by:
+`owner` (a member), `status`, `tags`, `summary` (what the document says, in
+a sentence or two, so an agent can decide whether to read the rest) and
+`reviewed` (the date a person last confirmed it is true). A document past
+its folder's review interval is marked possibly stale: an agent citing it
+says so, and its owner is reminded. That is how knowledge is kept true
+rather than only kept.
+
+**Headings are stable anchors**, so a citation names the document, its
+version and a heading, and still opens there after an edit elsewhere.
+
+**Editing** is a WYSIWYG editor that reads and writes the Markdown above, with
+a slash menu for its blocks; there is no source mode to learn. Saving is a
+new version. There is no real-time co-editing: an open editor shows who
+else has the document open, and a save on a stale version is refused and
+shown as a difference to reapply, as a page's `page_stale` is.
 
 ## Shape
 
@@ -59,17 +102,27 @@ The smallest useful version, on a self-hosted server as on the hosted one:
 
 ## Order of work
 
-1. **Spike, thrown away:** sync a few hundred documents into a real DSH
-   session's folder and measure whether its agent finds and cites the right
-   one without a search tool; and how large a team's knowledge can grow
-   before a local copy stops being reasonable. If it fails, step 2 adds a
-   search tool on the server before anything else.
-2. **Documents and folders** on the server, written and edited in the
-   console (save is a new version), and synced to the plugin.
+1. **Two spikes, thrown away:**
+   - **Local sync:** sync a few hundred documents into a real DSH session's
+     folder and measure whether its agent finds and cites the right one
+     without a search tool, and how large a team's knowledge can grow
+     before a local copy stops being reasonable. If it fails, step 2 adds a
+     search tool on the server before anything else.
+   - **The editor's round trip:** open real documents using every feature
+     of step 2 in candidate WYSIWYG editors (Milkdown, TipTap), edit one
+     paragraph, save, and diff. Pass: the diff is that paragraph alone. If
+     no editor passes, the editor normalises a document once on its first
+     save, as a version of its own, and every later diff is measured from
+     it.
+2. **Documents and folders**: the server's documents, folders, versions and
+   attachments; the editor with step 2's features in the table above, front
+   matter and the stale mark; templates; backlinks; and the plugin's sync.
 3. **Proposals and review**: the plugin's tool to propose a change, the
    review screen with the difference, accepted proposals as versions.
-4. **Server search** for the console and the phone app.
-5. **Imports and bots** (hosted edition): Lark documents imported, and the
+4. **Working together**: mentions and their notifications, a folder as a
+   table, embedded pages.
+5. **Comments and server search**, for the console and the phone app.
+6. **Imports and bots** (hosted edition): Lark documents imported, and the
    Lark bot answering from knowledge with citations.
 
 ## Open questions
@@ -79,6 +132,8 @@ The smallest useful version, on a self-hosted server as on the hosted one:
 - **Which edition has what**: the documents, folders and sync are what one
   team needs, so the community edition; whether review, roles and imports
   are closed.
+- **The review interval**: one default for the team, or set per folder,
+  and who is reminded besides the owner.
 - **Team memory** (hosted positioning, question 4): whether the team's
   memory is this module, kept by people and proposed by agents, or a store
   of its own.
@@ -89,5 +144,8 @@ The smallest useful version, on a self-hosted server as on the hosted one:
   them, through the API and through the plugin's sync; a proposal never
   changes a document until it is accepted; an accepted proposal on a stale
   version is refused.
+- **The format**: every feature in the table survives a round trip through
+  the editor unchanged (a fixture of each), and a rendered document and its
+  raw file say the same thing to a reader who reads only the file.
 - **End to end** (`server/e2e`): a real DSH session reads a synced document,
   cites it, and proposes a change that a second account accepts.
