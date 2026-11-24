@@ -155,38 +155,47 @@ func (s *Service) DeleteSpace(ctx context.Context, c Caller, teamID, spaceID str
 		return err
 	}
 	defer tx.Rollback()
-	if err := deleteSpace(ctx, tx.Client(), spaceID); err != nil {
-		return err
-	}
-	return tx.Commit()
-}
-
-// deleteSpace removes a space and everything in it, in a caller's
-// transaction; a team's deletion calls it for each of its spaces.
-func deleteSpace(ctx context.Context, db *ent.Client, spaceID string) error {
-	docs, err := db.KnowledgeDocument.Query().Where(knowledgedocument.SpaceID(spaceID)).IDs(ctx)
+	digests, err := deleteSpace(ctx, tx.Client(), spaceID)
 	if err != nil {
 		return err
 	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	s.Forget(context.WithoutCancel(ctx), teamID, digests)
+	return nil
+}
+
+// deleteSpace removes a space and everything in it, in a caller's
+// transaction, and returns the digests its attachments named.
+func deleteSpace(ctx context.Context, db *ent.Client, spaceID string) ([]string, error) {
+	docs, err := db.KnowledgeDocument.Query().Where(knowledgedocument.SpaceID(spaceID)).IDs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var digests []string
 	if len(docs) > 0 {
+		if digests, err = deleteAttachments(ctx, db, docs); err != nil {
+			return nil, err
+		}
 		if _, err := db.KnowledgeVersion.Delete().Where(knowledgeversion.DocumentIDIn(docs...)).Exec(ctx); err != nil {
-			return err
+			return nil, err
 		}
 		if _, err := db.KnowledgeProposal.Delete().Where(knowledgeproposal.DocumentIDIn(docs...)).Exec(ctx); err != nil {
-			return err
+			return nil, err
 		}
 		if _, err := db.KnowledgeDocument.Delete().Where(knowledgedocument.IDIn(docs...)).Exec(ctx); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	if _, err := db.KnowledgeFolder.Delete().Where(knowledgefolder.SpaceID(spaceID)).Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 	if _, err := db.KnowledgeSpaceMember.Delete().Where(knowledgespacemember.SpaceID(spaceID)).Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 	_, err = db.KnowledgeSpace.Delete().Where(knowledgespace.ID(spaceID)).Exec(ctx)
-	return err
+	return digests, err
 }
 
 // Access is who reads and who edits a space, besides the team's admins and

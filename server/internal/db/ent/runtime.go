@@ -18,6 +18,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -737,6 +738,59 @@ func init() {
 	// invite.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	invite.IDValidator = func() func(string) error {
 		validators := inviteDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	knowledgeattachmentMixin := schema.KnowledgeAttachment{}.Mixin()
+	knowledgeattachmentMixinFields0 := knowledgeattachmentMixin[0].Fields()
+	_ = knowledgeattachmentMixinFields0
+	knowledgeattachmentFields := schema.KnowledgeAttachment{}.Fields()
+	_ = knowledgeattachmentFields
+	// knowledgeattachmentDescCreatedAt is the schema descriptor for created_at field.
+	knowledgeattachmentDescCreatedAt := knowledgeattachmentMixinFields0[1].Descriptor()
+	// knowledgeattachment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	knowledgeattachment.DefaultCreatedAt = knowledgeattachmentDescCreatedAt.Default.(func() time.Time)
+	// knowledgeattachmentDescTeamID is the schema descriptor for team_id field.
+	knowledgeattachmentDescTeamID := knowledgeattachmentFields[0].Descriptor()
+	// knowledgeattachment.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	knowledgeattachment.TeamIDValidator = knowledgeattachmentDescTeamID.Validators[0].(func(string) error)
+	// knowledgeattachmentDescDocumentID is the schema descriptor for document_id field.
+	knowledgeattachmentDescDocumentID := knowledgeattachmentFields[1].Descriptor()
+	// knowledgeattachment.DocumentIDValidator is a validator for the "document_id" field. It is called by the builders before save.
+	knowledgeattachment.DocumentIDValidator = knowledgeattachmentDescDocumentID.Validators[0].(func(string) error)
+	// knowledgeattachmentDescName is the schema descriptor for name field.
+	knowledgeattachmentDescName := knowledgeattachmentFields[2].Descriptor()
+	// knowledgeattachment.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	knowledgeattachment.NameValidator = knowledgeattachmentDescName.Validators[0].(func(string) error)
+	// knowledgeattachmentDescContentType is the schema descriptor for content_type field.
+	knowledgeattachmentDescContentType := knowledgeattachmentFields[3].Descriptor()
+	// knowledgeattachment.ContentTypeValidator is a validator for the "content_type" field. It is called by the builders before save.
+	knowledgeattachment.ContentTypeValidator = knowledgeattachmentDescContentType.Validators[0].(func(string) error)
+	// knowledgeattachmentDescDigest is the schema descriptor for digest field.
+	knowledgeattachmentDescDigest := knowledgeattachmentFields[5].Descriptor()
+	// knowledgeattachment.DigestValidator is a validator for the "digest" field. It is called by the builders before save.
+	knowledgeattachment.DigestValidator = knowledgeattachmentDescDigest.Validators[0].(func(string) error)
+	// knowledgeattachmentDescCreatedBy is the schema descriptor for created_by field.
+	knowledgeattachmentDescCreatedBy := knowledgeattachmentFields[6].Descriptor()
+	// knowledgeattachment.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	knowledgeattachment.CreatedByValidator = knowledgeattachmentDescCreatedBy.Validators[0].(func(string) error)
+	// knowledgeattachmentDescID is the schema descriptor for id field.
+	knowledgeattachmentDescID := knowledgeattachmentMixinFields0[0].Descriptor()
+	// knowledgeattachment.DefaultID holds the default value on creation for the id field.
+	knowledgeattachment.DefaultID = knowledgeattachmentDescID.Default.(func() string)
+	// knowledgeattachment.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	knowledgeattachment.IDValidator = func() func(string) error {
+		validators := knowledgeattachmentDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),

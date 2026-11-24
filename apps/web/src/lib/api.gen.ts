@@ -3619,6 +3619,120 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/knowledge/documents/{id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Attach a file to a document the caller reads (any reader, or their plugin); the same name with the same bytes is the same attachment, with other bytes knowledge_name_taken */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /**
+                         * Format: binary
+                         * @description Its file name is the attachment's name
+                         */
+                        file: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The attachment, already held */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeAttachment"];
+                    };
+                };
+                /** @description The attachment, stored */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KnowledgeAttachment"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/knowledge/documents/{id}/attachments/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        /** An attachment's bytes, under a sandbox; an image or PDF inline, anything else as a download */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The file */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/octet-stream": string;
+                    };
+                };
+                /** @description Unchanged */
+                304: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teams/{teamId}/knowledge/proposals": {
         parameters: {
             query?: never;
@@ -4436,6 +4550,15 @@ export interface components {
             version: number;
             text: string;
             versions: components["schemas"]["KnowledgeVersion"][];
+            /** @description The files the document may name, every version alike */
+            attachments: components["schemas"]["KnowledgeAttachment"][];
+        };
+        KnowledgeAttachment: {
+            /** @description Named in the text as ![[name]] (an embed) or [[name]] (a link) */
+            name: string;
+            contentType: string;
+            /** Format: int64 */
+            size: number;
         };
         KnowledgeProposal: {
             id: string;
@@ -4503,6 +4626,13 @@ export interface components {
                         folders: string[];
                         title: string;
                         version: number;
+                        attachments: {
+                            name: string;
+                            /** Format: int64 */
+                            size: number;
+                            /** @description Changes only when the bytes do */
+                            digest: string;
+                        }[];
                     }[];
                 }[];
             }[];

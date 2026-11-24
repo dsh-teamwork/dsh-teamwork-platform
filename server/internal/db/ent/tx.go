@@ -40,6 +40,8 @@ type Tx struct {
 	Identity *IdentityClient
 	// Invite is the client for interacting with the Invite builders.
 	Invite *InviteClient
+	// KnowledgeAttachment is the client for interacting with the KnowledgeAttachment builders.
+	KnowledgeAttachment *KnowledgeAttachmentClient
 	// KnowledgeDocument is the client for interacting with the KnowledgeDocument builders.
 	KnowledgeDocument *KnowledgeDocumentClient
 	// KnowledgeFolder is the client for interacting with the KnowledgeFolder builders.
@@ -228,6 +230,7 @@ func (tx *Tx) init() {
 	tx.ConfigRevision = NewConfigRevisionClient(tx.config)
 	tx.Identity = NewIdentityClient(tx.config)
 	tx.Invite = NewInviteClient(tx.config)
+	tx.KnowledgeAttachment = NewKnowledgeAttachmentClient(tx.config)
 	tx.KnowledgeDocument = NewKnowledgeDocumentClient(tx.config)
 	tx.KnowledgeFolder = NewKnowledgeFolderClient(tx.config)
 	tx.KnowledgeProposal = NewKnowledgeProposalClient(tx.config)

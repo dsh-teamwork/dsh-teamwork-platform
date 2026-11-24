@@ -19,6 +19,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetreservation"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetwindow"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -184,9 +185,14 @@ func (s *Service) forgetStored(ctx context.Context, packages []*ent.PluginPackag
 	s.forgetArtifactObjects(ctx, objects)
 }
 
-// artifactObject is an artifact file's object in the store:
-// teams/{team}/pages/{digest}, the kind artifacts were first stored under.
-type artifactObject struct{ team, digest string }
+// artifactObject is an object a deleted row named: an artifact file's,
+// teams/{team}/pages/{digest} (the kind artifacts were first stored under),
+// or, with kind knowledgeObjects, a knowledge attachment's.
+type artifactObject struct{ team, digest, kind string }
+
+// knowledgeObjects is internal/knowledge's object kind (knowledge.ObjectKind),
+// which this package cannot import.
+const knowledgeObjects = "knowledge"
 
 // deleteArtifacts removes artifacts of a team with their versions, files and members,
 // and returns the objects their files named.
@@ -213,7 +219,7 @@ func deleteArtifacts(ctx context.Context, db *ent.Client, teamID string, ids []s
 	}
 	out := make([]artifactObject, len(digests))
 	for i, d := range digests {
-		out[i] = artifactObject{teamID, d}
+		out[i] = artifactObject{team: teamID, digest: d}
 	}
 	return out, nil
 }
@@ -222,11 +228,19 @@ func deleteArtifacts(ctx context.Context, db *ent.Client, teamID string, ids []s
 // A file left behind by a failed delete is logged, not a failed deletion.
 func (s *Service) forgetArtifactObjects(ctx context.Context, objects []artifactObject) {
 	for _, o := range objects {
-		named, err := s.DB.ArtifactFile.Query().Where(artifactfile.TeamID(o.team), artifactfile.Digest(o.digest)).Exist(ctx)
+		kind := "pages"
+		var named bool
+		var err error
+		if o.kind == knowledgeObjects {
+			kind = knowledgeObjects
+			named, err = s.DB.KnowledgeAttachment.Query().Where(knowledgeattachment.TeamID(o.team), knowledgeattachment.Digest(o.digest)).Exist(ctx)
+		} else {
+			named, err = s.DB.ArtifactFile.Query().Where(artifactfile.TeamID(o.team), artifactfile.Digest(o.digest)).Exist(ctx)
+		}
 		if err != nil || named {
 			continue
 		}
-		if err := s.Objects.DeleteObject(ctx, o.team, "pages", o.digest); err != nil {
+		if err := s.Objects.DeleteObject(ctx, o.team, kind, o.digest); err != nil {
 			slog.Warn("deleted artifact's file left in storage", "team", o.team, "digest", o.digest, "error", err)
 		}
 	}
@@ -252,8 +266,12 @@ func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.Plug
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := deleteKnowledge(ctx, db, teamID); err != nil {
+	knowledgeDigests, err := deleteKnowledge(ctx, db, teamID)
+	if err != nil {
 		return nil, nil, err
+	}
+	for _, d := range knowledgeDigests {
+		objects = append(objects, artifactObject{team: teamID, digest: d, kind: knowledgeObjects})
 	}
 	steps := []func() (int, error){
 		func() (int, error) {
@@ -289,16 +307,24 @@ func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.Plug
 // deleteKnowledge removes a team's knowledge (docs/tech/knowledge.md): its
 // spaces with their members and folders, and its documents with their
 // versions and proposals.
-func deleteKnowledge(ctx context.Context, db *ent.Client, teamID string) error {
+func deleteKnowledge(ctx context.Context, db *ent.Client, teamID string) ([]string, error) {
 	docs, err := db.KnowledgeDocument.Query().Where(knowledgedocument.TeamID(teamID)).IDs(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	spaces, err := db.KnowledgeSpace.Query().Where(knowledgespace.TeamID(teamID)).IDs(ctx)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	var digests []string
+	if err := db.KnowledgeAttachment.Query().Where(knowledgeattachment.TeamID(teamID)).Unique(true).
+		Select(knowledgeattachment.FieldDigest).Scan(ctx, &digests); err != nil {
+		return nil, err
 	}
 	steps := []func() (int, error){
+		func() (int, error) {
+			return db.KnowledgeAttachment.Delete().Where(knowledgeattachment.TeamID(teamID)).Exec(ctx)
+		},
 		func() (int, error) {
 			return db.KnowledgeVersion.Delete().Where(knowledgeversion.DocumentIDIn(docs...)).Exec(ctx)
 		},
@@ -318,8 +344,8 @@ func deleteKnowledge(ctx context.Context, db *ent.Client, teamID string) error {
 	}
 	for _, step := range steps {
 		if _, err := step(); err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return digests, nil
 }

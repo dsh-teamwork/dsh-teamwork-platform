@@ -128,3 +128,25 @@ func (KnowledgeProposal) Fields() []ent.Field {
 func (KnowledgeProposal) Indexes() []ent.Index {
 	return []ent.Index{index.Fields("team_id", "state", "created_at"), index.Fields("document_id", "state")}
 }
+
+// KnowledgeAttachment is a file a document names by its name, `![[name]]` or
+// `[[name]]` (docs/tech/knowledge.md, "Format"). A name, once uploaded, keeps
+// its bytes for the document's life, so every version that names it shows
+// the same file; the bytes are an object of the team, by digest.
+type KnowledgeAttachment struct{ ent.Schema }
+
+func (KnowledgeAttachment) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
+func (KnowledgeAttachment) Fields() []ent.Field {
+	return []ent.Field{
+		field.String("team_id").MaxLen(32).Immutable(),
+		field.String("document_id").MaxLen(32).Immutable(),
+		field.String("name").MaxLen(runes(120)).Immutable(),
+		field.String("content_type").MaxLen(100).Immutable(),
+		field.Int64("size").Immutable(),
+		field.String("digest").MaxLen(32).Immutable(),
+		field.String("created_by").MaxLen(32).Immutable(),
+	}
+}
+func (KnowledgeAttachment) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("document_id", "name").Unique(), index.Fields("team_id", "digest")}
+}

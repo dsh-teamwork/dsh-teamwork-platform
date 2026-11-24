@@ -1,9 +1,17 @@
 package httpapi_test
 
 import (
+	"bytes"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/knowledge"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/objectstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
 
@@ -204,5 +212,100 @@ func TestKnowledgeGoesWithItsTeam(t *testing.T) {
 		if left != 0 {
 			t.Fatalf("%d knowledge rows outlived their team", left)
 		}
+	})
+}
+
+// attach uploads one file to a document, as a browser or a plugin would.
+func attach(t *testing.T, e *env, client *http.Client, header map[string]string, path, name string, content []byte) response {
+	t.Helper()
+	var body bytes.Buffer
+	w := multipart.NewWriter(&body)
+	part, _ := w.CreateFormFile("file", name)
+	part.Write(content)
+	w.Close()
+	h := map[string]string{"Content-Type": w.FormDataContentType()}
+	for k, v := range header {
+		h[k] = v
+	}
+	return do(t, client, "POST", e.url+path, body.String(), h)
+}
+
+func TestKnowledgeAttachmentsKeepTheirBytes(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		store := objectstore.Local{Dir: t.TempDir()}
+		e := start(t, d, options{objects: store})
+		teamID, admin, a, b, _, _ := knowledgeTeam(t, e)
+		base := "/api/teams/" + teamID + "/knowledge"
+		space := must(t, admin.post(base+"/spaces", map[string]string{"name": "Diagrams"}), 201)["id"].(string)
+		docID := must(t, admin.post(base+"/documents", map[string]any{"spaceId": space, "title": "Flow", "text": "![[flow.png]]\n"}), 201)["id"].(string)
+		doc := base + "/documents/" + docID
+		png := []byte("\x89PNG\r\n\x1a\nfake image")
+
+		// A reader, or their agent, may attach: a file does nothing until an
+		// editor's version names it.
+		pa := e.pluginFor(a)
+		first := attach(t, e, http.DefaultClient, map[string]string{"Authorization": "Bearer " + pa.token}, doc+"/attachments", "flow.png", png)
+		if got := must(t, first, 201); got["name"] != "flow.png" || got["contentType"] != "image/png" || got["size"].(float64) != float64(len(png)) {
+			t.Fatalf("attached %v", got)
+		}
+		browserHeader := map[string]string{"Origin": b.origin}
+		must(t, attach(t, e, b.client, browserHeader, doc+"/attachments", "flow.png", png), 200)
+		refused(t, "the same name, other bytes", attach(t, e, b.client, browserHeader, doc+"/attachments", "flow.png", []byte("other")), 409, "knowledge_name_taken")
+		refused(t, "a type knowledge does not keep", attach(t, e, b.client, browserHeader, doc+"/attachments", "run.exe", []byte("x")), 400, "invalid_request")
+		refused(t, "a name a link cannot hold", attach(t, e, b.client, browserHeader, doc+"/attachments", "a]b.png", png), 400, "invalid_request")
+
+		// The document lists it, the copy's manifest gives its digest, and its
+		// bytes come back under a sandbox.
+		if got := must(t, b.get(doc), 200)["attachments"].([]any); len(got) != 1 || got[0].(map[string]any)["name"] != "flow.png" {
+			t.Fatalf("listed %v", got)
+		}
+		manifest := must(t, pa.get("/api/knowledge"), 200)["teams"].([]any)[0].(map[string]any)["spaces"].([]any)[0].(map[string]any)["documents"].([]any)[0].(map[string]any)
+		if files := manifest["attachments"].([]any); len(files) != 1 || files[0].(map[string]any)["digest"] == "" {
+			t.Fatalf("manifest %v", manifest)
+		}
+		res, err := b.client.Get(e.url + doc + "/attachments/flow.png")
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		if res.StatusCode != 200 || !bytes.Equal(got, png) || res.Header.Get("Content-Type") != "image/png" ||
+			!strings.HasPrefix(res.Header.Get("Content-Security-Policy"), "sandbox") || res.Header.Get("X-Content-Type-Options") != "nosniff" {
+			t.Fatalf("served %d %q %v", res.StatusCode, got, res.Header)
+		}
+
+		// Narrowed away from b, the file is as hidden as the document.
+		must(t, admin.send("PUT", base+"/spaces/"+space+"/access", map[string]any{"reading": "members", "readers": []string{}, "editors": []string{}}), 200)
+		if res, _ := b.client.Get(e.url + doc + "/attachments/flow.png"); res.StatusCode != 404 {
+			t.Fatalf("hidden attachment: %d", res.StatusCode)
+		}
+
+		// Deleting the document forgets the bytes no other document names.
+		objects, _ := filepath.Glob(filepath.Join(store.Dir, "teams", teamID, "knowledge", "*"))
+		if len(objects) != 1 {
+			t.Fatalf("stored %v", objects)
+		}
+		must(t, admin.send("DELETE", doc, nil), 204)
+		if objects, _ := filepath.Glob(filepath.Join(store.Dir, "teams", teamID, "knowledge", "*")); len(objects) != 0 {
+			t.Fatalf("left %v", objects)
+		}
+	})
+}
+
+func TestKnowledgeAttachmentsStayWithinTheTeamQuota(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		e := start(t, d, options{objects: objectstore.Local{Dir: t.TempDir()}})
+		admin := e.admin("admin@x.io")
+		teamID := newTeam(t, admin, "Knowledge")
+		base := "/api/teams/" + teamID + "/knowledge"
+		space := must(t, admin.post(base+"/spaces", map[string]string{"name": "Full"}), 201)["id"].(string)
+		doc := base + "/documents/" + must(t, admin.post(base+"/documents", map[string]any{"spaceId": space, "title": "D", "text": "x"}), 201)["id"].(string)
+		defer func(q int64) { knowledge.TeamAttachmentQuota = q }(knowledge.TeamAttachmentQuota)
+		knowledge.TeamAttachmentQuota = 8
+		h := map[string]string{"Origin": admin.origin}
+		must(t, attach(t, e, admin.client, h, doc+"/attachments", "a.txt", []byte("12345")), 201)
+		refused(t, "past the team's quota", attach(t, e, admin.client, h, doc+"/attachments", "b.txt", []byte("67890")), 413, "knowledge_team_full")
+		// The same bytes again take no more room.
+		must(t, attach(t, e, admin.client, h, doc+"/attachments", "c.txt", []byte("12345")), 201)
 	})
 }

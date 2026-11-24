@@ -397,6 +397,36 @@ var (
 			},
 		},
 	}
+	// KnowledgeAttachmentsColumns holds the columns for the "knowledge_attachments" table.
+	KnowledgeAttachmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "document_id", Type: field.TypeString, Size: 32},
+		{Name: "name", Type: field.TypeString, Size: 480},
+		{Name: "content_type", Type: field.TypeString, Size: 100},
+		{Name: "size", Type: field.TypeInt64},
+		{Name: "digest", Type: field.TypeString, Size: 32},
+		{Name: "created_by", Type: field.TypeString, Size: 32},
+	}
+	// KnowledgeAttachmentsTable holds the schema information for the "knowledge_attachments" table.
+	KnowledgeAttachmentsTable = &schema.Table{
+		Name:       "knowledge_attachments",
+		Columns:    KnowledgeAttachmentsColumns,
+		PrimaryKey: []*schema.Column{KnowledgeAttachmentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "knowledgeattachment_document_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{KnowledgeAttachmentsColumns[3], KnowledgeAttachmentsColumns[4]},
+			},
+			{
+				Name:    "knowledgeattachment_team_id_digest",
+				Unique:  false,
+				Columns: []*schema.Column{KnowledgeAttachmentsColumns[2], KnowledgeAttachmentsColumns[7]},
+			},
+		},
+	}
 	// KnowledgeDocumentsColumns holds the columns for the "knowledge_documents" table.
 	KnowledgeDocumentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -1034,6 +1064,7 @@ var (
 		ConfigRevisionsTable,
 		IdentitiesTable,
 		InvitesTable,
+		KnowledgeAttachmentsTable,
 		KnowledgeDocumentsTable,
 		KnowledgeFoldersTable,
 		KnowledgeProposalsTable,
@@ -1111,6 +1142,10 @@ func init() {
 	}
 	InvitesTable.ForeignKeys[0].RefTable = TeamsTable
 	InvitesTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	KnowledgeAttachmentsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

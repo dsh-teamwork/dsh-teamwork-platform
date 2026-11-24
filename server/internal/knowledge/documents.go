@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -39,6 +40,8 @@ type Document struct {
 	Version  int           `json:"version"`
 	Text     string        `json:"text"`
 	Versions []VersionView `json:"versions"`
+	// Attachments are the files the document may name, every version alike.
+	Attachments []Attachment `json:"attachments"`
 }
 
 // DocumentInput makes a document.
@@ -178,6 +181,9 @@ func (s *Service) Get(ctx context.Context, c Caller, teamID, documentID string, 
 		return Document{}, err
 	}
 	out.Text = v.Text
+	if out.Attachments, err = s.attachments(ctx, d.ID); err != nil {
+		return Document{}, err
+	}
 	return out, nil
 }
 
@@ -349,8 +355,31 @@ func (s *Service) Delete(ctx context.Context, c Caller, teamID, documentID strin
 	if _, err := tx.KnowledgeProposal.Delete().Where(knowledgeproposal.DocumentID(d.ID)).Exec(ctx); err != nil {
 		return err
 	}
+	digests, err := deleteAttachments(ctx, tx.Client(), []string{d.ID})
+	if err != nil {
+		return err
+	}
 	if err := tx.KnowledgeDocument.DeleteOneID(d.ID).Exec(ctx); err != nil {
 		return err
 	}
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	s.Forget(context.WithoutCancel(ctx), teamID, digests)
+	return nil
+}
+
+// deleteAttachments removes the attachment rows of documents, in a caller's
+// transaction, and returns the digests they named, whose objects the caller
+// forgets once it commits.
+func deleteAttachments(ctx context.Context, db *ent.Client, documentIDs []string) ([]string, error) {
+	var digests []string
+	if err := db.KnowledgeAttachment.Query().Where(knowledgeattachment.DocumentIDIn(documentIDs...)).
+		Unique(true).Select(knowledgeattachment.FieldDigest).Scan(ctx, &digests); err != nil {
+		return nil, err
+	}
+	if _, err := db.KnowledgeAttachment.Delete().Where(knowledgeattachment.DocumentIDIn(documentIDs...)).Exec(ctx); err != nil {
+		return nil, err
+	}
+	return digests, nil
 }

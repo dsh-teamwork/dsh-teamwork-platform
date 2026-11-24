@@ -25,6 +25,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/identity"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/invite"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeattachment"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgedocument"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgefolder"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgeproposal"
@@ -72,6 +73,7 @@ const (
 	TypeConfigRevision       = "ConfigRevision"
 	TypeIdentity             = "Identity"
 	TypeInvite               = "Invite"
+	TypeKnowledgeAttachment  = "KnowledgeAttachment"
 	TypeKnowledgeDocument    = "KnowledgeDocument"
 	TypeKnowledgeFolder      = "KnowledgeFolder"
 	TypeKnowledgeProposal    = "KnowledgeProposal"
@@ -10964,6 +10966,752 @@ func (m *InviteMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Invite edge %s", name)
+}
+
+// KnowledgeAttachmentMutation represents an operation that mutates the KnowledgeAttachment nodes in the graph.
+type KnowledgeAttachmentMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	team_id       *string
+	document_id   *string
+	name          *string
+	content_type  *string
+	size          *int64
+	addsize       *int64
+	digest        *string
+	created_by    *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*KnowledgeAttachment, error)
+	predicates    []predicate.KnowledgeAttachment
+}
+
+var _ ent.Mutation = (*KnowledgeAttachmentMutation)(nil)
+
+// knowledgeattachmentOption allows management of the mutation configuration using functional options.
+type knowledgeattachmentOption func(*KnowledgeAttachmentMutation)
+
+// newKnowledgeAttachmentMutation creates new mutation for the KnowledgeAttachment entity.
+func newKnowledgeAttachmentMutation(c config, op Op, opts ...knowledgeattachmentOption) *KnowledgeAttachmentMutation {
+	m := &KnowledgeAttachmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeKnowledgeAttachment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withKnowledgeAttachmentID sets the ID field of the mutation.
+func withKnowledgeAttachmentID(id string) knowledgeattachmentOption {
+	return func(m *KnowledgeAttachmentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *KnowledgeAttachment
+		)
+		m.oldValue = func(ctx context.Context) (*KnowledgeAttachment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().KnowledgeAttachment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withKnowledgeAttachment sets the old KnowledgeAttachment of the mutation.
+func withKnowledgeAttachment(node *KnowledgeAttachment) knowledgeattachmentOption {
+	return func(m *KnowledgeAttachmentMutation) {
+		m.oldValue = func(context.Context) (*KnowledgeAttachment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m KnowledgeAttachmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m KnowledgeAttachmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of KnowledgeAttachment entities.
+func (m *KnowledgeAttachmentMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *KnowledgeAttachmentMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *KnowledgeAttachmentMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().KnowledgeAttachment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *KnowledgeAttachmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *KnowledgeAttachmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the KnowledgeAttachment entity.
+// If the KnowledgeAttachment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeAttachmentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *KnowledgeAttachmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *KnowledgeAttachmentMutation) SetTeamID(s string) {
+	m.team_id = &s
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *KnowledgeAttachmentMutation) TeamID() (r string, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the KnowledgeAttachment entity.
+// If the KnowledgeAttachment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeAttachmentMutation) OldTeamID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *KnowledgeAttachmentMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetDocumentID sets the "document_id" field.
+func (m *KnowledgeAttachmentMutation) SetDocumentID(s string) {
+	m.document_id = &s
+}
+
+// DocumentID returns the value of the "document_id" field in the mutation.
+func (m *KnowledgeAttachmentMutation) DocumentID() (r string, exists bool) {
+	v := m.document_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDocumentID returns the old "document_id" field's value of the KnowledgeAttachment entity.
+// If the KnowledgeAttachment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeAttachmentMutation) OldDocumentID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDocumentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDocumentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDocumentID: %w", err)
+	}
+	return oldValue.DocumentID, nil
+}
+
+// ResetDocumentID resets all changes to the "document_id" field.
+func (m *KnowledgeAttachmentMutation) ResetDocumentID() {
+	m.document_id = nil
+}
+
+// SetName sets the "name" field.
+func (m *KnowledgeAttachmentMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *KnowledgeAttachmentMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the KnowledgeAttachment entity.
+// If the KnowledgeAttachment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeAttachmentMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *KnowledgeAttachmentMutation) ResetName() {
+	m.name = nil
+}
+
+// SetContentType sets the "content_type" field.
+func (m *KnowledgeAttachmentMutation) SetContentType(s string) {
+	m.content_type = &s
+}
+
+// ContentType returns the value of the "content_type" field in the mutation.
+func (m *KnowledgeAttachmentMutation) ContentType() (r string, exists bool) {
+	v := m.content_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContentType returns the old "content_type" field's value of the KnowledgeAttachment entity.
+// If the KnowledgeAttachment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeAttachmentMutation) OldContentType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContentType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContentType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContentType: %w", err)
+	}
+	return oldValue.ContentType, nil
+}
+
+// ResetContentType resets all changes to the "content_type" field.
+func (m *KnowledgeAttachmentMutation) ResetContentType() {
+	m.content_type = nil
+}
+
+// SetSize sets the "size" field.
+func (m *KnowledgeAttachmentMutation) SetSize(i int64) {
+	m.size = &i
+	m.addsize = nil
+}
+
+// Size returns the value of the "size" field in the mutation.
+func (m *KnowledgeAttachmentMutation) Size() (r int64, exists bool) {
+	v := m.size
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSize returns the old "size" field's value of the KnowledgeAttachment entity.
+// If the KnowledgeAttachment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeAttachmentMutation) OldSize(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSize is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSize requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSize: %w", err)
+	}
+	return oldValue.Size, nil
+}
+
+// AddSize adds i to the "size" field.
+func (m *KnowledgeAttachmentMutation) AddSize(i int64) {
+	if m.addsize != nil {
+		*m.addsize += i
+	} else {
+		m.addsize = &i
+	}
+}
+
+// AddedSize returns the value that was added to the "size" field in this mutation.
+func (m *KnowledgeAttachmentMutation) AddedSize() (r int64, exists bool) {
+	v := m.addsize
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSize resets all changes to the "size" field.
+func (m *KnowledgeAttachmentMutation) ResetSize() {
+	m.size = nil
+	m.addsize = nil
+}
+
+// SetDigest sets the "digest" field.
+func (m *KnowledgeAttachmentMutation) SetDigest(s string) {
+	m.digest = &s
+}
+
+// Digest returns the value of the "digest" field in the mutation.
+func (m *KnowledgeAttachmentMutation) Digest() (r string, exists bool) {
+	v := m.digest
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDigest returns the old "digest" field's value of the KnowledgeAttachment entity.
+// If the KnowledgeAttachment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeAttachmentMutation) OldDigest(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDigest is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDigest requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDigest: %w", err)
+	}
+	return oldValue.Digest, nil
+}
+
+// ResetDigest resets all changes to the "digest" field.
+func (m *KnowledgeAttachmentMutation) ResetDigest() {
+	m.digest = nil
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (m *KnowledgeAttachmentMutation) SetCreatedBy(s string) {
+	m.created_by = &s
+}
+
+// CreatedBy returns the value of the "created_by" field in the mutation.
+func (m *KnowledgeAttachmentMutation) CreatedBy() (r string, exists bool) {
+	v := m.created_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedBy returns the old "created_by" field's value of the KnowledgeAttachment entity.
+// If the KnowledgeAttachment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KnowledgeAttachmentMutation) OldCreatedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedBy: %w", err)
+	}
+	return oldValue.CreatedBy, nil
+}
+
+// ResetCreatedBy resets all changes to the "created_by" field.
+func (m *KnowledgeAttachmentMutation) ResetCreatedBy() {
+	m.created_by = nil
+}
+
+// Where appends a list predicates to the KnowledgeAttachmentMutation builder.
+func (m *KnowledgeAttachmentMutation) Where(ps ...predicate.KnowledgeAttachment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the KnowledgeAttachmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *KnowledgeAttachmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.KnowledgeAttachment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *KnowledgeAttachmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *KnowledgeAttachmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (KnowledgeAttachment).
+func (m *KnowledgeAttachmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *KnowledgeAttachmentMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.created_at != nil {
+		fields = append(fields, knowledgeattachment.FieldCreatedAt)
+	}
+	if m.team_id != nil {
+		fields = append(fields, knowledgeattachment.FieldTeamID)
+	}
+	if m.document_id != nil {
+		fields = append(fields, knowledgeattachment.FieldDocumentID)
+	}
+	if m.name != nil {
+		fields = append(fields, knowledgeattachment.FieldName)
+	}
+	if m.content_type != nil {
+		fields = append(fields, knowledgeattachment.FieldContentType)
+	}
+	if m.size != nil {
+		fields = append(fields, knowledgeattachment.FieldSize)
+	}
+	if m.digest != nil {
+		fields = append(fields, knowledgeattachment.FieldDigest)
+	}
+	if m.created_by != nil {
+		fields = append(fields, knowledgeattachment.FieldCreatedBy)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *KnowledgeAttachmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case knowledgeattachment.FieldCreatedAt:
+		return m.CreatedAt()
+	case knowledgeattachment.FieldTeamID:
+		return m.TeamID()
+	case knowledgeattachment.FieldDocumentID:
+		return m.DocumentID()
+	case knowledgeattachment.FieldName:
+		return m.Name()
+	case knowledgeattachment.FieldContentType:
+		return m.ContentType()
+	case knowledgeattachment.FieldSize:
+		return m.Size()
+	case knowledgeattachment.FieldDigest:
+		return m.Digest()
+	case knowledgeattachment.FieldCreatedBy:
+		return m.CreatedBy()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *KnowledgeAttachmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case knowledgeattachment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case knowledgeattachment.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case knowledgeattachment.FieldDocumentID:
+		return m.OldDocumentID(ctx)
+	case knowledgeattachment.FieldName:
+		return m.OldName(ctx)
+	case knowledgeattachment.FieldContentType:
+		return m.OldContentType(ctx)
+	case knowledgeattachment.FieldSize:
+		return m.OldSize(ctx)
+	case knowledgeattachment.FieldDigest:
+		return m.OldDigest(ctx)
+	case knowledgeattachment.FieldCreatedBy:
+		return m.OldCreatedBy(ctx)
+	}
+	return nil, fmt.Errorf("unknown KnowledgeAttachment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *KnowledgeAttachmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case knowledgeattachment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case knowledgeattachment.FieldTeamID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case knowledgeattachment.FieldDocumentID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDocumentID(v)
+		return nil
+	case knowledgeattachment.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case knowledgeattachment.FieldContentType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContentType(v)
+		return nil
+	case knowledgeattachment.FieldSize:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSize(v)
+		return nil
+	case knowledgeattachment.FieldDigest:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDigest(v)
+		return nil
+	case knowledgeattachment.FieldCreatedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedBy(v)
+		return nil
+	}
+	return fmt.Errorf("unknown KnowledgeAttachment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *KnowledgeAttachmentMutation) AddedFields() []string {
+	var fields []string
+	if m.addsize != nil {
+		fields = append(fields, knowledgeattachment.FieldSize)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *KnowledgeAttachmentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case knowledgeattachment.FieldSize:
+		return m.AddedSize()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *KnowledgeAttachmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case knowledgeattachment.FieldSize:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSize(v)
+		return nil
+	}
+	return fmt.Errorf("unknown KnowledgeAttachment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *KnowledgeAttachmentMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *KnowledgeAttachmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *KnowledgeAttachmentMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown KnowledgeAttachment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *KnowledgeAttachmentMutation) ResetField(name string) error {
+	switch name {
+	case knowledgeattachment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case knowledgeattachment.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case knowledgeattachment.FieldDocumentID:
+		m.ResetDocumentID()
+		return nil
+	case knowledgeattachment.FieldName:
+		m.ResetName()
+		return nil
+	case knowledgeattachment.FieldContentType:
+		m.ResetContentType()
+		return nil
+	case knowledgeattachment.FieldSize:
+		m.ResetSize()
+		return nil
+	case knowledgeattachment.FieldDigest:
+		m.ResetDigest()
+		return nil
+	case knowledgeattachment.FieldCreatedBy:
+		m.ResetCreatedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown KnowledgeAttachment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *KnowledgeAttachmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *KnowledgeAttachmentMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *KnowledgeAttachmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *KnowledgeAttachmentMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *KnowledgeAttachmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *KnowledgeAttachmentMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *KnowledgeAttachmentMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown KnowledgeAttachment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *KnowledgeAttachmentMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown KnowledgeAttachment edge %s", name)
 }
 
 // KnowledgeDocumentMutation represents an operation that mutates the KnowledgeDocument nodes in the graph.

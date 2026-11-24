@@ -16,6 +16,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespace"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/knowledgespacemember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/objectstore"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -28,7 +29,9 @@ const MaxText = 1 << 20
 type Service struct {
 	DB   *ent.Client
 	Team *team.Service
-	Now  func() time.Time
+	// Store keeps attachments' bytes; without one, attachments are refused.
+	Store objectstore.Store
+	Now   func() time.Time
 }
 
 func (s *Service) now() time.Time {

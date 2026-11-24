@@ -1,8 +1,11 @@
 package httpapi
 
 import (
+	"io"
+	"mime"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/knowledge"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -169,6 +172,36 @@ func (s *Server) knowledgeRoutes(get, post func(string, handler), write func(str
 		return k.Propose(r.Context(), c, team(r), id(r), in)
 	})(s))
 
+	post("/api/teams/{teamId}/knowledge/documents/{id}/attachments", func(w http.ResponseWriter, r *http.Request) error {
+		c, err := s.requirePlugin(r)
+		if err != nil {
+			return err
+		}
+		out, created, err := k.Attach(r.Context(), knowledgeCaller(c), team(r), id(r), r)
+		if err != nil {
+			return err
+		}
+		noStore(w)
+		status := http.StatusOK
+		if created {
+			status = http.StatusCreated
+		}
+		writeJSON(w, status, out)
+		return nil
+	})
+	get("/api/teams/{teamId}/knowledge/documents/{id}/attachments/{name}", func(w http.ResponseWriter, r *http.Request) error {
+		c, err := s.requirePlugin(r)
+		if err != nil {
+			return err
+		}
+		a, body, digest, err := k.OpenAttachment(r.Context(), knowledgeCaller(c), team(r), id(r), r.PathValue("name"))
+		if err != nil {
+			return err
+		}
+		defer body.Close()
+		serveAttachment(w, r, a, body, digest)
+		return nil
+	})
 	get("/api/teams/{teamId}/knowledge/proposals", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
 		return k.Proposals(r.Context(), c, team(r), r.URL.Query().Get("state"))
 	})(s))
@@ -188,4 +221,33 @@ func (s *Server) knowledgeRoutes(get, post func(string, handler), write func(str
 	post("/api/teams/{teamId}/knowledge/proposals/{id}/withdraw", knowledgeRoute(user, 200, func(r *http.Request, c knowledge.Caller) (any, error) {
 		return k.Withdraw(r.Context(), c, team(r), id(r))
 	})(s))
+}
+
+// serveAttachment writes an attachment's bytes as a file of its own type that
+// a browser runs nothing in: an image or a PDF shown inline, anything else
+// downloaded, and every one under a sandbox, so an SVG's script never runs
+// as the member viewing it. Membership is re-read on every request, so it
+// is cached only by a browser that revalidates.
+func serveAttachment(w http.ResponseWriter, r *http.Request, a knowledge.Attachment, body io.Reader, digest string) {
+	h := w.Header()
+	etag := `"` + digest + `"`
+	h.Set("ETag", etag)
+	h.Set("Cache-Control", "private, no-cache")
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("Content-Security-Policy", "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'")
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	disposition := "attachment"
+	if strings.HasPrefix(a.ContentType, "image/") || a.ContentType == "application/pdf" {
+		disposition = "inline"
+	}
+	h.Set("Content-Disposition", mime.FormatMediaType(disposition, map[string]string{"filename": a.Name}))
+	h.Set("Content-Type", a.ContentType)
+	h.Set("Content-Length", strconv.FormatInt(a.Size, 10))
+	w.WriteHeader(http.StatusOK)
+	if r.Method != http.MethodHead {
+		io.Copy(w, body)
+	}
 }

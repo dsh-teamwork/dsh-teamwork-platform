@@ -1465,6 +1465,48 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/KnowledgeProposalDetail' }
         default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/documents/{id}/attachments:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Attach a file to a document the caller reads (any reader, or their plugin); the same name with the same bytes is the same attachment, with other bytes knowledge_name_taken
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary, description: Its file name is the attachment's name }
+      responses:
+        '200':
+          description: The attachment, already held
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeAttachment' }
+        '201':
+          description: The attachment, stored
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeAttachment' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/knowledge/documents/{id}/attachments/{name}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: name, in: path, required: true, schema: { type: string } }
+    get:
+      summary: An attachment's bytes, under a sandbox; an image or PDF inline, anything else as a download
+      responses:
+        '200':
+          description: The file
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '304': { description: Unchanged }
+        default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/knowledge/proposals:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -1856,7 +1898,7 @@ components:
         createdAt: { type: string, format: date-time }
     KnowledgeDocument:
       type: object
-      required: [id, folderId, title, currentVersion, updatedAt, spaceId, canEdit, version, text, versions]
+      required: [id, folderId, title, currentVersion, updatedAt, spaceId, canEdit, version, text, versions, attachments]
       additionalProperties: false
       properties:
         id: { type: string }
@@ -1869,6 +1911,15 @@ components:
         version: { type: integer, description: The version whose text this is }
         text: { type: string }
         versions: { type: array, items: { $ref: '#/components/schemas/KnowledgeVersion' } }
+        attachments: { type: array, items: { $ref: '#/components/schemas/KnowledgeAttachment' }, description: 'The files the document may name, every version alike' }
+    KnowledgeAttachment:
+      type: object
+      required: [name, contentType, size]
+      additionalProperties: false
+      properties:
+        name: { type: string, description: 'Named in the text as ![[name]] (an embed) or [[name]] (a link)' }
+        contentType: { type: string }
+        size: { type: integer, format: int64 }
     KnowledgeProposal:
       type: object
       required: [id, documentId, documentTitle, spaceId, baseVersion, author, source, computer, sessionId, note, state, stale, canDecide, reason, version, createdAt, decidedAt]
@@ -1942,13 +1993,23 @@ components:
                       type: array
                       items:
                         type: object
-                        required: [id, folders, title, version]
+                        required: [id, folders, title, version, attachments]
                         additionalProperties: false
                         properties:
                           id: { type: string }
                           folders: { type: array, items: { type: string }, description: Folder names from the space's root down }
                           title: { type: string }
                           version: { type: integer }
+                          attachments:
+                            type: array
+                            items:
+                              type: object
+                              required: [name, size, digest]
+                              additionalProperties: false
+                              properties:
+                                name: { type: string }
+                                size: { type: integer, format: int64 }
+                                digest: { type: string, description: Changes only when the bytes do }
     ArtifactUploadMeta:
       type: object
       required: [kind]

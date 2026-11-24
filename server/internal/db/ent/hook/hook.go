@@ -165,6 +165,18 @@ func (f InviteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.InviteMutation", m)
 }
 
+// The KnowledgeAttachmentFunc type is an adapter to allow the use of ordinary
+// function as KnowledgeAttachment mutator.
+type KnowledgeAttachmentFunc func(context.Context, *ent.KnowledgeAttachmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KnowledgeAttachmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.KnowledgeAttachmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KnowledgeAttachmentMutation", m)
+}
+
 // The KnowledgeDocumentFunc type is an adapter to allow the use of ordinary
 // function as KnowledgeDocument mutator.
 type KnowledgeDocumentFunc func(context.Context, *ent.KnowledgeDocumentMutation) (ent.Value, error)

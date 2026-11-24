@@ -85,7 +85,7 @@ func start(t *testing.T, d *testdb.DB, o options) *env {
 	srv.Mailer = o.mailer
 	srv.Subdomains = o.subdomains
 	srv.Artifacts = &artifacts.Service{DB: d.Client, Store: teams.Objects, Team: teams, Sealer: authn.Sealer, ContentURL: contentURL}
-	srv.Knowledge = &knowledge.Service{DB: d.Client, Team: teams}
+	srv.Knowledge = &knowledge.Service{DB: d.Client, Team: teams, Store: teams.Objects}
 	if o.gatewayClient != nil {
 		srv.Gateway.Client = o.gatewayClient
 	}

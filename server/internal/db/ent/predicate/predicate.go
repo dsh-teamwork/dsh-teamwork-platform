@@ -45,6 +45,9 @@ type Identity func(*sql.Selector)
 // Invite is the predicate function for invite builders.
 type Invite func(*sql.Selector)
 
+// KnowledgeAttachment is the predicate function for knowledgeattachment builders.
+type KnowledgeAttachment func(*sql.Selector)
+
 // KnowledgeDocument is the predicate function for knowledgedocument builders.
 type KnowledgeDocument func(*sql.Selector)
 
