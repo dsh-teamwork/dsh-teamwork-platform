@@ -101,7 +101,7 @@ for await (const chunk of adapter.stream({
 assert.equal(text, 'hi');
 
 
-// Exercise the plugin's actual local preparation, upload, approval, sync and download path.
+// Exercise the plugin's actual local preparation, upload, default selection, sync and download path.
 const workspace=mkdtempSync(join(tmpdir(),'teamwork-share-e2e-'));
 let prepared;
 try {
@@ -110,13 +110,14 @@ try {
  await writeFile(join(directory,'index.js'),'export function apply() {}');
  const {preparePlugin}=await import(pathToFileURL(join(PLUGIN,'lib/local-share.js')).href);
  prepared=await preparePlugin(workspace,'plugin',new AbortController().signal);
- const pending=await client.submitPlugin(team.id,await readFile(prepared.path),prepared.sha256,{name:'Private fixture',note:'Actual client upload',baseVersion:0},new AbortController().signal);
- assert.equal(pending.state,'pending');
- await browser(`teams/${team.id}/submissions/${pending.id}/approve`,{revision:pending.revision});
+ const published=await client.publishPlugin(team.id,await readFile(prepared.path),prepared.sha256,{name:'Private fixture',note:'Actual client upload',baseVersion:0},new AbortController().signal);
+ assert.equal(published.version,1);
+ assert(!(await client.sync()).teams[0].configs.some(c=>c.id===published.id));
+ await browser(`teams/${team.id}/asset-defaults/${published.id}`,{version:published.version},'PUT');
  const synced=await client.sync();const shared=synced.teams[0].configs.find(c=>c.kind==='plugin'&&c.name==='Private fixture');assert(shared);
  const downloaded=await client.downloadPackage(team.id,shared.data.packageId,shared.data.sha256);
  assert.deepEqual(await readFile(downloaded),await readFile(prepared.path));
- console.log('private plugin e2e ok: prepared, submitted, approved, synced and downloaded exact bytes');
+ console.log('private plugin e2e ok: prepared, published, selected, synced and downloaded exact bytes');
 } finally {if(prepared)await rm(prepared.directory,{recursive:true,force:true});await rm(workspace,{recursive:true,force:true});}
 
 // An artifact, as the plugin's teamwork_artifact tool publishes one (docs/tech/artifacts.md): its own file collection and upload,

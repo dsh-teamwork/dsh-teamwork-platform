@@ -63,7 +63,7 @@ export function PropertiesForm({ team, properties, onChange }: { team: Team; pro
   const owners = [
     { value: '', label: t('noOwner') },
     ...(properties.owner && !known ? [{ value: properties.owner, label: parseOwner(properties.owner).name || properties.owner }] : []),
-    ...team.members.map((m) => ({ value: ownerMention(m.userId, m.email ?? m.userId), label: m.email ?? m.userId })),
+    ...team.members.map((m) => ({ value: ownerMention(m.userId, m.name || m.email || m.userId), label: [m.name, m.email || m.userId].filter(Boolean).join(' · ') })),
   ];
   const ownerValue = known ? (owners.find((o) => parseOwner(o.value).id === id)?.value ?? properties.owner) : properties.owner;
   return (

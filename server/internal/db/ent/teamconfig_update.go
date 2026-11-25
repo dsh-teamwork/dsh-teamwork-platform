@@ -113,6 +113,20 @@ func (_u *TeamConfigUpdate) AddVersion(v int) *TeamConfigUpdate {
 	return _u
 }
 
+// SetAssetArchived sets the "asset_archived" field.
+func (_u *TeamConfigUpdate) SetAssetArchived(v bool) *TeamConfigUpdate {
+	_u.mutation.SetAssetArchived(v)
+	return _u
+}
+
+// SetNillableAssetArchived sets the "asset_archived" field if the given value is not nil.
+func (_u *TeamConfigUpdate) SetNillableAssetArchived(v *bool) *TeamConfigUpdate {
+	if v != nil {
+		_u.SetAssetArchived(*v)
+	}
+	return _u
+}
+
 // SetTeam sets the "team" edge to the Team entity.
 func (_u *TeamConfigUpdate) SetTeam(v *Team) *TeamConfigUpdate {
 	return _u.SetTeamID(v.ID)
@@ -231,6 +245,9 @@ func (_u *TeamConfigUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.AddedVersion(); ok {
 		_spec.AddField(teamconfig.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AssetArchived(); ok {
+		_spec.SetField(teamconfig.FieldAssetArchived, field.TypeBool, value)
 	}
 	if _u.mutation.TeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -361,6 +378,20 @@ func (_u *TeamConfigUpdateOne) SetNillableVersion(v *int) *TeamConfigUpdateOne {
 // AddVersion adds value to the "version" field.
 func (_u *TeamConfigUpdateOne) AddVersion(v int) *TeamConfigUpdateOne {
 	_u.mutation.AddVersion(v)
+	return _u
+}
+
+// SetAssetArchived sets the "asset_archived" field.
+func (_u *TeamConfigUpdateOne) SetAssetArchived(v bool) *TeamConfigUpdateOne {
+	_u.mutation.SetAssetArchived(v)
+	return _u
+}
+
+// SetNillableAssetArchived sets the "asset_archived" field if the given value is not nil.
+func (_u *TeamConfigUpdateOne) SetNillableAssetArchived(v *bool) *TeamConfigUpdateOne {
+	if v != nil {
+		_u.SetAssetArchived(*v)
+	}
 	return _u
 }
 
@@ -512,6 +543,9 @@ func (_u *TeamConfigUpdateOne) sqlSave(ctx context.Context) (_node *TeamConfig, 
 	}
 	if value, ok := _u.mutation.AddedVersion(); ok {
 		_spec.AddField(teamconfig.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AssetArchived(); ok {
+		_spec.SetField(teamconfig.FieldAssetArchived, field.TypeBool, value)
 	}
 	if _u.mutation.TeamCleared() {
 		edge := &sqlgraph.EdgeSpec{

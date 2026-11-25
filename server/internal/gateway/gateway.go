@@ -76,6 +76,15 @@ func (g *Gateway) resolve(ctx context.Context, who Caller, configID string) (tar
 	if !in {
 		return target{}, forbidden()
 	}
+	if c.AssetOwnerID != "" {
+		c, err = g.Team.EffectiveAsset(ctx, who.UserID, c)
+		if err != nil {
+			return target{}, err
+		}
+		if c == nil {
+			return target{}, forbidden()
+		}
+	}
 	data := c.Data
 	effectiveID := c.ID
 	owner, reference := c.RouteOwner, c.RouteReference

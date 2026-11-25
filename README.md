@@ -7,7 +7,7 @@ English · [简体中文](README.zh-CN.md)
 [![CI](https://github.com/dsh-teamwork/dsh-teamwork-platform/actions/workflows/ci.yaml/badge.svg)](https://github.com/dsh-teamwork/dsh-teamwork-platform/actions/workflows/ci.yaml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-**Publish your team's DSH models, presets and approved plugins from one place.**
+**Publish your team's DSH models, presets and plugins from one place.**
 
 This is the open-source community server and web console for
 [DSH Teamwork](https://www.dshteamwork.com). Administrators publish shared
@@ -23,7 +23,7 @@ use the server's gateway, keeping provider keys on the server.
 | --- | --- |
 | Team resources | Shared models, native agent presets and exact plugin versions, across a person's teams. |
 | Team assistant | New teams receive a team-bound assistant; operations follow member/admin permissions and DSH approvals. |
-| Reviewed sharing | Members submit new resources and updates; admins review frozen contents before publication. |
+| Team assets | Members publish presets and plugins to the team catalog, and admins choose default versions. |
 | Versions and backups | Retained publication history, comparison, resource exports and reviewed restoration. |
 | Usage and budgets | Usage reports, model reference prices and team/member/provider limits. Reference points are not a cash wallet. |
 | Private plugin storage | Local directory or S3-compatible private storage, authenticated downloads and digest checks. |
@@ -87,13 +87,11 @@ and sync. Select your team's assistant preset and create a session with a
 working model. Ask it to inspect team configuration or your usage. New teams
 receive the assistant; existing teams are not automatically changed.
 
-Members can submit presets/plugins. Administrators can review, manage
-configuration and budgets, and prepare historical restorations. Provider keys
+Members publish presets and plugins. Administrators manage team defaults,
+configuration and budgets, and can restore historical configurations. Provider keys
 and initial account passwords use the web console's forms.
 See the [plugin user guide](https://github.com/dsh-teamwork/dsh-teamwork/blob/main/docs/en/guide.md)
 for commands and local approval behavior.
-
-![Administrator review of a demonstration resource submission](docs/tech/images/review-and-publish-en.png)
 
 ## Data and administration
 

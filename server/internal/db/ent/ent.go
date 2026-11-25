@@ -16,6 +16,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetnotice"
@@ -113,6 +114,7 @@ func checkColumn(t, c string) error {
 			artifactfile.Table:         artifactfile.ValidColumn,
 			artifactmember.Table:       artifactmember.ValidColumn,
 			artifactversion.Table:      artifactversion.ValidColumn,
+			assetselection.Table:       assetselection.ValidColumn,
 			budgetevent.Table:          budgetevent.ValidColumn,
 			budgetgate.Table:           budgetgate.ValidColumn,
 			budgetnotice.Table:         budgetnotice.ValidColumn,

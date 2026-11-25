@@ -13,6 +13,22 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** [System management](docs/tech/system-management.md)
 
+## 2026-11-25 — Clearer version selection in the team catalog
+
+- **What:** Asset details preview the selected version and separate personal and team actions. Catalog search includes team names, owners can upload a version from its details, and document mentions accept names with spaces.
+- **Why:** Members and administrators need to see which version an action will use.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/resources.tsx`, `apps/web/src/components/knowledge-slash.tsx`.
+
+## 2026-11-25 — Member-owned presets and plugins in the team catalog
+
+- **What:** Members publish validated presets and plugins directly to the team catalog and pin exact versions for themselves. Administrators can pin, rename or withdraw a team default. DSH sync resolves these choices. Knowledge document mentions search member names and keep the original account IDs.
+- **Why:** Teams can use member contributions without an approval queue and adopt defaults at their own pace.
+- **Breaking:** The old submission write routes are removed. Submission history stays readable. Older DSH clients can still sync configurations and should be updated before publishing with their assistant.
+- **Upgrade:** The server applies the asset selection and default history migrations. Existing configurations keep their sync behavior.
+- **Refs:** `docs/tech/team-assistant.md`, `docs/tech/knowledge.md`.
+
 ## 2026-11-24 — The sidebar previews images, pages long texts, follows changes and reviews a turn's changes
 
 - **What:** With the DSH Teamwork plugin 0.23.0, a session's sidebar shows an image as it is (`teamwork/readDocument` now sends png, jpg, gif, webp, bmp, ico, svg and avif), reads a long text 256 KiB a page as the reader reaches its end (`teamwork/readFile` takes `offset` and `version` and answers `next`), and reads a shown file again in place when it changes on the computer, saying when it is gone (`teamwork/statFile`, asked every four seconds while the tab is in view). An Office preview lists the fonts the computer's Office Kit lacked behind a warning in the path bar (`missingFonts`, shown in the new web `--warning` token). Each turn's changed files now come from DSH's own record (`workspace/changes` events, kept as `changes` items `rowsOf` leaves out; `teamwork/changes` and `teamwork/changeDiff`): the card shows the lines added and removed, a file's comparison floats under its row after half a second, and a click opens the turn's review as a sidebar tab. The relay client's `readDocument` answers `{ bytes, missingFonts }`, and it gains `statFile`, `turnChanges` and `changeDiff`. The preview page's English fallback for the phone's PDF labels is gone, since the phone names them.

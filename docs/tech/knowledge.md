@@ -1,6 +1,6 @@
 # Knowledge
 
-> **Status:** Current — the first version, the richer format and working together are built; later steps are plan · **Updated:** 2026-11-24
+> **Status:** Current — the first version, the richer format and working together are built; later steps are plan · **Updated:** 2026-11-25
 
 Where a team keeps what its business knows, as documents people and agents
 maintain together: Markdown in a tree of folders, owned by the team and
@@ -93,7 +93,7 @@ since people and agents already know them.
 | Properties | YAML front matter: `owner` (a member, `@[Name](member-id)`), `status`, `tags`, `summary` | A row of properties under the title | Built |
 | Templates | ordinary documents in the folder a space names for them; `{{title}}` and `{{date}}` are filled in | A choice when creating a document | Built |
 | Backlinks | computed from links | The documents linking here, at the foot | Built |
-| Mentions | `@[Name](member-id)` | The member as the team names them now; Mentions lists the documents naming the reader | Built |
+| Mentions | `@[Name](member-id)` | Pick by display name or email. The saved ID is the account ID. Mentions lists the documents naming the reader | Built |
 | A folder as a table | the front matter of its documents | A table, filtered and sorted by property | Built |
 | An embedded artifact | `![[artifact:ID]]` | The artifact's card, opened only by those it is shared with | Built |
 | Comments | not in the file: kept beside the version, anchored to the words they quote | Threads beside the text, their words marked | Built |

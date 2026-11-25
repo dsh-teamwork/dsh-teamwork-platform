@@ -88,11 +88,11 @@ export function TeamLayout() {
   );
 }
 
-/** Where the sidebar's amber dots go: the team overview while anything waits on the team, and the review queue while a submission does. */
+/** Whether the team overview has items that need the administrator's attention. */
 function waiting(summary?: Schemas['TeamSummary']) {
-  if (!summary) return { overview: false, sharing: false };
-  const any = summary.unpricedModels.length > 0 || summary.overruns > 0 || summary.pendingReviews > 0 || summary.nearLimit.length > 0 || summary.unresolved > 0 || summary.failedNotices > 0;
-  return { overview: any, sharing: summary.pendingReviews > 0 };
+  if (!summary) return { overview: false };
+  const any = summary.unpricedModels.length > 0 || summary.overruns > 0 || summary.nearLimit.length > 0 || summary.unresolved > 0 || summary.failedNotices > 0;
+  return { overview: any };
 }
 
 /** `/teams/{teamId}` itself: an admin lands on the team overview, a member on the workspace's home (ADR 0049). */

@@ -58,7 +58,6 @@ type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'pr
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
   overview: boolean;
-  sharing: boolean;
 }
 
 /** A page in the navigation: its path and icon, and whether it fills the area beside the sidebar, as `TeamPage.fill` does. */
@@ -362,7 +361,7 @@ export function ConsoleShell({
  * Workspace at the top; for the team's admin, Team management at the foot of
  * the sidebar, folded by default so the two read apart: its toggle sits just
  * above the account row and opens Team assets and Members and spend above it.
- * It starts folded, on its own pages too; a waiting review shows on the toggle
+ * It starts folded, on its own pages too; an item that needs attention shows on the toggle
  * while it is folded. An edition's entries join the group they name.
  */
 function Navigation({ team, section, waiting, open, setOpen, onNavigate }: {
@@ -404,7 +403,7 @@ function Navigation({ team, section, waiting, open, setOpen, onNavigate }: {
     <div key={key} className="flex flex-col gap-0.5">
       {key !== 'manage' && <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{t(`nav.groups.${key}`)}</p>}
       {sections.flatMap((s) => [
-        link(s.path, t(`nav.${s.key}`), s.icon, (s.key === 'overview' && waiting.overview) || (s.key === 'sharing' && waiting.sharing), s.subnav),
+        link(s.path, t(`nav.${s.key}`), s.icon, (s.key === 'overview' && waiting.overview), s.subnav),
         ...(s.editions ? editionLinks(key) : []),
       ])}
       {!sections.some((s) => s.editions) && editionLinks(key)}

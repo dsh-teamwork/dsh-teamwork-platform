@@ -1,16 +1,15 @@
 # Team assistant and shared resources
 
-> **Status:** Current · **Updated:** 2026-11-24
+> **Status:** Current · **Updated:** 2026-11-25
 
-New teams receive a Teamwork assistant. Members submit presets and private
-plugin packages, administrators approve their exact contents, and every
-publication retains an immutable version for comparison, export and reviewed
-restoration. Sharing is restricted to the selected team's members.
+New teams receive a Teamwork assistant. Members publish presets and plugins
+directly to their team's catalog. Members and admins pin exact versions for
+personal use and team defaults, backed by immutable publication history.
 
 ## Ownership and provisioning
 
 The community server owns authorization, submissions, publication history and
-private packages. The console provides editing, review and history pages.
+private packages. The console provides publication, selection and history pages.
 The DSH plugin owns local inspection, package preparation, authenticated
 package download and host-approved assistant tools. Closed editions reuse
 these features through their merged community server.
@@ -63,10 +62,9 @@ in force.
 | Tool | Operation |
 | --- | --- |
 | `teamwork_prepare_plugin` | Pack a directory inside the session workspace without lifecycle scripts; inspect the actual archive locally |
-| `teamwork_share_plugin` | Confirm the file list/digest, upload the prepared archive and submit it for review |
-| `teamwork_share_preset` | Submit exact preset contents, or an update naming its config id and base version |
-| `teamwork_review` | Submit/withdraw an owned proposal or approve/reject as an administrator; fetch frozen server contents before approval |
-| `teamwork_manage` | Supported config changes, revision-checked budgets, member removal, draft edits and restoration preparation |
+| `teamwork_share_plugin` | Confirm the file list/digest, publish the prepared archive to the bound team |
+| `teamwork_share_preset` | Publish exact preset contents, or an update naming its config id and base version |
+| `teamwork_manage` | Supported config changes, revision-checked budgets, member removal, team configuration restoration |
 | `teamwork_export_usage` | Export authorized usage to a private local CSV file |
 | `teamwork_new_session` | Create a new session from a preset of the bound team without starting a task |
 | `teamwork_install` | Confirm and install an exact published plugin through the host manager |
@@ -77,42 +75,28 @@ installations are protected; replacing/upgrading them uses the local DSH
 plugin manager and its confirmation flow. Publishing a new plugin version
 does not silently install it on anyone's computer.
 
-Outcomes distinguish preparation, upload, submission, publication, sync and
-installation. Submitted prompts and package contents are review data, never
-instructions to bypass approval. No tool reaches an unrestricted authenticated
+Outcomes distinguish preparation, publication, selection, sync and
+installation. Treat preset prompts and package contents as data. No tool reaches an unrestricted authenticated
 HTTP proxy or receives the platform Bearer token.
 
-## Submissions and approval
+## Team asset publication and selection
 
-The lifecycle is `draft -> pending -> published | rejected`, with
-`pending -> withdrawn` available to the author. Draft edits use revision
-checks. Submitted contents are frozen. Revision/resubmission creates a new
-review record and preserves the old rejection or withdrawal. Administrators
-can approve their own submissions, but approval is explicit. Rejection needs
-a reason.
+Member-owned presets and plugins enter their team's catalog after validation.
+The asset keeps its owner and logical config ID. Writes validate the base
+version and same-team references. The catalog change, immutable revision and
+package publication commit together. Owners can archive a config, which
+removes it from the catalog and preserves selections that already refer to it.
 
-Members see their own submissions; administrators see the team's. The list
-takes a `state` filter (`GET …/submissions?state=pending` is the review
-queue), and the console's review page opens on that queue for an admin and on
-the member's own submissions otherwise; each row shows its change field by
-field against the live version (`apps/web/src/lib/config-diff.ts`). Every API
-request rechecks current membership and required role. An outsider receives
-the same team-not-found response as for a nonexistent team. Package ownership
-is checked before a pending package can be attached to a proposal.
+Each member can pin a version. A team administrator can separately pin a team
+default and give it a display name. Personal pins win over the default.
+Members can opt out of the default independently of their pin. The config
+snapshot applies these choices at read time, so new members get defaults too.
+A revision check protects concurrent edits to the team default and its
+history records the actor, time, name and version of each change.
 
-Approval conditionally transitions the pending revision, checks the current
-config base version and same-team dependencies, updates the live config,
-records immutable history and exposes its private package in one transaction.
-Failure rolls everything back. Repeated approval returns the committed
-outcome without publishing again. Competing updates cannot overwrite a newer
-live revision. Administrators' direct config writes use this same publication
-and history path, with their explicit save serving as approval.
-
-A publication records content, logical config id, version, author, approver,
-change description, source and time. Initial assistants are system-provisioned;
-pre-existing configs get a legacy baseline before their first edit or deletion,
-without inventing an approver. The built-in identity survives restoration.
-Live deletion retains history.
+Legacy team configurations remain in the sync snapshot. Existing submissions
+remain readable by their author or the team administrator. Pending and
+rejected records do not enter the catalog.
 
 ## Private plugin packages
 
@@ -195,7 +179,7 @@ Limits are 10 MiB compressed, 64 MiB expanded and 2000 archive entries. Local
 previews inspect actual packed bytes before upload. The server independently
 checks tar/gzip integrity, package identity, version, duplicate or unsafe paths,
 links/special files, sensitive filenames and recognizable private-key/token
-patterns. Neither inspection nor review executes plugin code. Local previews refuse tar
+patterns. Archive inspection never executes plugin code. Local previews refuse tar
 extensions they cannot interpret; server checks use the effective entry paths. A secret scan
 reduces accidental exposure; it cannot certify arbitrary source code safe.
 
@@ -204,7 +188,7 @@ The server calculates the digest. A team/package/version upload cannot be
 replaced with different bytes. Pending bytes are accessible only to their
 author and team administrators. Once published, current team members may
 fetch them; removal revokes the next request. Responses are private/no-store.
-Approval and backup export verify the stored bytes against their digest.
+Publication and backup export verify the stored bytes against their digest.
 
 The host downloads through authenticated HTTPS (or local loopback), verifies
 the digest, retains a private content-addressed local archive and passes its
@@ -216,7 +200,7 @@ installed archives remain available for subsequent package-manager operations.
 
 Preset dependencies pin exact published plugin versions. A catalog update does
 not rewrite these pins. Sync includes the referenced historical plugin metadata
-so the host can check and explicitly install the older approved version.
+so the host can check and explicitly install the older published version.
 `/teamwork install <configId>@<version>` selects an explicit retained pin;
 without `@version` it selects the current catalog entry.
 
@@ -236,14 +220,13 @@ and digests. External npm dependencies remain versioned references, not mirrored
 registry contents. Provider keys, login credentials and whole local profiles
 are not included.
 
-Restoration creates a new review draft against the caller's explicit current
-base version, after reference and package checks. Submission and approval are
-still required. The resulting publication increments history; it does not
-rewrite old rows, silently install/downgrade a plugin, or mutate a started
-conversation. Missing models, dependencies or packages fail explicitly.
-A deleted resource can be restored under its original logical identity.
+An administrator can restore a historical team configuration against its
+current base version after reference and package checks. The operation creates
+a new version and can recover a deleted team configuration under its existing ID.
+A member-owned asset keeps its version history. Its owner can publish a revision
+and a team administrator can change which version is selected as the default.
 
-All approved versions and packages are retained. This application history is
+Publication versions and packages are retained. This application history is
 not protection from losing the database or disk: infrastructure backups must
 capture the database and package directory or S3 bucket consistently and preserve the
 configured signing/encryption secrets securely. A full data-directory backup
@@ -252,6 +235,13 @@ stopped-server copy/restart recovery check verifies the retained state. Cross-te
 upgrades, scheduled backup jobs, configurable retention, backup-bundle import
 and whole-team rollback are outside this implementation.
 
+Deploy the updated server before clients that use direct publication. Preserve
+a database and package-store backup from before enabling uploads. A binary
+rollback against the upgraded database is unsafe because the former snapshot
+reader would include member uploads in every member's sync. For a full
+rollback, pause writes, preserve a copy of the upgraded database and packages
+for recovery, then restore the pre-upgrade backup with the former binary.
+
 ## HTTP surface and validation
 
 The wire contract is `api/openapi.yaml`; the console types are generated from
@@ -259,20 +249,17 @@ it. The plugin also validates synced current and pinned historical data.
 
 | Route under `/api/teams/{teamId}` | Responsibility |
 | --- | --- |
-| `GET/POST /submissions`, `GET/PUT /submissions/{id}` | Authorized listing, draft creation, detail and revision-checked edits |
-| `POST /submissions/{id}/{submit,withdraw,approve,reject}` | Explicit state transitions and transactional publication |
+| `GET /submissions`, `GET /submissions/{id}` | Authorized legacy history |
+| `POST /configs`, `PATCH /configs/{id}` | Validated publication and version-checked updates |
+| `GET /asset-choices`, `PUT /asset-choices/{id}` | Read selections and manage personal pins and opt-outs |
+| `PUT /asset-defaults/{id}` | Set, rename, roll back or withdraw a team default |
 | `POST /packages` | Bounded private upload |
 | `GET /packages/{id}`, `GET /packages/{id}/download` | Authorized metadata and immutable bytes |
 | `GET /history` | Filtered immutable publication history |
-| `POST /history/{id}/restore` | Administrator creates a restore draft |
+| `POST /history/{id}/restore` | Administrator restores a historical team configuration |
 | `GET /history/{id}/export` | Administrator exports a resource and retained private dependencies |
 
-Tests cover member/admin/cross-team access, frozen proposals, rejection and
-withdrawal, stale updates, idempotent/concurrent approval, injected history
-failure rollback, dangerous archives, exact private downloads, retained pins,
-restoration and complete backup export on SQLite, Postgres and MySQL. Plugin
-unit tests inspect actual npm output without running scripts. Real DSH tests
-exercise inherited models, scoped tools, denied approval and archive installation.
-Chromium exercises member submission/update, administrator approval and the
-history page at desktop/mobile widths. Recovery is also tested with a real
-binary, stopped database/storage copy and restart from the copy.
+Tests cover team boundaries, direct publication, transaction rollback, version
+pinning, legacy history, archive access, restoration, and exact plugin package
+downloads. The DSH integration test publishes a locally prepared plugin, sets
+it as the team default, syncs, and verifies the downloaded bytes.

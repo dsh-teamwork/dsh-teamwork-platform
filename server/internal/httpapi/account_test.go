@@ -2,8 +2,10 @@ package httpapi_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetpolicy"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/team"
@@ -50,7 +52,10 @@ func TestDeletingAnAccount(t *testing.T) {
 		solo := newTeam(t, owner, "Alone")
 		must(t, owner.post("/api/teams/"+solo+"/configs", map[string]any{"kind": "preset", "name": "Mine", "data": map[string]any{"inheritModel": true, "description": "Mine", "requiredTools": []string{}, "optionalTools": []string{}, "systemPrompt": "Be brief."}}), 201)
 		// What the lone team holds beyond its configs: a draft and a budget.
-		must(t, owner.post("/api/teams/"+solo+"/submissions", map[string]any{"config": map[string]any{"kind": "preset", "name": "Draft", "data": map[string]any{"inheritModel": true}}, "baseVersion": 0, "note": ""}), 200)
+		asset := must(t, owner.post("/api/teams/"+solo+"/configs", map[string]any{"kind": "preset", "name": "Asset", "memberAsset": true, "data": map[string]any{"inheritModel": true}}), 201)["id"].(string)
+		must(t, owner.send("PUT", "/api/teams/"+solo+"/asset-choices/"+asset, map[string]int{"version": 1}), 204)
+		d.Client.ResourceSubmission.Create().SetTeamID(solo).SetAuthorID(ownerID).SetConfigID("old-draft").
+			SetProposal(json.RawMessage(`{"kind":"preset","name":"Draft","data":{"inheritModel":true}}`)).ExecX(ctx)
 		must(t, owner.send("PUT", "/api/teams/"+solo+"/budgets", budgetBody("team", "", "10", 0)), 200)
 		shared := newTeam(t, owner, "Shared")
 		_, token := invite(t, owner, shared)
@@ -74,7 +79,8 @@ func TestDeletingAnAccount(t *testing.T) {
 		if d.Client.Team.Query().Where(team.ID(solo)).ExistX(ctx) || d.Client.TeamConfig.Query().Where(teamconfig.TeamID(solo)).ExistX(ctx) {
 			t.Fatal("the team the account was alone in is still there")
 		}
-		if d.Client.ResourceSubmission.Query().Where(resourcesubmission.TeamID(solo)).ExistX(ctx) || d.Client.BudgetPolicy.Query().Where(budgetpolicy.TeamID(solo)).ExistX(ctx) {
+		if d.Client.ResourceSubmission.Query().Where(resourcesubmission.TeamID(solo)).ExistX(ctx) || d.Client.BudgetPolicy.Query().Where(budgetpolicy.TeamID(solo)).ExistX(ctx) ||
+			d.Client.AssetSelection.Query().Where(assetselection.TeamID(solo)).ExistX(ctx) {
 			t.Fatal("rows of the deleted team are left behind")
 		}
 		for _, id := range []string{shared, theirs} {
@@ -126,7 +132,10 @@ func TestDeletingATeam(t *testing.T) {
 			must(t, member.post("/api/invites/redeem", map[string]string{"token": token}), 200)
 		}
 		must(t, admin.post("/api/teams/"+doomed+"/configs", map[string]any{"kind": "preset", "name": "Ours", "data": map[string]any{"inheritModel": true, "description": "Ours", "requiredTools": []string{}, "optionalTools": []string{}, "systemPrompt": "Be brief."}}), 201)
-		must(t, member.post("/api/teams/"+doomed+"/submissions", map[string]any{"config": map[string]any{"kind": "preset", "name": "Draft", "data": map[string]any{"inheritModel": true}}, "baseVersion": 0, "note": ""}), 200)
+		asset := must(t, member.post("/api/teams/"+doomed+"/configs", map[string]any{"kind": "preset", "name": "Asset", "memberAsset": true, "data": map[string]any{"inheritModel": true}}), 201)["id"].(string)
+		must(t, member.send("PUT", "/api/teams/"+doomed+"/asset-choices/"+asset, map[string]int{"version": 1}), 204)
+		d.Client.ResourceSubmission.Create().SetTeamID(doomed).SetAuthorID(memberID).SetConfigID("old-draft").
+			SetProposal(json.RawMessage(`{"kind":"preset","name":"Draft","data":{"inheritModel":true}}`)).ExecX(ctx)
 		must(t, admin.send("PUT", "/api/teams/"+doomed+"/budgets", budgetBody("team", "", "10", 0)), 200)
 
 		path := "/api/teams/" + doomed
@@ -142,7 +151,8 @@ func TestDeletingATeam(t *testing.T) {
 		if d.Client.Team.Query().Where(team.ID(doomed)).ExistX(ctx) || d.Client.TeamConfig.Query().Where(teamconfig.TeamID(doomed)).ExistX(ctx) {
 			t.Fatal("the team is still there")
 		}
-		if d.Client.ResourceSubmission.Query().Where(resourcesubmission.TeamID(doomed)).ExistX(ctx) || d.Client.BudgetPolicy.Query().Where(budgetpolicy.TeamID(doomed)).ExistX(ctx) {
+		if d.Client.ResourceSubmission.Query().Where(resourcesubmission.TeamID(doomed)).ExistX(ctx) || d.Client.BudgetPolicy.Query().Where(budgetpolicy.TeamID(doomed)).ExistX(ctx) ||
+			d.Client.AssetSelection.Query().Where(assetselection.TeamID(doomed)).ExistX(ctx) {
 			t.Fatal("rows of the deleted team are left behind")
 		}
 		refused(t, "the member after the deletion", member.get(path), 404, "team_not_found")

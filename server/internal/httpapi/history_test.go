@@ -26,10 +26,7 @@ func TestHistoryRestorePublishesNewVersionAndRetainsDeletedIdentity(t *testing.T
 		config["name"] = "Updated"
 		config["version"] = 1
 		must(t, admin.send("PATCH", base+"/configs/"+id, config), 200)
-		draft := must(t, admin.post(base+"/history/"+old["id"].(string)+"/restore", map[string]any{"baseVersion": 2, "note": "Restore first version"}), 200)
-		path := base + "/submissions/" + draft["id"].(string)
-		pending := must(t, admin.post(path+"/submit", map[string]any{"revision": draft["revision"]}), 200)
-		must(t, admin.post(path+"/approve", map[string]any{"revision": pending["revision"]}), 200)
+		must(t, admin.post(base+"/history/"+old["id"].(string)+"/restore", map[string]any{"baseVersion": 2, "note": "Restore first version"}), 200)
 		history = jsonArray(t, admin.get(base+"/history?configId="+id))
 		if len(history) != 3 || history[0].(map[string]any)["version"] != float64(3) || history[2].(map[string]any)["name"] != "Original" {
 			t.Fatalf("history: %v", history)
@@ -45,10 +42,7 @@ func TestHistoryRestorePublishesNewVersionAndRetainsDeletedIdentity(t *testing.T
 		}
 		old = jsonArray(t, admin.get(base+"/history?configId="+builtin))[0].(map[string]any)
 		must(t, admin.send("DELETE", base+"/configs/"+builtin, nil), 204)
-		draft = must(t, admin.post(base+"/history/"+old["id"].(string)+"/restore", map[string]any{"baseVersion": 0, "note": "Recover assistant"}), 200)
-		path = base + "/submissions/" + draft["id"].(string)
-		pending = must(t, admin.post(path+"/submit", map[string]any{"revision": draft["revision"]}), 200)
-		must(t, admin.post(path+"/approve", map[string]any{"revision": pending["revision"]}), 200)
+		must(t, admin.post(base+"/history/"+old["id"].(string)+"/restore", map[string]any{"baseVersion": 0, "note": "Recover assistant"}), 200)
 		rows = jsonArray(t, admin.get(base+"/configs"))
 		found := false
 		for _, v := range rows {

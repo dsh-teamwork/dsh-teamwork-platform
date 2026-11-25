@@ -38,7 +38,7 @@ export function TeamPluginsPage() {
 
 function Plugins({ team, configs, reload }: { team: Team; configs: TeamConfig[]; reload: Reload }) {
   const t = useTranslations('team.plugins');
-  const plugins = configs.filter((c): c is Plugin => c.kind === 'plugin');
+  const plugins = configs.filter((c): c is Plugin => c.kind === 'plugin' && !c.assetOwnerId);
   const presets = configs.filter((c): c is Preset => c.kind === 'preset');
   const usedBy = (id: string) => presets.filter((p) => p.data.pluginDependencies.some((d) => d.pluginConfigId === id));
   const [editing, setEditing] = useState<Plugin | true | null>(null);

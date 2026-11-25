@@ -7,6 +7,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -18,7 +19,7 @@ func recordRevision(ctx context.Context, db *ent.Client, c *ent.TeamConfig, auth
 
 // publish is called only inside a transaction, after membership has been checked.
 // The versioned live write and immutable history commit together.
-func (s *Service) publish(ctx context.Context, teamID, configID string, base int, in wire.ConfigInput, author, reviewer, note, source string) (*ent.TeamConfig, error) {
+func (s *Service) publish(ctx context.Context, teamID, configID string, base int, in wire.ConfigInput, author, note, assetOwner string) (*ent.TeamConfig, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 	version := 1
 	restoredBuiltin := ""
 	if current != nil {
-		if current.RouteOwner != "" {
+		if current.RouteOwner != "" || current.AssetArchived || (current.AssetOwnerID != "" && current.AssetOwnerID != assetOwner) {
 			return nil, wire.E(http.StatusForbidden, "config_owned")
 		}
 		if string(current.Kind) != in.Kind {
@@ -62,7 +63,7 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 				return nil, err
 			}
 		}
-		n, err := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(teamID), teamconfig.Version(base)).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
+		n, err := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(teamID), teamconfig.Version(base), teamconfig.AssetArchived(false)).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
 		if err != nil {
 			return nil, conflict(err, wire.ConfigExists)
 		}
@@ -91,6 +92,9 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 			}
 		}
 		create := s.DB.TeamConfig.Create().SetTeamID(teamID).SetKind(teamconfig.Kind(in.Kind)).SetName(in.Name).SetData(in.Canonical()).SetVersion(version)
+		if assetOwner != "" {
+			create.SetAssetOwnerID(assetOwner)
+		}
 		if restoredBuiltin != "" {
 			create.SetBuiltin(restoredBuiltin)
 		}
@@ -107,13 +111,16 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 			return nil, err
 		}
 	}
-	if err := recordRevision(ctx, s.DB, current, author, reviewer, note, source); err != nil {
+	if err := recordRevision(ctx, s.DB, current, author, "", note, "direct"); err != nil {
 		return nil, err
 	}
 	return current, nil
 }
 
 func (s *Service) publishDirect(ctx context.Context, userID, teamID, configID string, base int, in wire.ConfigInput) (ConfigView, error) {
+	if err := in.Validate(); err != nil {
+		return ConfigView{}, err
+	}
 	tx, err := s.DB.Tx(ctx)
 	if err != nil {
 		return ConfigView{}, err
@@ -121,10 +128,41 @@ func (s *Service) publishDirect(ctx context.Context, userID, teamID, configID st
 	defer tx.Rollback()
 	scoped := *s
 	scoped.DB = tx.Client()
-	if _, err := scoped.RequireMembership(ctx, userID, teamID, true); err != nil {
+	member, err := scoped.RequireMembership(ctx, userID, teamID, false)
+	if err != nil {
 		return ConfigView{}, err
 	}
-	c, err := scoped.publish(ctx, teamID, configID, base, in, userID, userID, "", "direct")
+	admin := member.Role == membership.RoleAdmin
+	var owner string
+	switch {
+	case configID != "":
+		current, err := scoped.DB.TeamConfig.Query().Where(teamconfig.TeamID(teamID), teamconfig.ID(configID)).Only(ctx)
+		if ent.IsNotFound(err) {
+			return ConfigView{}, wire.E(http.StatusConflict, "config_conflict")
+		}
+		if err != nil {
+			return ConfigView{}, err
+		}
+		if current.AssetOwnerID == userID {
+			owner = userID
+		} else if !admin || current.AssetOwnerID != "" {
+			return ConfigView{}, wire.E(http.StatusForbidden, "config_owned")
+		}
+	case in.Kind != "model" && (!admin || in.MemberAsset):
+		owner = userID
+	case !admin:
+		return ConfigView{}, wire.E(http.StatusForbidden, "admin_required")
+	}
+	if owner != "" && in.Plugin != nil && in.Plugin.PackageID != "" {
+		pkg, err := scoped.Package(ctx, userID, teamID, in.Plugin.PackageID)
+		if err != nil {
+			return ConfigView{}, err
+		}
+		if !pkg.Published && pkg.AuthorID != userID {
+			return ConfigView{}, wire.E(http.StatusNotFound, "package_not_found")
+		}
+	}
+	c, err := scoped.publish(ctx, teamID, configID, base, in, userID, "", owner)
 	if err != nil {
 		return ConfigView{}, err
 	}

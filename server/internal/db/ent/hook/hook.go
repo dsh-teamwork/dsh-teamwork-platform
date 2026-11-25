@@ -57,6 +57,18 @@ func (f ArtifactVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactVersionMutation", m)
 }
 
+// The AssetSelectionFunc type is an adapter to allow the use of ordinary
+// function as AssetSelection mutator.
+type AssetSelectionFunc func(context.Context, *ent.AssetSelectionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AssetSelectionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AssetSelectionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AssetSelectionMutation", m)
+}
+
 // The BudgetEventFunc type is an adapter to allow the use of ordinary
 // function as BudgetEvent mutator.
 type BudgetEventFunc func(context.Context, *ent.BudgetEventMutation) (ent.Value, error)

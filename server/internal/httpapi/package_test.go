@@ -51,10 +51,7 @@ func TestPrivatePackagePublicationAccess(t *testing.T) {
 			otherTeam := newTeam(t, admin, "Other")
 			refused(t, "cross-team bytes", admin.get("/api/teams/"+otherTeam+"/packages/"+packageID+"/download"), 404, "package_not_found")
 			config := map[string]any{"kind": "plugin", "name": "Private plugin", "data": map[string]any{"package": uploaded["package"], "version": uploaded["version"], "packageId": packageID, "sha256": uploaded["sha256"]}}
-			draft := must(t, a.post(base+"/submissions", map[string]any{"config": config, "baseVersion": 0, "note": "Checked files"}), 200)
-			path := base + "/submissions/" + draft["id"].(string)
-			pending := must(t, a.post(path+"/submit", map[string]any{"revision": draft["revision"]}), 200)
-			must(t, admin.post(path+"/approve", map[string]any{"revision": pending["revision"]}), 200)
+			must(t, a.post(base+"/configs", config), 201)
 			metadata := must(t, b.get(base+"/packages/"+packageID), 200)
 			if metadata["published"] != true {
 				t.Fatal("package not published")

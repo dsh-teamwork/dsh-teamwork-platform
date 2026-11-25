@@ -53,6 +53,7 @@ func (s *Service) TeamsOf(ctx context.Context, userID string) ([]Summary, error)
 type MemberView struct {
 	UserID string  `json:"userId"`
 	Email  *string `json:"email"`
+	Name   *string `json:"name,omitempty"`
 	Role   string  `json:"role"`
 }
 
@@ -81,7 +82,7 @@ func (s *Service) TeamOf(ctx context.Context, userID, teamID string) (View, erro
 	}
 	v := View{ID: t.ID, Name: t.Name, Role: string(m.Role), Members: make([]MemberView, 0, len(members))}
 	for _, mm := range members {
-		v.Members = append(v.Members, MemberView{UserID: mm.UserID, Email: mm.Edges.User.Email, Role: string(mm.Role)})
+		v.Members = append(v.Members, MemberView{UserID: mm.UserID, Email: mm.Edges.User.Email, Name: mm.Edges.User.Name, Role: string(mm.Role)})
 	}
 	return v, nil
 }

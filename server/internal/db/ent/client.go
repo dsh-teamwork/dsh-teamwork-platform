@@ -19,6 +19,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetnotice"
@@ -69,6 +70,8 @@ type Client struct {
 	ArtifactMember *ArtifactMemberClient
 	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
 	ArtifactVersion *ArtifactVersionClient
+	// AssetSelection is the client for interacting with the AssetSelection builders.
+	AssetSelection *AssetSelectionClient
 	// BudgetEvent is the client for interacting with the BudgetEvent builders.
 	BudgetEvent *BudgetEventClient
 	// BudgetGate is the client for interacting with the BudgetGate builders.
@@ -150,6 +153,7 @@ func (c *Client) init() {
 	c.ArtifactFile = NewArtifactFileClient(c.config)
 	c.ArtifactMember = NewArtifactMemberClient(c.config)
 	c.ArtifactVersion = NewArtifactVersionClient(c.config)
+	c.AssetSelection = NewAssetSelectionClient(c.config)
 	c.BudgetEvent = NewBudgetEventClient(c.config)
 	c.BudgetGate = NewBudgetGateClient(c.config)
 	c.BudgetNotice = NewBudgetNoticeClient(c.config)
@@ -279,6 +283,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ArtifactFile:         NewArtifactFileClient(cfg),
 		ArtifactMember:       NewArtifactMemberClient(cfg),
 		ArtifactVersion:      NewArtifactVersionClient(cfg),
+		AssetSelection:       NewAssetSelectionClient(cfg),
 		BudgetEvent:          NewBudgetEventClient(cfg),
 		BudgetGate:           NewBudgetGateClient(cfg),
 		BudgetNotice:         NewBudgetNoticeClient(cfg),
@@ -335,6 +340,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ArtifactFile:         NewArtifactFileClient(cfg),
 		ArtifactMember:       NewArtifactMemberClient(cfg),
 		ArtifactVersion:      NewArtifactVersionClient(cfg),
+		AssetSelection:       NewAssetSelectionClient(cfg),
 		BudgetEvent:          NewBudgetEventClient(cfg),
 		BudgetGate:           NewBudgetGateClient(cfg),
 		BudgetNotice:         NewBudgetNoticeClient(cfg),
@@ -397,15 +403,15 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion, c.BudgetEvent,
-		c.BudgetGate, c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation,
-		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.KnowledgeAttachment,
-		c.KnowledgeComment, c.KnowledgeDocument, c.KnowledgeFolder,
-		c.KnowledgeProposal, c.KnowledgeSpace, c.KnowledgeSpaceMember,
-		c.KnowledgeVersion, c.Membership, c.ModelRate, c.Password, c.PluginGrant,
-		c.PluginPackage, c.RateWindow, c.RelayHost, c.RelayPairing,
-		c.RelayPairingOffer, c.ResourceSubmission, c.Team, c.TeamConfig,
-		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
+		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion,
+		c.AssetSelection, c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
+		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
+		c.KnowledgeAttachment, c.KnowledgeComment, c.KnowledgeDocument,
+		c.KnowledgeFolder, c.KnowledgeProposal, c.KnowledgeSpace,
+		c.KnowledgeSpaceMember, c.KnowledgeVersion, c.Membership, c.ModelRate,
+		c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow, c.RelayHost,
+		c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
+		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -415,15 +421,15 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion, c.BudgetEvent,
-		c.BudgetGate, c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation,
-		c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite, c.KnowledgeAttachment,
-		c.KnowledgeComment, c.KnowledgeDocument, c.KnowledgeFolder,
-		c.KnowledgeProposal, c.KnowledgeSpace, c.KnowledgeSpaceMember,
-		c.KnowledgeVersion, c.Membership, c.ModelRate, c.Password, c.PluginGrant,
-		c.PluginPackage, c.RateWindow, c.RelayHost, c.RelayPairing,
-		c.RelayPairingOffer, c.ResourceSubmission, c.Team, c.TeamConfig,
-		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
+		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion,
+		c.AssetSelection, c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
+		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
+		c.KnowledgeAttachment, c.KnowledgeComment, c.KnowledgeDocument,
+		c.KnowledgeFolder, c.KnowledgeProposal, c.KnowledgeSpace,
+		c.KnowledgeSpaceMember, c.KnowledgeVersion, c.Membership, c.ModelRate,
+		c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow, c.RelayHost,
+		c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
+		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -440,6 +446,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ArtifactMember.mutate(ctx, m)
 	case *ArtifactVersionMutation:
 		return c.ArtifactVersion.mutate(ctx, m)
+	case *AssetSelectionMutation:
+		return c.AssetSelection.mutate(ctx, m)
 	case *BudgetEventMutation:
 		return c.BudgetEvent.mutate(ctx, m)
 	case *BudgetGateMutation:
@@ -1040,6 +1048,139 @@ func (c *ArtifactVersionClient) mutate(ctx context.Context, m *ArtifactVersionMu
 		return (&ArtifactVersionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ArtifactVersion mutation op: %q", m.Op())
+	}
+}
+
+// AssetSelectionClient is a client for the AssetSelection schema.
+type AssetSelectionClient struct {
+	config
+}
+
+// NewAssetSelectionClient returns a client for the AssetSelection from the given config.
+func NewAssetSelectionClient(c config) *AssetSelectionClient {
+	return &AssetSelectionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `assetselection.Hooks(f(g(h())))`.
+func (c *AssetSelectionClient) Use(hooks ...Hook) {
+	c.hooks.AssetSelection = append(c.hooks.AssetSelection, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `assetselection.Intercept(f(g(h())))`.
+func (c *AssetSelectionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AssetSelection = append(c.inters.AssetSelection, interceptors...)
+}
+
+// Create returns a builder for creating a AssetSelection entity.
+func (c *AssetSelectionClient) Create() *AssetSelectionCreate {
+	mutation := newAssetSelectionMutation(c.config, OpCreate)
+	return &AssetSelectionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AssetSelection entities.
+func (c *AssetSelectionClient) CreateBulk(builders ...*AssetSelectionCreate) *AssetSelectionCreateBulk {
+	return &AssetSelectionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AssetSelectionClient) MapCreateBulk(slice any, setFunc func(*AssetSelectionCreate, int)) *AssetSelectionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AssetSelectionCreateBulk{err: fmt.Errorf("calling to AssetSelectionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AssetSelectionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AssetSelectionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AssetSelection.
+func (c *AssetSelectionClient) Update() *AssetSelectionUpdate {
+	mutation := newAssetSelectionMutation(c.config, OpUpdate)
+	return &AssetSelectionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AssetSelectionClient) UpdateOne(_m *AssetSelection) *AssetSelectionUpdateOne {
+	mutation := newAssetSelectionMutation(c.config, OpUpdateOne, withAssetSelection(_m))
+	return &AssetSelectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AssetSelectionClient) UpdateOneID(id string) *AssetSelectionUpdateOne {
+	mutation := newAssetSelectionMutation(c.config, OpUpdateOne, withAssetSelectionID(id))
+	return &AssetSelectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AssetSelection.
+func (c *AssetSelectionClient) Delete() *AssetSelectionDelete {
+	mutation := newAssetSelectionMutation(c.config, OpDelete)
+	return &AssetSelectionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AssetSelectionClient) DeleteOne(_m *AssetSelection) *AssetSelectionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AssetSelectionClient) DeleteOneID(id string) *AssetSelectionDeleteOne {
+	builder := c.Delete().Where(assetselection.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AssetSelectionDeleteOne{builder}
+}
+
+// Query returns a query builder for AssetSelection.
+func (c *AssetSelectionClient) Query() *AssetSelectionQuery {
+	return &AssetSelectionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAssetSelection},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AssetSelection entity by its id.
+func (c *AssetSelectionClient) Get(ctx context.Context, id string) (*AssetSelection, error) {
+	return c.Query().Where(assetselection.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AssetSelectionClient) GetX(ctx context.Context, id string) *AssetSelection {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AssetSelectionClient) Hooks() []Hook {
+	return c.hooks.AssetSelection
+}
+
+// Interceptors returns the client interceptors.
+func (c *AssetSelectionClient) Interceptors() []Interceptor {
+	return c.inters.AssetSelection
+}
+
+func (c *AssetSelectionClient) mutate(ctx context.Context, m *AssetSelectionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AssetSelectionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AssetSelectionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AssetSelectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AssetSelectionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AssetSelection mutation op: %q", m.Op())
 	}
 }
 
@@ -5691,22 +5832,22 @@ func (c *VerificationCodeClient) mutate(ctx context.Context, m *VerificationCode
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, BudgetEvent,
-		BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation, BudgetWindow,
-		ConfigRevision, Identity, Invite, KnowledgeAttachment, KnowledgeComment,
-		KnowledgeDocument, KnowledgeFolder, KnowledgeProposal, KnowledgeSpace,
-		KnowledgeSpaceMember, KnowledgeVersion, Membership, ModelRate, Password,
-		PluginGrant, PluginPackage, RateWindow, RelayHost, RelayPairing,
+		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, AssetSelection,
+		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
+		BudgetWindow, ConfigRevision, Identity, Invite, KnowledgeAttachment,
+		KnowledgeComment, KnowledgeDocument, KnowledgeFolder, KnowledgeProposal,
+		KnowledgeSpace, KnowledgeSpaceMember, KnowledgeVersion, Membership, ModelRate,
+		Password, PluginGrant, PluginPackage, RateWindow, RelayHost, RelayPairing,
 		RelayPairingOffer, ResourceSubmission, Team, TeamConfig, TeamProvider,
 		UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
-		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, BudgetEvent,
-		BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation, BudgetWindow,
-		ConfigRevision, Identity, Invite, KnowledgeAttachment, KnowledgeComment,
-		KnowledgeDocument, KnowledgeFolder, KnowledgeProposal, KnowledgeSpace,
-		KnowledgeSpaceMember, KnowledgeVersion, Membership, ModelRate, Password,
-		PluginGrant, PluginPackage, RateWindow, RelayHost, RelayPairing,
+		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, AssetSelection,
+		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
+		BudgetWindow, ConfigRevision, Identity, Invite, KnowledgeAttachment,
+		KnowledgeComment, KnowledgeDocument, KnowledgeFolder, KnowledgeProposal,
+		KnowledgeSpace, KnowledgeSpaceMember, KnowledgeVersion, Membership, ModelRate,
+		Password, PluginGrant, PluginPackage, RateWindow, RelayHost, RelayPairing,
 		RelayPairingOffer, ResourceSubmission, Team, TeamConfig, TeamProvider,
 		UsageRequest, User, VerificationCode []ent.Interceptor
 	}

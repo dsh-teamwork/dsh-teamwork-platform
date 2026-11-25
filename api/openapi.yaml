@@ -241,7 +241,7 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
     post:
-      summary: An admin publishes a model, preset or plugin
+      summary: Publish a member-owned asset or configure a team-wide resource as administrator
       requestBody:
         required: true
         content:
@@ -258,6 +258,61 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
         '409': { $ref: '#/components/responses/Error' }
+        '500': { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/asset-choices:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Read the caller's own selections, team defaults and retained archived assets
+      responses:
+        '200':
+          description: Asset selections
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AssetChoices' }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/asset-choices/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: Pin or remove a personal version and control whether the team default applies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                version: { type: integer, minimum: 0 }
+                disabled: { type: boolean }
+                name: { type: string, maxLength: 120 }
+                revision: { type: integer, minimum: 0 }
+      responses:
+        '204': { description: Selection saved }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/asset-defaults/{id}:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: Set, rename or withdraw a versioned team default as an administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                version: { type: integer, minimum: 0 }
+                disabled: { type: boolean }
+                name: { type: string, maxLength: 120 }
+                revision: { type: integer, minimum: 0 }
+      responses:
+        '204': { description: Selection saved }
+        default: { $ref: '#/components/responses/Error' }
   /configs:
     get:
       summary: What the plugin syncs — every team the caller is in, with its configuration
@@ -524,7 +579,7 @@ paths:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     patch:
-      summary: An admin edits a configuration, naming the version it read
+      summary: Edit a configuration as its owner, naming the version it read
       requestBody:
         required: true
         content:
@@ -545,7 +600,7 @@ paths:
         '404': { $ref: '#/components/responses/Error' }
         '409': { $ref: '#/components/responses/Error' }
     delete:
-      summary: An admin removes a configuration no preset still uses
+      summary: Archive a member-owned asset or remove a team configuration
       responses:
         '204': { description: 'Removed, or was not there' }
         '401': { $ref: '#/components/responses/Error' }
@@ -969,20 +1024,6 @@ paths:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/ResourceSubmission' } }
         default: { $ref: '#/components/responses/Error' }
-    post:
-      summary: Create a private submission draft
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/SubmissionInput' }
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ResourceSubmission' }
-        default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/submissions/{id}:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -992,39 +1033,6 @@ paths:
       responses:
         '200':
           description: Frozen proposal and current revision
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ResourceSubmission' }
-        default: { $ref: '#/components/responses/Error' }
-    put:
-      summary: Edit an owned draft at its current revision
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/SubmissionInput' }
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ResourceSubmission' }
-        default: { $ref: '#/components/responses/Error' }
-  /teams/{teamId}/submissions/{id}/{action}:
-    parameters:
-      - { name: teamId, in: path, required: true, schema: { type: string } }
-      - { name: id, in: path, required: true, schema: { type: string } }
-      - { name: action, in: path, required: true, schema: { type: string, enum: [submit, approve, reject, withdraw] } }
-    post:
-      summary: Submit, withdraw, or explicitly review the frozen proposal
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/ReviewInput' }
-      responses:
-        '200':
-          description: Success
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ResourceSubmission' }
@@ -1710,7 +1718,7 @@ paths:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     post:
-      summary: An administrator prepares a historical resource as a new review draft
+      summary: An administrator restores a historical team configuration as a new version
       requestBody:
         required: true
         content:
@@ -1724,10 +1732,10 @@ paths:
                 note: { type: string, maxLength: 2000 }
       responses:
         '200':
-          description: Restore draft; not published until submitted and approved
+          description: Restored configuration
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ResourceSubmission' }
+              schema: { $ref: '#/components/schemas/Config' }
         default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/history/{id}/export:
     parameters:
@@ -2409,7 +2417,7 @@ components:
           description: The team's models no call reaches until a rate is set for the provider and upstream model they call now; empty outside scope=team
           items: { type: string }
         budget: { $ref: '#/components/schemas/QuotaSummary' }
-        pendingReviews: { type: integer, minimum: 0, description: "Submissions awaiting review, in the scope asked for" }
+        pendingReviews: { type: integer, minimum: 0, description: "Deprecated compatibility field. Always zero." }
     UsageStats:
       type: object
       required: [since, until, timezone, totals, days, sources]
@@ -2717,10 +2725,27 @@ components:
         version: { type: string }
         providesTools: { type: array, items: { type: string } }
         description: { type: string }
+    AssetChoice:
+      type: object
+      required: [version, disabled, name, revision]
+      properties:
+        version: { type: integer }
+        disabled: { type: boolean }
+        name: { type: string }
+        revision: { type: integer }
+        adoptedVersions: { type: array, items: { type: integer } }
+    AssetChoices:
+      type: object
+      required: [personal, defaults, archived]
+      properties:
+        personal: { type: object, additionalProperties: { $ref: '#/components/schemas/AssetChoice' } }
+        defaults: { type: object, additionalProperties: { $ref: '#/components/schemas/AssetChoice' } }
+        archived: { type: array, items: { $ref: '#/components/schemas/Config' } }
     ConfigInput:
       type: object
       required: [kind, name, data]
       properties:
+        memberAsset: { type: boolean, description: Create a member-owned asset in the team directory. }
         kind: { type: string, enum: [model, preset, plugin] }
         name: { type: string, minLength: 1, maxLength: 120 }
         data:
@@ -2732,6 +2757,8 @@ components:
       type: object
       required: [id, kind, name, data, version, updatedAt]
       properties:
+        assetArchived: { type: boolean }
+        assetOwnerId: { type: string, description: Account ID of the member who owns this asset. }
         builtin: { type: string, enum: [team-assistant] }
         owner: { type: string, description: Protected route owner; absent for ordinary BYOK configurations. }
         id: { type: string }
@@ -2779,6 +2806,7 @@ components:
             type: object
             required: [userId, email, role]
             properties:
+              name: { type: string }
               userId: { type: string }
               email: { type: string, nullable: true }
               role: { type: string, enum: [admin, member] }
@@ -2799,23 +2827,6 @@ components:
         name: { type: string, nullable: true }
         image: { type: string, nullable: true }
         locale: { type: string, nullable: true, enum: [en, zh-CN, null] }
-    SubmissionInput:
-      type: object
-      required: [config, baseVersion, note]
-      additionalProperties: false
-      properties:
-        config: { $ref: '#/components/schemas/ConfigInput' }
-        configId: { type: string }
-        baseVersion: { type: integer, minimum: 0 }
-        revision: { type: integer, minimum: 0 }
-        note: { type: string, maxLength: 2000 }
-    ReviewInput:
-      type: object
-      required: [revision]
-      additionalProperties: false
-      properties:
-        revision: { type: integer, minimum: 1 }
-        reason: { type: string, maxLength: 2000 }
     ResourceSubmission:
       type: object
       required: [id, configId, baseVersion, proposal, note, authorId, state, revision, reviewerId, reason, createdAt, updatedAt, decidedAt]

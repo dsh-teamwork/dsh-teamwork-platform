@@ -137,11 +137,11 @@ export function DocumentView({ team, me, tree, documentId, onTreeChanged }: {
   const [linked, setLinked] = useState<string[]>([]);
   const artifact = useArtifactCards(team.id, linked, () => editor.current?.redraw());
   const [pickingArtifact, setPickingArtifact] = useState(false);
-  const members = useMemo(() => team.members.map((m) => ({ id: m.userId, name: m.email ?? m.userId })), [team.members]);
+  const members = useMemo(() => team.members.map((m) => ({ id: m.userId, name: m.name || m.email || m.userId, detail: m.name ? m.email ?? m.userId : undefined })), [team.members]);
   const member = useCallback<MemberResolver>(
     (id) => {
       const found = team.members.find((m) => m.userId === id);
-      return found ? { name: found.email ?? found.userId, me: id === me } : null;
+      return found ? { name: found.name || found.email || found.userId, me: id === me } : null;
     },
     [team.members, me],
   );

@@ -9,9 +9,9 @@ DSH is connected, it opens with the steps: sign in to Teamwork from DSH on your
 computer, then pair a browser (**My DSH**) or the phone app with it, each ticked
 off by itself as it happens. Below that are your own calls and budget
 for the last 30 days and what the team changed lately; the **Team toolbox**
-lists the team's presets and plugins, each opening its details, with what you
-have sent for review under **My submissions** at its top right once you have
-sent something; and **Models and usage** lists the team's models
+lets you browse and install the team's presets and plugins. **My assets**
+shows what you own and **My installs** shows what syncs to DSH.
+**Models and usage** lists the team's models
 with their rates, then shows the limits that apply to you, the points you spent
 by model and by day, and your latest calls, with a CSV of the period.
 
@@ -36,21 +36,23 @@ Run `/teamwork plugins` to see which pinned plugins your presets need, then
 `/teamwork install <id>` to preview the exact version. Nothing is installed until
 you confirm.
 
-## Share what works
+## Publish an asset
 
-Ask the team assistant to prepare a preset or plugin from your session, or
-submit one in the console's **Team toolbox**: upload a plugin, import a
-preset file, or write a new preset or a change to one. An admin reviews
-the exact contents; once approved, everyone gets it at their next sync.
+Upload a plugin, import a preset file, or create a preset in **Team toolbox**.
+After validation, the asset appears in this team's catalog. Your unuploaded
+local assets stay on your computer. Open the asset to preview and select a version. The catalog shows your selection and the team default.
+When you upload an update, existing installs keep their selected version.
+
+Team defaults sync on the next refresh. You can disable a default or pin a
+different version for yourself. DSH still asks before installing plugin code.
 
 ## Ask the team assistant
 
 Every team has an assistant preset. Start a session with it and ask about the
-team's resources, your usage, budgets, members, or what is waiting for review.
+team's resources, your usage, budgets, or members.
 Describe a preset you want and it drafts the whole thing (persona, method,
-model and tools), shows it to you, and submits it for review once you agree.
-An admin can have it create or change presets, review submissions, or turn a
-month's usage into an artifact. It suggests what to do next from what it finds.
+model and tools), shows it to you, and publishes it to the team once you agree.
+An admin can have it manage team configuration or turn a month's usage into an artifact. It suggests what to do next from what it finds.
 Anything it would change still asks for your approval, and an artifact it publishes
 stays yours until you share it.
 

@@ -140,18 +140,20 @@ func (s *Service) CreateProvider(ctx context.Context, userID, teamID string, in 
 
 // ConfigView is a stored configuration as the API answers it.
 type ConfigView struct {
-	ID        string          `json:"id"`
-	Kind      string          `json:"kind"`
-	Name      string          `json:"name"`
-	Data      json.RawMessage `json:"data"`
-	Version   int             `json:"version"`
-	UpdatedAt string          `json:"updatedAt"`
-	Owner     string          `json:"owner,omitempty"`
-	Builtin   string          `json:"builtin,omitempty"`
+	ID            string          `json:"id"`
+	Kind          string          `json:"kind"`
+	Name          string          `json:"name"`
+	Data          json.RawMessage `json:"data"`
+	Version       int             `json:"version"`
+	UpdatedAt     string          `json:"updatedAt"`
+	Owner         string          `json:"owner,omitempty"`
+	AssetArchived bool            `json:"assetArchived,omitempty"`
+	AssetOwnerID  string          `json:"assetOwnerId,omitempty"`
+	Builtin       string          `json:"builtin,omitempty"`
 }
 
 func configView(c *ent.TeamConfig) ConfigView {
-	return ConfigView{ID: c.ID, Kind: string(c.Kind), Name: c.Name, Data: c.Data, Version: c.Version, UpdatedAt: Time(c.UpdatedAt), Owner: c.RouteOwner, Builtin: builtinName(c.Builtin)}
+	return ConfigView{ID: c.ID, Kind: string(c.Kind), Name: c.Name, Data: c.Data, Version: c.Version, UpdatedAt: Time(c.UpdatedAt), Owner: c.RouteOwner, AssetOwnerID: c.AssetOwnerID, AssetArchived: c.AssetArchived, Builtin: builtinName(c.Builtin)}
 }
 
 var kindOrder = map[teamconfig.Kind]int{teamconfig.KindModel: 0, teamconfig.KindPreset: 1, teamconfig.KindPlugin: 2}
@@ -198,7 +200,7 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 	}
 	out := Snapshot{Teams: make([]TeamSnapshot, 0, len(ms))}
 	for _, m := range ms {
-		t, err := s.teamSnapshot(ctx, m.Edges.Team, string(m.Role))
+		t, err := s.teamSnapshot(ctx, m.Edges.Team, userID, string(m.Role))
 		if err != nil {
 			return Snapshot{}, err
 		}
@@ -209,8 +211,11 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 
 // teamSnapshot is one team's configurations and the plugin versions its
 // presets pin; t carries its configs.
-func (s *Service) teamSnapshot(ctx context.Context, t *ent.Team, role string) (TeamSnapshot, error) {
-	configs := t.Edges.Configs
+func (s *Service) teamSnapshot(ctx context.Context, t *ent.Team, userID, role string) (TeamSnapshot, error) {
+	configs, err := s.effectiveConfigs(ctx, t, userID)
+	if err != nil {
+		return TeamSnapshot{}, err
+	}
 	sortConfigs(configs)
 	views := make([]ConfigView, 0, len(configs))
 	for _, c := range configs {

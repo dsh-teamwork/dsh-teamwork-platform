@@ -59,3 +59,23 @@ func (PluginPackage) Fields() []ent.Field {
 func (PluginPackage) Indexes() []ent.Index {
 	return []ent.Index{index.Fields("team_id", "package", "version").Unique(), index.Fields("team_id", "author_id")}
 }
+
+// AssetSelection pins an asset for a member or, with an empty user ID, for the team.
+type AssetSelection struct{ ent.Schema }
+
+func (AssetSelection) Mixin() []ent.Mixin { return []ent.Mixin{Base{}, Updated{}} }
+func (AssetSelection) Fields() []ent.Field {
+	return []ent.Field{
+		field.String("team_id").MaxLen(32).Immutable(),
+		field.String("config_id").MaxLen(32).Immutable(),
+		field.String("user_id").MaxLen(32).Immutable(),
+		field.Int("version").Default(0),
+		field.Bool("disabled").Default(false),
+		field.String("name").MaxLen(runes(120)).Default(""),
+		field.JSON("history", []json.RawMessage{}).Optional(),
+		field.Int("revision").Default(0),
+	}
+}
+func (AssetSelection) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("team_id", "user_id", "config_id").Unique()}
+}

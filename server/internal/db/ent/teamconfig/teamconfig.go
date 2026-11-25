@@ -35,6 +35,10 @@ const (
 	FieldRouteReference = "route_reference"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
+	// FieldAssetOwnerID holds the string denoting the asset_owner_id field in the database.
+	FieldAssetOwnerID = "asset_owner_id"
+	// FieldAssetArchived holds the string denoting the asset_archived field in the database.
+	FieldAssetArchived = "asset_archived"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
 	// Table holds the table name of the teamconfig in the database.
@@ -61,6 +65,8 @@ var Columns = []string{
 	FieldRouteOwner,
 	FieldRouteReference,
 	FieldVersion,
+	FieldAssetOwnerID,
+	FieldAssetArchived,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -96,6 +102,12 @@ var (
 	RouteReferenceValidator func(string) error
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion int
+	// DefaultAssetOwnerID holds the default value on creation for the "asset_owner_id" field.
+	DefaultAssetOwnerID string
+	// AssetOwnerIDValidator is a validator for the "asset_owner_id" field. It is called by the builders before save.
+	AssetOwnerIDValidator func(string) error
+	// DefaultAssetArchived holds the default value on creation for the "asset_archived" field.
+	DefaultAssetArchived bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -177,6 +189,16 @@ func ByRouteReference(opts ...sql.OrderTermOption) OrderOption {
 // ByVersion orders the results by the version field.
 func ByVersion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVersion, opts...).ToFunc()
+}
+
+// ByAssetOwnerID orders the results by the asset_owner_id field.
+func ByAssetOwnerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAssetOwnerID, opts...).ToFunc()
+}
+
+// ByAssetArchived orders the results by the asset_archived field.
+func ByAssetArchived(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAssetArchived, opts...).ToFunc()
 }
 
 // ByTeamField orders the results by team field.

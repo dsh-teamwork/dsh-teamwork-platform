@@ -9,6 +9,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetnotice"
@@ -226,6 +227,73 @@ func init() {
 	// artifactversion.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	artifactversion.IDValidator = func() func(string) error {
 		validators := artifactversionDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	assetselectionMixin := schema.AssetSelection{}.Mixin()
+	assetselectionMixinFields0 := assetselectionMixin[0].Fields()
+	_ = assetselectionMixinFields0
+	assetselectionMixinFields1 := assetselectionMixin[1].Fields()
+	_ = assetselectionMixinFields1
+	assetselectionFields := schema.AssetSelection{}.Fields()
+	_ = assetselectionFields
+	// assetselectionDescCreatedAt is the schema descriptor for created_at field.
+	assetselectionDescCreatedAt := assetselectionMixinFields0[1].Descriptor()
+	// assetselection.DefaultCreatedAt holds the default value on creation for the created_at field.
+	assetselection.DefaultCreatedAt = assetselectionDescCreatedAt.Default.(func() time.Time)
+	// assetselectionDescUpdatedAt is the schema descriptor for updated_at field.
+	assetselectionDescUpdatedAt := assetselectionMixinFields1[0].Descriptor()
+	// assetselection.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	assetselection.DefaultUpdatedAt = assetselectionDescUpdatedAt.Default.(func() time.Time)
+	// assetselection.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	assetselection.UpdateDefaultUpdatedAt = assetselectionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// assetselectionDescTeamID is the schema descriptor for team_id field.
+	assetselectionDescTeamID := assetselectionFields[0].Descriptor()
+	// assetselection.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	assetselection.TeamIDValidator = assetselectionDescTeamID.Validators[0].(func(string) error)
+	// assetselectionDescConfigID is the schema descriptor for config_id field.
+	assetselectionDescConfigID := assetselectionFields[1].Descriptor()
+	// assetselection.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
+	assetselection.ConfigIDValidator = assetselectionDescConfigID.Validators[0].(func(string) error)
+	// assetselectionDescUserID is the schema descriptor for user_id field.
+	assetselectionDescUserID := assetselectionFields[2].Descriptor()
+	// assetselection.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	assetselection.UserIDValidator = assetselectionDescUserID.Validators[0].(func(string) error)
+	// assetselectionDescVersion is the schema descriptor for version field.
+	assetselectionDescVersion := assetselectionFields[3].Descriptor()
+	// assetselection.DefaultVersion holds the default value on creation for the version field.
+	assetselection.DefaultVersion = assetselectionDescVersion.Default.(int)
+	// assetselectionDescDisabled is the schema descriptor for disabled field.
+	assetselectionDescDisabled := assetselectionFields[4].Descriptor()
+	// assetselection.DefaultDisabled holds the default value on creation for the disabled field.
+	assetselection.DefaultDisabled = assetselectionDescDisabled.Default.(bool)
+	// assetselectionDescName is the schema descriptor for name field.
+	assetselectionDescName := assetselectionFields[5].Descriptor()
+	// assetselection.DefaultName holds the default value on creation for the name field.
+	assetselection.DefaultName = assetselectionDescName.Default.(string)
+	// assetselection.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	assetselection.NameValidator = assetselectionDescName.Validators[0].(func(string) error)
+	// assetselectionDescRevision is the schema descriptor for revision field.
+	assetselectionDescRevision := assetselectionFields[7].Descriptor()
+	// assetselection.DefaultRevision holds the default value on creation for the revision field.
+	assetselection.DefaultRevision = assetselectionDescRevision.Default.(int)
+	// assetselectionDescID is the schema descriptor for id field.
+	assetselectionDescID := assetselectionMixinFields0[0].Descriptor()
+	// assetselection.DefaultID holds the default value on creation for the id field.
+	assetselection.DefaultID = assetselectionDescID.Default.(func() string)
+	// assetselection.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	assetselection.IDValidator = func() func(string) error {
+		validators := assetselectionDescID.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
@@ -1816,6 +1884,16 @@ func init() {
 	teamconfigDescVersion := teamconfigFields[7].Descriptor()
 	// teamconfig.DefaultVersion holds the default value on creation for the version field.
 	teamconfig.DefaultVersion = teamconfigDescVersion.Default.(int)
+	// teamconfigDescAssetOwnerID is the schema descriptor for asset_owner_id field.
+	teamconfigDescAssetOwnerID := teamconfigFields[8].Descriptor()
+	// teamconfig.DefaultAssetOwnerID holds the default value on creation for the asset_owner_id field.
+	teamconfig.DefaultAssetOwnerID = teamconfigDescAssetOwnerID.Default.(string)
+	// teamconfig.AssetOwnerIDValidator is a validator for the "asset_owner_id" field. It is called by the builders before save.
+	teamconfig.AssetOwnerIDValidator = teamconfigDescAssetOwnerID.Validators[0].(func(string) error)
+	// teamconfigDescAssetArchived is the schema descriptor for asset_archived field.
+	teamconfigDescAssetArchived := teamconfigFields[9].Descriptor()
+	// teamconfig.DefaultAssetArchived holds the default value on creation for the asset_archived field.
+	teamconfig.DefaultAssetArchived = teamconfigDescAssetArchived.Default.(bool)
 	// teamconfigDescID is the schema descriptor for id field.
 	teamconfigDescID := teamconfigMixinFields0[0].Descriptor()
 	// teamconfig.DefaultID holds the default value on creation for the id field.

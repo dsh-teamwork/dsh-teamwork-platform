@@ -81,15 +81,22 @@ func (s *Service) DeleteProvider(ctx context.Context, userID, teamID, providerID
 		return err
 	}
 	callers, err := s.DB.TeamConfig.Query().
-		Where(teamconfig.TeamID(admin.TeamID), teamconfig.KindIn(teamconfig.KindModel, teamconfig.KindPreset)).All(ctx)
+		Where(teamconfig.TeamID(admin.TeamID), teamconfig.KindIn(teamconfig.KindModel, teamconfig.KindPreset), teamconfig.AssetArchived(false)).All(ctx)
 	if err != nil {
 		return err
 	}
-	for _, c := range callers {
+	selected, err := s.selectedPresetData(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	for _, caller := range callers {
+		selected = append(selected, caller.Data)
+	}
+	for _, raw := range selected {
 		var route struct {
 			Provider *string `json:"provider"`
 		}
-		if json.Unmarshal(c.Data, &route) == nil && route.Provider != nil && *route.Provider == p.Name {
+		if json.Unmarshal(raw, &route) == nil && route.Provider != nil && *route.Provider == p.Name {
 			return wire.E(http.StatusConflict, "provider_in_use")
 		}
 	}
