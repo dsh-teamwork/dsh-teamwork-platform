@@ -2053,6 +2053,7 @@
     "cannot_remove_self": "You cannot remove yourself.",
     "invite_invalid": "That invitation is invalid or has expired.",
     "invite_used": "That invitation has already been used.",
+    "asset_restore_forbidden": "This asset was archived by team management and cannot be restored under the same name.",
     "config_conflict": "Someone changed this configuration. Reload and try again.",
     "config_exists": "A configuration of this type already has that name.",
     "model_not_found": "The referenced team model no longer exists.",

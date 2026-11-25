@@ -39,6 +39,8 @@ const (
 	FieldAssetOwnerID = "asset_owner_id"
 	// FieldAssetArchived holds the string denoting the asset_archived field in the database.
 	FieldAssetArchived = "asset_archived"
+	// FieldAssetOwnerWithdrawn holds the string denoting the asset_owner_withdrawn field in the database.
+	FieldAssetOwnerWithdrawn = "asset_owner_withdrawn"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
 	// Table holds the table name of the teamconfig in the database.
@@ -67,6 +69,7 @@ var Columns = []string{
 	FieldVersion,
 	FieldAssetOwnerID,
 	FieldAssetArchived,
+	FieldAssetOwnerWithdrawn,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -108,6 +111,8 @@ var (
 	AssetOwnerIDValidator func(string) error
 	// DefaultAssetArchived holds the default value on creation for the "asset_archived" field.
 	DefaultAssetArchived bool
+	// DefaultAssetOwnerWithdrawn holds the default value on creation for the "asset_owner_withdrawn" field.
+	DefaultAssetOwnerWithdrawn bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -199,6 +204,11 @@ func ByAssetOwnerID(opts ...sql.OrderTermOption) OrderOption {
 // ByAssetArchived orders the results by the asset_archived field.
 func ByAssetArchived(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetArchived, opts...).ToFunc()
+}
+
+// ByAssetOwnerWithdrawn orders the results by the asset_owner_withdrawn field.
+func ByAssetOwnerWithdrawn(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAssetOwnerWithdrawn, opts...).ToFunc()
 }
 
 // ByTeamField orders the results by team field.

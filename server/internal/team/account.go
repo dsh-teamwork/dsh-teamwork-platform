@@ -113,7 +113,7 @@ func (s *Service) DeleteAccount(ctx context.Context, userID, confirm string) err
 	if _, err := tx.KnowledgeSpaceMember.Delete().Where(knowledgespacemember.UserID(userID)).Exec(ctx); err != nil {
 		return err
 	}
-	if err := tx.TeamConfig.Update().Where(teamconfig.AssetOwnerID(userID), teamconfig.AssetArchived(false)).SetAssetArchived(true).Exec(ctx); err != nil {
+	if err := tx.TeamConfig.Update().Where(teamconfig.AssetOwnerID(userID), teamconfig.Or(teamconfig.AssetArchived(false), teamconfig.AssetOwnerWithdrawn(true))).SetAssetArchived(true).SetAssetOwnerWithdrawn(false).Exec(ctx); err != nil {
 		return err
 	}
 	if _, err := tx.AssetSelection.Delete().Where(assetselection.UserID(userID)).Exec(ctx); err != nil {

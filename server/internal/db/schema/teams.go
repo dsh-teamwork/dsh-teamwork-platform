@@ -63,6 +63,7 @@ func (TeamConfig) Fields() []ent.Field {
 		field.Int("version").Default(1),
 		field.String("asset_owner_id").MaxLen(32).Default("").Immutable(),
 		field.Bool("asset_archived").Default(false),
+		field.Bool("asset_owner_withdrawn").Default(false),
 	}
 }
 func (TeamConfig) Edges() []ent.Edge {

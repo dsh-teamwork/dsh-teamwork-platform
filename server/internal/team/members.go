@@ -128,7 +128,7 @@ func (s *Service) removeMembership(ctx context.Context, userID, teamID string) e
 	if _, err := tx.AssetSelection.Delete().Where(assetselection.TeamID(teamID), assetselection.UserID(userID)).Exec(ctx); err != nil {
 		return err
 	}
-	if err := tx.TeamConfig.Update().Where(teamconfig.TeamID(teamID), teamconfig.AssetOwnerID(userID), teamconfig.AssetArchived(false)).SetAssetArchived(true).Exec(ctx); err != nil {
+	if err := tx.TeamConfig.Update().Where(teamconfig.TeamID(teamID), teamconfig.AssetOwnerID(userID), teamconfig.Or(teamconfig.AssetArchived(false), teamconfig.AssetOwnerWithdrawn(true))).SetAssetArchived(true).SetAssetOwnerWithdrawn(false).Exec(ctx); err != nil {
 		return err
 	}
 	return tx.Commit()

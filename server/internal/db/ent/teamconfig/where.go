@@ -115,6 +115,11 @@ func AssetArchived(v bool) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldEQ(FieldAssetArchived, v))
 }
 
+// AssetOwnerWithdrawn applies equality check predicate on the "asset_owner_withdrawn" field. It's identical to AssetOwnerWithdrawnEQ.
+func AssetOwnerWithdrawn(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldAssetOwnerWithdrawn, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldEQ(FieldCreatedAt, v))
@@ -663,6 +668,16 @@ func AssetArchivedEQ(v bool) predicate.TeamConfig {
 // AssetArchivedNEQ applies the NEQ predicate on the "asset_archived" field.
 func AssetArchivedNEQ(v bool) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldNEQ(FieldAssetArchived, v))
+}
+
+// AssetOwnerWithdrawnEQ applies the EQ predicate on the "asset_owner_withdrawn" field.
+func AssetOwnerWithdrawnEQ(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldAssetOwnerWithdrawn, v))
+}
+
+// AssetOwnerWithdrawnNEQ applies the NEQ predicate on the "asset_owner_withdrawn" field.
+func AssetOwnerWithdrawnNEQ(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNEQ(FieldAssetOwnerWithdrawn, v))
 }
 
 // HasTeam applies the HasEdge predicate on the "team" edge.

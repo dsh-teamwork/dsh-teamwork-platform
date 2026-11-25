@@ -42,7 +42,7 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 	version := 1
 	restoredBuiltin := ""
 	if current != nil {
-		if current.RouteOwner != "" || (current.AssetArchived && !reactivate) || (current.AssetOwnerID != "" && current.AssetOwnerID != assetOwner) {
+		if current.RouteOwner != "" || (current.AssetArchived && (!reactivate || !current.AssetOwnerWithdrawn)) || (current.AssetOwnerID != "" && current.AssetOwnerID != assetOwner) {
 			return nil, wire.E(http.StatusForbidden, "config_owned")
 		}
 		if string(current.Kind) != in.Kind {
@@ -68,7 +68,7 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 				return nil, err
 			}
 		}
-		n, err := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(teamID), teamconfig.Version(base), teamconfig.AssetArchived(reactivate)).SetAssetArchived(false).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
+		n, err := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(teamID), teamconfig.Version(base), teamconfig.AssetArchived(reactivate), teamconfig.AssetOwnerWithdrawn(reactivate)).SetAssetArchived(false).SetAssetOwnerWithdrawn(false).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
 		if err != nil {
 			return nil, conflict(err, wire.ConfigExists)
 		}
@@ -176,6 +176,9 @@ func (s *Service) publishDirect(ctx context.Context, userID, teamID, configID st
 			return ConfigView{}, err
 		}
 		if archived != nil {
+			if !archived.AssetOwnerWithdrawn {
+				return ConfigView{}, wire.E(http.StatusConflict, "asset_restore_forbidden")
+			}
 			configID, base, reactivate = archived.ID, archived.Version, true
 		}
 	}

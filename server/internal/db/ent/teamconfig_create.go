@@ -161,6 +161,20 @@ func (_c *TeamConfigCreate) SetNillableAssetArchived(v *bool) *TeamConfigCreate 
 	return _c
 }
 
+// SetAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field.
+func (_c *TeamConfigCreate) SetAssetOwnerWithdrawn(v bool) *TeamConfigCreate {
+	_c.mutation.SetAssetOwnerWithdrawn(v)
+	return _c
+}
+
+// SetNillableAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field if the given value is not nil.
+func (_c *TeamConfigCreate) SetNillableAssetOwnerWithdrawn(v *bool) *TeamConfigCreate {
+	if v != nil {
+		_c.SetAssetOwnerWithdrawn(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *TeamConfigCreate) SetID(v string) *TeamConfigCreate {
 	_c.mutation.SetID(v)
@@ -243,6 +257,10 @@ func (_c *TeamConfigCreate) defaults() {
 		v := teamconfig.DefaultAssetArchived
 		_c.mutation.SetAssetArchived(v)
 	}
+	if _, ok := _c.mutation.AssetOwnerWithdrawn(); !ok {
+		v := teamconfig.DefaultAssetOwnerWithdrawn
+		_c.mutation.SetAssetOwnerWithdrawn(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := teamconfig.DefaultID()
 		_c.mutation.SetID(v)
@@ -318,6 +336,9 @@ func (_c *TeamConfigCreate) check() error {
 	}
 	if _, ok := _c.mutation.AssetArchived(); !ok {
 		return &ValidationError{Name: "asset_archived", err: errors.New(`ent: missing required field "TeamConfig.asset_archived"`)}
+	}
+	if _, ok := _c.mutation.AssetOwnerWithdrawn(); !ok {
+		return &ValidationError{Name: "asset_owner_withdrawn", err: errors.New(`ent: missing required field "TeamConfig.asset_owner_withdrawn"`)}
 	}
 	if v, ok := _c.mutation.ID(); ok {
 		if err := teamconfig.IDValidator(v); err != nil {
@@ -406,6 +427,10 @@ func (_c *TeamConfigCreate) createSpec() (*TeamConfig, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AssetArchived(); ok {
 		_spec.SetField(teamconfig.FieldAssetArchived, field.TypeBool, value)
 		_node.AssetArchived = value
+	}
+	if value, ok := _c.mutation.AssetOwnerWithdrawn(); ok {
+		_spec.SetField(teamconfig.FieldAssetOwnerWithdrawn, field.TypeBool, value)
+		_node.AssetOwnerWithdrawn = value
 	}
 	if nodes := _c.mutation.TeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -563,6 +588,18 @@ func (u *TeamConfigUpsert) SetAssetArchived(v bool) *TeamConfigUpsert {
 // UpdateAssetArchived sets the "asset_archived" field to the value that was provided on create.
 func (u *TeamConfigUpsert) UpdateAssetArchived() *TeamConfigUpsert {
 	u.SetExcluded(teamconfig.FieldAssetArchived)
+	return u
+}
+
+// SetAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field.
+func (u *TeamConfigUpsert) SetAssetOwnerWithdrawn(v bool) *TeamConfigUpsert {
+	u.Set(teamconfig.FieldAssetOwnerWithdrawn, v)
+	return u
+}
+
+// UpdateAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field to the value that was provided on create.
+func (u *TeamConfigUpsert) UpdateAssetOwnerWithdrawn() *TeamConfigUpsert {
+	u.SetExcluded(teamconfig.FieldAssetOwnerWithdrawn)
 	return u
 }
 
@@ -731,6 +768,20 @@ func (u *TeamConfigUpsertOne) SetAssetArchived(v bool) *TeamConfigUpsertOne {
 func (u *TeamConfigUpsertOne) UpdateAssetArchived() *TeamConfigUpsertOne {
 	return u.Update(func(s *TeamConfigUpsert) {
 		s.UpdateAssetArchived()
+	})
+}
+
+// SetAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field.
+func (u *TeamConfigUpsertOne) SetAssetOwnerWithdrawn(v bool) *TeamConfigUpsertOne {
+	return u.Update(func(s *TeamConfigUpsert) {
+		s.SetAssetOwnerWithdrawn(v)
+	})
+}
+
+// UpdateAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field to the value that was provided on create.
+func (u *TeamConfigUpsertOne) UpdateAssetOwnerWithdrawn() *TeamConfigUpsertOne {
+	return u.Update(func(s *TeamConfigUpsert) {
+		s.UpdateAssetOwnerWithdrawn()
 	})
 }
 
@@ -1066,6 +1117,20 @@ func (u *TeamConfigUpsertBulk) SetAssetArchived(v bool) *TeamConfigUpsertBulk {
 func (u *TeamConfigUpsertBulk) UpdateAssetArchived() *TeamConfigUpsertBulk {
 	return u.Update(func(s *TeamConfigUpsert) {
 		s.UpdateAssetArchived()
+	})
+}
+
+// SetAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field.
+func (u *TeamConfigUpsertBulk) SetAssetOwnerWithdrawn(v bool) *TeamConfigUpsertBulk {
+	return u.Update(func(s *TeamConfigUpsert) {
+		s.SetAssetOwnerWithdrawn(v)
+	})
+}
+
+// UpdateAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field to the value that was provided on create.
+func (u *TeamConfigUpsertBulk) UpdateAssetOwnerWithdrawn() *TeamConfigUpsertBulk {
+	return u.Update(func(s *TeamConfigUpsert) {
+		s.UpdateAssetOwnerWithdrawn()
 	})
 }
 

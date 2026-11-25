@@ -85,10 +85,11 @@ Member-owned presets and plugins enter their team's catalog after validation.
 The asset keeps its owner and logical config ID. Writes validate the base
 version and same-team references. The catalog change, immutable revision and
 package publication commit together. New publications are selected for their author in the publication transaction. Member presets use a team model or inherit the session model. Owners and team admins can archive a config, which
-removes it from the catalog and preserves selections that already refer to it. An active owner can publish again under the same name to reactivate the original asset. Removing a member archives their assets and clears their personal selections.
+removes it from the catalog and preserves selections that already refer to it. An active owner can publish again under the same name after withdrawing their own asset. Administrative archives, membership removal and account deletion block same-name reactivation, including after a member rejoins. Removing a member archives their assets and clears their personal selections.
 
 Each member can pin a version. A team administrator can separately pin a team
-default and give it a display name. Personal pins win over the default.
+default and give it a display name. When selected assets of the same type share a display name, sync appends the asset ID to member-owned names to distinguish them. A previously synced name can gain or lose this suffix as other same-name assets enter or leave the selection.
+Personal pins win over the default.
 Members can opt out of the default independently of their pin. The config
 snapshot applies these choices at read time, so new members get defaults too.
 A revision check protects concurrent edits to the team default and its

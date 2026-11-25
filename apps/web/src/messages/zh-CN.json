@@ -2053,6 +2053,7 @@
     "cannot_remove_self": "不能移除自己。",
     "invite_invalid": "邀请无效或已过期。",
     "invite_used": "邀请已被使用。",
+    "asset_restore_forbidden": "此资产已由团队管理下架，无法通过同名发布恢复。",
     "config_conflict": "配置已被他人修改，请刷新后重试。",
     "config_exists": "同类型下已有同名配置。",
     "model_not_found": "引用的团队模型已不存在。",

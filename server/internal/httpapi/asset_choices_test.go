@@ -98,10 +98,18 @@ func TestMemberAssetsAreDiscoverableAndSyncOnlyWhenSelected(t *testing.T) {
 		must(t, admin.send("PUT", teamDefault, map[string]int{"version": 1, "revision": 2}), 204)
 		assertSnap(1, "Daily notes")
 		delete(preset, "version")
+		refused(t, "owner republishing an administrative archive", owner.post(base+"/configs", preset), 409, "asset_restore_forbidden")
+		must(t, owner.send("DELETE", base+"/configs/"+id, nil), 204)
+		refused(t, "owner changing the origin of an administrative archive", owner.post(base+"/configs", preset), 409, "asset_restore_forbidden")
+
+		preset["name"] = "Personal notes"
+		withdrawnID := must(t, owner.post(base+"/configs", preset), 201)["id"].(string)
+		must(t, owner.send("DELETE", base+"/configs/"+withdrawnID, nil), 204)
 		republished := must(t, owner.post(base+"/configs", preset), 201)
-		if republished["id"] != id || republished["version"] != float64(3) {
-			t.Fatalf("republishing must restore the original asset identity: %v", republished)
+		if republished["id"] != withdrawnID || republished["version"] != float64(2) {
+			t.Fatalf("republishing an owner withdrawal must preserve the asset identity: %v", republished)
 		}
+		must(t, owner.send("DELETE", base+"/configs/"+withdrawnID, nil), 204)
 		must(t, admin.send("DELETE", base+"/members/"+ownerID, nil), 204)
 		if d.Client.AssetSelection.Query().Where(assetselection.TeamID(teamID), assetselection.UserID(ownerID)).ExistX(t.Context()) {
 			t.Fatal("removed member's selections survived")
@@ -112,5 +120,8 @@ func TestMemberAssetsAreDiscoverableAndSyncOnlyWhenSelected(t *testing.T) {
 			}
 		}
 		assertSnap(1, "Daily notes")
+		_, token = invite(t, admin, teamID)
+		must(t, owner.post("/api/invites/redeem", map[string]string{"token": token}), 200)
+		refused(t, "removed member reactivating a previous withdrawal after rejoining", owner.post(base+"/configs", preset), 409, "asset_restore_forbidden")
 	})
 }

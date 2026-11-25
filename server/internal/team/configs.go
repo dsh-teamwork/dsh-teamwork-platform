@@ -67,7 +67,13 @@ func (s *Service) deleteConfig(ctx context.Context, userID, teamID, configID str
 		if target.AssetOwnerID != userID && admin.Role != membership.RoleAdmin {
 			return wire.E(http.StatusForbidden, "config_owned")
 		}
-		return s.DB.TeamConfig.UpdateOneID(configID).SetAssetArchived(true).Exec(ctx)
+		ownerWithdrawal := target.AssetOwnerID == userID
+		update := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID))
+		if ownerWithdrawal {
+			// Repeated owner requests must not overwrite an administrative archive.
+			update.Where(teamconfig.AssetArchived(false))
+		}
+		return update.SetAssetArchived(true).SetAssetOwnerWithdrawn(ownerWithdrawal).Exec(ctx)
 	}
 	if admin.Role != membership.RoleAdmin {
 		return wire.E(http.StatusForbidden, "admin_required")

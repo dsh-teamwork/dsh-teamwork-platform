@@ -955,6 +955,7 @@ var (
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "asset_owner_id", Type: field.TypeString, Size: 32, Default: ""},
 		{Name: "asset_archived", Type: field.TypeBool, Default: false},
+		{Name: "asset_owner_withdrawn", Type: field.TypeBool, Default: false},
 		{Name: "team_id", Type: field.TypeString, Size: 32},
 	}
 	// TeamConfigsTable holds the schema information for the "team_configs" table.
@@ -965,7 +966,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "team_configs_teams_configs",
-				Columns:    []*schema.Column{TeamConfigsColumns[12]},
+				Columns:    []*schema.Column{TeamConfigsColumns[13]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -974,12 +975,12 @@ var (
 			{
 				Name:    "teamconfig_team_id_kind_asset_owner_id_name",
 				Unique:  true,
-				Columns: []*schema.Column{TeamConfigsColumns[12], TeamConfigsColumns[3], TeamConfigsColumns[10], TeamConfigsColumns[4]},
+				Columns: []*schema.Column{TeamConfigsColumns[13], TeamConfigsColumns[3], TeamConfigsColumns[10], TeamConfigsColumns[4]},
 			},
 			{
 				Name:    "teamconfig_team_id_builtin",
 				Unique:  true,
-				Columns: []*schema.Column{TeamConfigsColumns[12], TeamConfigsColumns[5]},
+				Columns: []*schema.Column{TeamConfigsColumns[13], TeamConfigsColumns[5]},
 			},
 		},
 	}

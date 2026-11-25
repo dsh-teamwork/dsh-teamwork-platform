@@ -43,6 +43,8 @@ type TeamConfig struct {
 	AssetOwnerID string `json:"asset_owner_id,omitempty"`
 	// AssetArchived holds the value of the "asset_archived" field.
 	AssetArchived bool `json:"asset_archived,omitempty"`
+	// AssetOwnerWithdrawn holds the value of the "asset_owner_withdrawn" field.
+	AssetOwnerWithdrawn bool `json:"asset_owner_withdrawn,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamConfigQuery when eager-loading is set.
 	Edges        TeamConfigEdges `json:"edges"`
@@ -76,7 +78,7 @@ func (*TeamConfig) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case teamconfig.FieldData:
 			values[i] = new([]byte)
-		case teamconfig.FieldAssetArchived:
+		case teamconfig.FieldAssetArchived, teamconfig.FieldAssetOwnerWithdrawn:
 			values[i] = new(sql.NullBool)
 		case teamconfig.FieldVersion:
 			values[i] = new(sql.NullInt64)
@@ -180,6 +182,12 @@ func (_m *TeamConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.AssetArchived = value.Bool
 			}
+		case teamconfig.FieldAssetOwnerWithdrawn:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field asset_owner_withdrawn", values[i])
+			} else if value.Valid {
+				_m.AssetOwnerWithdrawn = value.Bool
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -258,6 +266,9 @@ func (_m *TeamConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("asset_archived=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AssetArchived))
+	builder.WriteString(", ")
+	builder.WriteString("asset_owner_withdrawn=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AssetOwnerWithdrawn))
 	builder.WriteByte(')')
 	return builder.String()
 }
