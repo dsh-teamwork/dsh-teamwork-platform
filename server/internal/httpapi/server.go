@@ -114,6 +114,7 @@ func (s *Server) Handler() http.Handler {
 		get("/api/teams/{teamId}/asset-choices", s.assetChoices)
 		write("PUT", "/api/teams/{teamId}/asset-choices/{id}", s.chooseAsset)
 		write("PUT", "/api/teams/{teamId}/asset-choices/{id}/hosts", s.setAssetHosts)
+		write("PUT", "/api/teams/{teamId}/asset-choices/{id}/here", s.setAssetHere)
 		write("PUT", "/api/teams/{teamId}/asset-defaults/{id}", s.setAssetDefault)
 		write("PATCH", "/api/teams/{teamId}/configs/{id}", s.updateConfig)
 		write("DELETE", "/api/teams/{teamId}/configs/{id}", s.deleteConfig)

@@ -47,6 +47,8 @@ to pin one of its versions, or to remove it from your DSH. The team's
 recommendations are already there; you can remove one too, except the team
 assistant. Under **On which DSHs**, uncheck a computer to keep an item off it:
 everything else you have reaches every DSH you sign in on, a new one included.
+In DSH, the Teamwork panel lists the team's other presets and plugins too:
+**Install here** puts one on that DSH alone.
 DSH still asks before installing plugin code.
 
 ## Share your own

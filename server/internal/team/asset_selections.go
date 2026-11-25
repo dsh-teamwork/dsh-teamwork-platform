@@ -168,6 +168,96 @@ func (s *Service) SetAssetHosts(ctx context.Context, userID, teamID, configID st
 	return tx.Commit()
 }
 
+// SetAssetHere puts one preset or plugin on the calling computer alone, or
+// takes it off that computer, from its DSH panel. Putting on an item the member
+// did not have adds it and keeps it off their other computers; one they had but
+// kept off this computer comes back here. Nothing else changes.
+func (s *Service) SetAssetHere(ctx context.Context, userID, teamID, configID, host string, on bool) error {
+	if host == "" {
+		return wire.E(http.StatusConflict, "host_unknown")
+	}
+	tx, err := s.DB.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	local := *s
+	local.DB = tx.Client()
+	if _, err := local.RequireMembership(ctx, userID, teamID, false); err != nil {
+		return err
+	}
+	config, err := local.DB.TeamConfig.Query().Where(teamconfig.TeamID(teamID), teamconfig.ID(configID), teamconfig.KindIn(teamconfig.KindPreset, teamconfig.KindPlugin)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return wire.E(http.StatusNotFound, "config_not_found")
+	}
+	if err != nil {
+		return err
+	}
+	// The team assistant is how a member reaches Teamwork from DSH; it stays on every computer.
+	if builtinName(config.Builtin) != "" {
+		return wire.E(http.StatusBadRequest, "invalid_request")
+	}
+	excluded := func(hosts ...string) *ent.AssetExclusionDelete {
+		return local.DB.AssetExclusion.Delete().Where(assetexclusion.TeamID(teamID), assetexclusion.UserID(userID), assetexclusion.ConfigID(configID), assetexclusion.HostIDIn(hosts...))
+	}
+	keepOff := func(hosts ...string) error {
+		if _, err := excluded(hosts...).Exec(ctx); err != nil || len(hosts) == 0 {
+			return err
+		}
+		creates := make([]*ent.AssetExclusionCreate, 0, len(hosts))
+		for _, h := range hosts {
+			creates = append(creates, local.DB.AssetExclusion.Create().SetTeamID(teamID).SetUserID(userID).SetConfigID(configID).SetHostID(h))
+		}
+		return local.DB.AssetExclusion.CreateBulk(creates...).Exec(ctx)
+	}
+	if !on {
+		if err := keepOff(host); err != nil {
+			return err
+		}
+		return tx.Commit()
+	}
+	choices, err := local.assetChoices(ctx, userID, teamID)
+	if err != nil {
+		return err
+	}
+	had := config.AssetOwnerID == "" && choices.Personal[configID].Mode != string(assetselection.ModeRemoved)
+	if config.AssetOwnerID != "" {
+		effective, err := local.effectiveAsset(ctx, config, choices)
+		if err != nil {
+			return err
+		}
+		had = effective != nil
+	}
+	if !had {
+		// A withdrawn item is not added again.
+		if config.AssetArchived {
+			return wire.E(http.StatusConflict, "config_conflict")
+		}
+		if config.AssetOwnerID == "" || choices.Defaults[configID].Version > 0 {
+			_, err = local.DB.AssetSelection.Delete().Where(assetselection.TeamID(teamID), assetselection.ConfigID(configID), assetselection.UserID(userID)).Exec(ctx)
+		} else {
+			err = local.savePersonalChoice(ctx, teamID, userID, configID, assetselection.ModeLatest, 0)
+		}
+		if err != nil {
+			return err
+		}
+		others, err := local.DB.RelayHost.Query().Where(relayhost.UserID(userID), relayhost.IDNEQ(host)).IDs(ctx)
+		if err != nil {
+			return err
+		}
+		if _, err := local.DB.AssetExclusion.Delete().Where(assetexclusion.TeamID(teamID), assetexclusion.UserID(userID), assetexclusion.ConfigID(configID)).Exec(ctx); err != nil {
+			return err
+		}
+		if err := keepOff(others...); err != nil {
+			return err
+		}
+	}
+	if _, err := excluded(host).Exec(ctx); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 // HostOfGrant is the computer (relay host) that last connected with a plugin
 // sign-in, or "" for one that has not connected yet, which then gets everything.
 func (s *Service) HostOfGrant(ctx context.Context, userID, grant string) (string, error) {

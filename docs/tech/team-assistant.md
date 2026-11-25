@@ -118,6 +118,14 @@ it pins, so a plugin kept off a computer where such a preset is still asks to
 be installed there. The team assistant stays on every computer. The rows go
 with the computer, the member's membership, the account and the team.
 
+The DSH panel lists the team's presets and plugins that do not sync to its
+computer and installs one there alone with `PUT /asset-choices/{id}/here`,
+which names no computer: the server takes the caller's from its plugin
+sign-in, and answers 409 `host_unknown` before that computer has connected.
+An item the member did not have is added to their account and kept off their
+other computers; one they kept off this computer comes back. `on: false` keeps
+it off this computer only.
+
 Legacy team configurations remain in the sync snapshot. Existing submissions
 remain readable by their author or the team administrator. Pending and
 rejected records do not enter the catalog.
@@ -277,6 +285,7 @@ it. The plugin also validates synced current and pinned historical data.
 | `POST /configs`, `PATCH /configs/{id}` | Validated publication and version-checked updates |
 | `GET /asset-choices`, `PUT /asset-choices/{id}` | Read choices, recommendations and reach; follow latest, pin, remove, or return to the recommendation |
 | `PUT /asset-choices/{id}/hosts` | Replace the caller's computers an item stays off |
+| `PUT /asset-choices/{id}/here` | From a DSH panel, put an item on that computer alone or take it off |
 | `PUT /asset-defaults/{id}` | Recommend at a version, rename, roll back or withdraw a recommendation |
 | `POST /packages` | Bounded private upload |
 | `GET /packages/{id}`, `GET /packages/{id}/download` | Authorized metadata and immutable bytes |

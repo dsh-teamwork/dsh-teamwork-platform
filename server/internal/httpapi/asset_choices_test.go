@@ -216,6 +216,29 @@ func TestAssetsStayOffChosenComputers(t *testing.T) {
 				refused(t, "the team assistant off a computer", member.send("PUT", base+"/asset-choices/"+config["id"].(string)+"/hosts", map[string]any{"off": []string{laptopHost}}), 400, "invalid_request")
 			}
 		}
+		// From a DSH panel: an item the member did not have goes on that computer alone.
+		author, _ := env.person("hosts-author@x.io")
+		_, invited := invite(t, admin, teamID)
+		must(t, author.post("/api/invites/redeem", map[string]string{"token": invited}), 200)
+		shared := must(t, author.post(base+"/configs", map[string]any{"kind": "preset", "name": "Author notes", "data": map[string]any{"inheritModel": true}}), 201)["id"].(string)
+		here := base + "/asset-choices/" + shared + "/here"
+		if has(laptop, shared) || has(desktop, shared) {
+			t.Fatal("an item nobody added must not sync")
+		}
+		refused(t, "a computer not connected yet", env.pluginFor(member).send("PUT", here, map[string]bool{"on": true}), 409, "host_unknown")
+		must(t, laptop.send("PUT", here, map[string]bool{"on": true}), 204)
+		if !has(laptop, shared) || has(desktop, shared) {
+			t.Fatal("installing from the laptop must put it on the laptop alone")
+		}
+		must(t, desktop.send("PUT", here, map[string]bool{"on": true}), 204)
+		if !has(laptop, shared) || !has(desktop, shared) {
+			t.Fatal("installing from the desktop too must leave it on both")
+		}
+		must(t, laptop.send("PUT", here, map[string]bool{"on": false}), 204)
+		if has(laptop, shared) || !has(desktop, shared) {
+			t.Fatal("removing from the laptop must leave the desktop alone")
+		}
+
 		must(t, member.send("PUT", hosts, map[string]any{"off": []string{laptopHost}}), 204)
 		must(t, admin.send("DELETE", base+"/members/"+memberID, nil), 204)
 		if d.Client.AssetExclusion.Query().Where(assetexclusion.UserID(memberID)).ExistX(t.Context()) {

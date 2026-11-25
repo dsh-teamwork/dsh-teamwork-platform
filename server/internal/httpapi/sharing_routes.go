@@ -95,6 +95,30 @@ func (s *Server) setAssetHosts(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// setAssetHere is a DSH panel putting an item on its own computer, or taking it off: the computer is the relay host
+// recorded for the caller's plugin sign-in.
+func (s *Server) setAssetHere(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in struct {
+		On bool `json:"on"`
+	}
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	host, err := s.Team.HostOfGrant(r.Context(), c.user.ID, c.grant)
+	if err != nil {
+		return err
+	}
+	if err := s.Team.SetAssetHere(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), host, in.On); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
 func (s *Server) setAssetDefault(w http.ResponseWriter, r *http.Request) error {
 	c, err := s.requireUser(r)
 	if err != nil {

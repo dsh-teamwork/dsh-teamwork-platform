@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** [System management](docs/tech/system-management.md)
 
+## 2026-11-25 — Install a team preset or plugin from the DSH panel
+
+- **What:** `PUT /api/teams/{teamId}/asset-choices/{id}/here` takes `{on}` from a DSH plugin and acts on the computer its sign-in names: on adds an item the member did not have and keeps it off their other computers, or brings one back to this computer; off keeps it off this computer. It answers 409 `host_unknown` before the computer has connected to the relay. The Teamwork plugin's panel lists the team's presets and plugins that do not sync here, with **Install here**, and **Remove from this DSH** on the ones that do.
+- **Why:** Members browse and install what the team shares from DSH itself, one computer at a time.
+- **Breaking:** None.
+- **Upgrade:** Nothing; the panel needs the Teamwork plugin from the same change.
+- **Refs:** `docs/tech/team-assistant.md`.
+
 ## 2026-11-25 — Keep a preset or plugin off chosen DSHs
 
 - **What:** In Presets and plugins, an item's details list the member's computers (their relay hosts) with a checkbox each; an unchecked computer syncs nothing about that item. `PUT /api/teams/{teamId}/asset-choices/{id}/hosts` takes `{off: [hostId]}`, `GET /asset-choices` adds `off`, and `GET /api/configs` leaves out what the calling computer keeps off, found through the relay host recorded for its plugin sign-in. A computer not known yet gets everything. A row kept off some computers reads "On 2 of 3 DSHs".

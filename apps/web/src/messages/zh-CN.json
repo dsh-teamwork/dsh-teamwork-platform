@@ -2101,7 +2101,8 @@
     "knowledge_agent_proposes": "智能体只能提出修改。",
     "knowledge_team_full": "团队的附件已达 2 GiB 上限。请先删除带有不再需要的文件的文档。",
     "knowledge_storage_unavailable": "这台服务器没有配置文件存储，无法附加文件。",
-    "host_not_found": "这台电脑不是你的。刷新页面后再试。"
+    "host_not_found": "这台电脑不是你的。刷新页面后再试。",
+    "host_unknown": "这台 DSH 还没有连上团队服务。稍等片刻再试。"
   },
   "docs": {
     "title": "文档",

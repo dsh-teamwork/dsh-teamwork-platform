@@ -2101,7 +2101,8 @@
     "knowledge_agent_proposes": "An agent can only propose changes.",
     "knowledge_team_full": "The team's attachments have reached their 2 GiB. Delete documents with files you no longer need first.",
     "knowledge_storage_unavailable": "This server has no file storage set up, so files cannot be attached.",
-    "host_not_found": "That computer is not one of yours. Reload the page and try again."
+    "host_not_found": "That computer is not one of yours. Reload the page and try again.",
+    "host_unknown": "This DSH has not connected to the team yet. Wait a moment and try again."
   },
   "docs": {
     "title": "Docs",

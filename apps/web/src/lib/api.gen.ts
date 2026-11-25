@@ -693,6 +693,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/asset-choices/{id}/here": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put a preset or plugin on the calling computer alone, or take it off that computer
+         * @description For a DSH panel, whose plugin token names its computer once it has connected to the relay (else 409 host_unknown). On adds an item the caller did not have and keeps it off their other computers, or brings back one they kept off this computer; off keeps it off this computer. The team assistant takes neither.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        on: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Saved */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teams/{teamId}/asset-defaults/{id}": {
         parameters: {
             query?: never;

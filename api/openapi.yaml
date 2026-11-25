@@ -311,6 +311,29 @@ paths:
       responses:
         '204': { description: Computers saved }
         default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/asset-choices/{id}/here:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: Put a preset or plugin on the calling computer alone, or take it off that computer
+      description: >-
+        For a DSH panel, whose plugin token names its computer once it has connected to the relay (else 409
+        host_unknown). On adds an item the caller did not have and keeps it off their other computers, or brings
+        back one they kept off this computer; off keeps it off this computer. The team assistant takes neither.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [on]
+              properties:
+                on: { type: boolean }
+      responses:
+        '204': { description: Saved }
+        default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/asset-defaults/{id}:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
