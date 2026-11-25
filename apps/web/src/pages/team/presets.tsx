@@ -364,7 +364,7 @@ export function PresetEditor({
       required: next === 'required' ? [...d.required.filter((n) => n !== name), name] : d.required.filter((n) => n !== name),
       optional: next === 'optional' ? [...d.optional.filter((n) => n !== name), name] : d.optional.filter((n) => n !== name),
     }));
-  const ready = draft.name.trim() && (draft.modelConfigId || draft.route);
+  const ready = draft.name.trim() && (draft.modelConfigId || (!memberAsset && draft.route));
   function addExtra() {
     const name = extra.trim();
     if (!name) return;
@@ -449,7 +449,7 @@ export function PresetEditor({
                   value={draft.modelConfigId}
                   options={[
                     { value: '__inherit__', label: t('inheritModel') },
-                    ...(draft.route
+                    ...(!memberAsset && draft.route
                       ? [{ value: '', label: t('keepRoute', { route: `${draft.route.provider} / ${draft.route.model}` }) }]
                       : draft.modelConfigId
                         ? []

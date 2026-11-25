@@ -337,7 +337,7 @@ export function PluginDialog({ teamId, configs, initialTarget, reload, onClose }
               className="w-full"
             />
             <Label htmlFor="plugin-note">{tr('assetDescription')}</Label>
-            <Textarea id="plugin-note" maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
+            <Textarea id="plugin-note" maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
         )}
         {invalid && (

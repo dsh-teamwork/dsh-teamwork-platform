@@ -19,9 +19,14 @@ func recordRevision(ctx context.Context, db *ent.Client, c *ent.TeamConfig, auth
 
 // publish is called only inside a transaction, after membership has been checked.
 // The versioned live write and immutable history commit together.
-func (s *Service) publish(ctx context.Context, teamID, configID string, base int, in wire.ConfigInput, author, note, assetOwner string) (*ent.TeamConfig, error) {
+func (s *Service) publish(ctx context.Context, teamID, configID string, base int, in wire.ConfigInput, author, note, assetOwner string, reactivate bool) (*ent.TeamConfig, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
+	}
+	if assetOwner != "" {
+		if err := validateMemberPreset(in.Preset); err != nil {
+			return nil, err
+		}
 	}
 	if err := s.checkReferences(ctx, teamID, &in); err != nil {
 		return nil, err
@@ -37,7 +42,7 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 	version := 1
 	restoredBuiltin := ""
 	if current != nil {
-		if current.RouteOwner != "" || current.AssetArchived || (current.AssetOwnerID != "" && current.AssetOwnerID != assetOwner) {
+		if current.RouteOwner != "" || (current.AssetArchived && !reactivate) || (current.AssetOwnerID != "" && current.AssetOwnerID != assetOwner) {
 			return nil, wire.E(http.StatusForbidden, "config_owned")
 		}
 		if string(current.Kind) != in.Kind {
@@ -63,7 +68,7 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 				return nil, err
 			}
 		}
-		n, err := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(teamID), teamconfig.Version(base), teamconfig.AssetArchived(false)).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
+		n, err := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(teamID), teamconfig.Version(base), teamconfig.AssetArchived(reactivate)).SetAssetArchived(false).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
 		if err != nil {
 			return nil, conflict(err, wire.ConfigExists)
 		}
@@ -162,9 +167,26 @@ func (s *Service) publishDirect(ctx context.Context, userID, teamID, configID st
 			return ConfigView{}, wire.E(http.StatusNotFound, "package_not_found")
 		}
 	}
-	c, err := scoped.publish(ctx, teamID, configID, base, in, userID, "", owner)
+	newAsset := owner != "" && configID == ""
+	reactivate := false
+	if newAsset {
+		archived, err := scoped.DB.TeamConfig.Query().Where(teamconfig.TeamID(teamID), teamconfig.AssetOwnerID(owner),
+			teamconfig.KindEQ(teamconfig.Kind(in.Kind)), teamconfig.Name(in.Name), teamconfig.AssetArchived(true)).Only(ctx)
+		if err != nil && !ent.IsNotFound(err) {
+			return ConfigView{}, err
+		}
+		if archived != nil {
+			configID, base, reactivate = archived.ID, archived.Version, true
+		}
+	}
+	c, err := scoped.publish(ctx, teamID, configID, base, in, userID, "", owner, reactivate)
 	if err != nil {
 		return ConfigView{}, err
+	}
+	if newAsset {
+		if err := scoped.savePersonalAssetChoice(ctx, teamID, userID, c.ID, AssetChoiceInput{Version: c.Version}); err != nil {
+			return ConfigView{}, err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return ConfigView{}, err
@@ -189,4 +211,13 @@ type RevisionView struct {
 
 func revisionView(r *ent.ConfigRevision) RevisionView {
 	return RevisionView{r.ID, r.ConfigID, string(r.Kind), r.Name, r.Data, r.Version, r.AuthorID, r.ReviewerID, r.Note, string(r.Source), Time(r.CreatedAt)}
+}
+
+func validateMemberPreset(preset *wire.PresetData) error {
+	if preset != nil && (preset.Provider != nil || preset.Model != nil) {
+		var issues wire.Issues
+		issues.Add("Select a team model or inherit the session model", "data", "modelConfigId")
+		return issues.Err()
+	}
+	return nil
 }

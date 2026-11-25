@@ -69,7 +69,7 @@ func (s *Server) selectAsset(teamDefault bool) func(http.ResponseWriter, *http.R
 		if err != nil {
 			return err
 		}
-		var choice team.AssetChoice
+		var choice team.AssetChoiceInput
 		if err := decode(r, &choice); err != nil {
 			return err
 		}

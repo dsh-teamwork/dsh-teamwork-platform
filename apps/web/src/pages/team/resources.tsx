@@ -255,7 +255,7 @@ function AssetDetails({ asset, names, teamId, admin, owner, choices, reload, clo
             <h3 className="text-sm font-semibold">{t('myUse')}</h3>
             <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">{status.map((line) => <span key={line}>{line}</span>)}</p>
             <div className="flex flex-wrap items-center gap-2">
-              {!asset.assetArchived && <Button disabled={pending || !preview || personal?.version === version} onClick={() => void choice('asset-choices', { version, disabled: personal?.disabled ?? false }, asset.kind === 'plugin' ? t('pluginSelected') : t('selectionSaved'))}>
+              {!asset.assetArchived && <Button disabled={pending || !preview || personal?.version === version} onClick={() => void choice('asset-choices', { version }, asset.kind === 'plugin' ? t('pluginSelected') : t('selectionSaved'))}>
                 {t(personal?.version === version ? 'selectedVersion' : 'selectVersion', { version })}
               </Button>}
             </div>
@@ -264,7 +264,7 @@ function AssetDetails({ asset, names, teamId, admin, owner, choices, reload, clo
               <summary className="cursor-pointer">{t('personalOptions')}</summary>
               <div className="mt-2 flex flex-wrap gap-2">
                 {!!personal?.version && <Button variant="outline" disabled={pending} onClick={() => void choice('asset-choices', { disabled: personal.disabled })}>{t('uninstall', { version: personal.version })}</Button>}
-                {!!teamDefault?.version && <Button variant="outline" disabled={pending} onClick={() => void choice('asset-choices', { version: personal?.version ?? 0, disabled: !personal?.disabled })}>
+                {!!teamDefault?.version && !personal?.version && <Button variant="outline" disabled={pending} onClick={() => void choice('asset-choices', { disabled: !personal?.disabled })}>
                   {t(personal?.disabled ? 'enableDefault' : 'disableDefault', { version: teamDefault.version })}
                 </Button>}
               </div>
@@ -281,11 +281,11 @@ function AssetDetails({ asset, names, teamId, admin, owner, choices, reload, clo
             {!!teamDefault?.version && <Button variant="ghost" disabled={pending} onClick={() => setConfirm('removeDefault')}>{t('removeDefault')}</Button>}
           </div>
         </details>}
-        {owner && !asset.assetArchived && <details className="rounded-lg border p-3 text-sm">
+        {(owner || (admin && asset.assetOwnerId)) && !asset.assetArchived && <details className="rounded-lg border p-3 text-sm">
           <summary className="cursor-pointer font-medium">{t('manageAsset')}</summary>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button variant="outline" disabled={pending} onClick={upload}>{t('uploadVersion')}</Button>
-            {edit && <Button variant="outline" disabled={pending} onClick={edit}>{t('editAsset')}</Button>}
+            {owner && <Button variant="outline" disabled={pending} onClick={upload}>{t('uploadVersion')}</Button>}
+            {owner && edit && <Button variant="outline" disabled={pending} onClick={edit}>{t('editAsset')}</Button>}
             <Button variant="ghost" disabled={pending} onClick={() => setConfirm('archive')}>{t('archive')}</Button>
           </div>
         </details>}

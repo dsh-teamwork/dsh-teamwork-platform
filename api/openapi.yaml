@@ -2392,7 +2392,7 @@ components:
             inheritsDefault: { type: boolean }
     TeamSummary:
       type: object
-      required: [since, calls, points, unpriced, unresolved, overruns, failedNotices, nearLimit, unpricedModels, budget, pendingReviews]
+      required: [since, calls, points, unpriced, unresolved, overruns, failedNotices, nearLimit, unpricedModels, budget]
       properties:
         since: { type: string, format: date-time, description: "Start of the counted period, 30 days back" }
         calls: { type: integer, minimum: 0, description: "Model calls in the period, in the scope asked for" }
@@ -2417,7 +2417,6 @@ components:
           description: The team's models no call reaches until a rate is set for the provider and upstream model they call now; empty outside scope=team
           items: { type: string }
         budget: { $ref: '#/components/schemas/QuotaSummary' }
-        pendingReviews: { type: integer, minimum: 0, description: "Deprecated compatibility field. Always zero." }
     UsageStats:
       type: object
       required: [since, until, timezone, totals, days, sources]

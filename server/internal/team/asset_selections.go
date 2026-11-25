@@ -15,6 +15,13 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
+type AssetChoiceInput struct {
+	Version  int    `json:"version"`
+	Disabled bool   `json:"disabled"`
+	Name     string `json:"name"`
+	Revision int    `json:"revision"`
+}
+
 type AssetChoice struct {
 	Version         int    `json:"version"`
 	Disabled        bool   `json:"disabled"`
@@ -23,10 +30,10 @@ type AssetChoice struct {
 	AdoptedVersions []int  `json:"adoptedVersions,omitempty"`
 }
 
-func (s *Service) SelectAsset(ctx context.Context, userID, teamID, configID string, teamDefault bool, choice AssetChoice) error {
+func (s *Service) SelectAsset(ctx context.Context, userID, teamID, configID string, teamDefault bool, choice AssetChoiceInput) error {
 	choice.Name = strings.TrimSpace(choice.Name)
-	if choice.Version < 0 || choice.Revision < 0 || len(choice.AdoptedVersions) != 0 || utf8.RuneCountInString(choice.Name) > 120 ||
-		(teamDefault && choice.Disabled) || (!teamDefault && choice.Name != "") {
+	if choice.Version < 0 || choice.Revision < 0 || utf8.RuneCountInString(choice.Name) > 120 ||
+		(choice.Disabled && (teamDefault || choice.Version != 0)) || (!teamDefault && choice.Name != "") {
 		return wire.E(http.StatusBadRequest, "invalid_request")
 	}
 	tx, err := s.DB.Tx(ctx)
@@ -79,6 +86,9 @@ func (s *Service) SelectAsset(ctx context.Context, userID, teamID, configID stri
 		if err := in.Validate(); err != nil {
 			return err
 		}
+		if err := validateMemberPreset(in.Preset); err != nil {
+			return err
+		}
 		if err := local.checkReferences(ctx, teamID, &in); err != nil {
 			return err
 		}
@@ -86,10 +96,7 @@ func (s *Service) SelectAsset(ctx context.Context, userID, teamID, configID stri
 	if teamDefault {
 		err = local.saveAssetDefault(ctx, userID, teamID, configID, current, choice)
 	} else {
-		err = local.DB.AssetSelection.Create().SetTeamID(teamID).SetUserID(userID).SetConfigID(configID).
-			SetVersion(choice.Version).SetDisabled(choice.Disabled).
-			OnConflictColumns(assetselection.FieldTeamID, assetselection.FieldUserID, assetselection.FieldConfigID).
-			UpdateNewValues().Exec(ctx)
+		err = local.savePersonalAssetChoice(ctx, teamID, userID, configID, choice)
 	}
 	if err != nil {
 		return err
@@ -104,7 +111,7 @@ type assetDefaultEvent struct {
 	At      string `json:"at"`
 }
 
-func (s *Service) saveAssetDefault(ctx context.Context, userID, teamID, configID string, current *ent.AssetSelection, choice AssetChoice) error {
+func (s *Service) saveAssetDefault(ctx context.Context, userID, teamID, configID string, current *ent.AssetSelection, choice AssetChoiceInput) error {
 	var history []json.RawMessage
 	revision := 0
 	if current != nil {
@@ -295,4 +302,11 @@ func (s *Service) selectedPresetData(ctx context.Context, teamID string) ([]json
 		}
 	}
 	return data, nil
+}
+
+func (s *Service) savePersonalAssetChoice(ctx context.Context, teamID, userID, configID string, choice AssetChoiceInput) error {
+	return s.DB.AssetSelection.Create().SetTeamID(teamID).SetUserID(userID).SetConfigID(configID).
+		SetVersion(choice.Version).SetDisabled(choice.Disabled).
+		OnConflictColumns(assetselection.FieldTeamID, assetselection.FieldUserID, assetselection.FieldConfigID).
+		UpdateNewValues().Exec(ctx)
 }

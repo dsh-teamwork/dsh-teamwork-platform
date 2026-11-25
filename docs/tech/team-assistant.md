@@ -84,8 +84,8 @@ HTTP proxy or receives the platform Bearer token.
 Member-owned presets and plugins enter their team's catalog after validation.
 The asset keeps its owner and logical config ID. Writes validate the base
 version and same-team references. The catalog change, immutable revision and
-package publication commit together. Owners can archive a config, which
-removes it from the catalog and preserves selections that already refer to it.
+package publication commit together. New publications are selected for their author in the publication transaction. Member presets use a team model or inherit the session model. Owners and team admins can archive a config, which
+removes it from the catalog and preserves selections that already refer to it. An active owner can publish again under the same name to reactivate the original asset. Removing a member archives their assets and clears their personal selections.
 
 Each member can pin a version. A team administrator can separately pin a team
 default and give it a display name. Personal pins win over the default.
@@ -224,7 +224,7 @@ An administrator can restore a historical team configuration against its
 current base version after reference and package checks. The operation creates
 a new version and can recover a deleted team configuration under its existing ID.
 A member-owned asset keeps its version history. Its owner can publish a revision
-and a team administrator can change which version is selected as the default.
+and a team administrator can change which version is selected as the default. Members use a historical revision by selecting it in the catalog.
 
 Publication versions and packages are retained. This application history is
 not protection from losing the database or disk: infrastructure backups must

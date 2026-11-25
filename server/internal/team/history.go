@@ -71,7 +71,7 @@ func (s *Service) RestoreRevision(ctx context.Context, userID, teamID, id string
 		return ConfigView{}, wire.E(http.StatusBadRequest, "invalid_request")
 	}
 	in := wire.ConfigInput{Kind: string(row.Kind), Name: row.Name, Data: row.Data}
-	config, err := local.publish(ctx, teamID, row.ConfigID, base, in, userID, note, "")
+	config, err := local.publish(ctx, teamID, row.ConfigID, base, in, userID, note, "", false)
 	if err != nil {
 		return ConfigView{}, err
 	}

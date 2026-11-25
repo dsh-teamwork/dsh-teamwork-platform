@@ -110,9 +110,9 @@ try {
  await writeFile(join(directory,'index.js'),'export function apply() {}');
  const {preparePlugin}=await import(pathToFileURL(join(PLUGIN,'lib/local-share.js')).href);
  prepared=await preparePlugin(workspace,'plugin',new AbortController().signal);
- const published=await client.publishPlugin(team.id,await readFile(prepared.path),prepared.sha256,{name:'Private fixture',note:'Actual client upload',baseVersion:0},new AbortController().signal);
+ const published=await client.publishPlugin(team.id,await readFile(prepared.path),prepared.sha256,{name:'Private fixture',description:'Actual client upload',baseVersion:0},new AbortController().signal);
  assert.equal(published.version,1);
- assert(!(await client.sync()).teams[0].configs.some(c=>c.id===published.id));
+ assert((await client.sync()).teams[0].configs.some(c=>c.id===published.id));
  await browser(`teams/${team.id}/asset-defaults/${published.id}`,{version:published.version},'PUT');
  const synced=await client.sync();const shared=synced.teams[0].configs.find(c=>c.kind==='plugin'&&c.name==='Private fixture');assert(shared);
  const downloaded=await client.downloadPackage(team.id,shared.data.packageId,shared.data.sha256);

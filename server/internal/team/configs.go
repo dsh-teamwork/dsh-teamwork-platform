@@ -64,7 +64,7 @@ func (s *Service) deleteConfig(ctx context.Context, userID, teamID, configID str
 		return err
 	}
 	if target != nil && target.AssetOwnerID != "" {
-		if target.AssetOwnerID != userID {
+		if target.AssetOwnerID != userID && admin.Role != membership.RoleAdmin {
 			return wire.E(http.StatusForbidden, "config_owned")
 		}
 		return s.DB.TeamConfig.UpdateOneID(configID).SetAssetArchived(true).Exec(ctx)

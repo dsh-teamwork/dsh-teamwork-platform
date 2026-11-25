@@ -32,6 +32,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/modelrate"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/resourcesubmission"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/usagerequest"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -110,6 +111,9 @@ func (s *Service) DeleteAccount(ctx context.Context, userID, confirm string) err
 		return err
 	}
 	if _, err := tx.KnowledgeSpaceMember.Delete().Where(knowledgespacemember.UserID(userID)).Exec(ctx); err != nil {
+		return err
+	}
+	if err := tx.TeamConfig.Update().Where(teamconfig.AssetOwnerID(userID), teamconfig.AssetArchived(false)).SetAssetArchived(true).Exec(ctx); err != nil {
 		return err
 	}
 	if _, err := tx.AssetSelection.Delete().Where(assetselection.UserID(userID)).Exec(ctx); err != nil {

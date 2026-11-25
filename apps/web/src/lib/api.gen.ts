@@ -5227,8 +5227,6 @@ export interface components {
             /** @description The team's models no call reaches until a rate is set for the provider and upstream model they call now; empty outside scope=team */
             unpricedModels: string[];
             budget: components["schemas"]["QuotaSummary"];
-            /** @description Deprecated compatibility field. Always zero. */
-            pendingReviews: number;
         };
         UsageStats: {
             /** Format: date-time */

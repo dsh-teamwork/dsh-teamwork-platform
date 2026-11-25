@@ -91,7 +91,16 @@ func (g *Gateway) resolve(ctx context.Context, who Caller, configID string) (tar
 	var ref struct {
 		ModelConfigID *string `json:"modelConfigId"`
 	}
-	if c.Kind == teamconfig.KindPreset && json.Unmarshal(data, &ref) == nil && ref.ModelConfigID != nil {
+	if c.Kind == teamconfig.KindPreset {
+		decodeErr := json.Unmarshal(data, &ref)
+		if c.AssetOwnerID != "" && (decodeErr != nil || ref.ModelConfigID == nil) {
+			return target{}, forbidden()
+		}
+		if decodeErr != nil {
+			ref.ModelConfigID = nil
+		}
+	}
+	if c.Kind == teamconfig.KindPreset && ref.ModelConfigID != nil {
 		m, err := g.Team.DB.TeamConfig.Query().
 			Where(teamconfig.ID(*ref.ModelConfigID), teamconfig.TeamID(c.TeamID), teamconfig.KindEQ(teamconfig.KindModel)).Only(ctx)
 		if ent.IsNotFound(err) {

@@ -158,11 +158,8 @@ func (s *Server) teamSummary(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	v := struct {
-		usage.Summary
-		PendingReviews int `json:"pendingReviews"`
-	}{}
-	if v.Summary, err = s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, team); err != nil {
+	v, err := s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, team)
+	if err != nil {
 		return err
 	}
 

@@ -218,8 +218,16 @@ func (s *Service) teamSnapshot(ctx context.Context, t *ent.Team, userID, role st
 	}
 	sortConfigs(configs)
 	views := make([]ConfigView, 0, len(configs))
+	nameCounts := make(map[string]int, len(configs))
 	for _, c := range configs {
-		views = append(views, configView(c))
+		nameCounts[string(c.Kind)+"\x00"+c.Name]++
+	}
+	for _, c := range configs {
+		view := configView(c)
+		if c.AssetOwnerID != "" && nameCounts[string(c.Kind)+"\x00"+c.Name] > 1 {
+			view.Name += " [" + c.ID + "]"
+		}
+		views = append(views, view)
 	}
 	pins := []PluginVersionView{}
 	seen := map[string]bool{}
