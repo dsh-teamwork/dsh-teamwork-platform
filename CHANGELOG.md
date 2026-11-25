@@ -13,6 +13,14 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** [System management](docs/tech/system-management.md)
 
+## 2026-11-25 — Keep a preset or plugin off chosen DSHs
+
+- **What:** In Presets and plugins, an item's details list the member's computers (their relay hosts) with a checkbox each; an unchecked computer syncs nothing about that item. `PUT /api/teams/{teamId}/asset-choices/{id}/hosts` takes `{off: [hostId]}`, `GET /asset-choices` adds `off`, and `GET /api/configs` leaves out what the calling computer keeps off, found through the relay host recorded for its plugin sign-in. A computer not known yet gets everything. A row kept off some computers reads "On 2 of 3 DSHs".
+- **Why:** Members want a preset or plugin on some of their computers and not others.
+- **Breaking:** None.
+- **Upgrade:** The server applies the `asset_exclusions` migration.
+- **Refs:** `docs/tech/team-assistant.md`, `docs/tech/relay.md`.
+
 ## 2026-11-25 — Presets and plugins replace the team toolbox
 
 - **What:** The console's **Presets and plugins** page (`/teams/{teamId}/presets`) replaces the team toolbox and the admin's Presets, Plugins and Review pages; version history opens from it. A member adds an item in one click and follows its latest version, pins one, or removes it, including a team-owned item other than the assistant; an admin recommends a member's item at one version and sees when its author has published past it. `PUT /asset-choices/{id}` takes `{mode: latest | pinned | removed | default, version}` instead of `{version, disabled}`, `GET /asset-choices` adds `users` (members each item reaches), and an author follows their own new item. Catalog search includes descriptions, and document mentions accept names with spaces. The landing page's pricing title no longer reads "Submission history".

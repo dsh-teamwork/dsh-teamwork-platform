@@ -643,6 +643,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teams/{teamId}/asset-choices/{id}/hosts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace the caller's computers a preset or plugin stays off
+         * @description Every other computer the caller signs in on syncs it, a newly connected one included. The ids are the caller's own relay hosts; the team assistant stays on every computer.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        off: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Computers saved */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teams/{teamId}/asset-defaults/{id}": {
         parameters: {
             query?: never;
@@ -5508,6 +5558,10 @@ export interface components {
             /** @description Members each preset and plugin reaches, by configuration id */
             users: {
                 [key: string]: number;
+            };
+            /** @description The caller's computers (relay host ids) each item stays off, by configuration id */
+            off: {
+                [key: string]: string[];
             };
             archived: components["schemas"]["Config"][];
         };

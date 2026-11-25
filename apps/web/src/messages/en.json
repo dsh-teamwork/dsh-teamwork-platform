@@ -612,7 +612,8 @@
         "onDsh": "On my DSH",
         "pinned": "Pinned at v{version}",
         "update": "v{version} available",
-        "behind": "Recommendation behind"
+        "behind": "Recommendation behind",
+        "onSome": "On {on} of {all} DSHs"
       },
       "add": "Add",
       "addToDsh": "Add to my DSH",
@@ -646,14 +647,14 @@
         "tools": "Tools",
         "plugins": "Plugins",
         "pluginMissing": "Plugin removed",
-        "onDsh": "on your DSH",
-        "notOnDsh": "not on your DSH",
         "none": "None",
         "package": "Package",
         "provides": "Tools it provides",
         "usedBy": "Used by",
         "unused": "No preset depends on it",
-        "separator": ", "
+        "separator": ", ",
+        "added": "added",
+        "notAdded": "not added"
       },
       "author": {
         "title": "Shared by you",
@@ -715,6 +716,16 @@
         "includedFiles": "{count, plural, one {# file} other {# files}} in the archive",
         "target": "Share as",
         "newPlugin": "A new plugin"
+      },
+      "computers": {
+        "title": "On which DSHs",
+        "hint": "It syncs to every DSH that is checked, and to any you connect later. Plugins still ask on each computer before they install.",
+        "online": "Online",
+        "offline": "Offline",
+        "turnedOff": "Kept off {name}.",
+        "turnedOn": "Back on {name}.",
+        "neededBy": "{presets} on this DSH still need it and will ask to install it.",
+        "separator": ", "
       }
     },
     "catalog": {
@@ -2089,7 +2100,8 @@
     "knowledge_not_author": "Only its author can withdraw a proposal.",
     "knowledge_agent_proposes": "An agent can only propose changes.",
     "knowledge_team_full": "The team's attachments have reached their 2 GiB. Delete documents with files you no longer need first.",
-    "knowledge_storage_unavailable": "This server has no file storage set up, so files cannot be attached."
+    "knowledge_storage_unavailable": "This server has no file storage set up, so files cannot be attached.",
+    "host_not_found": "That computer is not one of yours. Reload the page and try again."
   },
   "docs": {
     "title": "Docs",

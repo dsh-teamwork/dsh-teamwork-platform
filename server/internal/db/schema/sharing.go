@@ -81,3 +81,21 @@ func (AssetSelection) Fields() []ent.Field {
 func (AssetSelection) Indexes() []ent.Index {
 	return []ent.Index{index.Fields("team_id", "user_id", "config_id").Unique()}
 }
+
+// AssetExclusion keeps one preset or plugin off one of a member's computers
+// (a relay host): what the member has reaches every computer they sign in on
+// except those named here, so a new computer starts with everything.
+type AssetExclusion struct{ ent.Schema }
+
+func (AssetExclusion) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
+func (AssetExclusion) Fields() []ent.Field {
+	return []ent.Field{
+		field.String("team_id").MaxLen(32).Immutable(),
+		field.String("user_id").MaxLen(32).Immutable(),
+		field.String("config_id").MaxLen(32).Immutable(),
+		field.String("host_id").MaxLen(32).Immutable(),
+	}
+}
+func (AssetExclusion) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("team_id", "user_id", "config_id", "host_id").Unique(), index.Fields("host_id")}
+}

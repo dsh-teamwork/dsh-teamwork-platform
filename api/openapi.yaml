@@ -289,6 +289,28 @@ paths:
       responses:
         '204': { description: Choice saved }
         default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/asset-choices/{id}/hosts:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: Replace the caller's computers a preset or plugin stays off
+      description: >-
+        Every other computer the caller signs in on syncs it, a newly connected one included. The ids are
+        the caller's own relay hosts; the team assistant stays on every computer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [off]
+              properties:
+                off: { type: array, maxItems: 100, items: { type: string, minLength: 1, maxLength: 32 } }
+      responses:
+        '204': { description: Computers saved }
+        default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/asset-defaults/{id}:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
@@ -2737,11 +2759,12 @@ components:
         adoptedVersions: { type: array, items: { type: integer } }
     AssetChoices:
       type: object
-      required: [personal, defaults, users, archived]
+      required: [personal, defaults, users, off, archived]
       properties:
         personal: { type: object, additionalProperties: { $ref: '#/components/schemas/PersonalChoice' } }
         defaults: { type: object, additionalProperties: { $ref: '#/components/schemas/TeamDefault' } }
         users: { type: object, description: "Members each preset and plugin reaches, by configuration id", additionalProperties: { type: integer, minimum: 0 } }
+        off: { type: object, description: "The caller's computers (relay host ids) each item stays off, by configuration id", additionalProperties: { type: array, items: { type: string } } }
         archived: { type: array, items: { $ref: '#/components/schemas/Config' } }
     ConfigInput:
       type: object

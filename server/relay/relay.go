@@ -43,6 +43,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetexclusion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relaypairing"
@@ -963,6 +964,10 @@ func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 	}
 	if err == nil {
 		err = tx.RelayHost.DeleteOneID(id).Exec(ctx)
+	}
+	if err == nil {
+		// What its member kept off this computer goes with it (docs/tech/team-assistant.md).
+		_, err = tx.AssetExclusion.Delete().Where(assetexclusion.HostID(id)).Exec(ctx)
 	}
 	var pairings []string
 	if err == nil {

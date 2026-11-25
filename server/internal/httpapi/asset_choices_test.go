@@ -2,8 +2,13 @@ package httpapi_test
 
 import (
 	"encoding/json"
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"testing"
+	"time"
+
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetexclusion"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/plugingrant"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
@@ -152,6 +157,69 @@ func TestMemberAssetsAreDiscoverableAndSyncOnlyWhenSelected(t *testing.T) {
 			if config := row.(map[string]any); config["builtin"] != nil {
 				refused(t, "removing the team assistant", reader.send("PUT", base+"/asset-choices/"+config["id"].(string), map[string]string{"mode": "removed"}), 400, "invalid_request")
 			}
+		}
+	})
+}
+
+// A member keeps an item off chosen computers; every other computer, a new one included, still syncs it.
+func TestAssetsStayOffChosenComputers(t *testing.T) {
+	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
+		env := start(t, d, options{})
+		admin := env.admin("hosts-admin@x.io")
+		member, memberID := env.person("hosts-member@x.io")
+		_, strangerID := env.person("hosts-stranger@x.io")
+		teamID := newTeam(t, admin, "Team hosts")
+		_, token := invite(t, admin, teamID)
+		must(t, member.post("/api/invites/redeem", map[string]string{"token": token}), 200)
+		base := "/api/teams/" + teamID
+		preset := must(t, admin.post(base+"/configs", map[string]any{"kind": "preset", "name": "Team review", "data": map[string]any{"inheritModel": true}}), 201)["id"].(string)
+
+		laptop, desktop := env.pluginFor(member), env.pluginFor(member)
+		grants := d.Client.PluginGrant.Query().Where(plugingrant.UserID(memberID)).Order(ent.Asc(plugingrant.FieldCreatedAt), ent.Asc(plugingrant.FieldID)).AllX(t.Context())
+		if len(grants) != 2 {
+			t.Fatalf("two sign-ins, got %d", len(grants))
+		}
+		host := func(user, client, grant string) string {
+			return d.Client.RelayHost.Create().SetUserID(user).SetClientID(client).SetName(client).SetDshVersion("1").SetLastSeenAt(time.Now()).SetGrantID(grant).SaveX(t.Context()).ID
+		}
+		laptopHost := host(memberID, "laptop", grants[0].ID)
+		host(memberID, "desktop", grants[1].ID)
+		strangerHost := host(strangerID, "theirs", "")
+		has := func(p *plugin, id string) bool {
+			for _, row := range must(t, p.get("/api/configs"), 200)["teams"].([]any)[0].(map[string]any)["configs"].([]any) {
+				if row.(map[string]any)["id"] == id {
+					return true
+				}
+			}
+			return false
+		}
+		hosts := base + "/asset-choices/" + preset + "/hosts"
+		refused(t, "another person's computer", member.send("PUT", hosts, map[string]any{"off": []string{strangerHost}}), 404, "host_not_found")
+		must(t, member.send("PUT", hosts, map[string]any{"off": []string{laptopHost}}), 204)
+		if has(laptop, preset) || !has(desktop, preset) {
+			t.Fatal("the preset must stay off the laptop alone")
+		}
+		// A computer that has not connected yet is not known, so it gets everything.
+		if !has(env.pluginFor(member), preset) {
+			t.Fatal("a new computer must start with everything")
+		}
+		off := must(t, member.get(base+"/asset-choices"), 200)["off"].(map[string]any)
+		if ids, _ := off[preset].([]any); len(ids) != 1 || ids[0] != laptopHost {
+			t.Fatalf("asset choices do not report the computer: %v", off)
+		}
+		must(t, member.send("PUT", hosts, map[string]any{"off": []string{}}), 204)
+		if !has(laptop, preset) {
+			t.Fatal("turning the laptop back on must sync the preset again")
+		}
+		for _, row := range jsonArray(t, member.get(base+"/configs")) {
+			if config := row.(map[string]any); config["builtin"] != nil {
+				refused(t, "the team assistant off a computer", member.send("PUT", base+"/asset-choices/"+config["id"].(string)+"/hosts", map[string]any{"off": []string{laptopHost}}), 400, "invalid_request")
+			}
+		}
+		must(t, member.send("PUT", hosts, map[string]any{"off": []string{laptopHost}}), 204)
+		must(t, admin.send("DELETE", base+"/members/"+memberID, nil), 204)
+		if d.Client.AssetExclusion.Query().Where(assetexclusion.UserID(memberID)).ExistX(t.Context()) {
+			t.Fatal("a removed member's computer choices survived")
 		}
 	})
 }

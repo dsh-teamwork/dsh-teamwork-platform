@@ -8,9 +8,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetexclusion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/relayhost"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -101,6 +103,94 @@ func (s *Service) ChooseAsset(ctx context.Context, userID, teamID, configID stri
 		return err
 	}
 	return tx.Commit()
+}
+
+// AssetHosts is the caller's computers (relay hosts) an item stays off. Every
+// other computer they sign in on gets it, a new one included.
+type AssetHosts struct {
+	Off []string `json:"off"`
+}
+
+// SetAssetHosts replaces the computers one preset or plugin stays off for the
+// caller. It changes nothing about whether they have it at all.
+func (s *Service) SetAssetHosts(ctx context.Context, userID, teamID, configID string, in AssetHosts) error {
+	off := make([]string, 0, len(in.Off))
+	for _, id := range in.Off {
+		if id == "" || len(id) > 32 || len(off) >= 100 {
+			return wire.E(http.StatusBadRequest, "invalid_request")
+		}
+		if !containsString(off, id) {
+			off = append(off, id)
+		}
+	}
+	tx, err := s.DB.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	local := *s
+	local.DB = tx.Client()
+	if _, err := local.RequireMembership(ctx, userID, teamID, false); err != nil {
+		return err
+	}
+	config, err := local.DB.TeamConfig.Query().Where(teamconfig.TeamID(teamID), teamconfig.ID(configID), teamconfig.KindIn(teamconfig.KindPreset, teamconfig.KindPlugin)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return wire.E(http.StatusNotFound, "config_not_found")
+	}
+	if err != nil {
+		return err
+	}
+	// The team assistant is how a member reaches Teamwork from DSH; it stays on every computer.
+	if builtinName(config.Builtin) != "" && len(off) > 0 {
+		return wire.E(http.StatusBadRequest, "invalid_request")
+	}
+	if len(off) > 0 {
+		own, err := local.DB.RelayHost.Query().Where(relayhost.UserID(userID), relayhost.IDIn(off...)).Count(ctx)
+		if err != nil {
+			return err
+		}
+		if own != len(off) {
+			return wire.E(http.StatusNotFound, "host_not_found")
+		}
+	}
+	if _, err := local.DB.AssetExclusion.Delete().Where(assetexclusion.TeamID(teamID), assetexclusion.UserID(userID), assetexclusion.ConfigID(configID)).Exec(ctx); err != nil {
+		return err
+	}
+	if len(off) > 0 {
+		creates := make([]*ent.AssetExclusionCreate, 0, len(off))
+		for _, host := range off {
+			creates = append(creates, local.DB.AssetExclusion.Create().SetTeamID(teamID).SetUserID(userID).SetConfigID(configID).SetHostID(host))
+		}
+		if err := local.DB.AssetExclusion.CreateBulk(creates...).Exec(ctx); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// HostOfGrant is the computer (relay host) that last connected with a plugin
+// sign-in, or "" for one that has not connected yet, which then gets everything.
+func (s *Service) HostOfGrant(ctx context.Context, userID, grant string) (string, error) {
+	if grant == "" {
+		return "", nil
+	}
+	host, err := s.DB.RelayHost.Query().Where(relayhost.UserID(userID), relayhost.GrantID(grant)).Order(ent.Desc(relayhost.FieldLastSeenAt)).First(ctx)
+	if ent.IsNotFound(err) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return host.ID, nil
+}
+
+func containsString(values []string, value string) bool {
+	for _, v := range values {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 // SetAssetDefault recommends a member's asset to the whole team at one version,
@@ -230,7 +320,9 @@ type AssetChoices struct {
 	Personal map[string]PersonalChoice `json:"personal"`
 	Defaults map[string]TeamDefault    `json:"defaults"`
 	Users    map[string]int            `json:"users"`
-	Archived []ConfigView              `json:"archived"`
+	// Off is, by configuration id, the caller's computers each item stays off.
+	Off      map[string][]string `json:"off"`
+	Archived []ConfigView        `json:"archived"`
 }
 
 func (s *Service) AssetChoices(ctx context.Context, userID, teamID string) (AssetChoices, error) {
@@ -321,10 +413,17 @@ func (s *Service) assetUsers(ctx context.Context, teamID string, defaults map[st
 }
 
 func (s *Service) assetChoices(ctx context.Context, userID, teamID string) (AssetChoices, error) {
-	result := AssetChoices{Personal: map[string]PersonalChoice{}, Defaults: map[string]TeamDefault{}}
+	result := AssetChoices{Personal: map[string]PersonalChoice{}, Defaults: map[string]TeamDefault{}, Off: map[string][]string{}}
 	rows, err := s.DB.AssetSelection.Query().Where(assetselection.TeamID(teamID), assetselection.UserIDIn("", userID)).All(ctx)
 	if err != nil {
 		return result, err
+	}
+	off, err := s.DB.AssetExclusion.Query().Where(assetexclusion.TeamID(teamID), assetexclusion.UserID(userID)).All(ctx)
+	if err != nil {
+		return result, err
+	}
+	for _, row := range off {
+		result.Off[row.ConfigID] = append(result.Off[row.ConfigID], row.HostID)
 	}
 	for _, row := range rows {
 		if row.UserID == "" {
@@ -336,13 +435,18 @@ func (s *Service) assetChoices(ctx context.Context, userID, teamID string) (Asse
 	return result, nil
 }
 
-func (s *Service) effectiveConfigs(ctx context.Context, team *ent.Team, userID string) ([]*ent.TeamConfig, error) {
+// effectiveConfigs is what one member's computer syncs: their choices applied,
+// less what they keep off that computer (host, "" for one not yet known).
+func (s *Service) effectiveConfigs(ctx context.Context, team *ent.Team, userID, host string) ([]*ent.TeamConfig, error) {
 	choices, err := s.assetChoices(ctx, userID, team.ID)
 	if err != nil {
 		return nil, err
 	}
 	configs := make([]*ent.TeamConfig, 0, len(team.Edges.Configs))
 	for _, config := range team.Edges.Configs {
+		if host != "" && containsString(choices.Off[config.ID], host) {
+			continue
+		}
 		if config.AssetOwnerID == "" {
 			if choices.Personal[config.ID].Mode != string(assetselection.ModeRemoved) {
 				configs = append(configs, config)

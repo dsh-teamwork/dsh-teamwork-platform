@@ -4,7 +4,8 @@
  * is on the reader's DSH and adds, updates or removes it in one click; it opens its details beside the list. The
  * team's own items and the ones an admin recommends are on everyone's DSH until they remove them; a member's other
  * items are added by choice and follow their latest version unless pinned. An admin also recommends, updates a
- * recommendation, withdraws, and edits or deletes the team's own.
+ * recommendation, withdraws, and edits or deletes the team's own. What a member has reaches every computer they sign
+ * in on, a new one included, except the ones they keep it off (`PUT …/asset-choices/{id}/hosts`).
  */
 
 import { ArrowRight, Check, History, Laptop, Plus, Puzzle, Upload } from 'lucide-react';
@@ -14,7 +15,7 @@ import { useFormatter, useTranslations } from 'use-intl';
 
 import { Failure } from '@/components/page';
 import { PresetAvatar } from '@/components/preset-avatar';
-import { PageHeader } from '@/components/team/console-shell';
+import { PageHeader, twinOf } from '@/components/team/console-shell';
 import { useMutation, useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -39,6 +40,7 @@ type Item = Preset | Plugin;
 type Choices = Omit<Schemas['AssetChoices'], 'archived'> & { archived: TeamConfig[] };
 type Filter = 'all' | 'onDsh' | 'mine' | 'behind';
 type Choose = (item: Item, body: Schemas['PersonalChoice'], message: string) => Promise<boolean>;
+type Host = Schemas['RelayHost'];
 
 /** How the item reaches the reader's DSH, if it does: the team's own, the team's recommendation, or their own choice. */
 interface Use {
@@ -159,6 +161,8 @@ export function TeamLibraryPage() {
       use={reachOf(item, c)}
       mine={item.assetOwnerId === me}
       behind={admin && isBehind(item, c)}
+      hosts={dsh.hosts ?? []}
+      off={c.off[item.id] ?? []}
       pending={pending}
       onOpen={() => setParam('item', item.id)}
       onAdd={() => void add(item)}
@@ -297,6 +301,7 @@ export function TeamLibraryPage() {
           author={author(open)}
           models={models}
           items={items}
+          hosts={dsh.hosts ?? []}
           use={reachOf(open, c)}
           pending={pending}
           run={run}
@@ -385,6 +390,8 @@ function Row(props: {
   use: Use;
   mine: boolean;
   behind: boolean;
+  hosts: Host[];
+  off: string[];
   pending: boolean;
   onOpen: () => void;
   onAdd: () => void;
@@ -424,7 +431,10 @@ function Row(props: {
           ) : (
             <span className="flex items-center gap-1 text-xs text-success">
               <Check className="size-3.5" aria-hidden />
-              {t('state.onDsh')}
+              {/* Kept off some of the reader's computers: say on how many it is. */}
+              {props.off.some((id) => props.hosts.some((h) => h.id === id))
+                ? t('state.onSome', { on: props.hosts.filter((h) => !props.off.includes(h.id)).length, all: props.hosts.length })
+                : t('state.onDsh')}
             </span>
           )
         ) : item.assetArchived ? null : (
@@ -447,6 +457,7 @@ function Details(props: {
   author: string;
   models: Model[];
   items: Item[];
+  hosts: Host[];
   use: Use;
   pending: boolean;
   run: (action: () => Promise<unknown>, success?: string) => Promise<boolean>;
@@ -526,6 +537,10 @@ function Details(props: {
         {item.kind === 'plugin' && use.on && <p className="text-xs text-muted-foreground">{t('pluginInstall')}</p>}
 
         <Needs item={item} models={props.models} items={props.items} choices={choices} />
+
+        {use.on && props.hosts.length > 0 && item.builtin !== 'team-assistant' && (
+          <Computers item={item} teamId={props.teamId} hosts={props.hosts} items={props.items} choices={choices} pending={pending} run={props.run} />
+        )}
 
         {props.mine && !item.assetArchived && (
           <Panel title={t('author.title')}>
@@ -659,7 +674,7 @@ function Needs({ item, models, items, choices }: { item: Item; models: Model[]; 
             return (
               <span key={dependency.pluginConfigId} className="mr-3 inline-flex items-center gap-1.5">
                 {plugin?.name ?? t('pluginMissing')}
-                <span className={cn('text-xs', on ? 'text-success' : 'text-warning')}>{t(on ? 'onDsh' : 'notOnDsh')}</span>
+                <span className={cn('text-xs', on ? 'text-success' : 'text-warning')}>{t(on ? 'added' : 'notAdded')}</span>
               </span>
             );
           })
@@ -681,6 +696,58 @@ function Needs({ item, models, items, choices }: { item: Item; models: Model[]; 
           </div>
         ))}
       </dl>
+    </Panel>
+  );
+}
+
+/**
+ * The reader's computers, each with a switch: the item syncs to every computer that is on, a newly connected one
+ * included. A preset still carries the plugins it pins, so a plugin kept off a computer where such a preset is says
+ * that the preset will still ask to install it there.
+ */
+function Computers(props: { item: Item; teamId: string; hosts: Host[]; items: Item[]; choices: Choices; pending: boolean; run: (action: () => Promise<unknown>, success?: string) => Promise<boolean> }) {
+  const { item, hosts, choices } = props;
+  const t = useTranslations('team.library.computers');
+  const off = choices.off[item.id] ?? [];
+  const onHost = (other: Item, host: string) => reachOf(other, choices).on && !(choices.off[other.id] ?? []).includes(host);
+  const save = (next: string[], message: string) =>
+    props.run(() => api(`teams/${props.teamId}/asset-choices/${item.id}/hosts`, { method: 'PUT', body: { off: next } }), message);
+  const neededBy = (host: string): string | undefined => {
+    if (item.kind !== 'plugin') return undefined;
+    const presets = props.items.filter((p): p is Preset => p.kind === 'preset' && onHost(p, host) && p.data.pluginDependencies.some((d) => d.pluginConfigId === item.id));
+    return presets.length ? t('neededBy', { presets: presets.map((p) => p.name).join(t('separator')) }) : undefined;
+  };
+  return (
+    <Panel title={t('title')}>
+      <p className="text-xs text-muted-foreground">{t('hint')}</p>
+      <ul className="flex flex-col">
+        {hosts.map((host) => {
+          const on = !off.includes(host.id);
+          const twin = twinOf(hosts, host);
+          const warning = on ? undefined : neededBy(host.id);
+          return (
+            <li key={host.id} className="flex flex-col gap-0.5 border-t py-2 first:border-t-0">
+              <label className="flex items-center gap-2.5 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-foreground"
+                  checked={on}
+                  disabled={props.pending}
+                  onChange={() =>
+                    void save(on ? [...off, host.id] : off.filter((id) => id !== host.id), t(on ? 'turnedOff' : 'turnedOn', { name: host.name }))
+                  }
+                />
+                <span className="min-w-0 flex-1 truncate">
+                  {host.name}
+                  {twin && <span className="ml-1 text-muted-foreground">{twin}</span>}
+                </span>
+                <span className={cn('text-xs', host.online ? 'text-success' : 'text-muted-foreground')}>{t(host.online ? 'online' : 'offline')}</span>
+              </label>
+              {warning && <p className="pl-6.5 text-xs text-warning">{warning}</p>}
+            </li>
+          );
+        })}
+      </ul>
     </Panel>
   );
 }

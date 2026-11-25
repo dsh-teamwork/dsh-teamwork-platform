@@ -612,7 +612,8 @@
         "onDsh": "在我的 DSH",
         "pinned": "固定 v{version}",
         "update": "有更新 v{version}",
-        "behind": "推荐待更新"
+        "behind": "推荐待更新",
+        "onSome": "在 {on}/{all} 台 DSH"
       },
       "add": "添加",
       "addToDsh": "添加到我的 DSH",
@@ -646,14 +647,14 @@
         "tools": "工具",
         "plugins": "插件",
         "pluginMissing": "插件已删除",
-        "onDsh": "已在你的 DSH",
-        "notOnDsh": "不在你的 DSH",
         "none": "无",
         "package": "包",
         "provides": "提供的工具",
         "usedBy": "被这些预设依赖",
         "unused": "没有预设依赖它",
-        "separator": "、"
+        "separator": "、",
+        "added": "已添加",
+        "notAdded": "未添加"
       },
       "author": {
         "title": "我分享的",
@@ -715,6 +716,16 @@
         "includedFiles": "压缩包中有 {count} 个文件",
         "target": "分享为",
         "newPlugin": "新插件"
+      },
+      "computers": {
+        "title": "在哪些 DSH 上",
+        "hint": "勾选的 DSH 都会同步它，以后接入的新 DSH 也会。插件在每台电脑上安装前仍会请你确认。",
+        "online": "在线",
+        "offline": "离线",
+        "turnedOff": "已在「{name}」上关掉。",
+        "turnedOn": "已在「{name}」上打开。",
+        "neededBy": "这台 DSH 上的 {presets} 依赖它，仍会提示安装。",
+        "separator": "、"
       }
     },
     "catalog": {
@@ -2089,7 +2100,8 @@
     "knowledge_not_author": "只有提议人可以撤回修改提议。",
     "knowledge_agent_proposes": "智能体只能提出修改。",
     "knowledge_team_full": "团队的附件已达 2 GiB 上限。请先删除带有不再需要的文件的文档。",
-    "knowledge_storage_unavailable": "这台服务器没有配置文件存储，无法附加文件。"
+    "knowledge_storage_unavailable": "这台服务器没有配置文件存储，无法附加文件。",
+    "host_not_found": "这台电脑不是你的。刷新页面后再试。"
   },
   "docs": {
     "title": "文档",

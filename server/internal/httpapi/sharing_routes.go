@@ -79,6 +79,22 @@ func (s *Server) chooseAsset(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func (s *Server) setAssetHosts(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in team.AssetHosts
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Team.SetAssetHosts(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), in); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
 func (s *Server) setAssetDefault(w http.ResponseWriter, r *http.Request) error {
 	c, err := s.requireUser(r)
 	if err != nil {

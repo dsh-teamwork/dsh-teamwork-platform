@@ -106,6 +106,18 @@ answers how many members each item reaches. A revision check protects
 concurrent edits to a recommendation, and its history records the actor,
 time, name and version of each change.
 
+What a member has reaches every computer they sign in on, except the ones they
+keep it off. `asset_exclusions` holds one row per member, item and computer
+kept off; a computer is a relay host (`docs/tech/relay.md`), and
+`GET /api/configs` finds the caller's through the relay host whose `grant_id`
+is the plugin token's sign-in. A computer not known yet (one that has not
+connected to the relay, a browser, a cloud computer's token) gets everything,
+so a newly connected computer starts with all of it. Keeping an item off a
+computer delivers nothing about it there; a preset still carries the plugins
+it pins, so a plugin kept off a computer where such a preset is still asks to
+be installed there. The team assistant stays on every computer. The rows go
+with the computer, the member's membership, the account and the team.
+
 Legacy team configurations remain in the sync snapshot. Existing submissions
 remain readable by their author or the team administrator. Pending and
 rejected records do not enter the catalog.
@@ -264,6 +276,7 @@ it. The plugin also validates synced current and pinned historical data.
 | `GET /submissions`, `GET /submissions/{id}` | Authorized legacy history |
 | `POST /configs`, `PATCH /configs/{id}` | Validated publication and version-checked updates |
 | `GET /asset-choices`, `PUT /asset-choices/{id}` | Read choices, recommendations and reach; follow latest, pin, remove, or return to the recommendation |
+| `PUT /asset-choices/{id}/hosts` | Replace the caller's computers an item stays off |
 | `PUT /asset-defaults/{id}` | Recommend at a version, rename, roll back or withdraw a recommendation |
 | `POST /packages` | Bounded private upload |
 | `GET /packages/{id}`, `GET /packages/{id}/download` | Authorized metadata and immutable bytes |

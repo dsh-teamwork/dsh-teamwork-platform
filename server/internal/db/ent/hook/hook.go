@@ -57,6 +57,18 @@ func (f ArtifactVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactVersionMutation", m)
 }
 
+// The AssetExclusionFunc type is an adapter to allow the use of ordinary
+// function as AssetExclusion mutator.
+type AssetExclusionFunc func(context.Context, *ent.AssetExclusionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AssetExclusionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AssetExclusionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AssetExclusionMutation", m)
+}
+
 // The AssetSelectionFunc type is an adapter to allow the use of ordinary
 // function as AssetSelection mutator.
 type AssetSelectionFunc func(context.Context, *ent.AssetSelectionMutation) (ent.Value, error)

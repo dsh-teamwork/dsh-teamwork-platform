@@ -1,0 +1,2 @@
+-- Create "asset_exclusions" table
+CREATE TABLE `asset_exclusions` (`id` varchar(32) NOT NULL, `created_at` datetime(6) NOT NULL, `team_id` varchar(32) NOT NULL, `user_id` varchar(32) NOT NULL, `config_id` varchar(32) NOT NULL, `host_id` varchar(32) NOT NULL, PRIMARY KEY (`id`), INDEX `assetexclusion_host_id` (`host_id`), UNIQUE INDEX `assetexclusion_team_id_user_id_config_id_host_id` (`team_id`, `user_id`, `config_id`, `host_id`)) CHARSET utf8mb4 COLLATE utf8mb4_bin;
