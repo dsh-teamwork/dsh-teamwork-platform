@@ -39,6 +39,16 @@ func object(required []string, props schema) schema {
 }
 
 var routes = []route{
+	{
+		Method: "GET", Path: "/api/admin/activity", Access: read,
+		Description: "Account and team stocks at read time, creations and model activity in a range of UTC dates.",
+		Query: object([]string{}, schema{
+			"from": schema{"type": "string", "format": "date", "description": "Inclusive UTC date, defaults to to."},
+			"to":   schema{"type": "string", "format": "date", "description": "Inclusive UTC date, defaults to today. Window is 1–93 days."},
+		}),
+		Response: schema{"type": "object"},
+		handle:   getActivity,
+	},
 	{Method: "GET", Path: "/api/admin/teams", Access: read, Description: "Search teams by name, id or member email.", Response: schema{"type": "object"}, handle: listTeams},
 	{Method: "GET", Path: "/api/admin/teams/{id}", Access: read, Description: "Team identity and paginated membership, without configuration secrets.", Response: schema{"type": "object"}, handle: getTeam},
 	{Method: "GET", Path: "/api/admin/system", Access: read, Description: "Non-secret instance configuration status.", Response: schema{"type": "object"}, handle: getSystem},

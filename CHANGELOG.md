@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-25 — Read instance activity by UTC date
+
+- **What:** `GET /api/admin/activity` reports aggregate account, team, and model-call activity. Editions can read the same report through `Host.Activity`.
+- **Why:** Give operators production activity counts and editions a reporting boundary for open tables.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** [System management](docs/tech/system-management.md)
+
 ## 2026-11-24 — The sidebar previews images, pages long texts, follows changes and reviews a turn's changes
 
 - **What:** With the DSH Teamwork plugin 0.23.0, a session's sidebar shows an image as it is (`teamwork/readDocument` now sends png, jpg, gif, webp, bmp, ico, svg and avif), reads a long text 256 KiB a page as the reader reaches its end (`teamwork/readFile` takes `offset` and `version` and answers `next`), and reads a shown file again in place when it changes on the computer, saying when it is gone (`teamwork/statFile`, asked every four seconds while the tab is in view). An Office preview lists the fonts the computer's Office Kit lacked behind a warning in the path bar (`missingFonts`, shown in the new web `--warning` token). Each turn's changed files now come from DSH's own record (`workspace/changes` events, kept as `changes` items `rowsOf` leaves out; `teamwork/changes` and `teamwork/changeDiff`): the card shows the lines added and removed, a file's comparison floats under its row after half a second, and a click opens the turn's review as a sidebar tab. The relay client's `readDocument` answers `{ bytes, missingFonts }`, and it gains `statFile`, `turnChanges` and `changeDiff`. The preview page's English fallback for the phone's PDF labels is gone, since the phone names them.

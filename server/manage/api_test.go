@@ -6,11 +6,13 @@ package manage_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition/editiontest"
@@ -200,8 +202,8 @@ func TestIndex(t *testing.T) {
 			t.Fatalf("index: %d", s)
 		}
 		listed := b["routes"].([]any)
-		if len(listed) != 8 {
-			t.Fatalf("listed %d of %d", len(listed), 8)
+		if len(listed) != 9 {
+			t.Fatalf("listed %d of %d", len(listed), 9)
 		}
 		seen := map[string]bool{}
 		for _, r := range listed {
@@ -356,6 +358,56 @@ func TestTeamAdminsCannotControlInstancePasswords(t *testing.T) {
 			s, b := w.do(req)
 			if s != 403 || b["error"] != "not_allowed" {
 				t.Fatalf("operator credentials: %d %v", s, b)
+			}
+		}
+	})
+}
+
+func TestActivity(t *testing.T) {
+	each(t, admins, func(t *testing.T, w world) {
+		u := w.in.Account("operator-metrics@example.test")
+		team := w.in.Team(u)
+		now := time.Now().UTC()
+		query := "INSERT INTO usage_requests (id, created_at, team_id, user_id, submitted_config_id, config_id, provider, model, stream, state, route_owner, meter, error_code, point_units, input_tokens, output_tokens) VALUES (?, ?, ?, ?, '', '', 'fixture', 'model', ?, ?, ?, ?, ?, ?, ?, ?)"
+		if w.in.Dialect == "postgres" {
+			for i := 1; strings.Contains(query, "?"); i++ {
+				query = strings.Replace(query, "?", fmt.Sprintf("$%d", i), 1)
+			}
+		}
+		for i, row := range []struct {
+			owner, meter, state, code string
+			points, in, out           any
+		}{
+			{"", "", "settled", "", int64(2_500_000_000), 12, 4},
+			{"billing", "", "settled", "", int64(1_000_000_000), 20, 6},
+			{"billing", "", "pending", "upstream_unavailable", nil, nil, nil},
+			{"billing", "cloud.computer", "settled", "", int64(9_000_000_000), nil, nil},
+		} {
+			if _, err := w.in.SQL.Exec(query, fmt.Sprintf("metrics%d", i), now, team, u, false, row.state, row.owner, row.meter, row.code, row.points, row.in, row.out); err != nil {
+				t.Fatal(err)
+			}
+		}
+		header := map[string]string{"x-api-key": key}
+		s, b := w.do(request{method: "GET", path: "/api/admin/activity?to=" + now.Format(time.DateOnly), header: header})
+		if s != 200 {
+			t.Fatalf("activity: %d %v", s, b)
+		}
+		models := b["models"].(map[string]any)
+		if models["admitted"] != float64(3) || models["succeeded"] != float64(2) || models["errored"] != float64(1) {
+			t.Fatalf("model activity: %v", models)
+		}
+		routes := models["byRoute"].([]any)
+		byok := routes[0].(map[string]any)
+		hosted := routes[1].(map[string]any)
+		if byok["points"] != "2.5" || byok["inputTokens"] != float64(12) || hosted["points"] != "1" || hosted["callsMissingTokens"] != float64(1) {
+			t.Fatalf("route activity: %v", routes)
+		}
+		if b["refusalsBeforeAdmit"] != nil || b["coverage"].(map[string]any)["upstreamLatency"] != "not_collected" || strings.Contains(fmt.Sprint(b), "operator-metrics@example.test") {
+			t.Fatalf("activity coverage or privacy: %v", b)
+		}
+		for _, q := range []string{"?to=bad", "?from=2000-01-01", "?to=2999-01-01", "?from=2025-01-02&to=2025-01-01"} {
+			if s, b := w.do(request{method: "GET", path: "/api/admin/activity" + q, header: header}); s != 400 {
+				t.Fatalf("invalid window %s: %d %v", q, s, b)
 			}
 		}
 	})
