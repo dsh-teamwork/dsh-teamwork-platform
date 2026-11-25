@@ -39,10 +39,10 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-25 — Member-owned presets and plugins in the team catalog
 
-- **What:** Members publish validated presets and plugins directly to the team catalog. The author selects a new asset automatically. Member presets can use team models or inherit the session model. Administrators can pin, rename or withdraw a team default. DSH sync resolves these choices. Knowledge document mentions search member names and keep the original account IDs.
+- **What:** Members publish validated presets and plugins directly to the team catalog. The author selects a new asset automatically and can reactivate an asset they withdrew. Administrative archives block same-name reactivation. Member presets can use team models or inherit the session model. Administrators can pin, rename or withdraw a team default. DSH sync resolves these choices. Knowledge document mentions search member names and keep the original account IDs.
 - **Why:** Teams can use member contributions without an approval queue and adopt defaults at their own pace.
 - **Breaking:** The old submission write routes and the pending review count in team summaries are removed. Submission history stays readable. Update the DSH client for the new team summary and assistant publication API.
-- **Upgrade:** The server applies the asset selection and default history migrations. Existing configurations keep their sync behavior.
+- **Upgrade:** The server applies the asset selection, default history and archive provenance migrations. Existing configurations keep their sync behavior.
 - **Refs:** `docs/tech/team-assistant.md`, `docs/tech/knowledge.md`.
 
 ## 2026-11-24 — The sidebar previews images, pages long texts, follows changes and reviews a turn's changes

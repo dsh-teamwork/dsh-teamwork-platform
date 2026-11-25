@@ -1936,6 +1936,10 @@ func init() {
 	teamconfigDescAssetArchived := teamconfigFields[9].Descriptor()
 	// teamconfig.DefaultAssetArchived holds the default value on creation for the asset_archived field.
 	teamconfig.DefaultAssetArchived = teamconfigDescAssetArchived.Default.(bool)
+	// teamconfigDescAssetOwnerWithdrawn is the schema descriptor for asset_owner_withdrawn field.
+	teamconfigDescAssetOwnerWithdrawn := teamconfigFields[10].Descriptor()
+	// teamconfig.DefaultAssetOwnerWithdrawn holds the default value on creation for the asset_owner_withdrawn field.
+	teamconfig.DefaultAssetOwnerWithdrawn = teamconfigDescAssetOwnerWithdrawn.Default.(bool)
 	// teamconfigDescID is the schema descriptor for id field.
 	teamconfigDescID := teamconfigMixinFields0[0].Descriptor()
 	// teamconfig.DefaultID holds the default value on creation for the id field.

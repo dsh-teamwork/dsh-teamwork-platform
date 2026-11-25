@@ -26662,28 +26662,29 @@ func (m *TeamMutation) ResetEdge(name string) error {
 // TeamConfigMutation represents an operation that mutates the TeamConfig nodes in the graph.
 type TeamConfigMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *string
-	created_at      *time.Time
-	updated_at      *time.Time
-	kind            *teamconfig.Kind
-	name            *string
-	builtin         *string
-	data            *json.RawMessage
-	appenddata      json.RawMessage
-	route_owner     *string
-	route_reference *string
-	version         *int
-	addversion      *int
-	asset_owner_id  *string
-	asset_archived  *bool
-	clearedFields   map[string]struct{}
-	team            *string
-	clearedteam     bool
-	done            bool
-	oldValue        func(context.Context) (*TeamConfig, error)
-	predicates      []predicate.TeamConfig
+	op                    Op
+	typ                   string
+	id                    *string
+	created_at            *time.Time
+	updated_at            *time.Time
+	kind                  *teamconfig.Kind
+	name                  *string
+	builtin               *string
+	data                  *json.RawMessage
+	appenddata            json.RawMessage
+	route_owner           *string
+	route_reference       *string
+	version               *int
+	addversion            *int
+	asset_owner_id        *string
+	asset_archived        *bool
+	asset_owner_withdrawn *bool
+	clearedFields         map[string]struct{}
+	team                  *string
+	clearedteam           bool
+	done                  bool
+	oldValue              func(context.Context) (*TeamConfig, error)
+	predicates            []predicate.TeamConfig
 }
 
 var _ ent.Mutation = (*TeamConfigMutation)(nil)
@@ -27270,6 +27271,42 @@ func (m *TeamConfigMutation) ResetAssetArchived() {
 	m.asset_archived = nil
 }
 
+// SetAssetOwnerWithdrawn sets the "asset_owner_withdrawn" field.
+func (m *TeamConfigMutation) SetAssetOwnerWithdrawn(b bool) {
+	m.asset_owner_withdrawn = &b
+}
+
+// AssetOwnerWithdrawn returns the value of the "asset_owner_withdrawn" field in the mutation.
+func (m *TeamConfigMutation) AssetOwnerWithdrawn() (r bool, exists bool) {
+	v := m.asset_owner_withdrawn
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssetOwnerWithdrawn returns the old "asset_owner_withdrawn" field's value of the TeamConfig entity.
+// If the TeamConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamConfigMutation) OldAssetOwnerWithdrawn(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssetOwnerWithdrawn is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssetOwnerWithdrawn requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssetOwnerWithdrawn: %w", err)
+	}
+	return oldValue.AssetOwnerWithdrawn, nil
+}
+
+// ResetAssetOwnerWithdrawn resets all changes to the "asset_owner_withdrawn" field.
+func (m *TeamConfigMutation) ResetAssetOwnerWithdrawn() {
+	m.asset_owner_withdrawn = nil
+}
+
 // ClearTeam clears the "team" edge to the Team entity.
 func (m *TeamConfigMutation) ClearTeam() {
 	m.clearedteam = true
@@ -27331,7 +27368,7 @@ func (m *TeamConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TeamConfigMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.created_at != nil {
 		fields = append(fields, teamconfig.FieldCreatedAt)
 	}
@@ -27368,6 +27405,9 @@ func (m *TeamConfigMutation) Fields() []string {
 	if m.asset_archived != nil {
 		fields = append(fields, teamconfig.FieldAssetArchived)
 	}
+	if m.asset_owner_withdrawn != nil {
+		fields = append(fields, teamconfig.FieldAssetOwnerWithdrawn)
+	}
 	return fields
 }
 
@@ -27400,6 +27440,8 @@ func (m *TeamConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.AssetOwnerID()
 	case teamconfig.FieldAssetArchived:
 		return m.AssetArchived()
+	case teamconfig.FieldAssetOwnerWithdrawn:
+		return m.AssetOwnerWithdrawn()
 	}
 	return nil, false
 }
@@ -27433,6 +27475,8 @@ func (m *TeamConfigMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldAssetOwnerID(ctx)
 	case teamconfig.FieldAssetArchived:
 		return m.OldAssetArchived(ctx)
+	case teamconfig.FieldAssetOwnerWithdrawn:
+		return m.OldAssetOwnerWithdrawn(ctx)
 	}
 	return nil, fmt.Errorf("unknown TeamConfig field %s", name)
 }
@@ -27525,6 +27569,13 @@ func (m *TeamConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAssetArchived(v)
+		return nil
+	case teamconfig.FieldAssetOwnerWithdrawn:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssetOwnerWithdrawn(v)
 		return nil
 	}
 	return fmt.Errorf("unknown TeamConfig field %s", name)
@@ -27634,6 +27685,9 @@ func (m *TeamConfigMutation) ResetField(name string) error {
 		return nil
 	case teamconfig.FieldAssetArchived:
 		m.ResetAssetArchived()
+		return nil
+	case teamconfig.FieldAssetOwnerWithdrawn:
+		m.ResetAssetOwnerWithdrawn()
 		return nil
 	}
 	return fmt.Errorf("unknown TeamConfig field %s", name)

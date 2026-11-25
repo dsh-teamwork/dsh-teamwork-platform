@@ -87,7 +87,7 @@ Member-owned presets and plugins enter their team's catalog after validation.
 The asset keeps its owner and logical config ID. Writes validate the base
 version and same-team references. The catalog change, immutable revision and
 package publication commit together. New publications are selected for their author in the publication transaction. Member presets use a team model or inherit the session model. Owners and team admins can archive a config, which
-removes it from the catalog and preserves selections that already refer to it. An active owner can publish again under the same name to reactivate the original asset. Removing a member archives their assets and clears their personal selections.
+removes it from the catalog and preserves selections that already refer to it. An active owner can publish again under the same name after withdrawing their own asset. Administrative archives, membership removal and account deletion block same-name reactivation, including after a member rejoins. Removing a member archives their assets and clears their personal selections.
 
 A member's choice is one `asset_selections` row in one of three modes:
 `latest` follows the item's current version, `pinned` keeps one version and
