@@ -1,6 +1,6 @@
 # System management
 
-> **Status:** Current · **Updated:** 2026-11-17
+> **Status:** Current · **Updated:** 2026-11-25
 
 Platform owns instance administration; editions extend its guarded API and shared console instead of maintaining a second user-management implementation.
 
@@ -21,6 +21,8 @@ The community administrator can use the configured Google, email-code or local p
 ## Capabilities and boundary
 
 The overview counts all users, seven-day registrations and teams. Users can be searched by email/name and their display names corrected. Teams can be searched by name, exact ID or member email; the detail lists paginated membership. System diagnostics show the service role, database dialect and boolean configuration states, never credentials, connection strings or provider keys.
+
+`GET /api/admin/activity` returns read-time account and team totals, creations, and aggregate model usage for an inclusive range of 1–93 UTC dates ending no later than today. An omitted `to` defaults to today and an omitted `from` defaults to `to`. Model rows are grouped by routing and model, with metered resources excluded.
 
 `GET /api/admin` describes the registered route set. Reads and ordinary writes accept an allowlisted session or `MANAGE_API_KEY`; key writes require `x-agent-id`. A supplied invalid key never falls back to cookies. Cookie writes require same origin and JSON. Management permissions do not grant access to private conversation content or disclose team provider secrets. Ordinary account mutations are attributed in service logs; this is not a full audit-event store.
 

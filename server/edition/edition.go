@@ -155,7 +155,10 @@ type Host struct {
 	// SameOrigin reports whether r, a write, came from this site.
 	SameOrigin func(r *http.Request) bool
 	Users      Users
-	Env        func(string) string
+	// Activity aggregates accounts and model calls without exposing open tables.
+	Activity         func(context.Context, ActivityWindow) (any, error)
+	ActivityInsights func(context.Context, ActivityWindow) (ActivityInsights, error)
+	Env              func(string) string
 	// Seal keeps one of this extension's own secrets (a supplier's key) at
 	// rest under PROVIDER_KEYS_SECRET, bound to the extension and the name it
 	// gives, so a sealed value stored under another name no longer opens.

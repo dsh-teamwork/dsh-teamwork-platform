@@ -278,6 +278,8 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		},
 		Objects: objects(teams.Objects),
 		Users:   NewUsers(client), Env: env,
+		Activity:            manage.Activity(client),
+		ActivityInsights:    manage.ActivityInsights(client),
 		WithTeamTx:          meter.WithTeamTx,
 		ResolveFundingUsage: meter.ResolveFunding,
 		TeamExists: func(ctx context.Context, id string) (bool, error) {
