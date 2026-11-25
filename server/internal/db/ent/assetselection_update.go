@@ -58,16 +58,16 @@ func (_u *AssetSelectionUpdate) AddVersion(v int) *AssetSelectionUpdate {
 	return _u
 }
 
-// SetDisabled sets the "disabled" field.
-func (_u *AssetSelectionUpdate) SetDisabled(v bool) *AssetSelectionUpdate {
-	_u.mutation.SetDisabled(v)
+// SetMode sets the "mode" field.
+func (_u *AssetSelectionUpdate) SetMode(v assetselection.Mode) *AssetSelectionUpdate {
+	_u.mutation.SetMode(v)
 	return _u
 }
 
-// SetNillableDisabled sets the "disabled" field if the given value is not nil.
-func (_u *AssetSelectionUpdate) SetNillableDisabled(v *bool) *AssetSelectionUpdate {
+// SetNillableMode sets the "mode" field if the given value is not nil.
+func (_u *AssetSelectionUpdate) SetNillableMode(v *assetselection.Mode) *AssetSelectionUpdate {
 	if v != nil {
-		_u.SetDisabled(*v)
+		_u.SetMode(*v)
 	}
 	return _u
 }
@@ -168,6 +168,11 @@ func (_u *AssetSelectionUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *AssetSelectionUpdate) check() error {
+	if v, ok := _u.mutation.Mode(); ok {
+		if err := assetselection.ModeValidator(v); err != nil {
+			return &ValidationError{Name: "mode", err: fmt.Errorf(`ent: validator failed for field "AssetSelection.mode": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Name(); ok {
 		if err := assetselection.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "AssetSelection.name": %w`, err)}
@@ -203,8 +208,8 @@ func (_u *AssetSelectionUpdate) sqlSave(ctx context.Context) (_node int, err err
 	if value, ok := _u.mutation.AddedVersion(); ok {
 		_spec.AddField(assetselection.FieldVersion, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.Disabled(); ok {
-		_spec.SetField(assetselection.FieldDisabled, field.TypeBool, value)
+	if value, ok := _u.mutation.Mode(); ok {
+		_spec.SetField(assetselection.FieldMode, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(assetselection.FieldName, field.TypeString, value)
@@ -275,16 +280,16 @@ func (_u *AssetSelectionUpdateOne) AddVersion(v int) *AssetSelectionUpdateOne {
 	return _u
 }
 
-// SetDisabled sets the "disabled" field.
-func (_u *AssetSelectionUpdateOne) SetDisabled(v bool) *AssetSelectionUpdateOne {
-	_u.mutation.SetDisabled(v)
+// SetMode sets the "mode" field.
+func (_u *AssetSelectionUpdateOne) SetMode(v assetselection.Mode) *AssetSelectionUpdateOne {
+	_u.mutation.SetMode(v)
 	return _u
 }
 
-// SetNillableDisabled sets the "disabled" field if the given value is not nil.
-func (_u *AssetSelectionUpdateOne) SetNillableDisabled(v *bool) *AssetSelectionUpdateOne {
+// SetNillableMode sets the "mode" field if the given value is not nil.
+func (_u *AssetSelectionUpdateOne) SetNillableMode(v *assetselection.Mode) *AssetSelectionUpdateOne {
 	if v != nil {
-		_u.SetDisabled(*v)
+		_u.SetMode(*v)
 	}
 	return _u
 }
@@ -398,6 +403,11 @@ func (_u *AssetSelectionUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *AssetSelectionUpdateOne) check() error {
+	if v, ok := _u.mutation.Mode(); ok {
+		if err := assetselection.ModeValidator(v); err != nil {
+			return &ValidationError{Name: "mode", err: fmt.Errorf(`ent: validator failed for field "AssetSelection.mode": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Name(); ok {
 		if err := assetselection.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "AssetSelection.name": %w`, err)}
@@ -450,8 +460,8 @@ func (_u *AssetSelectionUpdateOne) sqlSave(ctx context.Context) (_node *AssetSel
 	if value, ok := _u.mutation.AddedVersion(); ok {
 		_spec.AddField(assetselection.FieldVersion, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.Disabled(); ok {
-		_spec.SetField(assetselection.FieldDisabled, field.TypeBool, value)
+	if value, ok := _u.mutation.Mode(); ok {
+		_spec.SetField(assetselection.FieldMode, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(assetselection.FieldName, field.TypeString, value)

@@ -63,20 +63,34 @@ func (s *Server) assetChoices(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (s *Server) selectAsset(teamDefault bool) func(http.ResponseWriter, *http.Request) error {
-	return func(w http.ResponseWriter, r *http.Request) error {
-		c, err := s.requireUser(r)
-		if err != nil {
-			return err
-		}
-		var choice team.AssetChoiceInput
-		if err := decode(r, &choice); err != nil {
-			return err
-		}
-		if err := s.Team.SelectAsset(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), teamDefault, choice); err != nil {
-			return err
-		}
-		w.WriteHeader(http.StatusNoContent)
-		return nil
+func (s *Server) chooseAsset(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
 	}
+	var in team.PersonalChoice
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Team.ChooseAsset(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), in); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (s *Server) setAssetDefault(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in team.TeamDefaultInput
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Team.SetAssetDefault(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), in); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }

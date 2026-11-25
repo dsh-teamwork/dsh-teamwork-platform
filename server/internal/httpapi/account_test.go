@@ -53,7 +53,7 @@ func TestDeletingAnAccount(t *testing.T) {
 		must(t, owner.post("/api/teams/"+solo+"/configs", map[string]any{"kind": "preset", "name": "Mine", "data": map[string]any{"inheritModel": true, "description": "Mine", "requiredTools": []string{}, "optionalTools": []string{}, "systemPrompt": "Be brief."}}), 201)
 		// What the lone team holds beyond its configs: a draft and a budget.
 		asset := must(t, owner.post("/api/teams/"+solo+"/configs", map[string]any{"kind": "preset", "name": "Asset", "memberAsset": true, "data": map[string]any{"inheritModel": true}}), 201)["id"].(string)
-		must(t, owner.send("PUT", "/api/teams/"+solo+"/asset-choices/"+asset, map[string]int{"version": 1}), 204)
+		must(t, owner.send("PUT", "/api/teams/"+solo+"/asset-choices/"+asset, map[string]any{"mode": "pinned", "version": 1}), 204)
 		d.Client.ResourceSubmission.Create().SetTeamID(solo).SetAuthorID(ownerID).SetConfigID("old-draft").
 			SetProposal(json.RawMessage(`{"kind":"preset","name":"Draft","data":{"inheritModel":true}}`)).ExecX(ctx)
 		must(t, owner.send("PUT", "/api/teams/"+solo+"/budgets", budgetBody("team", "", "10", 0)), 200)
@@ -133,7 +133,7 @@ func TestDeletingATeam(t *testing.T) {
 		}
 		must(t, admin.post("/api/teams/"+doomed+"/configs", map[string]any{"kind": "preset", "name": "Ours", "data": map[string]any{"inheritModel": true, "description": "Ours", "requiredTools": []string{}, "optionalTools": []string{}, "systemPrompt": "Be brief."}}), 201)
 		asset := must(t, member.post("/api/teams/"+doomed+"/configs", map[string]any{"kind": "preset", "name": "Asset", "memberAsset": true, "data": map[string]any{"inheritModel": true}}), 201)["id"].(string)
-		must(t, member.send("PUT", "/api/teams/"+doomed+"/asset-choices/"+asset, map[string]int{"version": 1}), 204)
+		must(t, member.send("PUT", "/api/teams/"+doomed+"/asset-choices/"+asset, map[string]any{"mode": "pinned", "version": 1}), 204)
 		d.Client.ResourceSubmission.Create().SetTeamID(doomed).SetAuthorID(memberID).SetConfigID("old-draft").
 			SetProposal(json.RawMessage(`{"kind":"preset","name":"Draft","data":{"inheritModel":true}}`)).ExecX(ctx)
 		must(t, admin.send("PUT", "/api/teams/"+doomed+"/budgets", budgetBody("team", "", "10", 0)), 200)

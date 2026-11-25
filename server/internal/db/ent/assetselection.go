@@ -30,8 +30,8 @@ type AssetSelection struct {
 	UserID string `json:"user_id,omitempty"`
 	// Version holds the value of the "version" field.
 	Version int `json:"version,omitempty"`
-	// Disabled holds the value of the "disabled" field.
-	Disabled bool `json:"disabled,omitempty"`
+	// Mode holds the value of the "mode" field.
+	Mode assetselection.Mode `json:"mode,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// History holds the value of the "history" field.
@@ -48,11 +48,9 @@ func (*AssetSelection) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case assetselection.FieldHistory:
 			values[i] = new([]byte)
-		case assetselection.FieldDisabled:
-			values[i] = new(sql.NullBool)
 		case assetselection.FieldVersion, assetselection.FieldRevision:
 			values[i] = new(sql.NullInt64)
-		case assetselection.FieldID, assetselection.FieldTeamID, assetselection.FieldConfigID, assetselection.FieldUserID, assetselection.FieldName:
+		case assetselection.FieldID, assetselection.FieldTeamID, assetselection.FieldConfigID, assetselection.FieldUserID, assetselection.FieldMode, assetselection.FieldName:
 			values[i] = new(sql.NullString)
 		case assetselection.FieldCreatedAt, assetselection.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -113,11 +111,11 @@ func (_m *AssetSelection) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Version = int(value.Int64)
 			}
-		case assetselection.FieldDisabled:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field disabled", values[i])
+		case assetselection.FieldMode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field mode", values[i])
 			} else if value.Valid {
-				_m.Disabled = value.Bool
+				_m.Mode = assetselection.Mode(value.String)
 			}
 		case assetselection.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -193,8 +191,8 @@ func (_m *AssetSelection) String() string {
 	builder.WriteString("version=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Version))
 	builder.WriteString(", ")
-	builder.WriteString("disabled=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Disabled))
+	builder.WriteString("mode=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Mode))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)

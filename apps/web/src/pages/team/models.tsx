@@ -6,7 +6,7 @@
  * and reference rate its public reference states (`lookupReference`), so a
  * published model is ready to call without a second form. It is Team
  * management's (ADR 0043); a member reads the team's models, never an address
- * or a key, in Team resources.
+ * or a key, in Models and usage.
  */
 
 import { catalogEntry, catalogVendors, PROVIDER_CATALOG, type CatalogProvider } from '@dsh-teamwork/shared';

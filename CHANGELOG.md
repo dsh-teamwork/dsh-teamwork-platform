@@ -13,13 +13,13 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** [System management](docs/tech/system-management.md)
 
-## 2026-11-25 — Clearer version selection in the team catalog
+## 2026-11-25 — Presets and plugins replace the team toolbox
 
-- **What:** Asset details preview the selected version and separate personal and team actions. Catalog search includes team names, owners can upload a version from its details, and document mentions accept names with spaces.
-- **Why:** Members and administrators need to see which version an action will use.
-- **Breaking:** None.
-- **Upgrade:** Nothing.
-- **Refs:** `apps/web/src/pages/team/resources.tsx`, `apps/web/src/components/knowledge-slash.tsx`.
+- **What:** The console's **Presets and plugins** page (`/teams/{teamId}/presets`) replaces the team toolbox and the admin's Presets, Plugins and Review pages; version history opens from it. A member adds an item in one click and follows its latest version, pins one, or removes it, including a team-owned item other than the assistant; an admin recommends a member's item at one version and sees when its author has published past it. `PUT /asset-choices/{id}` takes `{mode: latest | pinned | removed | default, version}` instead of `{version, disabled}`, `GET /asset-choices` adds `users` (members each item reaches), and an author follows their own new item. Catalog search includes descriptions, and document mentions accept names with spaces. The landing page's pricing title no longer reads "Submission history".
+- **Why:** Members care whether something is on their DSH and current, not which version number they picked; one list with the admin's actions inside replaces four pages.
+- **Breaking:** The personal choice request and response shapes change, and `/resources`, `/sharing` and the admin `/plugins` page are gone. Nothing shipped depends on them.
+- **Upgrade:** The server applies the `asset_choice_modes` migration, which replaces `asset_selections.disabled` with `mode`.
+- **Refs:** `docs/tech/team-assistant.md`, `apps/web/src/pages/team/library.tsx`, `apps/web/src/components/knowledge-slash.tsx`.
 
 ## 2026-11-25 — Member-owned presets and plugins in the team catalog
 

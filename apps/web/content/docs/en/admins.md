@@ -12,9 +12,10 @@ or the phone app with it. Below that it tracks what the team still lacks, and
 once the team is running opens with what waits on you:
 budgets near their limit, calls to resolve and budget
 mail that failed. It heads **Team management** at the foot of the sidebar,
-which only the team's admin sees, with **Team assets** (models, presets,
-plugins, submission history and version history) and **Members and spend** (members, usage and
-budgets) below it. Team management starts folded: open it with its toggle or
+which only the team's admin sees, with **Models** and **Members and spend** (members, usage and
+budgets) below it. Presets and plugins are managed in the Workspace's **Presets
+and plugins**, where you see the same list as members with your own actions
+added. Team management starts folded: open it with its toggle or
 **Alt+M** (**Option+M** on a Mac), and it folds away again when you choose a
 Workspace page. Press **Esc** to fold Team management. If a dialog is open,
 **Esc** closes the dialog first. The **Workspace** pages at the top are the same for
@@ -89,6 +90,9 @@ To manage picture input, edit a BYOK model and set **Image understanding**.
 
 ## 3. Add presets and plugins
 
+Both live in **Presets and plugins**. What you add there is the team's own and
+on every member's DSH, unless a member removes it.
+
 - **Presets** are roles the team shares: the model a preset calls, the tools it
   needs and the way it works. Start from a template (writer, data analyst,
   research analyst or presentation master) or a blank preset, and give it an
@@ -102,10 +106,11 @@ To manage picture input, edit a BYOK model and set **Image understanding**.
   (the hosted service does), or adds a DeepSeek API key; without either it
   works from the pages it can open.
 - **Plugins** pin npm packages at exact versions, so everyone runs the same
-  build. Members still confirm each installation in their own DSH.
+  build: on the Plugins tab, choose **Add from npm**. Members still confirm each
+  installation in their own DSH.
 
 Every change is published to members at their next sync and kept as a version
-under **Versions and backups**.
+under **Version history**, linked from the top of Presets and plugins.
 
 ## 4. Bring people in
 
@@ -139,12 +144,16 @@ the provider still bills you directly. Where the server sends email, a budget
 can also warn admins or the member as it nears its cap. **Usage** lists every
 call by member and model and exports it as CSV.
 
-## 6. Set a team default
+## 6. Recommend what members share
 
-Open a member's asset in **Team toolbox**, select a version, enter an optional
-team display name and choose **Set team default**. Members receive it on their
-next sync. Change the selected version to upgrade or roll back. Removing the
-default leaves members' personal installs in place.
+Open a member's preset or plugin in **Presets and plugins** and choose
+**Recommend to the team**: that version reaches every member's DSH at their
+next sync, under the name you give it if you give one. When its author
+publishes a newer version, the row says the recommendation is behind and the
+**Recommendation behind** filter collects them; read the change, then choose
+**Recommend v…** to move it. **Stop recommending** leaves it with whoever added
+it; **Withdraw** takes it out of the list for everyone, though whoever uses it
+keeps it.
 
 ## 7. Share what the team knows
 

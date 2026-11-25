@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-24
+> **Status:** Current · **Updated:** 2026-11-25
 
 The DSH Teamwork visual system — the whale mark, the black-and-white palette with its two accents, type, spacing and icons — and the file in code that owns each part.
 
@@ -322,10 +322,12 @@ a person or a character, which at this size reads as clip art.
   screens; a code block carries its own copy button
   (`apps/web/src/public/docs.tsx`).
 - **The console's sidebar is work first** (ADR 0043, 0049): *Workspace* at
-  the top, the reader's own (home, team resources with their submissions inside,
-  my usage, an edition's work pages); for the admin, *Team management* at the foot, opening on the
-  team overview, then *Team assets* (models, presets, plugins,
-  review, versions) and *Members and spend* (members, usage, budgets).
+  the top, the reader's own (home, presets and plugins, my usage, an
+  edition's work pages); for the admin, *Team management* at the foot, opening on the
+  team overview and models, then *Members and spend* (members, usage, budgets).
+  An admin manages presets and plugins inside the Workspace page, which
+  marks the team's recommendations with a navy tag and a recommendation
+  behind its latest version with an amber dot on its filter.
   Team management is a `--brand` sheet laid over the workspace, with
   rounded top corners and a shadow cast upward; the rows inside it are
   drawn in the navy's foreground, the selected bar included. It starts
@@ -375,8 +377,8 @@ a person or a character, which at this size reads as clip art.
   email* with a wide six-digit field, another email and a new code. Below
   `lg` the plate is dropped and the logo sits above the title.
 - **`/teams` is the console's front page**: the site's top bar (`components/site-frame.tsx`, shared with `/account`), the teams as
-  cards (each with the team's initials on navy, and a member's home, resources
-  and submissions, or an admin's overview, models and members, a click away) grouped by role, a welcome with the first steps when
+  cards (each with the team's initials on navy, and a member's home, presets
+  and plugins and usage, or an admin's overview, models and members, a click away) grouped by role, a welcome with the first steps when
   there are none, and creating or joining a team in a dialog.
 - **Outcomes in the console** use `--success` / `--warning` / `--info` /
   `--destructive`, and every mutation reports through a `sonner` toast.

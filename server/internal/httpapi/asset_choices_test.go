@@ -33,11 +33,14 @@ func TestMemberAssetsAreDiscoverableAndSyncOnlyWhenSelected(t *testing.T) {
 		}
 		d.Client.ConfigRevision.Create().SetTeamID(teamID).SetConfigID(id).SetVersion(99).SetKind("preset").
 			SetName("Historical direct route").SetData(json.RawMessage(`{"provider":"stub","model":"member-model"}`)).SetSource("direct").ExecX(t.Context())
-		refused(t, "member selecting a historical direct route", owner.send("PUT", base+"/asset-choices/"+id, map[string]int{"version": 99}), 400, "invalid_request")
+		refused(t, "member selecting a historical direct route", owner.send("PUT", base+"/asset-choices/"+id, map[string]any{"mode": "pinned", "version": 99}), 400, "invalid_request")
 		ownerChoice := d.Client.AssetSelection.Query().Where(assetselection.TeamID(teamID), assetselection.ConfigID(id), assetselection.UserID(ownerID)).OnlyX(t.Context())
-		d.Client.AssetSelection.UpdateOneID(ownerChoice.ID).SetVersion(99).ExecX(t.Context())
+		if ownerChoice.Mode != assetselection.ModeLatest {
+			t.Fatalf("the author does not follow their own asset: %v", ownerChoice)
+		}
+		d.Client.AssetSelection.UpdateOneID(ownerChoice.ID).SetMode(assetselection.ModePinned).SetVersion(99).ExecX(t.Context())
 		refused(t, "gateway rejects an already selected direct route", ownerPlugin.post("/api/llm/chat/completions", map[string]any{"model": id, "messages": []any{map[string]string{"role": "user", "content": "hello"}}}), 403, "model_forbidden")
-		must(t, owner.send("PUT", base+"/asset-choices/"+id, map[string]int{"version": 1}), 204)
+		must(t, owner.send("PUT", base+"/asset-choices/"+id, map[string]string{"mode": "latest"}), 204)
 
 		if configs := jsonArray(t, reader.get(base+"/configs")); len(configs) != 2 {
 			t.Fatalf("member upload is missing from catalog: %v", configs)
@@ -78,14 +81,27 @@ func TestMemberAssetsAreDiscoverableAndSyncOnlyWhenSelected(t *testing.T) {
 		refused(t, "member editing another member's asset", reader.send("PATCH", base+"/configs/"+id, preset), 403, "config_owned")
 		must(t, owner.send("PATCH", base+"/configs/"+id, preset), 200)
 		assertSnap(1, "Team notes")
-		must(t, reader.send("PUT", personal, map[string]int{"version": 2}), 204)
+		for _, row := range must(t, ownerPlugin.get("/api/configs"), 200)["teams"].([]any)[0].(map[string]any)["configs"].([]any) {
+			if config := row.(map[string]any); config["id"] == id && config["version"] != float64(2) {
+				t.Fatalf("the author's own DSH did not follow the new version: %v", config)
+			}
+		}
+		users := must(t, reader.get(base+"/asset-choices"), 200)["users"].(map[string]any)
+		if users[id] != float64(4) {
+			t.Fatalf("a recommended asset reaches every member: %v", users)
+		}
+		must(t, reader.send("PUT", personal, map[string]any{"mode": "pinned", "version": 2}), 204)
 		assertSnap(2, "Daily notes revised")
 		must(t, admin.send("DELETE", base+"/configs/"+id, nil), 204)
 		assertSnap(2, "Daily notes revised")
-		refused(t, "selected and disabled", reader.send("PUT", personal, map[string]any{"version": 2, "disabled": true}), 400, "invalid_request")
-		must(t, reader.send("PUT", personal, map[string]bool{"disabled": true}), 204)
+		refused(t, "removed at a version", reader.send("PUT", personal, map[string]any{"mode": "removed", "version": 2}), 400, "invalid_request")
+		refused(t, "adding a withdrawn asset", reader.send("PUT", personal, map[string]string{"mode": "latest"}), 409, "config_conflict")
+		must(t, reader.send("PUT", personal, map[string]string{"mode": "removed"}), 204)
 		assertSnap(0, "")
-		must(t, reader.send("PUT", personal, map[string]any{}), 204)
+		if users := must(t, reader.get(base+"/asset-choices"), 200)["users"].(map[string]any); users[id] != float64(3) {
+			t.Fatalf("a removal is not counted: %v", users)
+		}
+		must(t, reader.send("PUT", personal, map[string]string{"mode": "default"}), 204)
 		assertSnap(1, "Team notes")
 		archived := must(t, reader.get(base+"/asset-choices"), 200)["archived"].([]any)
 		if len(archived) != 1 || archived[0].(map[string]any)["id"] != id {
@@ -112,5 +128,30 @@ func TestMemberAssetsAreDiscoverableAndSyncOnlyWhenSelected(t *testing.T) {
 			}
 		}
 		assertSnap(1, "Daily notes")
+
+		// A team's own preset is on every member's DSH until they remove it; the assistant stays.
+		shared := must(t, admin.post(base+"/configs", map[string]any{"kind": "preset", "name": "Team review", "data": map[string]any{"inheritModel": true}}), 201)["id"].(string)
+		has := func(id string) bool {
+			for _, row := range must(t, plugin.get("/api/configs"), 200)["teams"].([]any)[0].(map[string]any)["configs"].([]any) {
+				if row.(map[string]any)["id"] == id {
+					return true
+				}
+			}
+			return false
+		}
+		refused(t, "pinning a team's own preset", reader.send("PUT", base+"/asset-choices/"+shared, map[string]any{"mode": "pinned", "version": 1}), 400, "invalid_request")
+		must(t, reader.send("PUT", base+"/asset-choices/"+shared, map[string]string{"mode": "removed"}), 204)
+		if has(shared) {
+			t.Fatal("a removed team preset still syncs")
+		}
+		must(t, reader.send("PUT", base+"/asset-choices/"+shared, map[string]string{"mode": "default"}), 204)
+		if !has(shared) {
+			t.Fatal("a team preset brought back does not sync")
+		}
+		for _, row := range jsonArray(t, reader.get(base+"/configs")) {
+			if config := row.(map[string]any); config["builtin"] != nil {
+				refused(t, "removing the team assistant", reader.send("PUT", base+"/asset-choices/"+config["id"].(string), map[string]string{"mode": "removed"}), 400, "invalid_request")
+			}
+		}
 	})
 }

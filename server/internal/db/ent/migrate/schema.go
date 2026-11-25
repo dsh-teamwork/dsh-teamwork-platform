@@ -128,7 +128,7 @@ var (
 		{Name: "config_id", Type: field.TypeString, Size: 32},
 		{Name: "user_id", Type: field.TypeString, Size: 32},
 		{Name: "version", Type: field.TypeInt, Default: 0},
-		{Name: "disabled", Type: field.TypeBool, Default: false},
+		{Name: "mode", Type: field.TypeEnum, Enums: []string{"latest", "pinned", "removed"}, Default: "pinned"},
 		{Name: "name", Type: field.TypeString, Size: 480, Default: ""},
 		{Name: "history", Type: field.TypeJSON, Nullable: true},
 		{Name: "revision", Type: field.TypeInt, Default: 0},

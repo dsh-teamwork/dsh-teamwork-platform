@@ -3,13 +3,15 @@
 > **Status:** Current · **Updated:** 2026-11-25
 
 New teams receive a Teamwork assistant. Members publish presets and plugins
-directly to their team's catalog. Members and admins pin exact versions for
-personal use and team defaults, backed by immutable publication history.
+directly to their team's catalog, which the console calls **Presets and
+plugins**. A member adds an item to their own DSH and follows its latest
+version, pins one, or removes it; an admin recommends an item to the whole team
+at one version. Immutable publication history backs both.
 
 ## Ownership and provisioning
 
 The community server owns authorization, submissions, publication history and
-private packages. The console provides publication, selection and history pages.
+private packages. The console's Presets and plugins page (`apps/web/src/pages/team/library.tsx`) lists, adds, publishes and recommends; administrators also edit the team's own items there and open the version history from it.
 The DSH plugin owns local inspection, package preparation, authenticated
 package download and host-approved assistant tools. Closed editions reuse
 these features through their merged community server.
@@ -87,12 +89,22 @@ version and same-team references. The catalog change, immutable revision and
 package publication commit together. New publications are selected for their author in the publication transaction. Member presets use a team model or inherit the session model. Owners and team admins can archive a config, which
 removes it from the catalog and preserves selections that already refer to it. An active owner can publish again under the same name to reactivate the original asset. Removing a member archives their assets and clears their personal selections.
 
-Each member can pin a version. A team administrator can separately pin a team
-default and give it a display name. Personal pins win over the default.
-Members can opt out of the default independently of their pin. The config
-snapshot applies these choices at read time, so new members get defaults too.
-A revision check protects concurrent edits to the team default and its
-history records the actor, time, name and version of each change.
+A member's choice is one `asset_selections` row in one of three modes:
+`latest` follows the item's current version, `pinned` keeps one version and
+`removed` takes it off their DSH. With no row, the team's recommendation
+applies: a member asset an administrator recommended (the row with an empty
+user ID, which pins a version and may give a display name), or a team-owned
+item, which is on every member's DSH. A team-owned item takes only `removed`
+and back, and the team assistant takes neither, since it is how a member
+reaches Teamwork from DSH. Adding an item follows its latest version, and a
+new publication writes a `latest` row for its author in the same transaction,
+so authors see each version they publish. A recommendation stays at its
+version until an administrator moves it, which is the one review left after
+submissions were removed. The config snapshot applies these choices at read
+time, so new members get recommendations too. `GET /asset-choices` also
+answers how many members each item reaches. A revision check protects
+concurrent edits to a recommendation, and its history records the actor,
+time, name and version of each change.
 
 Legacy team configurations remain in the sync snapshot. Existing submissions
 remain readable by their author or the team administrator. Pending and
@@ -251,8 +263,8 @@ it. The plugin also validates synced current and pinned historical data.
 | --- | --- |
 | `GET /submissions`, `GET /submissions/{id}` | Authorized legacy history |
 | `POST /configs`, `PATCH /configs/{id}` | Validated publication and version-checked updates |
-| `GET /asset-choices`, `PUT /asset-choices/{id}` | Read selections and manage personal pins and opt-outs |
-| `PUT /asset-defaults/{id}` | Set, rename, roll back or withdraw a team default |
+| `GET /asset-choices`, `PUT /asset-choices/{id}` | Read choices, recommendations and reach; follow latest, pin, remove, or return to the recommendation |
+| `PUT /asset-defaults/{id}` | Recommend at a version, rename, roll back or withdraw a recommendation |
 | `POST /packages` | Bounded private upload |
 | `GET /packages/{id}`, `GET /packages/{id}/download` | Authorized metadata and immutable bytes |
 | `GET /history` | Filtered immutable publication history |

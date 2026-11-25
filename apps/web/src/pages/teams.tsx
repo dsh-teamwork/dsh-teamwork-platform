@@ -7,7 +7,7 @@
  * dialog filled in.
  */
 
-import { ArrowRight, BookOpen, ChartColumn, Cpu, House, LayoutDashboard, LogIn, Plus, Users } from 'lucide-react';
+import { ArrowRight, ChartColumn, Cpu, House, LayoutDashboard, Layers, LogIn, Plus, Users } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
@@ -136,7 +136,7 @@ function TeamCard({ team }: { team: TeamSummary }) {
         ] as const)
       : ([
           { path: '/home', key: 'home', icon: House },
-          { path: '/resources', key: 'resources', icon: BookOpen },
+          { path: '/presets', key: 'library', icon: Layers },
           { path: '/my-usage', key: 'myUsage', icon: ChartColumn },
         ] as const);
   return (

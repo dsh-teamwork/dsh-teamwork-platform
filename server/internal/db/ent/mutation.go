@@ -2826,7 +2826,7 @@ type AssetSelectionMutation struct {
 	user_id       *string
 	version       *int
 	addversion    *int
-	disabled      *bool
+	mode          *assetselection.Mode
 	name          *string
 	history       *[]json.RawMessage
 	appendhistory []json.RawMessage
@@ -3178,40 +3178,40 @@ func (m *AssetSelectionMutation) ResetVersion() {
 	m.addversion = nil
 }
 
-// SetDisabled sets the "disabled" field.
-func (m *AssetSelectionMutation) SetDisabled(b bool) {
-	m.disabled = &b
+// SetMode sets the "mode" field.
+func (m *AssetSelectionMutation) SetMode(a assetselection.Mode) {
+	m.mode = &a
 }
 
-// Disabled returns the value of the "disabled" field in the mutation.
-func (m *AssetSelectionMutation) Disabled() (r bool, exists bool) {
-	v := m.disabled
+// Mode returns the value of the "mode" field in the mutation.
+func (m *AssetSelectionMutation) Mode() (r assetselection.Mode, exists bool) {
+	v := m.mode
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldDisabled returns the old "disabled" field's value of the AssetSelection entity.
+// OldMode returns the old "mode" field's value of the AssetSelection entity.
 // If the AssetSelection object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AssetSelectionMutation) OldDisabled(ctx context.Context) (v bool, err error) {
+func (m *AssetSelectionMutation) OldMode(ctx context.Context) (v assetselection.Mode, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDisabled is only allowed on UpdateOne operations")
+		return v, errors.New("OldMode is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDisabled requires an ID field in the mutation")
+		return v, errors.New("OldMode requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDisabled: %w", err)
+		return v, fmt.Errorf("querying old value for OldMode: %w", err)
 	}
-	return oldValue.Disabled, nil
+	return oldValue.Mode, nil
 }
 
-// ResetDisabled resets all changes to the "disabled" field.
-func (m *AssetSelectionMutation) ResetDisabled() {
-	m.disabled = nil
+// ResetMode resets all changes to the "mode" field.
+func (m *AssetSelectionMutation) ResetMode() {
+	m.mode = nil
 }
 
 // SetName sets the "name" field.
@@ -3424,8 +3424,8 @@ func (m *AssetSelectionMutation) Fields() []string {
 	if m.version != nil {
 		fields = append(fields, assetselection.FieldVersion)
 	}
-	if m.disabled != nil {
-		fields = append(fields, assetselection.FieldDisabled)
+	if m.mode != nil {
+		fields = append(fields, assetselection.FieldMode)
 	}
 	if m.name != nil {
 		fields = append(fields, assetselection.FieldName)
@@ -3456,8 +3456,8 @@ func (m *AssetSelectionMutation) Field(name string) (ent.Value, bool) {
 		return m.UserID()
 	case assetselection.FieldVersion:
 		return m.Version()
-	case assetselection.FieldDisabled:
-		return m.Disabled()
+	case assetselection.FieldMode:
+		return m.Mode()
 	case assetselection.FieldName:
 		return m.Name()
 	case assetselection.FieldHistory:
@@ -3485,8 +3485,8 @@ func (m *AssetSelectionMutation) OldField(ctx context.Context, name string) (ent
 		return m.OldUserID(ctx)
 	case assetselection.FieldVersion:
 		return m.OldVersion(ctx)
-	case assetselection.FieldDisabled:
-		return m.OldDisabled(ctx)
+	case assetselection.FieldMode:
+		return m.OldMode(ctx)
 	case assetselection.FieldName:
 		return m.OldName(ctx)
 	case assetselection.FieldHistory:
@@ -3544,12 +3544,12 @@ func (m *AssetSelectionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetVersion(v)
 		return nil
-	case assetselection.FieldDisabled:
-		v, ok := value.(bool)
+	case assetselection.FieldMode:
+		v, ok := value.(assetselection.Mode)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetDisabled(v)
+		m.SetMode(v)
 		return nil
 	case assetselection.FieldName:
 		v, ok := value.(string)
@@ -3675,8 +3675,8 @@ func (m *AssetSelectionMutation) ResetField(name string) error {
 	case assetselection.FieldVersion:
 		m.ResetVersion()
 		return nil
-	case assetselection.FieldDisabled:
-		m.ResetDisabled()
+	case assetselection.FieldMode:
+		m.ResetMode()
 		return nil
 	case assetselection.FieldName:
 		m.ResetName()

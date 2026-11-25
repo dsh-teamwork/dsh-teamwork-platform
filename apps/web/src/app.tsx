@@ -40,13 +40,10 @@ const KnowledgePage = lazy(() => import('@/pages/team/knowledge').then((m) => ({
 const TeamMyUsagePage = lazy(() => import('@/pages/team/my-usage').then((m) => ({ default: m.TeamMyUsagePage })));
 const TeamHomePage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamHomePage })));
 const TeamOverviewPage = lazy(() => import('@/pages/team/overview').then((m) => ({ default: m.TeamOverviewPage })));
-const TeamPluginsPage = lazy(() => import('@/pages/team/plugins').then((m) => ({ default: m.TeamPluginsPage })));
 const TeamHistoryPage = lazy(() => import('@/pages/team/history').then((m) => ({ default: m.TeamHistoryPage })));
-const TeamSharingPage = lazy(() => import('@/pages/team/sharing').then((m) => ({ default: m.TeamSharingPage })));
-const TeamResourcesPage = lazy(() => import('@/pages/team/resources').then((m) => ({ default: m.TeamResourcesPage })));
+const TeamLibraryPage = lazy(() => import('@/pages/team/library').then((m) => ({ default: m.TeamLibraryPage })));
 const AdminOnly = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.AdminOnly })));
 const TeamIndex = lazy(() => import('@/pages/team/layout').then((m) => ({ default: m.TeamIndex })));
-const TeamPresetsPage = lazy(() => import('@/pages/team/presets').then((m) => ({ default: m.TeamPresetsPage })));
 const TeamUsagePage = lazy(() => import('@/pages/team/usage').then((m) => ({ default: m.TeamUsagePage })));
 const MyDshPage = lazy(() => import('@/pages/team/my-dsh').then((m) => ({ default: m.MyDshPage })));
 const TeamBudgetsPage = lazy(() => import('@/pages/team/budgets').then((m) => ({ default: m.TeamBudgetsPage })));
@@ -124,7 +121,7 @@ export function mountWeb({ routes = [], teamPages = [], models, security }: WebE
     [
       { index: true, element: <TeamIndex /> },
       { path: 'home', element: <TeamHomePage /> },
-      { path: 'resources', element: <TeamResourcesPage /> },
+      { path: 'presets', element: <TeamLibraryPage /> },
       { path: 'my-usage', element: <TeamMyUsagePage /> },
       { path: 'my-dsh/:hostId/settings', element: <MyDshPage settings /> },
       { path: 'my-dsh/:hostId/tasks/:taskId?', element: <MyDshPage tasks /> },
@@ -142,9 +139,6 @@ export function mountWeb({ routes = [], teamPages = [], models, security }: WebE
     [
       { path: 'overview', element: <TeamOverviewPage /> },
       { path: 'models', element: <TeamModelsPage /> },
-      { path: 'presets', element: <TeamPresetsPage /> },
-      { path: 'plugins', element: <TeamPluginsPage /> },
-      { path: 'sharing', element: <TeamSharingPage /> },
       { path: 'history', element: <TeamHistoryPage /> },
       { path: 'members', element: <TeamMembersPage /> },
       { path: 'usage', element: <TeamUsagePage /> },

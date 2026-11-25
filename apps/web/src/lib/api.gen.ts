@@ -563,7 +563,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Read the caller's own selections, team defaults and retained archived assets */
+        /** Read the caller's own choices, the team's recommendations, how many members use each asset, and withdrawn assets the caller still sees */
         get: {
             parameters: {
                 query?: never;
@@ -606,7 +606,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Pin or remove a personal version and control whether the team default applies */
+        /**
+         * Choose how the caller uses a preset or plugin
+         * @description latest follows every new version, pinned keeps one, removed takes it off the caller's DSH, and default drops the caller's choice so the team's recommendation applies. A team's own preset or plugin takes only removed and default; the team assistant takes neither.
+         */
         put: {
             parameters: {
                 query?: never;
@@ -619,16 +622,11 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": {
-                        version?: number;
-                        disabled?: boolean;
-                        name?: string;
-                        revision?: number;
-                    };
+                    "application/json": components["schemas"]["PersonalChoice"];
                 };
             };
             responses: {
-                /** @description Selection saved */
+                /** @description Choice saved */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -656,7 +654,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Set, rename or withdraw a versioned team default as an administrator */
+        /** Recommend a member's asset to the team at one version, rename or withdraw it, as an administrator */
         put: {
             parameters: {
                 query?: never;
@@ -670,15 +668,15 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @description 0 withdraws the recommendation */
                         version?: number;
-                        disabled?: boolean;
                         name?: string;
                         revision?: number;
                     };
                 };
             };
             responses: {
-                /** @description Selection saved */
+                /** @description Recommendation saved */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -5488,19 +5486,28 @@ export interface components {
             providesTools?: string[];
             description?: string;
         };
-        AssetChoice: {
+        PersonalChoice: {
+            /** @enum {string} */
+            mode: "latest" | "pinned" | "removed" | "default";
+            /** @description The pinned version; only with pinned */
+            version?: number;
+        };
+        TeamDefault: {
             version: number;
-            disabled: boolean;
             name: string;
             revision: number;
             adoptedVersions?: number[];
         };
         AssetChoices: {
             personal: {
-                [key: string]: components["schemas"]["AssetChoice"];
+                [key: string]: components["schemas"]["PersonalChoice"];
             };
             defaults: {
-                [key: string]: components["schemas"]["AssetChoice"];
+                [key: string]: components["schemas"]["TeamDefault"];
+            };
+            /** @description Members each preset and plugin reaches, by configuration id */
+            users: {
+                [key: string]: number;
             };
             archived: components["schemas"]["Config"][];
         };

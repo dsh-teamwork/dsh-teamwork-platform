@@ -273,10 +273,6 @@ func init() {
 	assetselectionDescVersion := assetselectionFields[3].Descriptor()
 	// assetselection.DefaultVersion holds the default value on creation for the version field.
 	assetselection.DefaultVersion = assetselectionDescVersion.Default.(int)
-	// assetselectionDescDisabled is the schema descriptor for disabled field.
-	assetselectionDescDisabled := assetselectionFields[4].Descriptor()
-	// assetselection.DefaultDisabled holds the default value on creation for the disabled field.
-	assetselection.DefaultDisabled = assetselectionDescDisabled.Default.(bool)
 	// assetselectionDescName is the schema descriptor for name field.
 	assetselectionDescName := assetselectionFields[5].Descriptor()
 	// assetselection.DefaultName holds the default value on creation for the name field.

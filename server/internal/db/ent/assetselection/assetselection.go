@@ -3,6 +3,7 @@
 package assetselection
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -25,8 +26,8 @@ const (
 	FieldUserID = "user_id"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
-	// FieldDisabled holds the string denoting the disabled field in the database.
-	FieldDisabled = "disabled"
+	// FieldMode holds the string denoting the mode field in the database.
+	FieldMode = "mode"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldHistory holds the string denoting the history field in the database.
@@ -46,7 +47,7 @@ var Columns = []string{
 	FieldConfigID,
 	FieldUserID,
 	FieldVersion,
-	FieldDisabled,
+	FieldMode,
 	FieldName,
 	FieldHistory,
 	FieldRevision,
@@ -77,8 +78,6 @@ var (
 	UserIDValidator func(string) error
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion int
-	// DefaultDisabled holds the default value on creation for the "disabled" field.
-	DefaultDisabled bool
 	// DefaultName holds the default value on creation for the "name" field.
 	DefaultName string
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -90,6 +89,33 @@ var (
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(string) error
 )
+
+// Mode defines the type for the "mode" enum field.
+type Mode string
+
+// ModePinned is the default value of the Mode enum.
+const DefaultMode = ModePinned
+
+// Mode values.
+const (
+	ModeLatest  Mode = "latest"
+	ModePinned  Mode = "pinned"
+	ModeRemoved Mode = "removed"
+)
+
+func (m Mode) String() string {
+	return string(m)
+}
+
+// ModeValidator is a validator for the "mode" field enum values. It is called by the builders before save.
+func ModeValidator(m Mode) error {
+	switch m {
+	case ModeLatest, ModePinned, ModeRemoved:
+		return nil
+	default:
+		return fmt.Errorf("assetselection: invalid enum value for mode field: %q", m)
+	}
+}
 
 // OrderOption defines the ordering options for the AssetSelection queries.
 type OrderOption func(*sql.Selector)
@@ -129,9 +155,9 @@ func ByVersion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
-// ByDisabled orders the results by the disabled field.
-func ByDisabled(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDisabled, opts...).ToFunc()
+// ByMode orders the results by the mode field.
+func ByMode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMode, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
