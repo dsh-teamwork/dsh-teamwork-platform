@@ -1,5 +1,5 @@
 /**
- * Versions and backups (`/teams/{teamId}/history`): every publication of the
+ * Version history (`/teams/{teamId}/history`): every publication of the
  * team's resources as a timeline, newest first, filtered in one row (kind,
  * resource, author, time range). Each version opens to show what restoring it
  * would change, field by field (components/team/config-diff.tsx); an admin can

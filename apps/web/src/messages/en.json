@@ -650,7 +650,7 @@
         "none": "None",
         "package": "Package",
         "provides": "Tools it provides",
-        "usedBy": "Used by",
+        "usedBy": "Presets that use it",
         "unused": "No preset depends on it",
         "separator": ", ",
         "added": "added",
@@ -962,7 +962,7 @@
       "nameHint": "Leave empty to use the package name."
     },
     "history": {
-      "title": "Versions and backups",
+      "title": "Version history",
       "hint": "Every published version of the team's presets and plugins, newest first. Compare one with what is live, export it, or restore it as a new version.",
       "kind": "Kind",
       "allKinds": "All kinds",
