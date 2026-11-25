@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-20
+> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-25
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -186,7 +186,7 @@ running time ([ADR 0036](../adr/0036-edition-meters.md)), through
 | --- | --- |
 | `GET/PUT /model-rates/{configId}` | Read/edit revisioned reference rates; admins write |
 | `GET /usage` | Paginated user/config/time-filtered request history |
-| `GET /usage/stats` | Same authorization; a period of at most 92 days (30 by default): totals, every day in the caller's IANA zone, and each model's and meter's points, for My usage |
+| `GET /usage/stats` | Same authorization; a period of at most 92 days (30 by default): totals, every day in the caller's IANA zone, each model's and meter's points, and each member's (only the reader's when the read is one member's), for My usage and the admin's Usage dashboard |
 | `GET /usage/export` | Same authorization/filtering, formula-safe CSV, maximum 10,000 rows; excess fails without partial output |
 | `POST /usage/{requestId}/resolve` | Admin's reasoned estimate or bound-violation review |
 | `GET/PUT /budgets` | Applicable policies/current windows; admin revision-checked writes |

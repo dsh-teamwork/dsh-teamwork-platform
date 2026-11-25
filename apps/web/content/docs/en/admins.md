@@ -136,8 +136,10 @@ service's hosted models. Calls to any other provider of your own are refused
 while a budget is on. Budgets count **points**, the team's own measure of
 cost: CNY 1 is 1,000 points at the reference rates. With your own provider key,
 the provider still bills you directly. Where the server sends email, a budget
-can also warn admins or the member as it nears its cap. **Usage** lists every
-call by member and model and exports it as CSV.
+can also warn admins or the member as it nears its cap. **Usage** opens on the
+period at a glance: the team budget used and left, the totals, each day's points,
+and who and which models spent them, each member against their own limit. Below it
+lists every call by member and model and exports it as CSV.
 
 ## 6. Review what members share
 

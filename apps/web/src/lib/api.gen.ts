@@ -2020,7 +2020,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** A period's usage totals, days and models; a member reads their own, an admin the team's or one member's */
+        /** A period's usage totals, days, models and members; a member reads their own, an admin the team's or one member's */
         get: {
             parameters: {
                 query?: {
@@ -5233,6 +5233,16 @@ export interface components {
                     [key: string]: string;
                 };
                 calls: number;
+                points: string;
+                input: number;
+                output: number;
+            }[];
+            /** @description What each member spent, most points first; only the reader when the read is one member's */
+            members: {
+                userId: string;
+                /** @description Model calls; edition meters are no calls */
+                calls: number;
+                /** @description Points spent: priced model calls and edition meters */
                 points: string;
                 input: number;
                 output: number;

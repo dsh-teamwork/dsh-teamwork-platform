@@ -13,7 +13,8 @@ import (
 const MaxStatsSpan = 92 * 24 * time.Hour
 
 // Stats is a period's usage at a glance, for "My usage" and an admin's view of
-// the team or one member: its totals, each day's, and each model's and meter's.
+// the team or one member: its totals, each day's, each model's and meter's, and
+// each member's (only the reader, when the read is scoped to one member).
 type Stats struct {
 	Since    string      `json:"since"`
 	Until    string      `json:"until"`
@@ -21,6 +22,17 @@ type Stats struct {
 	Totals   StatsTotals `json:"totals"`
 	Days     []StatsDay  `json:"days"`
 	Sources  []StatsRow  `json:"sources"`
+	Members  []StatsUser `json:"members"`
+}
+
+// StatsUser is what one member spent in the period: model calls and their
+// tokens, and points from calls and meters alike.
+type StatsUser struct {
+	UserID string `json:"userId"`
+	Calls  int    `json:"calls"`
+	Points string `json:"points"`
+	Input  int64  `json:"input"`
+	Output int64  `json:"output"`
 }
 
 // StatsTotals counts model calls; points also sum what edition meters spent,
@@ -72,14 +84,14 @@ type tally struct {
 // The caller bounds the span (MaxStatsSpan) and scopes f to who may see it.
 func (s *Service) Stats(ctx context.Context, f Filter, loc *time.Location) (Stats, error) {
 	rows, err := s.query(f).Select(
-		usagerequest.FieldCreatedAt, usagerequest.FieldConfigID, usagerequest.FieldModel, usagerequest.FieldMeter,
+		usagerequest.FieldCreatedAt, usagerequest.FieldUserID, usagerequest.FieldConfigID, usagerequest.FieldModel, usagerequest.FieldMeter,
 		usagerequest.FieldState, usagerequest.FieldPointUnits, usagerequest.FieldInputTokens, usagerequest.FieldCacheReadTokens,
 		usagerequest.FieldCacheWriteTokens, usagerequest.FieldOutputTokens, usagerequest.FieldReasoningTokens,
 	).All(ctx)
 	if err != nil {
 		return Stats{}, err
 	}
-	out := Stats{Since: f.Since.UTC().Format(time.RFC3339Nano), Until: f.Until.UTC().Format(time.RFC3339Nano), Timezone: loc.String(), Days: []StatsDay{}, Sources: []StatsRow{}}
+	out := Stats{Since: f.Since.UTC().Format(time.RFC3339Nano), Until: f.Until.UTC().Format(time.RFC3339Nano), Timezone: loc.String(), Days: []StatsDay{}, Sources: []StatsRow{}, Members: []StatsUser{}}
 
 	// Every day of the period, so a chart has no gaps.
 	type day struct {
@@ -95,6 +107,7 @@ func (s *Service) Stats(ctx context.Context, f Filter, loc *time.Location) (Stat
 	}
 
 	sources := map[string]*tally{}
+	users := map[string]*tally{}
 	var units int64
 	add := func(p *int64) int64 {
 		if p == nil {
@@ -116,9 +129,15 @@ func (s *Service) Stats(ctx context.Context, f Filter, loc *time.Location) (Stat
 			}
 			sources[kind+":"+key] = src
 		}
+		user := users[r.UserID]
+		if user == nil {
+			user = &tally{key: r.UserID}
+			users[r.UserID] = user
+		}
 		u := add(r.PointUnits)
 		units += u
 		src.units += u
+		user.units += u
 		if d != nil {
 			d.units += u
 		}
@@ -128,6 +147,7 @@ func (s *Service) Stats(ctx context.Context, f Filter, loc *time.Location) (Stat
 		}
 		out.Totals.Calls++
 		src.calls++
+		user.calls++
 		if d != nil {
 			d.calls++
 		}
@@ -141,6 +161,8 @@ func (s *Service) Stats(ctx context.Context, f Filter, loc *time.Location) (Stat
 		out.Totals.Reasoning += add(r.ReasoningTokens)
 		src.input += add(r.InputTokens)
 		src.output += add(r.OutputTokens)
+		user.input += add(r.InputTokens)
+		user.output += add(r.OutputTokens)
 	}
 	out.Totals.Points = FormatPoints(units)
 	for _, key := range order {
@@ -163,9 +185,24 @@ func (s *Service) Stats(ctx context.Context, f Filter, loc *time.Location) (Stat
 			sources["model:"+c.ID].name = c.Name
 		}
 	}
-	list := make([]*tally, 0, len(sources))
-	for _, src := range sources {
-		list = append(list, src)
+	for _, user := range ranked(users) {
+		out.Members = append(out.Members, StatsUser{UserID: user.key, Calls: user.calls, Points: FormatPoints(user.units), Input: user.input, Output: user.output})
+	}
+	for _, src := range ranked(sources) {
+		labels := map[string]string{}
+		if m, ok := s.Meters[src.key]; ok && src.kind == "meter" {
+			labels = m.meter.Labels
+		}
+		out.Sources = append(out.Sources, StatsRow{Kind: src.kind, Key: src.key, Name: src.name, Labels: labels, Calls: src.calls, Points: FormatPoints(src.units), Input: src.input, Output: src.output})
+	}
+	return out, nil
+}
+
+// ranked orders tallies most points first, then most calls, then by kind and key.
+func ranked(m map[string]*tally) []*tally {
+	list := make([]*tally, 0, len(m))
+	for _, t := range m {
+		list = append(list, t)
 	}
 	sort.Slice(list, func(i, j int) bool {
 		if list[i].units != list[j].units {
@@ -176,12 +213,5 @@ func (s *Service) Stats(ctx context.Context, f Filter, loc *time.Location) (Stat
 		}
 		return list[i].kind+list[i].key < list[j].kind+list[j].key
 	})
-	for _, src := range list {
-		labels := map[string]string{}
-		if m, ok := s.Meters[src.key]; ok && src.kind == "meter" {
-			labels = m.meter.Labels
-		}
-		out.Sources = append(out.Sources, StatsRow{Kind: src.kind, Key: src.key, Name: src.name, Labels: labels, Calls: src.calls, Points: FormatPoints(src.units), Input: src.input, Output: src.output})
-	}
-	return out, nil
+	return list
 }

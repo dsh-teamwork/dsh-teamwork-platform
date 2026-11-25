@@ -1885,7 +1885,21 @@
     "accountingHint": "Cached tokens are included in input; reasoning is included in output. A dash means unpriced or unconfirmed, not zero consumption.",
     "count": "{count} calls",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "calls": "Calls",
+    "dashboard": {
+      "teamToday": "Team budget · today",
+      "teamMonth": "Team budget · this month",
+      "members": "By member",
+      "membersHint": "Who spent the period's points; for a member with their own limit, the bar is how much of it the open window has used.",
+      "models": "By model",
+      "modelsHint": "Which team models and meters the points went to.",
+      "pointsShare": "{points} points · {share}",
+      "calls": "{calls, plural, one {# call} other {# calls}}",
+      "tokens": "{input} in · {output} out",
+      "budget": "Own limit",
+      "budgetUsed": "{used} of {limit} limit used"
+    }
   },
   "budgets": {
     "remaining": "Available points",
