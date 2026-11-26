@@ -117,9 +117,7 @@
       "assets": "团队资产",
       "pricing": "版本与定价",
       "pluginRepo": "在 GitHub 查看 Teamwork 插件",
-      "docs": "文档",
-      "sharing": "提交历史",
-      "submissions": "我的提交历史"
+      "docs": "文档"
     },
     "shift": {
       "depth": "−5 m",
@@ -153,13 +151,12 @@
       "depth": "−50 m",
       "label": "协同 · 共享工作流",
       "title": "把好做法变成团队工作流",
-      "submitTitle": "成员上传资产",
-      "submitBody": "上传在 DSH 里验证过的「市场调研」预设。",
-      "reviewTitle": "管理员设为团队默认",
-      "reviewBody": "选择需要同步给团队的版本。",
-      "syncTitle": "成员同步各自使用的版本",
-      "syncBody": "成员获得团队默认版本，也可以自行选择其他版本。",
-      "alt": "分享与审批界面。市场调研预设拟在 v1 基础上新增标注信息来源、区分事实与推测的要求，等待管理员批准并发布。"
+      "shareTitle": "成员分享预设",
+      "shareBody": "把在 DSH 里验证过的「市场调研」预设分享给团队，在网页上发布，或让团队助理代劳。",
+      "recommendTitle": "管理员推荐给全队",
+      "recommendBody": "选定一个版本，进入每位成员的 DSH。作者再发新版，管理员看过改动后才更新推荐。",
+      "addTitle": "成员按需添加",
+      "addBody": "其他人一键添加，自动跟随最新版本，也可以固定某个版本，并选择装到哪几台 DSH。"
     },
     "govern": {
       "depth": "−200 m",
@@ -282,7 +279,7 @@
       "title": "一个人用 Agent 走得快，\n让全队与 Agent 共创，可以走得更远。"
     },
     "topology": {
-      "label": "成员从桌面、终端和手机接入，管理员在网页上管理团队。DSH Teamwork 同步经审批的工作流、管理预算和权限，并保留团队资源的版本。右侧分别展示模型提供商和云端 DSH。云端 DSH 目前向 Cloud 版的部分团队开放试用。",
+      "label": "成员从桌面、终端和手机接入，管理员在网页上管理团队。DSH Teamwork 同步团队分享的工作流、管理预算和权限，并保留团队资源的版本。右侧分别展示模型提供商和云端 DSH。云端 DSH 目前向 Cloud 版的部分团队开放试用。",
       "people": {
         "desktop": {
           "who": "林晓 · 成员",
@@ -298,7 +295,7 @@
         },
         "admin": {
           "who": "李明 · 管理员",
-          "where": "在网页上审批、管团队"
+          "where": "在网页上推荐、管团队"
         }
       },
       "providers": {
@@ -317,7 +314,7 @@
       },
       "features": {
         "everywhere": "桌面、网页、手机接入",
-        "collaborate": "提交、审核、全队同步",
+        "collaborate": "分享、推荐、全队同步",
         "govern": "管理预算、安全和权限",
         "assets": "版本和经验留在团队"
       }

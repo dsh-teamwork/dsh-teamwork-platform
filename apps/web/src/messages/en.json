@@ -117,9 +117,7 @@
       "assets": "Team assets",
       "pricing": "Editions and pricing",
       "pluginRepo": "Teamwork plugin on GitHub",
-      "docs": "Docs",
-      "sharing": "Submission history",
-      "submissions": "My submission history"
+      "docs": "Docs"
     },
     "shift": {
       "depth": "−5 m",
@@ -153,13 +151,12 @@
       "depth": "−50 m",
       "label": "Collaborate · shared workflows",
       "title": "Turn good practices into team workflows",
-      "submitTitle": "A member publishes an asset",
-      "submitBody": "Upload a market research preset you have tested in DSH.",
-      "reviewTitle": "An admin sets a team default",
-      "reviewBody": "Choose the version that should sync to the team.",
-      "syncTitle": "Members sync the versions they use",
-      "syncBody": "Members get the team default and can pin a different version for themselves.",
-      "alt": "The Sharing and review screen compares the market research preset at v1 with a proposed update that adds source citations and separates facts from assumptions."
+      "shareTitle": "A member shares a preset",
+      "shareBody": "Publish a market research preset you have tested in DSH, from the console or by asking the team assistant.",
+      "recommendTitle": "An admin recommends it",
+      "recommendBody": "Pick the version every member’s DSH gets. A later update waits until the admin moves the recommendation.",
+      "addTitle": "Members add what they use",
+      "addBody": "Anyone adds it in one click and follows its latest version, or keeps one version, on the DSHs they choose."
     },
     "govern": {
       "depth": "−200 m",
@@ -282,7 +279,7 @@
       "title": "Move faster with agents.\nBuild together and go further."
     },
     "topology": {
-      "label": "Members connect from the desktop, terminal, and phone, and the admin manages the team in the browser. DSH Teamwork syncs approved workflows, manages budgets and access, and keeps resource versions. On the right are model providers and a separate workspace, Cloud DSH, in trial for selected teams on the hosted edition.",
+      "label": "Members connect from the desktop, terminal, and phone, and the admin manages the team in the browser. DSH Teamwork syncs the workflows the team shares, manages budgets and access, and keeps resource versions. On the right are model providers and a separate workspace, Cloud DSH, in trial for selected teams on the hosted edition.",
       "people": {
         "desktop": {
           "who": "Maya · member",
@@ -317,7 +314,7 @@
       },
       "features": {
         "everywhere": "Desktop, web, and phone",
-        "collaborate": "Submit, review, and sync",
+        "collaborate": "Share, recommend, and sync",
         "govern": "Budgets, safety & access",
         "assets": "Keep team know-how"
       }

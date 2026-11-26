@@ -276,10 +276,10 @@ a person or a character, which at this size reads as clip art.
   the lower right scrolls to the team overview at −5 m. The overview asks
   how the whole team can make the most of DSH and introduces access,
   collaboration, governance, and team assets in page order.
-  *Collaborate* shows a market research preset moving from submission to
-  review, publication, and team sync. *Team assets* shows how teams can keep
+  *Collaborate* shows a market research preset moving from a member's share
+  to an admin's recommendation and to the members who add it. *Team assets* shows how teams can keep
   workflows from marketing, operations, and research. Its sample history lists
-  each resource's type, version, approval, reviewer, and time, newest first.
+  each resource's type, version, publisher, and time, newest first.
   In the first chapter, the team diagram reads
   left to right (`apps/web/src/public/topology.tsx`): the team's people,
   each with an icon for where they work (DSH Desktop, a terminal, the phone,
@@ -299,8 +299,7 @@ a person or a character, which at this size reads as clip art.
   *Everywhere* presents desktop and terminal, browser, and phone as equal
   columns that stack on narrow screens. Each pairs a short scenario with a
   screenshot. An edition can provide copy for its own workspace.
-  *Collaborate* shows the market research preset's proposed changes in the
-  review screen. The hosted page shows the community workspace alongside
+  *Collaborate* lists its three steps in words, with no screen. The hosted page shows the community workspace alongside
   its own cloud workspace. *Govern* pairs the usage page with three
   questions managers ask about budgets, security, and access. Each screen sits in a plain window or phone frame
   drawn from tokens. They are captures of the real interfaces with a demo team,
