@@ -220,10 +220,6 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
   const start = signedIn ? { href: '/teams', label: t('openConsole') } : { href: '/sign-in?next=%2Fteams', label: t('createTeam') };
   // The page's sections, then the documentation.
   const nav = [
-    ['#everywhere', 'nav.everywhere'],
-    ['#collaborate', 'nav.collaborate'],
-    ['#govern', 'nav.govern'],
-    ['#assets', 'nav.assets'],
     ['#self-host', 'nav.pricing'],
     ['/docs', 'nav.docs'],
   ] as const;
@@ -243,14 +239,15 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
           <img src="/logo.svg" alt="" width={30} height={30} className="max-[22.5rem]:size-7" />
           {tc('appName')}
         </a>
-        <nav aria-label={t('nav.label')} className="hidden gap-6 text-sm text-muted-foreground lg:flex">
-          {nav.map(([href, key]) => (
-            <a key={href} href={href} className="hover:text-foreground">
-              {t(key)}
-            </a>
-          ))}
-        </nav>
+        {/* Everything else sits at the right: the two places a visitor goes besides the story, then the controls. */}
         <div className="ml-auto flex items-center min-[22.5rem]:gap-2">
+          <nav aria-label={t('nav.label')} className="mr-2 hidden gap-6 text-sm text-muted-foreground md:flex">
+            {nav.map(([href, key]) => (
+              <a key={href} href={href} className="hover:text-foreground">
+                {t(key)}
+              </a>
+            ))}
+          </nav>
           <LocaleMenu locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} placement="header" />
           <ThemeButton label={tc('theme.toggle')} />
           <Button asChild variant="ghost" size="icon" className="shrink-0 text-muted-foreground">
@@ -262,7 +259,7 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
             <a href={start.href}>{start.label}</a>
           </Button>
           {/* Narrow screens: the sections behind a native disclosure, since this page runs no React. */}
-          <details data-menu="" className="group relative lg:hidden">
+          <details data-menu="" className="group relative md:hidden">
             <summary className="flex size-9 list-none items-center justify-center rounded-md border border-input [&::-webkit-details-marker]:hidden" aria-label={t('nav.menu')}>
               <span aria-hidden="true" className="flex w-4 flex-col gap-1">
                 <span className="h-px bg-foreground" />
