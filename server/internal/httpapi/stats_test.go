@@ -13,7 +13,9 @@ import (
 
 // Usage stats are scoped as the usage list is: a member reads their own, an
 // admin the team's or one member's. Days are every calendar day of the period
-// in the asked time zone; an edition's meter adds points but no calls.
+// in the asked time zone; an edition's meter adds points but no calls. Members
+// rank who spent the period, most points first: the team for its admin, the
+// reader alone for a member.
 func TestUsageStatsAreScopedAndDrawnInTheCallersZone(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		ctx := context.Background()
@@ -58,8 +60,18 @@ func TestUsageStatsAreScopedAndDrawnInTheCallersZone(t *testing.T) {
 		if got := must(t, member.get(path+"/usage/stats?userId=admin"), 200)["totals"].(map[string]any); got["calls"] != float64(2) {
 			t.Fatalf("a member asking for someone else read %+v", got)
 		}
-		if got := must(t, admin.get(path+"/usage/stats"), 200)["totals"].(map[string]any); got["calls"] != float64(3) || got["points"] != "35.6" {
+		if members := mine["members"].([]any); len(members) != 1 || members[0].(map[string]any)["userId"] != memberID {
+			t.Fatalf("a member's members: %+v", members)
+		}
+		team := must(t, admin.get(path+"/usage/stats"), 200)
+		if got := team["totals"].(map[string]any); got["calls"] != float64(3) || got["points"] != "35.6" {
 			t.Fatalf("the team's totals: %+v", got)
+		}
+		members := team["members"].([]any)
+		first, second := members[0].(map[string]any), members[1].(map[string]any)
+		if len(members) != 2 || first["userId"] != memberID || first["calls"] != float64(2) || first["points"] != "25.4" || first["input"] != float64(4000) ||
+			second["calls"] != float64(1) || second["points"] != "10.2" {
+			t.Fatalf("the team's members: %+v", members)
 		}
 		if got := must(t, admin.get(path+"/usage/stats?userId="+memberID), 200)["totals"].(map[string]any); got["calls"] != float64(2) {
 			t.Fatalf("one member's totals for the admin: %+v", got)

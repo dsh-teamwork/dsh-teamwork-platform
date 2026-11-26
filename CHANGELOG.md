@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-25 — The admin's Usage page opens on a dashboard
+
+- **What:** Usage starts with the period at a glance for the period and member chosen: the team budget's open window (used, left, when it resets), the totals, each day's points, and two rankings, by member (each against their own points limit) and by model. `GET /api/teams/{teamId}/usage/stats` answers `members`, what each member spent, most points first; a member's own read lists only them. The call list follows, unchanged.
+- **Why:** The admin's question is "who and what spent the budget this month", which a flat call list could only answer by exporting it.
+- **Breaking:** None: `members` is a new field.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/pages/team/usage.tsx`, `server/internal/usage/stats.go`, `docs/tech/usage-budgets.md`.
+
 ## 2026-11-25 — Read instance activity by UTC date
 
 - **What:** `GET /api/admin/activity` reports aggregate account, team, and model-call activity. Editions can read the same report through `Host.Activity`.

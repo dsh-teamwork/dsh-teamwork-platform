@@ -943,7 +943,7 @@ paths:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
     get:
-      summary: A period's usage totals, days and models; a member reads their own, an admin the team's or one member's
+      summary: A period's usage totals, days, models and members; a member reads their own, an admin the team's or one member's
       parameters:
         - { name: userId, in: query, schema: { type: string } }
         - { name: configId, in: query, schema: { type: string } }
@@ -2460,7 +2460,7 @@ components:
         budget: { $ref: '#/components/schemas/QuotaSummary' }
     UsageStats:
       type: object
-      required: [since, until, timezone, totals, days, sources]
+      required: [since, until, timezone, totals, days, sources, members]
       properties:
         since: { type: string, format: date-time }
         until: { type: string, format: date-time }
@@ -2500,6 +2500,18 @@ components:
               labels: { type: object, additionalProperties: { type: string }, description: "A meter's name in each language its edition registered; empty for a model" }
               calls: { type: integer, minimum: 0 }
               points: { type: string }
+              input: { type: integer, minimum: 0 }
+              output: { type: integer, minimum: 0 }
+        members:
+          type: array
+          description: "What each member spent, most points first; only the reader when the read is one member's"
+          items:
+            type: object
+            required: [userId, calls, points, input, output]
+            properties:
+              userId: { type: string }
+              calls: { type: integer, minimum: 0, description: Model calls; edition meters are no calls }
+              points: { type: string, description: "Points spent: priced model calls and edition meters" }
               input: { type: integer, minimum: 0 }
               output: { type: integer, minimum: 0 }
     QuotaSummary:

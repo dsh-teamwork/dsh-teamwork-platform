@@ -1930,7 +1930,21 @@
     "accountingHint": "缓存 Token 已包含在输入中，推理 Token 已包含在输出中。横线表示未定价或尚未确认，不代表零消耗。",
     "count": "共 {count} 次调用",
     "previous": "上一页",
-    "next": "下一页"
+    "next": "下一页",
+    "calls": "调用记录",
+    "dashboard": {
+      "teamToday": "团队预算 · 今日",
+      "teamMonth": "团队预算 · 本月",
+      "members": "按成员",
+      "membersHint": "谁花了这段时间的积分；设了个人额度的成员，进度条是本期额度的使用情况。",
+      "models": "按模型",
+      "modelsHint": "积分花在了哪些团队模型和计量项上。",
+      "pointsShare": "{points} 积分 · {share}",
+      "calls": "{calls} 次调用",
+      "tokens": "输入 {input} · 输出 {output}",
+      "budget": "个人额度",
+      "budgetUsed": "额度已用 {used} / {limit}"
+    }
   },
   "budgets": {
     "remaining": "可用积分",

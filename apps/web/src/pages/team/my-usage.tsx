@@ -178,7 +178,7 @@ function Limits({ budgets }: { budgets: Budgets }) {
 }
 
 /** The period's calls, points and tokens. */
-function Totals({ stats }: { stats: Stats }) {
+export function Totals({ stats }: { stats: Stats }) {
   const t = useTranslations('team.myUsage');
   const format = useFormatter();
   const locale = useLocale();
@@ -206,7 +206,7 @@ function Totals({ stats }: { stats: Stats }) {
  * Each day's points as columns from one baseline: one series, so no legend, in the neutral ink (navy is the team's).
  * Hovering or focusing a day reads it out above the plot; with none, the readout is the period's total.
  */
-function Daily({ stats }: { stats: Stats }) {
+export function Daily({ stats }: { stats: Stats }) {
   const t = useTranslations('team.myUsage');
   const format = useFormatter();
   const locale = useLocale();
