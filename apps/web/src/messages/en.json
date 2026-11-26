@@ -136,7 +136,7 @@
       },
       "console": {
         "title": "Web console",
-        "alt": "The team console's overview: a submission waiting for review, calls, points and budget",
+        "alt": "The team console's overview: nothing waiting, calls, points and budget, the team's presets and plugins, and a connected DSH",
         "description": "Manage the team in the browser: models, presets, members and usage."
       },
       "phone": {
