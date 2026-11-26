@@ -16,6 +16,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetexclusion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
@@ -66,6 +67,7 @@ const (
 	TypeArtifactFile         = "ArtifactFile"
 	TypeArtifactMember       = "ArtifactMember"
 	TypeArtifactVersion      = "ArtifactVersion"
+	TypeAssetExclusion       = "AssetExclusion"
 	TypeAssetSelection       = "AssetSelection"
 	TypeBudgetEvent          = "BudgetEvent"
 	TypeBudgetGate           = "BudgetGate"
@@ -2813,6 +2815,554 @@ func (m *ArtifactVersionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown ArtifactVersion edge %s", name)
 }
 
+// AssetExclusionMutation represents an operation that mutates the AssetExclusion nodes in the graph.
+type AssetExclusionMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	team_id       *string
+	user_id       *string
+	config_id     *string
+	host_id       *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*AssetExclusion, error)
+	predicates    []predicate.AssetExclusion
+}
+
+var _ ent.Mutation = (*AssetExclusionMutation)(nil)
+
+// assetexclusionOption allows management of the mutation configuration using functional options.
+type assetexclusionOption func(*AssetExclusionMutation)
+
+// newAssetExclusionMutation creates new mutation for the AssetExclusion entity.
+func newAssetExclusionMutation(c config, op Op, opts ...assetexclusionOption) *AssetExclusionMutation {
+	m := &AssetExclusionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAssetExclusion,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAssetExclusionID sets the ID field of the mutation.
+func withAssetExclusionID(id string) assetexclusionOption {
+	return func(m *AssetExclusionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AssetExclusion
+		)
+		m.oldValue = func(ctx context.Context) (*AssetExclusion, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AssetExclusion.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAssetExclusion sets the old AssetExclusion of the mutation.
+func withAssetExclusion(node *AssetExclusion) assetexclusionOption {
+	return func(m *AssetExclusionMutation) {
+		m.oldValue = func(context.Context) (*AssetExclusion, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AssetExclusionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AssetExclusionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of AssetExclusion entities.
+func (m *AssetExclusionMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AssetExclusionMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AssetExclusionMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AssetExclusion.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AssetExclusionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AssetExclusionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the AssetExclusion entity.
+// If the AssetExclusion object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetExclusionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AssetExclusionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *AssetExclusionMutation) SetTeamID(s string) {
+	m.team_id = &s
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *AssetExclusionMutation) TeamID() (r string, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the AssetExclusion entity.
+// If the AssetExclusion object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetExclusionMutation) OldTeamID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *AssetExclusionMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *AssetExclusionMutation) SetUserID(s string) {
+	m.user_id = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *AssetExclusionMutation) UserID() (r string, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the AssetExclusion entity.
+// If the AssetExclusion object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetExclusionMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *AssetExclusionMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetConfigID sets the "config_id" field.
+func (m *AssetExclusionMutation) SetConfigID(s string) {
+	m.config_id = &s
+}
+
+// ConfigID returns the value of the "config_id" field in the mutation.
+func (m *AssetExclusionMutation) ConfigID() (r string, exists bool) {
+	v := m.config_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfigID returns the old "config_id" field's value of the AssetExclusion entity.
+// If the AssetExclusion object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetExclusionMutation) OldConfigID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfigID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfigID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfigID: %w", err)
+	}
+	return oldValue.ConfigID, nil
+}
+
+// ResetConfigID resets all changes to the "config_id" field.
+func (m *AssetExclusionMutation) ResetConfigID() {
+	m.config_id = nil
+}
+
+// SetHostID sets the "host_id" field.
+func (m *AssetExclusionMutation) SetHostID(s string) {
+	m.host_id = &s
+}
+
+// HostID returns the value of the "host_id" field in the mutation.
+func (m *AssetExclusionMutation) HostID() (r string, exists bool) {
+	v := m.host_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostID returns the old "host_id" field's value of the AssetExclusion entity.
+// If the AssetExclusion object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AssetExclusionMutation) OldHostID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostID: %w", err)
+	}
+	return oldValue.HostID, nil
+}
+
+// ResetHostID resets all changes to the "host_id" field.
+func (m *AssetExclusionMutation) ResetHostID() {
+	m.host_id = nil
+}
+
+// Where appends a list predicates to the AssetExclusionMutation builder.
+func (m *AssetExclusionMutation) Where(ps ...predicate.AssetExclusion) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AssetExclusionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AssetExclusionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AssetExclusion, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AssetExclusionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AssetExclusionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AssetExclusion).
+func (m *AssetExclusionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AssetExclusionMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, assetexclusion.FieldCreatedAt)
+	}
+	if m.team_id != nil {
+		fields = append(fields, assetexclusion.FieldTeamID)
+	}
+	if m.user_id != nil {
+		fields = append(fields, assetexclusion.FieldUserID)
+	}
+	if m.config_id != nil {
+		fields = append(fields, assetexclusion.FieldConfigID)
+	}
+	if m.host_id != nil {
+		fields = append(fields, assetexclusion.FieldHostID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AssetExclusionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case assetexclusion.FieldCreatedAt:
+		return m.CreatedAt()
+	case assetexclusion.FieldTeamID:
+		return m.TeamID()
+	case assetexclusion.FieldUserID:
+		return m.UserID()
+	case assetexclusion.FieldConfigID:
+		return m.ConfigID()
+	case assetexclusion.FieldHostID:
+		return m.HostID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AssetExclusionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case assetexclusion.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case assetexclusion.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case assetexclusion.FieldUserID:
+		return m.OldUserID(ctx)
+	case assetexclusion.FieldConfigID:
+		return m.OldConfigID(ctx)
+	case assetexclusion.FieldHostID:
+		return m.OldHostID(ctx)
+	}
+	return nil, fmt.Errorf("unknown AssetExclusion field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AssetExclusionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case assetexclusion.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case assetexclusion.FieldTeamID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case assetexclusion.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case assetexclusion.FieldConfigID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfigID(v)
+		return nil
+	case assetexclusion.FieldHostID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AssetExclusion field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AssetExclusionMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AssetExclusionMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AssetExclusionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown AssetExclusion numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AssetExclusionMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AssetExclusionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AssetExclusionMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown AssetExclusion nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AssetExclusionMutation) ResetField(name string) error {
+	switch name {
+	case assetexclusion.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case assetexclusion.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case assetexclusion.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case assetexclusion.FieldConfigID:
+		m.ResetConfigID()
+		return nil
+	case assetexclusion.FieldHostID:
+		m.ResetHostID()
+		return nil
+	}
+	return fmt.Errorf("unknown AssetExclusion field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AssetExclusionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AssetExclusionMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AssetExclusionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AssetExclusionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AssetExclusionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AssetExclusionMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AssetExclusionMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown AssetExclusion unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AssetExclusionMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown AssetExclusion edge %s", name)
+}
+
 // AssetSelectionMutation represents an operation that mutates the AssetSelection nodes in the graph.
 type AssetSelectionMutation struct {
 	config
@@ -2826,7 +3376,7 @@ type AssetSelectionMutation struct {
 	user_id       *string
 	version       *int
 	addversion    *int
-	disabled      *bool
+	mode          *assetselection.Mode
 	name          *string
 	history       *[]json.RawMessage
 	appendhistory []json.RawMessage
@@ -3178,40 +3728,40 @@ func (m *AssetSelectionMutation) ResetVersion() {
 	m.addversion = nil
 }
 
-// SetDisabled sets the "disabled" field.
-func (m *AssetSelectionMutation) SetDisabled(b bool) {
-	m.disabled = &b
+// SetMode sets the "mode" field.
+func (m *AssetSelectionMutation) SetMode(a assetselection.Mode) {
+	m.mode = &a
 }
 
-// Disabled returns the value of the "disabled" field in the mutation.
-func (m *AssetSelectionMutation) Disabled() (r bool, exists bool) {
-	v := m.disabled
+// Mode returns the value of the "mode" field in the mutation.
+func (m *AssetSelectionMutation) Mode() (r assetselection.Mode, exists bool) {
+	v := m.mode
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldDisabled returns the old "disabled" field's value of the AssetSelection entity.
+// OldMode returns the old "mode" field's value of the AssetSelection entity.
 // If the AssetSelection object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AssetSelectionMutation) OldDisabled(ctx context.Context) (v bool, err error) {
+func (m *AssetSelectionMutation) OldMode(ctx context.Context) (v assetselection.Mode, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDisabled is only allowed on UpdateOne operations")
+		return v, errors.New("OldMode is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDisabled requires an ID field in the mutation")
+		return v, errors.New("OldMode requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDisabled: %w", err)
+		return v, fmt.Errorf("querying old value for OldMode: %w", err)
 	}
-	return oldValue.Disabled, nil
+	return oldValue.Mode, nil
 }
 
-// ResetDisabled resets all changes to the "disabled" field.
-func (m *AssetSelectionMutation) ResetDisabled() {
-	m.disabled = nil
+// ResetMode resets all changes to the "mode" field.
+func (m *AssetSelectionMutation) ResetMode() {
+	m.mode = nil
 }
 
 // SetName sets the "name" field.
@@ -3424,8 +3974,8 @@ func (m *AssetSelectionMutation) Fields() []string {
 	if m.version != nil {
 		fields = append(fields, assetselection.FieldVersion)
 	}
-	if m.disabled != nil {
-		fields = append(fields, assetselection.FieldDisabled)
+	if m.mode != nil {
+		fields = append(fields, assetselection.FieldMode)
 	}
 	if m.name != nil {
 		fields = append(fields, assetselection.FieldName)
@@ -3456,8 +4006,8 @@ func (m *AssetSelectionMutation) Field(name string) (ent.Value, bool) {
 		return m.UserID()
 	case assetselection.FieldVersion:
 		return m.Version()
-	case assetselection.FieldDisabled:
-		return m.Disabled()
+	case assetselection.FieldMode:
+		return m.Mode()
 	case assetselection.FieldName:
 		return m.Name()
 	case assetselection.FieldHistory:
@@ -3485,8 +4035,8 @@ func (m *AssetSelectionMutation) OldField(ctx context.Context, name string) (ent
 		return m.OldUserID(ctx)
 	case assetselection.FieldVersion:
 		return m.OldVersion(ctx)
-	case assetselection.FieldDisabled:
-		return m.OldDisabled(ctx)
+	case assetselection.FieldMode:
+		return m.OldMode(ctx)
 	case assetselection.FieldName:
 		return m.OldName(ctx)
 	case assetselection.FieldHistory:
@@ -3544,12 +4094,12 @@ func (m *AssetSelectionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetVersion(v)
 		return nil
-	case assetselection.FieldDisabled:
-		v, ok := value.(bool)
+	case assetselection.FieldMode:
+		v, ok := value.(assetselection.Mode)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetDisabled(v)
+		m.SetMode(v)
 		return nil
 	case assetselection.FieldName:
 		v, ok := value.(string)
@@ -3675,8 +4225,8 @@ func (m *AssetSelectionMutation) ResetField(name string) error {
 	case assetselection.FieldVersion:
 		m.ResetVersion()
 		return nil
-	case assetselection.FieldDisabled:
-		m.ResetDisabled()
+	case assetselection.FieldMode:
+		m.ResetMode()
 		return nil
 	case assetselection.FieldName:
 		m.ResetName()

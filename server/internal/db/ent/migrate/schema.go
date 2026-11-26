@@ -119,6 +119,33 @@ var (
 			},
 		},
 	}
+	// AssetExclusionsColumns holds the columns for the "asset_exclusions" table.
+	AssetExclusionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "config_id", Type: field.TypeString, Size: 32},
+		{Name: "host_id", Type: field.TypeString, Size: 32},
+	}
+	// AssetExclusionsTable holds the schema information for the "asset_exclusions" table.
+	AssetExclusionsTable = &schema.Table{
+		Name:       "asset_exclusions",
+		Columns:    AssetExclusionsColumns,
+		PrimaryKey: []*schema.Column{AssetExclusionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "assetexclusion_team_id_user_id_config_id_host_id",
+				Unique:  true,
+				Columns: []*schema.Column{AssetExclusionsColumns[2], AssetExclusionsColumns[3], AssetExclusionsColumns[4], AssetExclusionsColumns[5]},
+			},
+			{
+				Name:    "assetexclusion_host_id",
+				Unique:  false,
+				Columns: []*schema.Column{AssetExclusionsColumns[5]},
+			},
+		},
+	}
 	// AssetSelectionsColumns holds the columns for the "asset_selections" table.
 	AssetSelectionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -128,7 +155,7 @@ var (
 		{Name: "config_id", Type: field.TypeString, Size: 32},
 		{Name: "user_id", Type: field.TypeString, Size: 32},
 		{Name: "version", Type: field.TypeInt, Default: 0},
-		{Name: "disabled", Type: field.TypeBool, Default: false},
+		{Name: "mode", Type: field.TypeEnum, Enums: []string{"latest", "pinned", "removed"}, Default: "pinned"},
 		{Name: "name", Type: field.TypeString, Size: 480, Default: ""},
 		{Name: "history", Type: field.TypeJSON, Nullable: true},
 		{Name: "revision", Type: field.TypeInt, Default: 0},
@@ -1119,6 +1146,7 @@ var (
 		ArtifactFilesTable,
 		ArtifactMembersTable,
 		ArtifactVersionsTable,
+		AssetExclusionsTable,
 		AssetSelectionsTable,
 		BudgetEventsTable,
 		BudgetGatesTable,
@@ -1170,6 +1198,10 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	ArtifactVersionsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	AssetExclusionsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

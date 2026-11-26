@@ -9,6 +9,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetexclusion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
@@ -240,6 +241,51 @@ func init() {
 			return nil
 		}
 	}()
+	assetexclusionMixin := schema.AssetExclusion{}.Mixin()
+	assetexclusionMixinFields0 := assetexclusionMixin[0].Fields()
+	_ = assetexclusionMixinFields0
+	assetexclusionFields := schema.AssetExclusion{}.Fields()
+	_ = assetexclusionFields
+	// assetexclusionDescCreatedAt is the schema descriptor for created_at field.
+	assetexclusionDescCreatedAt := assetexclusionMixinFields0[1].Descriptor()
+	// assetexclusion.DefaultCreatedAt holds the default value on creation for the created_at field.
+	assetexclusion.DefaultCreatedAt = assetexclusionDescCreatedAt.Default.(func() time.Time)
+	// assetexclusionDescTeamID is the schema descriptor for team_id field.
+	assetexclusionDescTeamID := assetexclusionFields[0].Descriptor()
+	// assetexclusion.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	assetexclusion.TeamIDValidator = assetexclusionDescTeamID.Validators[0].(func(string) error)
+	// assetexclusionDescUserID is the schema descriptor for user_id field.
+	assetexclusionDescUserID := assetexclusionFields[1].Descriptor()
+	// assetexclusion.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	assetexclusion.UserIDValidator = assetexclusionDescUserID.Validators[0].(func(string) error)
+	// assetexclusionDescConfigID is the schema descriptor for config_id field.
+	assetexclusionDescConfigID := assetexclusionFields[2].Descriptor()
+	// assetexclusion.ConfigIDValidator is a validator for the "config_id" field. It is called by the builders before save.
+	assetexclusion.ConfigIDValidator = assetexclusionDescConfigID.Validators[0].(func(string) error)
+	// assetexclusionDescHostID is the schema descriptor for host_id field.
+	assetexclusionDescHostID := assetexclusionFields[3].Descriptor()
+	// assetexclusion.HostIDValidator is a validator for the "host_id" field. It is called by the builders before save.
+	assetexclusion.HostIDValidator = assetexclusionDescHostID.Validators[0].(func(string) error)
+	// assetexclusionDescID is the schema descriptor for id field.
+	assetexclusionDescID := assetexclusionMixinFields0[0].Descriptor()
+	// assetexclusion.DefaultID holds the default value on creation for the id field.
+	assetexclusion.DefaultID = assetexclusionDescID.Default.(func() string)
+	// assetexclusion.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	assetexclusion.IDValidator = func() func(string) error {
+		validators := assetexclusionDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	assetselectionMixin := schema.AssetSelection{}.Mixin()
 	assetselectionMixinFields0 := assetselectionMixin[0].Fields()
 	_ = assetselectionMixinFields0
@@ -273,10 +319,6 @@ func init() {
 	assetselectionDescVersion := assetselectionFields[3].Descriptor()
 	// assetselection.DefaultVersion holds the default value on creation for the version field.
 	assetselection.DefaultVersion = assetselectionDescVersion.Default.(int)
-	// assetselectionDescDisabled is the schema descriptor for disabled field.
-	assetselectionDescDisabled := assetselectionFields[4].Descriptor()
-	// assetselection.DefaultDisabled holds the default value on creation for the disabled field.
-	assetselection.DefaultDisabled = assetselectionDescDisabled.Default.(bool)
 	// assetselectionDescName is the schema descriptor for name field.
 	assetselectionDescName := assetselectionFields[5].Descriptor()
 	// assetselection.DefaultName holds the default value on creation for the name field.

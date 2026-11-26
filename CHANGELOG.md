@@ -13,13 +13,29 @@ are in `CLAUDE.md`, "The changelog".
 - **Upgrade:** Nothing.
 - **Refs:** [System management](docs/tech/system-management.md)
 
-## 2026-11-25 — Clearer version selection in the team catalog
+## 2026-11-25 — Install a team preset or plugin from the DSH panel
 
-- **What:** Asset details preview the selected version and separate personal and team actions. Catalog search includes team names, owners can upload a version from its details, and document mentions accept names with spaces.
-- **Why:** Members and administrators need to see which version an action will use.
+- **What:** `PUT /api/teams/{teamId}/asset-choices/{id}/here` takes `{on}` from a DSH plugin and acts on the computer its sign-in names: on adds an item the member did not have and keeps it off their other computers, or brings one back to this computer; off keeps it off this computer. It answers 409 `host_unknown` before the computer has connected to the relay. The Teamwork plugin's panel lists the team's presets and plugins that do not sync here, with **Install here**, and **Remove from this DSH** on the ones that do.
+- **Why:** Members browse and install what the team shares from DSH itself, one computer at a time.
 - **Breaking:** None.
-- **Upgrade:** Nothing.
-- **Refs:** `apps/web/src/pages/team/resources.tsx`, `apps/web/src/components/knowledge-slash.tsx`.
+- **Upgrade:** Nothing; the panel needs the Teamwork plugin from the same change.
+- **Refs:** `docs/tech/team-assistant.md`.
+
+## 2026-11-25 — Keep a preset or plugin off chosen DSHs
+
+- **What:** In Presets and plugins, an item's details list the member's computers (their relay hosts) with a checkbox each; an unchecked computer syncs nothing about that item. `PUT /api/teams/{teamId}/asset-choices/{id}/hosts` takes `{off: [hostId]}`, `GET /asset-choices` adds `off`, and `GET /api/configs` leaves out what the calling computer keeps off, found through the relay host recorded for its plugin sign-in. A computer not known yet gets everything. A row kept off some computers reads "On 2 of 3 DSHs".
+- **Why:** Members want a preset or plugin on some of their computers and not others.
+- **Breaking:** None.
+- **Upgrade:** The server applies the `asset_exclusions` migration.
+- **Refs:** `docs/tech/team-assistant.md`, `docs/tech/relay.md`.
+
+## 2026-11-25 — Presets and plugins replace the team toolbox
+
+- **What:** The console's **Presets and plugins** page (`/teams/{teamId}/presets`) replaces the team toolbox and the admin's Presets, Plugins and Review pages; version history opens from it. A member adds an item in one click and follows its latest version, pins one, or removes it, including a team-owned item other than the assistant; an admin recommends a member's item at one version and sees when its author has published past it. `PUT /asset-choices/{id}` takes `{mode: latest | pinned | removed | default, version}` instead of `{version, disabled}`, `GET /asset-choices` adds `users` (members each item reaches), and an author follows their own new item. Catalog search includes descriptions, and document mentions accept names with spaces. The landing page's pricing title no longer reads "Submission history". The landing page's Collaborate section and team diagram describe sharing, recommending and adding instead of submission and review, and the unused review screenshots are gone; the Chinese navigation labels for Models and usage and for Members and spend use the same conjunction as Presets and plugins; the Everywhere section's console screenshots show the new overview.
+- **Why:** Members care whether something is on their DSH and current, not which version number they picked; one list with the admin's actions inside replaces four pages.
+- **Breaking:** The personal choice request and response shapes change, and `/resources`, `/sharing` and the admin `/plugins` page are gone. Nothing shipped depends on them.
+- **Upgrade:** The server applies the `asset_choice_modes` migration, which replaces `asset_selections.disabled` with `mode`.
+- **Refs:** `docs/tech/team-assistant.md`, `apps/web/src/pages/team/library.tsx`, `apps/web/src/components/knowledge-slash.tsx`.
 
 ## 2026-11-25 — Member-owned presets and plugins in the team catalog
 

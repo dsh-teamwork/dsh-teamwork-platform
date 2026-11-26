@@ -1,4 +1,4 @@
-h1:5o/CsTFdZbLwn9XROjziWW/lIfPFV/i6TuX2kJVRqqc=
+h1:KrDBQAlnYf/mjCpJexTwiQ5Dhk+53Up2S2cTDBHGhYw=
 20261114012020_init.sql h1:VowocbRzKwjQnIaTKZMozK1Z3l8owoGztnZ6MKMN/fc=
 20261115041608_usage_metering.sql h1:d4436LY5DD5YZA2SDRyGuJ9DsEWmyrcoVSdhoHdXAYs=
 20261115044854_budget_reservations.sql h1:7x72jZnZ8HqLHjNki/0Y1FNp7uG4MePULMxHjVyOSAU=
@@ -29,3 +29,5 @@ h1:5o/CsTFdZbLwn9XROjziWW/lIfPFV/i6TuX2kJVRqqc=
 20261125080932_member_assets.sql h1:o5+UWPUEh2kXggJay8R/S9dPUNK6nkGFJwh5d1J/mm4=
 20261125081634_asset_default_history.sql h1:gGDQ+8beHS7VBwuZiwBvFiE+YMcx1N3SR6dRYOOdg3A=
 20261125121126_asset_archive_provenance.sql h1:q9WGD7B2mTCdg+NBnYRbG+80Ua7pZMVrxeDtUDCPX5Q=
+20261125133108_asset_choice_modes.sql h1:ZlPTHm5x8XKdDQnK01C+FVraTTYcPW3iwlY6gAVf43M=
+20261125142449_asset_exclusions.sql h1:kmY6TsoPDTjCpHEzMdgtUNPMn6lQ8zSN0+0eH5kasPc=

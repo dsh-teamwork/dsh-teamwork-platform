@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-24
+> **Status:** Current · **Updated:** 2026-11-25
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -731,7 +731,8 @@ to reach a DSH, beside, in the hosted edition, Cloud DSH.
   pairing to it: one lost or no longer used, or a record left by signing in
   again (a new `clientId`). Each host records `grant_id`, the sign-in its last
   hello came with ([ADR 0060](../adr/0060-plugin-tokens-are-revocable-grants.md)),
-  and the same transaction deletes that grant, so a connected computer is
+  and the same transaction deletes that grant and what its member kept off
+  that computer (`asset_exclusions`, docs/tech/team-assistant.md), so a connected computer is
   removed too: its socket closes with 4401 at once and its plugin finds itself
   signed out at its next sync. One that signs in again is recorded anew, under
   a new id, with nothing paired. Its phones hear `revoked` at once, and the desktop

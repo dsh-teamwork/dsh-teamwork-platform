@@ -12,6 +12,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetexclusion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
@@ -117,6 +118,9 @@ func (s *Service) DeleteAccount(ctx context.Context, userID, confirm string) err
 		return err
 	}
 	if _, err := tx.AssetSelection.Delete().Where(assetselection.UserID(userID)).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := tx.AssetExclusion.Delete().Where(assetexclusion.UserID(userID)).Exec(ctx); err != nil {
 		return err
 	}
 	// Their comments go, and with a thread they opened its replies.
@@ -292,6 +296,7 @@ func deleteTeam(ctx context.Context, db *ent.Client, teamID string) ([]*ent.Plug
 	}
 	steps := []func() (int, error){
 		func() (int, error) { return db.AssetSelection.Delete().Where(assetselection.TeamID(teamID)).Exec(ctx) },
+		func() (int, error) { return db.AssetExclusion.Delete().Where(assetexclusion.TeamID(teamID)).Exec(ctx) },
 		func() (int, error) {
 			return db.BudgetReservation.Delete().Where(budgetreservation.WindowIDIn(windows...)).Exec(ctx)
 		},

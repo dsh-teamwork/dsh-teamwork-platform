@@ -60,7 +60,7 @@ export function TeamHomePage() {
           label: t('figures.toolbox'),
           value: count('preset') + count('plugin'),
           note: t('figures.toolboxNote', { presets: count('preset'), plugins: count('plugin') }),
-          href: `${base}/resources`,
+          href: `${base}/presets`,
         }}
       />
       <div className={cn('grid items-start gap-6', dsh.done && 'lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]')}>
@@ -69,7 +69,7 @@ export function TeamHomePage() {
           title={t('updates')}
           action={
             <Button asChild size="sm" variant="outline">
-              <Link to={`${base}/resources`}>{t('openToolbox')}</Link>
+              <Link to={`${base}/presets`}>{t('openLibrary')}</Link>
             </Button>
           }
         />
@@ -325,9 +325,9 @@ function Invite({ team, base }: { team: Team; base: string }) {
 function Resources({ configs, base }: { configs: TeamConfig[]; base: string }) {
   const t = useTranslations('team');
   const kinds = [
-    { kind: 'model', path: 'models' },
-    { kind: 'preset', path: 'presets' },
-    { kind: 'plugin', path: 'plugins' },
+    { kind: 'model', path: 'models', label: 'nav.models' },
+    { kind: 'preset', path: 'presets', label: 'library.presets' },
+    { kind: 'plugin', path: 'presets?tab=plugins', label: 'library.plugins' },
   ] as const;
   return (
     <Recent
@@ -335,9 +335,9 @@ function Resources({ configs, base }: { configs: TeamConfig[]; base: string }) {
       title={t('overview.resources')}
       lead={
         <div className="grid grid-cols-3 border-t">
-          {kinds.map(({ kind, path }, i) => (
+          {kinds.map(({ kind, path, label }, i) => (
             <Link key={kind} to={`${base}/${path}`} className={cn('flex flex-col gap-0.5 px-6 py-3 hover:bg-accent', i > 0 && 'border-l')}>
-              <span className="text-xs text-muted-foreground">{t(`nav.${path}`)}</span>
+              <span className="text-xs text-muted-foreground">{t(label)}</span>
               <span className="text-lg font-semibold tabular-nums">{configs.filter((c) => c.kind === kind).length}</span>
             </Link>
           ))}

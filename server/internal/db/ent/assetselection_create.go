@@ -84,16 +84,16 @@ func (_c *AssetSelectionCreate) SetNillableVersion(v *int) *AssetSelectionCreate
 	return _c
 }
 
-// SetDisabled sets the "disabled" field.
-func (_c *AssetSelectionCreate) SetDisabled(v bool) *AssetSelectionCreate {
-	_c.mutation.SetDisabled(v)
+// SetMode sets the "mode" field.
+func (_c *AssetSelectionCreate) SetMode(v assetselection.Mode) *AssetSelectionCreate {
+	_c.mutation.SetMode(v)
 	return _c
 }
 
-// SetNillableDisabled sets the "disabled" field if the given value is not nil.
-func (_c *AssetSelectionCreate) SetNillableDisabled(v *bool) *AssetSelectionCreate {
+// SetNillableMode sets the "mode" field if the given value is not nil.
+func (_c *AssetSelectionCreate) SetNillableMode(v *assetselection.Mode) *AssetSelectionCreate {
 	if v != nil {
-		_c.SetDisabled(*v)
+		_c.SetMode(*v)
 	}
 	return _c
 }
@@ -193,9 +193,9 @@ func (_c *AssetSelectionCreate) defaults() {
 		v := assetselection.DefaultVersion
 		_c.mutation.SetVersion(v)
 	}
-	if _, ok := _c.mutation.Disabled(); !ok {
-		v := assetselection.DefaultDisabled
-		_c.mutation.SetDisabled(v)
+	if _, ok := _c.mutation.Mode(); !ok {
+		v := assetselection.DefaultMode
+		_c.mutation.SetMode(v)
 	}
 	if _, ok := _c.mutation.Name(); !ok {
 		v := assetselection.DefaultName
@@ -246,8 +246,13 @@ func (_c *AssetSelectionCreate) check() error {
 	if _, ok := _c.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "AssetSelection.version"`)}
 	}
-	if _, ok := _c.mutation.Disabled(); !ok {
-		return &ValidationError{Name: "disabled", err: errors.New(`ent: missing required field "AssetSelection.disabled"`)}
+	if _, ok := _c.mutation.Mode(); !ok {
+		return &ValidationError{Name: "mode", err: errors.New(`ent: missing required field "AssetSelection.mode"`)}
+	}
+	if v, ok := _c.mutation.Mode(); ok {
+		if err := assetselection.ModeValidator(v); err != nil {
+			return &ValidationError{Name: "mode", err: fmt.Errorf(`ent: validator failed for field "AssetSelection.mode": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "AssetSelection.name"`)}
@@ -325,9 +330,9 @@ func (_c *AssetSelectionCreate) createSpec() (*AssetSelection, *sqlgraph.CreateS
 		_spec.SetField(assetselection.FieldVersion, field.TypeInt, value)
 		_node.Version = value
 	}
-	if value, ok := _c.mutation.Disabled(); ok {
-		_spec.SetField(assetselection.FieldDisabled, field.TypeBool, value)
-		_node.Disabled = value
+	if value, ok := _c.mutation.Mode(); ok {
+		_spec.SetField(assetselection.FieldMode, field.TypeEnum, value)
+		_node.Mode = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(assetselection.FieldName, field.TypeString, value)
@@ -423,15 +428,15 @@ func (u *AssetSelectionUpsert) AddVersion(v int) *AssetSelectionUpsert {
 	return u
 }
 
-// SetDisabled sets the "disabled" field.
-func (u *AssetSelectionUpsert) SetDisabled(v bool) *AssetSelectionUpsert {
-	u.Set(assetselection.FieldDisabled, v)
+// SetMode sets the "mode" field.
+func (u *AssetSelectionUpsert) SetMode(v assetselection.Mode) *AssetSelectionUpsert {
+	u.Set(assetselection.FieldMode, v)
 	return u
 }
 
-// UpdateDisabled sets the "disabled" field to the value that was provided on create.
-func (u *AssetSelectionUpsert) UpdateDisabled() *AssetSelectionUpsert {
-	u.SetExcluded(assetselection.FieldDisabled)
+// UpdateMode sets the "mode" field to the value that was provided on create.
+func (u *AssetSelectionUpsert) UpdateMode() *AssetSelectionUpsert {
+	u.SetExcluded(assetselection.FieldMode)
 	return u
 }
 
@@ -578,17 +583,17 @@ func (u *AssetSelectionUpsertOne) UpdateVersion() *AssetSelectionUpsertOne {
 	})
 }
 
-// SetDisabled sets the "disabled" field.
-func (u *AssetSelectionUpsertOne) SetDisabled(v bool) *AssetSelectionUpsertOne {
+// SetMode sets the "mode" field.
+func (u *AssetSelectionUpsertOne) SetMode(v assetselection.Mode) *AssetSelectionUpsertOne {
 	return u.Update(func(s *AssetSelectionUpsert) {
-		s.SetDisabled(v)
+		s.SetMode(v)
 	})
 }
 
-// UpdateDisabled sets the "disabled" field to the value that was provided on create.
-func (u *AssetSelectionUpsertOne) UpdateDisabled() *AssetSelectionUpsertOne {
+// UpdateMode sets the "mode" field to the value that was provided on create.
+func (u *AssetSelectionUpsertOne) UpdateMode() *AssetSelectionUpsertOne {
 	return u.Update(func(s *AssetSelectionUpsert) {
-		s.UpdateDisabled()
+		s.UpdateMode()
 	})
 }
 
@@ -910,17 +915,17 @@ func (u *AssetSelectionUpsertBulk) UpdateVersion() *AssetSelectionUpsertBulk {
 	})
 }
 
-// SetDisabled sets the "disabled" field.
-func (u *AssetSelectionUpsertBulk) SetDisabled(v bool) *AssetSelectionUpsertBulk {
+// SetMode sets the "mode" field.
+func (u *AssetSelectionUpsertBulk) SetMode(v assetselection.Mode) *AssetSelectionUpsertBulk {
 	return u.Update(func(s *AssetSelectionUpsert) {
-		s.SetDisabled(v)
+		s.SetMode(v)
 	})
 }
 
-// UpdateDisabled sets the "disabled" field to the value that was provided on create.
-func (u *AssetSelectionUpsertBulk) UpdateDisabled() *AssetSelectionUpsertBulk {
+// UpdateMode sets the "mode" field to the value that was provided on create.
+func (u *AssetSelectionUpsertBulk) UpdateMode() *AssetSelectionUpsertBulk {
 	return u.Update(func(s *AssetSelectionUpsert) {
-		s.UpdateDisabled()
+		s.UpdateMode()
 	})
 }
 

@@ -1,10 +1,10 @@
 /**
- * Versions and backups (`/teams/{teamId}/history`): every publication of the
+ * Version history (`/teams/{teamId}/history`): every publication of the
  * team's resources as a timeline, newest first, filtered in one row (kind,
  * resource, author, time range). Each version opens to show what restoring it
  * would change, field by field (components/team/config-diff.tsx); an admin can
- * export it with what it depends on, or restore a team configuration as a
- * draft that goes through review like any other change.
+ * export it with what it depends on, or restore a team configuration as a new
+ * version. Presets and plugins (library.tsx) links here; it has no sidebar entry.
  */
 
 import { ChevronRight, Download, History as HistoryIcon, RotateCcw } from 'lucide-react';
@@ -208,7 +208,7 @@ function RevisionRow({ row, team, current, names, onRestore }: { row: Revision; 
   );
 }
 
-/** Restoring prepares a draft on top of the version live now; nothing changes until it is reviewed. */
+/** Restoring publishes the old contents as a new version on top of the one live now. */
 function RestoreDialog({ teamId, row, current, reload, onClose }: { teamId: string; row: Revision; current: TeamConfig | null; reload: () => Promise<unknown>; onClose: () => void }) {
   const t = useTranslations('team.history');
   const { pending, run } = useMutation(reload);

@@ -18,6 +18,9 @@ type ArtifactMember func(*sql.Selector)
 // ArtifactVersion is the predicate function for artifactversion builders.
 type ArtifactVersion func(*sql.Selector)
 
+// AssetExclusion is the predicate function for assetexclusion builders.
+type AssetExclusion func(*sql.Selector)
+
 // AssetSelection is the predicate function for assetselection builders.
 type AssetSelection func(*sql.Selector)
 

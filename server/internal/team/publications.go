@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
@@ -187,7 +188,8 @@ func (s *Service) publishDirect(ctx context.Context, userID, teamID, configID st
 		return ConfigView{}, err
 	}
 	if newAsset {
-		if err := scoped.savePersonalAssetChoice(ctx, teamID, userID, c.ID, AssetChoiceInput{Version: c.Version}); err != nil {
+		// The author has what they share on their own DSH, at every later version too.
+		if err := scoped.savePersonalChoice(ctx, teamID, userID, c.ID, assetselection.ModeLatest, 0); err != nil {
 			return ConfigView{}, err
 		}
 	}

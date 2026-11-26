@@ -335,7 +335,7 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
           <Depth depth={t('collaborate.depth')} label={t('collaborate.label')} />
           <h2 className={zoneTitle}>{t('collaborate.title')}</h2>
           <ol className="mt-6 grid list-decimal gap-6 pl-6 marker:font-mono marker:text-sm marker:text-muted-foreground lg:grid-cols-3">
-            {(['submit', 'review', 'sync'] as const).map((step) => (
+            {(['share', 'recommend', 'add'] as const).map((step) => (
               <li key={step} className="pl-1">
                 <h3 className="text-base font-bold">{t(`collaborate.${step}Title`)}</h3>
                 <p className="mt-0.5 text-sm text-muted-foreground">{t(`collaborate.${step}Body`)}</p>

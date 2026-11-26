@@ -2,7 +2,7 @@
  * The frame of a team's console (`/teams/{teamId}/…`): a sidebar with the team
  * switcher, the pages in groups and the account menu, and the page beside it.
  * The console is work first (ADR 0043): everyone sees Workspace — their own
- * home page, what the team provides (their own submissions one link inside),
+ * home page, the presets and plugins the team shares,
  * their own usage and an edition's work pages — and the team's admin alone sees Team management at the
  * sidebar's foot, opening on the team overview, where an admin lands (ADR 0049). On a narrow screen the sidebar becomes a top bar whose menu opens the same navigation in a
  * sheet. Which pages exist is `GROUPS`; the router sends a member who opens a
@@ -12,7 +12,6 @@
  */
 
 import {
-  BookOpen,
   ChartColumn,
   ChartNoAxesCombined,
   Check,
@@ -21,8 +20,6 @@ import {
   ChevronsUpDown,
   Cpu,
   Gauge,
-  GitPullRequestArrow,
-  History,
   House,
   Laptop,
   LibraryBig,
@@ -34,7 +31,6 @@ import {
   LayoutGrid,
   LogOut,
   Menu,
-  Puzzle,
   ShieldCheck,
   Users,
   X,
@@ -53,7 +49,7 @@ import { editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamP
 import { knowledgeNav, publishKnowledgeNav, useKnowledgeNav } from '@/lib/knowledge-nav';
 import { cn } from '@/lib/utils';
 
-type SectionKey = 'home' | 'overview' | 'resources' | 'myUsage' | 'models' | 'presets' | 'plugins' | 'sharing' | 'history' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'artifacts' | 'knowledge';
+type SectionKey = 'home' | 'overview' | 'library' | 'myUsage' | 'models' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'artifacts' | 'knowledge';
 
 /** Where the sidebar shows an amber dot: something waits on the admin there. */
 export interface Waiting {
@@ -186,23 +182,18 @@ const GROUPS: { key: TeamGroup | 'manage'; sections: Section[] }[] = [
       // What the team knows, as documents people and agents keep (docs/tech/knowledge.md); in every team.
       // Its spaces fold out beneath it.
       { path: 'knowledge', key: 'knowledge', icon: LibraryBig, fill: true, subnav: KnowledgeNav },
-      { path: 'resources', key: 'resources', icon: BookOpen },
+      { path: 'presets', key: 'library', icon: Layers },
       { path: 'my-usage', key: 'myUsage', icon: ChartColumn },
     ],
   },
   // The team overview heads Team management on its own; the toggle below it names the group.
   {
     key: 'manage',
-    sections: [{ path: 'overview', key: 'overview', icon: LayoutDashboard }],
-  },
-  {
-    key: 'assets',
+    // Presets and plugins are the team's too, but a Workspace page with the admin's actions inside (library.tsx);
+    // their version history opens from there.
     sections: [
+      { path: 'overview', key: 'overview', icon: LayoutDashboard },
       { path: 'models', key: 'models', icon: Cpu },
-      { path: 'presets', key: 'presets', icon: Layers },
-      { path: 'plugins', key: 'plugins', icon: Puzzle },
-      { path: 'sharing', key: 'sharing', icon: GitPullRequestArrow },
-      { path: 'history', key: 'history', icon: History },
     ],
   },
   {

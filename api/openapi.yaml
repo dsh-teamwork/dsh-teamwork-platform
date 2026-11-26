@@ -263,7 +263,7 @@ paths:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
     get:
-      summary: Read the caller's own selections, team defaults and retained archived assets
+      summary: Read the caller's own choices, the team's recommendations, how many members use each asset, and withdrawn assets the caller still sees
       responses:
         '200':
           description: Asset selections
@@ -276,7 +276,28 @@ paths:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     put:
-      summary: Pin or remove a personal version and control whether the team default applies
+      summary: Choose how the caller uses a preset or plugin
+      description: >-
+        latest follows every new version, pinned keeps one, removed takes it off the caller's DSH,
+        and default drops the caller's choice so the team's recommendation applies. A team's own
+        preset or plugin takes only removed and default; the team assistant takes neither.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PersonalChoice' }
+      responses:
+        '204': { description: Choice saved }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/asset-choices/{id}/hosts:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: Replace the caller's computers a preset or plugin stays off
+      description: >-
+        Every other computer the caller signs in on syncs it, a newly connected one included. The ids are
+        the caller's own relay hosts; the team assistant stays on every computer.
       requestBody:
         required: true
         content:
@@ -284,20 +305,41 @@ paths:
             schema:
               type: object
               additionalProperties: false
+              required: [off]
               properties:
-                version: { type: integer, minimum: 0 }
-                disabled: { type: boolean }
-                name: { type: string, maxLength: 120 }
-                revision: { type: integer, minimum: 0 }
+                off: { type: array, maxItems: 100, items: { type: string, minLength: 1, maxLength: 32 } }
       responses:
-        '204': { description: Selection saved }
+        '204': { description: Computers saved }
+        default: { $ref: '#/components/responses/Error' }
+  /teams/{teamId}/asset-choices/{id}/here:
+    parameters:
+      - { name: teamId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      summary: Put a preset or plugin on the calling computer alone, or take it off that computer
+      description: >-
+        For a DSH panel, whose plugin token names its computer once it has connected to the relay (else 409
+        host_unknown). On adds an item the caller did not have and keeps it off their other computers, or brings
+        back one they kept off this computer; off keeps it off this computer. The team assistant takes neither.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [on]
+              properties:
+                on: { type: boolean }
+      responses:
+        '204': { description: Saved }
         default: { $ref: '#/components/responses/Error' }
   /teams/{teamId}/asset-defaults/{id}:
     parameters:
       - { name: teamId, in: path, required: true, schema: { type: string } }
       - { name: id, in: path, required: true, schema: { type: string } }
     put:
-      summary: Set, rename or withdraw a versioned team default as an administrator
+      summary: Recommend a member's asset to the team at one version, rename or withdraw it, as an administrator
       requestBody:
         required: true
         content:
@@ -306,12 +348,11 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                version: { type: integer, minimum: 0 }
-                disabled: { type: boolean }
+                version: { type: integer, minimum: 0, description: 0 withdraws the recommendation }
                 name: { type: string, maxLength: 120 }
                 revision: { type: integer, minimum: 0 }
       responses:
-        '204': { description: Selection saved }
+        '204': { description: Recommendation saved }
         default: { $ref: '#/components/responses/Error' }
   /configs:
     get:
@@ -2724,21 +2765,29 @@ components:
         version: { type: string }
         providesTools: { type: array, items: { type: string } }
         description: { type: string }
-    AssetChoice:
+    PersonalChoice:
       type: object
-      required: [version, disabled, name, revision]
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode: { type: string, enum: [latest, pinned, removed, default] }
+        version: { type: integer, minimum: 1, description: The pinned version; only with pinned }
+    TeamDefault:
+      type: object
+      required: [version, name, revision]
       properties:
         version: { type: integer }
-        disabled: { type: boolean }
         name: { type: string }
         revision: { type: integer }
         adoptedVersions: { type: array, items: { type: integer } }
     AssetChoices:
       type: object
-      required: [personal, defaults, archived]
+      required: [personal, defaults, users, off, archived]
       properties:
-        personal: { type: object, additionalProperties: { $ref: '#/components/schemas/AssetChoice' } }
-        defaults: { type: object, additionalProperties: { $ref: '#/components/schemas/AssetChoice' } }
+        personal: { type: object, additionalProperties: { $ref: '#/components/schemas/PersonalChoice' } }
+        defaults: { type: object, additionalProperties: { $ref: '#/components/schemas/TeamDefault' } }
+        users: { type: object, description: "Members each preset and plugin reaches, by configuration id", additionalProperties: { type: integer, minimum: 0 } }
+        off: { type: object, description: "The caller's computers (relay host ids) each item stays off, by configuration id", additionalProperties: { type: array, items: { type: string } } }
         archived: { type: array, items: { $ref: '#/components/schemas/Config' } }
     ConfigInput:
       type: object

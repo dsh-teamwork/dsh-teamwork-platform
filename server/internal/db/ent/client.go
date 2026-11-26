@@ -19,6 +19,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactfile"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactmember"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/artifactversion"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetexclusion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetevent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/budgetgate"
@@ -70,6 +71,8 @@ type Client struct {
 	ArtifactMember *ArtifactMemberClient
 	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
 	ArtifactVersion *ArtifactVersionClient
+	// AssetExclusion is the client for interacting with the AssetExclusion builders.
+	AssetExclusion *AssetExclusionClient
 	// AssetSelection is the client for interacting with the AssetSelection builders.
 	AssetSelection *AssetSelectionClient
 	// BudgetEvent is the client for interacting with the BudgetEvent builders.
@@ -153,6 +156,7 @@ func (c *Client) init() {
 	c.ArtifactFile = NewArtifactFileClient(c.config)
 	c.ArtifactMember = NewArtifactMemberClient(c.config)
 	c.ArtifactVersion = NewArtifactVersionClient(c.config)
+	c.AssetExclusion = NewAssetExclusionClient(c.config)
 	c.AssetSelection = NewAssetSelectionClient(c.config)
 	c.BudgetEvent = NewBudgetEventClient(c.config)
 	c.BudgetGate = NewBudgetGateClient(c.config)
@@ -283,6 +287,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ArtifactFile:         NewArtifactFileClient(cfg),
 		ArtifactMember:       NewArtifactMemberClient(cfg),
 		ArtifactVersion:      NewArtifactVersionClient(cfg),
+		AssetExclusion:       NewAssetExclusionClient(cfg),
 		AssetSelection:       NewAssetSelectionClient(cfg),
 		BudgetEvent:          NewBudgetEventClient(cfg),
 		BudgetGate:           NewBudgetGateClient(cfg),
@@ -340,6 +345,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ArtifactFile:         NewArtifactFileClient(cfg),
 		ArtifactMember:       NewArtifactMemberClient(cfg),
 		ArtifactVersion:      NewArtifactVersionClient(cfg),
+		AssetExclusion:       NewAssetExclusionClient(cfg),
 		AssetSelection:       NewAssetSelectionClient(cfg),
 		BudgetEvent:          NewBudgetEventClient(cfg),
 		BudgetGate:           NewBudgetGateClient(cfg),
@@ -404,14 +410,15 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion,
-		c.AssetSelection, c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
-		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
-		c.KnowledgeAttachment, c.KnowledgeComment, c.KnowledgeDocument,
-		c.KnowledgeFolder, c.KnowledgeProposal, c.KnowledgeSpace,
-		c.KnowledgeSpaceMember, c.KnowledgeVersion, c.Membership, c.ModelRate,
-		c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow, c.RelayHost,
-		c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
-		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
+		c.AssetExclusion, c.AssetSelection, c.BudgetEvent, c.BudgetGate,
+		c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation, c.BudgetWindow,
+		c.ConfigRevision, c.Identity, c.Invite, c.KnowledgeAttachment,
+		c.KnowledgeComment, c.KnowledgeDocument, c.KnowledgeFolder,
+		c.KnowledgeProposal, c.KnowledgeSpace, c.KnowledgeSpaceMember,
+		c.KnowledgeVersion, c.Membership, c.ModelRate, c.Password, c.PluginGrant,
+		c.PluginPackage, c.RateWindow, c.RelayHost, c.RelayPairing,
+		c.RelayPairingOffer, c.ResourceSubmission, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Use(hooks...)
 	}
@@ -422,14 +429,15 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Artifact, c.ArtifactFile, c.ArtifactMember, c.ArtifactVersion,
-		c.AssetSelection, c.BudgetEvent, c.BudgetGate, c.BudgetNotice, c.BudgetPolicy,
-		c.BudgetReservation, c.BudgetWindow, c.ConfigRevision, c.Identity, c.Invite,
-		c.KnowledgeAttachment, c.KnowledgeComment, c.KnowledgeDocument,
-		c.KnowledgeFolder, c.KnowledgeProposal, c.KnowledgeSpace,
-		c.KnowledgeSpaceMember, c.KnowledgeVersion, c.Membership, c.ModelRate,
-		c.Password, c.PluginGrant, c.PluginPackage, c.RateWindow, c.RelayHost,
-		c.RelayPairing, c.RelayPairingOffer, c.ResourceSubmission, c.Team,
-		c.TeamConfig, c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
+		c.AssetExclusion, c.AssetSelection, c.BudgetEvent, c.BudgetGate,
+		c.BudgetNotice, c.BudgetPolicy, c.BudgetReservation, c.BudgetWindow,
+		c.ConfigRevision, c.Identity, c.Invite, c.KnowledgeAttachment,
+		c.KnowledgeComment, c.KnowledgeDocument, c.KnowledgeFolder,
+		c.KnowledgeProposal, c.KnowledgeSpace, c.KnowledgeSpaceMember,
+		c.KnowledgeVersion, c.Membership, c.ModelRate, c.Password, c.PluginGrant,
+		c.PluginPackage, c.RateWindow, c.RelayHost, c.RelayPairing,
+		c.RelayPairingOffer, c.ResourceSubmission, c.Team, c.TeamConfig,
+		c.TeamProvider, c.UsageRequest, c.User, c.VerificationCode,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -446,6 +454,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ArtifactMember.mutate(ctx, m)
 	case *ArtifactVersionMutation:
 		return c.ArtifactVersion.mutate(ctx, m)
+	case *AssetExclusionMutation:
+		return c.AssetExclusion.mutate(ctx, m)
 	case *AssetSelectionMutation:
 		return c.AssetSelection.mutate(ctx, m)
 	case *BudgetEventMutation:
@@ -1048,6 +1058,139 @@ func (c *ArtifactVersionClient) mutate(ctx context.Context, m *ArtifactVersionMu
 		return (&ArtifactVersionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ArtifactVersion mutation op: %q", m.Op())
+	}
+}
+
+// AssetExclusionClient is a client for the AssetExclusion schema.
+type AssetExclusionClient struct {
+	config
+}
+
+// NewAssetExclusionClient returns a client for the AssetExclusion from the given config.
+func NewAssetExclusionClient(c config) *AssetExclusionClient {
+	return &AssetExclusionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `assetexclusion.Hooks(f(g(h())))`.
+func (c *AssetExclusionClient) Use(hooks ...Hook) {
+	c.hooks.AssetExclusion = append(c.hooks.AssetExclusion, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `assetexclusion.Intercept(f(g(h())))`.
+func (c *AssetExclusionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AssetExclusion = append(c.inters.AssetExclusion, interceptors...)
+}
+
+// Create returns a builder for creating a AssetExclusion entity.
+func (c *AssetExclusionClient) Create() *AssetExclusionCreate {
+	mutation := newAssetExclusionMutation(c.config, OpCreate)
+	return &AssetExclusionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AssetExclusion entities.
+func (c *AssetExclusionClient) CreateBulk(builders ...*AssetExclusionCreate) *AssetExclusionCreateBulk {
+	return &AssetExclusionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AssetExclusionClient) MapCreateBulk(slice any, setFunc func(*AssetExclusionCreate, int)) *AssetExclusionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AssetExclusionCreateBulk{err: fmt.Errorf("calling to AssetExclusionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AssetExclusionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AssetExclusionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AssetExclusion.
+func (c *AssetExclusionClient) Update() *AssetExclusionUpdate {
+	mutation := newAssetExclusionMutation(c.config, OpUpdate)
+	return &AssetExclusionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AssetExclusionClient) UpdateOne(_m *AssetExclusion) *AssetExclusionUpdateOne {
+	mutation := newAssetExclusionMutation(c.config, OpUpdateOne, withAssetExclusion(_m))
+	return &AssetExclusionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AssetExclusionClient) UpdateOneID(id string) *AssetExclusionUpdateOne {
+	mutation := newAssetExclusionMutation(c.config, OpUpdateOne, withAssetExclusionID(id))
+	return &AssetExclusionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AssetExclusion.
+func (c *AssetExclusionClient) Delete() *AssetExclusionDelete {
+	mutation := newAssetExclusionMutation(c.config, OpDelete)
+	return &AssetExclusionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AssetExclusionClient) DeleteOne(_m *AssetExclusion) *AssetExclusionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AssetExclusionClient) DeleteOneID(id string) *AssetExclusionDeleteOne {
+	builder := c.Delete().Where(assetexclusion.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AssetExclusionDeleteOne{builder}
+}
+
+// Query returns a query builder for AssetExclusion.
+func (c *AssetExclusionClient) Query() *AssetExclusionQuery {
+	return &AssetExclusionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAssetExclusion},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AssetExclusion entity by its id.
+func (c *AssetExclusionClient) Get(ctx context.Context, id string) (*AssetExclusion, error) {
+	return c.Query().Where(assetexclusion.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AssetExclusionClient) GetX(ctx context.Context, id string) *AssetExclusion {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AssetExclusionClient) Hooks() []Hook {
+	return c.hooks.AssetExclusion
+}
+
+// Interceptors returns the client interceptors.
+func (c *AssetExclusionClient) Interceptors() []Interceptor {
+	return c.inters.AssetExclusion
+}
+
+func (c *AssetExclusionClient) mutate(ctx context.Context, m *AssetExclusionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AssetExclusionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AssetExclusionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AssetExclusionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AssetExclusionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AssetExclusion mutation op: %q", m.Op())
 	}
 }
 
@@ -5832,24 +5975,25 @@ func (c *VerificationCodeClient) mutate(ctx context.Context, m *VerificationCode
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, AssetSelection,
-		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
-		BudgetWindow, ConfigRevision, Identity, Invite, KnowledgeAttachment,
-		KnowledgeComment, KnowledgeDocument, KnowledgeFolder, KnowledgeProposal,
-		KnowledgeSpace, KnowledgeSpaceMember, KnowledgeVersion, Membership, ModelRate,
-		Password, PluginGrant, PluginPackage, RateWindow, RelayHost, RelayPairing,
-		RelayPairingOffer, ResourceSubmission, Team, TeamConfig, TeamProvider,
-		UsageRequest, User, VerificationCode []ent.Hook
+		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, AssetExclusion,
+		AssetSelection, BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy,
+		BudgetReservation, BudgetWindow, ConfigRevision, Identity, Invite,
+		KnowledgeAttachment, KnowledgeComment, KnowledgeDocument, KnowledgeFolder,
+		KnowledgeProposal, KnowledgeSpace, KnowledgeSpaceMember, KnowledgeVersion,
+		Membership, ModelRate, Password, PluginGrant, PluginPackage, RateWindow,
+		RelayHost, RelayPairing, RelayPairingOffer, ResourceSubmission, Team,
+		TeamConfig, TeamProvider, UsageRequest, User, VerificationCode []ent.Hook
 	}
 	inters struct {
-		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, AssetSelection,
-		BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy, BudgetReservation,
-		BudgetWindow, ConfigRevision, Identity, Invite, KnowledgeAttachment,
-		KnowledgeComment, KnowledgeDocument, KnowledgeFolder, KnowledgeProposal,
-		KnowledgeSpace, KnowledgeSpaceMember, KnowledgeVersion, Membership, ModelRate,
-		Password, PluginGrant, PluginPackage, RateWindow, RelayHost, RelayPairing,
-		RelayPairingOffer, ResourceSubmission, Team, TeamConfig, TeamProvider,
-		UsageRequest, User, VerificationCode []ent.Interceptor
+		Artifact, ArtifactFile, ArtifactMember, ArtifactVersion, AssetExclusion,
+		AssetSelection, BudgetEvent, BudgetGate, BudgetNotice, BudgetPolicy,
+		BudgetReservation, BudgetWindow, ConfigRevision, Identity, Invite,
+		KnowledgeAttachment, KnowledgeComment, KnowledgeDocument, KnowledgeFolder,
+		KnowledgeProposal, KnowledgeSpace, KnowledgeSpaceMember, KnowledgeVersion,
+		Membership, ModelRate, Password, PluginGrant, PluginPackage, RateWindow,
+		RelayHost, RelayPairing, RelayPairingOffer, ResourceSubmission, Team,
+		TeamConfig, TeamProvider, UsageRequest, User,
+		VerificationCode []ent.Interceptor
 	}
 )
 

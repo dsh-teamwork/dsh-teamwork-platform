@@ -1,177 +1,22 @@
-/** Read-only submission history and the team asset upload dialogs. */
+/** Sharing a preset or plugin from a file: a preset exported as JSON, or a plugin's npm archive, inspected first. */
 
-import { ChevronRight, Layers, Package, Puzzle } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { useFormatter, useNow, useTranslations } from 'use-intl';
+import { useTranslations } from 'use-intl';
 
-import { Failure } from '@/components/page';
-import { ConfigDiff } from '@/components/team/config-diff';
-import { PageHeader } from '@/components/team/console-shell';
-import { useMutation, useTeamError } from '@/components/team/use-mutation';
+import { useMutation } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { api, uploadPackage, type Schemas, type Team, type TeamConfig } from '@/lib/api';
+import { api, uploadPackage, type Schemas, type TeamConfig } from '@/lib/api';
 import { inspectPluginArchive, type PluginPreview } from '@/lib/plugin-archive';
-import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 
-import { useTeam } from './layout';
-
-type Submission = Schemas['ResourceSubmission'];
 type Proposal = Schemas['ConfigInput'];
 type Reload = () => Promise<unknown>;
-const PAGE = 50;
-
-/** The team's legacy submission history, under Team assets. */
-export function TeamSharingPage() {
-  const { team } = useTeam();
-  const t = useTranslations('team.sharing');
-  const tn = useTranslations('team.nav');
-  return (
-    <>
-      <PageHeader title={tn('sharing')} description={t('adminHint')} />
-      <Submissions key={team.id} team={team} review />
-    </>
-  );
-}
-
-/** The reader's own submissions, in a dialog over the Team toolbox; `reload` reads again what the toolbox shows of them. */
-export function MySubmissions({ onClose }: { onClose: () => void }) {
-  const { team } = useTeam();
-  const t = useTranslations('team.sharing');
-  const tn = useTranslations('team.nav');
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>{tn('submissions')}</DialogTitle>
-          <DialogDescription>{t('memberHint')}</DialogDescription>
-        </DialogHeader>
-        <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
-          <Submissions team={team} review={false} />
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Submissions({ team, review }: { team: Team; review: boolean }) {
-  const t = useTranslations('team.sharing');
-  const word = useTeamError();
-  const [offset, setOffset] = useState(0);
-  const rows = useApi<Submission[]>(`teams/${team.id}/submissions?offset=${offset}${review ? '' : '&mine=true'}`);
-  const configs = useApi<TeamConfig[]>(`teams/${team.id}/configs`);
-
-  const failed = (!rows.data && rows.error) || (!configs.data && configs.error);
-  if (failed) return <Failure message={word(failed)} />;
-  const names = new Map((configs.data ?? []).map((c) => [c.id, c.name]));
-
-  return (
-    <>
-      {!rows.data || !configs.data ? null : rows.data.length === 0 ? (
-        <p className="rounded-lg border px-4 py-10 text-center text-sm text-muted-foreground">{t('empty')}</p>
-      ) : (
-        <ul className="overflow-hidden rounded-lg border">
-          {rows.data.map((row) => (
-            <SubmissionRow
-              key={row.id}
-              row={row}
-              team={team}
-              current={configs.data?.find((c) => c.id === row.configId) ?? null}
-              names={names}
-            />
-          ))}
-        </ul>
-      )}
-
-      {rows.data && (offset > 0 || rows.data.length === PAGE) && (
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))}>
-            {t('previous')}
-          </Button>
-          <Button variant="outline" size="sm" disabled={rows.data.length < PAGE} onClick={() => setOffset(offset + PAGE)}>
-            {t('next')}
-          </Button>
-        </div>
-      )}
-
-    </>
-  );
-}
-
-/** A state as a word. What waits is marked by the sidebar's amber dot, not here: the badge reflects the historical state. */
-function StateBadge({ state }: { state: Submission['state'] }) {
-  const t = useTranslations('team.sharing.states');
-  return (
-    <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-medium', state === 'pending' || state === 'published' ? 'bg-secondary text-foreground' : 'bg-secondary text-muted-foreground')}>
-      {t(state)}
-    </span>
-  );
-}
-
-function SubmissionRow({
-  row,
-  team,
-  current,
-  names,
-}: {
-  row: Submission;
-  team: Team;
-  current: TeamConfig | null;
-  names: ReadonlyMap<string, string>;
-}) {
-  const t = useTranslations('team.sharing');
-  const tk = useTranslations('team.overview.kind');
-  const format = useFormatter();
-  const now = useNow();
-  const who = (id: string) => team.members.find((m) => m.userId === id)?.email ?? t('formerMember');
-  const Icon = row.proposal.kind === 'plugin' ? Puzzle : Layers;
-
-  return (
-    <li className="border-t first:border-t-0">
-      <details className="group">
-        <summary className="flex list-none items-start gap-3 px-4 py-3.5 hover:bg-accent [&::-webkit-details-marker]:hidden">
-          <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" aria-hidden />
-          <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="truncate font-medium">{row.proposal.name}</span>
-              <span className="text-xs text-muted-foreground">{tk(row.proposal.kind)}</span>
-              {/* A new resource has an id from the start; only a base version says it updates one. */}
-              <span className="text-xs text-muted-foreground">{row.baseVersion > 0 ? t('update', { version: row.baseVersion }) : t('new')}</span>
-            </span>
-            <span className="truncate text-xs text-muted-foreground">
-              {who(row.authorId)} · <time dateTime={row.createdAt}>{format.relativeTime(new Date(row.createdAt), now)}</time>
-              {row.note && ` · ${row.note}`}
-            </span>
-          </span>
-          <StateBadge state={row.state} />
-        </summary>
-
-        <div className="flex flex-col gap-4 border-t bg-muted/40 px-4 py-4 sm:pl-15">
-          {row.note && <p className="text-sm whitespace-pre-wrap">{row.note}</p>}
-          <ConfigDiff
-            before={current ? { name: current.name, data: current.data } : null}
-            after={{ name: row.proposal.name, data: row.proposal.data as Record<string, unknown> }}
-            names={names}
-            beforeLabel={current ? t('current', { version: current.version }) : t('notYet')}
-            afterLabel={t('proposed')}
-          />
-          {(row.reviewerId || row.reason) && (
-            <p className="text-sm text-muted-foreground">
-              {row.reviewerId && t('decidedBy', { name: who(row.reviewerId), at: row.decidedAt ? format.dateTime(new Date(row.decidedAt), { dateStyle: 'medium', timeStyle: 'short' }) : '' })}
-              {row.reason && <span className="mt-1 block whitespace-pre-wrap text-foreground">{row.reason}</span>}
-            </p>
-          )}
-        </div>
-      </details>
-    </li>
-  );
-}
 
 /** A file picked by click or dropped on the box. */
 function DropZone({ accept, label, hint, pick, children }: { accept: string; label: string; hint: string; pick: (file: File) => void; children?: ReactNode }) {
@@ -211,8 +56,7 @@ function DropZone({ accept, label, hint, pick, children }: { accept: string; lab
 
 /** Import a preset from a JSON file and publish it to the current team. */
 export function PresetDialog({ teamId, target, reload, onClose }: { teamId: string; target?: Extract<TeamConfig, { kind: 'preset' }>; reload: Reload; onClose: () => void }) {
-  const t = useTranslations('team.sharing');
-  const tr = useTranslations('team.resources');
+  const t = useTranslations('team.library.upload');
   const { pending, run } = useMutation(reload);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [invalid, setInvalid] = useState(false);
@@ -234,8 +78,8 @@ export function PresetDialog({ teamId, target, reload, onClose }: { teamId: stri
     <Dialog open onOpenChange={(open) => !open && !pending && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{tr(target ? 'uploadVersion' : 'importPreset')}</DialogTitle>
-          <DialogDescription>{tr('publicationHint')}</DialogDescription>
+          <DialogTitle>{t(target ? 'uploadVersion' : 'importPreset')}</DialogTitle>
+          <DialogDescription>{t('publicationHint')}</DialogDescription>
           {target && <p className="text-sm font-medium">{target.name} · v{target.version}</p>}
         </DialogHeader>
         {!proposal ? (
@@ -263,7 +107,7 @@ export function PresetDialog({ teamId, target, reload, onClose }: { teamId: stri
           </p>
         )}
         <DialogFooter>
-          {proposal && <Button variant="outline" disabled={pending} onClick={() => { setProposal(null); setInvalid(false); }}>{tr('replaceFile')}</Button>}
+          {proposal && <Button variant="outline" disabled={pending} onClick={() => { setProposal(null); setInvalid(false); }}>{t('replaceFile')}</Button>}
           <Button variant="outline" disabled={pending} onClick={onClose}>
             {t('cancel')}
           </Button>
@@ -271,11 +115,11 @@ export function PresetDialog({ teamId, target, reload, onClose }: { teamId: stri
             disabled={pending || !proposal || !proposal.name.trim()}
             onClick={async () => {
               if (!proposal) return;
-              const ok = await run(() => api(target ? `teams/${teamId}/configs/${target.id}` : `teams/${teamId}/configs`, { method: target ? 'PATCH' : 'POST', body: { ...proposal, memberAsset: true, ...(target ? { version: target.version } : {}) } }), tr('published'));
+              const ok = await run(() => api(target ? `teams/${teamId}/configs/${target.id}` : `teams/${teamId}/configs`, { method: target ? 'PATCH' : 'POST', body: { ...proposal, memberAsset: true, ...(target ? { version: target.version } : {}) } }), t('published'));
               if (ok) onClose();
             }}
           >
-            {tr('publish')}
+            {t('publish')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -285,8 +129,7 @@ export function PresetDialog({ teamId, target, reload, onClose }: { teamId: stri
 
 /** Inspect, upload and publish a plugin package to the current team. */
 export function PluginDialog({ teamId, configs, initialTarget, reload, onClose }: { teamId: string; configs: TeamConfig[]; initialTarget?: string; reload: Reload; onClose: () => void }) {
-  const t = useTranslations('team.sharing');
-  const tr = useTranslations('team.resources');
+  const t = useTranslations('team.library.upload');
   const { pending, run } = useMutation(reload);
   const [plugin, setPlugin] = useState<{ file: File; preview: PluginPreview } | null>(null);
   const [target, setTarget] = useState(initialTarget ?? '');
@@ -298,8 +141,8 @@ export function PluginDialog({ teamId, configs, initialTarget, reload, onClose }
     <Dialog open onOpenChange={(open) => !open && !pending && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{initialTarget ? tr('uploadVersion') : t('uploadPlugin')}</DialogTitle>
-          <DialogDescription>{tr('publicationHint')}</DialogDescription>
+          <DialogTitle>{initialTarget ? t('uploadVersion') : t('uploadPlugin')}</DialogTitle>
+          <DialogDescription>{t('publicationHint')}</DialogDescription>
         </DialogHeader>
         {!plugin ? (
           <DropZone
@@ -336,7 +179,7 @@ export function PluginDialog({ teamId, configs, initialTarget, reload, onClose }
               change={setTarget}
               className="w-full"
             />
-            <Label htmlFor="plugin-note">{tr('assetDescription')}</Label>
+            <Label htmlFor="plugin-note">{t('assetDescription')}</Label>
             <Textarea id="plugin-note" maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
         )}
@@ -346,7 +189,7 @@ export function PluginDialog({ teamId, configs, initialTarget, reload, onClose }
           </p>
         )}
         <DialogFooter>
-          {plugin && <Button variant="outline" disabled={pending} onClick={() => { setPlugin(null); setInvalid(false); }}>{tr('replaceFile')}</Button>}
+          {plugin && <Button variant="outline" disabled={pending} onClick={() => { setPlugin(null); setInvalid(false); }}>{t('replaceFile')}</Button>}
           <Button variant="outline" disabled={pending} onClick={onClose}>
             {t('cancel')}
           </Button>
@@ -367,11 +210,11 @@ export function PluginDialog({ teamId, configs, initialTarget, reload, onClose }
                   method: existing ? 'PATCH' : 'POST',
                   body: { ...config, memberAsset: true, ...(existing ? { version: existing.version } : {}) },
                 });
-              }, tr('published'));
+              }, t('published'));
               if (ok) onClose();
             }}
           >
-            {tr('publish')}
+            {t('publish')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -94,11 +94,6 @@ func Version(v int) predicate.AssetSelection {
 	return predicate.AssetSelection(sql.FieldEQ(FieldVersion, v))
 }
 
-// Disabled applies equality check predicate on the "disabled" field. It's identical to DisabledEQ.
-func Disabled(v bool) predicate.AssetSelection {
-	return predicate.AssetSelection(sql.FieldEQ(FieldDisabled, v))
-}
-
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.AssetSelection {
 	return predicate.AssetSelection(sql.FieldEQ(FieldName, v))
@@ -424,14 +419,24 @@ func VersionLTE(v int) predicate.AssetSelection {
 	return predicate.AssetSelection(sql.FieldLTE(FieldVersion, v))
 }
 
-// DisabledEQ applies the EQ predicate on the "disabled" field.
-func DisabledEQ(v bool) predicate.AssetSelection {
-	return predicate.AssetSelection(sql.FieldEQ(FieldDisabled, v))
+// ModeEQ applies the EQ predicate on the "mode" field.
+func ModeEQ(v Mode) predicate.AssetSelection {
+	return predicate.AssetSelection(sql.FieldEQ(FieldMode, v))
 }
 
-// DisabledNEQ applies the NEQ predicate on the "disabled" field.
-func DisabledNEQ(v bool) predicate.AssetSelection {
-	return predicate.AssetSelection(sql.FieldNEQ(FieldDisabled, v))
+// ModeNEQ applies the NEQ predicate on the "mode" field.
+func ModeNEQ(v Mode) predicate.AssetSelection {
+	return predicate.AssetSelection(sql.FieldNEQ(FieldMode, v))
+}
+
+// ModeIn applies the In predicate on the "mode" field.
+func ModeIn(vs ...Mode) predicate.AssetSelection {
+	return predicate.AssetSelection(sql.FieldIn(FieldMode, vs...))
+}
+
+// ModeNotIn applies the NotIn predicate on the "mode" field.
+func ModeNotIn(vs ...Mode) predicate.AssetSelection {
+	return predicate.AssetSelection(sql.FieldNotIn(FieldMode, vs...))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

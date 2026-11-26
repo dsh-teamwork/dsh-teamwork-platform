@@ -63,20 +63,74 @@ func (s *Server) assetChoices(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (s *Server) selectAsset(teamDefault bool) func(http.ResponseWriter, *http.Request) error {
-	return func(w http.ResponseWriter, r *http.Request) error {
-		c, err := s.requireUser(r)
-		if err != nil {
-			return err
-		}
-		var choice team.AssetChoiceInput
-		if err := decode(r, &choice); err != nil {
-			return err
-		}
-		if err := s.Team.SelectAsset(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), teamDefault, choice); err != nil {
-			return err
-		}
-		w.WriteHeader(http.StatusNoContent)
-		return nil
+func (s *Server) chooseAsset(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
 	}
+	var in team.PersonalChoice
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Team.ChooseAsset(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), in); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (s *Server) setAssetHosts(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in team.AssetHosts
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Team.SetAssetHosts(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), in); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+// setAssetHere is a DSH panel putting an item on its own computer, or taking it off: the computer is the relay host
+// recorded for the caller's plugin sign-in.
+func (s *Server) setAssetHere(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in struct {
+		On bool `json:"on"`
+	}
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	host, err := s.Team.HostOfGrant(r.Context(), c.user.ID, c.grant)
+	if err != nil {
+		return err
+	}
+	if err := s.Team.SetAssetHere(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), host, in.On); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (s *Server) setAssetDefault(w http.ResponseWriter, r *http.Request) error {
+	c, err := s.requireUser(r)
+	if err != nil {
+		return err
+	}
+	var in team.TeamDefaultInput
+	if err := decode(r, &in); err != nil {
+		return err
+	}
+	if err := s.Team.SetAssetDefault(r.Context(), c.user.ID, r.PathValue("teamId"), r.PathValue("id"), in); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }

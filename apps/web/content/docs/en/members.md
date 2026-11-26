@@ -8,9 +8,10 @@ next to your own setup. In the console, your team opens on **Home**. Until your
 DSH is connected, it opens with the steps: sign in to Teamwork from DSH on your
 computer, then pair a browser (**My DSH**) or the phone app with it, each ticked
 off by itself as it happens. Below that are your own calls and budget
-for the last 30 days and what the team changed lately; the **Team toolbox**
-lets you browse and install the team's presets and plugins. **My assets**
-shows what you own and **My installs** shows what syncs to DSH.
+for the last 30 days and what the team changed lately. **Presets and plugins**
+lists what the team shares: the team's recommendations, already on your DSH,
+then what members share, most used first. **On my DSH** shows what syncs to
+your DSH and **Shared by me** what you share.
 **Models and usage** lists the team's models
 with their rates, then shows the limits that apply to you, the points you spent
 by model and by day, and your latest calls, with a CSV of the period.
@@ -36,15 +37,27 @@ Run `/teamwork plugins` to see which pinned plugins your presets need, then
 `/teamwork install <id>` to preview the exact version. Nothing is installed until
 you confirm.
 
-## Publish an asset
+## Add a preset or plugin
 
-Upload a plugin, import a preset file, or create a preset in **Team toolbox**.
-After validation, the asset appears in this team's catalog. Your unuploaded
-local assets stay on your computer. Open the asset to preview and select a version. The catalog shows your selection and the team default.
-When you upload an update, existing installs keep their selected version.
+In **Presets and plugins**, choose **Add** beside anything a member shares. It
+reaches your DSH at the next sync and follows its latest version from then on;
+when you pinned an older version, the row offers **Update**. Open an item to
+see what it needs (its model, tools and plugins, and whether you have them),
+to pin one of its versions, or to remove it from your DSH. The team's
+recommendations are already there; you can remove one too, except the team
+assistant. Under **On which DSHs**, uncheck a computer to keep an item off it:
+everything else you have reaches every DSH you sign in on, a new one included.
+In DSH, the Teamwork panel lists the team's other presets and plugins too:
+**Install here** puts one on that DSH alone.
+DSH still asks before installing plugin code.
 
-Team defaults sync on the next refresh. You can disable a default or pin a
-different version for yourself. DSH still asks before installing plugin code.
+## Share your own
+
+Choose **New preset** or **Import a preset**, or on the Plugins tab **Upload a
+plugin**. Once checked, it is in Presets and plugins for everyone and on your
+own DSH. Open it to see how many people use it, publish a new version, or
+withdraw it; whoever already uses a withdrawn item keeps it. What you keep for
+yourself can stay local.
 
 ## Ask the team assistant
 

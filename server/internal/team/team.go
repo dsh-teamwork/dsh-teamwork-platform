@@ -191,7 +191,9 @@ type Snapshot struct {
 }
 
 // ConfigSnapshot is what the plugin syncs.
-func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, error) {
+// ConfigSnapshot is what a member's computer syncs; host is that computer's
+// relay host, or "" when it is not known, which gets everything.
+func (s *Service) ConfigSnapshot(ctx context.Context, userID, host string) (Snapshot, error) {
 	ms, err := s.DB.Membership.Query().Where(membership.UserID(userID)).
 		WithTeam(func(q *ent.TeamQuery) { q.WithConfigs() }).
 		Order(ent.Asc(membership.FieldCreatedAt), ent.Asc(membership.FieldID)).All(ctx)
@@ -200,7 +202,7 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 	}
 	out := Snapshot{Teams: make([]TeamSnapshot, 0, len(ms))}
 	for _, m := range ms {
-		t, err := s.teamSnapshot(ctx, m.Edges.Team, userID, string(m.Role))
+		t, err := s.teamSnapshot(ctx, m.Edges.Team, userID, host, string(m.Role))
 		if err != nil {
 			return Snapshot{}, err
 		}
@@ -211,8 +213,8 @@ func (s *Service) ConfigSnapshot(ctx context.Context, userID string) (Snapshot, 
 
 // teamSnapshot is one team's configurations and the plugin versions its
 // presets pin; t carries its configs.
-func (s *Service) teamSnapshot(ctx context.Context, t *ent.Team, userID, role string) (TeamSnapshot, error) {
-	configs, err := s.effectiveConfigs(ctx, t, userID)
+func (s *Service) teamSnapshot(ctx context.Context, t *ent.Team, userID, host, role string) (TeamSnapshot, error) {
+	configs, err := s.effectiveConfigs(ctx, t, userID, host)
 	if err != nil {
 		return TeamSnapshot{}, err
 	}

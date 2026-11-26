@@ -7,6 +7,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetexclusion"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
@@ -126,6 +127,9 @@ func (s *Service) removeMembership(ctx context.Context, userID, teamID string) e
 		return err
 	}
 	if _, err := tx.AssetSelection.Delete().Where(assetselection.TeamID(teamID), assetselection.UserID(userID)).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := tx.AssetExclusion.Delete().Where(assetexclusion.TeamID(teamID), assetexclusion.UserID(userID)).Exec(ctx); err != nil {
 		return err
 	}
 	if err := tx.TeamConfig.Update().Where(teamconfig.TeamID(teamID), teamconfig.AssetOwnerID(userID), teamconfig.Or(teamconfig.AssetArchived(false), teamconfig.AssetOwnerWithdrawn(true))).SetAssetArchived(true).SetAssetOwnerWithdrawn(false).Exec(ctx); err != nil {

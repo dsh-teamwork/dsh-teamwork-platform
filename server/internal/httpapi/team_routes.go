@@ -69,7 +69,12 @@ func (s *Server) configs(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	snap, err := s.Team.ConfigSnapshot(r.Context(), c.user.ID)
+	// A computer gets what its member keeps on it; a browser or a computer token gets everything.
+	host, err := s.Team.HostOfGrant(r.Context(), c.user.ID, c.grant)
+	if err != nil {
+		return err
+	}
+	snap, err := s.Team.ConfigSnapshot(r.Context(), c.user.ID, host)
 	if err != nil {
 		return err
 	}
