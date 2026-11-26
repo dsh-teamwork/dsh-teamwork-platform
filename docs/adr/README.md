@@ -60,6 +60,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0067 — Team DSH is removed](0067-team-dsh-is-removed.md) — shared DSHs, host tokens and the shared archive go; the relay serves a member's own computers.
 - [0068 — Knowledge is its own module](0068-knowledge-is-its-own-module.md) — kept-together documents beside pages; pages keep html and svg.
 - [0069 — Pages become artifacts](0069-pages-become-artifacts.md) — plugin archives become packages; knowledge documents stay documents in code.
+- [0070 — The first visitor sets up the instance](0070-the-first-visitor-sets-up-the-instance.md) — no setup token; the sign-in page offers the first account.
 
 The template:
 

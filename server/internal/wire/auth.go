@@ -18,7 +18,6 @@ const (
 	InvalidCredentials     = "invalid_credentials"
 	WeakPassword           = "weak_password"
 	SetupClosed            = "setup_closed"
-	SetupLinkInvalid       = "setup_link_invalid"
 	PasswordChangeRequired = "password_change_required"
 )
 
@@ -61,9 +60,8 @@ type PasswordSignIn struct {
 	Password string `json:"password"`
 }
 
-// Setup is POST /api/auth/setup: the first account, with the printed token.
+// Setup is POST /api/auth/setup: the first account, while none exists.
 type Setup struct {
-	Token    string `json:"token"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }

@@ -97,7 +97,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Claim the first account with the link the server printed */
+        /** Claim the first account; open to anyone until one password exists (ADR 0070) */
         post: {
             parameters: {
                 query?: never;
@@ -5479,6 +5479,7 @@ export interface components {
                 emailCode: boolean;
                 google: boolean;
             };
+            /** @description No account exists yet: the sign-in page offers /setup to whoever opens it (ADR 0070). */
             setupOpen: boolean;
             /** @description The pending phone login can authorize only this PKCE challenge. */
             appChallenge?: string;
@@ -5492,7 +5493,6 @@ export interface components {
             password: string;
         };
         Setup: {
-            token: string;
             email: string;
             password: string;
         };

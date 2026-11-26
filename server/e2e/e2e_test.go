@@ -26,7 +26,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 )
 
@@ -148,7 +147,7 @@ func TestPluginEndToEnd(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 		cmd := exec.CommandContext(ctx, "node", filepath.Join(here(), "plugin.mjs"))
-		cmd.Env = append(os.Environ(), "BASE="+base, "SETUP_TOKEN="+auth.SetupToken(secret), "STUB_URL="+stub, "PLUGIN="+plugin)
+		cmd.Env = append(os.Environ(), "BASE="+base, "STUB_URL="+stub, "PLUGIN="+plugin)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("plugin e2e: %v\n%s", err, out)

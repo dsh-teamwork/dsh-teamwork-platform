@@ -187,15 +187,12 @@ func (s *Service) SetupOpen(ctx context.Context) (bool, error) {
 
 const firstAccountKey = "setup:first-account"
 
-// ClaimFirstAccount creates the instance's first account with the token the
-// server printed. The claim is a unique row written in the same transaction
-// as the account, so two people racing for the link get one account between
-// them, on every dialect, and the link is dead once used.
-func (s *Service) ClaimFirstAccount(ctx context.Context, token, email, pw string) (*ent.User, error) {
-	want := SetupToken(s.Secret)
-	if subtle.ConstantTimeCompare([]byte(token), []byte(want)) != 1 {
-		return nil, refuse(wire.SetupLinkInvalid)
-	}
+// ClaimFirstAccount creates the instance's first account for whoever asks
+// first: no token, as the sign-in page offers setup to anyone while no
+// password exists (ADR 0070). The claim is a unique row written in the same
+// transaction as the account, so two people racing get one account between
+// them, on every dialect, and setup is closed once used.
+func (s *Service) ClaimFirstAccount(ctx context.Context, email, pw string) (*ent.User, error) {
 	addr, ok := wire.Email(email)
 	if !ok {
 		return nil, refuse(wire.InvalidEmail)

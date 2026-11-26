@@ -1,12 +1,9 @@
 package auth
 
 import (
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -64,13 +61,4 @@ func GeneratePassword() string {
 		panic(err)
 	}
 	return b64.EncodeToString(b)
-}
-
-// SetupToken is the first account's token: derived from AUTH_SECRET, so it
-// survives a restart and needs no table. The Node server derived it the same
-// way.
-func SetupToken(secret string) string {
-	m := hmac.New(sha256.New, []byte(secret))
-	fmt.Fprint(m, "dsh-teamwork:first-account")
-	return b64.EncodeToString(m.Sum(nil))
 }

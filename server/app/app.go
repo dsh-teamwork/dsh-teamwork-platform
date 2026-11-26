@@ -133,14 +133,14 @@ func run(version string) error {
 		slog.Info("object storage verified", "provider", "s3")
 	}
 	// A management process never offers the first account: the database is
-	// shared, so it is claimed where members sign in, and a management
-	// service's log is no place for a live link.
+	// shared, so it is claimed where members sign in. Elsewhere the sign-in
+	// page offers it to whoever opens it first (ADR 0070); this line only
+	// says where to go.
 	if cfg.Passwords() && cfg.ServiceRole != "manage" {
 		if open, err := srv.Auth.SetupOpen(ctx); err != nil {
 			slog.Error("could not check for a first account", "error", err)
 		} else if open {
-			// The server's own output is the one place only its operator reads.
-			fmt.Printf("No account exists yet. Create the first one at %s/setup?token=%s\n", cfg.AppURL, auth.SetupToken(cfg.AuthSecret))
+			fmt.Printf("No account exists yet. Create the first one at %s/setup\n", cfg.AppURL)
 		}
 	}
 

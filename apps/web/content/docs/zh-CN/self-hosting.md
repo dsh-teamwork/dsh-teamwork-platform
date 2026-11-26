@@ -7,7 +7,7 @@ description: 启动开源社区版，让成员的 DSH 连接它，并保管好�
 
 ## 启动实例
 
-需要 Git、Docker 和 Docker Compose。克隆仓库后，把成员将要访问的地址写进 `compose.yaml` 旁边的 `.env`，这样服务器打印的首个账号链接用的就是这个地址：
+需要 Git、Docker 和 Docker Compose。克隆仓库后，把成员将要访问的地址写进 `compose.yaml` 旁边的 `.env`：
 
 ```sh
 git clone https://github.com/dsh-teamwork/dsh-teamwork-platform.git
@@ -17,7 +17,7 @@ docker compose up -d --build
 docker compose logs server
 ```
 
-只想在本机试用时可以不写 `.env`，访问 `http://localhost:3000`。服务器监听 3000 端口，SQLite 数据库、生成的密钥和私有插件包都保存在 `data` 卷中。打开它打印出的首个账号链接，然后创建团队。
+只想在本机试用时可以不写 `.env`，访问 `http://localhost:3000`。服务器监听 3000 端口，SQLite 数据库、生成的密钥和私有插件包都保存在 `data` 卷中。打开它并创建首个账号：在第一个账号创建之前，登录页会把这一步提供给最先访问的人，所以请在公开地址之前完成。然后创建团队。
 
 所有配置项都写在 `.env` 里，每行一个 `NAME=value`。修改后再运行一次 `docker compose up -d`。
 

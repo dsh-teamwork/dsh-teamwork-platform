@@ -48,7 +48,9 @@
     "resend": "Send a new code",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "setupHint": "This instance has no account yet. Open the setup link the server printed when it started to create the first one."
+    "setupTitle": "Set up this instance",
+    "setupBody": "Nobody has an account here yet. Create the first one: it signs in with an email and a password, creates your team and adds everyone else.",
+    "setupStart": "Create the first account"
   },
   "authErrors": {
     "invalid_email": "That doesn't look like an email address.",
@@ -59,8 +61,7 @@
     "unavailable": "Sign-in isn't available right now.",
     "invalid_credentials": "That email and password don't match.",
     "weak_password": "Use at least 10 characters.",
-    "setup_closed": "This instance already has its first account. Sign in instead.",
-    "setup_link_invalid": "This is not the link the server printed. Copy it again from the server’s output."
+    "setup_closed": "This instance already has its first account. Sign in instead."
   },
   "plugin": {
     "verification_required": "Verify your sign-in with a passkey and try again.",
@@ -90,7 +91,7 @@
   "setup": {
     "title": "Create the first account",
     "description": "This instance has no account yet. Create yours, then create your team and add the others.",
-    "closed": "This link no longer works: the first account already exists.",
+    "closed": "Setup is closed: the first account already exists. Sign in instead.",
     "submit": "Create account"
   },
   "home": {

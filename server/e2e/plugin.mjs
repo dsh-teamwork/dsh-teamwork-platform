@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const { BASE, SETUP_TOKEN, STUB_URL, PLUGIN } = process.env;
+const { BASE, STUB_URL, PLUGIN } = process.env;
 const { TeamworkClient } = await import(pathToFileURL(join(PLUGIN, 'lib/client.js')).href);
 const { platformAdapter, teamProvider } = await import(pathToFileURL(join(PLUGIN, 'lib/platform-models.js')).href);
 const { listenForCode } = await import(pathToFileURL(join(PLUGIN, 'lib/login-callback.js')).href);
@@ -36,7 +36,7 @@ async function browser(path, body, method = body === undefined ? 'GET' : 'POST')
 }
 
 // The admin claims the instance and sets a team up.
-await browser('auth/setup', { token: SETUP_TOKEN, email: 'admin@example.com', password: 'correct horse battery' });
+await browser('auth/setup', { email: 'admin@example.com', password: 'correct horse battery' });
 const team = await browser('teams', { name: 'Core' });
 await browser(`teams/${team.id}/providers`, { name: 'stub', baseUrl: STUB_URL, apiKey: 'sk-e2e' });
 const model = await browser(`teams/${team.id}/configs`, { kind: 'model', name: 'Stub', data: { provider: 'stub', model: 'stub-model', contextWindow: 4096, maxTokens: 512, reasoningEfforts: ['low', 'high'] } });

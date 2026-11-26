@@ -14,8 +14,7 @@ for it.
 ## Start an instance
 
 With Git, Docker and Docker Compose, clone the repository and write the
-address members will open into a `.env` beside `compose.yaml`, so the
-first-account link the server prints already uses it:
+address members will open into a `.env` beside `compose.yaml`:
 
 ```sh
 git clone https://github.com/dsh-teamwork/dsh-teamwork-platform.git
@@ -27,8 +26,9 @@ docker compose logs server
 
 Leave `.env` out to try it on this machine at `http://localhost:3000`. The
 server listens on port 3000 and keeps its SQLite database, generated secrets
-and private plugin archives in the `data` volume. Open the first-account link
-it prints, then create a team.
+and private plugin archives in the `data` volume. Open it and create the first
+account, which the sign-in page offers to whoever arrives first until one
+exists, so do it before you share the address. Then create a team.
 
 Every setting goes in `.env`, one `NAME=value` per line. After changing it, run
 `docker compose up -d` again.

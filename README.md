@@ -57,7 +57,8 @@ docker compose up -d --build
 docker compose logs server
 ```
 
-Open the private first-account setup link printed by the server. The local
+Open the console and create the first account, which its sign-in page offers
+until one exists. The local
 console is at `http://localhost:3000`; Compose retains the database, secrets and
 local plugin archives in its `data` volume. Create a team and add members in
 the console.
@@ -128,8 +129,8 @@ pnpm build
 ```
 
 The local default is `http://127.0.0.1:3800`, with private data in
-`~/.dsh-teamwork`. Follow the setup link printed at
-startup. [CLAUDE.md](CLAUDE.md) contains development commands and the complete
+`~/.dsh-teamwork`. Open it to create the
+first account. [CLAUDE.md](CLAUDE.md) contains development commands and the complete
 pre-push gate. Pull requests run that gate; commits carry a `Signed-off-by:`
 line (`git commit -s`) certifying the [DCO](https://developercertificate.org/).
 [Report issues here](https://github.com/dsh-teamwork/dsh-teamwork-platform/issues).

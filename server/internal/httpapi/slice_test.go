@@ -170,17 +170,21 @@ func TestPasswordGuessLimitUnderBurst(t *testing.T) {
 	})
 }
 
-// Racing for the setup link gets one account between everybody.
+// Setup needs no token (ADR 0070), so the race is the security boundary:
+// whoever comes first gets the one account, and setup closes for everybody.
 func TestFirstAccountRace(t *testing.T) {
 	testdb.Each(t, func(t *testing.T, d *testdb.DB) {
 		e := start(t, d, options{})
+		if s := must(t, e.browser().get("/api/auth/session"), http.StatusOK); s["setupOpen"] != true {
+			t.Fatalf("fresh instance: %v", s)
+		}
 		var ok atomic.Int32
 		var wg sync.WaitGroup
 		for i := 0; i < 12; i++ {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
-				r := e.browser().post("/api/auth/setup", map[string]string{"token": auth.SetupToken(secret), "email": fmt.Sprintf("p%d@x.io", i), "password": "correct horse battery"})
+				r := e.browser().post("/api/auth/setup", map[string]string{"email": fmt.Sprintf("p%d@x.io", i), "password": "correct horse battery"})
 				if r.status == http.StatusNoContent {
 					ok.Add(1)
 				} else if r.code() != "setup_closed" {
@@ -192,8 +196,11 @@ func TestFirstAccountRace(t *testing.T) {
 		if n := d.Client.Password.Query().CountX(context.Background()); ok.Load() != 1 || n != 1 {
 			t.Fatalf("%d claims succeeded, %d passwords", ok.Load(), n)
 		}
-		if r := e.browser().post("/api/auth/setup", map[string]string{"token": "wrong", "email": "z@x.io", "password": "correct horse battery"}); r.code() != "setup_link_invalid" {
-			t.Fatalf("wrong token: %s", r.body)
+		if r := e.browser().post("/api/auth/setup", map[string]string{"email": "z@x.io", "password": "correct horse battery"}); r.code() != "setup_closed" {
+			t.Fatalf("after the claim: %s", r.body)
+		}
+		if s := must(t, e.browser().get("/api/auth/session"), http.StatusOK); s["setupOpen"] != false {
+			t.Fatalf("after the claim: %v", s)
 		}
 	})
 }
