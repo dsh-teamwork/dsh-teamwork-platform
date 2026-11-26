@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-26 — A simpler home header, and an edition's community
+
+- **What:** The home header keeps only *Community edition* (behind GitHub's mark, to the editions table's open row), the hosted service's page where an edition names one (`HomeWorkspace.cloudLink.nav`), and *Docs*, at the right beside the language, the theme and *Create a team*; the section links and the GitHub button to the plugin repository are gone. An edition may name its user community (`EditionCommunity`, `mountWeb`'s `community`, `HomeWorkspace.community`): a link, or a code to scan in a popover, shown on the home page's first screen in place of *Full install guide*, in its footer and in the footer of `/teams` and `/account`. The open edition names none and keeps the install guide link.
+- **Why:** A header with fewer, clearer ways on, and a place for an edition's users to reach its makers.
+- **Breaking:** An edition's `HomeWorkspace.cloudLink` now requires `nav`.
+- **Upgrade:** Nothing.
+- **Refs:** `apps/web/src/lib/edition.ts`, `apps/web/src/components/community.tsx`, `docs/design.md`.
+
 ## 2026-11-25 — Read instance activity by UTC date
 
 - **What:** `GET /api/admin/activity` reports aggregate account, team, and model-call activity. Editions can read the same report through `Host.Activity`.
