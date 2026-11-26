@@ -553,7 +553,7 @@
       "budgets": "预算",
       "groups": {
         "work": "工作区",
-        "people": "成员与费用",
+        "people": "成员和费用",
         "manage": "团队管理"
       },
       "open": "打开导航",
@@ -561,7 +561,7 @@
       "waiting": "有待你处理的事项",
       "fold": "收起{name}下的电脑",
       "unfold": "展开{name}下的电脑",
-      "myUsage": "模型与用量",
+      "myUsage": "模型和用量",
       "myDsh": "我的 DSH",
       "artifacts": "共享页面",
       "knowledge": "知识文档",
@@ -1030,7 +1030,7 @@
       "no": "否"
     },
     "myUsage": {
-      "title": "模型与用量",
+      "title": "模型和用量",
       "description": "团队可用的模型和单价，以及你自己在这个团队的使用情况：对你生效的额度、花了多少积分、用在了哪些模型上。",
       "period": "时间范围",
       "days": "近 {count} 天",
