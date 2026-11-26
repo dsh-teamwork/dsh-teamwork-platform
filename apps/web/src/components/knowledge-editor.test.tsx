@@ -2,7 +2,7 @@
 import { act, createElement, createRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { IntlProvider } from 'use-intl';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { joinFrontMatter, splitFrontMatter } from '@/lib/knowledge-format';
 import messages from '@/messages/en.json';
@@ -98,6 +98,11 @@ Deploys go out from \`main\`; see [[Glossary#Release train]] and [[Pricing]].
 
 /** The attachments the document holds. */
 const FILES = ['diagram.png', 'spec.pdf', 'old spec.pdf', 'data.csv'];
+
+// A diagram loads mermaid on first draw. Cold, under the gate's parallel load,
+// that alone outlasted the first case's five seconds; loaded once here, every
+// case times the editor rather than the import.
+beforeAll(() => import('mermaid'), 60_000);
 
 let host: HTMLDivElement | null = null;
 afterEach(() => {
