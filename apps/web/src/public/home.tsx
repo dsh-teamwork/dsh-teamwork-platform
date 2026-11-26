@@ -3,7 +3,7 @@ import { BatteryFull, Check, ExternalLink, Github, MessagesSquare, Signal, Wifi 
 import type { ReactNode } from 'react';
 
 import { CommunityCard } from '@/components/community';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import type { EditionCommunity } from '@/lib/edition';
 import type { Locale } from '@/lib/locale';
 import en from '@/messages/en.json';
@@ -27,7 +27,7 @@ import { SeaBed, SeaSurface, WhalePassage, WhalePod } from './sea';
  * that is planned, or offered only by the hosted service, says so where it
  * appears (ADR 0007: a claim here holds for any instance). A deployment's
  * legal pages are linked when it has them, and an edition's community
- * (`EditionCommunity`) beside the closing call and in the footer.
+ * (`EditionCommunity`) on the first screen and in the footer.
  *
  * Prerendered when the console is built (scripts/prerender.mjs), once per
  * locale and sign-in state; the Go server picks one per request
@@ -163,11 +163,10 @@ export interface HomeWorkspace {
 
 /**
  * The edition's community: a link, or a <details> menu holding the code to scan
- * (src/public/client.ts closes it on a click outside). It opens upward, over
- * the page rather than into the seabed's drawing, from its start or, at the
- * footer's end, from its end; on the first screen, downward.
+ * (src/public/client.ts closes it on a click outside). On the first screen it
+ * opens downward from its start; at the footer's end, upward from its end.
  */
-function Community({ community, className, end, down }: { community: EditionCommunity; className: string; end?: boolean; down?: boolean }) {
+function Community({ community, className, footer }: { community: EditionCommunity; className: string; footer?: boolean }) {
   const { qr } = community;
   if (!qr) {
     return (
@@ -183,7 +182,7 @@ function Community({ community, className, end, down }: { community: EditionComm
         <MessagesSquare aria-hidden className="size-4" />
         {community.label}
       </summary>
-      <div className={`absolute z-10 rounded-lg border bg-background text-foreground shadow-lg ${down ? 'top-full mt-2' : 'bottom-full mb-2'} ${end ? 'right-0' : 'left-0'}`}>
+      <div className={`absolute z-10 rounded-lg border bg-background text-foreground shadow-lg ${footer ? 'right-0 bottom-full mb-2' : 'left-0 top-full mt-2'}`}>
         <CommunityCard community={{ ...community, qr }} />
       </div>
     </details>
@@ -294,7 +293,7 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
                   <Copyable text={PLUGIN} label={t('install.copy')} />
                   {/* An edition with a community offers it here instead, where a newcomer is stuck installing; the guide stays in the navigation. */}
                   {workspace?.community ? (
-                    <Community community={workspace.community} className={`${introLink} gap-1.5`} down />
+                    <Community community={workspace.community} className={`${introLink} gap-1.5`} />
                   ) : (
                     <a href="/docs/install" target="_blank" rel="noopener" className={`${introLink} gap-1`}>
                       {t('install.more')}
@@ -532,14 +531,9 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
                 <span className="opacity-75">{t('final.label')}</span>
               </p>
               <h2 className={`${zoneTitle} whitespace-pre-line`}>{t('final.title')}</h2>
-              <div className="mt-8 flex flex-wrap items-start gap-3">
-                <Button asChild size="lg">
-                  <a href={start.href}>{start.label}</a>
-                </Button>
-                {workspace?.community && (
-                  <Community community={workspace.community} className={buttonVariants({ size: 'lg', variant: 'outline' })} />
-                )}
-              </div>
+              <Button asChild size="lg" className="mt-8">
+                <a href={start.href}>{start.label}</a>
+              </Button>
             </div>
           </section>
 
@@ -552,7 +546,7 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
               </span>
               <nav aria-label={t('nav.label')} className="ml-auto flex flex-wrap items-center justify-end gap-x-4 sm:gap-x-6">
                 <a href="/docs">{t('nav.docs')}</a>
-                {workspace?.community && <Community community={workspace.community} className="inline-flex items-center gap-1.5 py-1.5 hover:text-foreground" end />}
+                {workspace?.community && <Community community={workspace.community} className="inline-flex items-center gap-1.5 py-1.5 hover:text-foreground" footer />}
                 {legal && (
                   <>
                     <a href="/privacy">{tc('privacy')}</a>
