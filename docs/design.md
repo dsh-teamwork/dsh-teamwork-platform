@@ -272,8 +272,8 @@ a person or a character, which at this size reads as clip art.
 - **The landing page's first screen is what the product is and how to start.**
   The title, one sentence, the plugin to copy and the install guide sit
   above the waterline; an edition with a community links that there in the
-  guide's place, where a newcomer stuck installing looks for help. Everything in the header but the mark sits at the right: two links,
-  Pricing and Docs, then the language, the theme switch, a GitHub icon that
+  guide's place, where a newcomer stuck installing looks for help. Everything in the header but the mark sits at the right: three links,
+  Open source (the GitHub organization), Pricing and Docs, then the language, the theme switch, a GitHub icon that
   links to the Teamwork plugin, and *Create a team*. The dive link at
   the lower right scrolls to the team overview at −5 m. The overview asks
   how the whole team can make the most of DSH and introduces access,
