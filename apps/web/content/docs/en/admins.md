@@ -10,10 +10,10 @@ on its **Team overview**. Until your own DSH is connected it opens with that:
 sign in to Teamwork from DSH on your computer, then pair a browser (**My DSH**)
 or the phone app with it. Below that it tracks what the team still lacks, and
 once the team is running opens with what waits on you:
-submissions to review, budgets near their limit, calls to resolve and budget
+budgets near their limit, calls to resolve and budget
 mail that failed. It heads **Team management** at the foot of the sidebar,
 which only the team's admin sees, with **Team assets** (models, presets,
-plugins, review and history) and **Members and spend** (members, usage and
+plugins, submission history and version history) and **Members and spend** (members, usage and
 budgets) below it. Team management starts folded: open it with its toggle or
 **Alt+M** (**Option+M** on a Mac), and it folds away again when you choose a
 Workspace page. Press **Esc** to fold Team management. If a dialog is open,
@@ -139,11 +139,12 @@ the provider still bills you directly. Where the server sends email, a budget
 can also warn admins or the member as it nears its cap. **Usage** lists every
 call by member and model and exports it as CSV.
 
-## 6. Review what members share
+## 6. Set a team default
 
-Members can submit presets and plugins. Under **Review**, compare
-the proposed contents with what is live, then approve to publish or reject with
-a reason.
+Open a member's asset in **Team toolbox**, select a version, enter an optional
+team display name and choose **Set team default**. Members receive it on their
+next sync. Change the selected version to upgrade or roll back. Removing the
+default leaves members' personal installs in place.
 
 ## 7. Share what the team knows
 

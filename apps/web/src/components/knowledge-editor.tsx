@@ -296,7 +296,7 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
   const slashName = (id: SlashItemId) => t(`slash.${id}`);
   const blocks = slash?.kind === 'block' ? slashItems(slash.query, slashName, { attach: !!onAttach, artifact: !!onArtifact }) : [];
   const people = slash?.kind === 'mention' ? mentionItems(slash.query, members) : [];
-  const items = slash?.kind === 'mention' ? people.map((m) => ({ key: m.id, label: m.name })) : blocks.map((id) => ({ key: id, label: slashName(id) }));
+  const items = slash?.kind === 'mention' ? people.map((m) => ({ key: m.id, label: m.name, detail: m.detail })) : blocks.map((id) => ({ key: id, label: slashName(id) }));
   const menu = useRef({ slash, items, active });
   const pick = (index: number) => {
     const open = menu.current.slash;
@@ -313,7 +313,7 @@ export const KnowledgeEditor = forwardRef<KnowledgeEditorHandle, {
   const slashKeys = useRef<(event: KeyboardEvent) => boolean>(() => false);
   const onSlashKey = (event: KeyboardEvent) => {
     const { slash: open, items: shown, active: at } = menu.current;
-    if (!open) return false;
+    if (!open || event.isComposing) return false;
     if (event.key === 'Escape') {
       dismissed.current = open.from;
       setSlash(null);

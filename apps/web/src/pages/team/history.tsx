@@ -3,13 +3,12 @@
  * team's resources as a timeline, newest first, filtered in one row (kind,
  * resource, author, time range). Each version opens to show what restoring it
  * would change, field by field (components/team/config-diff.tsx); an admin can
- * export it with what it depends on, or prepare a restore, which becomes a
+ * export it with what it depends on, or restore a team configuration as a
  * draft that goes through review like any other change.
  */
 
 import { ChevronRight, Download, History as HistoryIcon, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router';
 import { useFormatter, useNow, useTranslations } from 'use-intl';
 
 import { Failure } from '@/components/page';
@@ -189,7 +188,7 @@ function RevisionRow({ row, team, current, names, onRestore }: { row: Revision; 
               afterLabel={t('thisVersion', { version: row.version })}
             />
           )}
-          {row.kind !== 'model' && (
+          {row.kind !== 'model' && !current?.assetOwnerId && (
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" disabled={pending} onClick={() => void run(() => download(`teams/${team.id}/history/${row.id}/export`, `teamwork-${row.id}.tgz`))}>
                 <Download />
@@ -213,7 +212,6 @@ function RevisionRow({ row, team, current, names, onRestore }: { row: Revision; 
 function RestoreDialog({ teamId, row, current, reload, onClose }: { teamId: string; row: Revision; current: TeamConfig | null; reload: () => Promise<unknown>; onClose: () => void }) {
   const t = useTranslations('team.history');
   const { pending, run } = useMutation(reload);
-  const [done, setDone] = useState(false);
   return (
     <Dialog open onOpenChange={(open) => !open && !pending && onClose()}>
       <DialogContent>
@@ -222,32 +220,24 @@ function RestoreDialog({ teamId, row, current, reload, onClose }: { teamId: stri
             <HistoryIcon className="size-4" aria-hidden />
             {t('restoreTitle', { name: row.name, version: row.version })}
           </DialogTitle>
-          <DialogDescription>{done ? t('draftCreated') : t('confirm', { version: row.version, base: current?.version ?? 0 })}</DialogDescription>
+          <DialogDescription>{t('confirm', { version: row.version, base: current?.version ?? 0 })}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          {done ? (
-            <Button asChild>
-              <Link to={`/teams/${teamId}/sharing`}>{t('openReview')}</Link>
-            </Button>
-          ) : (
-            <>
-              <Button variant="outline" disabled={pending} onClick={onClose}>
-                {t('cancel')}
-              </Button>
-              <Button
-                disabled={pending}
-                onClick={async () => {
-                  const ok = await run(
-                    () => api(`teams/${teamId}/history/${row.id}/restore`, { body: { baseVersion: current?.version ?? 0, note: t('restoreNote', { version: row.version }) } }),
-                    t('draftCreated'),
-                  );
-                  if (ok) setDone(true);
-                }}
-              >
-                {t('prepare')}
-              </Button>
-            </>
-          )}
+          <Button variant="outline" disabled={pending} onClick={onClose}>
+            {t('cancel')}
+          </Button>
+          <Button
+            disabled={pending}
+            onClick={async () => {
+              const ok = await run(
+                () => api(`teams/${teamId}/history/${row.id}/restore`, { body: { baseVersion: current?.version ?? 0, note: t('restoreNote', { version: row.version }) } }),
+                t('restored'),
+              );
+              if (ok) onClose();
+            }}
+          >
+            {t('restore')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

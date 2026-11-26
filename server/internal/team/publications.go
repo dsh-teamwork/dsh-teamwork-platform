@@ -7,6 +7,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/pluginpackage"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -18,9 +19,14 @@ func recordRevision(ctx context.Context, db *ent.Client, c *ent.TeamConfig, auth
 
 // publish is called only inside a transaction, after membership has been checked.
 // The versioned live write and immutable history commit together.
-func (s *Service) publish(ctx context.Context, teamID, configID string, base int, in wire.ConfigInput, author, reviewer, note, source string) (*ent.TeamConfig, error) {
+func (s *Service) publish(ctx context.Context, teamID, configID string, base int, in wire.ConfigInput, author, note, assetOwner string, reactivate bool) (*ent.TeamConfig, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
+	}
+	if assetOwner != "" {
+		if err := validateMemberPreset(in.Preset); err != nil {
+			return nil, err
+		}
 	}
 	if err := s.checkReferences(ctx, teamID, &in); err != nil {
 		return nil, err
@@ -36,7 +42,7 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 	version := 1
 	restoredBuiltin := ""
 	if current != nil {
-		if current.RouteOwner != "" {
+		if current.RouteOwner != "" || (current.AssetArchived && (!reactivate || !current.AssetOwnerWithdrawn)) || (current.AssetOwnerID != "" && current.AssetOwnerID != assetOwner) {
 			return nil, wire.E(http.StatusForbidden, "config_owned")
 		}
 		if string(current.Kind) != in.Kind {
@@ -62,7 +68,7 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 				return nil, err
 			}
 		}
-		n, err := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(teamID), teamconfig.Version(base)).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
+		n, err := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(teamID), teamconfig.Version(base), teamconfig.AssetArchived(reactivate), teamconfig.AssetOwnerWithdrawn(reactivate)).SetAssetArchived(false).SetAssetOwnerWithdrawn(false).SetName(in.Name).SetData(in.Canonical()).AddVersion(1).Save(ctx)
 		if err != nil {
 			return nil, conflict(err, wire.ConfigExists)
 		}
@@ -91,6 +97,9 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 			}
 		}
 		create := s.DB.TeamConfig.Create().SetTeamID(teamID).SetKind(teamconfig.Kind(in.Kind)).SetName(in.Name).SetData(in.Canonical()).SetVersion(version)
+		if assetOwner != "" {
+			create.SetAssetOwnerID(assetOwner)
+		}
 		if restoredBuiltin != "" {
 			create.SetBuiltin(restoredBuiltin)
 		}
@@ -107,13 +116,16 @@ func (s *Service) publish(ctx context.Context, teamID, configID string, base int
 			return nil, err
 		}
 	}
-	if err := recordRevision(ctx, s.DB, current, author, reviewer, note, source); err != nil {
+	if err := recordRevision(ctx, s.DB, current, author, "", note, "direct"); err != nil {
 		return nil, err
 	}
 	return current, nil
 }
 
 func (s *Service) publishDirect(ctx context.Context, userID, teamID, configID string, base int, in wire.ConfigInput) (ConfigView, error) {
+	if err := in.Validate(); err != nil {
+		return ConfigView{}, err
+	}
 	tx, err := s.DB.Tx(ctx)
 	if err != nil {
 		return ConfigView{}, err
@@ -121,12 +133,63 @@ func (s *Service) publishDirect(ctx context.Context, userID, teamID, configID st
 	defer tx.Rollback()
 	scoped := *s
 	scoped.DB = tx.Client()
-	if _, err := scoped.RequireMembership(ctx, userID, teamID, true); err != nil {
-		return ConfigView{}, err
-	}
-	c, err := scoped.publish(ctx, teamID, configID, base, in, userID, userID, "", "direct")
+	member, err := scoped.RequireMembership(ctx, userID, teamID, false)
 	if err != nil {
 		return ConfigView{}, err
+	}
+	admin := member.Role == membership.RoleAdmin
+	var owner string
+	switch {
+	case configID != "":
+		current, err := scoped.DB.TeamConfig.Query().Where(teamconfig.TeamID(teamID), teamconfig.ID(configID)).Only(ctx)
+		if ent.IsNotFound(err) {
+			return ConfigView{}, wire.E(http.StatusConflict, "config_conflict")
+		}
+		if err != nil {
+			return ConfigView{}, err
+		}
+		if current.AssetOwnerID == userID {
+			owner = userID
+		} else if !admin || current.AssetOwnerID != "" {
+			return ConfigView{}, wire.E(http.StatusForbidden, "config_owned")
+		}
+	case in.Kind != "model" && (!admin || in.MemberAsset):
+		owner = userID
+	case !admin:
+		return ConfigView{}, wire.E(http.StatusForbidden, "admin_required")
+	}
+	if owner != "" && in.Plugin != nil && in.Plugin.PackageID != "" {
+		pkg, err := scoped.Package(ctx, userID, teamID, in.Plugin.PackageID)
+		if err != nil {
+			return ConfigView{}, err
+		}
+		if !pkg.Published && pkg.AuthorID != userID {
+			return ConfigView{}, wire.E(http.StatusNotFound, "package_not_found")
+		}
+	}
+	newAsset := owner != "" && configID == ""
+	reactivate := false
+	if newAsset {
+		archived, err := scoped.DB.TeamConfig.Query().Where(teamconfig.TeamID(teamID), teamconfig.AssetOwnerID(owner),
+			teamconfig.KindEQ(teamconfig.Kind(in.Kind)), teamconfig.Name(in.Name), teamconfig.AssetArchived(true)).Only(ctx)
+		if err != nil && !ent.IsNotFound(err) {
+			return ConfigView{}, err
+		}
+		if archived != nil {
+			if !archived.AssetOwnerWithdrawn {
+				return ConfigView{}, wire.E(http.StatusConflict, "asset_restore_forbidden")
+			}
+			configID, base, reactivate = archived.ID, archived.Version, true
+		}
+	}
+	c, err := scoped.publish(ctx, teamID, configID, base, in, userID, "", owner, reactivate)
+	if err != nil {
+		return ConfigView{}, err
+	}
+	if newAsset {
+		if err := scoped.savePersonalAssetChoice(ctx, teamID, userID, c.ID, AssetChoiceInput{Version: c.Version}); err != nil {
+			return ConfigView{}, err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return ConfigView{}, err
@@ -151,4 +214,13 @@ type RevisionView struct {
 
 func revisionView(r *ent.ConfigRevision) RevisionView {
 	return RevisionView{r.ID, r.ConfigID, string(r.Kind), r.Name, r.Data, r.Version, r.AuthorID, r.ReviewerID, r.Note, string(r.Source), Time(r.CreatedAt)}
+}
+
+func validateMemberPreset(preset *wire.PresetData) error {
+	if preset != nil && (preset.Provider != nil || preset.Model != nil) {
+		var issues wire.Issues
+		issues.Add("Select a team model or inherit the session model", "data", "modelConfigId")
+		return issues.Err()
+	}
+	return nil
 }

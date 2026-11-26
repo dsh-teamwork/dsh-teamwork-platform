@@ -105,6 +105,21 @@ func Version(v int) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldEQ(FieldVersion, v))
 }
 
+// AssetOwnerID applies equality check predicate on the "asset_owner_id" field. It's identical to AssetOwnerIDEQ.
+func AssetOwnerID(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldAssetOwnerID, v))
+}
+
+// AssetArchived applies equality check predicate on the "asset_archived" field. It's identical to AssetArchivedEQ.
+func AssetArchived(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldAssetArchived, v))
+}
+
+// AssetOwnerWithdrawn applies equality check predicate on the "asset_owner_withdrawn" field. It's identical to AssetOwnerWithdrawnEQ.
+func AssetOwnerWithdrawn(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldAssetOwnerWithdrawn, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldEQ(FieldCreatedAt, v))
@@ -578,6 +593,91 @@ func VersionLT(v int) predicate.TeamConfig {
 // VersionLTE applies the LTE predicate on the "version" field.
 func VersionLTE(v int) predicate.TeamConfig {
 	return predicate.TeamConfig(sql.FieldLTE(FieldVersion, v))
+}
+
+// AssetOwnerIDEQ applies the EQ predicate on the "asset_owner_id" field.
+func AssetOwnerIDEQ(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDNEQ applies the NEQ predicate on the "asset_owner_id" field.
+func AssetOwnerIDNEQ(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNEQ(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDIn applies the In predicate on the "asset_owner_id" field.
+func AssetOwnerIDIn(vs ...string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldIn(FieldAssetOwnerID, vs...))
+}
+
+// AssetOwnerIDNotIn applies the NotIn predicate on the "asset_owner_id" field.
+func AssetOwnerIDNotIn(vs ...string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNotIn(FieldAssetOwnerID, vs...))
+}
+
+// AssetOwnerIDGT applies the GT predicate on the "asset_owner_id" field.
+func AssetOwnerIDGT(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldGT(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDGTE applies the GTE predicate on the "asset_owner_id" field.
+func AssetOwnerIDGTE(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldGTE(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDLT applies the LT predicate on the "asset_owner_id" field.
+func AssetOwnerIDLT(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldLT(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDLTE applies the LTE predicate on the "asset_owner_id" field.
+func AssetOwnerIDLTE(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldLTE(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDContains applies the Contains predicate on the "asset_owner_id" field.
+func AssetOwnerIDContains(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldContains(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDHasPrefix applies the HasPrefix predicate on the "asset_owner_id" field.
+func AssetOwnerIDHasPrefix(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldHasPrefix(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDHasSuffix applies the HasSuffix predicate on the "asset_owner_id" field.
+func AssetOwnerIDHasSuffix(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldHasSuffix(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDEqualFold applies the EqualFold predicate on the "asset_owner_id" field.
+func AssetOwnerIDEqualFold(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEqualFold(FieldAssetOwnerID, v))
+}
+
+// AssetOwnerIDContainsFold applies the ContainsFold predicate on the "asset_owner_id" field.
+func AssetOwnerIDContainsFold(v string) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldContainsFold(FieldAssetOwnerID, v))
+}
+
+// AssetArchivedEQ applies the EQ predicate on the "asset_archived" field.
+func AssetArchivedEQ(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldAssetArchived, v))
+}
+
+// AssetArchivedNEQ applies the NEQ predicate on the "asset_archived" field.
+func AssetArchivedNEQ(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNEQ(FieldAssetArchived, v))
+}
+
+// AssetOwnerWithdrawnEQ applies the EQ predicate on the "asset_owner_withdrawn" field.
+func AssetOwnerWithdrawnEQ(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldEQ(FieldAssetOwnerWithdrawn, v))
+}
+
+// AssetOwnerWithdrawnNEQ applies the NEQ predicate on the "asset_owner_withdrawn" field.
+func AssetOwnerWithdrawnNEQ(v bool) predicate.TeamConfig {
+	return predicate.TeamConfig(sql.FieldNEQ(FieldAssetOwnerWithdrawn, v))
 }
 
 // HasTeam applies the HasEdge predicate on the "team" edge.

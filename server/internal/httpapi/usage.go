@@ -158,16 +158,11 @@ func (s *Server) teamSummary(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	v := struct {
-		usage.Summary
-		PendingReviews int `json:"pendingReviews"`
-	}{}
-	if v.Summary, err = s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, team); err != nil {
+	v, err := s.Usage.Summary(r.Context(), m.TeamID, c.user.ID, team)
+	if err != nil {
 		return err
 	}
-	if v.PendingReviews, err = s.Team.PendingSubmissions(r.Context(), m.TeamID, c.user.ID, team); err != nil {
-		return err
-	}
+
 	noStore(w)
 	writeJSON(w, http.StatusOK, v)
 	return nil

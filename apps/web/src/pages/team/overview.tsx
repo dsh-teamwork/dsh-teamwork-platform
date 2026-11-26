@@ -14,7 +14,7 @@
  */
 
 import { formatPoints } from '@dsh-teamwork/shared';
-import { ArrowRight, CircleCheck, CircleSlash, Gauge, GitPullRequestArrow, MailWarning, ReceiptText, Tag } from 'lucide-react';
+import { ArrowRight, CircleCheck, CircleSlash, Gauge, MailWarning, ReceiptText, Tag } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useFormatter, useLocale, useNow, useTranslations } from 'use-intl';
@@ -155,14 +155,6 @@ function Waiting({ scope, summary, base }: { scope: Scope; summary?: Summary; ba
   if (summary.overruns > 0) {
     items.push({ key: 'overruns', icon: <CircleSlash className="size-4" aria-hidden />, text: t('overruns', { count: summary.overruns }), href: `${base}/usage` });
   }
-  if (summary.pendingReviews > 0) {
-    items.push({
-      key: 'reviews',
-      icon: <GitPullRequestArrow className="size-4" aria-hidden />,
-      text: t(scope === 'team' ? 'reviews' : 'reviewsMine', { count: summary.pendingReviews }),
-      href: scope === 'team' ? `${base}/sharing` : `${base}/resources?submissions`,
-    });
-  }
   for (const limit of summary.nearLimit) {
     items.push({
       key: `limit-${limit.scope}-${limit.subjectId}-${limit.period}`,
@@ -192,7 +184,6 @@ function Waiting({ scope, summary, base }: { scope: Scope; summary?: Summary; ba
       <h2 id="waiting" className="flex items-center gap-2 border-b bg-muted px-4 py-2.5 text-sm font-semibold">
         {/* The page's one amber mark: something here waits on the reader (docs/design.md). */}
         <span aria-hidden className="size-1.5 rounded-full bg-signal" />
-        {/* One's own submissions wait on an admin, not on oneself. */}
         {t(scope === 'team' ? 'title' : 'titleMember')}
         <span className="font-normal text-muted-foreground tabular-nums">{items.length}</span>
       </h2>

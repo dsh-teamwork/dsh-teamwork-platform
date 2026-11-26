@@ -22,6 +22,8 @@ type Tx struct {
 	ArtifactMember *ArtifactMemberClient
 	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
 	ArtifactVersion *ArtifactVersionClient
+	// AssetSelection is the client for interacting with the AssetSelection builders.
+	AssetSelection *AssetSelectionClient
 	// BudgetEvent is the client for interacting with the BudgetEvent builders.
 	BudgetEvent *BudgetEventClient
 	// BudgetGate is the client for interacting with the BudgetGate builders.
@@ -223,6 +225,7 @@ func (tx *Tx) init() {
 	tx.ArtifactFile = NewArtifactFileClient(tx.config)
 	tx.ArtifactMember = NewArtifactMemberClient(tx.config)
 	tx.ArtifactVersion = NewArtifactVersionClient(tx.config)
+	tx.AssetSelection = NewAssetSelectionClient(tx.config)
 	tx.BudgetEvent = NewBudgetEventClient(tx.config)
 	tx.BudgetGate = NewBudgetGateClient(tx.config)
 	tx.BudgetNotice = NewBudgetNoticeClient(tx.config)

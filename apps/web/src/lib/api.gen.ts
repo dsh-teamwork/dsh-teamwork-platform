@@ -515,7 +515,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** An admin publishes a model, preset or plugin */
+        /** Publish a member-owned asset or configure a team-wide resource as administrator */
         post: {
             parameters: {
                 query?: never;
@@ -545,8 +545,150 @@ export interface paths {
                 403: components["responses"]["Error"];
                 404: components["responses"]["Error"];
                 409: components["responses"]["Error"];
+                500: components["responses"]["Error"];
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/asset-choices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        /** Read the caller's own selections, team defaults and retained archived assets */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Asset selections */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssetChoices"];
+                    };
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/asset-choices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Pin or remove a personal version and control whether the team default applies */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        version?: number;
+                        disabled?: boolean;
+                        name?: string;
+                        revision?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Selection saved */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teams/{teamId}/asset-defaults/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Set, rename or withdraw a versioned team default as an administrator */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    teamId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        version?: number;
+                        disabled?: boolean;
+                        name?: string;
+                        revision?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Selection saved */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: components["responses"]["Error"];
+            };
+        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1298,7 +1440,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** An admin removes a configuration no preset still uses */
+        /** Archive a member-owned asset or remove a team configuration */
         delete: {
             parameters: {
                 query?: never;
@@ -1326,7 +1468,7 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** An admin edits a configuration, naming the version it read */
+        /** Edit a configuration as its owner, naming the version it read */
         patch: {
             parameters: {
                 query?: never;
@@ -2298,34 +2440,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create a private submission draft */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    teamId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["SubmissionInput"];
-                };
-            };
-            responses: {
-                /** @description Success */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ResourceSubmission"];
-                    };
-                };
-                default: components["responses"]["Error"];
-            };
-        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2367,85 +2482,8 @@ export interface paths {
                 default: components["responses"]["Error"];
             };
         };
-        /** Edit an owned draft at its current revision */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    teamId: string;
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["SubmissionInput"];
-                };
-            };
-            responses: {
-                /** @description Success */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ResourceSubmission"];
-                    };
-                };
-                default: components["responses"]["Error"];
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/teams/{teamId}/submissions/{id}/{action}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                teamId: string;
-                id: string;
-                action: "submit" | "approve" | "reject" | "withdraw";
-            };
-            cookie?: never;
-        };
-        get?: never;
         put?: never;
-        /** Submit, withdraw, or explicitly review the frozen proposal */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    teamId: string;
-                    id: string;
-                    action: "submit" | "approve" | "reject" | "withdraw";
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ReviewInput"];
-                };
-            };
-            responses: {
-                /** @description Success */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ResourceSubmission"];
-                    };
-                };
-                default: components["responses"]["Error"];
-            };
-        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4223,7 +4261,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** An administrator prepares a historical resource as a new review draft */
+        /** An administrator restores a historical team configuration as a new version */
         post: {
             parameters: {
                 query?: never;
@@ -4243,13 +4281,13 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Restore draft; not published until submitted and approved */
+                /** @description Restored configuration */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ResourceSubmission"];
+                        "application/json": components["schemas"]["Config"];
                     };
                 };
                 default: components["responses"]["Error"];
@@ -5189,8 +5227,6 @@ export interface components {
             /** @description The team's models no call reaches until a rate is set for the provider and upstream model they call now; empty outside scope=team */
             unpricedModels: string[];
             budget: components["schemas"]["QuotaSummary"];
-            /** @description Submissions awaiting review, in the scope asked for */
-            pendingReviews: number;
         };
         UsageStats: {
             /** Format: date-time */
@@ -5452,13 +5488,34 @@ export interface components {
             providesTools?: string[];
             description?: string;
         };
+        AssetChoice: {
+            version: number;
+            disabled: boolean;
+            name: string;
+            revision: number;
+            adoptedVersions?: number[];
+        };
+        AssetChoices: {
+            personal: {
+                [key: string]: components["schemas"]["AssetChoice"];
+            };
+            defaults: {
+                [key: string]: components["schemas"]["AssetChoice"];
+            };
+            archived: components["schemas"]["Config"][];
+        };
         ConfigInput: {
+            /** @description Create a member-owned asset in the team directory. */
+            memberAsset?: boolean;
             /** @enum {string} */
             kind: "model" | "preset" | "plugin";
             name: string;
             data: components["schemas"]["ModelData"] | components["schemas"]["PresetData"] | components["schemas"]["PluginData"];
         };
         Config: {
+            assetArchived?: boolean;
+            /** @description Account ID of the member who owns this asset. */
+            assetOwnerId?: string;
             /** @enum {string} */
             builtin?: "team-assistant";
             /** @description Protected route owner; absent for ordinary BYOK configurations. */
@@ -5495,6 +5552,7 @@ export interface components {
             /** @enum {string} */
             role: "admin" | "member";
             members: {
+                name?: string;
                 userId: string;
                 email: string | null;
                 /** @enum {string} */
@@ -5515,17 +5573,6 @@ export interface components {
             image: string | null;
             /** @enum {string|null} */
             locale: "en" | "zh-CN" | null;
-        };
-        SubmissionInput: {
-            config: components["schemas"]["ConfigInput"];
-            configId?: string;
-            baseVersion: number;
-            revision?: number;
-            note: string;
-        };
-        ReviewInput: {
-            revision: number;
-            reason?: string;
         };
         ResourceSubmission: {
             id: string;

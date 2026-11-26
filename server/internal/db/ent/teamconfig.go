@@ -39,6 +39,12 @@ type TeamConfig struct {
 	RouteReference string `json:"route_reference,omitempty"`
 	// Version holds the value of the "version" field.
 	Version int `json:"version,omitempty"`
+	// AssetOwnerID holds the value of the "asset_owner_id" field.
+	AssetOwnerID string `json:"asset_owner_id,omitempty"`
+	// AssetArchived holds the value of the "asset_archived" field.
+	AssetArchived bool `json:"asset_archived,omitempty"`
+	// AssetOwnerWithdrawn holds the value of the "asset_owner_withdrawn" field.
+	AssetOwnerWithdrawn bool `json:"asset_owner_withdrawn,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamConfigQuery when eager-loading is set.
 	Edges        TeamConfigEdges `json:"edges"`
@@ -72,9 +78,11 @@ func (*TeamConfig) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case teamconfig.FieldData:
 			values[i] = new([]byte)
+		case teamconfig.FieldAssetArchived, teamconfig.FieldAssetOwnerWithdrawn:
+			values[i] = new(sql.NullBool)
 		case teamconfig.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case teamconfig.FieldID, teamconfig.FieldTeamID, teamconfig.FieldKind, teamconfig.FieldName, teamconfig.FieldBuiltin, teamconfig.FieldRouteOwner, teamconfig.FieldRouteReference:
+		case teamconfig.FieldID, teamconfig.FieldTeamID, teamconfig.FieldKind, teamconfig.FieldName, teamconfig.FieldBuiltin, teamconfig.FieldRouteOwner, teamconfig.FieldRouteReference, teamconfig.FieldAssetOwnerID:
 			values[i] = new(sql.NullString)
 		case teamconfig.FieldCreatedAt, teamconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -162,6 +170,24 @@ func (_m *TeamConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Version = int(value.Int64)
 			}
+		case teamconfig.FieldAssetOwnerID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field asset_owner_id", values[i])
+			} else if value.Valid {
+				_m.AssetOwnerID = value.String
+			}
+		case teamconfig.FieldAssetArchived:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field asset_archived", values[i])
+			} else if value.Valid {
+				_m.AssetArchived = value.Bool
+			}
+		case teamconfig.FieldAssetOwnerWithdrawn:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field asset_owner_withdrawn", values[i])
+			} else if value.Valid {
+				_m.AssetOwnerWithdrawn = value.Bool
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -234,6 +260,15 @@ func (_m *TeamConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("version=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Version))
+	builder.WriteString(", ")
+	builder.WriteString("asset_owner_id=")
+	builder.WriteString(_m.AssetOwnerID)
+	builder.WriteString(", ")
+	builder.WriteString("asset_archived=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AssetArchived))
+	builder.WriteString(", ")
+	builder.WriteString("asset_owner_withdrawn=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AssetOwnerWithdrawn))
 	builder.WriteByte(')')
 	return builder.String()
 }

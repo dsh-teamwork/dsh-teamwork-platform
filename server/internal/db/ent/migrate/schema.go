@@ -119,6 +119,33 @@ var (
 			},
 		},
 	}
+	// AssetSelectionsColumns holds the columns for the "asset_selections" table.
+	AssetSelectionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
+		{Name: "team_id", Type: field.TypeString, Size: 32},
+		{Name: "config_id", Type: field.TypeString, Size: 32},
+		{Name: "user_id", Type: field.TypeString, Size: 32},
+		{Name: "version", Type: field.TypeInt, Default: 0},
+		{Name: "disabled", Type: field.TypeBool, Default: false},
+		{Name: "name", Type: field.TypeString, Size: 480, Default: ""},
+		{Name: "history", Type: field.TypeJSON, Nullable: true},
+		{Name: "revision", Type: field.TypeInt, Default: 0},
+	}
+	// AssetSelectionsTable holds the schema information for the "asset_selections" table.
+	AssetSelectionsTable = &schema.Table{
+		Name:       "asset_selections",
+		Columns:    AssetSelectionsColumns,
+		PrimaryKey: []*schema.Column{AssetSelectionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "assetselection_team_id_user_id_config_id",
+				Unique:  true,
+				Columns: []*schema.Column{AssetSelectionsColumns[3], AssetSelectionsColumns[5], AssetSelectionsColumns[4]},
+			},
+		},
+	}
 	// BudgetEventsColumns holds the columns for the "budget_events" table.
 	BudgetEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 32},
@@ -926,6 +953,9 @@ var (
 		{Name: "route_owner", Type: field.TypeString, Size: 40, Default: ""},
 		{Name: "route_reference", Type: field.TypeString, Size: 100, Default: ""},
 		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "asset_owner_id", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "asset_archived", Type: field.TypeBool, Default: false},
+		{Name: "asset_owner_withdrawn", Type: field.TypeBool, Default: false},
 		{Name: "team_id", Type: field.TypeString, Size: 32},
 	}
 	// TeamConfigsTable holds the schema information for the "team_configs" table.
@@ -936,21 +966,21 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "team_configs_teams_configs",
-				Columns:    []*schema.Column{TeamConfigsColumns[10]},
+				Columns:    []*schema.Column{TeamConfigsColumns[13]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "teamconfig_team_id_kind_name",
+				Name:    "teamconfig_team_id_kind_asset_owner_id_name",
 				Unique:  true,
-				Columns: []*schema.Column{TeamConfigsColumns[10], TeamConfigsColumns[3], TeamConfigsColumns[4]},
+				Columns: []*schema.Column{TeamConfigsColumns[13], TeamConfigsColumns[3], TeamConfigsColumns[10], TeamConfigsColumns[4]},
 			},
 			{
 				Name:    "teamconfig_team_id_builtin",
 				Unique:  true,
-				Columns: []*schema.Column{TeamConfigsColumns[10], TeamConfigsColumns[5]},
+				Columns: []*schema.Column{TeamConfigsColumns[13], TeamConfigsColumns[5]},
 			},
 		},
 	}
@@ -1089,6 +1119,7 @@ var (
 		ArtifactFilesTable,
 		ArtifactMembersTable,
 		ArtifactVersionsTable,
+		AssetSelectionsTable,
 		BudgetEventsTable,
 		BudgetGatesTable,
 		BudgetNoticesTable,
@@ -1139,6 +1170,10 @@ func init() {
 		Collation: "utf8mb4_bin",
 	}
 	ArtifactVersionsTable.Annotation = &entsql.Annotation{
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	AssetSelectionsTable.Annotation = &entsql.Annotation{
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

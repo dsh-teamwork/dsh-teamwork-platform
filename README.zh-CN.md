@@ -7,7 +7,7 @@
 [![CI](https://github.com/dsh-teamwork/dsh-teamwork-platform/actions/workflows/ci.yaml/badge.svg)](https://github.com/dsh-teamwork/dsh-teamwork-platform/actions/workflows/ci.yaml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-**集中发布团队的 DSH 模型、预设和审批后的插件。**
+**集中发布团队的 DSH 模型、预设和插件。**
 
 这里是 [DSH Teamwork](https://www.dshteamwork.com) 的开源社区版服务器与网页控制台。管理员发布共享资源，成员通过 [DSH 插件](https://github.com/dsh-teamwork/dsh-teamwork)连接。团队模型经过服务端网关调用，供应商密钥保留在服务器上。
 
@@ -19,8 +19,8 @@
 | --- | --- |
 | 团队资源 | 共享模型、原生智能体预设和精确插件版本；一个人可以加入多个团队。 |
 | 团队助理 | 新团队带有绑定该团队的助理，操作受成员／管理员权限及 DSH 审批约束。 |
-| 分享与审批 | 成员提交新增和更新，管理员检查冻结内容后发布。 |
-| 版本与备份 | 保留发布历史，支持对比、资源导出及经审批的历史恢复。 |
+| 团队资产 | 成员上传预设和插件到团队目录，管理员选择团队默认版本。 |
+| 版本与备份 | 保留发布历史，支持对比、资源导出及历史恢复。 |
 | 使用量与预算 | 使用量报表、模型参考价格，以及团队／成员／供应商限额；参考积分不是现金钱包。 |
 | 私有插件存储 | 本地目录或兼容 S3 的私有存储、认证下载与摘要校验。 |
 | 实例管理 | 独立的实例管理员角色、目录和不含秘密值的诊断。 |
@@ -35,7 +35,7 @@
 | 自建社区版 | 使用下面的 Docker Compose 或源码构建方式运行本仓库。 |
 | DSH 插件 | 在 DSH 宿主中安装 `@dsh-teamwork/dsh-teamwork`，可连接托管或自建服务。 |
 
-托管中转和匹配的 Teamwork 手机 App 不属于社区版服务器。托管服务另有商业账号／支付功能；社区版的团队配置、资源审批及参考预算不依赖这些组件。
+托管中转和匹配的 Teamwork 手机 App 不属于社区版服务器。托管服务另有商业账号／支付功能；社区版的团队配置、资产目录及参考预算不依赖这些组件。
 
 ## 使用 Docker 自建
 
@@ -67,9 +67,7 @@ dsh web
 
 在 Teamwork 登录面板选择自建服务器，授权并同步。选择团队助理预设，用可用模型新建会话，要求它查询团队配置或个人使用量。新团队会获得助理，已有团队不会被自动补建。
 
-成员可提交预设／插件；管理员可审核、管理配置和预算，并准备历史恢复。供应商密钥和初始账号密码使用网页安全表单输入。命令和本机审批行为见[插件使用指南](https://github.com/dsh-teamwork/dsh-teamwork/blob/main/docs/zh-CN/guide.md)。
-
-![管理员审核演示资源提交](docs/tech/images/review-and-publish-zh.png)
+成员可上传预设和插件，管理员可管理团队默认、配置和预算，也可恢复历史配置。供应商密钥和初始账号密码使用网页安全表单输入。命令和本机审批行为见[插件使用指南](https://github.com/dsh-teamwork/dsh-teamwork/blob/main/docs/zh-CN/guide.md)。
 
 ## 数据与管理
 

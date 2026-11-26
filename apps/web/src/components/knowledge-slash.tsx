@@ -73,8 +73,8 @@ export function findSlash(view: EditorView): SlashOpen | null {
     const coords = view.coordsAtPos($from.start());
     return { kind: 'block', from: $from.start(), to: selection.from, query: block[1], left: coords.left, top: coords.bottom };
   }
-  const mention = /(?:^|[\s(])@([^\s@[\]()]{0,40})$/.exec(before);
-  if (!mention) return null;
+  const mention = /(?:^|[\s(])@([^\s[\]()@]*(?: +[^\s[\]()@]+|@[^\s[\]()@]+)* *)$/.exec(before);
+  if (!mention || mention[1].length > 80) return null;
   const from = selection.from - mention[1].length - 1;
   const coords = view.coordsAtPos(from);
   return { kind: 'mention', from, to: selection.from, query: mention[1], left: coords.left, top: coords.bottom };
@@ -84,6 +84,7 @@ export function findSlash(view: EditorView): SlashOpen | null {
 export interface Mentionable {
   id: string;
   name: string;
+  detail?: string;
 }
 
 /** Puts a mention of a member where the `@` and its query were, and a space after it. */
@@ -97,8 +98,8 @@ export function insertMention(ctx: Ctx, open: SlashOpen, member: Mentionable) {
 
 /** The members a query keeps, by name, at most eight. */
 export function mentionItems(query: string, members: Mentionable[]): Mentionable[] {
-  const q = query.toLocaleLowerCase();
-  return members.filter((m) => m.name.toLocaleLowerCase().includes(q)).slice(0, 8);
+  const q = query.trim().replace(/ +/g, ' ').toLocaleLowerCase();
+  return members.filter((m) => m.name.toLocaleLowerCase().includes(q) || m.detail?.toLocaleLowerCase().includes(q)).slice(0, 8);
 }
 
 /** The plugin that reports the menu's state and gives its keys to `keys` first. */
@@ -180,7 +181,7 @@ export function slashItems(query: string, name: (id: SlashItemId) => string, can
 export function SlashMenu({ label, empty, items, active, top, left, onPick, onHover }: {
   label: string;
   empty: string;
-  items: { key: string; label: string }[];
+  items: { key: string; label: string; detail?: string }[];
   active: number;
   top: number;
   left: number;
@@ -196,8 +197,8 @@ export function SlashMenu({ label, empty, items, active, top, left, onPick, onHo
       ref={list}
       role="listbox"
       aria-label={label}
-      style={{ top: top + 4, left }}
-      className="fixed z-50 flex max-h-72 w-56 flex-col overflow-y-auto rounded-lg border bg-card p-1 text-sm text-card-foreground shadow-lg"
+      style={{ top: Math.min(top + 4, window.innerHeight - Math.min(items.length * 54 + 10, 288) - 8), left: Math.max(8, Math.min(left, window.innerWidth - 288)) }}
+      className="fixed z-50 flex max-h-72 w-70 max-w-[calc(100vw-1rem)] flex-col overflow-y-auto rounded-lg border bg-card p-1 text-sm text-card-foreground shadow-lg"
       // The editor keeps the focus, so typing still narrows the list.
       onMouseDown={(event) => event.preventDefault()}
     >
@@ -212,9 +213,10 @@ export function SlashMenu({ label, empty, items, active, top, left, onPick, onHo
             aria-selected={i === active}
             onMouseEnter={() => onHover(i)}
             onClick={() => onPick(i)}
-            className={cn('truncate rounded-md px-2 py-1.5 text-start', i === active && 'bg-accent text-accent-foreground')}
+            className={cn('rounded-md px-2 py-1.5 text-start [overflow-wrap:anywhere]', i === active && 'bg-accent text-accent-foreground')}
           >
-            {item.label}
+            <span className="block">{item.label}</span>
+            {item.detail && <span className="block text-xs opacity-80">{item.detail}</span>}
           </button>
         ))
       )}

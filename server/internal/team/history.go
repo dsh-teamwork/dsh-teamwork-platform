@@ -55,22 +55,30 @@ func (s *Service) historical(ctx context.Context, userID, teamID, id string, adm
 	}
 	return row, err
 }
-func (s *Service) RestoreRevision(ctx context.Context, userID, teamID, id string, base int, note string) (SubmissionView, error) {
-	row, err := s.historical(ctx, userID, teamID, id, true)
+func (s *Service) RestoreRevision(ctx context.Context, userID, teamID, id string, base int, note string) (ConfigView, error) {
+	tx, err := s.DB.Tx(ctx)
 	if err != nil {
-		return SubmissionView{}, err
+		return ConfigView{}, err
 	}
-	if row.Kind == configrevision.KindModel {
-		return SubmissionView{}, wire.E(400, "invalid_request")
+	defer tx.Rollback()
+	local := *s
+	local.DB = tx.Client()
+	row, err := local.historical(ctx, userID, teamID, id, true)
+	if err != nil {
+		return ConfigView{}, err
+	}
+	if row.Kind == configrevision.KindModel || len([]rune(note)) > 2000 {
+		return ConfigView{}, wire.E(http.StatusBadRequest, "invalid_request")
 	}
 	in := wire.ConfigInput{Kind: string(row.Kind), Name: row.Name, Data: row.Data}
-	if err := in.Validate(); err != nil {
-		return SubmissionView{}, err
+	config, err := local.publish(ctx, teamID, row.ConfigID, base, in, userID, note, "", false)
+	if err != nil {
+		return ConfigView{}, err
 	}
-	if err := s.checkReferences(ctx, teamID, &in); err != nil {
-		return SubmissionView{}, err
+	if err := tx.Commit(); err != nil {
+		return ConfigView{}, err
 	}
-	return s.SaveSubmission(ctx, userID, teamID, "", wire.SubmissionInput{Config: in, ConfigID: row.ConfigID, BaseVersion: base, Note: note})
+	return configView(config), nil
 }
 
 // resolvePlugin retains exact dependency versions even after the live catalog advances.

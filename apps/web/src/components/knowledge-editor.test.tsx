@@ -8,7 +8,7 @@ import { joinFrontMatter, splitFrontMatter } from '@/lib/knowledge-format';
 import messages from '@/messages/en.json';
 
 import { KnowledgeEditor, type KnowledgeEditorHandle } from './knowledge-editor';
-import { mentionItems, slashItems } from './knowledge-slash';
+import { findSlash, mentionItems, slashItems } from './knowledge-slash';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 // jsdom lays nothing out; ProseMirror measures the cursor to scroll it into view after an insert.
@@ -198,6 +198,25 @@ describe('the knowledge editor', () => {
 
   it('finds a member to mention by name', () => {
     expect(mentionItems('ada', [{ id: 'user1', name: 'ada@example.com' }, { id: 'u2', name: 'bo@example.com' }])).toEqual([{ id: 'user1', name: 'ada@example.com' }]);
+    const members = [{ id: 'ada1', name: 'Ada', detail: 'first@example.com' }, { id: 'ada2', name: 'Ada', detail: 'second@example.com' }];
+    expect(mentionItems('Ada', members)).toEqual(members);
+    expect(mentionItems('second@', members)).toEqual([members[1]]);
+  });
+
+  it('keeps a full name in the mention query after an earlier mention trigger', () => {
+    const text = '@Previous person @Ada Lovelace';
+    const view = {
+      editable: true,
+      state: {
+        selection: {
+          empty: true,
+          from: text.length + 1,
+          $from: { parentOffset: text.length, parent: { isTextblock: true, type: { name: 'paragraph', spec: {} }, textBetween: () => text } },
+        },
+      },
+      coordsAtPos: () => ({ left: 0, bottom: 20 }),
+    } as unknown as Parameters<typeof findSlash>[0];
+    expect(findSlash(view)).toMatchObject({ kind: 'mention', query: 'Ada Lovelace', from: text.lastIndexOf('@') + 1 });
   });
 
   it('narrows the block menu by either word, and offers files only with somewhere to put them', () => {

@@ -297,12 +297,13 @@ func (p *PluginData) validate(is *Issues) {
 	maxLen(is, p.Description, 1000, "data", "description")
 }
 
-// ConfigInput is a configuration as an admin writes it: its kind, name and
+// ConfigInput is a configuration as a member or administrator writes it: its kind, name and
 // the kind's data. Data is checked strictly: an unknown field is refused.
 type ConfigInput struct {
-	Kind string          `json:"kind"`
-	Name string          `json:"name"`
-	Data json.RawMessage `json:"data"`
+	MemberAsset bool            `json:"memberAsset,omitempty"`
+	Kind        string          `json:"kind"`
+	Name        string          `json:"name"`
+	Data        json.RawMessage `json:"data"`
 
 	Model  *ModelData  `json:"-"`
 	Preset *PresetData `json:"-"`

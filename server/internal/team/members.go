@@ -7,7 +7,9 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/assetselection"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
 
@@ -53,6 +55,7 @@ func (s *Service) TeamsOf(ctx context.Context, userID string) ([]Summary, error)
 type MemberView struct {
 	UserID string  `json:"userId"`
 	Email  *string `json:"email"`
+	Name   *string `json:"name,omitempty"`
 	Role   string  `json:"role"`
 }
 
@@ -81,7 +84,7 @@ func (s *Service) TeamOf(ctx context.Context, userID, teamID string) (View, erro
 	}
 	v := View{ID: t.ID, Name: t.Name, Role: string(m.Role), Members: make([]MemberView, 0, len(members))}
 	for _, mm := range members {
-		v.Members = append(v.Members, MemberView{UserID: mm.UserID, Email: mm.Edges.User.Email, Role: string(mm.Role)})
+		v.Members = append(v.Members, MemberView{UserID: mm.UserID, Email: mm.Edges.User.Email, Name: mm.Edges.User.Name, Role: string(mm.Role)})
 	}
 	return v, nil
 }
@@ -97,8 +100,7 @@ func (s *Service) LeaveTeam(ctx context.Context, userID, teamID string) error {
 		return wire.E(http.StatusBadRequest, "admin_cannot_leave")
 	}
 	// Scoped to the row just read: a membership changed since is not this one.
-	_, err = s.DB.Membership.Delete().Where(membership.UserID(userID), membership.TeamID(m.TeamID), membership.RoleEQ(membership.RoleMember)).Exec(ctx)
-	return err
+	return s.removeMembership(ctx, userID, m.TeamID)
 }
 
 // RemoveMember is an admin removing a member. An admin is never removed.
@@ -110,8 +112,26 @@ func (s *Service) RemoveMember(ctx context.Context, userID, teamID, target strin
 	if target == userID {
 		return wire.E(http.StatusBadRequest, "cannot_remove_self")
 	}
-	_, err = s.DB.Membership.Delete().Where(membership.UserID(target), membership.TeamID(admin.TeamID), membership.RoleEQ(membership.RoleMember)).Exec(ctx)
-	return err
+	return s.removeMembership(ctx, target, admin.TeamID)
+}
+
+func (s *Service) removeMembership(ctx context.Context, userID, teamID string) error {
+	tx, err := s.DB.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	deleted, err := tx.Membership.Delete().Where(membership.UserID(userID), membership.TeamID(teamID), membership.RoleEQ(membership.RoleMember)).Exec(ctx)
+	if err != nil || deleted == 0 {
+		return err
+	}
+	if _, err := tx.AssetSelection.Delete().Where(assetselection.TeamID(teamID), assetselection.UserID(userID)).Exec(ctx); err != nil {
+		return err
+	}
+	if err := tx.TeamConfig.Update().Where(teamconfig.TeamID(teamID), teamconfig.AssetOwnerID(userID), teamconfig.Or(teamconfig.AssetArchived(false), teamconfig.AssetOwnerWithdrawn(true))).SetAssetArchived(true).SetAssetOwnerWithdrawn(false).Exec(ctx); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // AddedMember is POST /api/teams/:teamId/members: the first password the

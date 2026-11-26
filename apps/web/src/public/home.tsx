@@ -333,20 +333,15 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
 
         <Zone id="collaborate">
           <Depth depth={t('collaborate.depth')} label={t('collaborate.label')} />
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-            <div>
-              <h2 className={zoneTitle}>{t('collaborate.title')}</h2>
-              <ol className="mt-6 list-decimal space-y-4 pl-6 marker:font-mono marker:text-sm marker:text-muted-foreground">
-                {(['submit', 'review', 'sync'] as const).map((step) => (
-                  <li key={step} className="pl-1">
-                    <h3 className="text-base font-bold">{t(`collaborate.${step}Title`)}</h3>
-                    <p className="mt-0.5 text-sm text-muted-foreground">{t(`collaborate.${step}Body`)}</p>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <Shot src={`/home/review-${tag}.webp`} alt={t('collaborate.alt')} width={959} height={locale === 'zh-CN' ? 287 : 303} />
-          </div>
+          <h2 className={zoneTitle}>{t('collaborate.title')}</h2>
+          <ol className="mt-6 grid list-decimal gap-6 pl-6 marker:font-mono marker:text-sm marker:text-muted-foreground lg:grid-cols-3">
+            {(['submit', 'review', 'sync'] as const).map((step) => (
+              <li key={step} className="pl-1">
+                <h3 className="text-base font-bold">{t(`collaborate.${step}Title`)}</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">{t(`collaborate.${step}Body`)}</p>
+              </li>
+            ))}
+          </ol>
           {workspace && (
             <div className="mt-10 border-t border-border pt-5">
               <h3 className="flex items-center gap-2 text-base font-bold">

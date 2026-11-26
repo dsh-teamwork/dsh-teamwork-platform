@@ -26,7 +26,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 		must(t, admin.post(path+"/members", map[string]string{"email": "member@summary.test"}), 201)
 
 		empty := must(t, admin.get(path+"/summary?scope=team"), 200)
-		if empty["calls"] != float64(0) || empty["points"] != "0" || empty["pendingReviews"] != float64(0) || len(empty["nearLimit"].([]any)) != 0 {
+		if empty["calls"] != float64(0) || empty["points"] != "0" || len(empty["nearLimit"].([]any)) != 0 {
 			t.Fatalf("a new team's summary: %+v", empty)
 		}
 
@@ -47,8 +47,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 
 		// A member's submission waiting for review.
 		preset := map[string]any{"kind": "preset", "name": "Review", "data": map[string]any{"inheritModel": true, "systemPrompt": "Review carefully"}}
-		draft := must(t, member.post(path+"/submissions", map[string]any{"config": preset, "baseVersion": 0, "note": "Please review"}), 200)
-		must(t, member.post(path+"/submissions/"+draft["id"].(string)+"/submit", map[string]any{"revision": draft["revision"]}), 200)
+		must(t, member.post(path+"/configs", preset), 201)
 
 		// A team cap of 100 points with 90 already spent this month: past the 80% notice.
 		must(t, admin.send("PUT", path+"/budgets", budgetBody("team", "", "100", 0)), 200)
@@ -59,7 +58,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 
 		got := must(t, admin.get(path+"/summary?scope=team"), 200)
 		if got["calls"] != float64(2) || got["points"] != "25.4" || got["unpriced"] != float64(1) || got["unresolved"] != float64(1) || got["overruns"] != float64(1) ||
-			got["pendingReviews"] != float64(1) || got["failedNotices"] != float64(0) {
+			got["failedNotices"] != float64(0) {
 			t.Fatalf("admin summary: %+v", got)
 		}
 		near := got["nearLimit"].([]any)
@@ -71,7 +70,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 		}
 
 		mine := must(t, member.get(path+"/summary"), 200)
-		if mine["calls"] != float64(1) || mine["points"] != "15.2" || mine["unresolved"] != float64(0) || mine["overruns"] != float64(0) || mine["pendingReviews"] != float64(1) ||
+		if mine["calls"] != float64(1) || mine["points"] != "15.2" || mine["unresolved"] != float64(0) || mine["overruns"] != float64(0) ||
 			len(mine["nearLimit"].([]any)) != 1 {
 			t.Fatalf("member summary: %+v", mine)
 		}
@@ -81,7 +80,7 @@ func TestTeamSummaryIsScopedToTheCaller(t *testing.T) {
 
 		// The workspace's home shows an admin their own: one priced call, nothing of theirs to review or resolve.
 		own := must(t, admin.get(path+"/summary"), 200)
-		if own["calls"] != float64(1) || own["points"] != "10.2" || own["unresolved"] != float64(0) || own["pendingReviews"] != float64(0) ||
+		if own["calls"] != float64(1) || own["points"] != "10.2" || own["unresolved"] != float64(0) ||
 			own["failedNotices"] != float64(0) || len(own["nearLimit"].([]any)) != 1 {
 			t.Fatalf("admin's own summary: %+v", own)
 		}

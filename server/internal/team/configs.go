@@ -8,6 +8,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/configrevision"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
 )
@@ -18,7 +19,7 @@ func (s *Service) ListConfigs(ctx context.Context, userID, teamID string) ([]Con
 	if err != nil {
 		return nil, err
 	}
-	rows, err := s.DB.TeamConfig.Query().Where(teamconfig.TeamID(m.TeamID)).All(ctx)
+	rows, err := s.DB.TeamConfig.Query().Where(teamconfig.TeamID(m.TeamID), teamconfig.AssetArchived(false)).All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func (s *Service) DeleteConfig(ctx context.Context, userID, teamID, configID str
 	return tx.Commit()
 }
 func (s *Service) deleteConfig(ctx context.Context, userID, teamID, configID string) error {
-	admin, err := s.RequireMembership(ctx, userID, teamID, true)
+	admin, err := s.RequireMembership(ctx, userID, teamID, false)
 	if err != nil {
 		return err
 	}
@@ -62,14 +63,36 @@ func (s *Service) deleteConfig(ctx context.Context, userID, teamID, configID str
 	if err != nil && !ent.IsNotFound(err) {
 		return err
 	}
+	if target != nil && target.AssetOwnerID != "" {
+		if target.AssetOwnerID != userID && admin.Role != membership.RoleAdmin {
+			return wire.E(http.StatusForbidden, "config_owned")
+		}
+		ownerWithdrawal := target.AssetOwnerID == userID
+		update := s.DB.TeamConfig.Update().Where(teamconfig.ID(configID), teamconfig.TeamID(admin.TeamID))
+		if ownerWithdrawal {
+			// Repeated owner requests must not overwrite an administrative archive.
+			update.Where(teamconfig.AssetArchived(false))
+		}
+		return update.SetAssetArchived(true).SetAssetOwnerWithdrawn(ownerWithdrawal).Exec(ctx)
+	}
+	if admin.Role != membership.RoleAdmin {
+		return wire.E(http.StatusForbidden, "admin_required")
+	}
 	if target != nil && target.Kind != teamconfig.KindPreset {
-		presets, err := s.DB.TeamConfig.Query().Where(teamconfig.TeamID(admin.TeamID), teamconfig.KindEQ(teamconfig.KindPreset)).All(ctx)
+		presets, err := s.DB.TeamConfig.Query().Where(teamconfig.TeamID(admin.TeamID), teamconfig.KindEQ(teamconfig.KindPreset), teamconfig.AssetArchived(false)).All(ctx)
 		if err != nil {
 			return err
 		}
-		for _, p := range presets {
+		selected, err := s.selectedPresetData(ctx, teamID)
+		if err != nil {
+			return err
+		}
+		for _, preset := range presets {
+			selected = append(selected, preset.Data)
+		}
+		for _, raw := range selected {
 			var data wire.PresetData
-			if json.Unmarshal(p.Data, &data) != nil {
+			if json.Unmarshal(raw, &data) != nil {
 				continue
 			}
 			if target.Kind == teamconfig.KindModel && data.ModelConfigID != nil && *data.ModelConfigID == configID {

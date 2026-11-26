@@ -103,7 +103,7 @@ export function TeamPresetsPage() {
 function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[]; reload: Reload }) {
   const t = useTranslations('team.presets');
   const tt = useTranslations('team.templates');
-  const presets = configs.filter((c): c is Preset => c.kind === 'preset').sort((a,b)=>Number(b.builtin === 'team-assistant')-Number(a.builtin === 'team-assistant'));
+  const presets = configs.filter((c): c is Preset => c.kind === 'preset' && !c.assetOwnerId).sort((a,b)=>Number(b.builtin === 'team-assistant')-Number(a.builtin === 'team-assistant'));
   const models = configs.filter((c): c is Model => c.kind === 'model');
   const plugins = configs.filter((c): c is Plugin => c.kind === 'plugin');
   const [editing, setEditing] = useState<{ draft: Draft; preset?: Preset; template?: string } | null>(null);
@@ -192,7 +192,6 @@ function Presets({ team, configs, reload }: { team: Team; configs: TeamConfig[];
       {editing && (
         <PresetEditor
           teamId={team.id}
-          submitForReview={false}
           reload={reload}
           initial={editing.draft}
           preset={editing.preset}
@@ -326,7 +325,7 @@ type Tab = 'basics' | 'tools' | 'persona';
 /** Publish or edit one preset; the server checks its model and plugin pins belong to the team, at those versions. */
 export function PresetEditor({
   teamId,
-  submitForReview,
+  memberAsset = false,
   reload,
   initial,
   preset,
@@ -336,7 +335,7 @@ export function PresetEditor({
   onClose,
 }: {
   teamId: string;
-  submitForReview: boolean;
+  memberAsset?: boolean;
   reload: Reload;
   initial: Draft;
   preset?: Preset;
@@ -346,6 +345,7 @@ export function PresetEditor({
   onClose: () => void;
 }) {
   const t = useTranslations('team.presets');
+  const tr = useTranslations('team.resources');
   const tools = useTranslations('team.tools');
   const avatars = useTranslations('team.avatars');
   const { pending, run } = useMutation(reload);
@@ -364,7 +364,7 @@ export function PresetEditor({
       required: next === 'required' ? [...d.required.filter((n) => n !== name), name] : d.required.filter((n) => n !== name),
       optional: next === 'optional' ? [...d.optional.filter((n) => n !== name), name] : d.optional.filter((n) => n !== name),
     }));
-  const ready = draft.name.trim() && (draft.modelConfigId || draft.route);
+  const ready = draft.name.trim() && (draft.modelConfigId || (!memberAsset && draft.route));
   function addExtra() {
     const name = extra.trim();
     if (!name) return;
@@ -388,10 +388,10 @@ export function PresetEditor({
         return plugin ? [{ pluginConfigId: id, version: plugin.data.version }] : [];
       }),
     };
-    const body = { kind: 'preset', name: draft.name.trim(), data, ...(preset ? { version: preset.version } : {}) };
+    const body = { memberAsset, kind: 'preset', name: draft.name.trim(), data, ...(preset ? { version: preset.version } : {}) };
     const saved = await run(
-      () => submitForReview ? (async()=>{const draft=await api<{id:string;revision:number}>(`teams/${teamId}/submissions`,{body:{config:{kind:'preset',name:body.name,data},configId:preset?.id,baseVersion:preset?.version ?? 0,note:''}});return api(`teams/${teamId}/submissions/${draft.id}/submit`,{body:{revision:draft.revision}});})() : api(preset ? `teams/${teamId}/configs/${preset.id}` : `teams/${teamId}/configs`, { method: preset ? 'PATCH' : 'POST', body }),
-      submitForReview ? t('submitted') : preset ? t('saved') : t('added', { name: body.name }),
+      () => api(preset ? `teams/${teamId}/configs/${preset.id}` : `teams/${teamId}/configs`, { method: preset ? 'PATCH' : 'POST', body }),
+      preset ? t('saved') : t('added', { name: body.name }),
     );
     if (saved) onClose();
   }
@@ -401,7 +401,7 @@ export function PresetEditor({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{preset ? t('editTitle') : t('newTitle')}</DialogTitle>
-          <DialogDescription>{template ? t('fromTemplate', { name: template }) : t('editorHint')}</DialogDescription>
+          <DialogDescription>{memberAsset ? tr('publicationHint') : template ? t('fromTemplate', { name: template }) : t('editorHint')}</DialogDescription>
         </DialogHeader>
 
         <div role="tablist" className="flex gap-1 border-b">
@@ -449,7 +449,7 @@ export function PresetEditor({
                   value={draft.modelConfigId}
                   options={[
                     { value: '__inherit__', label: t('inheritModel') },
-                    ...(draft.route
+                    ...(!memberAsset && draft.route
                       ? [{ value: '', label: t('keepRoute', { route: `${draft.route.provider} / ${draft.route.model}` }) }]
                       : draft.modelConfigId
                         ? []
@@ -565,7 +565,7 @@ export function PresetEditor({
             {t('cancel')}
           </Button>
           <Button type="submit" form="preset-editor" disabled={pending || !ready}>
-            {submitForReview ? t('submitForReview') : preset ? t('save') : t('create')}
+            {preset ? t('save') : t('create')}
           </Button>
         </DialogFooter>
       </DialogContent>
