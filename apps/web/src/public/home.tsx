@@ -157,7 +157,8 @@ export interface HomeWorkspace {
   title: string;
   description: string;
   icon?: ReactNode;
-  cloudLink?: { href: string; label: string };
+  /** Its hosted service's page: `label` on the editions table, `nav` in the header. */
+  cloudLink?: { href: string; label: string; nav: string };
   community?: EditionCommunity;
 }
 
@@ -217,12 +218,13 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
 
   // Signed out, the way in is creating a team: sign-in returns to /teams, where that happens.
   const start = signedIn ? { href: '/teams', label: t('openConsole') } : { href: '/sign-in?next=%2Fteams', label: t('createTeam') };
-  // The page's sections, then the documentation.
-  const nav = [
-    ['https://github.com/dsh-teamwork', 'nav.openSource'],
-    ['#self-host', 'nav.pricing'],
-    ['/docs', 'nav.docs'],
-  ] as const;
+  // The two editions, the open one at its row of the editions table and the hosted one (where an edition has it) at its
+  // own page, then the documentation.
+  const nav: { href: string; label: string; mark?: boolean }[] = [
+    { href: '#self-host', label: t('nav.communityEdition'), mark: true },
+    ...(workspace?.cloudLink ? [{ href: workspace.cloudLink.href, label: workspace.cloudLink.nav }] : []),
+    { href: '/docs', label: t('nav.docs') },
+  ];
   const faqs = ['install', 'pricing', 'selfHost', 'security'] as const;
   const pricingRows = ['access', 'sharing', 'models', 'cloudDsh', 'operations', 'payment'] as const;
 
@@ -239,13 +241,13 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
           <img src="/logo.svg" alt="" width={30} height={30} className="max-[22.5rem]:size-7" />
           {tc('appName')}
         </a>
-        {/* Everything else sits at the right: where a visitor goes besides the story (the source, marked by GitHub's mark), then the controls. */}
+        {/* Everything else sits at the right: where a visitor goes besides the story (the open edition marked by GitHub's), then the controls. */}
         <div className="ml-auto flex items-center min-[22.5rem]:gap-2">
           <nav aria-label={t('nav.label')} className="mr-2 hidden gap-6 whitespace-nowrap text-sm text-muted-foreground lg:flex">
-            {nav.map(([href, key]) => (
+            {nav.map(({ href, label, mark }) => (
               <a key={href} href={href} className="inline-flex items-center gap-1.5 hover:text-foreground">
-                {key === 'nav.openSource' && <Github aria-hidden className="size-4" />}
-                {t(key)}
+                {mark && <Github aria-hidden className="size-4" />}
+                {label}
               </a>
             ))}
           </nav>
@@ -264,10 +266,10 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
               </span>
             </summary>
             <div className="absolute right-0 z-10 mt-2 flex w-56 flex-col rounded-lg border bg-background p-1 shadow-lg">
-              {nav.map(([href, key]) => (
+              {nav.map(({ href, label, mark }) => (
                 <a key={href} href={href} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent">
-                  {key === 'nav.openSource' && <Github aria-hidden className="size-4" />}
-                  {t(key)}
+                  {mark && <Github aria-hidden className="size-4" />}
+                  {label}
                 </a>
               ))}
               <a href={start.href} className="mt-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground sm:hidden">
