@@ -232,7 +232,9 @@ cd server && go run ./cmd/dsh-teamwork   # the server on :3800, SQLite in ~/.dsh
 pnpm dev              # everything on :3800: the edition's Go server, which takes pages
                       #   from the web Vite (:3810) and the /manage Vite (:3811);
                       #   reads a gitignored root .env first (the shell wins)
-pnpm dev:setup        # Postgres 16 and MySQL 8.4 for the Go suites (dev/)
+pnpm dev:setup        # Postgres 16 and MySQL 8.4 for the Go suites (dev/); the
+                      #   variables it prints may go in that .env, which the
+                      #   pre-push hook reads the same way
 pnpm dev:stop | dev:clean    # stop them; clean also drops their volumes
 
 pnpm tsc              # the gate, in CI's order: tsc → lint:lang → lint:docs →

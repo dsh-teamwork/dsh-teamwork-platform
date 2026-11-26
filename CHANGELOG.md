@@ -7,11 +7,11 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-26 — The sign-in page sets up a fresh instance
 
-- **What:** While no account has a password, the sign-in page shows only a call to create the first account, and `/setup` creates it for whoever arrives first. `POST /api/auth/setup` takes `{email, password}` with no `token`; `setup_link_invalid` is gone, and a second claim is still `setup_closed`. The server's start line names `APP_URL/setup` with no secret. A management process still neither offers nor accepts setup. `pnpm dev` reads a gitignored root `.env` first; a variable the shell sets wins.
+- **What:** While no account has a password, the sign-in page shows only a call to create the first account, and `/setup` creates it for whoever arrives first. `POST /api/auth/setup` takes `{email, password}` with no `token`; `setup_link_invalid` is gone, and a second claim is still `setup_closed`. The server's start line names `APP_URL/setup` with no secret. A management process still neither offers nor accepts setup. `pnpm dev` and the pre-push hook read a gitignored root `.env` first, so the test databases `pnpm dev:setup` prints can live there; a variable the shell sets wins.
 - **Why:** The deployer opens the instance next to set it up, and finding a token in the server's log was the first chore of every install.
 - **Breaking:** A script that posts `token` to `/api/auth/setup` still works (the field is ignored); one that greps the log for `setup?token=` no longer finds it. An instance reachable by others before setup can be claimed by whoever opens it first (ADR 0070).
 - **Upgrade:** Nothing.
-- **Refs:** [ADR 0070](docs/adr/0070-the-first-visitor-sets-up-the-instance.md), `server/internal/auth/auth.go`, `apps/web/src/pages/sign-in.tsx`, `scripts/dev.mjs`
+- **Refs:** [ADR 0070](docs/adr/0070-the-first-visitor-sets-up-the-instance.md), `server/internal/auth/auth.go`, `apps/web/src/pages/sign-in.tsx`, `scripts/dev.mjs`, `.husky/pre-push`
 
 ## 2026-11-26 — A simpler home header, and an edition's community
 
