@@ -48,7 +48,9 @@
     "resend": "重新发送验证码",
     "showPassword": "显示密码",
     "hidePassword": "隐藏密码",
-    "setupHint": "这个实例还没有账号。请打开服务器启动时打印的设置链接，创建第一个账号。"
+    "setupTitle": "初始化这个实例",
+    "setupBody": "这里还没有任何账号。先创建第一个账号：用邮箱和密码登录，创建你的团队，再把其他人加进来。",
+    "setupStart": "创建第一个账号"
   },
   "authErrors": {
     "invalid_email": "邮箱地址格式不正确。",
@@ -59,8 +61,7 @@
     "unavailable": "登录服务暂时不可用。",
     "invalid_credentials": "邮箱或密码不正确。",
     "weak_password": "密码至少需要 10 个字符。",
-    "setup_closed": "此实例已经有第一个账号了，请直接登录。",
-    "setup_link_invalid": "这不是服务器打印的那条链接，请从服务器输出中重新复制。"
+    "setup_closed": "此实例已经有第一个账号了，请直接登录。"
   },
   "plugin": {
     "verification_required": "请先使用通行密钥验证登录，再试一次。",
@@ -90,7 +91,7 @@
   "setup": {
     "title": "创建第一个账号",
     "description": "此实例还没有任何账号。先创建你自己的账号，再创建团队并添加其他成员。",
-    "closed": "此链接已失效：第一个账号已经创建。",
+    "closed": "初始化已结束：第一个账号已经创建，请直接登录。",
     "submit": "创建账号"
   },
   "home": {
@@ -115,8 +116,7 @@
       "collaborate": "协同",
       "govern": "治理",
       "assets": "团队资产",
-      "pricing": "版本与定价",
-      "pluginRepo": "在 GitHub 查看 Teamwork 插件",
+      "communityEdition": "开源社区版",
       "docs": "文档"
     },
     "shift": {

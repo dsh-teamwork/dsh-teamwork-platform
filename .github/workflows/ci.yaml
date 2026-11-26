@@ -237,9 +237,9 @@ jobs:
         run: node server/scripts/smoke-npm.mjs http://127.0.0.1:4873 server/dist/release 0.0.0-ci.${{ github.run_number }}
 
   # Self-hosting as README.md describes it: build server/Dockerfile, start
-  # compose.yaml with no .env at all, and check the server answers and prints
-  # the link that claims the first account. No Google, PostHog or SMTP account
-  # is involved.
+  # compose.yaml with no .env at all, check the server answers and offers the
+  # first account, and claim it. No Google, PostHog or SMTP account is
+  # involved.
   self-host:
     if: github.repository == 'dsh-teamwork/dsh-teamwork-platform'
     runs-on: ubuntu-latest
@@ -257,19 +257,22 @@ jobs:
             echo "$path $status"
             test "$status" = 200
           done
-          docker compose logs server | grep -F 'http://localhost:3000/setup?token='
+          docker compose logs server | grep -F 'http://localhost:3000/setup'
+          curl -sf http://localhost:3000/api/auth/session | grep -F '"setupOpen":true'
+          status=$(curl -s -o /dev/null -w '%{http_code}' -c jar -H 'Origin: http://localhost:3000' -H 'Content-Type: application/json' \
+            -d '{"email":"admin@example.com","password":"correct horse battery"}' http://localhost:3000/api/auth/setup)
+          echo "setup $status"
+          test "$status" = 204
 
       # The SQLite file and the generated secrets are in the volume, so a new
-      # container starts on the same instance.
+      # container starts on the same instance: the account still exists and
+      # the session cookie, sealed under AUTH_SECRET, still opens.
       - name: The data outlives the container
         run: |
-          before=$(docker compose logs server | grep -o 'setup?token=[A-Za-z0-9_-]*' | head -1)
           docker compose down
           docker compose up -d --wait
           for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 2; done
-          after=$(docker compose logs server | grep -o 'setup?token=[A-Za-z0-9_-]*' | head -1)
-          echo "$before / $after"
-          test -n "$before" && test "$before" = "$after"
+          curl -sf -b jar http://localhost:3000/api/auth/session | tee /dev/stderr | grep -F '"email":"admin@example.com"'
 
       - name: Logs on failure
         if: failure()

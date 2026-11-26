@@ -115,7 +115,7 @@ func (s *Server) setup(w http.ResponseWriter, r *http.Request) error {
 	if err := decode(r, &in); err != nil {
 		return err
 	}
-	user, err := s.Auth.ClaimFirstAccount(r.Context(), in.Token, in.Email, in.Password)
+	user, err := s.Auth.ClaimFirstAccount(r.Context(), in.Email, in.Password)
 	if err != nil {
 		return err
 	}

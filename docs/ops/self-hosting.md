@@ -1,6 +1,6 @@
 # Self-hosting the community server
 
-> **Status:** Current · **Updated:** 2026-11-24
+> **Status:** Current · **Updated:** 2026-11-26
 
 Run a community instance, connect a member's DSH, and retain the database,
 private plugin bytes and secrets across upgrades.
@@ -45,7 +45,9 @@ outside the source checkout. Use the binary from a service manager for a
 persistent source installation. `--data` selects its private data directory.
 Without `DATABASE_URL` it uses SQLite; migrations apply before serving.
 
-Open the first-account setup link printed by the server privately. Then create
+Open the instance and create the first account: until one exists, the sign-in
+page offers nothing else, to whoever arrives first (ADR 0070), so do it before
+the address is shared. Then create
 a team in `/teams` and add members by email. Without SMTP, new local accounts
 receive an initial password to change on first sign-in. No Google, analytics or
 mail account is needed for a local password installation.

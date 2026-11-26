@@ -230,8 +230,11 @@ for English, switches the reply for as long as that holds.
 ```bash
 cd server && go run ./cmd/dsh-teamwork   # the server on :3800, SQLite in ~/.dsh-teamwork
 pnpm dev              # everything on :3800: the edition's Go server, which takes pages
-                      #   from the web Vite (:3810) and the /manage Vite (:3811)
-pnpm dev:setup        # Postgres 16 and MySQL 8.4 for the Go suites (dev/)
+                      #   from the web Vite (:3810) and the /manage Vite (:3811);
+                      #   reads a gitignored root .env first (the shell wins)
+pnpm dev:setup        # Postgres 16 and MySQL 8.4 for the Go suites (dev/); the
+                      #   variables it prints may go in that .env, which the
+                      #   pre-push hook reads the same way
 pnpm dev:stop | dev:clean    # stop them; clean also drops their volumes
 
 pnpm tsc              # the gate, in CI's order: tsc → lint:lang → lint:docs →
@@ -434,11 +437,11 @@ Three doors, all in `server/internal/auth` (ADR 0014):
   team admin creates a member's account with a first password, shown once,
   which its owner must change before `/teams` or `/plugin` open (the session
   that signed in with it need not type it again; one from before a reset
-  must); the admin resets it the same way. The first account is claimed at `/setup?token=…`, a
-  link the server prints at start, derived from `AUTH_SECRET` and dead once any
-  password exists. A management process (`SERVICE_ROLE=manage`) neither prints
-  nor accepts it: the database is shared, so the first account is claimed where
-  members sign in.
+  must); the admin resets it the same way. The first account is claimed at `/setup`, which the
+  sign-in page offers to whoever arrives while no password exists, with no
+  token (ADR 0070); the server prints where it is at start. A management
+  process (`SERVICE_ROLE=manage`) neither offers nor accepts it: the database
+  is shared, so the first account is claimed where members sign in.
 
 Every limit is a conditional update on `rate_windows`, never a lock. **An
 account is not its email**: the `identities` table records each door that

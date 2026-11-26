@@ -54,7 +54,7 @@ paths:
         '429': { $ref: '#/components/responses/Error' }
   /auth/setup:
     post:
-      summary: Claim the first account with the link the server printed
+      summary: Claim the first account; open to anyone until one password exists (ADR 0070)
       security: []
       requestBody:
         required: true
@@ -2619,7 +2619,7 @@ components:
             password: { type: boolean }
             emailCode: { type: boolean }
             google: { type: boolean }
-        setupOpen: { type: boolean }
+        setupOpen: { type: boolean, description: "No account exists yet: the sign-in page offers /setup to whoever opens it (ADR 0070)." }
         appChallenge: { type: string, description: "The pending phone login can authorize only this PKCE challenge." }
         pendingVerification: { type: boolean, description: "A second verification is pending before this browser signs in." }
         appRedirect: { type: string, description: "The phone app's sign-in address, where /plugin sends its code (ADR 0046)" }
@@ -2631,9 +2631,8 @@ components:
         password: { type: string }
     Setup:
       type: object
-      required: [token, email, password]
+      required: [email, password]
       properties:
-        token: { type: string }
         email: { type: string }
         password: { type: string, minLength: 10, maxLength: 256 }
     ChangePassword:

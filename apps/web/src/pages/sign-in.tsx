@@ -1,6 +1,6 @@
-import { ArrowLeft, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useState, type ComponentType, type ReactNode } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { useTitle } from '@/components/page';
@@ -141,156 +141,168 @@ export function SignInPage() {
         </header>
 
         <main className="flex flex-1 items-center justify-center px-6 pb-16">
-          <div className="w-full max-w-sm">
-            <img src="/logo.svg" alt="" width={44} height={44} className="mb-6 lg:hidden" />
-            <h1 className="text-2xl font-semibold tracking-tight">{codeSent ? t('checkEmail') : t('title')}</h1>
-            <p className="mt-2 text-sm text-muted-foreground">{codeSent ? t('codeSent', { email }) : t(subtitle)}</p>
-
-            <div className="mt-8 flex flex-col gap-6">
-              {doors.password && session.setupOpen && (
-                <p className="rounded-md border border-dashed px-3 py-2.5 text-sm text-muted-foreground">{t('setupHint')}</p>
-              )}
-
-              {!codeSent && oauth.length > 0 && (
-                <div className="flex flex-col gap-2.5">
-                  {oauth.map(({ door, label, start, Mark }) => (
-                    <Button
-                      key={door}
-                      variant="outline"
-                      size="lg"
-                      className="w-full"
-                      disabled={busy}
-                      onClick={() => {
-                        setPending(door);
-                        window.location.assign(`${start}?next=${encodeURIComponent(next)}`);
-                      }}
-                    >
-                      {pending === door ? <Loader2 className="animate-spin" aria-hidden /> : <Mark className="size-4" />}
-                      {t(label)}
-                    </Button>
-                  ))}
-                  <div className="mt-3.5 flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="h-px flex-1 bg-border" />
-                    {t('orEmail')}
-                    <span className="h-px flex-1 bg-border" />
-                  </div>
-                </div>
-              )}
-
-              {doors.password ? (
-                <form
-                  className="flex flex-col gap-4"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void run('password', async () => {
-                      const { mustChangePassword } = await api<{ mustChangePassword: boolean }>('auth/password/sign-in?next=' + encodeURIComponent(next), { body: { email, password } });
-                      await signedIn(mustChangePassword);
-                    });
-                  }}
-                >
-                  <Field id="email" label={t('email')} icon={Mail}>
-                    <Input id="email" type="email" autoComplete="username" required autoFocus={!oauth.length} placeholder={t('emailPlaceholder')} className="h-10 pl-9" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </Field>
-                  <Field id="password" label={t('password')} icon={Lock}>
-                    <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required className="h-10 px-9" value={password} onChange={(e) => setPassword(e.target.value)} />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={t(showPassword ? 'hidePassword' : 'showPassword')}
-                      title={t(showPassword ? 'hidePassword' : 'showPassword')}
-                      className="absolute top-1/2 right-1 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    >
-                      {showPassword ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
-                    </button>
-                  </Field>
-                  <Button type="submit" size="lg" className="mt-1 w-full" disabled={busy}>
-                    {spinner('password')}
-                    {t('verify')}
-                  </Button>
-                </form>
-              ) : doors.emailCode && !codeSent ? (
-                <form
-                  className="flex flex-col gap-4"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void run('send', async () => {
-                      await api('auth/email/send', { body: { email } });
-                      setCodeSent(true);
-                    });
-                  }}
-                >
-                  <Field id="email" label={t('email')} icon={Mail}>
-                    <Input id="email" type="email" autoComplete="email" required autoFocus={!oauth.length} placeholder={t('emailPlaceholder')} className="h-10 pl-9" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </Field>
-                  <Button type="submit" size="lg" className="w-full" disabled={busy}>
-                    {spinner('send')}
-                    {t('sendCode')}
-                  </Button>
-                </form>
-              ) : doors.emailCode ? (
-                <form
-                  className="flex flex-col gap-4"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void run('verify', async () => {
-                      await api('auth/email/verify?next=' + encodeURIComponent(next), { body: { email, code } });
-                      await signedIn();
-                    });
-                  }}
-                >
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="code">{t('code')}</Label>
-                    <Input
-                      id="code"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      autoFocus
-                      pattern="\d{6}"
-                      maxLength={6}
-                      required
-                      placeholder="000000"
-                      className="h-12 indent-[0.5em] text-center font-mono text-xl tracking-[0.5em] placeholder:tracking-[0.5em] placeholder:text-muted-foreground/40"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                    />
-                  </div>
-                  <Button type="submit" size="lg" className="w-full" disabled={busy || code.length !== 6}>
-                    {spinner('verify')}
-                    {t('verify')}
-                  </Button>
-                  <div className="flex items-center justify-between text-sm">
-                    <button
-                      type="button"
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        setCodeSent(false);
-                        setCode('');
-                        setError(null);
-                      }}
-                    >
-                      {t('useAnotherEmail')}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className="text-brand hover:underline disabled:opacity-50 dark:text-foreground"
-                      onClick={() => void run('send', () => api('auth/email/send', { body: { email } }).then(() => setCode('')))}
-                    >
-                      {t('resend')}
-                    </button>
-                  </div>
-                </form>
-              ) : null}
-
-              {error && (
-                <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
-                  {te(error)}
-                </p>
-              )}
-
-              {doors.password && <p className="text-center text-xs text-muted-foreground">{t('noAccount')}</p>}
+          {doors.password && session.setupOpen ? (
+            // A fresh instance has nobody to sign in: the one thing to do is
+            // create the first account, offered to whoever is here (ADR 0070).
+            <div className="w-full max-w-sm">
+              <img src="/logo.svg" alt="" width={44} height={44} className="mb-6 lg:hidden" />
+              <div className="mb-6 grid size-12 place-items-center rounded-xl bg-brand text-brand-foreground">
+                <ShieldCheck className="size-6" aria-hidden />
+              </div>
+              <h1 className="text-2xl font-semibold tracking-tight">{t('setupTitle')}</h1>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t('setupBody')}</p>
+              <Button asChild size="lg" className="mt-8 w-full">
+                <Link to="/setup">{t('setupStart')}</Link>
+              </Button>
             </div>
-          </div>
+          ) : (
+            <div className="w-full max-w-sm">
+              <img src="/logo.svg" alt="" width={44} height={44} className="mb-6 lg:hidden" />
+              <h1 className="text-2xl font-semibold tracking-tight">{codeSent ? t('checkEmail') : t('title')}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">{codeSent ? t('codeSent', { email }) : t(subtitle)}</p>
+
+              <div className="mt-8 flex flex-col gap-6">
+                {!codeSent && oauth.length > 0 && (
+                  <div className="flex flex-col gap-2.5">
+                    {oauth.map(({ door, label, start, Mark }) => (
+                      <Button
+                        key={door}
+                        variant="outline"
+                        size="lg"
+                        className="w-full"
+                        disabled={busy}
+                        onClick={() => {
+                          setPending(door);
+                          window.location.assign(`${start}?next=${encodeURIComponent(next)}`);
+                        }}
+                      >
+                        {pending === door ? <Loader2 className="animate-spin" aria-hidden /> : <Mark className="size-4" />}
+                        {t(label)}
+                      </Button>
+                    ))}
+                    <div className="mt-3.5 flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="h-px flex-1 bg-border" />
+                      {t('orEmail')}
+                      <span className="h-px flex-1 bg-border" />
+                    </div>
+                  </div>
+                )}
+
+                {doors.password ? (
+                  <form
+                    className="flex flex-col gap-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void run('password', async () => {
+                        const { mustChangePassword } = await api<{ mustChangePassword: boolean }>('auth/password/sign-in?next=' + encodeURIComponent(next), { body: { email, password } });
+                        await signedIn(mustChangePassword);
+                      });
+                    }}
+                  >
+                    <Field id="email" label={t('email')} icon={Mail}>
+                      <Input id="email" type="email" autoComplete="username" required autoFocus={!oauth.length} placeholder={t('emailPlaceholder')} className="h-10 pl-9" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </Field>
+                    <Field id="password" label={t('password')} icon={Lock}>
+                      <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required className="h-10 px-9" value={password} onChange={(e) => setPassword(e.target.value)} />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={t(showPassword ? 'hidePassword' : 'showPassword')}
+                        title={t(showPassword ? 'hidePassword' : 'showPassword')}
+                        className="absolute top-1/2 right-1 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      >
+                        {showPassword ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+                      </button>
+                    </Field>
+                    <Button type="submit" size="lg" className="mt-1 w-full" disabled={busy}>
+                      {spinner('password')}
+                      {t('verify')}
+                    </Button>
+                  </form>
+                ) : doors.emailCode && !codeSent ? (
+                  <form
+                    className="flex flex-col gap-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void run('send', async () => {
+                        await api('auth/email/send', { body: { email } });
+                        setCodeSent(true);
+                      });
+                    }}
+                  >
+                    <Field id="email" label={t('email')} icon={Mail}>
+                      <Input id="email" type="email" autoComplete="email" required autoFocus={!oauth.length} placeholder={t('emailPlaceholder')} className="h-10 pl-9" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </Field>
+                    <Button type="submit" size="lg" className="w-full" disabled={busy}>
+                      {spinner('send')}
+                      {t('sendCode')}
+                    </Button>
+                  </form>
+                ) : doors.emailCode ? (
+                  <form
+                    className="flex flex-col gap-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void run('verify', async () => {
+                        await api('auth/email/verify?next=' + encodeURIComponent(next), { body: { email, code } });
+                        await signedIn();
+                      });
+                    }}
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="code">{t('code')}</Label>
+                      <Input
+                        id="code"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        autoFocus
+                        pattern="\d{6}"
+                        maxLength={6}
+                        required
+                        placeholder="000000"
+                        className="h-12 indent-[0.5em] text-center font-mono text-xl tracking-[0.5em] placeholder:tracking-[0.5em] placeholder:text-muted-foreground/40"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                      />
+                    </div>
+                    <Button type="submit" size="lg" className="w-full" disabled={busy || code.length !== 6}>
+                      {spinner('verify')}
+                      {t('verify')}
+                    </Button>
+                    <div className="flex items-center justify-between text-sm">
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setCodeSent(false);
+                          setCode('');
+                          setError(null);
+                        }}
+                      >
+                        {t('useAnotherEmail')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className="text-brand hover:underline disabled:opacity-50 dark:text-foreground"
+                        onClick={() => void run('send', () => api('auth/email/send', { body: { email } }).then(() => setCode('')))}
+                      >
+                        {t('resend')}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+
+                {error && (
+                  <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+                    {te(error)}
+                  </p>
+                )}
+
+                {doors.password && <p className="text-center text-xs text-muted-foreground">{t('noAccount')}</p>}
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>

@@ -17,8 +17,18 @@ import { IntlProvider, useTranslations } from 'use-intl';
 import { CardPage, Loading } from '@/components/page';
 import { Button } from '@/components/ui/button';
 import { startAnalytics } from '@/lib/analytics';
-import { setEditionSecurity, type EditionSecurity, replacing, setEditionModels, setEditionTeamPages, type EditionModels, type TeamPage } from '@/lib/edition';
-import { currentLocale } from '@/lib/locale';
+import {
+  type EditionCommunity,
+  type EditionModels,
+  type EditionSecurity,
+  replacing,
+  setEditionCommunity,
+  setEditionModels,
+  setEditionSecurity,
+  setEditionTeamPages,
+  type TeamPage,
+} from '@/lib/edition';
+import { currentLocale, type Locale } from '@/lib/locale';
 import { RequireUser, SessionProvider } from '@/lib/session';
 import { watchSystemTheme } from '@/lib/theme';
 import en from '@/messages/en.json';
@@ -101,9 +111,11 @@ export interface WebExtension {
   /** Models the edition supplies, offered from the team's models page header (`EditionModels`). */
   models?: EditionModels;
   security?: EditionSecurity;
+  /** Where its users talk with its makers, in each language: the footer of the console's pages outside a team links to it (`EditionCommunity`). */
+  community?: (locale: Locale) => EditionCommunity;
 }
 
-export function mountWeb({ routes = [], teamPages = [], models, security }: WebExtension = {}) {
+export function mountWeb({ routes = [], teamPages = [], models, security, community }: WebExtension = {}) {
   const locale = currentLocale();
   document.documentElement.lang = locale;
   void startAnalytics();
@@ -111,6 +123,7 @@ export function mountWeb({ routes = [], teamPages = [], models, security }: WebE
   setEditionTeamPages(teamPages);
   setEditionModels(models);
   setEditionSecurity(security);
+  setEditionCommunity(community);
   window.addEventListener('vite:preloadError', reloadOnStaleChunk);
 
   // Workspace, for everyone in the team; Team management, for its admin, who alone

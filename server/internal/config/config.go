@@ -41,7 +41,7 @@ type Config struct {
 	MigratePackages     bool // copy and verify local archives into configured S3, then exit
 	MigratePackagePaths bool // copy flat keys to team-scoped paths in the current store, then exit
 
-	AuthSecret         string // signs sessions, tokens and the setup link
+	AuthSecret         string // signs sessions and tokens
 	ProviderKeysSecret []byte // 32 bytes; seals provider keys
 
 	AllowPrivateProviders bool
@@ -152,8 +152,8 @@ func Load(args []string, env func(string) string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	// The secret every session, token and the setup link derive from: one a
-	// stranger could guess would let them claim the first account.
+	// The secret every session and token derives from: one a stranger could
+	// guess would let them forge a session for any account.
 	if c.AuthSecret = first(authEnv, stored.AuthSecret); len(c.AuthSecret) < MinAuthSecret {
 		return Config{}, fmt.Errorf("AUTH_SECRET: at least %d characters of random (openssl rand -base64 32)", MinAuthSecret)
 	}

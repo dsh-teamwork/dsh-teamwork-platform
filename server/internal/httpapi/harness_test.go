@@ -210,7 +210,7 @@ func must(t *testing.T, r response, status int) map[string]any {
 // admin claims the first account and signs in with it.
 func (e *env) admin(email string) *browser {
 	b := e.browser()
-	r := b.post("/api/auth/setup", map[string]string{"token": auth.SetupToken(secret), "email": email, "password": "correct horse battery"})
+	r := b.post("/api/auth/setup", map[string]string{"email": email, "password": "correct horse battery"})
 	if r.status != http.StatusNoContent {
 		e.t.Fatalf("setup: %d %s", r.status, r.body)
 	}

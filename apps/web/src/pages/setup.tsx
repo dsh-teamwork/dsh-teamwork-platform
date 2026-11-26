@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { CardPage, Failure, useTitle } from '@/components/page';
@@ -13,9 +13,8 @@ import { useSession } from '@/lib/session';
 const PASSWORD_MIN = 10;
 
 /**
- * Where the link the server prints at start leads: the instance's first
- * account, while none exists (ADR 0006). The token is checked when the form
- * is sent, so the page says nothing about whether it is right.
+ * The instance's first account, open to whoever arrives while none exists:
+ * the sign-in page sends the deployer here (ADR 0070).
  */
 export function SetupPage() {
   const t = useTranslations('setup');
@@ -25,20 +24,18 @@ export function SetupPage() {
   useTitle(t('title'));
   const { session, refresh } = useSession();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const token = params.get('token');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<AuthError | null>(null);
   const [pending, setPending] = useState(false);
 
-  if (!token || !session.doors.password || !session.setupOpen) return <CardPage title={t('title')} description={t('closed')} />;
+  if (!session.doors.password || !session.setupOpen) return <CardPage title={t('title')} description={t('closed')} />;
 
   async function submit() {
     setError(null);
     setPending(true);
     try {
-      await api('auth/setup', { body: { token, email, password } });
+      await api('auth/setup', { body: { email, password } });
       await refresh();
       navigate('/teams', { replace: true });
     } catch (failure) {

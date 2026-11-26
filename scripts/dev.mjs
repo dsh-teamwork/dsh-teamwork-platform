@@ -7,9 +7,16 @@
 // one no other web app depends on (premium/apps/web over apps/web). The
 // management console here is always the open one, as the combined role mounts
 // it; the closed operator console runs on its own (premium/CLAUDE.md).
+//
+// A `.env` at the repository root (gitignored) is read first, so a local
+// SMTP_URL or ADMIN_EMAILS need not be typed on every start; a variable the
+// shell already sets wins over the file. It is read once: an edit takes a
+// restart of `pnpm dev`.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 const listed = spawnSync('pnpm', ['list', '--recursive', '--depth', '-1', '--json'], { encoding: 'utf8' });
 if (listed.error) throw listed.error;

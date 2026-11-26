@@ -20,6 +20,23 @@
 
 set -u
 
+# The root .env, read as `pnpm dev` reads it (scripts/dev.mjs): Node's own
+# parser, and a variable the shell already sets wins. It is where the test
+# databases `pnpm dev:setup` prints can live instead of every shell's export.
+if [ -f .env ]; then
+  envs=$(node <<'JS'
+const before = new Set(Object.keys(process.env));
+process.loadEnvFile('.env');
+// Each new variable as an export the shell reads back, single-quoted.
+const quote = (v) => `'${v.replaceAll("'", `'\\''`)}'`;
+for (const [k, v] of Object.entries(process.env)) {
+  if (!before.has(k) && /^[A-Za-z_][A-Za-z0-9_]*$/.test(k)) console.log(`export ${k}=${quote(v)}`);
+}
+JS
+  ) || exit 1
+  eval "$envs"
+fi
+
 red() { printf '\033[1;31m%s\033[0m\n' "$1"; }
 
 run() {

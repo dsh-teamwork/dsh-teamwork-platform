@@ -1,8 +1,10 @@
 import { createTranslator } from 'use-intl';
-import { BatteryFull, Check, ExternalLink, Github, Signal, Wifi } from 'lucide-react';
+import { BatteryFull, Check, ExternalLink, Github, MessagesSquare, Signal, Wifi } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { CommunityCard } from '@/components/community';
 import { Button } from '@/components/ui/button';
+import type { EditionCommunity } from '@/lib/edition';
 import type { Locale } from '@/lib/locale';
 import en from '@/messages/en.json';
 import zhCN from '@/messages/zh-CN.json';
@@ -24,13 +26,14 @@ import { SeaBed, SeaSurface, WhalePassage, WhalePod } from './sea';
  * governance, to the team's assets and the closing call on the deep floor. Each section is labelled with its depth. A capability
  * that is planned, or offered only by the hosted service, says so where it
  * appears (ADR 0007: a claim here holds for any instance). A deployment's
- * legal pages are linked when it has them.
+ * legal pages are linked when it has them, and an edition's community
+ * (`EditionCommunity`) on the first screen and in the footer.
  *
  * Prerendered when the console is built (scripts/prerender.mjs), once per
  * locale and sign-in state; the Go server picks one per request
  * (server/internal/web). It runs no React in the browser: the language picker
  * and theme controls come from ./controls.tsx and src/public/client.ts wires
- * them, and the narrow screen's menu is a <details>.
+ * them, and the narrow screen's menu and the community's code are a <details>.
  */
 
 function Depth({ depth, label }: { depth: string; label: string }) {
@@ -56,6 +59,7 @@ const zoneTitle = 'max-w-3xl text-balance [word-break:auto-phrase] text-3xl font
 const zoneLede = 'mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg';
 // The community edition: the open half of this product (ADR 0005), self-hosted.
 const communityRepo = 'https://github.com/dsh-teamwork/dsh-teamwork-platform';
+const introLink = 'inline-flex items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline';
 
 /** The deep floor's layers, newest on top: an example of what a team keeps, drawn darker as it settles. */
 const STRATA = [
@@ -146,14 +150,44 @@ function PhoneShot({ src, alt, platformsLabel, storeSearch }: {
   );
 }
 
-/** Public content for workspaces offered by a different edition. */
+/** What a different edition adds to the home page: the workspaces it offers, and its community. */
 export interface HomeWorkspace {
   browserDescription: string;
   phoneDescription: string;
   title: string;
   description: string;
   icon?: ReactNode;
-  cloudLink?: { href: string; label: string };
+  /** Its hosted service's page: `label` on the editions table, `nav` in the header. */
+  cloudLink?: { href: string; label: string; nav: string };
+  community?: EditionCommunity;
+}
+
+/**
+ * The edition's community: a link, or a <details> menu holding the code to scan
+ * (src/public/client.ts closes it on a click outside). On the first screen it
+ * opens downward from its start; at the footer's end, upward from its end.
+ */
+function Community({ community, className, footer }: { community: EditionCommunity; className: string; footer?: boolean }) {
+  const { qr } = community;
+  if (!qr) {
+    return (
+      <a href={community.href} target="_blank" rel="noreferrer" className={className}>
+        <MessagesSquare aria-hidden className="size-4" />
+        {community.label}
+      </a>
+    );
+  }
+  return (
+    <details data-menu="" className="relative">
+      <summary className={`${className} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
+        <MessagesSquare aria-hidden className="size-4" />
+        {community.label}
+      </summary>
+      <div className={`absolute z-10 rounded-lg border bg-background text-foreground shadow-lg ${footer ? 'right-0 bottom-full mb-2' : 'left-0 top-full mt-2'}`}>
+        <CommunityCard community={{ ...community, qr }} />
+      </div>
+    </details>
+  );
 }
 
 export interface HomeProps {
@@ -184,15 +218,13 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
 
   // Signed out, the way in is creating a team: sign-in returns to /teams, where that happens.
   const start = signedIn ? { href: '/teams', label: t('openConsole') } : { href: '/sign-in?next=%2Fteams', label: t('createTeam') };
-  // The page's sections, then the documentation.
-  const nav = [
-    ['#everywhere', 'nav.everywhere'],
-    ['#collaborate', 'nav.collaborate'],
-    ['#govern', 'nav.govern'],
-    ['#assets', 'nav.assets'],
-    ['#self-host', 'nav.pricing'],
-    ['/docs', 'nav.docs'],
-  ] as const;
+  // The two editions, the open one at its row of the editions table and the hosted one (where an edition has it) at its
+  // own page, then the documentation.
+  const nav: { href: string; label: string; mark?: boolean }[] = [
+    { href: '#self-host', label: t('nav.communityEdition'), mark: true },
+    ...(workspace?.cloudLink ? [{ href: workspace.cloudLink.href, label: workspace.cloudLink.nav }] : []),
+    { href: '/docs', label: t('nav.docs') },
+  ];
   const faqs = ['install', 'pricing', 'selfHost', 'security'] as const;
   const pricingRows = ['access', 'sharing', 'models', 'cloudDsh', 'operations', 'payment'] as const;
 
@@ -209,21 +241,18 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
           <img src="/logo.svg" alt="" width={30} height={30} className="max-[22.5rem]:size-7" />
           {tc('appName')}
         </a>
-        <nav aria-label={t('nav.label')} className="hidden gap-6 text-sm text-muted-foreground lg:flex">
-          {nav.map(([href, key]) => (
-            <a key={href} href={href} className="hover:text-foreground">
-              {t(key)}
-            </a>
-          ))}
-        </nav>
+        {/* Everything else sits at the right: where a visitor goes besides the story (the open edition marked by GitHub's), then the controls. */}
         <div className="ml-auto flex items-center min-[22.5rem]:gap-2">
+          <nav aria-label={t('nav.label')} className="mr-2 hidden gap-6 whitespace-nowrap text-sm text-muted-foreground lg:flex">
+            {nav.map(({ href, label, mark }) => (
+              <a key={href} href={href} className="inline-flex items-center gap-1.5 hover:text-foreground">
+                {mark && <Github aria-hidden className="size-4" />}
+                {label}
+              </a>
+            ))}
+          </nav>
           <LocaleMenu locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} placement="header" />
           <ThemeButton label={tc('theme.toggle')} />
-          <Button asChild variant="ghost" size="icon" className="shrink-0 text-muted-foreground">
-            <a href="https://github.com/dsh-teamwork/dsh-teamwork" aria-label={t('nav.pluginRepo')} title={t('nav.pluginRepo')}>
-              <Github aria-hidden />
-            </a>
-          </Button>
           <Button asChild className="hidden sm:inline-flex">
             <a href={start.href}>{start.label}</a>
           </Button>
@@ -237,9 +266,10 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
               </span>
             </summary>
             <div className="absolute right-0 z-10 mt-2 flex w-56 flex-col rounded-lg border bg-background p-1 shadow-lg">
-              {nav.map(([href, key]) => (
-                <a key={href} href={href} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
-                  {t(key)}
+              {nav.map(({ href, label, mark }) => (
+                <a key={href} href={href} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent">
+                  {mark && <Github aria-hidden className="size-4" />}
+                  {label}
                 </a>
               ))}
               <a href={start.href} className="mt-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground sm:hidden">
@@ -261,10 +291,15 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
               <div className="mt-2 flex flex-col items-start gap-2.5">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   <Copyable text={PLUGIN} label={t('install.copy')} />
-                  <a href="/docs/install" target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-                    {t('install.more')}
-                    <ExternalLink aria-hidden="true" className="size-3.5" />
-                  </a>
+                  {/* An edition with a community offers it here instead, where a newcomer is stuck installing; the guide stays in the navigation. */}
+                  {workspace?.community ? (
+                    <Community community={workspace.community} className={`${introLink} gap-1.5`} />
+                  ) : (
+                    <a href="/docs/install" target="_blank" rel="noopener" className={`${introLink} gap-1`}>
+                      {t('install.more')}
+                      <ExternalLink aria-hidden="true" className="size-3.5" />
+                    </a>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   <span aria-hidden="true" className="mr-1.5 inline-block size-1.5 -translate-y-px rounded-full bg-success align-middle" />
@@ -511,6 +546,7 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
               </span>
               <nav aria-label={t('nav.label')} className="ml-auto flex flex-wrap items-center justify-end gap-x-4 sm:gap-x-6">
                 <a href="/docs">{t('nav.docs')}</a>
+                {workspace?.community && <Community community={workspace.community} className="inline-flex items-center gap-1.5 py-1.5 hover:text-foreground" footer />}
                 {legal && (
                   <>
                     <a href="/privacy">{tc('privacy')}</a>

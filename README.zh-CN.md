@@ -48,7 +48,7 @@ docker compose up -d --build
 docker compose logs server
 ```
 
-打开服务器输出的首个账号设置链接，不公开分享该链接。默认本地控制台为 `http://localhost:3000`；Compose 的 `data` 卷保留数据库、密钥和本地插件包。在控制台创建团队并添加成员。
+打开控制台创建首个账号：在第一个账号创建之前，登录页只提供这一项操作，谁先打开谁就能创建，所以请在公开地址之前完成。默认本地控制台为 `http://localhost:3000`；Compose 的 `data` 卷保留数据库、密钥和本地插件包。在控制台创建团队并添加成员。
 
 供其他电脑访问时，将 `APP_URL` 设置为实际 HTTPS 地址并部署 TLS 反向代理。成员在 Teamwork 登录面板选择该服务器，再授权 DSH。插件只在本机回环地址上接受明文 HTTP。
 

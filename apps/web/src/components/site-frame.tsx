@@ -1,7 +1,7 @@
 /**
  * The frame of the console's pages outside a team (`/teams`, `/account`): the
  * site's top bar (home, your teams, the docs, the theme and the account) and a
- * footer with the language and the theme, around a page as wide as the home
+ * footer with the edition's community, the language and the theme, around a page as wide as the home
  * page's sections.
  */
 
@@ -11,6 +11,7 @@ import { NavLink } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { AccountAvatarLink } from '@/components/account';
+import { CommunityLink } from '@/components/community';
 import { LocalePicker } from '@/components/locale-picker';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,7 @@ export function SiteFrame({ children }: { children: ReactNode }) {
           <a href="/docs" className="hover:text-foreground">
             {td('title')}
           </a>
+          <CommunityLink />
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
             <LocalePicker className="h-9" />

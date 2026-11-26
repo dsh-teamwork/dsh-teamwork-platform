@@ -1,6 +1,6 @@
 # Design
 
-> **Status:** Current · **Updated:** 2026-11-25
+> **Status:** Current · **Updated:** 2026-11-26
 
 The DSH Teamwork visual system — the whale mark, the black-and-white palette with its two accents, type, spacing and icons — and the file in code that owns each part.
 
@@ -271,8 +271,11 @@ a person or a character, which at this size reads as clip art.
   screens, and reduced motion keeps the artwork still.
 - **The landing page's first screen is what the product is and how to start.**
   The title, one sentence, the plugin to copy and the install guide sit
-  above the waterline. The header carries *Create a team* and a GitHub icon
-  beside the theme switch that links to the Teamwork plugin. The dive link at
+  above the waterline; an edition with a community links that there in the
+  guide's place, where a newcomer stuck installing looks for help. Everything in the header but the mark sits at the right: three links,
+  Community edition (behind GitHub's mark, to the editions table's open
+  row), the hosted service's page where an edition has one, and Docs, then
+  the language, the theme switch and *Create a team*. The dive link at
   the lower right scrolls to the team overview at −5 m. The overview asks
   how the whole team can make the most of DSH and introduces access,
   collaboration, governance, and team assets in page order.
