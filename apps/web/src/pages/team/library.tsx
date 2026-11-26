@@ -502,7 +502,14 @@ function Details(props: {
 
   return (
     <Dialog open onOpenChange={(next) => !next && !pending && props.close()}>
-      <DialogContent className="top-0 right-0 left-auto h-dvh max-h-dvh w-full max-w-md translate-x-0 translate-y-0 gap-5 rounded-none border-y-0 border-r-0 sm:rounded-l-xl">
+      {/* Focus starts on the panel itself, so no action looks chosen before the reader picks one; Tab reaches them all. */}
+      <DialogContent
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement).focus();
+        }}
+        className="top-0 right-0 left-auto h-dvh max-h-dvh w-full max-w-md translate-x-0 translate-y-0 gap-5 rounded-none border-y-0 border-r-0 outline-none sm:rounded-l-xl"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-start gap-3">
             <ItemIcon item={item} className="size-11" />
@@ -525,11 +532,6 @@ function Details(props: {
           {removable && (
             <Button variant="ghost" disabled={pending} onClick={() => void props.choose(item, removeBody, t('removed'))}>
               {t('remove')}
-            </Button>
-          )}
-          {use.on && use.how === 'pinned' && !item.assetArchived && (
-            <Button variant="ghost" disabled={pending} onClick={() => void props.choose(item, { mode: recommended ? 'default' : 'latest' }, t('followed'))}>
-              {t(recommended ? 'followRecommended' : 'followLatest')}
             </Button>
           )}
         </div>
@@ -642,7 +644,7 @@ function Details(props: {
           </section>
         )}
 
-        {item.assetOwnerId && <Versions item={item} names={new Map([...props.models, ...props.items].map((i) => [i.id, i.name]))} teamId={props.teamId} use={use} recommended={recommendation?.version} pending={pending} choose={props.choose} />}
+        {item.assetOwnerId && <Versions item={item} names={new Map([...props.models, ...props.items].map((i) => [i.id, i.name]))} teamId={props.teamId} use={use} recommended={recommendation?.version} follow={recommended ? 'default' : 'latest'} pending={pending} choose={props.choose} />}
       </DialogContent>
     </Dialog>
   );
@@ -753,17 +755,39 @@ function Computers(props: { item: Item; teamId: string; hosts: Host[]; items: It
 }
 
 /** A member's item version by version, newest first: each opens to its contents and can be pinned. */
-function Versions({ item, names, teamId, use, recommended, pending, choose }: { item: Item; names: ReadonlyMap<string, string>; teamId: string; use: Use; recommended?: number; pending: boolean; choose: Choose }) {
+function Versions({ item, names, teamId, use, recommended, follow, pending, choose }: {
+  item: Item;
+  names: ReadonlyMap<string, string>;
+  teamId: string;
+  use: Use;
+  recommended?: number;
+  /** Where a pinned reader goes back to: the team's recommendation, or the latest version. */
+  follow: 'default' | 'latest';
+  pending: boolean;
+  choose: Choose;
+}) {
   const t = useTranslations('team.library.versions');
+  const tl = useTranslations('team.library');
+  const pinned = use.how === 'pinned' && !item.assetArchived;
+  // A reader who pinned a version came here to choose one, so the list opens for them.
+  const [open, setOpen] = useState(pinned);
   const format = useFormatter();
   const history = useApi<Schemas['ConfigRevision'][]>(`teams/${teamId}/history?configId=${item.id}`);
   const [shown, setShown] = useState<number | null>(null);
   const rows = (history.data ?? []).filter((r) => r.kind === item.kind);
   return (
-    <details className="rounded-lg border p-3 text-sm">
+    <details className="rounded-lg border p-3 text-sm" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
       <summary className="font-semibold">
         {t('title')} <span className="font-normal text-muted-foreground">{t('count', { count: item.version })}</span>
       </summary>
+      {pinned && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted px-3 py-2">
+          <span className="min-w-0 flex-1 text-xs text-muted-foreground">{tl('onDsh.pinned', { version: use.version ?? 0 })}</span>
+          <Button size="sm" variant="outline" disabled={pending} onClick={() => void choose(item, { mode: follow }, tl('followed'))}>
+            {tl(follow === 'default' ? 'followRecommended' : 'followLatest')}
+          </Button>
+        </div>
+      )}
       {!history.data ? (
         <p role="status" className="mt-2 text-muted-foreground">{t(history.error ? 'unavailable' : 'loading')}</p>
       ) : (
