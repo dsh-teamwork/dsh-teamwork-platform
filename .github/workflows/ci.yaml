@@ -59,6 +59,9 @@ jobs:
       # Its drift check empties these (server/scripts/drift.mjs).
       MIGRATE_DEV_POSTGRES: postgres://postgres:postgres_password@localhost:5432/go_drift?sslmode=disable
       MIGRATE_DEV_MYSQL: mysql://root:mysql_password@localhost:3306/go_drift
+      # Every turbo run writes .turbo/runs/<id>.json, naming each task's hash;
+      # the last step keeps only those entries in the cache.
+      TURBO_RUN_SUMMARY: "true"
 
     steps:
       - uses: actions/checkout@v4
@@ -88,13 +91,17 @@ jobs:
       # Turbo's own cache, carried between runs. The key is unique per run on
       # purpose: a hit on the primary key skips the post-job save and freezes
       # the cache at whichever run wrote it first; `restore-keys` is what
-      # actually matches, and takes the most recent entry.
+      # actually matches, and takes the most recent entry. The last step,
+      # "Prune the Turbo cache", keeps it to one run's entries. The `pruned`
+      # prefix keeps the entries saved before that step existed from ever
+      # being restored: they had grown to several gigabytes, and restoring one
+      # took the runner down inside this step.
       - name: Turbo cache
         uses: actions/cache@v4
         with:
           path: .turbo/cache
-          key: turbo-${{ runner.os }}-${{ github.sha }}
-          restore-keys: turbo-${{ runner.os }}-
+          key: turbo-pruned-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-pruned-${{ runner.os }}-
 
       - name: Type check
         run: pnpm tsc
@@ -166,6 +173,23 @@ jobs:
       - name: Edition boundary
         if: hashFiles('premium/scripts/lint-edition.mjs') != ''
         run: node premium/scripts/lint-edition.mjs
+
+      # Turbo never deletes a cache entry, so without this every run saves
+      # all earlier runs' entries plus its own (two Go binaries and the built
+      # consoles, about 90 MB per merge), and the archive only grows. Keep the
+      # entries this run's turbo invocations hit or wrote, by the hashes their
+      # run summaries name; the post-job save then stores one run's worth.
+      - name: Prune the Turbo cache
+        run: |
+          node -e '
+            const fs = require("fs");
+            const used = new Set();
+            for (const f of fs.readdirSync(".turbo/runs"))
+              for (const task of JSON.parse(fs.readFileSync(`.turbo/runs/${f}`, "utf8")).tasks) used.add(task.hash);
+            for (const f of fs.readdirSync(".turbo/cache"))
+              if (!used.has(f.split(/[-.]/)[0])) fs.rmSync(`.turbo/cache/${f}`);
+          '
+          du -sh .turbo/cache
 
   # The release, packed exactly as the release workflow packs it: five
   # binaries, their npm packages and the launcher (server/scripts/pack.mjs).
