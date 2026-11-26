@@ -1,7 +1,7 @@
 /**
  * What an edition's web app adds to this one through `mountWeb` (src/app.tsx):
- * the team pages its console navigation lists beside the open ones, and the
- * models it supplies itself. Set once, before the first render.
+ * the team pages its console navigation lists beside the open ones, the
+ * models it supplies itself, and its community. Set once, before the first render.
  */
 
 import type { LucideIcon } from 'lucide-react';
@@ -97,6 +97,29 @@ export const editionModels = () => models;
 
 export function setEditionModels(section: EditionModels | undefined) {
   models = section;
+}
+
+/**
+ * Where the people using an edition talk with the people making it, in one
+ * language: a link, and the code a phone scans where joining is done in a
+ * phone's chat app. The home page's foot and the console's carry it
+ * (components/community.tsx, src/public/home.tsx); the open edition has none,
+ * and then nothing is shown.
+ */
+export interface EditionCommunity {
+  /** Its name, as the link reads ("Discord"). */
+  label: string;
+  href: string;
+  /** The code to scan, an image URL, and the line beneath it; with one, the link opens it rather than leaving the page. */
+  qr?: { src: string; caption: string };
+}
+
+let community: ((locale: Locale) => EditionCommunity) | undefined;
+
+export const editionCommunity = (locale: Locale) => community?.(locale);
+
+export function setEditionCommunity(value: ((locale: Locale) => EditionCommunity) | undefined) {
+  community = value;
 }
 
 export interface EditionSecurity {
