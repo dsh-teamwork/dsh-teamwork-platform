@@ -59,6 +59,7 @@ const zoneTitle = 'max-w-3xl text-balance [word-break:auto-phrase] text-3xl font
 const zoneLede = 'mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg';
 // The community edition: the open half of this product (ADR 0005), self-hosted.
 const communityRepo = 'https://github.com/dsh-teamwork/dsh-teamwork-platform';
+const introLink = 'inline-flex items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline';
 
 /** The deep floor's layers, newest on top: an example of what a team keeps, drawn darker as it settles. */
 const STRATA = [
@@ -164,9 +165,9 @@ export interface HomeWorkspace {
  * The edition's community: a link, or a <details> menu holding the code to scan
  * (src/public/client.ts closes it on a click outside). It opens upward, over
  * the page rather than into the seabed's drawing, from its start or, at the
- * footer's end, from its end.
+ * footer's end, from its end; on the first screen, downward.
  */
-function Community({ community, className, end }: { community: EditionCommunity; className: string; end?: boolean }) {
+function Community({ community, className, end, down }: { community: EditionCommunity; className: string; end?: boolean; down?: boolean }) {
   const { qr } = community;
   if (!qr) {
     return (
@@ -182,7 +183,7 @@ function Community({ community, className, end }: { community: EditionCommunity;
         <MessagesSquare aria-hidden className="size-4" />
         {community.label}
       </summary>
-      <div className={`absolute z-10 rounded-lg border bg-background text-foreground shadow-lg bottom-full mb-2 ${end ? 'right-0' : 'left-0'}`}>
+      <div className={`absolute z-10 rounded-lg border bg-background text-foreground shadow-lg ${down ? 'top-full mt-2' : 'bottom-full mb-2'} ${end ? 'right-0' : 'left-0'}`}>
         <CommunityCard community={{ ...community, qr }} />
       </div>
     </details>
@@ -294,10 +295,15 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
               <div className="mt-2 flex flex-col items-start gap-2.5">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   <Copyable text={PLUGIN} label={t('install.copy')} />
-                  <a href="/docs/install" target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-                    {t('install.more')}
-                    <ExternalLink aria-hidden="true" className="size-3.5" />
-                  </a>
+                  {/* An edition with a community offers it here instead, where a newcomer is stuck installing; the guide stays in the navigation. */}
+                  {workspace?.community ? (
+                    <Community community={workspace.community} className={`${introLink} gap-1.5`} down />
+                  ) : (
+                    <a href="/docs/install" target="_blank" rel="noopener" className={`${introLink} gap-1`}>
+                      {t('install.more')}
+                      <ExternalLink aria-hidden="true" className="size-3.5" />
+                    </a>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   <span aria-hidden="true" className="mr-1.5 inline-block size-1.5 -translate-y-px rounded-full bg-success align-middle" />
