@@ -133,6 +133,10 @@ async function open(body: string, readOnly = false, extra: Record<string, unknow
         normalised = text;
       },
     }) }));
+  });
+  // A second act: React runs the editor's mount effects as the first one ends,
+  // so waiting inside it never saw onReady and always spent its full half second.
+  await act(async () => {
     for (let i = 0; i < 50 && !normalised; i++) await new Promise((r) => setTimeout(r, 10));
   });
   const html = host.innerHTML;
