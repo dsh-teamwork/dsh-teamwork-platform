@@ -239,22 +239,18 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
           <img src="/logo.svg" alt="" width={30} height={30} className="max-[22.5rem]:size-7" />
           {tc('appName')}
         </a>
-        {/* Everything else sits at the right: the two places a visitor goes besides the story, then the controls. */}
+        {/* Everything else sits at the right: where a visitor goes besides the story (the source, marked by GitHub's mark), then the controls. */}
         <div className="ml-auto flex items-center min-[22.5rem]:gap-2">
           <nav aria-label={t('nav.label')} className="mr-2 hidden gap-6 whitespace-nowrap text-sm text-muted-foreground lg:flex">
             {nav.map(([href, key]) => (
-              <a key={href} href={href} className="hover:text-foreground">
+              <a key={href} href={href} className="inline-flex items-center gap-1.5 hover:text-foreground">
+                {key === 'nav.openSource' && <Github aria-hidden className="size-4" />}
                 {t(key)}
               </a>
             ))}
           </nav>
           <LocaleMenu locale={locale} label={tc('language')} names={(l) => tc(`localeNames.${l}`)} placement="header" />
           <ThemeButton label={tc('theme.toggle')} />
-          <Button asChild variant="ghost" size="icon" className="shrink-0 text-muted-foreground">
-            <a href="https://github.com/dsh-teamwork/dsh-teamwork" aria-label={t('nav.pluginRepo')} title={t('nav.pluginRepo')}>
-              <Github aria-hidden />
-            </a>
-          </Button>
           <Button asChild className="hidden sm:inline-flex">
             <a href={start.href}>{start.label}</a>
           </Button>
@@ -269,7 +265,8 @@ export function HomePage({ locale, signedIn, legal, workspace }: HomeProps) {
             </summary>
             <div className="absolute right-0 z-10 mt-2 flex w-56 flex-col rounded-lg border bg-background p-1 shadow-lg">
               {nav.map(([href, key]) => (
-                <a key={href} href={href} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
+                <a key={href} href={href} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent">
+                  {key === 'nav.openSource' && <Github aria-hidden className="size-4" />}
                   {t(key)}
                 </a>
               ))}
