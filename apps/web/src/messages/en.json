@@ -2032,6 +2032,7 @@
     "rate_changed": "Rates changed while you were editing. Refresh and try again.",
     "rate_model_required": "Set rates on the model referenced by this preset.",
     "usage_unavailable": "Usage accounting is temporarily unavailable. Try again shortly.",
+    "team_resetting": "The team is resetting. Try this write again shortly.",
     "team_not_found": "This team does not exist, or you are not in it.",
     "admin_required": "Only the team admin can do that.",
     "already_in_team": "You are already in this team.",

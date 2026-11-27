@@ -2032,6 +2032,7 @@
     "rate_changed": "单价已被其他操作更新，请刷新后重试。",
     "rate_model_required": "请在此预设引用的模型上设置单价。",
     "usage_unavailable": "用量计量服务暂时不可用，请稍后重试。",
+    "team_resetting": "团队正在重置，请稍后重试这项写入。",
     "team_not_found": "找不到这个团队，或者你不在这个团队里。",
     "admin_required": "只有团队管理员可以执行此操作。",
     "already_in_team": "你已经是这个团队的成员了。",
