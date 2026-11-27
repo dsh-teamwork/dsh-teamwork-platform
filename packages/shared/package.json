@@ -16,6 +16,10 @@
     "vitest": "4.1.11"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./knowledge-diff": "./src/knowledge-diff.ts"
+  },
+  "dependencies": {
+    "diff": "9.0.0"
   }
 }

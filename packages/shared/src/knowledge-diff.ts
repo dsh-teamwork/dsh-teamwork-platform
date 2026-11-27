@@ -1,7 +1,8 @@
 /**
  * The difference between two texts of a document, line by line, for comparing
- * versions, deciding a proposal and reapplying a stale save
- * (components/knowledge-diff.tsx draws it). Long runs of unchanged lines fold
+ * versions, deciding a proposal and reapplying a stale save. The web console
+ * (`apps/web/src/components/knowledge-diff.tsx`) and the closed phone app draw
+ * it. Long runs of unchanged lines fold
  * away, leaving a few lines of context around each change.
  */
 

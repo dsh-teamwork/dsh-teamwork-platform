@@ -1,13 +1,14 @@
 /**
- * Two texts of a knowledge document, line by line (lib/knowledge-diff.ts
- * decides what changed): removed lines struck on a destructive tint, added
- * ones on a success tint, each numbered on its own side, and the unchanged
- * runs between changes folded into one line saying how many are hidden.
+ * Two texts of a knowledge document, line by line
+ * (`@dsh-teamwork/shared/knowledge-diff` decides what changed): removed lines
+ * struck on a destructive tint, added ones on a success tint, each numbered on
+ * its own side, and the unchanged runs between changes folded into one line
+ * saying how many are hidden.
  */
 
 import { useTranslations } from 'use-intl';
 
-import { diffStats, diffText, foldDiff } from '@/lib/knowledge-diff';
+import { diffStats, diffText, foldDiff } from '@dsh-teamwork/shared/knowledge-diff';
 import { cn } from '@/lib/utils';
 
 export function KnowledgeDiff({ before, after, beforeLabel, afterLabel }: { before: string; after: string; beforeLabel: string; afterLabel: string }) {
