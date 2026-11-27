@@ -201,9 +201,15 @@ console's `PinGate` (`apps/web/src/pages/team/dsh-session.tsx`).
 
 ## Frames
 
-One JSON frame per WebSocket message. The relay reads only the envelope. The
-complete DSH business frame is inside authenticated ciphertext. The relay
-rejects plaintext `call`, `result` and `mux` frames.
+An encryption record is one **binary** WebSocket message
+([ADR 0072](../adr/0072-encryption-records-cross-the-relay-as-binary.md)): its
+kind in one byte (1 commit, 2 reveal, 3 noise, 4 data), the pairing id's
+length in one byte, the pairing id, the 22-character channel id, then the
+record's bytes, at most 512 KiB (`encodePacket`, `decodePacket`). The relay
+reads that header only and passes the message on unchanged. Everything else
+is one JSON text frame per message. The complete DSH business frame is inside
+authenticated ciphertext; the relay ignores plaintext `call`, `result` and
+`mux` frames, and a `sealed` frame sent as text.
 `server/relay/protocol.go` is the source; the plugin's `src/relay.ts`
 and `src/bridge.ts`, and the clients' `packages/relay-client` (`src/protocol.ts`), restate it.
 
@@ -219,11 +225,12 @@ team membership then, and closes with 4401 for anyone else.
 
 | Direction | `t` | Fields | Meaning |
 | --- | --- | --- | --- |
-| phone ↔ relay ↔ plugin | `sealed` | `pairingId`, `channelId`, `kind`, `data` | Commitment, reveal, Noise key bootstrap or AES-GCM records; `kind` is `commit`, `reveal`, `noise` or `data` |
+| phone ↔ relay ↔ plugin | binary | kind, `pairingId`, `channelId`, record | Commitment, reveal, Noise key bootstrap or AES-GCM records |
 | relay → phone | `error` | `pairingId`, `error` | Routing refusal: `not_paired`, `offline` or `rate_limited` |
 | either → relay | `ping` | none | Does this socket still carry frames? Answered at once |
 | relay → either | `pong` | none | The answer to `ping` |
 | relay → phone | `offline`, `detached` | `pairingId` | Host unavailable or another socket took over |
+| relay → phone | `presence` | `hostId` | One of the member's computers connected or left: list them again (`watchComputers`) |
 | relay → plugin | `detach` | `pairingId` | Phone unavailable; close its transport and native streams |
 | relay → either | `revoked` | `pairingId` | Drop the pairing |
 | plugin → relay | `waiting` | none | Generic attention signal; no conversation identifier or question type |
@@ -245,6 +252,18 @@ nothing; without this a call waited out its twenty-second timeout and the
 relay's own ping found the socket only after up to a minute. A new socket not
 welcomed within ten seconds is given up the same way. The app and the console
 also ask at once when they come back to the foreground (`checkConnection`).
+A screen listing the member's computers watches them (`watchComputers`)
+instead of asking on a timer: the relay sends every phone and browser socket
+of the member `presence` when one of their computers connects or leaves, the
+client reports a socket that came back from a drop the same way, and it
+keeps the socket open, dialling again after a drop, while anyone watches. The
+phone app lists its computers only then and when it comes to the foreground.
+
+**What each step took** is reported to a client's `measure` option
+(`TimingName` in `packages/relay-client`): the socket's welcome, a computer's
+channel, a follow's snapshot, each call, and a message until its answer
+begins. Nothing is sent anywhere; the app shows the last of each when its
+version line on Settings is tapped.
 
 `src/secure-channel.ts` in the plugin owns the transport; the mobile app keeps
 an identical wire copy, checked by integration tests. Following
@@ -289,7 +308,7 @@ receive ordering and discard late results after closure. Native cryptography
 does not by itself promise hardware acceleration or measured phone throughput.
 
 Each decoded `data` record contains a four-byte big-endian counter, ciphertext
-and 16-byte GCM tag, at most 384 KiB total before base64. Messages queued
+and 16-byte GCM tag, at most 384 KiB total. Messages queued
 together (a stream's frames as DSH sends them) are sealed into one record,
 so a burst costs one cipher call and one relay frame; the receiver already
 reads any number of length-prefixed messages from a record. Its 12-byte nonce is

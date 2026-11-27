@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-27 — Records cross the relay as binary, and the phone hears its computers come and go
+
+- **What:** An encryption record is one binary WebSocket message (a kind byte, the pairing id, the channel id, the raw record) that the relay passes on unchanged; a `sealed` JSON frame is ignored. The relay sends a member's phone and browser sockets `presence` when one of their computers connects or leaves, and `RelayClient.watchComputers` reports it, and a socket back from a drop, to a list that reads its computers then instead of on a timer. A client takes a `measure` option, told how long the socket, a channel, a follow's snapshot, each call and a message's first answer took.
+- **Why:** Base64 inside JSON cost a third more bytes on every record and a parse and re-marshal at the relay; polling the computers every fifteen seconds asked the relay for nothing most of the time; and the route had no numbers.
+- **Breaking:** The relay, the plugin, the web console and the app change together: an end that still sends records as text reaches nobody until it is updated.
+- **Upgrade:** Nothing; the plugin's and the app's halves ship with their next releases.
+- **Refs:** [ADR 0072](docs/adr/0072-encryption-records-cross-the-relay-as-binary.md), `docs/tech/relay.md`, `server/relay/protocol.go`, `packages/relay-client/src/secure-channel.ts`, `packages/relay-client/src/live.ts`
+
 ## 2026-11-27 — A phone reaches its computer in fewer trips
 
 - **What:** A channel between a device and a computer that already trust each other is `pinned`: no commitments, Noise from the first packet, and the device's first call goes with Noise's last message; each end sends once its own key is set. An unlock belongs to the pairing for its fifteen idle minutes, so a reconnect does not ask for the PIN again. The relay answers `ping` with `pong`; the phone, the console and the plugin each ping every fifteen seconds and reconnect when five pass with nothing heard. The relay writes each socket from its own queue and closes one more than 8 MiB behind with 4408, so a slow device holds up no other. The client asks `GET /api/relay` once per ten minutes, not before every request. A burst of messages is sealed as one record, and a follow's opening snapshot is held to 256 KiB.

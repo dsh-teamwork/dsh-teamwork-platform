@@ -20,10 +20,10 @@
 
 import { HostFrameSchema, PHONE_PATH, type PhoneEvent } from './protocol';
 import { webAesKey } from './aes-gcm';
-import { SecureChannel, securePacket, newChannelId, type AesKey, type RandomBytes } from './secure-channel';
+import { SecureChannel, decodePacket, encodePacket, securePacket, newChannelId, type AesKey, type RandomBytes } from './secure-channel';
 import { z } from 'zod';
 import { bridgeValue, createDshSessions } from './dsh-sessions';
-import { HOST_OS, RelayError, type DeviceKeys, type Computer, type OwnComputer, type RelayClient, type RelayErrorCode } from './types';
+import { HOST_OS, RelayError, type Measure, type DeviceKeys, type Computer, type OwnComputer, type RelayClient, type RelayErrorCode } from './types';
 
 export interface LiveRelayOptions {
   keys: DeviceKeys;
@@ -44,6 +44,8 @@ export interface LiveRelayOptions {
   WebSocket?: typeof globalThis.WebSocket;
   /** The AES-256-GCM backend records are sealed with: WebCrypto unless the platform has a native one. */
   importAesKey?: (bytes: Uint8Array) => Promise<AesKey>;
+  /** Told how long each step of the route took (`TimingName`), for a developer measuring it. */
+  measure?: Measure;
 }
 
 /** How long a call may wait for its result before the screen is told it failed. */
@@ -79,6 +81,7 @@ interface Connection {
 
 export function createLiveRelay(options: LiveRelayOptions): RelayClient {
   const request = options.request ?? fetch;
+  const measure: Measure = options.measure ?? (() => {});
   let counter = 0;
   const nextId = () => `${Date.now().toString(36)}-${(counter++).toString(36)}`;
 
@@ -86,8 +89,25 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
   let activeSocket: WebSocket | null = null;
   /** Asks the open socket whether it still carries frames, once welcomed. */
   let heartbeat: (() => void) | null = null;
+  /** Who lists the member's computers again when one comes or goes (`watchComputers`), and how the socket is kept. */
+  const computerWatchers = new Set<() => void>();
+  let welcomedBefore = false;
+  let rewatchTimer: ReturnType<typeof setTimeout> | undefined;
+  let rewatchAttempt = 0;
+  const computersChanged = () => computerWatchers.forEach((onChange) => onChange());
+  /** While anyone watches the computers, a socket that dropped is dialled again, waiting longer after each failure. */
+  function keepWatching() {
+    if (!computerWatchers.size || rewatchTimer) return;
+    const epoch = generation;
+    const delay = Math.min(30_000, 1000 * 2 ** rewatchAttempt++);
+    rewatchTimer = setTimeout(() => {
+      rewatchTimer = undefined;
+      if (epoch !== generation || !computerWatchers.size) return;
+      void connect().catch(() => keepWatching());
+    }, delay);
+  }
   let generation = 0;
-  const calls = new Map<string, { pairingId: string; resolve(value: unknown): void; reject(error: RelayError): void; timer: ReturnType<typeof setTimeout> }>();
+  const calls = new Map<string, { pairingId: string; at: number; resolve(value: unknown): void; reject(error: RelayError): void; timer: ReturnType<typeof setTimeout> }>();
   const streams = new Map<string, { pairingId: string; receive(body: Record<string, unknown>): void }>();
   const sessions = createDshSessions(
     {
@@ -98,7 +118,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
         if (cancel) void sendSecure(pairingId, { t: 'mux', pairingId, body: { type: 'cancel', streamId } }).catch(() => {});
       },
     },
-    { locale: options.locale, nextId },
+    { locale: options.locale, nextId, measure },
   );
   interface SecureLink {
     channel: SecureChannel; channelId: string; ready: Promise<void>; resolve(): void; reject(error: RelayError): void;
@@ -130,6 +150,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     if (active && !active.failed) return active;
     if (opening.has(id)) return opening.get(id)!;
     const epoch = generation;
+    const asked = Date.now();
     const pending = (async () => {
       const known = await options.keys.peer(id);
       if (!known && !pairing) throw new RelayError('device_verification_required');
@@ -148,7 +169,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
           link.remoteKey = key; link.code = code;
           // A computer this device already trusts was authenticated by the handshake itself: work goes now, without
           // waiting a trip for its `secureReady`.
-          if (known) { link.accepted = true; channel.verified(); resolve(); }
+          if (known) { link.accepted = true; channel.verified(); measure('channel', Date.now() - asked); resolve(); }
           const draft = pairingDrafts.get(id);
           if (draft) draft.safetyCode = code;
           if (pairing) channel.send({ t: 'pairHello', name: pairing.name, kind: options.device });
@@ -250,9 +271,12 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       const origin = await relayOrigin(server);
       if (epoch !== generation) throw new RelayError('unavailable');
       const Socket = options.WebSocket ?? globalThis.WebSocket;
+      const dialled = Date.now();
       const socket = new Socket(origin.replace(/^http/, 'ws') + PHONE_PATH);
+      socket.binaryType = 'arraybuffer';
       activeSocket = socket;
-      const send = (frame: unknown) => socket.send(JSON.stringify(frame));
+      // An encryption record goes as a binary message (`encodePacket`); everything else is JSON.
+      const send = (frame: unknown) => socket.send(securePacket(frame) ? encodePacket(frame) : JSON.stringify(frame));
       let heard = Date.now();
       let beat: ReturnType<typeof setInterval> | undefined;
       let welcomed: ReturnType<typeof setTimeout> | undefined;
@@ -286,8 +310,17 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
         socket.onmessage = (message) => {
           if (epoch !== generation) return;
           heard = Date.now();
-          const frame = parse(String(message.data));
+          if (typeof message.data !== 'string') {
+            const packet = decodePacket(message.data as ArrayBuffer);
+            if (packet) receive(packet);
+            return;
+          }
+          const frame = parse(message.data);
           if (frame?.t === 'welcome') {
+            measure('socket', Date.now() - dialled);
+            rewatchAttempt = 0;
+            if (welcomedBefore) computersChanged();
+            welcomedBefore = true;
             clearTimeout(welcomed);
             beat = setInterval(check, PING_EVERY_MS);
             heartbeat = check;
@@ -315,6 +348,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     }
     streams.clear();
     sessions.endedAll();
+    keepWatching();
   }
 
   function receive(frame: Record<string, unknown> | null) {
@@ -325,6 +359,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       return;
     }
     const event = frame as PhoneEvent;
+    if (event.t === 'presence') return computersChanged();
     if (event.t === 'error') {
       const code = PHONE_ERRORS[event.error] ?? 'unavailable';
       if (event.id) return fail(event.id, code);
@@ -365,6 +400,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     if (!call || call.pairingId !== pairingId) return;
     calls.delete(id);
     clearTimeout(call.timer);
+    measure('call', Date.now() - call.at);
     try {
       call.resolve(bridgeValue(status, body));
     } catch (error) {
@@ -394,7 +430,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     const id = nextId();
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => fail(id, 'unavailable'), method === 'teamwork/readDocument' ? 75_000 : CALL_TIMEOUT_MS);
-      calls.set(id, { pairingId, resolve, reject, timer });
+      calls.set(id, { pairingId, at: Date.now(), resolve, reject, timer });
       void sendSecure(pairingId, { t: 'call', pairingId, id, method, body: { args } }).catch(() => fail(id, 'unavailable'));
     });
   }
@@ -412,14 +448,23 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     checkConnection() {
       heartbeat?.();
     },
+    watchComputers(onChange) {
+      computerWatchers.add(onChange);
+      void connect().catch(() => keepWatching());
+      return () => { computerWatchers.delete(onChange); };
+    },
     reset() {
       generation++;
       discovered = null;
+      welcomedBefore = false;
       const socket = activeSocket;
       activeSocket = null;
-      // Signed out: nothing comes back.
+      // Signed out: nothing comes back, and nothing is dialled again until something asks.
       sessions.reset();
       lost();
+      clearTimeout(rewatchTimer);
+      rewatchTimer = undefined;
+      rewatchAttempt = 0;
       socket?.close();
     },
     async listComputers(): Promise<Computer[]> {

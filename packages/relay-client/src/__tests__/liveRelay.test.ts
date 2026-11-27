@@ -8,6 +8,9 @@
 vi.mock('../secure-channel', () => ({
   newChannelId: () => 'abcdefghijklmnopqrstuv',
   securePacket: (frame: any) => frame?.t === 'sealed',
+  // The stub's packets stay objects; the socket below carries them as its binary messages.
+  encodePacket: (packet: unknown) => packet,
+  decodePacket: (message: unknown) => message,
   SecureChannel: class {
     constructor(private options: any) {}
     get id() { return this.options.channelId; }
@@ -30,15 +33,16 @@ class FakeSocket {
   sent: any[] = [];
   channels = new Map<string,string>();
   onopen?: () => void;
-  onmessage?: (event: { data: string }) => void;
+  onmessage?: (event: { data: unknown }) => void;
   onclose?: () => void;
   onerror?: () => void;
   constructor(readonly url: string) {
     FakeSocket.made.push(this);
     setTimeout(() => this.onopen?.(), 0);
   }
-  send(data: string) {
-    const frame = JSON.parse(data);
+  binaryType = 'blob';
+  send(data: string | object) {
+    const frame = typeof data === 'string' ? JSON.parse(data) : data;
     if (frame.t === 'sealed') {
       this.channels.set(frame.pairingId, frame.channelId);
       if (FakeSocket.offline.has(frame.pairingId)) { queueMicrotask(() => this.push({ t: 'error', pairingId: frame.pairingId, error: 'offline' })); return; }
@@ -56,7 +60,8 @@ class FakeSocket {
   push(frame: unknown) {
     const inner = frame as any;
     const outer = ['result','mux','secureReady','revokedAck'].includes(inner.t) ? { t: 'sealed', pairingId: inner.pairingId, channelId: this.channels.get(inner.pairingId), kind: 'data', data: JSON.stringify(inner) } : inner;
-    this.onmessage?.({ data: JSON.stringify(outer) });
+    // A sealed packet is a binary message (here, the stub's object); anything else is JSON text.
+    this.onmessage?.({ data: outer.t === 'sealed' ? outer : JSON.stringify(outer) });
   }
 }
 
@@ -105,7 +110,9 @@ function setup() {
     return new Response('{}', { status: 404 });
   }) as typeof fetch;
   const credentials: Array<{server:string;token?:string}> = [];
+  const timings: string[] = [];
   const relay = createLiveRelay({
+    measure: (name, ms) => { expect(ms).toBeGreaterThanOrEqual(0); timings.push(name); },
     keys: { relayKey: async account => { credentials.push(account); return 'phone-key'; }, identity: async () => ({} as any), peer: async () => 'host-key', trust: async () => {}, forget: async () => {} },
     random: n => new Uint8Array(n).fill(1),
     session: async () => ({ server: 'https://teamwork.example.test', token }),
@@ -131,10 +138,37 @@ function setup() {
     const { streamId } = s.sent.find((f) => f.t === 'mux' && f.pairingId === pairingId && f.body.endpoint === '$events').body;
     for (const value of [...before, { type: 'ready', clientId: 'c-1' }]) s.push({ t: 'mux', pairingId, body: { type: 'item', streamId, value } });
   };
-  return { relay, asked, socket, sentOf, eventsReady, credentials, setToken: (next: string) => { token = next; } };
+  return { relay, asked, socket, sentOf, eventsReady, credentials, timings, setToken: (next: string) => { token = next; } };
 }
 
 describe('the live relay client', () => {
+  it('tells a watcher when a computer comes or goes, and after the socket comes back, keeping the socket open', async () => {
+    vi.useFakeTimers();
+    try {
+      const { relay } = setup();
+      const changed = vi.fn();
+      const stop = relay.watchComputers(changed);
+      await vi.advanceTimersByTimeAsync(1);
+      const s = FakeSocket.made[0]!;
+      s.push({ t: 'welcome' });
+      expect(changed).not.toHaveBeenCalled();
+      s.push({ t: 'presence', hostId: 'h' });
+      expect(changed).toHaveBeenCalledTimes(1);
+      // The socket drops: dialled again while someone watches, and told once it is back.
+      s.close();
+      await vi.advanceTimersByTimeAsync(1001);
+      expect(FakeSocket.made).toHaveLength(2);
+      FakeSocket.made[1]!.push({ t: 'welcome' });
+      expect(changed).toHaveBeenCalledTimes(2);
+      stop();
+      FakeSocket.made[1]!.close();
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(FakeSocket.made).toHaveLength(2);
+      relay.reset();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it('asks the server where its relay is once, not before every request', async () => {
     const { relay, asked } = setup();
     await relay.listComputers();
@@ -326,6 +360,23 @@ describe('the live relay client', () => {
     await expect(listed).rejects.toEqual(new RelayError('not_found'));
   });
 
+  it('times the socket, the channel, a follow\'s snapshot, each call, and a message until its answer begins', async () => {
+    const { relay, socket, timings } = setup();
+    relay.follow('p1', 's1', () => {});
+    const s = await socket();
+    await until(() => s.sent.filter((f) => f.t === 'mux').length >= 2);
+    const [events, follow] = s.sent.filter((f) => f.t === 'mux').map((f) => f.body);
+    s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: events.streamId, value: { type: 'ready', clientId: 'c-1' } } });
+    s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: follow.streamId, value: { type: 'snapshot', records: [], cursor: 0 } } });
+    const sent = relay.prompt('p1', 's1', 'hello');
+    await until(() => s.sent.some((f) => f.method === 'session/prompt'));
+    const call = s.sent.find((f) => f.method === 'session/prompt');
+    s.push({ t: 'result', pairingId: 'p1', id: call.id, status: 200, body: { result: { ok: true } } });
+    await sent;
+    s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: follow.streamId, value: { type: 'event', event: { type: 'assistant/message', seq: 2, data: { message: { content: [{ type: 'text', text: 'hi' }] } } } } } });
+    expect(timings).toEqual(['socket', 'channel', 'snapshot', 'call', 'reply']);
+    relay.reset();
+  });
   it('follows a session, shows the question the agent asks, and answers it through $events', async () => {
     const { relay, socket } = setup();
     const seen: SessionEvent[] = [];

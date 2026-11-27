@@ -40,22 +40,62 @@ export type SecurePacket = {
   pairingId: string;
   channelId: string;
   kind: 'commit' | 'reveal' | 'noise' | 'data';
-  data: string;
+  data: Uint8Array;
 };
+const KINDS = ['commit', 'reveal', 'noise', 'data'] as const;
+/** The longest record a sealed frame carries (the relay's `maxSealedBytes`). */
+const SEALED_BYTES = 512 * 1024;
+const PAIRING_ID = /^[\x21-\x7e]{1,64}$/;
+const CHANNEL_ID = /^[A-Za-z0-9_-]{22}$/;
 export function securePacket(value: unknown): value is SecurePacket {
   if (!value || typeof value !== 'object') return false;
   const f = value as SecurePacket;
   return (
     f.t === 'sealed' &&
     typeof f.pairingId === 'string' &&
-    f.pairingId.length > 0 &&
-    f.pairingId.length <= 64 &&
+    PAIRING_ID.test(f.pairingId) &&
     typeof f.channelId === 'string' &&
-    /^[A-Za-z0-9_-]{22}$/.test(f.channelId) &&
-    ['commit', 'reveal', 'noise', 'data'].includes(f.kind) &&
-    typeof f.data === 'string' &&
-    f.data.length <= 700000
+    CHANNEL_ID.test(f.channelId) &&
+    KINDS.includes(f.kind) &&
+    f.data instanceof Uint8Array &&
+    f.data.length > 0 &&
+    f.data.length <= SEALED_BYTES
   );
+}
+/**
+ * A packet as one binary WebSocket message (the relay's `server/relay/protocol.go`, `sealedRecord`): its kind in one
+ * byte (1 commit, 2 reveal, 3 noise, 4 data), the pairing id's length in one byte, the pairing id, the 22-character
+ * channel id, then the record's bytes as they are. No base64 and no JSON: the relay reads the header and passes the
+ * message on unchanged.
+ */
+export function encodePacket(packet: SecurePacket): Uint8Array {
+  const id = new TextEncoder().encode(packet.pairingId);
+  const channel = new TextEncoder().encode(packet.channelId);
+  const bytes = new Uint8Array(2 + id.length + channel.length + packet.data.length);
+  bytes[0] = KINDS.indexOf(packet.kind) + 1;
+  bytes[1] = id.length;
+  bytes.set(id, 2);
+  bytes.set(channel, 2 + id.length);
+  bytes.set(packet.data, 2 + id.length + channel.length);
+  return bytes;
+}
+/** A binary message read back into a packet, or null when it is not a well-formed one. */
+export function decodePacket(message: ArrayBuffer | ArrayBufferView): SecurePacket | null {
+  const bytes = message instanceof ArrayBuffer ? new Uint8Array(message) : new Uint8Array(message.buffer, message.byteOffset, message.byteLength);
+  if (bytes.length < 2) return null;
+  const kind = KINDS[bytes[0]! - 1];
+  const n = bytes[1]!;
+  const head = 2 + n + 22;
+  if (!kind || bytes.length <= head) return null;
+  const decoder = new TextDecoder();
+  const packet: SecurePacket = {
+    t: 'sealed',
+    kind,
+    pairingId: decoder.decode(bytes.subarray(2, 2 + n)),
+    channelId: decoder.decode(bytes.subarray(2 + n, head)),
+    data: bytes.slice(head),
+  };
+  return securePacket(packet) ? packet : null;
 }
 export type RandomBytes = (length: number) => Uint8Array;
 export interface Identity {
@@ -181,7 +221,7 @@ export class SecureChannel {
     return this.options.channelId;
   }
   start() {
-    if (!this.options.pinned) return this.packet('commit', this.commitment);
+    if (!this.options.pinned) return this.packet('commit', unbase64(this.commitment));
     if (!this.options.expectedKey) return this.close(new Error('device_verification_required'));
     this.started = true;
     this.remoteReveal = { key: this.options.expectedKey, salt: '' };
@@ -192,7 +232,7 @@ export class SecureChannel {
       sha256(encode([DOMAIN, this.options.pairingId, this.options.channelId, initiator, key, salt])),
     );
   }
-  private packet(kind: SecurePacket['kind'], data: string) {
+  private packet(kind: SecurePacket['kind'], data: Uint8Array) {
     if (this.dead) return;
     this.options.send({
       t: 'sealed',
@@ -209,14 +249,14 @@ export class SecureChannel {
         throw new Error('channel_mismatch');
       if (this.options.pinned && (packet.kind === 'commit' || packet.kind === 'reveal')) throw new Error('unexpected_commitment');
       if (packet.kind === 'commit') {
-        if (this.remoteCommit || unbase64(packet.data).length !== 32) throw new Error('invalid_commitment');
-        this.remoteCommit = packet.data;
+        if (this.remoteCommit || packet.data.length !== 32) throw new Error('invalid_commitment');
+        this.remoteCommit = base64(packet.data);
         this.revealSent = true;
-        this.packet('reveal', JSON.stringify({ key: this.options.identity.publicKey, salt: this.salt }));
+        this.packet('reveal', encode({ key: this.options.identity.publicKey, salt: this.salt }));
       } else if (packet.kind === 'reveal') {
         if (!this.remoteCommit || !this.revealSent || this.remoteReveal || packet.data.length > 512)
           throw new Error('invalid_reveal');
-        const reveal = JSON.parse(packet.data) as { key: string; salt: string };
+        const reveal = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(packet.data)) as { key: string; salt: string };
         if (
           typeof reveal.key !== 'string' ||
           typeof reveal.salt !== 'string' ||
@@ -232,7 +272,7 @@ export class SecureChannel {
         void this.handshake().catch((error) => this.close(error));
       } else {
         if (!this.started) throw new Error('handshake_required');
-        const bytes = unbase64(packet.data);
+        const bytes = packet.data;
         if (bytes.length > PACKET_BYTES) throw new Error('message_too_large');
         if (packet.kind === 'noise') {
           if (this.bootstrapDone) throw new Error('unexpected_noise');
@@ -253,7 +293,7 @@ export class SecureChannel {
     if (this.wire.length) {
       const bytes = this.wire;
       this.wire = new Uint8Array(0);
-      this.packet('noise', base64(bytes));
+      this.packet('noise', bytes);
     }
   }
   private async handshake() {
@@ -386,7 +426,7 @@ export class SecureChannel {
         if (this.dead) return;
         this.sendCount++;
         this.sentBytes += plaintext.length;
-        this.packet('data', base64(join(nonce.subarray(8), ciphertext)));
+        this.packet('data', join(nonce.subarray(8), ciphertext));
       }
     }
   }

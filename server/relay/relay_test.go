@@ -122,7 +122,7 @@ func (w *world) openWith(path string, header http.Header, hello obj) *peer {
 	go func() {
 		defer close(p.closed)
 		for {
-			_, data, err := c.Read(context.Background())
+			kind, data, err := c.Read(context.Background())
 			if err != nil {
 				p.mu.Lock()
 				p.ended = websocket.CloseStatus(err)
@@ -133,7 +133,11 @@ func (w *world) openWith(path string, header http.Header, hello obj) *peer {
 				return
 			}
 			var f obj
-			json.Unmarshal(data, &f)
+			if kind == websocket.MessageBinary {
+				f = unsealed(data)
+			} else {
+				json.Unmarshal(data, &f)
+			}
 			p.mu.Lock()
 			if p.welcome == nil && f["t"] == "welcome" {
 				p.welcome = f
@@ -165,11 +169,38 @@ func (w *world) phone(h handset) *peer {
 	return w.open("/relay/phone", obj{"t": "hello", "token": h.token, "deviceKey": h.key})
 }
 
+// send writes v as JSON, or, for a `sealed` frame, as the binary record the
+// clients send (sealedFrame).
 func (p *peer) send(v any) {
-	b, _ := json.Marshal(v)
-	if err := p.c.Write(context.Background(), websocket.MessageText, b); err != nil {
+	kind, b := websocket.MessageText, []byte(nil)
+	if f, ok := v.(obj); ok && f["t"] == "sealed" && f["data"] != nil {
+		kind, b = websocket.MessageBinary, sealedFrame(f)
+	} else {
+		b, _ = json.Marshal(v)
+	}
+	if err := p.c.Write(context.Background(), kind, b); err != nil {
 		p.t.Fatal(err)
 	}
+}
+
+var kindNames = []string{"", "commit", "reveal", "noise", "data"}
+
+// sealedFrame is the binary record for a sealed obj, its data written as bytes.
+func sealedFrame(f obj) []byte {
+	id, channel, data := f["pairingId"].(string), f["channelId"].(string), f["data"].(string)
+	kind := byte(0)
+	for i, name := range kindNames {
+		if name == f["kind"] {
+			kind = byte(i)
+		}
+	}
+	return append(append(append([]byte{kind, byte(len(id))}, id...), channel...), data...)
+}
+
+// unsealed reads a binary record back into the obj a test compares.
+func unsealed(b []byte) obj {
+	n := int(b[1])
+	return obj{"t": "sealed", "kind": kindNames[b[0]], "pairingId": string(b[2 : 2+n]), "channelId": string(b[2+n : 2+n+22]), "data": string(b[2+n+22:])}
 }
 
 func (p *peer) next(match func(obj) bool) obj {
@@ -500,10 +531,18 @@ func TestForwarding(t *testing.T) {
 			t.Fatal("use not recorded")
 		}
 
-		// Plaintext business frames are never forwarded, even for a confirmed pairing.
+		// Plaintext business frames are never forwarded, even for a confirmed pairing, and a
+		// sealed record only goes as binary.
 		for _, kind := range []string{"call", "mux"} {
 			phone.send(obj{"t": kind, "pairingId": id, "id": "x", "method": "session/list", "body": obj{}})
 		}
+		text, _ := json.Marshal(sealed(id, "as-text"))
+		phone.c.Write(context.Background(), websocket.MessageText, text)
+		laptop.none(func(f obj) bool { return f["data"] == "as-text" })
+		for _, bad := range [][]byte{{9, 1, 'p'}, append([]byte{4, 0}, "abcdefghijklmnopqrstuvx"...), append([]byte{4, 1, 'p'}, "short"...)} {
+			phone.c.Write(context.Background(), websocket.MessageBinary, bad)
+		}
+		laptop.none(is("sealed"))
 		laptop.none(is("call"))
 		laptop.none(is("mux"))
 		laptop.send(obj{"t": "result", "pairingId": id, "id": "x", "status": 200, "body": "plaintext"})
@@ -938,12 +977,11 @@ func TestSlowPhone(t *testing.T) {
 		hello, _ := json.Marshal(obj{"t": "hello", "token": other.token, "deviceKey": other.key})
 		slow.Write(context.Background(), websocket.MessageText, hello)
 		slow.Read(context.Background())
-		taken, _ := json.Marshal(sealed(slowPairing.ID, "open"))
-		slow.Write(context.Background(), websocket.MessageText, taken)
+		slow.Write(context.Background(), websocket.MessageBinary, sealedFrame(sealed(slowPairing.ID, "open")))
 		laptop.next(is("sealed"))
 
-		big := strings.Repeat("x", 600000)
-		for range 40 {
+		big := strings.Repeat("x", 500000)
+		for range 48 {
 			laptop.send(sealed(slowPairing.ID, big))
 		}
 		laptop.send(sealed(fast, "still-quick"))
@@ -976,5 +1014,19 @@ func TestPing(t *testing.T) {
 		phone := w.phone(w.adaPhone)
 		phone.send(obj{"t": "ping"})
 		equal(t, phone.next(is("pong")), obj{"t": "pong"})
+	})
+}
+
+// A member's phones hear when one of their computers connects or leaves, and
+// another member's do not.
+func TestPresence(t *testing.T) {
+	each(t, func(t *testing.T, w *world) {
+		phone := w.phone(w.adaPhone)
+		other := w.phone(w.bobPhone)
+		laptop := w.host(w.ada, "presence-client")
+		equal(t, phone.next(is("presence")), obj{"t": "presence", "hostId": laptop.hostID()})
+		laptop.c.Close(websocket.StatusNormalClosure, "")
+		equal(t, phone.next(is("presence")), obj{"t": "presence", "hostId": laptop.hostID()})
+		other.none(is("presence"))
 	})
 }

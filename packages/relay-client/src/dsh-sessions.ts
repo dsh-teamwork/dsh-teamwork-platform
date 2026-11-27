@@ -34,7 +34,7 @@ import {
 } from './dsh';
 import { deletedResult, historyResult, taskResult, tasksOf } from './schedule';
 import { applySessionEvent } from './session';
-import { RelayError, type Answer, type Pending, type RelayClient, type RelayErrorCode, type SessionEvent, type SessionState } from './types';
+import { RelayError, type Answer, type Measure, type Pending, type RelayClient, type RelayErrorCode, type SessionEvent, type SessionState } from './types';
 
 /** How a computer's DSH is reached: the relay's channel, or an edition's server. */
 export interface DshLink {
@@ -163,7 +163,10 @@ interface Events {
   answered: Map<string, string[]>;
 }
 
-export function createDshSessions(link: DshLink, options: { locale: () => string; nextId: () => string }): DshSessions {
+export function createDshSessions(link: DshLink, options: { locale: () => string; nextId: () => string; measure?: Measure }): DshSessions {
+  const measure = options.measure ?? (() => {});
+  /** When the member last sent a message in each session (`computerId sessionId`), until the agent's answer begins. */
+  const sent = new Map<string, number>();
   const { call } = link;
   const follows = new Set<Follow>();
   const events = new Map<string, Events>();
@@ -201,6 +204,7 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
   async function open(follow: Follow) {
     const { computerId, sessionId } = follow;
     const opening = {};
+    const asked = Date.now();
     follow.opening = opening;
     follow.streamId = 'opening';
     try {
@@ -220,6 +224,7 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
         if (value?.type === 'snapshot') {
           retries = 0;
           follow.state = { ...snapshotOf(value, follow.streams), pending: pendingFor(computerId, sessionId) };
+          measure('snapshot', Date.now() - asked);
           return follow.emit({ type: 'snapshot', state: follow.state });
         }
         const changes =
@@ -229,6 +234,11 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
               ? streamEventsOf(value.frame, follow.streams)
               : [];
         for (const change of changes) {
+          const key = `${computerId} ${sessionId}`;
+          if (sent.has(key) && (change.type === 'delta' || (change.type === 'item' && change.item.kind !== 'user'))) {
+            measure('reply', Date.now() - sent.get(key)!);
+            sent.delete(key);
+          }
           follow.state = applySessionEvent(follow.state, change);
           follow.emit(change);
         }
@@ -575,6 +585,7 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
     },
 
     async prompt(computerId, sessionId, text, attachments) {
+      sent.set(`${computerId} ${sessionId}`, Date.now());
       await call(computerId, 'session/prompt', {
         request: {
           requestId: attachments?.requestId ?? options.nextId(),
