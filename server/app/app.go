@@ -299,6 +299,9 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 		CreateSystemTeam: teams.CreateSystemTeam,
 		JoinMember:       teams.JoinMember,
 		ResetTeamContent: teams.ResetTeamContent,
+		EnsureTeamBudget: func(ctx context.Context, teamID, actorID string, in edition.TeamBudgetPolicy) error {
+			return meter.EnsurePolicy(ctx, teamID, actorID, usage.PolicyInput{Scope: in.Scope, Period: in.Period, Timezone: in.Timezone, Points: &in.Points, Enabled: true, Notify: "none"})
+		},
 	}
 	stops := []func(){}
 	if cfg.ServiceRole != "manage" {

@@ -203,6 +203,44 @@ func (s *Service) SetPolicy(ctx context.Context, teamID, actorID string, in Poli
 	return policyView(p, now), nil
 }
 
+// EnsurePolicy creates a policy or reconciles it through SetPolicy. Reading
+// the same desired state repeatedly writes no revision or audit event.
+func (s *Service) EnsurePolicy(ctx context.Context, teamID, actorID string, in PolicyInput) error {
+	if err := in.Validate(); err != nil {
+		return err
+	}
+	p, err := s.DB.BudgetPolicy.Query().Where(budgetpolicy.TeamID(teamID), budgetpolicy.ScopeEQ(budgetpolicy.Scope(in.Scope)),
+		budgetpolicy.SubjectID(in.SubjectID), budgetpolicy.PeriodEQ(budgetpolicy.Period(in.Period))).Only(ctx)
+	if ent.IsNotFound(err) {
+		in.Revision = 0
+		_, err = s.SetPolicy(ctx, teamID, actorID, in)
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	if samePolicy(p, in) {
+		return nil
+	}
+	in.Revision = p.Revision
+	_, err = s.SetPolicy(ctx, teamID, actorID, in)
+	return err
+}
+
+func samePolicy(p *ent.BudgetPolicy, in PolicyInput) bool {
+	points := (*int64)(nil)
+	if in.Points != nil {
+		n, _ := Decimal(*in.Points, 9)
+		points = &n
+	}
+	return p.Timezone == in.Timezone && p.Enabled == in.Enabled && string(p.Notify) == in.Notify &&
+		sameLimit(p.PointLimit, points) && sameLimit(p.InputLimit, in.Input) && sameLimit(p.OutputLimit, in.Output) && sameLimit(p.TotalLimit, in.Total)
+}
+
+func sameLimit(a, b *int64) bool {
+	return a == nil && b == nil || a != nil && b != nil && *a == *b
+}
+
 // window reuses an active scope window even when its default policy was replaced
 // by a member override. A new policy starts counting at activation, not before.
 func window(ctx context.Context, db *ent.Client, p *ent.BudgetPolicy, userID string, now time.Time) (*ent.BudgetWindow, error) {

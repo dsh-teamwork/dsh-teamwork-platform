@@ -62,3 +62,13 @@ type ArtifactSeed struct {
 	Title   string
 	Content []byte
 }
+
+// TeamBudgetPolicy is the small budget shape a system team needs: one team or
+// default-member daily/monthly point cap. Member overrides and token caps stay
+// with the ordinary budget API.
+type TeamBudgetPolicy struct {
+	Scope    string
+	Period   string
+	Timezone string
+	Points   string
+}

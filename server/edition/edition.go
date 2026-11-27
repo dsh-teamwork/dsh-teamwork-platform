@@ -178,6 +178,9 @@ type Host struct {
 	// ResetTeamContent replaces member content with the edition's seed while
 	// preserving the team, its members, models, budgets and usage history.
 	ResetTeamContent func(context.Context, string, string, TeamSeed) error
+	// EnsureTeamBudget creates or reconciles a system team's point cap through
+	// the public budget service. An unchanged policy adds no revision.
+	EnsureTeamBudget func(context.Context, string, string, TeamBudgetPolicy) error
 	// RegisterFunding binds protected models to this extension. Called once
 	// during Mount, before serving; community code needs no participant.
 	RegisterFunding func(ModelFunding) (FundingHost, error)
