@@ -40,10 +40,10 @@ type preparedArtifact struct {
 // The team, its members, built-in assistant, models, budgets, usage and wallet
 // stay in place. Seed bytes are stored outside the database transaction; no
 // network or object-store work happens inside it.
-func (s *Service) ResetTeamContent(ctx context.Context, teamID, ownerID string, seed edition.TeamSeed) (err error) {
+func (s *Service) ResetTeamContent(ctx context.Context, teamID, ownerID string, seed edition.TeamSeed) (generation int64, err error) {
 	configs, artifacts, err := prepareSeed(seed)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	written := make([]artifactObject, 0, len(artifacts))
 	committed := false
@@ -54,16 +54,16 @@ func (s *Service) ResetTeamContent(ctx context.Context, teamID, ownerID string, 
 	}()
 	for _, a := range artifacts {
 		if s.Objects == nil {
-			return fmt.Errorf("artifact object store is unavailable")
+			return 0, fmt.Errorf("artifact object store is unavailable")
 		}
 		if err := s.Objects.PutObject(ctx, teamID, "pages", a.digest, bytes.NewReader(a.content), int64(len(a.content))); err != nil {
-			return err
+			return 0, err
 		}
 		written = append(written, artifactObject{team: teamID, digest: a.digest})
 	}
 	tx, err := s.DB.Tx(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer tx.Rollback()
 	owner, err := tx.Membership.Query().Where(membership.TeamID(teamID), membership.UserID(ownerID), membership.RoleEQ(membership.RoleAdmin)).Exist(ctx)
@@ -71,23 +71,23 @@ func (s *Service) ResetTeamContent(ctx context.Context, teamID, ownerID string, 
 		if err == nil {
 			err = fmt.Errorf("seed owner is not a team administrator")
 		}
-		return err
+		return 0, err
 	}
 
 	// Personal choices and publication history belong to the content being
 	// replaced, not to the members or their usage history.
 	if _, err = tx.AssetSelection.Delete().Where(assetselection.TeamID(teamID)).Exec(ctx); err != nil {
-		return err
+		return 0, err
 	}
 	if _, err = tx.AssetExclusion.Delete().Where(assetexclusion.TeamID(teamID)).Exec(ctx); err != nil {
-		return err
+		return 0, err
 	}
 	if _, err = tx.ResourceSubmission.Delete().Where(resourcesubmission.TeamID(teamID)).Exec(ctx); err != nil {
-		return err
+		return 0, err
 	}
 	memberConfigs, err := tx.TeamConfig.Query().Where(teamconfig.TeamID(teamID), teamconfig.KindNEQ(teamconfig.KindModel), teamconfig.BuiltinIsNil()).All(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	configIDs := make([]string, 0, len(memberConfigs))
 	for _, c := range memberConfigs {
@@ -95,31 +95,31 @@ func (s *Service) ResetTeamContent(ctx context.Context, teamID, ownerID string, 
 	}
 	if len(configIDs) > 0 {
 		if _, err = tx.ConfigRevision.Delete().Where(configrevision.TeamID(teamID), configrevision.ConfigIDIn(configIDs...)).Exec(ctx); err != nil {
-			return err
+			return 0, err
 		}
 	}
 	if _, err = tx.TeamConfig.Delete().Where(teamconfig.TeamID(teamID), teamconfig.KindNEQ(teamconfig.KindModel), teamconfig.BuiltinIsNil()).Exec(ctx); err != nil {
-		return err
+		return 0, err
 	}
 	packages, err := tx.PluginPackage.Query().Where(pluginpackage.TeamID(teamID)).All(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if _, err = tx.PluginPackage.Delete().Where(pluginpackage.TeamID(teamID)).Exec(ctx); err != nil {
-		return err
+		return 0, err
 	}
 
 	artifactIDs, err := tx.Artifact.Query().Where(artifact.TeamID(teamID)).IDs(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	objects, err := deleteArtifacts(ctx, tx.Client(), teamID, artifactIDs)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	knowledgeDigests, err := deleteKnowledge(ctx, tx.Client(), teamID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	for _, digest := range knowledgeDigests {
 		objects = append(objects, artifactObject{team: teamID, digest: digest, kind: knowledgeObjects})
@@ -131,31 +131,31 @@ func (s *Service) ResetTeamContent(ctx context.Context, teamID, ownerID string, 
 		created, err := tx.TeamConfig.Create().SetID(c.id).SetTeamID(teamID).SetKind(teamconfig.Kind(c.input.Kind)).
 			SetName(c.input.Name).SetData(c.input.Canonical()).SetVersion(seed.Version).Save(ctx)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		if err := recordRevision(ctx, tx.Client(), created, ownerID, "", "Official seed", "system"); err != nil {
-			return err
+			return 0, err
 		}
 	}
 	for _, c := range configs {
 		if err := local.checkReferences(ctx, teamID, &c.input); err != nil {
-			return err
+			return 0, err
 		}
 	}
 	for _, space := range seed.Spaces {
 		if _, err := tx.KnowledgeSpace.Create().SetID(space.ID).SetTeamID(teamID).SetName(space.Name).
 			SetReading(knowledgespace.ReadingTeam).SetCreatedBy(ownerID).Save(ctx); err != nil {
-			return err
+			return 0, err
 		}
 		for _, document := range space.Documents {
 			at := s.now()
 			if _, err := tx.KnowledgeDocument.Create().SetID(document.ID).SetTeamID(teamID).SetSpaceID(space.ID).
 				SetFolderID("").SetTitle(document.Title).SetCurrentVersion(seed.Version).SetUpdatedAt(at).Save(ctx); err != nil {
-				return err
+				return 0, err
 			}
 			if err := tx.KnowledgeVersion.Create().SetDocumentID(document.ID).SetNumber(seed.Version).SetAuthorID(ownerID).
 				SetSource(knowledgeversion.SourceConsole).SetNote("Official seed").SetText(document.Text).SetCreatedAt(at).Exec(ctx); err != nil {
-				return err
+				return 0, err
 			}
 		}
 	}
@@ -164,30 +164,34 @@ func (s *Service) ResetTeamContent(ctx context.Context, teamID, ownerID string, 
 		created, err := tx.Artifact.Create().SetID(a.id).SetTeamID(teamID).SetOwnerID(ownerID).SetKind(artifact.Kind(a.kind)).
 			SetTitle(a.title).SetSharing(artifact.SharingTeam).SetCurrentVersion(seed.Version).SetUpdatedAt(at).Save(ctx)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		version, err := tx.ArtifactVersion.Create().SetArtifactID(created.ID).SetNumber(seed.Version).SetAuthorID(ownerID).
 			SetNote("Official seed").SetSize(int64(len(a.content))).SetCreatedAt(at).Save(ctx)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		entry, contentType := artifactEntry(a.kind)
 		if err := tx.ArtifactFile.Create().SetVersionID(version.ID).SetTeamID(teamID).SetPath(entry).
 			SetContentType(contentType).SetSize(int64(len(a.content))).SetDigest(a.digest).Exec(ctx); err != nil {
-			return err
+			return 0, err
 		}
 	}
 	// Increment in the same transaction as the content replacement. Writes
 	// admitted at the previous generation now fail their commit fence.
 	if err := tx.Team.UpdateOneID(teamID).AddContentGeneration(1).Exec(ctx); err != nil {
-		return err
+		return 0, err
 	}
 	if err := tx.Commit(); err != nil {
-		return err
+		return 0, err
 	}
 	committed = true
 	s.forgetStored(context.WithoutCancel(ctx), packages, objects)
-	return nil
+	current, err := s.DB.Team.Get(ctx, teamID)
+	if err != nil {
+		return 0, err
+	}
+	return current.ContentGeneration, nil
 }
 
 func prepareSeed(seed edition.TeamSeed) ([]preparedConfig, []preparedArtifact, error) {

@@ -177,7 +177,7 @@ type Host struct {
 	JoinMember func(context.Context, string, string) (bool, error)
 	// ResetTeamContent replaces member content with the edition's seed while
 	// preserving the team, its members, models, budgets and usage history.
-	ResetTeamContent func(context.Context, string, string, TeamSeed) error
+	ResetTeamContent func(context.Context, string, string, TeamSeed) (int64, error)
 	// EnsureTeamBudget creates or reconciles a system team's point cap through
 	// the public budget service. An unchanged policy adds no revision.
 	EnsureTeamBudget func(context.Context, string, string, TeamBudgetPolicy) error

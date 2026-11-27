@@ -109,7 +109,7 @@ func TestResetTeamContentPreservesScopeAndMembership(t *testing.T) {
 			t.Fatal(err)
 		}
 		seed := testSeed()
-		if err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, seed); err != nil {
+		if _, err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, seed); err != nil {
 			t.Fatal(err)
 		}
 
@@ -140,7 +140,7 @@ func TestResetTeamContentPreservesScopeAndMembership(t *testing.T) {
 		d.Client.KnowledgeProposal.Create().SetTeamID(demo.ID).SetDocumentID(documentID).SetBaseVersion(1).
 			SetAuthorID(user.ID).SetSource(knowledgeproposal.SourceConsole).SetText("proposal").SaveX(ctx)
 
-		if err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, seed); err != nil {
+		if _, err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, seed); err != nil {
 			t.Fatal(err)
 		}
 		if n, _ := d.Client.Membership.Query().Where(membership.TeamID(demo.ID)).Count(ctx); n != 2 {
@@ -179,7 +179,7 @@ func TestResetTeamContentPreservesScopeAndMembership(t *testing.T) {
 		seedDigest := digestForTest(seed.Artifacts[0].Content)
 		assertObject(t, ctx, store, demo.ID, "pages", seedDigest, true)
 
-		if err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, seed); err != nil {
+		if _, err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, seed); err != nil {
 			t.Fatal(err)
 		}
 		if n, _ := d.Client.Artifact.Query().Where(artifact.TeamID(demo.ID)).Count(ctx); n != 1 {
@@ -202,13 +202,13 @@ func TestResetTeamContentRollsBackInvalidReferences(t *testing.T) {
 			t.Fatal(err)
 		}
 		seed := testSeed()
-		if err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, seed); err != nil {
+		if _, err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, seed); err != nil {
 			t.Fatal(err)
 		}
 		invalid := testSeed()
 		missing := "missing-model"
 		invalid.Configs[0].Data = json.RawMessage(`{"modelConfigId":"` + missing + `"}`)
-		if err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, invalid); err == nil {
+		if _, err := s.ResetTeamContent(ctx, demo.ID, demo.OwnerID, invalid); err == nil {
 			t.Fatal("invalid model reference was accepted")
 		}
 		document, err := d.Client.KnowledgeDocument.Get(ctx, seed.Spaces[0].Documents[0].ID)
