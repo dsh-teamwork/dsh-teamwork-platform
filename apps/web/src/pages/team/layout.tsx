@@ -5,7 +5,7 @@
  * A team the person is not in is not found, as one that does not exist.
  */
 
-import { createContext, useContext } from 'react';
+import { createContext, createElement, useContext } from 'react';
 import { Link, Navigate, Outlet, useParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
@@ -84,7 +84,7 @@ export function TeamLayout() {
       value={{ team: team.data, reload: team.reload, me: session.user.id, passwords: session.doors.password, teamSummary: summary.data, reloadTeamSummary: summary.reload }}
     >
       <ConsoleShell team={team.data} teams={teams.data} waiting={waiting(summary.data)}>
-        {Notice && <Notice team={team.data} />}
+        {Notice && createElement(Notice, { team: team.data })}
         <Outlet />
       </ConsoleShell>
     </TeamContext.Provider>

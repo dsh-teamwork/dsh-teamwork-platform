@@ -8,7 +8,7 @@
  */
 
 import { ArrowRight, ChartColumn, Cpu, House, LayoutDashboard, Layers, LogIn, Plus, Users } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { createElement, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
@@ -43,7 +43,7 @@ export function TeamsPage() {
   useTitle(useTranslations('team.list')('title'));
   return (
     <SiteFrame>
-      {Notice && <Notice />}
+      {Notice && createElement(Notice)}
       {teams.data ? (
         <TeamsHome teams={teams.data} invite={params.get('invite') ?? ''} passwords={session.doors.password} reload={teams.reload} />
       ) : (
