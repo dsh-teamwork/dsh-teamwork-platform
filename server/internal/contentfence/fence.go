@@ -94,7 +94,6 @@ func (tx *guardedTx) Commit() error {
 		tx.Rollback()
 		return err
 	}
-	defer rows.Close()
 	var generation int64
 	if !rows.Next() {
 		tx.Rollback()
@@ -107,6 +106,10 @@ func (tx *guardedTx) Commit() error {
 	if generation != tx.admitted.generation {
 		tx.Rollback()
 		return wire.E(http.StatusConflict, "team_resetting")
+	}
+	if err := rows.Close(); err != nil {
+		tx.Rollback()
+		return err
 	}
 	return tx.Tx.Commit()
 }
