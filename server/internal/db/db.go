@@ -21,6 +21,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "modernc.org/sqlite"
 
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/contentfence"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 )
 
@@ -119,5 +120,5 @@ func Open(ctx context.Context, t Target, extra ...Set) (*ent.Client, *sql.DB, er
 		conn.Close()
 		return nil, nil, err
 	}
-	return ent.NewClient(ent.Driver(entsql.OpenDB(t.Dialect, conn))), conn, nil
+	return ent.NewClient(ent.Driver(contentfence.NewDriver(entsql.OpenDB(t.Dialect, conn), t.Dialect))), conn, nil
 }

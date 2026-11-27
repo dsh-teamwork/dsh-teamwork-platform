@@ -18,6 +18,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldContentGeneration holds the string denoting the content_generation field in the database.
+	FieldContentGeneration = "content_generation"
 	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
 	EdgeMemberships = "memberships"
 	// EdgeConfigs holds the string denoting the configs edge name in mutations.
@@ -63,6 +65,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldName,
+	FieldContentGeneration,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -80,6 +83,10 @@ var (
 	DefaultCreatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultContentGeneration holds the default value on creation for the "content_generation" field.
+	DefaultContentGeneration int64
+	// ContentGenerationValidator is a validator for the "content_generation" field. It is called by the builders before save.
+	ContentGenerationValidator func(int64) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -102,6 +109,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByContentGeneration orders the results by the content_generation field.
+func ByContentGeneration(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContentGeneration, opts...).ToFunc()
 }
 
 // ByMembershipsCount orders the results by memberships count.

@@ -21,6 +21,8 @@ type Team struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// ContentGeneration holds the value of the "content_generation" field.
+	ContentGeneration int64 `json:"content_generation,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamQuery when eager-loading is set.
 	Edges        TeamEdges `json:"edges"`
@@ -83,6 +85,8 @@ func (*Team) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case team.FieldContentGeneration:
+			values[i] = new(sql.NullInt64)
 		case team.FieldID, team.FieldName:
 			values[i] = new(sql.NullString)
 		case team.FieldCreatedAt:
@@ -119,6 +123,12 @@ func (_m *Team) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				_m.Name = value.String
+			}
+		case team.FieldContentGeneration:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field content_generation", values[i])
+			} else if value.Valid {
+				_m.ContentGeneration = value.Int64
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -181,6 +191,9 @@ func (_m *Team) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
+	builder.WriteString(", ")
+	builder.WriteString("content_generation=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ContentGeneration))
 	builder.WriteByte(')')
 	return builder.String()
 }

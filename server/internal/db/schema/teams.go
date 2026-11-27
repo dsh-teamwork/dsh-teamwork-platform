@@ -14,7 +14,11 @@ type Team struct{ ent.Schema }
 
 func (Team) Mixin() []ent.Mixin { return []ent.Mixin{Base{}} }
 func (Team) Fields() []ent.Field {
-	return []ent.Field{field.String("name").MaxLen(runes(100))}
+	return []ent.Field{
+		field.String("name").MaxLen(runes(100)),
+		// content_generation fences a reset against a write admitted before it.
+		field.Int64("content_generation").NonNegative().Default(0),
+	}
 }
 func (Team) Edges() []ent.Edge {
 	return []ent.Edge{

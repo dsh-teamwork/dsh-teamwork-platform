@@ -961,6 +961,7 @@ var (
 		{Name: "id", Type: field.TypeString, Size: 32},
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"mysql": "datetime(6)"}},
 		{Name: "name", Type: field.TypeString, Size: 400},
+		{Name: "content_generation", Type: field.TypeInt64, Default: 0},
 	}
 	// TeamsTable holds the schema information for the "teams" table.
 	TeamsTable = &schema.Table{

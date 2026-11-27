@@ -185,6 +185,10 @@ func TestResetTeamContentPreservesScopeAndMembership(t *testing.T) {
 		if n, _ := d.Client.Artifact.Query().Where(artifact.TeamID(demo.ID)).Count(ctx); n != 1 {
 			t.Fatalf("repeated reset changed artifacts: %d", n)
 		}
+		current, err := d.Client.Team.Get(ctx, demo.ID)
+		if err != nil || current.ContentGeneration != 3 {
+			t.Fatalf("reset generations: %d, %v", current.ContentGeneration, err)
+		}
 	})
 }
 

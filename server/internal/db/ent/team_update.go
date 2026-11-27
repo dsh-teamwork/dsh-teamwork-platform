@@ -46,6 +46,27 @@ func (_u *TeamUpdate) SetNillableName(v *string) *TeamUpdate {
 	return _u
 }
 
+// SetContentGeneration sets the "content_generation" field.
+func (_u *TeamUpdate) SetContentGeneration(v int64) *TeamUpdate {
+	_u.mutation.ResetContentGeneration()
+	_u.mutation.SetContentGeneration(v)
+	return _u
+}
+
+// SetNillableContentGeneration sets the "content_generation" field if the given value is not nil.
+func (_u *TeamUpdate) SetNillableContentGeneration(v *int64) *TeamUpdate {
+	if v != nil {
+		_u.SetContentGeneration(*v)
+	}
+	return _u
+}
+
+// AddContentGeneration adds value to the "content_generation" field.
+func (_u *TeamUpdate) AddContentGeneration(v int64) *TeamUpdate {
+	_u.mutation.AddContentGeneration(v)
+	return _u
+}
+
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
 func (_u *TeamUpdate) AddMembershipIDs(ids ...string) *TeamUpdate {
 	_u.mutation.AddMembershipIDs(ids...)
@@ -229,6 +250,11 @@ func (_u *TeamUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Team.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ContentGeneration(); ok {
+		if err := team.ContentGenerationValidator(v); err != nil {
+			return &ValidationError{Name: "content_generation", err: fmt.Errorf(`ent: validator failed for field "Team.content_generation": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -252,6 +278,12 @@ func (_u *TeamUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.ContentGeneration(); ok {
+		_spec.SetField(team.FieldContentGeneration, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedContentGeneration(); ok {
+		_spec.AddField(team.FieldContentGeneration, field.TypeInt64, value)
 	}
 	if _u.mutation.MembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -469,6 +501,27 @@ func (_u *TeamUpdateOne) SetNillableName(v *string) *TeamUpdateOne {
 	return _u
 }
 
+// SetContentGeneration sets the "content_generation" field.
+func (_u *TeamUpdateOne) SetContentGeneration(v int64) *TeamUpdateOne {
+	_u.mutation.ResetContentGeneration()
+	_u.mutation.SetContentGeneration(v)
+	return _u
+}
+
+// SetNillableContentGeneration sets the "content_generation" field if the given value is not nil.
+func (_u *TeamUpdateOne) SetNillableContentGeneration(v *int64) *TeamUpdateOne {
+	if v != nil {
+		_u.SetContentGeneration(*v)
+	}
+	return _u
+}
+
+// AddContentGeneration adds value to the "content_generation" field.
+func (_u *TeamUpdateOne) AddContentGeneration(v int64) *TeamUpdateOne {
+	_u.mutation.AddContentGeneration(v)
+	return _u
+}
+
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
 func (_u *TeamUpdateOne) AddMembershipIDs(ids ...string) *TeamUpdateOne {
 	_u.mutation.AddMembershipIDs(ids...)
@@ -665,6 +718,11 @@ func (_u *TeamUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Team.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ContentGeneration(); ok {
+		if err := team.ContentGenerationValidator(v); err != nil {
+			return &ValidationError{Name: "content_generation", err: fmt.Errorf(`ent: validator failed for field "Team.content_generation": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -705,6 +763,12 @@ func (_u *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) {
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.ContentGeneration(); ok {
+		_spec.SetField(team.FieldContentGeneration, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedContentGeneration(); ok {
+		_spec.AddField(team.FieldContentGeneration, field.TypeInt64, value)
 	}
 	if _u.mutation.MembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{

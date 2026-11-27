@@ -190,6 +190,9 @@ type Host struct {
 	// Operator-only recovery. Team APIs never receive this capability.
 	ResolveFundingUsage func(context.Context, string, string, string, string, string, Tokens) error
 	WithTeamTx          func(context.Context, string, func(SQLExecutor) error) error
+	// RegisterTeamWriteGuard installs an edition's admission guard for content
+	// writes. The generation fence still applies after admission. Mount-only.
+	RegisterTeamWriteGuard func(func(context.Context, string) error) error
 	// SubscribeTeams runs inside a team creation, a member join, a team's
 	// deletion, an account's, or an admin removing an owned model (TeamChange). Handlers access only their own tables, perform no
 	// network I/O, and return errors to roll back the change and theirs.

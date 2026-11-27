@@ -54,6 +54,14 @@ func (s *Server) route(h handler, write bool) http.HandlerFunc {
 			fail(w, r, wire.E(http.StatusForbidden, "cross_origin"))
 			return
 		}
+		if write && s.Team != nil && s.Team.Content != nil {
+			ctx, err := s.Team.Content.Admit(r.Context(), r.PathValue("teamId"))
+			if err != nil {
+				fail(w, r, err)
+				return
+			}
+			r = r.WithContext(ctx)
+		}
 		if err := h(w, r); err != nil {
 			fail(w, r, err)
 		}

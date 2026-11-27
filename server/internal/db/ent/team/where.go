@@ -75,6 +75,11 @@ func Name(v string) predicate.Team {
 	return predicate.Team(sql.FieldEQ(FieldName, v))
 }
 
+// ContentGeneration applies equality check predicate on the "content_generation" field. It's identical to ContentGenerationEQ.
+func ContentGeneration(v int64) predicate.Team {
+	return predicate.Team(sql.FieldEQ(FieldContentGeneration, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Team {
 	return predicate.Team(sql.FieldEQ(FieldCreatedAt, v))
@@ -178,6 +183,46 @@ func NameEqualFold(v string) predicate.Team {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Team {
 	return predicate.Team(sql.FieldContainsFold(FieldName, v))
+}
+
+// ContentGenerationEQ applies the EQ predicate on the "content_generation" field.
+func ContentGenerationEQ(v int64) predicate.Team {
+	return predicate.Team(sql.FieldEQ(FieldContentGeneration, v))
+}
+
+// ContentGenerationNEQ applies the NEQ predicate on the "content_generation" field.
+func ContentGenerationNEQ(v int64) predicate.Team {
+	return predicate.Team(sql.FieldNEQ(FieldContentGeneration, v))
+}
+
+// ContentGenerationIn applies the In predicate on the "content_generation" field.
+func ContentGenerationIn(vs ...int64) predicate.Team {
+	return predicate.Team(sql.FieldIn(FieldContentGeneration, vs...))
+}
+
+// ContentGenerationNotIn applies the NotIn predicate on the "content_generation" field.
+func ContentGenerationNotIn(vs ...int64) predicate.Team {
+	return predicate.Team(sql.FieldNotIn(FieldContentGeneration, vs...))
+}
+
+// ContentGenerationGT applies the GT predicate on the "content_generation" field.
+func ContentGenerationGT(v int64) predicate.Team {
+	return predicate.Team(sql.FieldGT(FieldContentGeneration, v))
+}
+
+// ContentGenerationGTE applies the GTE predicate on the "content_generation" field.
+func ContentGenerationGTE(v int64) predicate.Team {
+	return predicate.Team(sql.FieldGTE(FieldContentGeneration, v))
+}
+
+// ContentGenerationLT applies the LT predicate on the "content_generation" field.
+func ContentGenerationLT(v int64) predicate.Team {
+	return predicate.Team(sql.FieldLT(FieldContentGeneration, v))
+}
+
+// ContentGenerationLTE applies the LTE predicate on the "content_generation" field.
+func ContentGenerationLTE(v int64) predicate.Team {
+	return predicate.Team(sql.FieldLTE(FieldContentGeneration, v))
 }
 
 // HasMemberships applies the HasEdge predicate on the "memberships" edge.

@@ -47,6 +47,20 @@ func (_c *TeamCreate) SetName(v string) *TeamCreate {
 	return _c
 }
 
+// SetContentGeneration sets the "content_generation" field.
+func (_c *TeamCreate) SetContentGeneration(v int64) *TeamCreate {
+	_c.mutation.SetContentGeneration(v)
+	return _c
+}
+
+// SetNillableContentGeneration sets the "content_generation" field if the given value is not nil.
+func (_c *TeamCreate) SetNillableContentGeneration(v *int64) *TeamCreate {
+	if v != nil {
+		_c.SetContentGeneration(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *TeamCreate) SetID(v string) *TeamCreate {
 	_c.mutation.SetID(v)
@@ -160,6 +174,10 @@ func (_c *TeamCreate) defaults() {
 		v := team.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
+	if _, ok := _c.mutation.ContentGeneration(); !ok {
+		v := team.DefaultContentGeneration
+		_c.mutation.SetContentGeneration(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := team.DefaultID()
 		_c.mutation.SetID(v)
@@ -177,6 +195,14 @@ func (_c *TeamCreate) check() error {
 	if v, ok := _c.mutation.Name(); ok {
 		if err := team.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Team.name": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.ContentGeneration(); !ok {
+		return &ValidationError{Name: "content_generation", err: errors.New(`ent: missing required field "Team.content_generation"`)}
+	}
+	if v, ok := _c.mutation.ContentGeneration(); ok {
+		if err := team.ContentGenerationValidator(v); err != nil {
+			return &ValidationError{Name: "content_generation", err: fmt.Errorf(`ent: validator failed for field "Team.content_generation": %w`, err)}
 		}
 	}
 	if v, ok := _c.mutation.ID(); ok {
@@ -227,6 +253,10 @@ func (_c *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := _c.mutation.ContentGeneration(); ok {
+		_spec.SetField(team.FieldContentGeneration, field.TypeInt64, value)
+		_node.ContentGeneration = value
 	}
 	if nodes := _c.mutation.MembershipsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -356,6 +386,24 @@ func (u *TeamUpsert) UpdateName() *TeamUpsert {
 	return u
 }
 
+// SetContentGeneration sets the "content_generation" field.
+func (u *TeamUpsert) SetContentGeneration(v int64) *TeamUpsert {
+	u.Set(team.FieldContentGeneration, v)
+	return u
+}
+
+// UpdateContentGeneration sets the "content_generation" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateContentGeneration() *TeamUpsert {
+	u.SetExcluded(team.FieldContentGeneration)
+	return u
+}
+
+// AddContentGeneration adds v to the "content_generation" field.
+func (u *TeamUpsert) AddContentGeneration(v int64) *TeamUpsert {
+	u.Add(team.FieldContentGeneration, v)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -418,6 +466,27 @@ func (u *TeamUpsertOne) SetName(v string) *TeamUpsertOne {
 func (u *TeamUpsertOne) UpdateName() *TeamUpsertOne {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetContentGeneration sets the "content_generation" field.
+func (u *TeamUpsertOne) SetContentGeneration(v int64) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetContentGeneration(v)
+	})
+}
+
+// AddContentGeneration adds v to the "content_generation" field.
+func (u *TeamUpsertOne) AddContentGeneration(v int64) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.AddContentGeneration(v)
+	})
+}
+
+// UpdateContentGeneration sets the "content_generation" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateContentGeneration() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateContentGeneration()
 	})
 }
 
@@ -650,6 +719,27 @@ func (u *TeamUpsertBulk) SetName(v string) *TeamUpsertBulk {
 func (u *TeamUpsertBulk) UpdateName() *TeamUpsertBulk {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetContentGeneration sets the "content_generation" field.
+func (u *TeamUpsertBulk) SetContentGeneration(v int64) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetContentGeneration(v)
+	})
+}
+
+// AddContentGeneration adds v to the "content_generation" field.
+func (u *TeamUpsertBulk) AddContentGeneration(v int64) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.AddContentGeneration(v)
+	})
+}
+
+// UpdateContentGeneration sets the "content_generation" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateContentGeneration() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateContentGeneration()
 	})
 }
 

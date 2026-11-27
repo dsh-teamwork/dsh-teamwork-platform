@@ -177,6 +177,11 @@ func (s *Service) ResetTeamContent(ctx context.Context, teamID, ownerID string, 
 			return err
 		}
 	}
+	// Increment in the same transaction as the content replacement. Writes
+	// admitted at the previous generation now fail their commit fence.
+	if err := tx.Team.UpdateOneID(teamID).AddContentGeneration(1).Exec(ctx); err != nil {
+		return err
+	}
 	if err := tx.Commit(); err != nil {
 		return err
 	}

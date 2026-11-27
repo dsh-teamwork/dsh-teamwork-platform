@@ -1861,6 +1861,12 @@ func init() {
 	teamDescName := teamFields[0].Descriptor()
 	// team.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	team.NameValidator = teamDescName.Validators[0].(func(string) error)
+	// teamDescContentGeneration is the schema descriptor for content_generation field.
+	teamDescContentGeneration := teamFields[1].Descriptor()
+	// team.DefaultContentGeneration holds the default value on creation for the content_generation field.
+	team.DefaultContentGeneration = teamDescContentGeneration.Default.(int64)
+	// team.ContentGenerationValidator is a validator for the "content_generation" field. It is called by the builders before save.
+	team.ContentGenerationValidator = teamDescContentGeneration.Validators[0].(func(int64) error)
 	// teamDescID is the schema descriptor for id field.
 	teamDescID := teamMixinFields0[0].Descriptor()
 	// team.DefaultID holds the default value on creation for the id field.

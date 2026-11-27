@@ -28,6 +28,7 @@ import (
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/artifacts"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/config"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/contentfence"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/gateway"
@@ -190,7 +191,7 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 	if cfg.ReviewEmail != "" {
 		slog.Warn("REVIEW_SIGN_IN: this address signs in with a fixed code; unset it once store review is over", "email", cfg.ReviewEmail)
 	}
-	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords()}
+	teams := &team.Service{DB: client, Keys: keys, Network: network, Auth: authn, Passwords: cfg.Passwords(), Content: contentfence.New(conn, dialect)}
 	if cfg.ServiceRole != "manage" {
 		teams.Objects, err = objectstore.FromEnv(cfg.DataDir, env)
 		if err != nil {
@@ -288,6 +289,13 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 				return false, nil
 			}
 			return err == nil, err
+		},
+		RegisterTeamWriteGuard: func(guard func(context.Context, string) error) error {
+			if guard == nil || teams.Content.Guard != nil {
+				return errors.New("invalid or duplicate team write guard")
+			}
+			teams.Content.Guard = guard
+			return nil
 		},
 		TeamRole: func(ctx context.Context, userID, teamID string, admin bool) (string, error) {
 			m, err := teams.RequireMembership(ctx, userID, teamID, admin)

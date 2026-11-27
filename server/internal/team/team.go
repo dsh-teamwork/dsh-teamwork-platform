@@ -15,6 +15,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/auth"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/contentfence"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/teamconfig"
@@ -37,6 +38,7 @@ type Service struct {
 	Passwords        bool
 	Now              func() time.Time
 	Changed          func(context.Context, *ent.Client, edition.TeamChange) error
+	Content          *contentfence.Fence
 }
 
 func (s *Service) changed(ctx context.Context, db *ent.Client, change edition.TeamChange) error {
