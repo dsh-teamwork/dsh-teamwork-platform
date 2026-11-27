@@ -152,6 +152,8 @@ func (n *Network) Client() *http.Client {
 		}
 		return d.DialContext
 	}
+	// ResponseHeaderTimeout outlasts DSH's 300s stream idle timeout, so the caller
+	// decides when a provider slow to its first token has taken too long.
 	transport := func(scheme string) *http.Transport {
 		return &http.Transport{
 			Proxy:                 nil,
@@ -160,7 +162,7 @@ func (n *Network) Client() *http.Client {
 			MaxIdleConnsPerHost:   64,
 			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
-			ResponseHeaderTimeout: 120 * time.Second,
+			ResponseHeaderTimeout: 330 * time.Second,
 		}
 	}
 	bySchemes := schemes{"https": transport("https"), "http": transport("http")}

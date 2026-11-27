@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-27 — The gateway waits longer for a slow provider
+
+- **What:** The model gateway waits up to 330 seconds for a provider's response headers, up from 120. The DSH plugin's team models time out after 300 seconds without a token, DSH's own default, up from 120.
+- **Why:** A provider that answers only once its first token is ready (seen with Kimi on long conversations) could take past two minutes; both sides then gave up at 120 seconds, and DSH showed `pi-ai stream idle timeout after 120000ms`.
+- **Breaking:** None.
+- **Upgrade:** Nothing; the plugin's half ships with its next release.
+- **Refs:** `server/internal/team/network.go`, `dsh-teamwork` `src/platform-models.ts`
+
 ## 2026-11-26 — The sign-in page sets up a fresh instance
 
 - **What:** While no account has a password, the sign-in page shows only a call to create the first account, and `/setup` creates it for whoever arrives first. `POST /api/auth/setup` takes `{email, password}` with no `token`; `setup_link_invalid` is gone, and a second claim is still `setup_closed`. The server's start line names `APP_URL/setup` with no secret. A management process still neither offers nor accepts setup. `pnpm dev` and the pre-push hook read a gitignored root `.env` first, so the test databases `pnpm dev:setup` prints can live there; a variable the shell sets wins.
