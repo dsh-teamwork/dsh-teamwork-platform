@@ -14,8 +14,8 @@ import {
   planSave,
   splitFrontMatter,
   suggestAttachmentName,
-} from '@/lib/knowledge-format';
-import { findDocument, folderPaths, nestSpace, resolveWikiLink, type KnowledgeSpace, type KnowledgeTree } from '@/lib/knowledge-tree';
+} from '../knowledge-format';
+import { findDocument, folderPaths, nestSpace, resolveWikiLink, type KnowledgeSpace, type KnowledgeTree } from '../knowledge-tree';
 
 const at = '2026-11-24T00:00:00Z';
 const doc = (id: string, title: string, folderId = '') => ({ id, title, folderId, currentVersion: 1, updatedAt: at });

@@ -5,10 +5,12 @@
  * providers a console offers to add, named as Models.dev names them, the
  * preset avatars both clients draw, how an amount of points is shown, and how
  * a team's preset or plugin reaches a member's DSH.
- * Isomorphic: nothing here may reach for Node, the DOM or React. The line
- * difference of a knowledge document is an entry of its own,
- * `@dsh-teamwork/shared/knowledge-diff`, so the `diff` library reaches only
- * the pages that compare texts. The wire is `api/openapi.yaml`, not this
+ * Isomorphic: nothing here may reach for Node, the DOM or React. A knowledge
+ * document's rules are entries of their own, so their libraries reach only
+ * the pages that read documents: `@dsh-teamwork/shared/knowledge-format`
+ * (front matter, `[[links]]`, attachments), `/knowledge-properties` (its
+ * YAML properties), `/knowledge-tree` (a space's folders nested, links
+ * resolved) and `/knowledge-diff` (the line difference). The wire is `api/openapi.yaml`, not this
  * package.
  */
 

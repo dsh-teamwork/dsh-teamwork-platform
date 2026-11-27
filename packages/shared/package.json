@@ -17,9 +17,13 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./knowledge-diff": "./src/knowledge-diff.ts"
+    "./knowledge-diff": "./src/knowledge-diff.ts",
+    "./knowledge-format": "./src/knowledge-format.ts",
+    "./knowledge-properties": "./src/knowledge-properties.ts",
+    "./knowledge-tree": "./src/knowledge-tree.ts"
   },
   "dependencies": {
-    "diff": "9.0.0"
+    "diff": "9.0.0",
+    "yaml": "2.8.2"
   }
 }

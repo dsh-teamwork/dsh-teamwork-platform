@@ -3,10 +3,10 @@
  * Milkdown with its commonmark and gfm presets, which keeps Markdown as its
  * model, read-only to show a document and editable to change it. It reads and
  * writes Markdown and nothing else: front matter is split off before it opens
- * a document (lib/knowledge-format.ts), and `[[links]]` are an inline node of
+ * a document (`@dsh-teamwork/shared/knowledge-format`), and `[[links]]` are an inline node of
  * their own, parsed by a remark plugin and written back exactly as typed.
  * `![[name.png]]` embeds an attachment's image and `[[name.pdf]]` links its
- * file (lib/knowledge-format.ts tells them from a document link by the
+ * file (`@dsh-teamwork/shared/knowledge-format` tells them from a document link by the
  * extension); both are the same node with an `embed` flag, so each is written
  * back exactly as typed. A file pasted or dropped while editing goes to the
  * page, which uploads it and inserts its link at the cursor. Lists are
@@ -33,7 +33,7 @@ import { $inputRule, $node, $prose, $remark, $view, getMarkdown } from '@milkdow
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
-import { ARTIFACT_EMBED, headingSlug, isAttachmentName, isImageName, knownCalloutKind, parseWikiTarget, WIKILINK } from '@/lib/knowledge-format';
+import { ARTIFACT_EMBED, headingSlug, isAttachmentName, isImageName, knownCalloutKind, parseWikiTarget, WIKILINK } from '@dsh-teamwork/shared/knowledge-format';
 import { cn } from '@/lib/utils';
 
 import {

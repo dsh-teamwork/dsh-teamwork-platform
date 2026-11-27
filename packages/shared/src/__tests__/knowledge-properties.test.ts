@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { NO_PROPERTIES, ownerMention, parseOwner, readProperties, writeProperties } from '@/lib/knowledge-properties';
+import { NO_PROPERTIES, ownerMention, parseOwner, readProperties, writeProperties } from '../knowledge-properties';
 
 describe("a knowledge document's properties", () => {
   const front = '---\n# who to ask\nowner: "@[Ada](u1)"\nreviewed: 2026-11-01\ntags: [deploys, ops]\n---\n\n';
@@ -41,7 +41,7 @@ describe("a knowledge document's properties", () => {
 
 describe('a line of a document as a list shows it', () => {
   it('reads mentions as names and links as their words', async () => {
-    const { readableLine } = await import('@/lib/knowledge-format');
+    const { readableLine } = await import('../knowledge-format');
     const nameOf = (id: string) => (id === 'user1' ? 'ada@example.com' : null);
     expect(readableLine('Ask @[Ada](user1) or @[Bo](gone2) about [[Pricing#Tiers|tiers]] and ![[chart.png]].', nameOf)).toBe('Ask @ada@example.com or @Bo about tiers and chart.png.');
   });

@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { api, type Schemas } from '@/lib/api';
-import { ARTIFACT_EMBED, parseWikiTarget } from '@/lib/knowledge-format';
+import { ARTIFACT_EMBED, parseWikiTarget } from '@dsh-teamwork/shared/knowledge-format';
 import { cn } from '@/lib/utils';
 
 type Card = { title: string; kind: string } | 'missing';

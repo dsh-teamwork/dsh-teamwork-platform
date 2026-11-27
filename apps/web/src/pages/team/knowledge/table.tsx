@@ -2,7 +2,7 @@
  * A folder as a table (`/teams/{teamId}/knowledge/table/{spaceId}[/{folderId}]`,
  * docs/tech/knowledge.md, "Format"): the documents directly in a folder, or
  * at a space's root, one row each with the properties their front matter
- * gives (lib/knowledge-properties.ts). It filters by words, status and tag
+ * gives (`@dsh-teamwork/shared/knowledge-properties`). It filters by words, status and tag
  * and sorts by any column; nothing it shows is stored apart from the
  * documents, so editing a property is editing its document.
  */
@@ -16,8 +16,8 @@ import { useTeamError } from '@/components/team/use-mutation';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import type { Schemas, Team } from '@/lib/api';
-import { parseOwner, readProperties, type Properties } from '@/lib/knowledge-properties';
-import { folderPaths, type KnowledgeTree } from '@/lib/knowledge-tree';
+import { parseOwner, readProperties, type Properties } from '@dsh-teamwork/shared/knowledge-properties';
+import { folderPaths, type KnowledgeTree } from '@dsh-teamwork/shared/knowledge-tree';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 

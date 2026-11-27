@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { Schemas } from '@/lib/api';
-import { FORMATTING_NOTE } from '@/lib/knowledge-format';
+import { FORMATTING_NOTE } from '@dsh-teamwork/shared/knowledge-format';
 import { cn } from '@/lib/utils';
 
 /** A person as knowledge names them: their name, else their email. */

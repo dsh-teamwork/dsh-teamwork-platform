@@ -23,7 +23,7 @@ import type { EditorView } from '@milkdown/kit/prose/view';
 import { $prose } from '@milkdown/kit/utils';
 import { useEffect, useRef } from 'react';
 
-import { DIAGRAM_LANGUAGE } from '@/lib/knowledge-format';
+import { DIAGRAM_LANGUAGE } from '@dsh-teamwork/shared/knowledge-format';
 import { cn } from '@/lib/utils';
 
 import { insertCallout, mentionNode } from './knowledge-blocks';

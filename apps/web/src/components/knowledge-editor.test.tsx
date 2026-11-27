@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { IntlProvider } from 'use-intl';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { joinFrontMatter, splitFrontMatter } from '@/lib/knowledge-format';
+import { joinFrontMatter, splitFrontMatter } from '@dsh-teamwork/shared/knowledge-format';
 import messages from '@/messages/en.json';
 
 import { KnowledgeEditor, type KnowledgeEditorHandle } from './knowledge-editor';

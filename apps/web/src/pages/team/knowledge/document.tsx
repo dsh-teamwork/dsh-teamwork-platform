@@ -6,7 +6,7 @@
  * Edit opens the same text in the editor. An editor's save is a new version
  * on the version being edited; a reader's is a proposal for an editor to
  * decide. The first save of a document the editor would rewrite records that
- * normalisation as its own version first (lib/knowledge-format.ts,
+ * normalisation as its own version first (`@dsh-teamwork/shared/knowledge-format`,
  * `planSave`). A save on a version that is no longer current keeps what the
  * person typed, reads the current version and offers the difference before
  * they save again on top of it; nothing they typed is dropped, and leaving
@@ -41,9 +41,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api, ApiError, type Schemas, type Team } from '@/lib/api';
-import { ARTIFACT_EMBED, attachmentUrl, isAttachmentName, isImageName, parseWikiTarget, planSave, splitFrontMatter } from '@/lib/knowledge-format';
-import { readProperties, writeProperties } from '@/lib/knowledge-properties';
-import { findDocument, folderPaths, resolveWikiLink, type KnowledgeTree } from '@/lib/knowledge-tree';
+import { ARTIFACT_EMBED, attachmentUrl, isAttachmentName, isImageName, parseWikiTarget, planSave, splitFrontMatter } from '@dsh-teamwork/shared/knowledge-format';
+import { readProperties, writeProperties } from '@dsh-teamwork/shared/knowledge-properties';
+import { findDocument, folderPaths, resolveWikiLink, type KnowledgeTree } from '@dsh-teamwork/shared/knowledge-tree';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 

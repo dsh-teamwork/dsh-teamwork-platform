@@ -165,9 +165,6 @@ importers:
       xlsx:
         specifier: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
         version: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
-      yaml:
-        specifier: 2.8.2
-        version: 2.8.2
     devDependencies:
       '@eslint/js':
         specifier: 9.39.4
@@ -284,6 +281,9 @@ importers:
       diff:
         specifier: 9.0.0
         version: 9.0.0
+      yaml:
+        specifier: 2.8.2
+        version: 2.8.2
     devDependencies:
       eslint:
         specifier: 9.39.5

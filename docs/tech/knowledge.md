@@ -234,7 +234,7 @@ dsh-teamwork      the plugin: KnowledgeSync writes the local copy;
   `mermaid` block draws through Mermaid (`mermaid`, at its strict security
   level), loaded the first time a diagram is drawn. The block menu is
   `components/knowledge-slash.tsx`; properties are read and written with
-  `yaml` (`lib/knowledge-properties.ts`), which keeps every other key and
+  `yaml` (`@dsh-teamwork/shared/knowledge-properties`), which keeps every other key and
   comment as written. Rendering is the console's, never the server's: a document's text is
   never HTML, so it needs no sandbox origin.
 - **Attachments** belong to a document, which names them by name in the

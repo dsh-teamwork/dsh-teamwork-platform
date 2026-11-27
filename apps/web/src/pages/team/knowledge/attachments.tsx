@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ApiError, uploadAttachment, type Schemas } from '@/lib/api';
-import { ATTACHMENT_EXTENSIONS, attachmentNameOf, attachmentUrl, isAttachmentName, isImageName, MAX_ATTACHMENT, pastedName, suggestAttachmentName } from '@/lib/knowledge-format';
+import { ATTACHMENT_EXTENSIONS, attachmentNameOf, attachmentUrl, isAttachmentName, isImageName, MAX_ATTACHMENT, pastedName, suggestAttachmentName } from '@dsh-teamwork/shared/knowledge-format';
 import { cn } from '@/lib/utils';
 
 export type Attachment = Schemas['KnowledgeAttachment'];
