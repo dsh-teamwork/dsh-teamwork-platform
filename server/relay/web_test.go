@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -284,5 +285,77 @@ func TestDesktopWebTicketQuotaIsPerHost(t *testing.T) {
 	}
 	if first.takeTicket(now) || !second.takeTicket(now) || !first.takeTicket(now.Add(time.Minute)) {
 		t.Fatal("ticket issuance rate is not isolated or did not reset")
+	}
+}
+
+// A computer's tunnels: the first request asks for one, its use asks for
+// spares ahead, a later request takes a spare without asking, and a stale
+// spare is never handed out.
+func TestDesktopWebSpareTunnels(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s := &socket{ctx: ctx, wake: make(chan struct{}, 1)}
+	d := &desktopWeb{pending: map[string]askedTunnel{}}
+	host := &desktopWebHost{socket: s, slots: make(chan struct{}, 32), tunnels: make(chan spareTunnel, 32)}
+	dials := func() []string {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		var ids []string
+		for _, m := range s.queue {
+			var f map[string]string
+			json.Unmarshal(m.b, &f)
+			if f["t"] == "webDial" {
+				ids = append(ids, f["id"])
+			}
+		}
+		return ids
+	}
+	waitFor := func(n int) []string {
+		for range 200 {
+			if ids := dials(); len(ids) >= n {
+				return ids
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+		t.Fatalf("asked for %d tunnels, wanted %d", len(dials()), n)
+		return nil
+	}
+	got := make(chan net.Conn, 1)
+	go func() {
+		conn, err := d.dial(ctx, host)
+		if err != nil {
+			t.Error(err)
+		}
+		got <- conn
+	}()
+	first, far := net.Pipe()
+	defer far.Close()
+	if !d.deliver(waitFor(1)[0], first) {
+		t.Fatal("the asked tunnel was not taken")
+	}
+	(<-got).Close()
+	// Its use asked for desktopWebSpares more, ahead of any request.
+	ids := waitFor(1 + desktopWebSpares)
+	spare, spareFar := net.Pipe()
+	defer spareFar.Close()
+	d.deliver(ids[1], spare)
+	conn, err := d.dial(ctx, host)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if conn.(*desktopConn).Conn != spare {
+		t.Fatal("the request did not take the spare")
+	}
+	conn.Close()
+	// A spare past its freshness is closed, not handed out.
+	stale, staleFar := net.Pipe()
+	defer staleFar.Close()
+	host.slots <- struct{}{}
+	host.tunnels <- spareTunnel{conn: stale, at: time.Now().Add(-desktopWebSpareFresh - time.Second)}
+	if host.fresh() != nil {
+		t.Fatal("a stale spare was handed out")
+	}
+	if _, err := stale.Write([]byte("x")); err == nil {
+		t.Fatal("the stale spare was left open")
 	}
 }

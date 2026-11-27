@@ -27,11 +27,11 @@ import { toast } from 'sonner';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import { HOST_OS_NAMES, normalizePairingCode, PAIRING_CODE_LENGTH, RelayError, type Pairing } from '@dsh-teamwork/relay-client';
-import { COMPUTERS_REFRESH_MS, twinOf } from '@/components/team/console-shell';
+import { twinOf } from '@/components/team/console-shell';
 import { Button } from '@/components/ui/button';
 import { CodePrompt, CodeSlots } from '@/components/ui/code-entry';
 import { Input } from '@/components/ui/input';
-import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, renameComputer, type MyComputer } from '@/lib/relay';
+import { browserCanJoin, desktopWebAddress, myComputers, relayFor, removeComputer, removeDevice, renameComputer, useComputersChanged, type MyComputer } from '@/lib/relay';
 import { cn } from '@/lib/utils';
 
 import { SignInSteps } from './connect-dsh';
@@ -65,12 +65,9 @@ export function MyDshPage({ settings = false, tasks = false }: { settings?: bool
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `t` is stable for a locale.
   }, [me]);
-  useEffect(() => {
-    void load();
-    // Whether each computer is online changes on its own: read the list again while the page is open.
-    const timer = setInterval(() => void load(), COMPUTERS_REFRESH_MS);
-    return () => clearInterval(timer);
-  }, [load]);
+  useEffect(() => void load(), [load]);
+  // Whether each computer is online changes on its own: read the list again when one comes or goes.
+  useComputersChanged(me, load);
 
   const host = hosts?.find((h) => h.id === hostId);
   // No computer in the address: open the one opened here last, else the first online, else the first.

@@ -15,6 +15,8 @@ import {
   type RelayClient,
 } from '@dsh-teamwork/relay-client';
 
+import { useEffect } from 'react';
+
 import type { Schemas } from './api';
 import { currentLocale } from './locale';
 
@@ -98,15 +100,45 @@ export function relayFor(account: string): RelayClient {
   return relay;
 }
 
-/** Whether this browser can hold the key the channel needs: WebCrypto Ed25519 and IndexedDB. */
-export async function browserCanJoin(): Promise<boolean> {
-  if (typeof indexedDB === 'undefined' || !globalThis.crypto?.subtle) return false;
-  try {
-    await newWebCryptoKeyPair();
-    return true;
-  } catch {
-    return false;
-  }
+/** Whether this browser can hold the key the channel needs: WebCrypto Ed25519 and IndexedDB. Asked once. */
+let canJoin: Promise<boolean> | undefined;
+export function browserCanJoin(): Promise<boolean> {
+  return (canJoin ??= (async () => {
+    if (typeof indexedDB === 'undefined' || !globalThis.crypto?.subtle) return false;
+    try {
+      await newWebCryptoKeyPair();
+      return true;
+    } catch {
+      return false;
+    }
+  })());
+}
+
+/** How often a list of computers is read again where this browser cannot hear them come and go. */
+export const COMPUTERS_REFRESH_MS = 10_000;
+
+/**
+ * Reads the member's computers again (`load`) when one connects or leaves, or the relay's socket came back from a
+ * drop (`RelayClient.watchComputers`), rather than on a timer. A browser that cannot keep a relay key cannot open that
+ * socket, and reads them every `COMPUTERS_REFRESH_MS` instead, as it does until it knows.
+ */
+export function useComputersChanged(account: string | undefined, load: () => void, enabled = true) {
+  useEffect(() => {
+    if (!enabled) return;
+    let live = true;
+    let stop = () => {};
+    const timer = setInterval(load, COMPUTERS_REFRESH_MS);
+    void browserCanJoin().then((can) => {
+      if (!live || !can || !account) return;
+      clearInterval(timer);
+      stop = relayFor(account).watchComputers(load);
+    });
+    return () => {
+      live = false;
+      clearInterval(timer);
+      stop();
+    };
+  }, [account, load, enabled]);
 }
 
 export type MyComputer = Schemas['RelayHost'];

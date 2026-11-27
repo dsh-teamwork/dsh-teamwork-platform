@@ -15,6 +15,7 @@ import { useFormatter, useTranslations } from 'use-intl';
 
 import {
   applySessionEvent,
+  frameBatch,
   defaultDirectory,
   deliverFiles,
   imageMediaType,
@@ -42,6 +43,7 @@ import {
   type RelayErrorCode,
   type SessionConfiguration,
   type SessionOptions,
+  type SessionEvent,
   type SessionState,
   type SessionSummary,
 } from '@dsh-teamwork/relay-client';
@@ -504,7 +506,16 @@ function SessionView({ computerId, sessionId, title, name, started, tasks }: { c
   const openFile = config?.files && id ? (target: FileTarget) => changeSidebar((s) => openTab(s, { kind: 'file', path: target.path, line: target.line })) : undefined;
   const openArtifact = (artifact: PublishedArtifact) => changeSidebar((s) => openTab(s, { kind: 'artifact', artifact }));
 
-  useEffect(() => (id ? relay.follow(computerId, id, (event) => setState((s) => applySessionEvent(s, event))) : undefined), [relay, computerId, id]);
+  // Live events are applied a frame at a time (`frameBatch`), not one render each; a snapshot shows at once.
+  useEffect(() => {
+    if (!id) return;
+    const batch = frameBatch<SessionEvent>((events) => setState((s) => events.reduce(applySessionEvent, s)));
+    const stop = relay.follow(computerId, id, (event) => {
+      batch.push(event);
+      if (event.type === 'snapshot') batch.flush();
+    });
+    return () => { stop(); batch.stop(); };
+  }, [relay, computerId, id]);
 
   const [openedWork, setOpenedWork] = useState<ReadonlySet<string>>(new Set());
   const workKey = (work: string) => JSON.stringify([id, work]);

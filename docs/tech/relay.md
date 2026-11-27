@@ -260,7 +260,10 @@ instead of asking on a timer: the relay sends every phone and browser socket
 of the member `presence` when one of their computers connects or leaves, the
 client reports a socket that came back from a drop the same way, and it
 keeps the socket open, dialling again after a drop, while anyone watches. The
-phone app lists its computers only then and when it comes to the foreground.
+phone app and the console list their computers only then (a browser that
+cannot keep a relay key every ten seconds), and the app when it comes to the
+foreground. A follow's live events are applied once a frame (`frameBatch`),
+on the phone and in the console alike.
 
 **What each step took** is reported to a client's `measure` option
 (`TimingName` in `packages/relay-client`): the socket's welcome, a computer's
@@ -723,9 +726,10 @@ to reach a DSH, beside, in the hosted edition, Cloud DSH.
   the chevron at the entry's end folds them away, remembered in the browser,
   and opening the page unfolds them. `/my-dsh` with no computer in the address
   opens the one this browser opened last, else the first online, else the
-  first. The list is read again every ten seconds while it is shown, as the
-  page reads its own, so a computer coming online or going away moves the page
-  along by itself. An edition's page reached on several computers folds its
+  first. The list is read again when a computer connects or leaves
+  (`useComputersChanged`, the relay's `presence`), as the page reads its own,
+  so a computer coming online or going away moves the page along by itself; a
+  browser that cannot keep a relay key reads it every ten seconds instead. An edition's page reached on several computers folds its
   own out the same way (`TeamPage.subnav`).
 - **The column beside the sidebar is the open computer's**: its name,
   online or offline, operating system, whether this browser is paired with it,
@@ -898,7 +902,14 @@ opens any more, ends every session and drops unspent tickets, and the control
 connection and paired phones stay. Turning the feature off, signing out or
 reconnecting closes forwarded streams and requires a fresh ticket too.
 
-The gateway asks for one outbound data socket per upstream connection.
+The gateway asks for one outbound data socket per upstream connection, and,
+once one is used, keeps four more asked for ahead (`desktopWebSpares` in
+`server/relay/web.go`): each request takes a tunnel that already came, and
+only waits for one when none has. A page's assets each take a tunnel, and one
+asked for when needed costs a trip to the computer and a new connection from it
+to the relay before any byte moves. A spare is used for eight seconds, since
+the plugin closes a tunnel that carried nothing for ten, and no spare is asked
+for while nothing is used.
 The plugin authenticates to its own DSH with the page launch URL and adds
 that cookie and the local Host and Origin on the computer. HTTP and WebSocket
 bytes use the same data connection. This is a full native Web interface

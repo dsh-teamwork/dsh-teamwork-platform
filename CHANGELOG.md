@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-27 — The console follows its computers by presence, and native Web keeps tunnels ready
+
+- **What:** The web console's computer lists (My DSH, its sidebar entry, the connect card) read again when the relay says a computer came or went, not every ten seconds; a browser that cannot keep a relay key still polls. A followed session in the console applies its live events once a frame (`frameBatch`, now in `packages/relay-client` and shared with the app). Native DSH Web keeps four tunnels asked for ahead once one is used, so a request takes one that already came instead of waiting for the computer to connect a new one.
+- **Why:** Every request through native Web waited a trip to the computer and a fresh connection from it before any byte moved, and a page's assets each needed one; the console polled for nothing most of the time and rendered every delta on its own.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/relay/web.go`, `apps/web/src/lib/relay.ts`, `apps/web/src/pages/team/dsh-session.tsx`, `packages/relay-client/src/frame-batch.ts`, `docs/tech/relay.md`
+
 ## 2026-11-27 — Records cross the relay as binary, and the phone hears its computers come and go
 
 - **What:** An encryption record is one binary WebSocket message (a kind byte, the pairing id, the channel id, the raw record) that the relay passes on unchanged; a `sealed` JSON frame is ignored. The relay sends a member's phone and browser sockets `presence` when one of their computers connects or leaves, and `RelayClient.watchComputers` reports it, and a socket back from a drop, to a list that reads its computers then instead of on a timer. A client takes a `measure` option, told how long the socket, a channel, a follow's snapshot, each call and a message's first answer took.

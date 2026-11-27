@@ -11,13 +11,15 @@ import { Link } from 'react-router';
 import { useTranslations } from 'use-intl';
 
 import { CopyButton } from '@/components/copy-button';
-import { COMPUTERS_REFRESH_MS, ownComputers } from '@/components/team/console-shell';
+import { ownComputers } from '@/components/team/console-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Schemas } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { useTeam } from './layout';
+import { useComputersChanged } from '@/lib/relay';
+import { useSession } from '@/lib/session';
 
 const LOGIN = '/teamwork login';
 /** The plugin's npm name, what DSH installs (the plugin's README, "Install"). */
@@ -46,12 +48,9 @@ export function useOwnDsh(): OwnDsh {
   const computer = hosts?.[0];
   const paired = (hosts ?? []).some((h) => h.pairings.some((p) => p.status === 'confirmed'));
   const done = !!computer && paired;
-  useEffect(() => {
-    void load();
-    if (done) return;
-    const timer = setInterval(() => void load(), COMPUTERS_REFRESH_MS);
-    return () => clearInterval(timer);
-  }, [load, done]);
+  useEffect(() => void load(), [load]);
+  // Until DSH signs in and pairs, the card moves on when a computer comes.
+  useComputersChanged(useSession().session?.user?.id, load, !done);
   return { hosts, computer, paired, done };
 }
 
