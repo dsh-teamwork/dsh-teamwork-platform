@@ -108,8 +108,9 @@ func (tx *guardedTx) Commit() error {
 	}
 	var generation int64
 	if !rows.Next() {
-		tx.Rollback()
-		return wire.E(http.StatusConflict, "team_resetting")
+		// A deletion in this transaction removed the team itself. Seeded resets
+		// preserve the team row, so a missing row is not a reset conflict.
+		return tx.Tx.Commit()
 	}
 	if err := rows.Scan(&generation); err != nil {
 		tx.Rollback()

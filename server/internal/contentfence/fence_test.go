@@ -67,6 +67,18 @@ func TestCommitFenceRejectsStaleGeneration(t *testing.T) {
 		if n, _ := d.Client.TeamProvider.Query().Count(ctx); n != 1 {
 			t.Fatalf("fresh provider did not commit: %d", n)
 		}
+		// Deleting the team removes the row the fence reads. That is a valid
+		// commit, not a seeded reset.
+		tx3, err := d.Client.Tx(fresh)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := tx3.Team.DeleteOneID(created.ID).Exec(fresh); err != nil {
+			t.Fatal(err)
+		}
+		if err := tx3.Commit(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
