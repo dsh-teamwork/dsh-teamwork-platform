@@ -207,9 +207,22 @@ type socket struct {
 	// cookie is a browser's upgrade request, kept to re-open its session at
 	// each ping, when that, not a token, admitted it.
 	cookie atomic.Value // *http.Request
+
+	// What waits to be written, in order, by the socket's own writer: a
+	// sender never waits on the peer, so one slow phone cannot hold up a
+	// computer's answers to its other devices (docs/tech/relay.md, "Frames").
+	mu     sync.Mutex
+	queue  [][]byte
+	queued int
+	wake   chan struct{}
 }
 
-// send writes one frame; a socket that cannot take it is closing anyway.
+// maxQueuedBytes is how much may wait for a socket that reads too slowly;
+// past it the socket is closed with closeTooSlow and its peer reconnects.
+const maxQueuedBytes = 8 * maxFrameBytes
+
+// send queues one frame for the socket's writer and returns at once; a
+// socket that cannot take it is closing anyway.
 func (s *socket) send(v any) {
 	if s == nil {
 		return
@@ -219,9 +232,44 @@ func (s *socket) send(v any) {
 		slog.Error("relay: frame", "error", err)
 		return
 	}
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
-	defer cancel()
-	s.c.Write(ctx, websocket.MessageText, b)
+	s.mu.Lock()
+	if s.queued+len(b) > maxQueuedBytes {
+		s.mu.Unlock()
+		go s.c.Close(closeTooSlow, "too slow")
+		return
+	}
+	s.queue = append(s.queue, b)
+	s.queued += len(b)
+	s.mu.Unlock()
+	select {
+	case s.wake <- struct{}{}:
+	default:
+	}
+}
+
+// write is the socket's one writer: it writes what send queued, in order,
+// each frame within ten seconds or the socket is dropped.
+func (s *socket) write() {
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-s.wake:
+		}
+		s.mu.Lock()
+		batch := s.queue
+		s.queue, s.queued = nil, 0
+		s.mu.Unlock()
+		for _, b := range batch {
+			ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+			err := s.c.Write(ctx, websocket.MessageText, b)
+			cancel()
+			if err != nil {
+				s.c.CloseNow()
+				return
+			}
+		}
+	}
 }
 
 // accept upgrades the request from any origin: a socket proves who it is in
@@ -235,10 +283,11 @@ func (r *relay) accept(w http.ResponseWriter, req *http.Request) (*socket, func(
 	c.SetReadLimit(maxFrameBytes)
 	r.handlers.Add(1)
 	ctx, cancel := context.WithCancel(r.ctx)
-	s := &socket{c: c, ctx: ctx}
+	s := &socket{c: c, ctx: ctx, wake: make(chan struct{}, 1)}
 	r.mu.Lock()
 	r.sockets[s] = struct{}{}
 	r.mu.Unlock()
+	go s.write()
 	go r.keepAlive(s)
 	return s, func() {
 		cancel()
@@ -362,7 +411,9 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		if !ok {
 			continue
 		}
-		if fw, ok := parseHostFrame(f); ok {
+		if f.T == "ping" {
+			s.send(pong)
+		} else if fw, ok := parseHostFrame(f); ok {
 			r.toPhone(hostID, fw)
 		} else if wt, ok := parseWaiting(f); ok {
 			go r.notify(hostID, wt)
@@ -587,7 +638,9 @@ func (r *relay) acceptPhone(w http.ResponseWriter, req *http.Request) {
 		if !ok {
 			continue
 		}
-		if fw, ok := parsePhoneFrame(f); ok {
+		if f.T == "ping" {
+			s.send(pong)
+		} else if fw, ok := parsePhoneFrame(f); ok {
 			if err := r.forward(ph, s, fw); err != nil {
 				slog.Error("relay: could not forward a phone frame", "error", err)
 			}

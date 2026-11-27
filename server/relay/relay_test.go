@@ -910,3 +910,71 @@ func discovered(w *world) obj {
 	}
 	return out
 }
+
+// A phone that stops reading holds up none of its computer's frames for the
+// member's other devices, and is closed once too much waits for it.
+func TestSlowPhone(t *testing.T) {
+	each(t, func(t *testing.T, w *world) {
+		laptop := w.host(w.ada, "slow-client")
+		fast := w.paired(w.adaID, laptop.hostID(), true)
+		other := handset{w.ada, keyB}
+		slowPairing, err := w.r.db.RelayPairing.Create().SetUserID(w.adaID).SetHostID(laptop.hostID()).SetDeviceName("tablet").
+			SetDeviceKeyHash(w.r.pairings.deviceHash(keyB)).SetConfirmedAt(time.Now()).Save(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		phone := w.phone(w.adaPhone)
+		phone.send(sealed(fast, "open"))
+		laptop.next(is("sealed"))
+
+		// The slow handset reads its welcome and then nothing.
+		url := strings.Replace(w.in.URL, "http", "ws", 1) + "/relay/phone"
+		slow, _, err := websocket.Dial(context.Background(), url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer slow.CloseNow()
+		slow.SetReadLimit(maxFrameBytes * 2)
+		hello, _ := json.Marshal(obj{"t": "hello", "token": other.token, "deviceKey": other.key})
+		slow.Write(context.Background(), websocket.MessageText, hello)
+		slow.Read(context.Background())
+		taken, _ := json.Marshal(sealed(slowPairing.ID, "open"))
+		slow.Write(context.Background(), websocket.MessageText, taken)
+		laptop.next(is("sealed"))
+
+		big := strings.Repeat("x", 600000)
+		for range 40 {
+			laptop.send(sealed(slowPairing.ID, big))
+		}
+		laptop.send(sealed(fast, "still-quick"))
+		start := time.Now()
+		equal(t, phone.next(is("sealed"))["data"], "still-quick")
+		if waited := time.Since(start); waited > time.Second {
+			t.Fatalf("the fast phone waited %v", waited)
+		}
+
+		// What waited for the slow one passed its limit: it is closed, and told why once it reads.
+		deadline, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		for {
+			if _, _, err := slow.Read(deadline); err != nil {
+				if code := websocket.CloseStatus(err); code != closeTooSlow {
+					t.Fatalf("slow phone closed with %d (%v)", code, err)
+				}
+				break
+			}
+		}
+	})
+}
+
+// Either end may ask whether its socket still carries frames.
+func TestPing(t *testing.T) {
+	each(t, func(t *testing.T, w *world) {
+		laptop := w.host(w.ada, "ping-client")
+		laptop.send(obj{"t": "ping"})
+		equal(t, laptop.next(is("pong")), obj{"t": "pong"})
+		phone := w.phone(w.adaPhone)
+		phone.send(obj{"t": "ping"})
+		equal(t, phone.next(is("pong")), obj{"t": "pong"})
+	})
+}

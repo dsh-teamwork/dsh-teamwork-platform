@@ -314,6 +314,11 @@ export class RelayError extends Error {
 export interface RelayClient {
   /** Ends this account's socket, calls and streams before another account can connect. */
   reset(): void;
+  /**
+   * Asks the relay at once whether the open socket still carries frames, as the app does when it comes back to the
+   * foreground; a socket that does not answer is replaced, and follows open again.
+   */
+  checkConnection(): void;
   /** The member's paired computers: confirmed pairings only. */
   listComputers(): Promise<Computer[]>;
   /** The member's own computers, paired with this device or not; none from a server too old to list them to an app. */

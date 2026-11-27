@@ -19,7 +19,7 @@ vi.mock('../secure-channel', () => ({
   },
 }));
 import { describe, expect, it, vi } from 'vitest';
-import { createLiveRelay } from '../live';
+import { createLiveRelay, PING_EVERY_MS, PONG_TIMEOUT_MS } from '../live';
 import { RETRY_MS } from '../dsh-sessions';
 import { RelayError, type SessionEvent } from '../types';
 
@@ -135,6 +135,41 @@ function setup() {
 }
 
 describe('the live relay client', () => {
+  it('asks the server where its relay is once, not before every request', async () => {
+    const { relay, asked } = setup();
+    await relay.listComputers();
+    await relay.listHosts();
+    expect(asked.filter((a) => a.url.endsWith('/api/relay'))).toHaveLength(1);
+    relay.reset();
+    await relay.listComputers();
+    expect(asked.filter((a) => a.url.endsWith('/api/relay'))).toHaveLength(2);
+  });
+  it('takes a socket that stops answering as lost, and asks at once when told to check', async () => {
+    vi.useFakeTimers();
+    try {
+      const { relay } = setup();
+      const first = relay.prompt('p1', 's', 'one');
+      const lost = expect(first).rejects.toMatchObject({ code: 'unavailable' });
+      await vi.advanceTimersByTimeAsync(1);
+      const s = FakeSocket.made[0]!;
+      s.push({ t: 'welcome' });
+      await vi.advanceTimersByTimeAsync(PING_EVERY_MS);
+      expect(s.sent.filter((f) => f.t === 'ping')).toHaveLength(1);
+      s.push({ t: 'pong' });
+      await vi.advanceTimersByTimeAsync(PONG_TIMEOUT_MS);
+      relay.checkConnection();
+      expect(s.sent.filter((f) => f.t === 'ping')).toHaveLength(2);
+      // Nothing comes back: the call fails now, not at its own timeout, and the next use dials again.
+      await vi.advanceTimersByTimeAsync(PONG_TIMEOUT_MS);
+      await lost;
+      void relay.prompt('p1', 's', 'two').catch(() => {});
+      await vi.advanceTimersByTimeAsync(1);
+      expect(FakeSocket.made).toHaveLength(2);
+      relay.reset();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it('ends pending work on sign-out and uses a fresh authenticated socket afterwards', async () => {
     const { relay, socket, eventsReady, setToken, credentials } = setup();
     const pending = relay.listSessions('p1');

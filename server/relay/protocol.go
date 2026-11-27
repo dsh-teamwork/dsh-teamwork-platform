@@ -37,6 +37,7 @@ const (
 	closeBadHello     = 4400 // malformed hello, or none in time
 	closeUnauthorized = 4401 // the token is not a member's: sign in again first
 	closeReplaced     = 4409 // the same computer connected again; this socket is stale
+	closeTooSlow      = 4408 // the peer reads more slowly than frames arrive for it
 )
 
 var (
@@ -210,6 +211,12 @@ func parsePhoneFrame(f *frame) (forwarded, bool) {
 }
 
 func parseHostFrame(f *frame) (forwarded, bool) { return parsePhoneFrame(f) }
+
+// pong answers a `ping` from either end at once. A WebSocket's own pings
+// are the relay's to send and a browser cannot send one, so each end checks
+// that its socket still carries frames with this pair: a socket left half
+// open by a network change is found within seconds, not at a call's timeout.
+var pong = map[string]string{"t": "pong"}
 
 type waiting struct{}
 

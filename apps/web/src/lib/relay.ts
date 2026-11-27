@@ -75,6 +75,14 @@ export class BrowserKeys implements DeviceKeys {
 
 let current: { account: string; relay: RelayClient } | undefined;
 
+// A tab coming back into view may have slept through a network change: the relay is asked at once whether the
+// socket still carries frames, rather than at the next heartbeat.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') current?.relay.checkConnection();
+  });
+}
+
 /** The relay client for the signed-in account; another account's is ended first. */
 export function relayFor(account: string): RelayClient {
   if (current?.account === account) return current.relay;

@@ -88,6 +88,17 @@ class Queue {
     this.wake?.();
     this.wake = undefined;
   }
+  /** Takes what is queued, oldest first, while it fits in `room` bytes. */
+  drain(room: number) {
+    const taken: Uint8Array[] = [];
+    while (this.items.length && this.items[0]!.length <= room) {
+      const value = this.items.shift()!;
+      this.bytes -= value.length;
+      room -= value.length;
+      taken.push(value);
+    }
+    return taken;
+  }
   end() {
     this.ended = true;
     this.items = [];
@@ -121,13 +132,22 @@ export interface SecureOptions {
   random: RandomBytes;
   importAesKey(bytes: Uint8Array): Promise<AesKey>;
   expectedKey?: string;
+  /**
+   * Both ends already trust each other's key (`expectedKey`): no commitments are exchanged, Noise starts with the
+   * first packet, and no safety code is compared. Pairing never uses it.
+   */
+  pinned?: boolean;
   send(packet: SecurePacket): void;
   ready(remoteKey: string, safetyCode: string): void | Promise<void>;
   message(value: unknown): void | Promise<void>;
   closed(error: Error): void;
 }
 
-/** Commit/reveal identities and fresh random salts before Noise prevents adaptive short-code grinding. */
+/**
+ * Pairing commits to and reveals identities and fresh random salts before Noise, which prevents adaptive grinding of
+ * the safety code. A channel between devices that already pinned each other's keys (`pinned`) has no code to grind and
+ * goes straight to Noise XX, which authenticates both pinned keys; the platform's ADR 0071.
+ */
 export class SecureChannel {
   private incoming = new Queue();
   private outgoing = new Queue();
@@ -151,6 +171,7 @@ export class SecureChannel {
   private wire = new Uint8Array(0);
   private abort = new AbortController();
   private readyState = false;
+  private isVerified = false;
   constructor(private readonly options: SecureOptions) {
     this.salt = base64(options.random(32));
     this.commitment = this.commit(options.initiator, options.identity.publicKey, this.salt);
@@ -160,7 +181,11 @@ export class SecureChannel {
     return this.options.channelId;
   }
   start() {
-    this.packet('commit', this.commitment);
+    if (!this.options.pinned) return this.packet('commit', this.commitment);
+    if (!this.options.expectedKey) return this.close(new Error('device_verification_required'));
+    this.started = true;
+    this.remoteReveal = { key: this.options.expectedKey, salt: '' };
+    void this.handshake().catch((error) => this.close(error));
   }
   private commit(initiator: boolean, key: string, salt: string) {
     return base64(
@@ -182,6 +207,7 @@ export class SecureChannel {
     try {
       if (packet.pairingId !== this.options.pairingId || packet.channelId !== this.options.channelId)
         throw new Error('channel_mismatch');
+      if (this.options.pinned && (packet.kind === 'commit' || packet.kind === 'reveal')) throw new Error('unexpected_commitment');
       if (packet.kind === 'commit') {
         if (this.remoteCommit || unbase64(packet.data).length !== 32) throw new Error('invalid_commitment');
         this.remoteCommit = packet.data;
@@ -234,12 +260,20 @@ export class SecureChannel {
     const { identity, initiator, random, expectedKey } = this.options;
     const local = { key: identity.publicKey, salt: this.salt };
     const remote = this.remoteReveal!;
-    const transcript = encode([
-      DOMAIN,
-      this.options.pairingId,
-      this.options.channelId,
-      ...(initiator ? [local, remote] : [remote, local]),
-    ]);
+    const transcript = this.options.pinned
+      ? encode([
+          DOMAIN,
+          'pinned',
+          this.options.pairingId,
+          this.options.channelId,
+          ...(initiator ? [local.key, remote.key] : [remote.key, local.key]),
+        ])
+      : encode([
+          DOMAIN,
+          this.options.pairingId,
+          this.options.channelId,
+          ...(initiator ? [local, remote] : [remote, local]),
+        ]);
     const crypto = {
       ...pureJsCrypto,
       generateX25519KeyPair: () => pureJsCrypto.generateX25519KeyPairFromSeed(random(32)),
@@ -286,9 +320,27 @@ export class SecureChannel {
     const keyMessage = rawKey.slice();
     const writing = Promise.resolve(secured.conn.sink((async function* () { yield keyMessage; })()));
     void writing.catch((error) => this.close(error));
+    const hash = sha256(transcript);
+    const digits = String(
+      new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(0) % 100000000,
+    ).padStart(8, '0');
+    const sendAAD = join(hash, new Uint8Array([initiator ? 1 : 0]));
+    const receiveAAD = join(hash, new Uint8Array([initiator ? 0 : 1]));
     let remoteKey = new Uint8Array(0);
+    let announced: Promise<void>;
     try {
       const sendKey = await this.options.importAesKey(rawKey);
+      // Our key leaves before any record sealed under it. From here this end may send: the peer is authenticated, and
+      // records that reach it before its own key import wait in its bounded queue. Waiting for the peer's key first
+      // would cost every channel one more trip across the relay.
+      await writing;
+      this.flush();
+      if (this.dead) return;
+      this.sendKey = sendKey;
+      this.readyState = true;
+      void this.encrypt(sendAAD).catch((error) => this.close(error));
+      announced = Promise.resolve(this.options.ready(remote.key, `${digits.slice(0, 4)} ${digits.slice(4)}`));
+      void announced.catch((error) => this.close(error));
       for await (const chunk of secured.conn.source) {
         remoteKey = join(remoteKey, chunk.subarray());
         if (remoteKey.length > 32) throw new Error('invalid_aes_key');
@@ -296,10 +348,7 @@ export class SecureChannel {
       }
       if (remoteKey.length !== 32) throw new Error('channel_closed');
       const receiveKey = await this.options.importAesKey(remoteKey);
-      await writing;
-      this.flush();
       if (this.dead) return;
-      this.sendKey = sendKey;
       this.receiveKey = receiveKey;
     } finally {
       rawKey.fill(0);
@@ -308,17 +357,9 @@ export class SecureChannel {
     }
     this.bootstrapDone = true;
     this.incoming.end();
-    const hash = sha256(transcript);
-    const digits = String(
-      new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(0) % 100000000,
-    ).padStart(8, '0');
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.close(new Error('verification_timeout')), 120000);
-    this.readyState = true;
-    const sendAAD = join(hash, new Uint8Array([initiator ? 1 : 0]));
-    const receiveAAD = join(hash, new Uint8Array([initiator ? 0 : 1]));
-    void this.encrypt(sendAAD).catch((error) => this.close(error));
-    await this.options.ready(remote.key, `${digits.slice(0, 4)} ${digits.slice(4)}`);
+    if (!this.isVerified) this.timer = setTimeout(() => this.close(new Error('verification_timeout')), 120000);
+    await announced;
     await this.decrypt(receiveAAD);
   }
   private nonce(counter: number) {
@@ -328,7 +369,13 @@ export class SecureChannel {
     return nonce;
   }
   private async encrypt(additionalData: Uint8Array) {
-    for await (const message of this.outgoing.source()) {
+    for await (const first of this.outgoing.source()) {
+      // A burst (a stream's frames as DSH sends them) goes as one record: one cipher call, one packet and one relay
+      // frame instead of one each. The receiver already reads any number of length-prefixed messages from a record.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      if (this.dead) return;
+      let message = first;
+      for (const next of this.outgoing.drain(RECORD_PLAINTEXT - first.length)) message = join(message, next);
       for (let offset = 0; offset < message.length; offset += RECORD_PLAINTEXT) {
         if (this.dead) return;
         const plaintext = message.subarray(offset, offset + RECORD_PLAINTEXT);
@@ -379,7 +426,9 @@ export class SecureChannel {
     this.outgoing.push(join(length, bytes));
   }
   verified() {
-    clearTimeout(this.timer);
+    this.isVerified = true;
+    // The bootstrap deadline still holds until the peer's key arrives.
+    if (this.bootstrapDone) clearTimeout(this.timer);
   }
   close(error = new Error('channel_closed')) {
     if (this.dead) return;

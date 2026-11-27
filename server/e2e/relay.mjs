@@ -41,6 +41,7 @@ const phoneIdentity = await deviceIdentity(base64(randomBytes(32)));
 const hostIdentity = await deviceIdentity(base64(randomBytes(32)));
 const events = [], wire = [], business = [], codes = [];
 let hostChannel;
+let pinned = false;
 let link;
 link = new RelayLink({
   endpoint: () => BASE, token: () => TOKEN,
@@ -49,9 +50,10 @@ link = new RelayLink({
   onForward:frame=>{
     if(frame.t!=='sealed')return;
     wire.push(frame);
-    if(!hostChannel){
+    if(!hostChannel||hostChannel.id!==frame.channelId){
+      hostChannel?.close();
       hostChannel=new SecureChannel({pairingId:frame.pairingId,channelId:frame.channelId,identity:hostIdentity,initiator:false,importAesKey:desktopAes,
-        expectedKey:phoneIdentity.publicKey,random:n=>randomBytes(n),send:f=>{wire.push(f);link.send(f);},
+        expectedKey:phoneIdentity.publicKey,pinned,random:n=>randomBytes(n),send:f=>{wire.push(f);link.send(f);},
         ready:(_key,code)=>codes.push(code),message:value=>{business.push(value);hostChannel.send({echoed:value.method,blob:value.blob});},closed:()=>{}});
       hostChannel.start();
     }
@@ -120,6 +122,17 @@ phoneChannel.send({method:'session/list',blob:'original phone still connected'})
 await until('original channel survives attempted takeover',()=>replies.length===2);
 assert.deepEqual(replies[1],{echoed:'session/list',blob:'original phone still connected'});
 otherSocket.close();
+// The two now trust each other: a new channel goes straight to Noise, with no commitments, and carries work at once.
+phoneChannel.close();
+pinned = true;
+const sealedBefore = wire.length;
+phoneChannel=new SecureChannel({pairingId:pairing.id,channelId:newChannelId(n=>randomBytes(n)),identity:phoneIdentity,initiator:true,importAesKey:mobileAes,
+ expectedKey:hostIdentity.publicKey,pinned:true,random:n=>randomBytes(n),send:f=>{wire.push(f);socket.send(JSON.stringify(f));},
+ ready:()=>{phoneChannel.verified();phoneChannel.send({method:'session/list',blob:'over the pinned channel'});},message:value=>replies.push(value),closed:()=>{}});
+phoneChannel.start();
+await until('an answer over the pinned channel',()=>replies.length===3);
+assert.deepEqual(replies[2],{echoed:'session/list',blob:'over the pinned channel'});
+assert.ok(!wire.slice(sealedBefore).some(f=>f.kind==='commit'||f.kind==='reveal'));
 // Revoked on the computer: the phone loses it at once.
 assert.equal(await link.request({ t: 'revoke', pairingId: pairing.id }), null);
 await until('the revocation', () => frames.find((f) => f.t === 'revoked'));
