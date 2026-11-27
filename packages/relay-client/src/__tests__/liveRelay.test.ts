@@ -190,9 +190,11 @@ describe('the live relay client', () => {
       await vi.advanceTimersByTimeAsync(PING_EVERY_MS);
       expect(s.sent.filter((f) => f.t === 'ping')).toHaveLength(1);
       s.push({ t: 'pong' });
-      await vi.advanceTimersByTimeAsync(PONG_TIMEOUT_MS);
+      // Answered: the next ping comes on the interval, and the socket stays.
+      await vi.advanceTimersByTimeAsync(PING_EVERY_MS - 1);
+      expect(FakeSocket.made).toHaveLength(1);
       relay.checkConnection();
-      expect(s.sent.filter((f) => f.t === 'ping')).toHaveLength(2);
+      expect(s.sent.filter((f) => f.t === 'ping').length).toBeGreaterThanOrEqual(2);
       // Nothing comes back: the call fails now, not at its own timeout, and the next use dials again.
       await vi.advanceTimersByTimeAsync(PONG_TIMEOUT_MS);
       await lost;
@@ -368,13 +370,21 @@ describe('the live relay client', () => {
     const [events, follow] = s.sent.filter((f) => f.t === 'mux').map((f) => f.body);
     s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: events.streamId, value: { type: 'ready', clientId: 'c-1' } } });
     s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: follow.streamId, value: { type: 'snapshot', records: [], cursor: 0 } } });
-    const sent = relay.prompt('p1', 's1', 'hello');
+    // A message that did not go is not timed: the answer that follows belongs to nothing sent from here.
+    const failed = relay.prompt('p1', 's1', 'lost');
     await until(() => s.sent.some((f) => f.method === 'session/prompt'));
-    const call = s.sent.find((f) => f.method === 'session/prompt');
+    const lost = s.sent.find((f) => f.method === 'session/prompt');
+    s.push({ t: 'result', pairingId: 'p1', id: lost.id, status: 502, body: { error: 'dsh_unreachable' } });
+    await expect(failed).rejects.toBeDefined();
+    s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: follow.streamId, value: { type: 'event', event: { type: 'assistant/message', seq: 1, data: { message: { content: [{ type: 'text', text: 'late' }] } } } } } });
+    expect(timings).not.toContain('reply');
+    const sent = relay.prompt('p1', 's1', 'hello');
+    await until(() => s.sent.filter((f) => f.method === 'session/prompt').length === 2);
+    const call = s.sent.filter((f) => f.method === 'session/prompt')[1];
     s.push({ t: 'result', pairingId: 'p1', id: call.id, status: 200, body: { result: { ok: true } } });
     await sent;
     s.push({ t: 'mux', pairingId: 'p1', body: { type: 'item', streamId: follow.streamId, value: { type: 'event', event: { type: 'assistant/message', seq: 2, data: { message: { content: [{ type: 'text', text: 'hi' }] } } } } } });
-    expect(timings).toEqual(['socket', 'channel', 'snapshot', 'call', 'reply']);
+    expect(timings).toEqual(['socket', 'channel', 'snapshot', 'call', 'call', 'reply']);
     relay.reset();
   });
   it('follows a session, shows the question the agent asks, and answers it through $events', async () => {

@@ -53,10 +53,12 @@ export const CALL_TIMEOUT_MS = 20_000;
 
 /**
  * How often an idle socket asks the relay for a `pong`, how long it waits for one before the socket is taken as
- * lost and reconnected, and how long a new socket may take to be welcomed. Any frame heard counts as an answer.
+ * lost and reconnected, and how long a new socket may take to be welcomed. Any frame heard counts as an answer. The
+ * relay sends the pong ahead of what waits for the socket, but not ahead of a frame already being written: the wait
+ * outlasts a large record crossing a slow link, so such a record is not mistaken for a dead socket.
  */
 export const PING_EVERY_MS = 15_000;
-export const PONG_TIMEOUT_MS = 5_000;
+export const PONG_TIMEOUT_MS = 20_000;
 export const WELCOME_TIMEOUT_MS = 10_000;
 
 /** How long what the server said of its relay (`GET /api/relay`) is used before it is asked again. */

@@ -1030,3 +1030,17 @@ func TestPresence(t *testing.T) {
 		other.none(is("presence"))
 	})
 }
+
+// A pong goes ahead of the frames already waiting for its socket.
+func TestPongJumpsTheQueue(t *testing.T) {
+	s := &socket{wake: make(chan struct{}, 1)}
+	s.sendBinary([]byte("record-1"))
+	s.sendBinary([]byte("record-2"))
+	s.sendFirst(pong)
+	if got := string(s.queue[0].b); got != `{"t":"pong"}` || s.queue[0].kind != websocket.MessageText {
+		t.Fatalf("first queued: %s", got)
+	}
+	if string(s.queue[1].b) != "record-1" || string(s.queue[2].b) != "record-2" {
+		t.Fatal("the records lost their order")
+	}
+}

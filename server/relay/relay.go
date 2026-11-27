@@ -250,14 +250,31 @@ func (s *socket) sendBinary(b []byte) {
 	s.enqueue(outgoing{websocket.MessageBinary, b})
 }
 
-func (s *socket) enqueue(m outgoing) {
+// sendFirst queues v ahead of everything waiting: a `pong` says the socket
+// still carries frames, so it does not wait behind records already queued.
+func (s *socket) sendFirst(v any) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		slog.Error("relay: frame", "error", err)
+		return
+	}
+	s.enqueueAt(outgoing{websocket.MessageText, b}, true)
+}
+
+func (s *socket) enqueue(m outgoing) { s.enqueueAt(m, false) }
+
+func (s *socket) enqueueAt(m outgoing, first bool) {
 	s.mu.Lock()
 	if s.queued+len(m.b) > maxQueuedBytes {
 		s.mu.Unlock()
 		go s.c.Close(closeTooSlow, "too slow")
 		return
 	}
-	s.queue = append(s.queue, m)
+	if first {
+		s.queue = append([]outgoing{m}, s.queue...)
+	} else {
+		s.queue = append(s.queue, m)
+	}
 	s.queued += len(m.b)
 	s.mu.Unlock()
 	select {
@@ -438,7 +455,7 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 			continue
 		}
 		if f.T == "ping" {
-			s.send(pong)
+			s.sendFirst(pong)
 		} else if wt, ok := parseWaiting(f); ok {
 			go r.notify(hostID, wt)
 		} else if request, ok := parsePluginRequest(f); ok {
@@ -698,7 +715,7 @@ func (r *relay) acceptPhone(w http.ResponseWriter, req *http.Request) {
 			continue
 		}
 		if f, ok := parse(data); ok && f.T == "ping" {
-			s.send(pong)
+			s.sendFirst(pong)
 		}
 	}
 }

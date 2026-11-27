@@ -245,11 +245,14 @@ pinned device or read/alter accepted business content. Endpoint compromise and
 malicious client updates are outside this transport boundary.
 
 **Each end checks its socket every fifteen seconds** with `ping`, and takes it
-as lost when nothing at all comes back within five
-(`packages/relay-client/src/live.ts`, the plugin's `src/relay.ts`). A
-network change can leave a socket half open, reading nothing and refusing
-nothing; without this a call waited out its twenty-second timeout and the
-relay's own ping found the socket only after up to a minute. A new socket not
+as lost when nothing at all comes back within twenty
+(`packages/relay-client/src/live.ts`, the plugin's `src/relay.ts`). The relay
+sends the `pong` ahead of whatever waits for that socket, but a frame already
+being written comes first, and the twenty seconds outlast a large record on a
+slow link, so it is not mistaken for a dead socket. A network change can leave
+a socket half open, reading nothing and refusing nothing; without this a call
+waited out its own timeout and the relay's own ping found the socket only
+after up to a minute. A new socket not
 welcomed within ten seconds is given up the same way. The app and the console
 also ask at once when they come back to the foreground (`checkConnection`).
 A screen listing the member's computers watches them (`watchComputers`)
@@ -327,9 +330,11 @@ its long strings (a tool's output, a file written) cut to 64, 16, 4 and then
 1 KiB, and a follow's snapshot or a `session/page` result then keeps its newest
 records and says `hasMore`. A stream frame that still cannot fit ends that
 stream with `too_large`, and a call's result answers 502 `too_large`, without
-touching the channel. A follow's opening snapshot is held to 256 KiB by the
-same rules (`SNAPSHOT_BYTES`), since nothing on the screen can show until it
-has crossed the relay. The clients read the history before a snapshot with
+touching the channel. A follow's opening snapshot is held to 256 KiB
+(`SNAPSHOT_BYTES`, `newestRecords`), since nothing on the screen can show
+until it has crossed the relay: a tool's output is shortened first, then the
+oldest records go whole and it says `hasMore`; what the member and the agent
+said is shortened only in a newest record that alone does not fit. The clients read the history before a snapshot with
 `session/page` (`beforeSeq`, 50 messages, as DSH's own opening window), from
 the member's "Show earlier messages".
 
@@ -351,8 +356,8 @@ shapes. Business methods, request/result bodies, session ids, paths, tool
 results, file names and upload chunks are all encrypted. TLS and existing
 sign-in, membership checks, upload budgets and native prompt deduplication hold.
 
-The relay enforces two limits. A frame over 1 MiB closes the socket that sent
-it. **Each socket has its own writer**: a frame for it is queued and the
+The relay enforces three limits. A frame over 1 MiB closes the socket that
+sent it. **Each socket has its own writer**: a frame for it is queued and the
 sender moves on, so a phone or browser reading slowly holds up nothing its
 computer sends to its other devices. Past 8 MiB waiting, the slow socket is
 closed with 4408 and its client reconnects. A phone may send 300 frames per pairing in ten seconds; past that its

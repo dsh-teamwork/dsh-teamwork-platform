@@ -585,7 +585,9 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
     },
 
     async prompt(computerId, sessionId, text, attachments) {
-      sent.set(`${computerId} ${sessionId}`, Date.now());
+      const key = `${computerId} ${sessionId}`;
+      sent.set(key, Date.now());
+      // A message that did not go has no answer to time.
       await call(computerId, 'session/prompt', {
         request: {
           requestId: attachments?.requestId ?? options.nextId(),
@@ -596,6 +598,9 @@ export function createDshSessions(link: DshLink, options: { locale: () => string
             ...(attachments?.receipts ?? []).map((receiptId) => ({ type: 'file', receiptId })),
           ],
         },
+      }).catch((error: unknown) => {
+        sent.delete(key);
+        throw error;
       });
     },
 
