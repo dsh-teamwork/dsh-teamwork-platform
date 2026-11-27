@@ -8,6 +8,7 @@
  * in on, a new one included, except the ones they keep it off (`PUT …/asset-choices/{id}/hosts`).
  */
 
+import { assetName, isBehind, isRecommended, reachOf, type AssetUse } from '@dsh-teamwork/shared';
 import { ArrowRight, Check, History, Laptop, Plus, Puzzle, Upload } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
@@ -41,38 +42,6 @@ type Choices = Omit<Schemas['AssetChoices'], 'archived'> & { archived: TeamConfi
 type Filter = 'all' | 'onDsh' | 'mine' | 'behind';
 type Choose = (item: Item, body: Schemas['PersonalChoice'], message: string) => Promise<boolean>;
 type Host = Schemas['RelayHost'];
-
-/** How the item reaches the reader's DSH, if it does: the team's own, the team's recommendation, or their own choice. */
-interface Use {
-  on: boolean;
-  version?: number;
-  how?: 'team' | 'recommended' | 'latest' | 'pinned';
-  /** Pinned below the latest version of an item still offered. */
-  update?: boolean;
-}
-
-function reachOf(item: Item, choices: Choices): Use {
-  const personal = choices.personal[item.id];
-  if (personal?.mode === 'removed') return { on: false };
-  if (personal?.mode === 'latest') return { on: true, version: item.version, how: 'latest' };
-  if (personal?.mode === 'pinned' && personal.version) {
-    return { on: true, version: personal.version, how: 'pinned', update: personal.version < item.version && !item.assetArchived };
-  }
-  if (!item.assetOwnerId) return { on: true, version: item.version, how: 'team' };
-  const recommended = choices.defaults[item.id]?.version;
-  return recommended ? { on: true, version: recommended, how: 'recommended' } : { on: false };
-}
-
-/** On everyone's DSH unless they remove it: the team's own, or a member's the team recommends. */
-const isRecommended = (item: Item, choices: Choices) => !item.assetArchived && (!item.assetOwnerId || (choices.defaults[item.id]?.version ?? 0) > 0);
-
-/** A recommendation an admin has not moved to the version its author published since. */
-const isBehind = (item: Item, choices: Choices) => {
-  const recommended = choices.defaults[item.id]?.version ?? 0;
-  return !!item.assetOwnerId && !item.assetArchived && recommended > 0 && recommended < item.version;
-};
-
-const displayName = (item: Item, choices: Choices) => choices.defaults[item.id]?.name || item.name;
 
 export function TeamLibraryPage() {
   const { team, me } = useTeam();
@@ -131,7 +100,7 @@ export function TeamLibraryPage() {
     if (filter === 'mine' && item.assetOwnerId !== me) return false;
     if (filter === 'behind' && !isBehind(item, c)) return false;
     const description = item.kind === 'preset' ? item.data.description : item.data.description ?? '';
-    return !q || `${displayName(item, c)} ${item.name} ${description} ${author(item)}`.toLocaleLowerCase().includes(q);
+    return !q || `${assetName(item, c)} ${item.name} ${description} ${author(item)}`.toLocaleLowerCase().includes(q);
   });
   const recommended = shown.filter((i) => isRecommended(i, c));
   const others = shown.filter((i) => !isRecommended(i, c)).sort((a, b) => (c.users[b.id] ?? 0) - (c.users[a.id] ?? 0));
@@ -155,7 +124,7 @@ export function TeamLibraryPage() {
     <Row
       key={item.id}
       item={item}
-      name={displayName(item, c)}
+      name={assetName(item, c)}
       author={author(item)}
       users={c.users[item.id] ?? 0}
       use={reachOf(item, c)}
@@ -387,7 +356,7 @@ function Row(props: {
   name: string;
   author: string;
   users: number;
-  use: Use;
+  use: AssetUse;
   mine: boolean;
   behind: boolean;
   hosts: Host[];
@@ -458,7 +427,7 @@ function Details(props: {
   models: Model[];
   items: Item[];
   hosts: Host[];
-  use: Use;
+  use: AssetUse;
   pending: boolean;
   run: (action: () => Promise<unknown>, success?: string) => Promise<boolean>;
   choose: Choose;
@@ -470,7 +439,7 @@ function Details(props: {
 }) {
   const { item, choices, use, pending, admin } = props;
   const t = useTranslations('team.library');
-  const name = displayName(item, choices);
+  const name = assetName(item, choices);
   const recommendation = choices.defaults[item.id];
   const recommended = isRecommended(item, choices);
   const [confirm, setConfirm] = useState<'withdraw' | 'delete' | null>(null);
@@ -759,7 +728,7 @@ function Versions({ item, names, teamId, use, recommended, follow, pending, choo
   item: Item;
   names: ReadonlyMap<string, string>;
   teamId: string;
-  use: Use;
+  use: AssetUse;
   recommended?: number;
   /** Where a pinned reader goes back to: the team's recommendation, or the latest version. */
   follow: 'default' | 'latest';

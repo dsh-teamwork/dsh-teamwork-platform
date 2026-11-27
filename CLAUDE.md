@@ -363,7 +363,8 @@ api/openapi.yaml     the wire contract
 packages/shared      the languages and the rule that picks one, the model
                      providers' marks and the rule that picks one, the
                      providers a console offers to add (named as Models.dev
-                     names them), the preset avatars, and the line
+                     names them), the preset avatars, how a team's preset
+                     or plugin reaches a member's DSH, and the line
                      difference of a knowledge document, shared by the
                      console, an edition's console and the closed mobile app
 packages/relay-client  the relay's client: the encrypted channel (the
