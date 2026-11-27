@@ -80,6 +80,18 @@ type guardedTx struct {
 	dialectName string
 }
 
+func (tx *guardedTx) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	return tx.Tx.(interface {
+		ExecContext(context.Context, string, ...any) (sql.Result, error)
+	}).ExecContext(ctx, query, args...)
+}
+
+func (tx *guardedTx) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	return tx.Tx.(interface {
+		QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+	}).QueryContext(ctx, query, args...)
+}
+
 func (tx *guardedTx) Commit() error {
 	builder := entsql.Dialect(tx.dialectName)
 	read := builder.Select("content_generation").From(entsql.Table("teams")).Where(entsql.EQ("id", tx.admitted.teamID))

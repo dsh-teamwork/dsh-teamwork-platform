@@ -8,6 +8,7 @@ import (
 
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/edition"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/contentfence"
+	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/db/ent/membership"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/team"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/testdb"
 	"github.com/dsh-teamwork/dsh-teamwork-platform/server/internal/wire"
@@ -53,6 +54,11 @@ func TestCommitFenceRejectsStaleGeneration(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := tx2.TeamProvider.Create().SetTeamID(created.ID).SetName("fresh").SetBaseURL("https://example.test").SetKeyCipher("sealed").Exec(fresh); err != nil {
+			t.Fatal(err)
+		}
+		// Ent's membership/existence checks also need QueryContext on the
+		// guarded transaction, not only the write builders' ExecContext.
+		if _, err := tx2.Membership.Query().Where(membership.TeamID(created.ID), membership.UserID(created.OwnerID)).Only(fresh); err != nil {
 			t.Fatal(err)
 		}
 		if err := tx2.Commit(); err != nil {
