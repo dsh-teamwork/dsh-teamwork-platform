@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status:** Current · **Updated:** 2026-11-26
+> **Status:** Current · **Updated:** 2026-11-27
 
 How the pieces fit: the data flow, a request through the team API, the two
 ways to sign in, the model gateway and what is expensive to change. The rules
@@ -19,7 +19,17 @@ Edition team provisioning uses `Host.SubscribeTeams` (ADR 0026): callbacks
 borrow the creation/join transaction and return errors before either side
 commits. Creation carries the true creator once; accepted invitations and
 password-admin additions emit only actual joins. No subscriber means no
-extension work or historical replay.
+extension work or historical replay. `Host.CreateSystemTeam` and
+`Host.JoinMember` add a sign-in-less owner and an ordinary member idempotently
+for an edition's public demonstration team, with a `System` event mark rather
+than an ordinary creator's acquisition lifecycle.
+
+A seeded content reset replaces member content in place and increments
+`teams.content_generation`; it never deletes the team, memberships, models,
+usage or financial records. A write admits the generation and checks it before
+commit (`server/internal/contentfence`), so a late write fails with
+`team_resetting` rather than surviving the reset. Object writes precede the
+transaction and unreferenced bytes are collected after it (ADR 0071).
 
 An edition may serve a domain's subdomains of its own (`Host.ServeSubdomains`):
 every request whose Host is under that domain reaches the edition's handler
@@ -86,7 +96,7 @@ Instance administration is shared by all editions: [system management](system-ma
 | --- | --- | --- |
 | `users` | An account: email, name, image, locale | Created by the first sign-in through any door, or by an admin adding a member by email |
 | `identities` | Each door that reached an account: `provider`, `subject` | `(provider, subject)` unique; an account is joined by email only on an email the door verified |
-| `teams` | A name | — |
+| `teams` | A name and `content_generation`, incremented by a seeded reset | A write admitted at an older generation cannot commit after the reset |
 | `memberships` | Who is in which team, as `admin` or `member` | `(user_id, team_id)` is the key: a person may be in several teams, once in each (ADR 0013) |
 | `team_configs` | `kind` (`model`, `preset`, `plugin`), `name`, `data`, `version` | Unique per team, kind and name; `data` validated by `wire.ConfigInput` on every write; an edit names its `version`; a model or plugin a preset uses cannot be removed (`model_in_use`, `plugin_in_use`) |
 | `invites` | A SHA-256 of a single-use token, its expiry and use | The token itself is never stored |

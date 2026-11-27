@@ -63,6 +63,7 @@ or the hosted service, kept with the closed edition rather than here.
 - [0070 — The first visitor sets up the instance](0070-the-first-visitor-sets-up-the-instance.md) — no setup token; the sign-in page offers the first account.
 - [0071 — Devices that trust each other reconnect in one trip](0071-devices-that-trust-each-other-reconnect-in-one-trip.md) — pinned channels skip commitments; an unlock outlives its channel.
 - [0072 — Encryption records cross the relay as binary](0072-encryption-records-cross-the-relay-as-binary.md) — a small header and the raw record, passed on unchanged.
+- [0071 — Seeded team resets use content generations](0071-seeded-team-resets-use-content-generations.md) — restore member content in place and fence late commits.
 
 The template:
 

@@ -1,6 +1,6 @@
 # Usage points and team budgets
 
-> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-20
+> **Status:** Current — community metering, budgets, optional atomic model funding and edition meters · **Updated:** 2026-11-27
 
 Community instances measure model usage and enforce team/member/provider
 reference budgets without a hosted account, payment service or subscription
@@ -97,6 +97,9 @@ a member override replaces that period's default. An override can be limited,
 unlimited, or restored to inheritance. Disabling enforcement retains tracking.
 Changing a cap or replacing a default/override never resets consumption.
 New policies start counting at activation, without retroactive charges.
+`Host.EnsureTeamBudget` reconciles a system team's small team/default-member
+point cap through the same service; an identical policy writes no revision or
+audit event.
 
 A timezone edit takes effect at the old boundary. DST produces real 23/25-hour
 days; new windows cannot overlap the preceding one. Reservations always settle

@@ -16,6 +16,16 @@ your DSH and **Shared by me** what you share.
 with their rates, then shows the limits that apply to you, the points you spent
 by model and by day, and your latest calls, with a CSV of the period.
 
+## Try the official demo team
+
+On the hosted service, the teams page can show **Whale Studio**, an official
+public demo with models, knowledge and artifacts already configured. Join as
+an ordinary member: you can use the team model and collaborate, but cannot add
+a provider or your own key. Other members may see your account details and
+what you share, so do not enter sensitive information. Cloud content is
+restored every day; membership and usage records remain, while local DSH
+sessions and files are not changed. Create your own team for persistent work.
+
 ## Start from a team preset
 
 Choose **New session** with a team preset, or run `/teamwork new <id>`. A preset
