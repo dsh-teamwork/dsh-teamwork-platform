@@ -168,6 +168,16 @@ type Host struct {
 	// TeamRole re-reads one membership. An outsider gets the public 404 error.
 	TeamRole   func(context.Context, string, string, bool) (string, error)
 	TeamExists func(context.Context, string) (bool, error)
+	// CreateSystemTeam provisions a team owned by an account with no sign-in
+	// door. System suppresses ordinary account-acquisition rewards while still
+	// letting an edition bind its team models.
+	CreateSystemTeam func(context.Context, SystemTeamInput) (SystemTeam, error)
+	// JoinMember adds an existing account as an ordinary member, without an
+	// invitation. It is idempotent and reports whether a membership was added.
+	JoinMember func(context.Context, string, string) (bool, error)
+	// ResetTeamContent replaces member content with the edition's seed while
+	// preserving the team, its members, models, budgets and usage history.
+	ResetTeamContent func(context.Context, string, string, TeamSeed) error
 	// RegisterFunding binds protected models to this extension. Called once
 	// during Mount, before serving; community code needs no participant.
 	RegisterFunding func(ModelFunding) (FundingHost, error)
@@ -196,6 +206,9 @@ type Host struct {
 // and publishing it again adds it back.
 type TeamChange struct {
 	Kind, TeamID, UserID, ActorID string
+	// System marks provisioning by an edition rather than a person's own team
+	// creation or an ordinary invitation join.
+	System bool
 	// ConfigID is the removed configuration, for ModelRemoved only.
 	ConfigID string
 }

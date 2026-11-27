@@ -25,7 +25,11 @@ import {
   setEditionCommunity,
   setEditionModels,
   setEditionSecurity,
+  setEditionTeamNotice,
   setEditionTeamPages,
+  setEditionTeamsNotice,
+  type EditionTeamNotice,
+  type EditionTeamsNotice,
   type TeamPage,
 } from '@/lib/edition';
 import { currentLocale, type Locale } from '@/lib/locale';
@@ -110,18 +114,23 @@ export interface WebExtension {
   teamPages?: TeamPage[];
   /** Models the edition supplies, offered from the team's models page header (`EditionModels`). */
   models?: EditionModels;
+  /** Notices above the teams list and inside one team's console. */
+  teamsNotice?: EditionTeamsNotice;
+  teamNotice?: EditionTeamNotice;
   security?: EditionSecurity;
   /** Where its users talk with its makers, in each language: the footer of the console's pages outside a team links to it (`EditionCommunity`). */
   community?: (locale: Locale) => EditionCommunity;
 }
 
-export function mountWeb({ routes = [], teamPages = [], models, security, community }: WebExtension = {}) {
+export function mountWeb({ routes = [], teamPages = [], models, teamsNotice, teamNotice, security, community }: WebExtension = {}) {
   const locale = currentLocale();
   document.documentElement.lang = locale;
   void startAnalytics();
   watchSystemTheme();
   setEditionTeamPages(teamPages);
   setEditionModels(models);
+  setEditionTeamsNotice(teamsNotice);
+  setEditionTeamNotice(teamNotice);
   setEditionSecurity(security);
   setEditionCommunity(community);
   window.addEventListener('vite:preloadError', reloadOnStaleChunk);

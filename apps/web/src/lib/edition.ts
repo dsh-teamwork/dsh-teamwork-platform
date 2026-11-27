@@ -74,6 +74,23 @@ export function setEditionTeamPages(pages: readonly TeamPage[]) {
   teamPages = pages;
 }
 
+export type EditionTeamsNotice = ComponentType;
+export type EditionTeamNotice = ComponentType<{ team: Team }>;
+
+let teamsNotice: EditionTeamsNotice | undefined;
+let teamNotice: EditionTeamNotice | undefined;
+
+export const editionTeamsNotice = () => teamsNotice;
+export const editionTeamNotice = () => teamNotice;
+
+export function setEditionTeamsNotice(value: EditionTeamsNotice | undefined) {
+  teamsNotice = value;
+}
+
+export function setEditionTeamNotice(value: EditionTeamNotice | undefined) {
+  teamNotice = value;
+}
+
 /** routes without any whose path one of added has, at every level, then added: how an edition replaces a page. */
 export function replacing(routes: RouteObject[], added: RouteObject[]): RouteObject[] {
   const taken = new Set(added.map((r) => r.path).filter(Boolean));

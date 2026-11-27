@@ -88,7 +88,21 @@ func (s *Service) CreateTeam(ctx context.Context, userID string, in wire.CreateT
 		return Created{}, err
 	}
 	defer tx.Rollback()
-	t, err := tx.Team.Create().SetName(in.Name).Save(ctx)
+	created, err := s.createInTx(ctx, tx, userID, in, locale, false, "")
+	if err != nil {
+		return Created{}, err
+	}
+	return created, tx.Commit()
+}
+
+// createInTx is team creation's part of the caller's transaction. A system
+// team creates its sign-in-less owner in the same transaction before this.
+func (s *Service) createInTx(ctx context.Context, tx *ent.Tx, userID string, in wire.CreateTeam, locale string, system bool, id string) (Created, error) {
+	create := tx.Team.Create().SetName(in.Name)
+	if id != "" {
+		create.SetID(id)
+	}
+	t, err := create.Save(ctx)
 	if err != nil {
 		return Created{}, err
 	}
@@ -98,10 +112,11 @@ func (s *Service) CreateTeam(ctx context.Context, userID string, in wire.CreateT
 	if err := provisionAssistant(ctx, tx.Client(), t.ID, t.Name, locale); err != nil {
 		return Created{}, err
 	}
-	if err := s.changed(ctx, tx.Client(), edition.TeamChange{Kind: edition.TeamCreated, TeamID: t.ID, UserID: userID, ActorID: userID}); err != nil {
+	change := edition.TeamChange{Kind: edition.TeamCreated, TeamID: t.ID, UserID: userID, ActorID: userID, System: system}
+	if err := s.changed(ctx, tx.Client(), change); err != nil {
 		return Created{}, err
 	}
-	return Created{ID: t.ID, Name: t.Name}, tx.Commit()
+	return Created{ID: t.ID, Name: t.Name}, nil
 }
 
 // ProviderView is a provider as an admin sees it: never the key.

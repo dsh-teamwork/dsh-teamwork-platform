@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api, type TeamSummary } from '@/lib/api';
+import { editionTeamsNotice } from '@/lib/edition';
 import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
@@ -38,9 +39,11 @@ export function TeamsPage() {
   const word = useTeamError();
   const [params] = useSearchParams();
   const teams = useApi<TeamSummary[]>('teams');
+  const Notice = editionTeamsNotice();
   useTitle(useTranslations('team.list')('title'));
   return (
     <SiteFrame>
+      {Notice && <Notice />}
       {teams.data ? (
         <TeamsHome teams={teams.data} invite={params.get('invite') ?? ''} passwords={session.doors.password} reload={teams.reload} />
       ) : (

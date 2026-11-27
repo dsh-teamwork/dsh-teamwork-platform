@@ -296,6 +296,9 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			}
 			return string(m.Role), nil
 		},
+		CreateSystemTeam: teams.CreateSystemTeam,
+		JoinMember:       teams.JoinMember,
+		ResetTeamContent: teams.ResetTeamContent,
 	}
 	stops := []func(){}
 	if cfg.ServiceRole != "manage" {
