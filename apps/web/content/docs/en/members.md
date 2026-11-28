@@ -24,7 +24,8 @@ an ordinary member: you can use the team model and collaborate, but cannot add
 a provider or your own key. Other members may see your account details and
 what you share, so do not enter sensitive information. Cloud content is
 restored every day; membership and usage records remain, while local DSH
-sessions and files are not changed. Create your own team for persistent work.
+sessions and files are not changed. Create your own team for persistent work:
+creating or joining another team leaves the demo automatically.
 
 ## Start from a team preset
 

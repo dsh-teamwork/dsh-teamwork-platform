@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-28 — Starting a real team leaves the trial team automatically
+
+- **What:** `Host.RegisterAutoLeaveTeam` lets an edition mark its public trial team. Creating or joining any other team removes that person's ordinary membership in the same transaction; joining the trial team itself and system provisioning are excluded. Member-owned trial assets are archived by the same leaving path.
+- **Why:** A person who has a real team should not remain in a shared public demo, but the automatic exit must be atomic with the creation or join.
+- **Breaking:** None for ordinary teams. Trial members leave automatically when they create or join another team.
+- **Upgrade:** Deploy the server; no migration.
+- **Refs:** `server/internal/team/team.go`, `server/internal/team/members.go`, `server/internal/team/auto_leave_test.go`.
+
 ## 2026-11-28 — Ent generation stays on the declared Go toolchain
 
 - **What:** Both `go:generate` directives pin `GOTOOLCHAIN=go1.26.4`, and the generated Ent mutations use `json.RawMessage` instead of Go 1.27's `encoding/json/jsontext`.
