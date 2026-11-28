@@ -74,7 +74,7 @@ export function setEditionTeamPages(pages: readonly TeamPage[]) {
   teamPages = pages;
 }
 
-export type EditionTeamsNotice = ComponentType;
+export type EditionTeamsNotice = ComponentType<{ teams: TeamSummary[] }>;
 export type EditionTeamNotice = ComponentType<{ team: Team }>;
 
 let teamsNotice: EditionTeamsNotice | undefined;

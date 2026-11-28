@@ -50,7 +50,7 @@ export function TeamsPage() {
       ) : (
         teams.error ? <Failure message={word(teams.error)} /> : null
       )}
-      {Notice && createElement(Notice)}
+      {Notice && teams.data && createElement(Notice, { teams: teams.data })}
     </SiteFrame>
   );
 }
