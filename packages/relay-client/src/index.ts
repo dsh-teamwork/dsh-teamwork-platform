@@ -10,6 +10,7 @@ export * from './attachments';
 export * from './conversation';
 export * from './dsh';
 export * from './dsh-sessions';
+export * from './frame-batch';
 export * from './links';
 export * from './live';
 export * from './pin';

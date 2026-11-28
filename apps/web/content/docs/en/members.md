@@ -80,7 +80,8 @@ the column beside the sidebar, under its name, its operating system and its
 settings button. Pair this browser with it once: in DSH on that computer, open the
 Teamwork panel, choose **Devices** and make a code, type the code here, check
 that both screens show the same safety code, and approve on the computer. Then
-set a four-digit PIN, which the computer asks for again when you come back.
+set a four-digit PIN, which the computer asks for again when you come back after
+fifteen minutes away; a dropped connection alone does not ask for it.
 After that you start, follow and answer sessions on it from the browser, end to
 end encrypted between the browser and the computer. Each computer says whether
 it is online and whether this browser is paired with it; one that is offline

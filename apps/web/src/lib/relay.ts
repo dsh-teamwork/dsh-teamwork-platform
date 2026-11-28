@@ -15,6 +15,8 @@ import {
   type RelayClient,
 } from '@dsh-teamwork/relay-client';
 
+import { useEffect } from 'react';
+
 import type { Schemas } from './api';
 import { currentLocale } from './locale';
 
@@ -75,6 +77,14 @@ export class BrowserKeys implements DeviceKeys {
 
 let current: { account: string; relay: RelayClient } | undefined;
 
+// A tab coming back into view may have slept through a network change: the relay is asked at once whether the
+// socket still carries frames, rather than at the next heartbeat.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') current?.relay.checkConnection();
+  });
+}
+
 /** The relay client for the signed-in account; another account's is ended first. */
 export function relayFor(account: string): RelayClient {
   if (current?.account === account) return current.relay;
@@ -90,15 +100,46 @@ export function relayFor(account: string): RelayClient {
   return relay;
 }
 
-/** Whether this browser can hold the key the channel needs: WebCrypto Ed25519 and IndexedDB. */
-export async function browserCanJoin(): Promise<boolean> {
-  if (typeof indexedDB === 'undefined' || !globalThis.crypto?.subtle) return false;
-  try {
-    await newWebCryptoKeyPair();
-    return true;
-  } catch {
-    return false;
-  }
+/** Whether this browser can hold the key the channel needs: WebCrypto Ed25519 and IndexedDB. Asked once. */
+let canJoin: Promise<boolean> | undefined;
+export function browserCanJoin(): Promise<boolean> {
+  return (canJoin ??= (async () => {
+    if (typeof indexedDB === 'undefined' || !globalThis.crypto?.subtle) return false;
+    try {
+      await newWebCryptoKeyPair();
+      return true;
+    } catch {
+      return false;
+    }
+  })());
+}
+
+/** How often a list of computers is read again where this browser cannot hear them come and go. */
+export const COMPUTERS_REFRESH_MS = 10_000;
+
+/**
+ * Reads the member's computers again (`load`) when one connects or leaves, or the relay's socket came back from a
+ * drop (`RelayClient.watchComputers`), rather than on a timer. A browser that cannot keep a relay key cannot open that
+ * socket, and reads them every `COMPUTERS_REFRESH_MS` instead, as it does until it knows and wherever no `account` is
+ * given (a list that should not open the socket on its own).
+ */
+export function useComputersChanged(account: string | undefined, load: () => void, enabled = true) {
+  useEffect(() => {
+    if (!enabled) return;
+    let live = true;
+    let stop = () => {};
+    const timer = setInterval(load, COMPUTERS_REFRESH_MS);
+    void browserCanJoin().then((can) => {
+      if (!live || !can || !account) return;
+      clearInterval(timer);
+      stop = relayFor(account).watchComputers(load);
+    });
+    return () => {
+      live = false;
+      clearInterval(timer);
+      stop();
+    };
+  }, [account, load, enabled]);
 }
 
 export type MyComputer = Schemas['RelayHost'];

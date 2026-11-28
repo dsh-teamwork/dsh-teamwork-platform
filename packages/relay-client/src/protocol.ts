@@ -21,10 +21,12 @@ export const HostFrameSchema = z.discriminatedUnion('t', [
 /**
  * Sent to a phone unasked: a frame was refused (`id` names the call, when it
  * was one); the pairing was revoked; its computer went away, closing every
- * stream; or another socket of this handset took the pairing over.
+ * stream; another socket of this handset took the pairing over; or one of the member's computers came or went.
  */
 export type PhoneEvent =
   | { t: 'error'; pairingId: string; id?: string; error: 'not_paired' | 'offline' | 'rate_limited' }
   | { t: 'revoked'; pairingId: string }
   | { t: 'offline'; pairingId: string }
-  | { t: 'detached'; pairingId: string };
+  | { t: 'detached'; pairingId: string }
+  /** One of the member's computers connected or left, or a pairing, name or notification of one changed: list again. */
+  | { t: 'presence'; hostId?: string };

@@ -25,7 +25,7 @@ const until = async (what, check) => {
 };
 
 // One canonical wire implementation, executed by both endpoints.
-const { SecureChannel, deviceIdentity, base64, newChannelId } = await import(pathToFileURL(join(PLUGIN,'lib/secure-channel.js')).href);
+const { SecureChannel, deviceIdentity, base64, newChannelId, encodePacket, decodePacket } = await import(pathToFileURL(join(PLUGIN,'lib/secure-channel.js')).href);
 const { randomBytes } = await import('node:crypto');
 // The phone side runs the plugin's own channel and AES-GCM records. The
 // clients' copy (packages/relay-client) must be this one, byte for byte.
@@ -41,6 +41,7 @@ const phoneIdentity = await deviceIdentity(base64(randomBytes(32)));
 const hostIdentity = await deviceIdentity(base64(randomBytes(32)));
 const events = [], wire = [], business = [], codes = [];
 let hostChannel;
+let pinned = false;
 let link;
 link = new RelayLink({
   endpoint: () => BASE, token: () => TOKEN,
@@ -49,9 +50,10 @@ link = new RelayLink({
   onForward:frame=>{
     if(frame.t!=='sealed')return;
     wire.push(frame);
-    if(!hostChannel){
+    if(!hostChannel||hostChannel.id!==frame.channelId){
+      hostChannel?.close();
       hostChannel=new SecureChannel({pairingId:frame.pairingId,channelId:frame.channelId,identity:hostIdentity,initiator:false,importAesKey:desktopAes,
-        expectedKey:phoneIdentity.publicKey,random:n=>randomBytes(n),send:f=>{wire.push(f);link.send(f);},
+        expectedKey:phoneIdentity.publicKey,pinned,random:n=>randomBytes(n),send:f=>{wire.push(f);link.send(f);},
         ready:(_key,code)=>codes.push(code),message:value=>{business.push(value);hostChannel.send({echoed:value.method,blob:value.blob});},closed:()=>{}});
       hostChannel.start();
     }
@@ -83,12 +85,14 @@ assert.equal(pending.pairings[0].status, 'pending');
 const socket = new WebSocket(origin.replace(/^http/,'ws')+'/phone', COOKIE ? { headers: admission } : undefined);
 const frames=[],replies=[];
 let phoneChannel;
-socket.onmessage=m=>{const f=JSON.parse(m.data);if(f.t==='sealed'){wire.push(f);phoneChannel.receive(f);}else frames.push(f);};
+socket.binaryType='arraybuffer';
+// Records come as binary messages, the relay's control frames as JSON.
+socket.onmessage=m=>{if(typeof m.data!=='string'){const f=decodePacket(m.data);wire.push(f);phoneChannel.receive(f);}else frames.push(JSON.parse(m.data));};
 await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject;});
 socket.send(JSON.stringify(COOKIE ? {t:'hello',deviceKey} : {t:'hello',token:TOKEN,deviceKey}));
 await until('welcome',()=>frames.find(f=>f.t==='welcome'));
 phoneChannel=new SecureChannel({pairingId:pairing.id,channelId:newChannelId(n=>randomBytes(n)),identity:phoneIdentity,initiator:true,importAesKey:mobileAes,
- expectedKey:hostIdentity.publicKey,random:n=>randomBytes(n),send:f=>{wire.push(f);socket.send(JSON.stringify(f));},
+ expectedKey:hostIdentity.publicKey,random:n=>randomBytes(n),send:f=>{wire.push(f);socket.send(encodePacket(f));},
  ready:(_key,code)=>codes.push(code),message:value=>replies.push(value),closed:()=>{}});
 phoneChannel.start();await until('both authenticated handshakes',()=>codes.length===2);
 assert.equal(codes[0],codes[1]);phoneChannel.verified();hostChannel.verified();
@@ -100,26 +104,37 @@ phoneChannel.send({method:'session/list',text:'PRIVATE_RELAY_SENTINEL',blob:'x'.
 await until('encrypted answer',()=>replies.length===1);
 assert.deepEqual(replies[0],{echoed:'session/list',blob:'x'.repeat(1000000)});
 assert.equal(business.length,1);
-assert.ok(!JSON.stringify(wire).includes('PRIVATE_RELAY_SENTINEL'));
-assert.ok(!JSON.stringify(wire).includes('session/list'));
-assert.ok(wire.every(f=>JSON.stringify(f).length<1024*1024));
+assert.ok(!wire.some(f=>Buffer.from(f.data).includes('PRIVATE_RELAY_SENTINEL')));
+assert.ok(!wire.some(f=>Buffer.from(f.data).includes('session/list')));
+assert.ok(wire.every(f=>encodePacket(f).length<1024*1024));
 // A second handset with the same account token cannot enumerate, revoke, or displace this channel.
 const otherPhone = path => fetch(origin+path,{headers:{authorization:`Bearer ${TOKEN}`,'x-device-key':otherDeviceKey}});
 assert.deepEqual((await (await otherPhone('/pairings')).json()).pairings,[]);
 assert.equal((await fetch(origin+'/pairings/'+pairing.id,{method:'DELETE',headers:{authorization:`Bearer ${TOKEN}`,'x-device-key':otherDeviceKey}})).status,404);
 const otherSocket = new WebSocket(origin.replace(/^http/,'ws')+'/phone');
 const otherFrames=[];
-otherSocket.onmessage=event=>otherFrames.push(JSON.parse(event.data));
+otherSocket.onmessage=event=>{if(typeof event.data==='string')otherFrames.push(JSON.parse(event.data));};
 await new Promise((resolve,reject)=>{otherSocket.onopen=resolve;otherSocket.onerror=reject;});
 otherSocket.send(JSON.stringify({t:'hello',token:TOKEN,deviceKey:otherDeviceKey}));
 await until('other handset welcome',()=>otherFrames.some(f=>f.t==='welcome'));
-otherSocket.send(JSON.stringify({t:'sealed',pairingId:pairing.id,channelId:newChannelId(n=>randomBytes(n)),kind:'commit',data:base64(randomBytes(32))}));
+otherSocket.send(encodePacket({t:'sealed',pairingId:pairing.id,channelId:newChannelId(n=>randomBytes(n)),kind:'commit',data:randomBytes(32)}));
 await until('other handset refused',()=>otherFrames.some(f=>f.error==='not_paired'));
 assert.ok(!frames.some(f=>f.t==='detached'));
 phoneChannel.send({method:'session/list',blob:'original phone still connected'});
 await until('original channel survives attempted takeover',()=>replies.length===2);
 assert.deepEqual(replies[1],{echoed:'session/list',blob:'original phone still connected'});
 otherSocket.close();
+// The two now trust each other: a new channel goes straight to Noise, with no commitments, and carries work at once.
+phoneChannel.close();
+pinned = true;
+const sealedBefore = wire.length;
+phoneChannel=new SecureChannel({pairingId:pairing.id,channelId:newChannelId(n=>randomBytes(n)),identity:phoneIdentity,initiator:true,importAesKey:mobileAes,
+ expectedKey:hostIdentity.publicKey,pinned:true,random:n=>randomBytes(n),send:f=>{wire.push(f);socket.send(encodePacket(f));},
+ ready:()=>{phoneChannel.verified();phoneChannel.send({method:'session/list',blob:'over the pinned channel'});},message:value=>replies.push(value),closed:()=>{}});
+phoneChannel.start();
+await until('an answer over the pinned channel',()=>replies.length===3);
+assert.deepEqual(replies[2],{echoed:'session/list',blob:'over the pinned channel'});
+assert.ok(!wire.slice(sealedBefore).some(f=>f.kind==='commit'||f.kind==='reveal'));
 // Revoked on the computer: the phone loses it at once.
 assert.equal(await link.request({ t: 'revoke', pairingId: pairing.id }), null);
 await until('the revocation', () => frames.find((f) => f.t === 'revoked'));

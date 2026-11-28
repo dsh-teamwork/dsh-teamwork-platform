@@ -37,6 +37,7 @@ const (
 	closeBadHello     = 4400 // malformed hello, or none in time
 	closeUnauthorized = 4401 // the token is not a member's: sign in again first
 	closeReplaced     = 4409 // the same computer connected again; this socket is stale
+	closeTooSlow      = 4408 // the peer reads more slowly than frames arrive for it
 )
 
 var (
@@ -79,9 +80,6 @@ type frame struct {
 	ID         *string `json:"id"`
 	PairingID  *string `json:"pairingId"`
 	Accept     *bool   `json:"accept"`
-	ChannelID  *string `json:"channelId"`
-	Data       *string `json:"data"`
-	Kind       *string `json:"kind"`
 }
 
 func parse(data []byte) (*frame, bool) {
@@ -191,25 +189,47 @@ func parsePluginRequest(f *frame) (pluginRequest, bool) {
 	return pluginRequest{}, false
 }
 
-// forwarded carries opaque encryption records, including initial verification for pending pairings.
-// The plugin independently authenticates devices before any business request reaches DSH.
-type forwarded struct {
-	T         string `json:"t"`
-	PairingID string `json:"pairingId"`
-	ChannelID string `json:"channelId"`
-	Kind      string `json:"kind"`
-	Data      string `json:"data"`
+// sealedRecord is one encryption record between a phone and its computer, in a
+// binary WebSocket message the relay passes on byte for byte
+// (docs/tech/relay.md, "Frames"): a kind byte (sealedKinds), the pairing id's
+// length in one byte, the pairing id, the 22-character channel id, and the
+// record itself. The relay reads the header only; what follows is ciphertext
+// or a handshake message, never parsed here.
+type sealedRecord struct {
+	PairingID string
+	frame     []byte
 }
 
-func parsePhoneFrame(f *frame) (forwarded, bool) {
-	if f.T != "sealed" || !str(f.PairingID, 1, 64) || !str(f.ChannelID, 22, 22) || !clientIDPattern.MatchString(*f.ChannelID) ||
-		f.Kind == nil || (*f.Kind != "commit" && *f.Kind != "reveal" && *f.Kind != "noise" && *f.Kind != "data") || !str(f.Data, 1, 700000) {
-		return forwarded{}, false
+// sealedKinds are commit, reveal, noise and data, in that order.
+const sealedKinds = 4
+
+// maxSealedBytes is the longest record a sealed frame carries: a channel
+// packet is at most 384 KiB, and a Noise flight far less.
+const maxSealedBytes = 512 * 1024
+
+var pairingIDPattern = regexp.MustCompile(`^[\x21-\x7e]{1,64}$`)
+
+func parseSealed(data []byte) (sealedRecord, bool) {
+	if len(data) < 2 || data[0] < 1 || data[0] > sealedKinds {
+		return sealedRecord{}, false
 	}
-	return forwarded{T: "sealed", PairingID: *f.PairingID, ChannelID: *f.ChannelID, Kind: *f.Kind, Data: *f.Data}, true
+	n := int(data[1])
+	head := 2 + n + 22
+	if n < 1 || n > 64 || len(data) <= head || len(data)-head > maxSealedBytes {
+		return sealedRecord{}, false
+	}
+	pairingID, channelID := string(data[2:2+n]), string(data[2+n:head])
+	if !pairingIDPattern.MatchString(pairingID) || !clientIDPattern.MatchString(channelID) {
+		return sealedRecord{}, false
+	}
+	return sealedRecord{PairingID: pairingID, frame: data}, true
 }
 
-func parseHostFrame(f *frame) (forwarded, bool) { return parsePhoneFrame(f) }
+// pong answers a `ping` from either end at once. A WebSocket's own pings
+// are the relay's to send and a browser cannot send one, so each end checks
+// that its socket still carries frames with this pair: a socket left half
+// open by a network change is found within seconds, not at a call's timeout.
+var pong = map[string]string{"t": "pong"}
 
 type waiting struct{}
 

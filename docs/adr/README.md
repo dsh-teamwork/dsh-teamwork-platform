@@ -61,6 +61,8 @@ or the hosted service, kept with the closed edition rather than here.
 - [0068 — Knowledge is its own module](0068-knowledge-is-its-own-module.md) — kept-together documents beside pages; pages keep html and svg.
 - [0069 — Pages become artifacts](0069-pages-become-artifacts.md) — plugin archives become packages; knowledge documents stay documents in code.
 - [0070 — The first visitor sets up the instance](0070-the-first-visitor-sets-up-the-instance.md) — no setup token; the sign-in page offers the first account.
+- [0071 — Devices that trust each other reconnect in one trip](0071-devices-that-trust-each-other-reconnect-in-one-trip.md) — pinned channels skip commitments; an unlock outlives its channel.
+- [0072 — Encryption records cross the relay as binary](0072-encryption-records-cross-the-relay-as-binary.md) — a small header and the raw record, passed on unchanged.
 
 The template:
 

@@ -249,6 +249,15 @@ export type SessionEvent =
   | { type: 'older'; items: ConversationItem[]; earlier: number | null }
   | { type: 'closed'; reason: RelayErrorCode };
 
+/**
+ * What a client times, in milliseconds, for whoever is measuring the route (a developer on a real network):
+ * `socket` from dialling to the relay's welcome, `channel` from asking for a computer's encrypted channel to its being
+ * usable, `snapshot` from opening a session's follow to its snapshot, `call` one call's round trip, and `reply` from
+ * sending a message to the first of the agent's answer. Nothing is sent anywhere.
+ */
+export type TimingName = 'socket' | 'channel' | 'snapshot' | 'call' | 'reply';
+export type Measure = (name: TimingName, ms: number) => void;
+
 export type RelayErrorCode =
   | 'offline'
   | 'not_found'
@@ -314,8 +323,19 @@ export class RelayError extends Error {
 export interface RelayClient {
   /** Ends this account's socket, calls and streams before another account can connect. */
   reset(): void;
+  /**
+   * Asks the relay at once whether the open socket still carries frames, as the app does when it comes back to the
+   * foreground; a socket that does not answer is replaced, and follows open again.
+   */
+  checkConnection(): void;
   /** The member's paired computers: confirmed pairings only. */
   listComputers(): Promise<Computer[]>;
+  /**
+   * Calls `onChange` whenever one of the member's computers connects or leaves, and after the socket comes back from
+   * a drop (what changed meanwhile was not heard), so a screen lists them again instead of asking on a timer. It
+   * keeps the relay's socket open while anyone watches.
+   */
+  watchComputers(onChange: () => void): () => void;
   /** The member's own computers, paired with this device or not; none from a server too old to list them to an app. */
   listHosts(): Promise<OwnComputer[]>;
   renameHost(hostId: string, name: string): Promise<void>;

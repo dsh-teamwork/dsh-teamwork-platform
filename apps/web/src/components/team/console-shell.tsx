@@ -48,6 +48,7 @@ import { api, type Schemas, type Team, type TeamSummary } from '@/lib/api';
 import { editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { knowledgeNav, publishKnowledgeNav, useKnowledgeNav } from '@/lib/knowledge-nav';
 import { cn } from '@/lib/utils';
+import { useComputersChanged } from '@/lib/relay';
 
 type SectionKey = 'home' | 'overview' | 'library' | 'myUsage' | 'models' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'artifacts' | 'knowledge';
 
@@ -77,9 +78,6 @@ export async function ownComputers(): Promise<RelayHost[]> {
   return ((await response.json()) as { hosts: RelayHost[] }).hosts;
 }
 
-/** How often a list of computers is read again while it is shown, for each one's online state. */
-export const COMPUTERS_REFRESH_MS = 10_000;
-
 /**
  * Two records can share a name (two DSHs on one machine, or one signed in again): a short id after the name tells them
  * apart, or null where the name is the only one.
@@ -92,11 +90,10 @@ export function twinOf(hosts: readonly { id: string; name: string }[], host: { i
 function MyDshNav({ teamId, current, onNavigate }: SubnavProps) {
   const [hosts, setHosts] = useState<RelayHost[] | null>(null);
   const load = useCallback(() => ownComputers().then(setHosts, () => undefined), []);
-  useEffect(() => {
-    void load();
-    const timer = setInterval(() => void load(), COMPUTERS_REFRESH_MS);
-    return () => clearInterval(timer);
-  }, [load]);
+  useEffect(() => void load(), [load]);
+  // The sidebar is on every team page: it reads on a timer rather than opening the relay's socket for pages that do
+  // not use it; My DSH's own pages follow presence.
+  useComputersChanged(undefined, load);
   return (hosts ?? []).map((host) => (
     <SubnavLink
       key={host.id}

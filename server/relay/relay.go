@@ -100,7 +100,8 @@ type relay struct {
 		at    time.Time
 		count int
 	}
-	sockets map[*socket]struct{} // every open socket, closed at shutdown
+	sockets map[*socket]struct{}            // every open socket, closed at shutdown
+	phones  map[string]map[*socket]struct{} // every phone or browser socket, by its member's id
 }
 
 // attachment is a pairing a phone socket took over: where its frames go, and
@@ -119,7 +120,7 @@ func newRelay(h edition.Host, pingEvery time.Duration) *relay {
 		db: client, pairings: &pairings{db: client, secret: h.AuthSecret},
 		push: &notifier{db: client, send: h.Push, last: map[string]time.Time{}},
 		host: h, pingEvery: pingEvery, ctx: ctx, cancel: cancel,
-		hosts: map[string]*socket{}, attached: map[string]*attachment{}, revoked: map[string]bool{}, sockets: map[*socket]struct{}{},
+		hosts: map[string]*socket{}, attached: map[string]*attachment{}, revoked: map[string]bool{}, sockets: map[*socket]struct{}{}, phones: map[string]map[*socket]struct{}{},
 	}
 }
 
@@ -207,9 +208,28 @@ type socket struct {
 	// cookie is a browser's upgrade request, kept to re-open its session at
 	// each ping, when that, not a token, admitted it.
 	cookie atomic.Value // *http.Request
+
+	// What waits to be written, in order, by the socket's own writer: a
+	// sender never waits on the peer, so one slow phone cannot hold up a
+	// computer's answers to its other devices (docs/tech/relay.md, "Frames").
+	mu     sync.Mutex
+	queue  []outgoing
+	queued int
+	wake   chan struct{}
 }
 
-// send writes one frame; a socket that cannot take it is closing anyway.
+// outgoing is one queued message: JSON text, or a sealed record's bytes.
+type outgoing struct {
+	kind websocket.MessageType
+	b    []byte
+}
+
+// maxQueuedBytes is how much may wait for a socket that reads too slowly;
+// past it the socket is closed with closeTooSlow and its peer reconnects.
+const maxQueuedBytes = 8 * maxFrameBytes
+
+// send queues one frame for the socket's writer and returns at once; a
+// socket that cannot take it is closing anyway.
 func (s *socket) send(v any) {
 	if s == nil {
 		return
@@ -219,9 +239,79 @@ func (s *socket) send(v any) {
 		slog.Error("relay: frame", "error", err)
 		return
 	}
-	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
-	defer cancel()
-	s.c.Write(ctx, websocket.MessageText, b)
+	s.enqueue(outgoing{websocket.MessageText, b})
+}
+
+// sendBinary queues a sealed record exactly as it arrived.
+func (s *socket) sendBinary(b []byte) {
+	if s == nil {
+		return
+	}
+	s.enqueue(outgoing{websocket.MessageBinary, b})
+}
+
+// sendFirst queues v ahead of everything waiting: a `pong` says the socket
+// still carries frames, so it does not wait behind records already queued.
+func (s *socket) sendFirst(v any) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		slog.Error("relay: frame", "error", err)
+		return
+	}
+	s.enqueueAt(outgoing{websocket.MessageText, b}, true)
+}
+
+func (s *socket) enqueue(m outgoing) { s.enqueueAt(m, false) }
+
+func (s *socket) enqueueAt(m outgoing, first bool) {
+	s.mu.Lock()
+	if s.queued+len(m.b) > maxQueuedBytes {
+		s.mu.Unlock()
+		go s.c.Close(closeTooSlow, "too slow")
+		return
+	}
+	if first {
+		s.queue = append([]outgoing{m}, s.queue...)
+	} else {
+		s.queue = append(s.queue, m)
+	}
+	s.queued += len(m.b)
+	s.mu.Unlock()
+	select {
+	case s.wake <- struct{}{}:
+	default:
+	}
+}
+
+// write is the socket's one writer: it writes what send queued, in order,
+// each frame within ten seconds or the socket is dropped. It takes one frame
+// at a time, so one queued ahead of the rest (sendFirst) goes next.
+func (s *socket) write() {
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-s.wake:
+		}
+		for {
+			s.mu.Lock()
+			if len(s.queue) == 0 {
+				s.mu.Unlock()
+				break
+			}
+			m := s.queue[0]
+			s.queue = s.queue[1:]
+			s.queued -= len(m.b)
+			s.mu.Unlock()
+			ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+			err := s.c.Write(ctx, m.kind, m.b)
+			cancel()
+			if err != nil {
+				s.c.CloseNow()
+				return
+			}
+		}
+	}
 }
 
 // accept upgrades the request from any origin: a socket proves who it is in
@@ -235,10 +325,11 @@ func (r *relay) accept(w http.ResponseWriter, req *http.Request) (*socket, func(
 	c.SetReadLimit(maxFrameBytes)
 	r.handlers.Add(1)
 	ctx, cancel := context.WithCancel(r.ctx)
-	s := &socket{c: c, ctx: ctx}
+	s := &socket{c: c, ctx: ctx, wake: make(chan struct{}, 1)}
 	r.mu.Lock()
 	r.sockets[s] = struct{}{}
 	r.mu.Unlock()
+	go s.write()
 	go r.keepAlive(s)
 	return s, func() {
 		cancel()
@@ -351,23 +442,30 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		defer r.desktopWeb.attach(hostID, userID, name, s)()
 	}
 	s.send(map[string]string{"t": "welcome", "hostId": hostID})
-	defer r.hostLeft(hostID, s)
+	r.presence(userID, hostID)
+	defer r.hostLeft(userID, hostID, s)
 
 	for {
-		_, data, err := s.c.Read(s.ctx)
+		kind, data, err := s.c.Read(s.ctx)
 		if err != nil {
 			return
+		}
+		if kind == websocket.MessageBinary {
+			if record, ok := parseSealed(data); ok {
+				r.toPhone(hostID, record)
+			}
+			continue
 		}
 		f, ok := parse(data)
 		if !ok {
 			continue
 		}
-		if fw, ok := parseHostFrame(f); ok {
-			r.toPhone(hostID, fw)
+		if f.T == "ping" {
+			s.sendFirst(pong)
 		} else if wt, ok := parseWaiting(f); ok {
 			go r.notify(hostID, wt)
 		} else if request, ok := parsePluginRequest(f); ok {
-			go func() { s.send(r.answer(hostID, request)) }()
+			go func() { s.send(r.answer(userID, hostID, request)) }()
 		}
 	}
 }
@@ -409,7 +507,7 @@ func (r *relay) recordHost(ctx context.Context, userID, grant string, h hello) (
 
 // hostLeft forgets a host's socket, unless a newer one replaced it: every
 // phone using it hears the computer went away.
-func (r *relay) hostLeft(hostID string, s *socket) {
+func (r *relay) hostLeft(userID, hostID string, s *socket) {
 	r.mu.Lock()
 	if r.hosts[hostID] != s {
 		r.mu.Unlock()
@@ -434,6 +532,28 @@ func (r *relay) hostLeft(hostID string, s *socket) {
 	if err := r.db.RelayHost.UpdateOneID(hostID).SetLastSeenAt(time.Now().UTC()).Exec(context.Background()); err != nil && !ent.IsNotFound(err) {
 		slog.Error("relay: could not record a host leaving", "error", err)
 	}
+	r.presence(userID, hostID)
+}
+
+// presence tells every phone and browser of the member that one of their
+// computers connected or left, or a pairing to one, its name or its
+// notifications changed, so each lists its computers again instead of asking
+// on a timer. It names the host, when there is one, and nothing else: the list
+// says what changed, under the same checks as ever.
+func (r *relay) presence(userID, hostID string) {
+	r.mu.Lock()
+	var to []*socket
+	for s := range r.phones[userID] {
+		to = append(to, s)
+	}
+	r.mu.Unlock()
+	frame := map[string]string{"t": "presence"}
+	if hostID != "" {
+		frame["hostId"] = hostID
+	}
+	for _, s := range to {
+		s.send(frame)
+	}
 }
 
 func (r *relay) tell(hostID string, event any) {
@@ -445,12 +565,12 @@ func (r *relay) tell(hostID string, event any) {
 
 // toPhone passes a host's answer to the phone using that pairing, and only if
 // the pairing is this host's.
-func (r *relay) toPhone(hostID string, f forwarded) {
+func (r *relay) toPhone(hostID string, f sealedRecord) {
 	r.mu.Lock()
 	a := r.attached[f.PairingID]
 	r.mu.Unlock()
 	if a != nil && a.hostID == hostID {
-		a.phone.send(f)
+		a.phone.sendBinary(f.frame)
 	}
 }
 
@@ -487,7 +607,7 @@ type reply struct {
 	Error string `json:"error,omitempty"`
 }
 
-func (r *relay) answer(hostID string, q pluginRequest) reply {
+func (r *relay) answer(userID, hostID string, q pluginRequest) reply {
 	ctx, now := r.ctx, time.Now().UTC()
 	out := reply{T: "reply", ID: q.id}
 	var err error
@@ -508,9 +628,13 @@ func (r *relay) answer(hostID string, q pluginRequest) reply {
 			r.revoked[q.pairingID] = true
 			r.mu.Unlock()
 		}
+		if err == nil {
+			r.presence(userID, hostID)
+		}
 	case "revoke":
 		if _, err = r.pairings.revoke(ctx, host(hostID), q.pairingID, now); err == nil {
 			r.ended(hostID, q.pairingID)
+			r.presence(userID, hostID)
 		}
 	case "webRevoke":
 		if r.desktopWeb != nil {
@@ -574,28 +698,44 @@ func (r *relay) acceptPhone(w http.ResponseWriter, req *http.Request) {
 	}
 	ph := phone{userID: userID, deviceHash: r.pairings.deviceHash(hello.deviceKey)}
 	s.send(map[string]string{"t": "welcome"})
+	r.mu.Lock()
+	if r.phones[userID] == nil {
+		r.phones[userID] = map[*socket]struct{}{}
+	}
+	r.phones[userID][s] = struct{}{}
+	r.mu.Unlock()
+	defer func() {
+		r.mu.Lock()
+		delete(r.phones[userID], s)
+		if len(r.phones[userID]) == 0 {
+			delete(r.phones, userID)
+		}
+		r.mu.Unlock()
+	}()
 	defer r.phoneLeft(s)
 
 	// One frame at a time, so a pairing's first frame is checked before its
 	// second is passed on.
 	for {
-		_, data, err := s.c.Read(s.ctx)
+		kind, data, err := s.c.Read(s.ctx)
 		if err != nil {
 			return
 		}
-		f, ok := parse(data)
-		if !ok {
+		if kind == websocket.MessageBinary {
+			if record, ok := parseSealed(data); ok {
+				if err := r.forward(ph, s, record); err != nil {
+					slog.Error("relay: could not forward a phone frame", "error", err)
+				}
+			}
 			continue
 		}
-		if fw, ok := parsePhoneFrame(f); ok {
-			if err := r.forward(ph, s, fw); err != nil {
-				slog.Error("relay: could not forward a phone frame", "error", err)
-			}
+		if f, ok := parse(data); ok && f.T == "ping" {
+			s.sendFirst(pong)
 		}
 	}
 }
 
-func (r *relay) forward(ph phone, s *socket, f forwarded) error {
+func (r *relay) forward(ph phone, s *socket, f sealedRecord) error {
 	refuse := func(why string) error {
 		event := map[string]string{"t": "error", "pairingId": f.PairingID, "error": why}
 		s.send(event)
@@ -643,7 +783,7 @@ func (r *relay) forward(ph phone, s *socket, f forwarded) error {
 	if limited {
 		return refuse("rate_limited")
 	}
-	host.send(f)
+	host.sendBinary(f.frame)
 	return nil
 }
 
@@ -772,6 +912,7 @@ func (r *relay) pair(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	r.tell(paired.HostID, map[string]any{"t": "paired", "pairing": paired})
+	r.presence(ph.userID, paired.HostID)
 	writeJSON(w, http.StatusCreated, map[string]any{"pairing": paired})
 }
 
@@ -928,6 +1069,7 @@ func (r *relay) renameHost(w http.ResponseWriter, req *http.Request) {
 	if r.desktopWeb != nil {
 		r.desktopWeb.rename(id, name)
 	}
+	r.presence(userID, id)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -998,6 +1140,7 @@ func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 	if s != nil {
 		go s.c.Close(closeUnauthorized, "signed out")
 	}
+	r.presence(userID, id)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -1025,6 +1168,7 @@ func (r *relay) setPush(w http.ResponseWriter, req *http.Request) {
 		rejectedJSON(w, err)
 		return
 	}
+	r.presence(ph.userID, "")
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -1033,8 +1177,9 @@ func (r *relay) setPush(w http.ResponseWriter, req *http.Request) {
 // their own computers (ADR 0048), so a lost phone is cut off from the browser.
 func (r *relay) revokePairing(w http.ResponseWriter, req *http.Request) {
 	var s scope
+	var userID string
 	if bearer(req) == "" {
-		userID := r.caller(w, req)
+		userID = r.caller(w, req)
 		if userID == "" {
 			return
 		}
@@ -1049,7 +1194,7 @@ func (r *relay) revokePairing(w http.ResponseWriter, req *http.Request) {
 		if !ok {
 			return
 		}
-		s = ph
+		s, userID = ph, ph.userID
 	}
 	id := req.PathValue("id")
 	hostID, err := r.pairings.revoke(req.Context(), s, id, time.Now().UTC())
@@ -1058,6 +1203,7 @@ func (r *relay) revokePairing(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	r.ended(hostID, id)
+	r.presence(userID, hostID)
 	w.WriteHeader(http.StatusNoContent)
 }
 

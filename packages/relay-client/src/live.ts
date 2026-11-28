@@ -20,10 +20,10 @@
 
 import { HostFrameSchema, PHONE_PATH, type PhoneEvent } from './protocol';
 import { webAesKey } from './aes-gcm';
-import { SecureChannel, securePacket, newChannelId, type AesKey, type RandomBytes } from './secure-channel';
+import { SecureChannel, decodePacket, encodePacket, securePacket, newChannelId, type AesKey, type RandomBytes } from './secure-channel';
 import { z } from 'zod';
 import { bridgeValue, createDshSessions } from './dsh-sessions';
-import { HOST_OS, RelayError, type DeviceKeys, type Computer, type OwnComputer, type RelayClient, type RelayErrorCode } from './types';
+import { HOST_OS, RelayError, type Measure, type DeviceKeys, type Computer, type OwnComputer, type RelayClient, type RelayErrorCode } from './types';
 
 export interface LiveRelayOptions {
   keys: DeviceKeys;
@@ -44,10 +44,25 @@ export interface LiveRelayOptions {
   WebSocket?: typeof globalThis.WebSocket;
   /** The AES-256-GCM backend records are sealed with: WebCrypto unless the platform has a native one. */
   importAesKey?: (bytes: Uint8Array) => Promise<AesKey>;
+  /** Told how long each step of the route took (`TimingName`), for a developer measuring it. */
+  measure?: Measure;
 }
 
 /** How long a call may wait for its result before the screen is told it failed. */
 export const CALL_TIMEOUT_MS = 20_000;
+
+/**
+ * How often an idle socket asks the relay for a `pong`, how long it waits for one before the socket is taken as
+ * lost and reconnected, and how long a new socket may take to be welcomed. Any frame heard counts as an answer. The
+ * relay sends the pong ahead of what waits for the socket, but not ahead of a frame already being written: the wait
+ * outlasts a large record crossing a slow link, so such a record is not mistaken for a dead socket.
+ */
+export const PING_EVERY_MS = 15_000;
+export const PONG_TIMEOUT_MS = 20_000;
+export const WELCOME_TIMEOUT_MS = 10_000;
+
+/** How long what the server said of its relay (`GET /api/relay`) is used before it is asked again. */
+const DISCOVERY_MS = 10 * 60_000;
 
 const PairingSchema = z.object({ id: z.string(), hostId: z.string(), hostName: z.string(), hostOs: z.enum(HOST_OS).nullable().catch(null), hostLastSeenAt: z.string().nullable().catch(null), status: z.enum(['pending', 'confirmed']), online: z.boolean().optional(), push: z.boolean().optional() });
 
@@ -68,13 +83,33 @@ interface Connection {
 
 export function createLiveRelay(options: LiveRelayOptions): RelayClient {
   const request = options.request ?? fetch;
+  const measure: Measure = options.measure ?? (() => {});
   let counter = 0;
   const nextId = () => `${Date.now().toString(36)}-${(counter++).toString(36)}`;
 
   let connection: Promise<Connection> | null = null;
   let activeSocket: WebSocket | null = null;
+  /** Asks the open socket whether it still carries frames, once welcomed. */
+  let heartbeat: (() => void) | null = null;
+  /** Who lists the member's computers again when one comes or goes (`watchComputers`), and how the socket is kept. */
+  const computerWatchers = new Set<() => void>();
+  let welcomedBefore = false;
+  let rewatchTimer: ReturnType<typeof setTimeout> | undefined;
+  let rewatchAttempt = 0;
+  const computersChanged = () => computerWatchers.forEach((onChange) => onChange());
+  /** While anyone watches the computers, a socket that dropped is dialled again, waiting longer after each failure. */
+  function keepWatching() {
+    if (!computerWatchers.size || rewatchTimer) return;
+    const epoch = generation;
+    const delay = Math.min(30_000, 1000 * 2 ** rewatchAttempt++);
+    rewatchTimer = setTimeout(() => {
+      rewatchTimer = undefined;
+      if (epoch !== generation || !computerWatchers.size) return;
+      void connect().catch(() => keepWatching());
+    }, delay);
+  }
   let generation = 0;
-  const calls = new Map<string, { pairingId: string; resolve(value: unknown): void; reject(error: RelayError): void; timer: ReturnType<typeof setTimeout> }>();
+  const calls = new Map<string, { pairingId: string; at: number; resolve(value: unknown): void; reject(error: RelayError): void; timer: ReturnType<typeof setTimeout> }>();
   const streams = new Map<string, { pairingId: string; receive(body: Record<string, unknown>): void }>();
   const sessions = createDshSessions(
     {
@@ -85,12 +120,12 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
         if (cancel) void sendSecure(pairingId, { t: 'mux', pairingId, body: { type: 'cancel', streamId } }).catch(() => {});
       },
     },
-    { locale: options.locale, nextId },
+    { locale: options.locale, nextId, measure },
   );
   interface SecureLink {
     channel: SecureChannel; channelId: string; ready: Promise<void>; resolve(): void; reject(error: RelayError): void;
     remoteKey?: string; known?: string; userConfirmed: boolean; accepted: boolean;
-    code?: string; failed: boolean; revoked?: () => void;
+    code?: string; failed: boolean; revoked?: (error?: RelayError) => void;
   }
   const channels = new Map<string, SecureLink>();
   const opening = new Map<string, Promise<SecureLink>>();
@@ -117,6 +152,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     if (active && !active.failed) return active;
     if (opening.has(id)) return opening.get(id)!;
     const epoch = generation;
+    const asked = Date.now();
     const pending = (async () => {
       const known = await options.keys.peer(id);
       if (!known && !pairing) throw new RelayError('device_verification_required');
@@ -130,9 +166,12 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       let link!: SecureLink;
       const channel = new SecureChannel({
         pairingId: id, channelId: newChannelId(options.random), initiator: true, identity,
-        importAesKey: options.importAesKey ?? webAesKey, expectedKey: known ?? pairing?.expectedKey, random: options.random, send,
+        importAesKey: options.importAesKey ?? webAesKey, expectedKey: known ?? pairing?.expectedKey, pinned: !!known, random: options.random, send,
         ready: (key, code) => {
           link.remoteKey = key; link.code = code;
+          // A computer this device already trusts was authenticated by the handshake itself: work goes now, without
+          // waiting a trip for its `secureReady`.
+          if (known) { link.accepted = true; channel.verified(); measure('channel', Date.now() - asked); resolve(); }
           const draft = pairingDrafts.get(id);
           if (draft) draft.safetyCode = code;
           if (pairing) channel.send({ t: 'pairHello', name: pairing.name, kind: options.device });
@@ -146,9 +185,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
             if (draft) draft.status = 'confirmed';
             link.accepted = true; channel.verified(); resolve(); return;
           }
-          if (body?.t === 'secureReady' && known) {
-            link.accepted = true; channel.verified(); resolve(); return;
-          }
+          if (body?.t === 'secureReady' && known) return;
           if (body?.t === 'revokedAck' && link.accepted) { link.revoked?.(); return; }
           if (!link.accepted) throw new Error('device_not_verified');
           // The computer's PIN lock, said in the channel; nothing else of the member's work passes while it is shut.
@@ -166,6 +203,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
           link.failed = true;
           const code = error.message === 'device_key_changed' ? error.message : 'unavailable';
           reject(new RelayError(code));
+          link.revoked?.(new RelayError(code));
           const draft = pairingDrafts.get(id);
           if (draft) draft.verificationError = true;
           endPairing(id, code);
@@ -195,10 +233,21 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
   }
 
   /** What the server says of its relay: where the plugin socket is, and whether it delivers notifications. */
-  async function discover(server: string) {
-    const response = await request(`${server}/api/relay`);
-    if (!response.ok) throw new RelayError('unavailable');
-    return z.object({ url: z.string(), push: z.boolean() }).parse(await response.json());
+  /**
+   * Asked once per server for ten minutes, not before every request: each ask is a round trip to the server, as long
+   * as the request it precedes. A failed ask is not kept, and signing out forgets it.
+   */
+  let discovered: { server: string; at: number; answer: Promise<{ url: string; push: boolean }> } | null = null;
+  function discover(server: string) {
+    if (discovered?.server === server && Date.now() - discovered.at < DISCOVERY_MS) return discovered.answer;
+    const answer = (async () => {
+      const response = await request(`${server}/api/relay`);
+      if (!response.ok) throw new RelayError('unavailable');
+      return z.object({ url: z.string(), push: z.boolean() }).parse(await response.json());
+    })();
+    const entry = discovered = { server, at: Date.now(), answer };
+    answer.catch(() => { if (discovered === entry) discovered = null; });
+    return answer;
   }
 
   /** The relay's HTTP origin, from the plugin socket the server names. */
@@ -224,21 +273,61 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       const origin = await relayOrigin(server);
       if (epoch !== generation) throw new RelayError('unavailable');
       const Socket = options.WebSocket ?? globalThis.WebSocket;
+      const dialled = Date.now();
       const socket = new Socket(origin.replace(/^http/, 'ws') + PHONE_PATH);
+      socket.binaryType = 'arraybuffer';
       activeSocket = socket;
-      const send = (frame: unknown) => socket.send(JSON.stringify(frame));
+      // An encryption record goes as a binary message (`encodePacket`); everything else is JSON.
+      const send = (frame: unknown) => socket.send(securePacket(frame) ? encodePacket(frame) : JSON.stringify(frame));
+      let heard = Date.now();
+      let beat: ReturnType<typeof setInterval> | undefined;
+      let welcomed: ReturnType<typeof setTimeout> | undefined;
+      // A socket a network change left half open says nothing: it is given up as lost, not waited on.
+      const dead = () => {
+        clearInterval(beat);
+        clearTimeout(welcomed);
+        socket.onclose = null;
+        socket.onmessage = null;
+        socket.onerror = null;
+        try { socket.close(); } catch { /* already closing */ }
+        if (activeSocket === socket) { activeSocket = null; heartbeat = null; }
+        if (epoch === generation) lost();
+      };
+      const check = () => {
+        const asked = Date.now();
+        try { send({ t: 'ping' }); } catch { return dead(); }
+        setTimeout(() => { if (heard < asked && activeSocket === socket) dead(); }, PONG_TIMEOUT_MS);
+      };
       await new Promise<void>((resolve, reject) => {
+        welcomed = setTimeout(() => { reject(new RelayError('unavailable')); dead(); }, WELCOME_TIMEOUT_MS);
         socket.onopen = () => send({ t: 'hello', ...(token ? { token } : {}), deviceKey });
         socket.onerror = () => reject(new RelayError('unavailable'));
         socket.onclose = () => {
+          clearInterval(beat);
+          clearTimeout(welcomed);
           reject(new RelayError('unavailable'));
+          if (activeSocket === socket) { activeSocket = null; heartbeat = null; }
           if (epoch === generation) lost();
         };
         socket.onmessage = (message) => {
           if (epoch !== generation) return;
-          const frame = parse(String(message.data));
-          if (frame?.t === 'welcome') resolve();
-          else receive(frame);
+          heard = Date.now();
+          if (typeof message.data !== 'string') {
+            const packet = decodePacket(message.data as ArrayBuffer);
+            if (packet) receive(packet);
+            return;
+          }
+          const frame = parse(message.data);
+          if (frame?.t === 'welcome') {
+            measure('socket', Date.now() - dialled);
+            rewatchAttempt = 0;
+            if (welcomedBefore) computersChanged();
+            welcomedBefore = true;
+            clearTimeout(welcomed);
+            beat = setInterval(check, PING_EVERY_MS);
+            heartbeat = check;
+            resolve();
+          } else if (frame?.t !== 'pong') receive(frame);
         };
       });
       return { socket, send };
@@ -261,6 +350,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     }
     streams.clear();
     sessions.endedAll();
+    keepWatching();
   }
 
   function receive(frame: Record<string, unknown> | null) {
@@ -271,6 +361,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
       return;
     }
     const event = frame as PhoneEvent;
+    if (event.t === 'presence') return computersChanged();
     if (event.t === 'error') {
       const code = PHONE_ERRORS[event.error] ?? 'unavailable';
       if (event.id) return fail(event.id, code);
@@ -293,6 +384,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     const link = channels.get(pairingId);
     if (!link) return;
     link.reject(new RelayError(code));
+    link.revoked?.(new RelayError(code));
     link.channel.close();
   }
 
@@ -310,6 +402,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     if (!call || call.pairingId !== pairingId) return;
     calls.delete(id);
     clearTimeout(call.timer);
+    measure('call', Date.now() - call.at);
     try {
       call.resolve(bridgeValue(status, body));
     } catch (error) {
@@ -339,7 +432,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
     const id = nextId();
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => fail(id, 'unavailable'), method === 'teamwork/readDocument' ? 75_000 : CALL_TIMEOUT_MS);
-      calls.set(id, { pairingId, resolve, reject, timer });
+      calls.set(id, { pairingId, at: Date.now(), resolve, reject, timer });
       void sendSecure(pairingId, { t: 'call', pairingId, id, method, body: { args } }).catch(() => fail(id, 'unavailable'));
     });
   }
@@ -354,13 +447,26 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
   }
 
   return {
+    checkConnection() {
+      heartbeat?.();
+    },
+    watchComputers(onChange) {
+      computerWatchers.add(onChange);
+      void connect().catch(() => keepWatching());
+      return () => { computerWatchers.delete(onChange); };
+    },
     reset() {
       generation++;
+      discovered = null;
+      welcomedBefore = false;
       const socket = activeSocket;
       activeSocket = null;
-      // Signed out: nothing comes back.
+      // Signed out: nothing comes back, and nothing is dialled again until something asks.
       sessions.reset();
       lost();
+      clearTimeout(rewatchTimer);
+      rewatchTimer = undefined;
+      rewatchAttempt = 0;
       socket?.close();
     },
     async listComputers(): Promise<Computer[]> {
@@ -450,7 +556,7 @@ export function createLiveRelay(options: LiveRelayOptions): RelayClient {
         await link.ready;
         await new Promise<void>((resolve, reject) => {
           const timer = setTimeout(() => { link.revoked = undefined; reject(new RelayError('unavailable')); }, 10000);
-          link.revoked = () => { clearTimeout(timer); resolve(); };
+          link.revoked = (error) => { clearTimeout(timer); link.revoked = undefined; if (error) reject(error); else resolve(); };
           try { link.channel.send({ t: 'revoke' }); } catch { clearTimeout(timer); link.revoked = undefined; reject(new RelayError('unavailable')); }
         });
       } catch (error) {

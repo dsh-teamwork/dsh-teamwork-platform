@@ -1,6 +1,6 @@
 # Relay and pairing
 
-> **Status:** Current · **Updated:** 2026-11-25
+> **Status:** Current · **Updated:** 2026-11-27
 
 How a phone or a browser reaches a DSH through the server, end to end
 encrypted ([ADR 0044](../adr/0044-the-relay-and-shared-dshs-are-open.md); the
@@ -122,8 +122,10 @@ needing no call elsewhere on a connection.
    after the encrypted desktop acknowledgement. Neither trusts server confirmation
    alone. No business request is admitted until this ceremony completes.
 5. Future channels pin both saved keys and use a fresh Noise handshake without
-   another safety-code ceremony. Changed or missing keys require pairing again;
-   old plaintext pairings cannot silently become trusted encrypted devices.
+   another safety-code ceremony, and without the commitments either: a pinned
+   channel's first packet is Noise's ([ADR 0071](../adr/0071-devices-that-trust-each-other-reconnect-in-one-trip.md)).
+   Changed or missing keys require pairing again; old plaintext pairings
+   cannot silently become trusted encrypted devices.
 6. Desktop revocation closes the channel and persists local trust removal before
    asking the relay. Phone revocation first asks a connected desktop for an
    encrypted acknowledgement that trust was removed. When the relay answers that
@@ -182,11 +184,16 @@ console's `PinGate` (`apps/web/src/pages/team/dsh-session.tsx`).
   connection after pairing, and changed from any of their devices with the old
   PIN (`setPin`). The DSH stores it as scrypt with its parameters and salt.
 - **Sent only inside the channel**; nothing is derived from it.
-- **Asked whenever a channel is authorized and after fifteen minutes with
-  nothing sent on it**: the DSH says `pinRequired` (with `set` when there is
-  none yet), and until `unlock` or `setPin` succeeds it answers every call
-  with `teamwork/locked` and ends every stream, so nothing reaches DSH. An
-  unlock lasts as long as the channel and its idle timer.
+- **Asked when a device has carried no work for fifteen minutes**: the DSH
+  says `pinRequired` (with `set` when there is none yet), and until `unlock`
+  or `setPin` succeeds it answers every call with `teamwork/locked` and ends
+  every stream, so nothing reaches DSH. **An unlock belongs to the pairing,
+  not to one channel** ([ADR 0071](../adr/0071-devices-that-trust-each-other-reconnect-in-one-trip.md)):
+  the plugin remembers in memory when each pairing last carried work while
+  unlocked, so a channel opened again after a dropped socket within the
+  fifteen minutes is `unlocked` at once. A wrong PIN, revocation, a PIN
+  change or reset, signing out and changing server forget it; the plugin's
+  own relay socket reconnecting does not.
 - **Five wrong PINs lock it** on every device until it is cleared at the
   computer (`/teamwork pin reset`), which also clears a forgotten PIN, set
   again at the next connection. The count is kept in the PIN file, so a
@@ -194,9 +201,15 @@ console's `PinGate` (`apps/web/src/pages/team/dsh-session.tsx`).
 
 ## Frames
 
-One JSON frame per WebSocket message. The relay reads only the envelope. The
-complete DSH business frame is inside authenticated ciphertext. The relay
-rejects plaintext `call`, `result` and `mux` frames.
+An encryption record is one **binary** WebSocket message
+([ADR 0072](../adr/0072-encryption-records-cross-the-relay-as-binary.md)): its
+kind in one byte (1 commit, 2 reveal, 3 noise, 4 data), the pairing id's
+length in one byte, the pairing id, the 22-character channel id, then the
+record's bytes, at most 512 KiB (`encodePacket`, `decodePacket`). The relay
+reads that header only and passes the message on unchanged. Everything else
+is one JSON text frame per message. The complete DSH business frame is inside
+authenticated ciphertext; the relay ignores plaintext `call`, `result` and
+`mux` frames, and a `sealed` frame sent as text.
 `server/relay/protocol.go` is the source; the plugin's `src/relay.ts`
 and `src/bridge.ts`, and the clients' `packages/relay-client` (`src/protocol.ts`), restate it.
 
@@ -212,9 +225,12 @@ team membership then, and closes with 4401 for anyone else.
 
 | Direction | `t` | Fields | Meaning |
 | --- | --- | --- | --- |
-| phone ↔ relay ↔ plugin | `sealed` | `pairingId`, `channelId`, `kind`, `data` | Commitment, reveal, Noise key bootstrap or AES-GCM records; `kind` is `commit`, `reveal`, `noise` or `data` |
+| phone ↔ relay ↔ plugin | binary | kind, `pairingId`, `channelId`, record | Commitment, reveal, Noise key bootstrap or AES-GCM records |
 | relay → phone | `error` | `pairingId`, `error` | Routing refusal: `not_paired`, `offline` or `rate_limited` |
+| either → relay | `ping` | none | Does this socket still carry frames? Answered at once |
+| relay → either | `pong` | none | The answer to `ping` |
 | relay → phone | `offline`, `detached` | `pairingId` | Host unavailable or another socket took over |
+| relay → phone | `presence` | `hostId`, when one | One of the member's computers connected or left, or a pairing, name or notification of one changed: list them again (`watchComputers`) |
 | relay → plugin | `detach` | `pairingId` | Phone unavailable; close its transport and native streams |
 | relay → either | `revoked` | `pairingId` | Drop the pairing |
 | plugin → relay | `waiting` | none | Generic attention signal; no conversation identifier or question type |
@@ -228,6 +244,35 @@ timing and sizes, and can drop or delay traffic. It cannot authenticate as a
 pinned device or read/alter accepted business content. Endpoint compromise and
 malicious client updates are outside this transport boundary.
 
+**Each end checks its socket every fifteen seconds** with `ping`, and takes it
+as lost when nothing at all comes back within twenty
+(`packages/relay-client/src/live.ts`, the plugin's `src/relay.ts`). The relay
+sends the `pong` ahead of whatever waits for that socket, but a frame already
+being written comes first, and the twenty seconds outlast a large record on a
+slow link, so it is not mistaken for a dead socket. A network change can leave
+a socket half open, reading nothing and refusing nothing; without this a call
+waited out its own timeout and the relay's own ping found the socket only
+after up to a minute. A new socket not
+welcomed within ten seconds is given up the same way. The app and the console
+also ask at once when they come back to the foreground (`checkConnection`).
+A screen listing the member's computers watches them (`watchComputers`)
+instead of asking on a timer: the relay sends every phone and browser socket
+of the member `presence` when one of their computers connects or leaves, a
+pairing to one is redeemed, confirmed or revoked, or one is renamed or
+forgotten, the
+client reports a socket that came back from a drop the same way, and it
+keeps the socket open, dialling again after a drop, while anyone watches. The
+phone app and the console list their computers only then (a browser that
+cannot keep a relay key every ten seconds), and the app when it comes to the
+foreground. A follow's live events are applied once a frame (`frameBatch`),
+on the phone and in the console alike.
+
+**What each step took** is reported to a client's `measure` option
+(`TimingName` in `packages/relay-client`): the socket's welcome, a computer's
+channel, a follow's snapshot, each call, and a message until its answer
+begins. Nothing is sent anywhere; the app shows the last of each when its
+version line on Settings is tapped.
+
 `src/secure-channel.ts` in the plugin owns the transport; the mobile app keeps
 an identical wire copy, checked by integration tests. Following
 the hosted edition's ADR 0019, the established
@@ -235,6 +280,16 @@ the hosted edition's ADR 0019, the established
 random 32-byte AES sending key from each endpoint. It uses the existing JS
 handshake backend, with the fixed `dsh-e2ee-aesgcm` domain and the complete
 pairing/channel transcript in the prologue. Noise carries no business data.
+Between devices that already pinned each other's keys the channel is
+`pinned` ([ADR 0071](../adr/0071-devices-that-trust-each-other-reconnect-in-one-trip.md)):
+no commitment or reveal, Noise from the first packet, a prologue of the
+domain, `pinned`, the pairing, the channel and both keys, and a computer that
+does not trust the pairing answers nothing. Each end sends as soon as its own
+sending key is set, without waiting for the peer's, and a device that trusts
+its computer sends its first call then, with Noise's last message, not after
+`secureReady`; the computer holds it until it has decided whether the device
+is still unlocked. Reopening a channel costs one round trip, and the first
+call is answered on the second.
 
 The mobile custom entry installs missing DOM event constructors before Expo
 Router evaluates routes and imports libp2p. Hermes does not expose Event,
@@ -261,7 +316,10 @@ receive ordering and discard late results after closure. Native cryptography
 does not by itself promise hardware acceleration or measured phone throughput.
 
 Each decoded `data` record contains a four-byte big-endian counter, ciphertext
-and 16-byte GCM tag, at most 384 KiB total before base64. Its 12-byte nonce is
+and 16-byte GCM tag, at most 384 KiB total. Messages queued
+together (a stream's frames as DSH sends them) are sealed into one record,
+so a burst costs one cipher call and one relay frame; the receiver already
+reads any number of length-prefixed messages from a record. Its 12-byte nonce is
 eight zero bytes plus that counter. AAD is the SHA-256 prologue hash followed by
 the sender role byte (initiator 1, responder 0), binding records to this channel
 and direction. Counters start at zero under independent fresh directional keys;
@@ -277,7 +335,11 @@ its long strings (a tool's output, a file written) cut to 64, 16, 4 and then
 1 KiB, and a follow's snapshot or a `session/page` result then keeps its newest
 records and says `hasMore`. A stream frame that still cannot fit ends that
 stream with `too_large`, and a call's result answers 502 `too_large`, without
-touching the channel. The clients read the history before a snapshot with
+touching the channel. A follow's opening snapshot is held to 256 KiB
+(`SNAPSHOT_BYTES`, `newestRecords`), since nothing on the screen can show
+until it has crossed the relay: a tool's output is shortened first, then the
+oldest records go whole and it says `hasMore`; what the member and the agent
+said is shortened only in a newest record that alone does not fit. The clients read the history before a snapshot with
 `session/page` (`beforeSeq`, 50 messages, as DSH's own opening window), from
 the member's "Show earlier messages".
 
@@ -299,8 +361,11 @@ shapes. Business methods, request/result bodies, session ids, paths, tool
 results, file names and upload chunks are all encrypted. TLS and existing
 sign-in, membership checks, upload budgets and native prompt deduplication hold.
 
-The relay enforces two limits. A frame over 1 MiB closes the socket that sent
-it. A phone may send 300 frames per pairing in ten seconds; past that its
+The relay enforces three limits. A frame over 1 MiB closes the socket that
+sent it. **Each socket has its own writer**: a frame for it is queued and the
+sender moves on, so a phone or browser reading slowly holds up nothing its
+computer sends to its other devices. Past 8 MiB waiting, the slow socket is
+closed with 4408 and its client reconnects. A phone may send 300 frames per pairing in ten seconds; past that its
 frames are dropped and it is told `rate_limited`. Only the phone's side is
 counted, since what comes back is the member's own computer answering. Both
 numbers are a first guess, measured before a store release (step 7).
@@ -663,9 +728,12 @@ to reach a DSH, beside, in the hosted edition, Cloud DSH.
   the chevron at the entry's end folds them away, remembered in the browser,
   and opening the page unfolds them. `/my-dsh` with no computer in the address
   opens the one this browser opened last, else the first online, else the
-  first. The list is read again every ten seconds while it is shown, as the
-  page reads its own, so a computer coming online or going away moves the page
-  along by itself. An edition's page reached on several computers folds its
+  first. The list is read again every ten seconds, since the sidebar is on
+  every team page and does not open the relay's socket for itself; the page
+  reads its own when the relay says a computer or a pairing changed
+  (`useComputersChanged`, `presence`), so a computer coming online or going
+  away moves it along by itself, and a browser that cannot keep a relay key
+  reads it every ten seconds instead. An edition's page reached on several computers folds its
   own out the same way (`TeamPage.subnav`).
 - **The column beside the sidebar is the open computer's**: its name,
   online or offline, operating system, whether this browser is paired with it,
@@ -758,6 +826,12 @@ to reach a DSH, beside, in the hosted edition, Cloud DSH.
   pairing is the revocable gate, so 30 days is acceptable to start.
 - **The relay's region**, on the hosted service: the same question as the
   service's own.
+- **A direct path between a phone and its computer.** Every frame crosses the
+  relay, even when both are on one network or in one country and the relay is
+  abroad. The channel is end-to-end encrypted already, so its transport could
+  change underneath it: a direct connection on the same network, or a WebRTC
+  data channel with the relay as signalling and its current path as the
+  fallback. Recorded, not planned.
 
 ## How done is verified
 
@@ -832,7 +906,14 @@ opens any more, ends every session and drops unspent tickets, and the control
 connection and paired phones stay. Turning the feature off, signing out or
 reconnecting closes forwarded streams and requires a fresh ticket too.
 
-The gateway asks for one outbound data socket per upstream connection.
+The gateway asks for one outbound data socket per upstream connection, and,
+once one is used, keeps four more asked for ahead (`desktopWebSpares` in
+`server/relay/web.go`): each request takes a tunnel that already came, and
+only waits for one when none has. A page's assets each take a tunnel, and one
+asked for when needed costs a trip to the computer and a new connection from it
+to the relay before any byte moves. A spare is used for eight seconds, since
+the plugin closes a tunnel that carried nothing for ten, and no spare is asked
+for while nothing is used.
 The plugin authenticates to its own DSH with the page launch URL and adds
 that cookie and the local Host and Origin on the computer. HTTP and WebSocket
 bytes use the same data connection. This is a full native Web interface

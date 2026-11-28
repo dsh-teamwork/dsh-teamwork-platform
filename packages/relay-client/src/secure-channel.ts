@@ -40,22 +40,62 @@ export type SecurePacket = {
   pairingId: string;
   channelId: string;
   kind: 'commit' | 'reveal' | 'noise' | 'data';
-  data: string;
+  data: Uint8Array;
 };
+const KINDS = ['commit', 'reveal', 'noise', 'data'] as const;
+/** The longest record a sealed frame carries (the relay's `maxSealedBytes`). */
+const SEALED_BYTES = 512 * 1024;
+const PAIRING_ID = /^[\x21-\x7e]{1,64}$/;
+const CHANNEL_ID = /^[A-Za-z0-9_-]{22}$/;
 export function securePacket(value: unknown): value is SecurePacket {
   if (!value || typeof value !== 'object') return false;
   const f = value as SecurePacket;
   return (
     f.t === 'sealed' &&
     typeof f.pairingId === 'string' &&
-    f.pairingId.length > 0 &&
-    f.pairingId.length <= 64 &&
+    PAIRING_ID.test(f.pairingId) &&
     typeof f.channelId === 'string' &&
-    /^[A-Za-z0-9_-]{22}$/.test(f.channelId) &&
-    ['commit', 'reveal', 'noise', 'data'].includes(f.kind) &&
-    typeof f.data === 'string' &&
-    f.data.length <= 700000
+    CHANNEL_ID.test(f.channelId) &&
+    KINDS.includes(f.kind) &&
+    f.data instanceof Uint8Array &&
+    f.data.length > 0 &&
+    f.data.length <= SEALED_BYTES
   );
+}
+/**
+ * A packet as one binary WebSocket message (the relay's `server/relay/protocol.go`, `sealedRecord`): its kind in one
+ * byte (1 commit, 2 reveal, 3 noise, 4 data), the pairing id's length in one byte, the pairing id, the 22-character
+ * channel id, then the record's bytes as they are. No base64 and no JSON: the relay reads the header and passes the
+ * message on unchanged.
+ */
+export function encodePacket(packet: SecurePacket): Uint8Array {
+  const id = new TextEncoder().encode(packet.pairingId);
+  const channel = new TextEncoder().encode(packet.channelId);
+  const bytes = new Uint8Array(2 + id.length + channel.length + packet.data.length);
+  bytes[0] = KINDS.indexOf(packet.kind) + 1;
+  bytes[1] = id.length;
+  bytes.set(id, 2);
+  bytes.set(channel, 2 + id.length);
+  bytes.set(packet.data, 2 + id.length + channel.length);
+  return bytes;
+}
+/** A binary message read back into a packet, or null when it is not a well-formed one. */
+export function decodePacket(message: ArrayBuffer | ArrayBufferView): SecurePacket | null {
+  const bytes = message instanceof ArrayBuffer ? new Uint8Array(message) : new Uint8Array(message.buffer, message.byteOffset, message.byteLength);
+  if (bytes.length < 2) return null;
+  const kind = KINDS[bytes[0]! - 1];
+  const n = bytes[1]!;
+  const head = 2 + n + 22;
+  if (!kind || bytes.length <= head) return null;
+  const decoder = new TextDecoder();
+  const packet: SecurePacket = {
+    t: 'sealed',
+    kind,
+    pairingId: decoder.decode(bytes.subarray(2, 2 + n)),
+    channelId: decoder.decode(bytes.subarray(2 + n, head)),
+    data: bytes.slice(head),
+  };
+  return securePacket(packet) ? packet : null;
 }
 export type RandomBytes = (length: number) => Uint8Array;
 export interface Identity {
@@ -87,6 +127,17 @@ class Queue {
     this.items.push(value);
     this.wake?.();
     this.wake = undefined;
+  }
+  /** Takes what is queued, oldest first, while it fits in `room` bytes. */
+  drain(room: number) {
+    const taken: Uint8Array[] = [];
+    while (this.items.length && this.items[0]!.length <= room) {
+      const value = this.items.shift()!;
+      this.bytes -= value.length;
+      room -= value.length;
+      taken.push(value);
+    }
+    return taken;
   }
   end() {
     this.ended = true;
@@ -121,13 +172,22 @@ export interface SecureOptions {
   random: RandomBytes;
   importAesKey(bytes: Uint8Array): Promise<AesKey>;
   expectedKey?: string;
+  /**
+   * Both ends already trust each other's key (`expectedKey`): no commitments are exchanged, Noise starts with the
+   * first packet, and no safety code is compared. Pairing never uses it.
+   */
+  pinned?: boolean;
   send(packet: SecurePacket): void;
   ready(remoteKey: string, safetyCode: string): void | Promise<void>;
   message(value: unknown): void | Promise<void>;
   closed(error: Error): void;
 }
 
-/** Commit/reveal identities and fresh random salts before Noise prevents adaptive short-code grinding. */
+/**
+ * Pairing commits to and reveals identities and fresh random salts before Noise, which prevents adaptive grinding of
+ * the safety code. A channel between devices that already pinned each other's keys (`pinned`) has no code to grind and
+ * goes straight to Noise XX, which authenticates both pinned keys; the platform's ADR 0071.
+ */
 export class SecureChannel {
   private incoming = new Queue();
   private outgoing = new Queue();
@@ -151,6 +211,7 @@ export class SecureChannel {
   private wire = new Uint8Array(0);
   private abort = new AbortController();
   private readyState = false;
+  private isVerified = false;
   constructor(private readonly options: SecureOptions) {
     this.salt = base64(options.random(32));
     this.commitment = this.commit(options.initiator, options.identity.publicKey, this.salt);
@@ -160,14 +221,18 @@ export class SecureChannel {
     return this.options.channelId;
   }
   start() {
-    this.packet('commit', this.commitment);
+    if (!this.options.pinned) return this.packet('commit', unbase64(this.commitment));
+    if (!this.options.expectedKey) return this.close(new Error('device_verification_required'));
+    this.started = true;
+    this.remoteReveal = { key: this.options.expectedKey, salt: '' };
+    void this.handshake().catch((error) => this.close(error));
   }
   private commit(initiator: boolean, key: string, salt: string) {
     return base64(
       sha256(encode([DOMAIN, this.options.pairingId, this.options.channelId, initiator, key, salt])),
     );
   }
-  private packet(kind: SecurePacket['kind'], data: string) {
+  private packet(kind: SecurePacket['kind'], data: Uint8Array) {
     if (this.dead) return;
     this.options.send({
       t: 'sealed',
@@ -182,15 +247,16 @@ export class SecureChannel {
     try {
       if (packet.pairingId !== this.options.pairingId || packet.channelId !== this.options.channelId)
         throw new Error('channel_mismatch');
+      if (this.options.pinned && (packet.kind === 'commit' || packet.kind === 'reveal')) throw new Error('unexpected_commitment');
       if (packet.kind === 'commit') {
-        if (this.remoteCommit || unbase64(packet.data).length !== 32) throw new Error('invalid_commitment');
-        this.remoteCommit = packet.data;
+        if (this.remoteCommit || packet.data.length !== 32) throw new Error('invalid_commitment');
+        this.remoteCommit = base64(packet.data);
         this.revealSent = true;
-        this.packet('reveal', JSON.stringify({ key: this.options.identity.publicKey, salt: this.salt }));
+        this.packet('reveal', encode({ key: this.options.identity.publicKey, salt: this.salt }));
       } else if (packet.kind === 'reveal') {
         if (!this.remoteCommit || !this.revealSent || this.remoteReveal || packet.data.length > 512)
           throw new Error('invalid_reveal');
-        const reveal = JSON.parse(packet.data) as { key: string; salt: string };
+        const reveal = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(packet.data)) as { key: string; salt: string };
         if (
           typeof reveal.key !== 'string' ||
           typeof reveal.salt !== 'string' ||
@@ -206,7 +272,7 @@ export class SecureChannel {
         void this.handshake().catch((error) => this.close(error));
       } else {
         if (!this.started) throw new Error('handshake_required');
-        const bytes = unbase64(packet.data);
+        const bytes = packet.data;
         if (bytes.length > PACKET_BYTES) throw new Error('message_too_large');
         if (packet.kind === 'noise') {
           if (this.bootstrapDone) throw new Error('unexpected_noise');
@@ -227,19 +293,27 @@ export class SecureChannel {
     if (this.wire.length) {
       const bytes = this.wire;
       this.wire = new Uint8Array(0);
-      this.packet('noise', base64(bytes));
+      this.packet('noise', bytes);
     }
   }
   private async handshake() {
     const { identity, initiator, random, expectedKey } = this.options;
     const local = { key: identity.publicKey, salt: this.salt };
     const remote = this.remoteReveal!;
-    const transcript = encode([
-      DOMAIN,
-      this.options.pairingId,
-      this.options.channelId,
-      ...(initiator ? [local, remote] : [remote, local]),
-    ]);
+    const transcript = this.options.pinned
+      ? encode([
+          DOMAIN,
+          'pinned',
+          this.options.pairingId,
+          this.options.channelId,
+          ...(initiator ? [local.key, remote.key] : [remote.key, local.key]),
+        ])
+      : encode([
+          DOMAIN,
+          this.options.pairingId,
+          this.options.channelId,
+          ...(initiator ? [local, remote] : [remote, local]),
+        ]);
     const crypto = {
       ...pureJsCrypto,
       generateX25519KeyPair: () => pureJsCrypto.generateX25519KeyPairFromSeed(random(32)),
@@ -286,9 +360,27 @@ export class SecureChannel {
     const keyMessage = rawKey.slice();
     const writing = Promise.resolve(secured.conn.sink((async function* () { yield keyMessage; })()));
     void writing.catch((error) => this.close(error));
+    const hash = sha256(transcript);
+    const digits = String(
+      new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(0) % 100000000,
+    ).padStart(8, '0');
+    const sendAAD = join(hash, new Uint8Array([initiator ? 1 : 0]));
+    const receiveAAD = join(hash, new Uint8Array([initiator ? 0 : 1]));
     let remoteKey = new Uint8Array(0);
+    let announced: Promise<void>;
     try {
       const sendKey = await this.options.importAesKey(rawKey);
+      // Our key leaves before any record sealed under it. From here this end may send: the peer is authenticated, and
+      // records that reach it before its own key import wait in its bounded queue. Waiting for the peer's key first
+      // would cost every channel one more trip across the relay.
+      await writing;
+      this.flush();
+      if (this.dead) return;
+      this.sendKey = sendKey;
+      this.readyState = true;
+      void this.encrypt(sendAAD).catch((error) => this.close(error));
+      announced = Promise.resolve(this.options.ready(remote.key, `${digits.slice(0, 4)} ${digits.slice(4)}`));
+      void announced.catch((error) => this.close(error));
       for await (const chunk of secured.conn.source) {
         remoteKey = join(remoteKey, chunk.subarray());
         if (remoteKey.length > 32) throw new Error('invalid_aes_key');
@@ -296,10 +388,7 @@ export class SecureChannel {
       }
       if (remoteKey.length !== 32) throw new Error('channel_closed');
       const receiveKey = await this.options.importAesKey(remoteKey);
-      await writing;
-      this.flush();
       if (this.dead) return;
-      this.sendKey = sendKey;
       this.receiveKey = receiveKey;
     } finally {
       rawKey.fill(0);
@@ -308,17 +397,9 @@ export class SecureChannel {
     }
     this.bootstrapDone = true;
     this.incoming.end();
-    const hash = sha256(transcript);
-    const digits = String(
-      new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(0) % 100000000,
-    ).padStart(8, '0');
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.close(new Error('verification_timeout')), 120000);
-    this.readyState = true;
-    const sendAAD = join(hash, new Uint8Array([initiator ? 1 : 0]));
-    const receiveAAD = join(hash, new Uint8Array([initiator ? 0 : 1]));
-    void this.encrypt(sendAAD).catch((error) => this.close(error));
-    await this.options.ready(remote.key, `${digits.slice(0, 4)} ${digits.slice(4)}`);
+    if (!this.isVerified) this.timer = setTimeout(() => this.close(new Error('verification_timeout')), 120000);
+    await announced;
     await this.decrypt(receiveAAD);
   }
   private nonce(counter: number) {
@@ -328,7 +409,13 @@ export class SecureChannel {
     return nonce;
   }
   private async encrypt(additionalData: Uint8Array) {
-    for await (const message of this.outgoing.source()) {
+    for await (const first of this.outgoing.source()) {
+      // A burst (a stream's frames as DSH sends them) goes as one record: one cipher call, one packet and one relay
+      // frame instead of one each. The receiver already reads any number of length-prefixed messages from a record.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      if (this.dead) return;
+      let message = first;
+      for (const next of this.outgoing.drain(RECORD_PLAINTEXT - first.length)) message = join(message, next);
       for (let offset = 0; offset < message.length; offset += RECORD_PLAINTEXT) {
         if (this.dead) return;
         const plaintext = message.subarray(offset, offset + RECORD_PLAINTEXT);
@@ -339,7 +426,7 @@ export class SecureChannel {
         if (this.dead) return;
         this.sendCount++;
         this.sentBytes += plaintext.length;
-        this.packet('data', base64(join(nonce.subarray(8), ciphertext)));
+        this.packet('data', join(nonce.subarray(8), ciphertext));
       }
     }
   }
@@ -379,7 +466,9 @@ export class SecureChannel {
     this.outgoing.push(join(length, bytes));
   }
   verified() {
-    clearTimeout(this.timer);
+    this.isVerified = true;
+    // The bootstrap deadline still holds until the peer's key arrives.
+    if (this.bootstrapDone) clearTimeout(this.timer);
   }
   close(error = new Error('channel_closed')) {
     if (this.dead) return;

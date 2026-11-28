@@ -5,6 +5,30 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-27 — The console follows its computers by presence, and native Web keeps tunnels ready
+
+- **What:** The web console's My DSH page and connect card read the computers again when the relay says a computer came or went or a pairing, name or notification of one changed (`presence`), not every ten seconds; the sidebar, on every team page, and a browser that cannot keep a relay key still poll. A followed session in the console applies its live events once a frame (`frameBatch`, now in `packages/relay-client` and shared with the app). Native DSH Web keeps four tunnels asked for ahead once one is used, so a request takes one that already came instead of waiting for the computer to connect a new one.
+- **Why:** Every request through native Web waited a trip to the computer and a fresh connection from it before any byte moved, and a page's assets each needed one; the console polled for nothing most of the time and rendered every delta on its own.
+- **Breaking:** None.
+- **Upgrade:** Nothing.
+- **Refs:** `server/relay/web.go`, `apps/web/src/lib/relay.ts`, `apps/web/src/pages/team/dsh-session.tsx`, `packages/relay-client/src/frame-batch.ts`, `docs/tech/relay.md`
+
+## 2026-11-27 — Records cross the relay as binary, and the phone hears its computers come and go
+
+- **What:** An encryption record is one binary WebSocket message (a kind byte, the pairing id, the channel id, the raw record) that the relay passes on unchanged; a `sealed` JSON frame is ignored. The relay sends a member's phone and browser sockets `presence` when one of their computers connects or leaves, and `RelayClient.watchComputers` reports it, and a socket back from a drop, to a list that reads its computers then instead of on a timer. A client takes a `measure` option, told how long the socket, a channel, a follow's snapshot, each call and a message's first answer took.
+- **Why:** Base64 inside JSON cost a third more bytes on every record and a parse and re-marshal at the relay; polling the computers every fifteen seconds asked the relay for nothing most of the time; and the route had no numbers.
+- **Breaking:** The relay, the plugin, the web console and the app change together: an end that still sends records as text reaches nobody until it is updated.
+- **Upgrade:** Nothing; the plugin's and the app's halves ship with their next releases.
+- **Refs:** [ADR 0072](docs/adr/0072-encryption-records-cross-the-relay-as-binary.md), `docs/tech/relay.md`, `server/relay/protocol.go`, `packages/relay-client/src/secure-channel.ts`, `packages/relay-client/src/live.ts`
+
+## 2026-11-27 — A phone reaches its computer in fewer trips
+
+- **What:** A channel between a device and a computer that already trust each other is `pinned`: no commitments, Noise from the first packet, and the device's first call goes with Noise's last message; each end sends once its own key is set. An unlock belongs to the pairing for its fifteen idle minutes, so a reconnect does not ask for the PIN again. The relay answers `ping` with `pong`; the phone, the console and the plugin each ping every fifteen seconds and reconnect when twenty pass with nothing heard, the relay sending its `pong` ahead of frames already queued. The relay writes each socket from its own queue and closes one more than 8 MiB behind with 4408, so a slow device holds up no other. The client asks `GET /api/relay` once per ten minutes, not before every request. A burst of messages is sealed as one record, and a follow's opening snapshot is held to 256 KiB by shortening tool output and then dropping its oldest records, never the newest replies.
+- **Why:** Every step was a trip through the relay, which for a phone and a computer in one country may be abroad: opening a channel took four to five of them, every dropped socket asked for the PIN again, a half-open socket stalled calls for twenty seconds, and one slow phone held up its computer's other devices.
+- **Breaking:** The relay, the plugin, the console and the app change together. A device without the pinned path still connects to an updated computer; an updated device times out against a computer without it until the plugin is updated.
+- **Upgrade:** Nothing; the plugin's and the app's halves ship with their next releases.
+- **Refs:** [ADR 0071](docs/adr/0071-devices-that-trust-each-other-reconnect-in-one-trip.md), `docs/tech/relay.md`, `server/relay/relay.go`, `packages/relay-client/src/live.ts`, `packages/relay-client/src/secure-channel.ts`, `dsh-teamwork` `src/phone-security.ts`, `src/bridge.ts`, `src/relay.ts`
+
 ## 2026-11-27 — The gateway waits longer for a slow provider
 
 - **What:** The model gateway waits up to 330 seconds for a provider's response headers, up from 120. The DSH plugin's team models time out after 300 seconds without a token, DSH's own default, up from 120.

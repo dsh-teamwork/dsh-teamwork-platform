@@ -35,8 +35,37 @@ type desktopWeb struct {
 	mu      sync.Mutex
 	hosts   map[string]*desktopWebHost
 	cookies cipher.AEAD
-	pending map[string]chan net.Conn
+	pending map[string]askedTunnel // webDial ids not yet answered
 }
+
+// askedTunnel is a webDial the computer has not answered yet: whose it is,
+// when it was asked, and whether it is a spare.
+type askedTunnel struct {
+	host  *desktopWebHost
+	at    time.Time
+	spare bool
+}
+
+// spareTunnel is a data socket the computer opened that no request has taken
+// yet. Every tunnel, asked for a request or as a spare, waits here, and a
+// request takes the first fresh one.
+type spareTunnel struct {
+	conn net.Conn
+	at   time.Time
+}
+
+const (
+	// desktopWebSpares is how many tunnels a computer keeps open ahead of
+	// requests once one is used: a page's assets each take a tunnel, and one
+	// asked for only when needed costs a trip to the computer and a new
+	// connection from it to the relay before any byte moves.
+	desktopWebSpares = 4
+	// desktopWebSpareFresh is how long a spare is used: the plugin closes a
+	// tunnel that carried nothing for ten seconds.
+	desktopWebSpareFresh = 8 * time.Second
+	// desktopWebAskTimeout is how long an asked tunnel may take to come.
+	desktopWebAskTimeout = 15 * time.Second
+)
 
 const (
 	desktopWebTicketLimit = 8
@@ -93,7 +122,9 @@ type desktopWebHost struct {
 	name          atomic.Pointer[string] // the member may rename the computer while it is connected
 	lastDial      atomic.Int64           // microseconds the last tunnel took to come up; 0 before any
 	generation    string
-	slots         chan struct{}
+	slots         chan struct{}               // one per tunnel asked for, waiting or in use
+	tunnels       chan spareTunnel            // tunnels come and not yet taken
+	asking        atomic.Int32                // spares asked for and not yet come
 	tickets       map[string]desktopWebTicket // guarded by desktopWeb.mu
 	ticketWindow  time.Time
 	ticketCount   int
@@ -145,7 +176,7 @@ func (r *relay) mountDesktopWeb() error {
 	}
 	d := &desktopWeb{
 		domain: domain, home: strings.TrimSuffix(r.host.AppURL, "/") + "/", hosts: make(map[string]*desktopWebHost),
-		cookies: cookies, pending: make(map[string]chan net.Conn),
+		cookies: cookies, pending: make(map[string]askedTunnel),
 	}
 	if err := r.host.ServeSubdomains(domain, http.HandlerFunc(r.serveDesktopWeb)); err != nil {
 		return err
@@ -174,6 +205,7 @@ func (d *desktopWeb) revoke(hostID string) {
 		delete(host.sessions, id)
 	}
 	clear(host.tickets)
+	host.dropSpares()
 }
 
 // sweep ends every session past its idle or absolute limit, closing what it
@@ -213,16 +245,30 @@ func (d *desktopWeb) rename(id, name string) {
 
 func (d *desktopWeb) attach(id, user, name string, s *socket) func() {
 	label := webLabel(id)
-	host := &desktopWebHost{socket: s, user: user, slots: make(chan struct{}, 32), generation: webSecret(), tickets: make(map[string]desktopWebTicket), sessions: make(map[string]*desktopWebSession)}
+	host := &desktopWebHost{socket: s, user: user, slots: make(chan struct{}, 32), tunnels: make(chan spareTunnel, 32), generation: webSecret(), tickets: make(map[string]desktopWebTicket), sessions: make(map[string]*desktopWebSession)}
 	host.name.Store(&name)
 	d.mu.Lock()
 	d.hosts[label] = host
 	d.mu.Unlock()
 	return func() {
 		d.mu.Lock()
-		defer d.mu.Unlock()
 		if d.hosts[label] == host {
 			delete(d.hosts, label)
+		}
+		d.mu.Unlock()
+		host.dropSpares()
+	}
+}
+
+// dropSpares closes the tunnels no request took.
+func (h *desktopWebHost) dropSpares() {
+	for {
+		select {
+		case t := <-h.tunnels:
+			t.conn.Close()
+			<-h.slots
+		default:
+			return
 		}
 	}
 }
@@ -576,8 +622,20 @@ func (c *desktopConn) Close() error {
 }
 
 func (d *desktopWeb) dial(ctx context.Context, host *desktopWebHost) (net.Conn, error) {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, desktopWebAskTimeout)
 	defer cancel()
+	session, _ := ctx.Value(desktopWebSessionKey{}).(*desktopWebSession)
+	asked := time.Now()
+	taken := func(conn net.Conn) net.Conn {
+		// What the request waited for its tunnel, which the Teamwork bar shows; a spare that was ready waited none.
+		host.lastDial.Store(max(time.Since(asked).Microseconds(), 1))
+		// A tunnel in use: keep the next ones coming before they are needed.
+		go d.refill(host)
+		return &desktopConn{Conn: conn, release: func() { <-host.slots }, session: session}
+	}
+	if conn := host.fresh(); conn != nil {
+		return taken(conn), nil
+	}
 	select {
 	case host.slots <- struct{}{}:
 	case <-ctx.Done():
@@ -585,42 +643,111 @@ func (d *desktopWeb) dial(ctx context.Context, host *desktopWebHost) (net.Conn, 
 	case <-host.socket.ctx.Done():
 		return nil, host.socket.ctx.Err()
 	}
-	id, delivery := webSecret(), make(chan net.Conn, 1)
+	d.ask(host, false)
+	for {
+		select {
+		case t := <-host.tunnels:
+			if time.Since(t.at) < desktopWebSpareFresh {
+				return taken(t.conn), nil
+			}
+			t.conn.Close()
+			<-host.slots
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-host.socket.ctx.Done():
+			return nil, host.socket.ctx.Err()
+		}
+	}
+}
+
+// fresh takes a tunnel that came and is still fresh, closing stale ones on
+// the way, or nil when none waits.
+func (h *desktopWebHost) fresh() net.Conn {
+	for {
+		select {
+		case t := <-h.tunnels:
+			if time.Since(t.at) < desktopWebSpareFresh {
+				return t.conn
+			}
+			t.conn.Close()
+			<-h.slots
+		default:
+			return nil
+		}
+	}
+}
+
+// refill asks for spares until desktopWebSpares are come or coming, as far as
+// the computer's slots allow.
+func (d *desktopWeb) refill(host *desktopWebHost) {
+	for len(host.tunnels)+int(host.asking.Load()) < desktopWebSpares {
+		select {
+		case host.slots <- struct{}{}:
+		default:
+			return
+		}
+		host.asking.Add(1)
+		d.ask(host, true)
+	}
+}
+
+// ask sends the computer one webDial, its slot already held; the tunnel
+// comes to host.tunnels (accept), or the slot is freed when it does not
+// come in time.
+func (d *desktopWeb) ask(host *desktopWebHost, spare bool) {
+	id := webSecret()
 	d.mu.Lock()
-	d.pending[id] = delivery
+	d.pending[id] = askedTunnel{host: host, at: time.Now(), spare: spare}
 	d.mu.Unlock()
-	defer func() {
+	host.socket.send(map[string]string{"t": "webDial", "id": id})
+	time.AfterFunc(desktopWebAskTimeout, func() {
 		d.mu.Lock()
+		_, waiting := d.pending[id]
 		delete(d.pending, id)
 		d.mu.Unlock()
-		select {
-		case conn := <-delivery:
-			conn.Close()
-		default:
+		if waiting {
+			if spare {
+				host.asking.Add(-1)
+			}
+			<-host.slots
 		}
-	}()
-	asked := time.Now()
-	host.socket.send(map[string]string{"t": "webDial", "id": id})
-	select {
-	case conn := <-delivery:
-		host.lastDial.Store(max(time.Since(asked).Microseconds(), 1))
-		session, _ := ctx.Value(desktopWebSessionKey{}).(*desktopWebSession)
-		return &desktopConn{Conn: conn, release: func() { <-host.slots }, session: session}, nil
-	case <-ctx.Done():
-		<-host.slots
-		return nil, ctx.Err()
-	case <-host.socket.ctx.Done():
-		<-host.slots
-		return nil, host.socket.ctx.Err()
+	})
+}
+
+// deliver puts a tunnel the computer opened for id where requests take them.
+func (d *desktopWeb) deliver(id string, conn net.Conn) bool {
+	d.mu.Lock()
+	asked, ok := d.pending[id]
+	delete(d.pending, id)
+	d.mu.Unlock()
+	if !ok {
+		return false
 	}
+	host := asked.host
+	if asked.spare {
+		host.asking.Add(-1)
+	}
+	// A computer whose control socket is gone has nobody to take its tunnels.
+	if host.socket.ctx.Err() != nil {
+		conn.Close()
+		<-host.slots
+		return true
+	}
+	select {
+	case host.tunnels <- spareTunnel{conn: conn, at: time.Now()}:
+	default:
+		conn.Close()
+		<-host.slots
+	}
+	return true
 }
 
 func (d *desktopWeb) accept(w http.ResponseWriter, req *http.Request) {
 	id := req.Header.Get("X-DSH-Web-Dial")
 	d.mu.Lock()
-	delivery := d.pending[id]
+	_, ok := d.pending[id]
 	d.mu.Unlock()
-	if delivery == nil {
+	if !ok {
 		http.NotFound(w, req)
 		return
 	}
@@ -628,17 +755,8 @@ func (d *desktopWeb) accept(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		return
 	}
-	conn := websocket.NetConn(context.Background(), ws, websocket.MessageBinary)
 	ws.SetReadLimit(1 << 20)
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	if d.pending[id] == delivery {
-		select {
-		case delivery <- conn:
-			delete(d.pending, id)
-			return
-		default:
-		}
+	if !d.deliver(id, websocket.NetConn(context.Background(), ws, websocket.MessageBinary)) {
+		ws.CloseNow()
 	}
-	ws.CloseNow()
 }

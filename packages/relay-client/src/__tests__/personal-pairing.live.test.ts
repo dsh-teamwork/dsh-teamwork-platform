@@ -63,7 +63,8 @@ test.skipIf(!BASE)('a browser pairs with a personal computer and the pairing con
   security.offerCode(offer.expiresAt);
   const pairing = await relay.pair(offer.code, 'Web browser');
   const code = await until('the browser safety code', async () => (await relay.getPairing(pairing.id))?.safetyCode);
-  expect(security.status(pairing.id).safetyCode).toBe(code);
+  // Each end draws its code once its own half of the handshake is done; the browser's may come first.
+  expect(await until('the desktop safety code', async () => security.status(pairing.id).safetyCode)).toBe(code);
 
   await relay.confirmPairing(pairing.id);
   await until('the desktop to hear the browser confirm', () => security.status(pairing.id).phoneConfirmed);
