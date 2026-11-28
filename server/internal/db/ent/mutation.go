@@ -4,7 +4,7 @@ package ent
 
 import (
 	"context"
-	"encoding/json/jsontext"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -3378,8 +3378,8 @@ type AssetSelectionMutation struct {
 	addversion    *int
 	mode          *assetselection.Mode
 	name          *string
-	history       *[]jsontext.Value
-	appendhistory []jsontext.Value
+	history       *[]json.RawMessage
+	appendhistory []json.RawMessage
 	revision      *int
 	addrevision   *int
 	clearedFields map[string]struct{}
@@ -3801,13 +3801,13 @@ func (m *AssetSelectionMutation) ResetName() {
 }
 
 // SetHistory sets the "history" field.
-func (m *AssetSelectionMutation) SetHistory(j []jsontext.Value) {
-	m.history = &j
+func (m *AssetSelectionMutation) SetHistory(jm []json.RawMessage) {
+	m.history = &jm
 	m.appendhistory = nil
 }
 
 // History returns the value of the "history" field in the mutation.
-func (m *AssetSelectionMutation) History() (r []jsontext.Value, exists bool) {
+func (m *AssetSelectionMutation) History() (r []json.RawMessage, exists bool) {
 	v := m.history
 	if v == nil {
 		return
@@ -3818,7 +3818,7 @@ func (m *AssetSelectionMutation) History() (r []jsontext.Value, exists bool) {
 // OldHistory returns the old "history" field's value of the AssetSelection entity.
 // If the AssetSelection object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AssetSelectionMutation) OldHistory(ctx context.Context) (v []jsontext.Value, err error) {
+func (m *AssetSelectionMutation) OldHistory(ctx context.Context) (v []json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHistory is only allowed on UpdateOne operations")
 	}
@@ -3832,13 +3832,13 @@ func (m *AssetSelectionMutation) OldHistory(ctx context.Context) (v []jsontext.V
 	return oldValue.History, nil
 }
 
-// AppendHistory adds j to the "history" field.
-func (m *AssetSelectionMutation) AppendHistory(j []jsontext.Value) {
-	m.appendhistory = append(m.appendhistory, j...)
+// AppendHistory adds jm to the "history" field.
+func (m *AssetSelectionMutation) AppendHistory(jm []json.RawMessage) {
+	m.appendhistory = append(m.appendhistory, jm...)
 }
 
 // AppendedHistory returns the list of values that were appended to the "history" field in this mutation.
-func (m *AssetSelectionMutation) AppendedHistory() ([]jsontext.Value, bool) {
+func (m *AssetSelectionMutation) AppendedHistory() ([]json.RawMessage, bool) {
 	if len(m.appendhistory) == 0 {
 		return nil, false
 	}
@@ -4109,7 +4109,7 @@ func (m *AssetSelectionMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case assetselection.FieldHistory:
-		v, ok := value.([]jsontext.Value)
+		v, ok := value.([]json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -4303,8 +4303,8 @@ type BudgetEventMutation struct {
 	action_key    *string
 	actor_id      *string
 	kind          *budgetevent.Kind
-	data          *jsontext.Value
-	appenddata    jsontext.Value
+	data          *json.RawMessage
+	appenddata    json.RawMessage
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*BudgetEvent, error)
@@ -4704,13 +4704,13 @@ func (m *BudgetEventMutation) ResetKind() {
 }
 
 // SetData sets the "data" field.
-func (m *BudgetEventMutation) SetData(j jsontext.Value) {
-	m.data = &j
+func (m *BudgetEventMutation) SetData(jm json.RawMessage) {
+	m.data = &jm
 	m.appenddata = nil
 }
 
 // Data returns the value of the "data" field in the mutation.
-func (m *BudgetEventMutation) Data() (r jsontext.Value, exists bool) {
+func (m *BudgetEventMutation) Data() (r json.RawMessage, exists bool) {
 	v := m.data
 	if v == nil {
 		return
@@ -4721,7 +4721,7 @@ func (m *BudgetEventMutation) Data() (r jsontext.Value, exists bool) {
 // OldData returns the old "data" field's value of the BudgetEvent entity.
 // If the BudgetEvent object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BudgetEventMutation) OldData(ctx context.Context) (v jsontext.Value, err error) {
+func (m *BudgetEventMutation) OldData(ctx context.Context) (v json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldData is only allowed on UpdateOne operations")
 	}
@@ -4735,13 +4735,13 @@ func (m *BudgetEventMutation) OldData(ctx context.Context) (v jsontext.Value, er
 	return oldValue.Data, nil
 }
 
-// AppendData adds j to the "data" field.
-func (m *BudgetEventMutation) AppendData(j jsontext.Value) {
-	m.appenddata = append(m.appenddata, j...)
+// AppendData adds jm to the "data" field.
+func (m *BudgetEventMutation) AppendData(jm json.RawMessage) {
+	m.appenddata = append(m.appenddata, jm...)
 }
 
 // AppendedData returns the list of values that were appended to the "data" field in this mutation.
-func (m *BudgetEventMutation) AppendedData() (jsontext.Value, bool) {
+func (m *BudgetEventMutation) AppendedData() (json.RawMessage, bool) {
 	if len(m.appenddata) == 0 {
 		return nil, false
 	}
@@ -4935,7 +4935,7 @@ func (m *BudgetEventMutation) SetField(name string, value ent.Value) error {
 		m.SetKind(v)
 		return nil
 	case budgetevent.FieldData:
-		v, ok := value.(jsontext.Value)
+		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -5503,8 +5503,8 @@ type BudgetNoticeMutation struct {
 	recipient_id  *string
 	threshold     *int
 	addthreshold  *int
-	data          *jsontext.Value
-	appenddata    jsontext.Value
+	data          *json.RawMessage
+	appenddata    json.RawMessage
 	state         *budgetnotice.State
 	lease_id      *string
 	lease_until   *time.Time
@@ -5823,13 +5823,13 @@ func (m *BudgetNoticeMutation) ResetThreshold() {
 }
 
 // SetData sets the "data" field.
-func (m *BudgetNoticeMutation) SetData(j jsontext.Value) {
-	m.data = &j
+func (m *BudgetNoticeMutation) SetData(jm json.RawMessage) {
+	m.data = &jm
 	m.appenddata = nil
 }
 
 // Data returns the value of the "data" field in the mutation.
-func (m *BudgetNoticeMutation) Data() (r jsontext.Value, exists bool) {
+func (m *BudgetNoticeMutation) Data() (r json.RawMessage, exists bool) {
 	v := m.data
 	if v == nil {
 		return
@@ -5840,7 +5840,7 @@ func (m *BudgetNoticeMutation) Data() (r jsontext.Value, exists bool) {
 // OldData returns the old "data" field's value of the BudgetNotice entity.
 // If the BudgetNotice object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BudgetNoticeMutation) OldData(ctx context.Context) (v jsontext.Value, err error) {
+func (m *BudgetNoticeMutation) OldData(ctx context.Context) (v json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldData is only allowed on UpdateOne operations")
 	}
@@ -5854,13 +5854,13 @@ func (m *BudgetNoticeMutation) OldData(ctx context.Context) (v jsontext.Value, e
 	return oldValue.Data, nil
 }
 
-// AppendData adds j to the "data" field.
-func (m *BudgetNoticeMutation) AppendData(j jsontext.Value) {
-	m.appenddata = append(m.appenddata, j...)
+// AppendData adds jm to the "data" field.
+func (m *BudgetNoticeMutation) AppendData(jm json.RawMessage) {
+	m.appenddata = append(m.appenddata, jm...)
 }
 
 // AppendedData returns the list of values that were appended to the "data" field in this mutation.
-func (m *BudgetNoticeMutation) AppendedData() (jsontext.Value, bool) {
+func (m *BudgetNoticeMutation) AppendedData() (json.RawMessage, bool) {
 	if len(m.appenddata) == 0 {
 		return nil, false
 	}
@@ -6303,7 +6303,7 @@ func (m *BudgetNoticeMutation) SetField(name string, value ent.Value) error {
 		m.SetThreshold(v)
 		return nil
 	case budgetnotice.FieldData:
-		v, ok := value.(jsontext.Value)
+		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -10312,8 +10312,8 @@ type ConfigRevisionMutation struct {
 	builtin       *string
 	kind          *configrevision.Kind
 	name          *string
-	data          *jsontext.Value
-	appenddata    jsontext.Value
+	data          *json.RawMessage
+	appenddata    json.RawMessage
 	author_id     *string
 	reviewer_id   *string
 	note          *string
@@ -10701,13 +10701,13 @@ func (m *ConfigRevisionMutation) ResetName() {
 }
 
 // SetData sets the "data" field.
-func (m *ConfigRevisionMutation) SetData(j jsontext.Value) {
-	m.data = &j
+func (m *ConfigRevisionMutation) SetData(jm json.RawMessage) {
+	m.data = &jm
 	m.appenddata = nil
 }
 
 // Data returns the value of the "data" field in the mutation.
-func (m *ConfigRevisionMutation) Data() (r jsontext.Value, exists bool) {
+func (m *ConfigRevisionMutation) Data() (r json.RawMessage, exists bool) {
 	v := m.data
 	if v == nil {
 		return
@@ -10718,7 +10718,7 @@ func (m *ConfigRevisionMutation) Data() (r jsontext.Value, exists bool) {
 // OldData returns the old "data" field's value of the ConfigRevision entity.
 // If the ConfigRevision object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ConfigRevisionMutation) OldData(ctx context.Context) (v jsontext.Value, err error) {
+func (m *ConfigRevisionMutation) OldData(ctx context.Context) (v json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldData is only allowed on UpdateOne operations")
 	}
@@ -10732,13 +10732,13 @@ func (m *ConfigRevisionMutation) OldData(ctx context.Context) (v jsontext.Value,
 	return oldValue.Data, nil
 }
 
-// AppendData adds j to the "data" field.
-func (m *ConfigRevisionMutation) AppendData(j jsontext.Value) {
-	m.appenddata = append(m.appenddata, j...)
+// AppendData adds jm to the "data" field.
+func (m *ConfigRevisionMutation) AppendData(jm json.RawMessage) {
+	m.appenddata = append(m.appenddata, jm...)
 }
 
 // AppendedData returns the list of values that were appended to the "data" field in this mutation.
-func (m *ConfigRevisionMutation) AppendedData() (jsontext.Value, bool) {
+func (m *ConfigRevisionMutation) AppendedData() (json.RawMessage, bool) {
 	if len(m.appenddata) == 0 {
 		return nil, false
 	}
@@ -11090,7 +11090,7 @@ func (m *ConfigRevisionMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case configrevision.FieldData:
-		v, ok := value.(jsontext.Value)
+		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -24857,8 +24857,8 @@ type ResourceSubmissionMutation struct {
 	config_id       *string
 	base_version    *int
 	addbase_version *int
-	proposal        *jsontext.Value
-	appendproposal  jsontext.Value
+	proposal        *json.RawMessage
+	appendproposal  json.RawMessage
 	note            *string
 	state           *resourcesubmission.State
 	revision        *int
@@ -25213,13 +25213,13 @@ func (m *ResourceSubmissionMutation) ResetBaseVersion() {
 }
 
 // SetProposal sets the "proposal" field.
-func (m *ResourceSubmissionMutation) SetProposal(j jsontext.Value) {
-	m.proposal = &j
+func (m *ResourceSubmissionMutation) SetProposal(jm json.RawMessage) {
+	m.proposal = &jm
 	m.appendproposal = nil
 }
 
 // Proposal returns the value of the "proposal" field in the mutation.
-func (m *ResourceSubmissionMutation) Proposal() (r jsontext.Value, exists bool) {
+func (m *ResourceSubmissionMutation) Proposal() (r json.RawMessage, exists bool) {
 	v := m.proposal
 	if v == nil {
 		return
@@ -25230,7 +25230,7 @@ func (m *ResourceSubmissionMutation) Proposal() (r jsontext.Value, exists bool) 
 // OldProposal returns the old "proposal" field's value of the ResourceSubmission entity.
 // If the ResourceSubmission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ResourceSubmissionMutation) OldProposal(ctx context.Context) (v jsontext.Value, err error) {
+func (m *ResourceSubmissionMutation) OldProposal(ctx context.Context) (v json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldProposal is only allowed on UpdateOne operations")
 	}
@@ -25244,13 +25244,13 @@ func (m *ResourceSubmissionMutation) OldProposal(ctx context.Context) (v jsontex
 	return oldValue.Proposal, nil
 }
 
-// AppendProposal adds j to the "proposal" field.
-func (m *ResourceSubmissionMutation) AppendProposal(j jsontext.Value) {
-	m.appendproposal = append(m.appendproposal, j...)
+// AppendProposal adds jm to the "proposal" field.
+func (m *ResourceSubmissionMutation) AppendProposal(jm json.RawMessage) {
+	m.appendproposal = append(m.appendproposal, jm...)
 }
 
 // AppendedProposal returns the list of values that were appended to the "proposal" field in this mutation.
-func (m *ResourceSubmissionMutation) AppendedProposal() (jsontext.Value, bool) {
+func (m *ResourceSubmissionMutation) AppendedProposal() (json.RawMessage, bool) {
 	if len(m.appendproposal) == 0 {
 		return nil, false
 	}
@@ -25707,7 +25707,7 @@ func (m *ResourceSubmissionMutation) SetField(name string, value ent.Value) erro
 		m.SetBaseVersion(v)
 		return nil
 	case resourcesubmission.FieldProposal:
-		v, ok := value.(jsontext.Value)
+		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -26760,8 +26760,8 @@ type TeamConfigMutation struct {
 	kind                  *teamconfig.Kind
 	name                  *string
 	builtin               *string
-	data                  *jsontext.Value
-	appenddata            jsontext.Value
+	data                  *json.RawMessage
+	appenddata            json.RawMessage
 	route_owner           *string
 	route_reference       *string
 	version               *int
@@ -27111,13 +27111,13 @@ func (m *TeamConfigMutation) ResetBuiltin() {
 }
 
 // SetData sets the "data" field.
-func (m *TeamConfigMutation) SetData(j jsontext.Value) {
-	m.data = &j
+func (m *TeamConfigMutation) SetData(jm json.RawMessage) {
+	m.data = &jm
 	m.appenddata = nil
 }
 
 // Data returns the value of the "data" field in the mutation.
-func (m *TeamConfigMutation) Data() (r jsontext.Value, exists bool) {
+func (m *TeamConfigMutation) Data() (r json.RawMessage, exists bool) {
 	v := m.data
 	if v == nil {
 		return
@@ -27128,7 +27128,7 @@ func (m *TeamConfigMutation) Data() (r jsontext.Value, exists bool) {
 // OldData returns the old "data" field's value of the TeamConfig entity.
 // If the TeamConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TeamConfigMutation) OldData(ctx context.Context) (v jsontext.Value, err error) {
+func (m *TeamConfigMutation) OldData(ctx context.Context) (v json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldData is only allowed on UpdateOne operations")
 	}
@@ -27142,13 +27142,13 @@ func (m *TeamConfigMutation) OldData(ctx context.Context) (v jsontext.Value, err
 	return oldValue.Data, nil
 }
 
-// AppendData adds j to the "data" field.
-func (m *TeamConfigMutation) AppendData(j jsontext.Value) {
-	m.appenddata = append(m.appenddata, j...)
+// AppendData adds jm to the "data" field.
+func (m *TeamConfigMutation) AppendData(jm json.RawMessage) {
+	m.appenddata = append(m.appenddata, jm...)
 }
 
 // AppendedData returns the list of values that were appended to the "data" field in this mutation.
-func (m *TeamConfigMutation) AppendedData() (jsontext.Value, bool) {
+func (m *TeamConfigMutation) AppendedData() (json.RawMessage, bool) {
 	if len(m.appenddata) == 0 {
 		return nil, false
 	}
@@ -27619,7 +27619,7 @@ func (m *TeamConfigMutation) SetField(name string, value ent.Value) error {
 		m.SetBuiltin(v)
 		return nil
 	case teamconfig.FieldData:
-		v, ok := value.(jsontext.Value)
+		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -28538,8 +28538,8 @@ type UsageRequestMutation struct {
 	addadmitted_input     *int64
 	admitted_output       *int64
 	addadmitted_output    *int64
-	rates                 *jsontext.Value
-	appendrates           jsontext.Value
+	rates                 *json.RawMessage
+	appendrates           json.RawMessage
 	point_units           *int64
 	addpoint_units        *int64
 	input_tokens          *int64
@@ -29360,13 +29360,13 @@ func (m *UsageRequestMutation) ResetAdmittedOutput() {
 }
 
 // SetRates sets the "rates" field.
-func (m *UsageRequestMutation) SetRates(j jsontext.Value) {
-	m.rates = &j
+func (m *UsageRequestMutation) SetRates(jm json.RawMessage) {
+	m.rates = &jm
 	m.appendrates = nil
 }
 
 // Rates returns the value of the "rates" field in the mutation.
-func (m *UsageRequestMutation) Rates() (r jsontext.Value, exists bool) {
+func (m *UsageRequestMutation) Rates() (r json.RawMessage, exists bool) {
 	v := m.rates
 	if v == nil {
 		return
@@ -29377,7 +29377,7 @@ func (m *UsageRequestMutation) Rates() (r jsontext.Value, exists bool) {
 // OldRates returns the old "rates" field's value of the UsageRequest entity.
 // If the UsageRequest object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UsageRequestMutation) OldRates(ctx context.Context) (v jsontext.Value, err error) {
+func (m *UsageRequestMutation) OldRates(ctx context.Context) (v json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRates is only allowed on UpdateOne operations")
 	}
@@ -29391,13 +29391,13 @@ func (m *UsageRequestMutation) OldRates(ctx context.Context) (v jsontext.Value, 
 	return oldValue.Rates, nil
 }
 
-// AppendRates adds j to the "rates" field.
-func (m *UsageRequestMutation) AppendRates(j jsontext.Value) {
-	m.appendrates = append(m.appendrates, j...)
+// AppendRates adds jm to the "rates" field.
+func (m *UsageRequestMutation) AppendRates(jm json.RawMessage) {
+	m.appendrates = append(m.appendrates, jm...)
 }
 
 // AppendedRates returns the list of values that were appended to the "rates" field in this mutation.
-func (m *UsageRequestMutation) AppendedRates() (jsontext.Value, bool) {
+func (m *UsageRequestMutation) AppendedRates() (json.RawMessage, bool) {
 	if len(m.appendrates) == 0 {
 		return nil, false
 	}
@@ -30441,7 +30441,7 @@ func (m *UsageRequestMutation) SetField(name string, value ent.Value) error {
 		m.SetAdmittedOutput(v)
 		return nil
 	case usagerequest.FieldRates:
-		v, ok := value.(jsontext.Value)
+		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
