@@ -11,7 +11,7 @@ import { Link } from 'react-router';
 import { useFormatter, useTranslations } from 'use-intl';
 
 import { Button } from '@/components/ui/button';
-import { folderPaths, type KnowledgeSpace, type KnowledgeTree } from '@/lib/knowledge-tree';
+import { folderPaths, type KnowledgeSpace, type KnowledgeTree } from '@dsh-teamwork/shared/knowledge-tree';
 
 /** When anything in a space last changed, or null for an empty one. */
 const lastChange = (space: KnowledgeSpace) => space.documents.reduce<string | null>((at, d) => (!at || d.updatedAt > at ? d.updatedAt : at), null);

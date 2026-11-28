@@ -26,7 +26,7 @@ import { TextSelection } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import { $inputRule, $node, $remark, $view } from '@milkdown/kit/utils';
 
-import { CALLOUT, CALLOUT_KINDS, calloutFamily, DIAGRAM_LANGUAGE, type CalloutFold } from '@/lib/knowledge-format';
+import { CALLOUT, CALLOUT_KINDS, calloutFamily, DIAGRAM_LANGUAGE, type CalloutFold } from '@dsh-teamwork/shared/knowledge-format';
 
 /** What the blocks say to a person: names of kinds and folds, and a diagram that cannot be drawn. */
 export interface BlockWords {

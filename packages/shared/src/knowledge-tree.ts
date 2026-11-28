@@ -1,17 +1,40 @@
 /**
- * A team's knowledge tree as the console reads it (`GET …/knowledge`): the
+ * A team's knowledge tree as the console and the closed phone app read it (`GET …/knowledge`): the
  * flat folders and documents of each space nested, filtered by title (the
  * first version finds a document by its title), and `[[links]]` resolved to
  * the document they name.
  */
 
-import type { Schemas } from './api';
 import { headingSlug, parseWikiTarget } from './knowledge-format';
 
-export type KnowledgeTree = Schemas['KnowledgeTree'];
-export type KnowledgeSpace = Schemas['KnowledgeSpace'];
-export type KnowledgeFolder = Schemas['KnowledgeFolder'];
-export type KnowledgeDocumentSummary = Schemas['KnowledgeDocumentSummary'];
+/** `GET …/knowledge` as `api/openapi.yaml` states it (`KnowledgeTree` and the schemas it holds). */
+export interface KnowledgeFolder {
+  id: string;
+  /** Empty at the space's root. */
+  parentId: string;
+  name: string;
+}
+export interface KnowledgeDocumentSummary {
+  id: string;
+  /** Empty at the space's root. */
+  folderId: string;
+  title: string;
+  currentVersion: number;
+  updatedAt: string;
+}
+export interface KnowledgeSpace {
+  id: string;
+  name: string;
+  reading: 'team' | 'members';
+  canEdit: boolean;
+  templatesFolderId: string;
+  folders: KnowledgeFolder[];
+  documents: KnowledgeDocumentSummary[];
+}
+export interface KnowledgeTree {
+  canCreateSpace: boolean;
+  spaces: KnowledgeSpace[];
+}
 
 export interface FolderNode {
   folder: KnowledgeFolder;

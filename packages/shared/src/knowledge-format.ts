@@ -128,7 +128,6 @@ export function attachmentUrl(teamId: string, documentId: string, name: string):
  * replaced by a hyphen.
  */
 export function attachmentNameOf(fileName: string): string {
-  // eslint-disable-next-line no-control-regex
   return fileName.replace(/[[\]|#^/\\\u0000-\u001f\u007f]/g, '-').trim();
 }
 

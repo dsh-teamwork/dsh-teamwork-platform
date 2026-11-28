@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api, type Schemas, type Team } from '@/lib/api';
-import { folderPaths, type KnowledgeSpace } from '@/lib/knowledge-tree';
+import { folderPaths, type KnowledgeSpace } from '@dsh-teamwork/shared/knowledge-tree';
 import { cn } from '@/lib/utils';
 
 type Access = Schemas['KnowledgeAccess'];

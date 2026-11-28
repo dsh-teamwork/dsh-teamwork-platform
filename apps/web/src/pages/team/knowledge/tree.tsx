@@ -21,8 +21,8 @@ import { useTeamError } from '@/components/team/use-mutation';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { api, type Schemas, type Team } from '@/lib/api';
-import { fillTemplate, headingSlug, readableLine } from '@/lib/knowledge-format';
-import { nestSpace, type FolderNode, type KnowledgeDocumentSummary, type KnowledgeSpace, type KnowledgeTree } from '@/lib/knowledge-tree';
+import { fillTemplate, headingSlug, readableLine } from '@dsh-teamwork/shared/knowledge-format';
+import { nestSpace, type FolderNode, type KnowledgeDocumentSummary, type KnowledgeSpace, type KnowledgeTree } from '@dsh-teamwork/shared/knowledge-tree';
 import { cn } from '@/lib/utils';
 
 import { ActionMenu, NameDialog } from './shared';

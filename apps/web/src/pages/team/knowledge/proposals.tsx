@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { api, ApiError, type Schemas, type Team } from '@/lib/api';
-import { attachmentNamesIn } from '@/lib/knowledge-format';
+import { attachmentNamesIn } from '@dsh-teamwork/shared/knowledge-format';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 

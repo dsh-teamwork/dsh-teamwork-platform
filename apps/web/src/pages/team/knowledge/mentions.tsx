@@ -10,8 +10,8 @@ import { useFormatter, useTranslations } from 'use-intl';
 
 import { useTeamError } from '@/components/team/use-mutation';
 import type { Schemas, Team } from '@/lib/api';
-import { headingSlug, readableLine } from '@/lib/knowledge-format';
-import type { KnowledgeTree } from '@/lib/knowledge-tree';
+import { headingSlug, readableLine } from '@dsh-teamwork/shared/knowledge-format';
+import type { KnowledgeTree } from '@dsh-teamwork/shared/knowledge-tree';
 import { useApi } from '@/lib/use-api';
 
 export function MentionsView({ team, tree }: { team: Team; tree: KnowledgeTree }) {

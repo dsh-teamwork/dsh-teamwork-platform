@@ -1,5 +1,5 @@
 /**
- * A document's properties on its page (lib/knowledge-properties.ts): a row
+ * A document's properties on its page (`@dsh-teamwork/shared/knowledge-properties`): a row
  * under the title while reading, and a form above the text while editing,
  * whose every change rewrites the front matter the save carries. The owner is
  * chosen from the team's members; one written by hand, or a member who has
@@ -12,7 +12,7 @@ import { Field } from '@/components/team/field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import type { Team } from '@/lib/api';
-import { ownerMention, parseOwner, type Properties } from '@/lib/knowledge-properties';
+import { ownerMention, parseOwner, type Properties } from '@dsh-teamwork/shared/knowledge-properties';
 
 /** Who an owner is, as the team now names them. */
 function ownerName(team: Team, owner: string): string {

@@ -20,7 +20,7 @@ import { useTranslations } from 'use-intl';
 
 import { api, type Schemas } from '@/lib/api';
 import { publishKnowledgeNav } from '@/lib/knowledge-nav';
-import { findDocument, type KnowledgeTree } from '@/lib/knowledge-tree';
+import { findDocument, type KnowledgeTree } from '@dsh-teamwork/shared/knowledge-tree';
 import { useApi } from '@/lib/use-api';
 
 import { useTeam } from '../layout';
