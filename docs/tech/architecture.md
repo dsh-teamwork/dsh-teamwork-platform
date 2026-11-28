@@ -29,7 +29,7 @@ A seeded content reset replaces member content in place and increments
 usage or financial records. A write admits the generation and checks it before
 commit (`server/internal/contentfence`), so a late write fails with
 `team_resetting` rather than surviving the reset. Object writes precede the
-transaction and unreferenced bytes are collected after it (ADR 0071).
+transaction and unreferenced bytes are collected after it (ADR 0073).
 
 An edition may serve a domain's subdomains of its own (`Host.ServeSubdomains`):
 every request whose Host is under that domain reaches the edition's handler

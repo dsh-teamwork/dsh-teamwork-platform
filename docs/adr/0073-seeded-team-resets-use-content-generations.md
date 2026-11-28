@@ -1,4 +1,4 @@
-# 0071. Seeded team resets use content generations
+# 0073. Seeded team resets use content generations
 
 > **Status:** Accepted · **Date:** 2026-11-27
 

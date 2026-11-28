@@ -42,7 +42,7 @@ are in `CLAUDE.md`, "The changelog".
 - **Why:** A hosted public demo needs a real member experience without deleting its members, models, usage or financial history, and without late writes silently surviving a daily reset.
 - **Breaking:** None for existing teams. New writes rejected while an edition resets a team receive 409 `team_resetting`.
 - **Upgrade:** Apply the `team_content_generation` migration on SQLite, Postgres and MySQL.
-- **Refs:** [ADR 0071](docs/adr/0071-seeded-team-resets-use-content-generations.md), [Architecture](docs/tech/architecture.md), `server/internal/contentfence`, `server/internal/team/reset.go`.
+- **Refs:** [ADR 0073](docs/adr/0073-seeded-team-resets-use-content-generations.md), [Architecture](docs/tech/architecture.md), `server/internal/contentfence`, `server/internal/team/reset.go`.
 
 ## 2026-11-26 — The sign-in page sets up a fresh instance
 
