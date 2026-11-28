@@ -122,20 +122,26 @@ func (s *Service) removeMembership(ctx context.Context, userID, teamID string) e
 		return err
 	}
 	defer tx.Rollback()
-	deleted, err := tx.Membership.Delete().Where(membership.UserID(userID), membership.TeamID(teamID), membership.RoleEQ(membership.RoleMember)).Exec(ctx)
-	if err != nil || deleted == 0 {
-		return err
-	}
-	if _, err := tx.AssetSelection.Delete().Where(assetselection.TeamID(teamID), assetselection.UserID(userID)).Exec(ctx); err != nil {
-		return err
-	}
-	if _, err := tx.AssetExclusion.Delete().Where(assetexclusion.TeamID(teamID), assetexclusion.UserID(userID)).Exec(ctx); err != nil {
-		return err
-	}
-	if err := tx.TeamConfig.Update().Where(teamconfig.TeamID(teamID), teamconfig.AssetOwnerID(userID), teamconfig.Or(teamconfig.AssetArchived(false), teamconfig.AssetOwnerWithdrawn(true))).SetAssetArchived(true).SetAssetOwnerWithdrawn(false).Exec(ctx); err != nil {
+	if err := s.removeMembershipInTx(ctx, tx.Client(), userID, teamID); err != nil {
 		return err
 	}
 	return tx.Commit()
+}
+
+// removeMembershipInTx is leaving's part of an existing transaction, shared by
+// a member's own request and an edition's automatic trial-team exit.
+func (s *Service) removeMembershipInTx(ctx context.Context, db *ent.Client, userID, teamID string) error {
+	deleted, err := db.Membership.Delete().Where(membership.UserID(userID), membership.TeamID(teamID), membership.RoleEQ(membership.RoleMember)).Exec(ctx)
+	if err != nil || deleted == 0 {
+		return err
+	}
+	if _, err := db.AssetSelection.Delete().Where(assetselection.TeamID(teamID), assetselection.UserID(userID)).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := db.AssetExclusion.Delete().Where(assetexclusion.TeamID(teamID), assetexclusion.UserID(userID)).Exec(ctx); err != nil {
+		return err
+	}
+	return db.TeamConfig.Update().Where(teamconfig.TeamID(teamID), teamconfig.AssetOwnerID(userID), teamconfig.Or(teamconfig.AssetArchived(false), teamconfig.AssetOwnerWithdrawn(true))).SetAssetArchived(true).SetAssetOwnerWithdrawn(false).Exec(ctx)
 }
 
 // AddedMember is POST /api/teams/:teamId/members: the first password the

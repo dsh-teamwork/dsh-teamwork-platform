@@ -39,13 +39,33 @@ type Service struct {
 	Now              func() time.Time
 	Changed          func(context.Context, *ent.Client, edition.TeamChange) error
 	Content          *contentfence.Fence
+	// AutoLeaveTeam is an edition's trial team: a person who creates or joins
+	// any other team leaves it in the same transaction. Joining it and system
+	// provisioning never trigger the rule.
+	AutoLeaveTeam string
 }
 
 func (s *Service) changed(ctx context.Context, db *ent.Client, change edition.TeamChange) error {
+	if err := s.autoLeave(ctx, db, change); err != nil {
+		return err
+	}
 	if s.Changed == nil {
 		return nil
 	}
 	return s.Changed(ctx, db, change)
+}
+
+func (s *Service) autoLeave(ctx context.Context, db *ent.Client, change edition.TeamChange) error {
+	if s.AutoLeaveTeam == "" || change.TeamID == s.AutoLeaveTeam {
+		return nil
+	}
+	if change.Kind != edition.TeamCreated && change.Kind != edition.MemberJoined {
+		return nil
+	}
+	if change.Kind == edition.TeamCreated && change.System {
+		return nil
+	}
+	return s.removeMembershipInTx(ctx, db, change.UserID, s.AutoLeaveTeam)
 }
 
 func (s *Service) now() time.Time {

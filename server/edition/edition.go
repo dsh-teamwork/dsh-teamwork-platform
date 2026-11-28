@@ -193,6 +193,10 @@ type Host struct {
 	// RegisterTeamWriteGuard installs an edition's admission guard for content
 	// writes. The generation fence still applies after admission. Mount-only.
 	RegisterTeamWriteGuard func(func(context.Context, string) error) error
+	// RegisterAutoLeaveTeam marks an edition's trial team: creating or joining
+	// another team removes the person's membership of it in that transaction.
+	// Joining the trial team and system provisioning are excluded. Mount-only.
+	RegisterAutoLeaveTeam func(string) error
 	// SubscribeTeams runs inside a team creation, a member join, a team's
 	// deletion, an account's, or an admin removing an owned model (TeamChange). Handlers access only their own tables, perform no
 	// network I/O, and return errors to roll back the change and theirs.

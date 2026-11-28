@@ -297,6 +297,13 @@ func Build(cfg config.Config, client *ent.Client, conn *sql.DB, dialect string, 
 			teams.Content.Guard = guard
 			return nil
 		},
+		RegisterAutoLeaveTeam: func(teamID string) error {
+			if teamID == "" || teams.AutoLeaveTeam != "" {
+				return errors.New("invalid or duplicate auto-leave team")
+			}
+			teams.AutoLeaveTeam = teamID
+			return nil
+		},
 		TeamRole: func(ctx context.Context, userID, teamID string, admin bool) (string, error) {
 			m, err := teams.RequireMembership(ctx, userID, teamID, admin)
 			if err != nil {
