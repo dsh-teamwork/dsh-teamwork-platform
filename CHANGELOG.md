@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-28 — Ent generation stays on the declared Go toolchain
+
+- **What:** Both `go:generate` directives pin `GOTOOLCHAIN=go1.26.4`, and the generated Ent mutations use `json.RawMessage` instead of Go 1.27's `encoding/json/jsontext`.
+- **Why:** Generating with a newer local Go made Railway's Go 1.26 image fail with `build constraints exclude all Go files`.
+- **Breaking:** None.
+- **Upgrade:** Rebuild and deploy the server image.
+- **Refs:** `server/internal/db/generate.go`, `server/internal/db/ent/mutation.go`.
+
 ## 2026-11-27 — The console follows its computers by presence, and native Web keeps tunnels ready
 
 - **What:** The web console's My DSH page and connect card read the computers again when the relay says a computer came or went or a pairing, name or notification of one changed (`presence`), not every ten seconds; the sidebar, on every team page, and a browser that cannot keep a relay key still poll. A followed session in the console applies its live events once a frame (`frameBatch`, now in `packages/relay-client` and shared with the app). Native DSH Web keeps four tunnels asked for ahead once one is used, so a request takes one that already came instead of waiting for the computer to connect a new one.
