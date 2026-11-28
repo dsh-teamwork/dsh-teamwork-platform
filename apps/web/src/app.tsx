@@ -27,8 +27,10 @@ import {
   setEditionSecurity,
   setEditionTeamNotice,
   setEditionTeamPages,
+  setEditionTeamsFilter,
   setEditionTeamsNotice,
   type EditionTeamNotice,
+  type EditionTeamsFilter,
   type EditionTeamsNotice,
   type TeamPage,
 } from '@/lib/edition';
@@ -117,12 +119,14 @@ export interface WebExtension {
   /** Notices above the teams list and inside one team's console. */
   teamsNotice?: EditionTeamsNotice;
   teamNotice?: EditionTeamNotice;
+  /** Which memberships the teams page lists; the demo is an onboarding card, not a team card. */
+  teamsFilter?: EditionTeamsFilter;
   security?: EditionSecurity;
   /** Where its users talk with its makers, in each language: the footer of the console's pages outside a team links to it (`EditionCommunity`). */
   community?: (locale: Locale) => EditionCommunity;
 }
 
-export function mountWeb({ routes = [], teamPages = [], models, teamsNotice, teamNotice, security, community }: WebExtension = {}) {
+export function mountWeb({ routes = [], teamPages = [], models, teamsNotice, teamNotice, teamsFilter, security, community }: WebExtension = {}) {
   const locale = currentLocale();
   document.documentElement.lang = locale;
   void startAnalytics();
@@ -131,6 +135,7 @@ export function mountWeb({ routes = [], teamPages = [], models, teamsNotice, tea
   setEditionModels(models);
   setEditionTeamsNotice(teamsNotice);
   setEditionTeamNotice(teamNotice);
+  setEditionTeamsFilter(teamsFilter);
   setEditionSecurity(security);
   setEditionCommunity(community);
   window.addEventListener('vite:preloadError', reloadOnStaleChunk);

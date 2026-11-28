@@ -8,7 +8,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import type { RouteObject } from 'react-router';
 
-import type { Team } from '@/lib/api';
+import type { Team, TeamSummary } from '@/lib/api';
 import type { Locale } from '@/lib/locale';
 
 /** The console's navigation groups: Workspace for everyone, the other two for the team's admin alone. */
@@ -89,6 +89,16 @@ export function setEditionTeamsNotice(value: EditionTeamsNotice | undefined) {
 
 export function setEditionTeamNotice(value: EditionTeamNotice | undefined) {
   teamNotice = value;
+}
+
+export type EditionTeamsFilter = (teams: readonly TeamSummary[]) => TeamSummary[];
+
+let teamsFilter: EditionTeamsFilter | undefined;
+
+export const editionTeamsFilter = () => teamsFilter;
+
+export function setEditionTeamsFilter(value: EditionTeamsFilter | undefined) {
+  teamsFilter = value;
 }
 
 /** routes without any whose path one of added has, at every level, then added: how an edition replaces a page. */
