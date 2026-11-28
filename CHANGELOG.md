@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-28 — The demo notice shares the team list's read
+
+- **What:** The teams-page notice receives the already-loaded team list as a prop instead of issuing a second independent read, so its visibility follows the same load state as the team cards.
+- **Why:** Two separate reads let the demo card appear before the team list, or vice versa, depending on which request answered first.
+- **Breaking:** None.
+- **Upgrade:** Deploy the web console.
+- **Refs:** `apps/web/src/pages/teams.tsx`, `apps/web/src/lib/edition.ts`.
+
 ## 2026-11-28 — An edition can filter the teams page
 
 - **What:** `mountWeb` accepts a `teamsFilter`, applied only to what the teams page lists. An edition can keep an onboarding team's membership out of the ordinary team cards without changing the underlying membership API.
