@@ -37,7 +37,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Dialog, DropdownMenu } from 'radix-ui';
-import { useCallback, useEffect, useId, useState, type ComponentType, type ReactNode } from 'react';
+import { createElement, useCallback, useEffect, useId, useState, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'use-intl';
@@ -45,7 +45,7 @@ import { useLocale, useTranslations } from 'use-intl';
 import { AccountRow } from '@/components/account';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { api, type Schemas, type Team, type TeamSummary } from '@/lib/api';
-import { editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamPage } from '@/lib/edition';
+import { editionTeamNotice, editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamPage } from '@/lib/edition';
 import { knowledgeNav, publishKnowledgeNav, useKnowledgeNav } from '@/lib/knowledge-nav';
 import { cn } from '@/lib/utils';
 import { useComputersChanged } from '@/lib/relay';
@@ -268,6 +268,7 @@ export function ConsoleShell({
     if (!next) setDrawerManagementOpen(false);
   };
   const close = () => changeDrawerOpen(false);
+  const Notice = editionTeamNotice();
 
   useEffect(() => {
     if (team.role !== 'admin') return;
@@ -295,6 +296,7 @@ export function ConsoleShell({
           <TeamSwitcher team={team} teams={teams} section={section} />
         </div>
         <Navigation team={team} section={section} waiting={waiting} open={managementOpen} setOpen={setManagementOpen} />
+        {Notice && createElement(Notice, { team })}
         <div className="flex items-center gap-1 border-t px-3 pt-3">
           <AccountRow detail={t(`role.${team.role}`)} />
           <ThemeToggle />
@@ -332,6 +334,7 @@ export function ConsoleShell({
               </Dialog.Close>
             </div>
             <Navigation team={team} section={section} waiting={waiting} open={drawerManagementOpen} setOpen={setDrawerManagementOpen} onNavigate={close} />
+            {Notice && createElement(Notice, { team })}
             <div className="flex items-center gap-1 border-t px-3 pt-3">
               <AccountRow detail={t(`role.${team.role}`)} onNavigate={close} />
               <ThemeToggle />

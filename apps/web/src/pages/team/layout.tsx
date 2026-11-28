@@ -5,7 +5,7 @@
  * A team the person is not in is not found, as one that does not exist.
  */
 
-import { createContext, createElement, useContext } from 'react';
+import { createContext, useContext } from 'react';
 import { Link, Navigate, Outlet, useParams } from 'react-router';
 import { useTranslations } from 'use-intl';
 
@@ -14,7 +14,6 @@ import { ConsoleShell } from '@/components/team/console-shell';
 import { useTeamError } from '@/components/team/use-mutation';
 import { Button } from '@/components/ui/button';
 import { ApiError, type Schemas, type Team, type TeamSummary } from '@/lib/api';
-import { editionTeamNotice } from '@/lib/edition';
 import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
 
@@ -53,7 +52,6 @@ export function TeamLayout() {
   // else does. Only an admin has one, so it is read once the team says whose console this is.
   const admin = team.data?.role === 'admin';
   const summary = useApi<Schemas['TeamSummary']>(admin ? `teams/${encodeURIComponent(teamId)}/summary?scope=team` : null);
-  const Notice = editionTeamNotice();
   useTitle(team.data?.name);
 
   if (team.error instanceof ApiError && team.error.code === 'team_not_found') {
@@ -84,7 +82,6 @@ export function TeamLayout() {
       value={{ team: team.data, reload: team.reload, me: session.user.id, passwords: session.doors.password, teamSummary: summary.data, reloadTeamSummary: summary.reload }}
     >
       <ConsoleShell team={team.data} teams={teams.data} waiting={waiting(summary.data)}>
-        {Notice && createElement(Notice, { team: team.data })}
         <Outlet />
       </ConsoleShell>
     </TeamContext.Provider>

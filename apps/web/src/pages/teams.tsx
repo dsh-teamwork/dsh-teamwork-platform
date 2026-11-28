@@ -7,7 +7,7 @@
  * dialog filled in.
  */
 
-import { ArrowRight, ChartColumn, Cpu, House, LayoutDashboard, Layers, LogIn, Plus, Users } from 'lucide-react';
+import { ChartColumn, Cpu, House, LayoutDashboard, Layers, LogIn, Plus, Users } from 'lucide-react';
 import { createElement, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useTranslations } from 'use-intl';
@@ -43,12 +43,12 @@ export function TeamsPage() {
   useTitle(useTranslations('team.list')('title'));
   return (
     <SiteFrame>
-      {Notice && createElement(Notice)}
       {teams.data ? (
         <TeamsHome teams={teams.data} invite={params.get('invite') ?? ''} passwords={session.doors.password} reload={teams.reload} />
       ) : (
         teams.error ? <Failure message={word(teams.error)} /> : null
       )}
+      {Notice && createElement(Notice)}
     </SiteFrame>
   );
 }
@@ -103,14 +103,6 @@ function TeamsHome({ teams, invite, passwords, reload }: { teams: TeamSummary[];
           );
         })
       )}
-
-      <aside className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border bg-muted px-5 py-4 text-sm">
-        <span className="text-muted-foreground">{t('connectHint')}</span>
-        <a href="/docs/install" className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline">
-          {t('connectLink')}
-          <ArrowRight className="size-4" aria-hidden />
-        </a>
-      </aside>
 
       {dialog === 'create' && <CreateDialog reload={reload} onClose={() => setDialog(null)} />}
       {dialog === 'join' && <JoinDialog invite={invite} reload={reload} onClose={() => setDialog(null)} />}
