@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-28 — Demo guidance sits at the page foot and in the sidebar
+
+- **What:** The edition's teams-page notice now renders after the team list, and the team-page notice slot moved from the content area to above the account row in the sidebar. The teams page's install-hint aside is removed.
+- **Why:** Demo guidance should support the team list and the workspace without taking over either page's header.
+- **Breaking:** None.
+- **Upgrade:** Deploy the web console.
+- **Refs:** `apps/web/src/pages/teams.tsx`, `apps/web/src/pages/team/layout.tsx`, `apps/web/src/components/team/console-shell.tsx`.
+
 ## 2026-11-28 — Starting a real team leaves the trial team automatically
 
 - **What:** `Host.RegisterAutoLeaveTeam` lets an edition mark its public trial team. Creating or joining any other team removes that person's ordinary membership in the same transaction; joining the trial team itself and system provisioning are excluded. Member-owned trial assets are archived by the same leaving path.
