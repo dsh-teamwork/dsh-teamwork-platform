@@ -5,6 +5,14 @@ task reads the top of this file to learn what moved recently; git holds the
 detail. What counts as key, the entry format and how old entries are compacted
 are in `CLAUDE.md`, "The changelog".
 
+## 2026-11-28 — An edition can filter the teams page
+
+- **What:** `mountWeb` accepts a `teamsFilter`, applied only to what the teams page lists. An edition can keep an onboarding team's membership out of the ordinary team cards without changing the underlying membership API.
+- **Why:** The public demo is an onboarding entry, not a second team card beside the first-team setup.
+- **Breaking:** None; without a filter the list is unchanged.
+- **Upgrade:** Deploy the web console.
+- **Refs:** `apps/web/src/lib/edition.ts`, `apps/web/src/app.tsx`, `apps/web/src/pages/teams.tsx`.
+
 ## 2026-11-28 — Demo guidance sits at the page foot and in the sidebar
 
 - **What:** The edition's teams-page notice now renders after the team list, and the team-page notice slot moved from the content area to above the account row in the sidebar. The teams page's install-hint aside is removed.
