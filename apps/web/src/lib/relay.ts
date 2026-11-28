@@ -120,7 +120,8 @@ export const COMPUTERS_REFRESH_MS = 10_000;
 /**
  * Reads the member's computers again (`load`) when one connects or leaves, or the relay's socket came back from a
  * drop (`RelayClient.watchComputers`), rather than on a timer. A browser that cannot keep a relay key cannot open that
- * socket, and reads them every `COMPUTERS_REFRESH_MS` instead, as it does until it knows.
+ * socket, and reads them every `COMPUTERS_REFRESH_MS` instead, as it does until it knows and wherever no `account` is
+ * given (a list that should not open the socket on its own).
  */
 export function useComputersChanged(account: string | undefined, load: () => void, enabled = true) {
   useEffect(() => {

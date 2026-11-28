@@ -7,7 +7,7 @@ are in `CLAUDE.md`, "The changelog".
 
 ## 2026-11-27 — The console follows its computers by presence, and native Web keeps tunnels ready
 
-- **What:** The web console's computer lists (My DSH, its sidebar entry, the connect card) read again when the relay says a computer came or went, not every ten seconds; a browser that cannot keep a relay key still polls. A followed session in the console applies its live events once a frame (`frameBatch`, now in `packages/relay-client` and shared with the app). Native DSH Web keeps four tunnels asked for ahead once one is used, so a request takes one that already came instead of waiting for the computer to connect a new one.
+- **What:** The web console's My DSH page and connect card read the computers again when the relay says a computer came or went or a pairing, name or notification of one changed (`presence`), not every ten seconds; the sidebar, on every team page, and a browser that cannot keep a relay key still poll. A followed session in the console applies its live events once a frame (`frameBatch`, now in `packages/relay-client` and shared with the app). Native DSH Web keeps four tunnels asked for ahead once one is used, so a request takes one that already came instead of waiting for the computer to connect a new one.
 - **Why:** Every request through native Web waited a trip to the computer and a fresh connection from it before any byte moved, and a page's assets each needed one; the console polled for nothing most of the time and rendered every delta on its own.
 - **Breaking:** None.
 - **Upgrade:** Nothing.

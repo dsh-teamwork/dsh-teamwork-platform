@@ -284,7 +284,8 @@ func (s *socket) enqueueAt(m outgoing, first bool) {
 }
 
 // write is the socket's one writer: it writes what send queued, in order,
-// each frame within ten seconds or the socket is dropped.
+// each frame within ten seconds or the socket is dropped. It takes one frame
+// at a time, so one queued ahead of the rest (sendFirst) goes next.
 func (s *socket) write() {
 	for {
 		select {
@@ -292,11 +293,16 @@ func (s *socket) write() {
 			return
 		case <-s.wake:
 		}
-		s.mu.Lock()
-		batch := s.queue
-		s.queue, s.queued = nil, 0
-		s.mu.Unlock()
-		for _, m := range batch {
+		for {
+			s.mu.Lock()
+			if len(s.queue) == 0 {
+				s.mu.Unlock()
+				break
+			}
+			m := s.queue[0]
+			s.queue = s.queue[1:]
+			s.queued -= len(m.b)
+			s.mu.Unlock()
 			ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
 			err := s.c.Write(ctx, m.kind, m.b)
 			cancel()
@@ -459,7 +465,7 @@ func (r *relay) acceptPlugin(w http.ResponseWriter, req *http.Request) {
 		} else if wt, ok := parseWaiting(f); ok {
 			go r.notify(hostID, wt)
 		} else if request, ok := parsePluginRequest(f); ok {
-			go func() { s.send(r.answer(hostID, request)) }()
+			go func() { s.send(r.answer(userID, hostID, request)) }()
 		}
 	}
 }
@@ -530,9 +536,10 @@ func (r *relay) hostLeft(userID, hostID string, s *socket) {
 }
 
 // presence tells every phone and browser of the member that one of their
-// computers connected or left, so each lists its computers again instead of
-// asking on a timer. It names the host and nothing else: the list says
-// what changed, under the same checks as ever.
+// computers connected or left, or a pairing to one, its name or its
+// notifications changed, so each lists its computers again instead of asking
+// on a timer. It names the host, when there is one, and nothing else: the list
+// says what changed, under the same checks as ever.
 func (r *relay) presence(userID, hostID string) {
 	r.mu.Lock()
 	var to []*socket
@@ -540,8 +547,12 @@ func (r *relay) presence(userID, hostID string) {
 		to = append(to, s)
 	}
 	r.mu.Unlock()
+	frame := map[string]string{"t": "presence"}
+	if hostID != "" {
+		frame["hostId"] = hostID
+	}
 	for _, s := range to {
-		s.send(map[string]string{"t": "presence", "hostId": hostID})
+		s.send(frame)
 	}
 }
 
@@ -596,7 +607,7 @@ type reply struct {
 	Error string `json:"error,omitempty"`
 }
 
-func (r *relay) answer(hostID string, q pluginRequest) reply {
+func (r *relay) answer(userID, hostID string, q pluginRequest) reply {
 	ctx, now := r.ctx, time.Now().UTC()
 	out := reply{T: "reply", ID: q.id}
 	var err error
@@ -617,9 +628,13 @@ func (r *relay) answer(hostID string, q pluginRequest) reply {
 			r.revoked[q.pairingID] = true
 			r.mu.Unlock()
 		}
+		if err == nil {
+			r.presence(userID, hostID)
+		}
 	case "revoke":
 		if _, err = r.pairings.revoke(ctx, host(hostID), q.pairingID, now); err == nil {
 			r.ended(hostID, q.pairingID)
+			r.presence(userID, hostID)
 		}
 	case "webRevoke":
 		if r.desktopWeb != nil {
@@ -897,6 +912,7 @@ func (r *relay) pair(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	r.tell(paired.HostID, map[string]any{"t": "paired", "pairing": paired})
+	r.presence(ph.userID, paired.HostID)
 	writeJSON(w, http.StatusCreated, map[string]any{"pairing": paired})
 }
 
@@ -1053,6 +1069,7 @@ func (r *relay) renameHost(w http.ResponseWriter, req *http.Request) {
 	if r.desktopWeb != nil {
 		r.desktopWeb.rename(id, name)
 	}
+	r.presence(userID, id)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -1123,6 +1140,7 @@ func (r *relay) deleteHost(w http.ResponseWriter, req *http.Request) {
 	if s != nil {
 		go s.c.Close(closeUnauthorized, "signed out")
 	}
+	r.presence(userID, id)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -1150,6 +1168,7 @@ func (r *relay) setPush(w http.ResponseWriter, req *http.Request) {
 		rejectedJSON(w, err)
 		return
 	}
+	r.presence(ph.userID, "")
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -1158,8 +1177,9 @@ func (r *relay) setPush(w http.ResponseWriter, req *http.Request) {
 // their own computers (ADR 0048), so a lost phone is cut off from the browser.
 func (r *relay) revokePairing(w http.ResponseWriter, req *http.Request) {
 	var s scope
+	var userID string
 	if bearer(req) == "" {
-		userID := r.caller(w, req)
+		userID = r.caller(w, req)
 		if userID == "" {
 			return
 		}
@@ -1174,7 +1194,7 @@ func (r *relay) revokePairing(w http.ResponseWriter, req *http.Request) {
 		if !ok {
 			return
 		}
-		s = ph
+		s, userID = ph, ph.userID
 	}
 	id := req.PathValue("id")
 	hostID, err := r.pairings.revoke(req.Context(), s, id, time.Now().UTC())
@@ -1183,6 +1203,7 @@ func (r *relay) revokePairing(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	r.ended(hostID, id)
+	r.presence(userID, hostID)
 	w.WriteHeader(http.StatusNoContent)
 }
 

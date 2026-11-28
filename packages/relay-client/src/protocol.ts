@@ -28,5 +28,5 @@ export type PhoneEvent =
   | { t: 'revoked'; pairingId: string }
   | { t: 'offline'; pairingId: string }
   | { t: 'detached'; pairingId: string }
-  /** One of the member's computers connected or left: list them again. */
-  | { t: 'presence'; hostId: string };
+  /** One of the member's computers connected or left, or a pairing, name or notification of one changed: list again. */
+  | { t: 'presence'; hostId?: string };

@@ -49,7 +49,6 @@ import { editionTeamPages, navPath, type SubnavProps, type TeamGroup, type TeamP
 import { knowledgeNav, publishKnowledgeNav, useKnowledgeNav } from '@/lib/knowledge-nav';
 import { cn } from '@/lib/utils';
 import { useComputersChanged } from '@/lib/relay';
-import { useSession } from '@/lib/session';
 
 type SectionKey = 'home' | 'overview' | 'library' | 'myUsage' | 'models' | 'members' | 'usage' | 'budgets' | 'myDsh' | 'artifacts' | 'knowledge';
 
@@ -92,7 +91,9 @@ function MyDshNav({ teamId, current, onNavigate }: SubnavProps) {
   const [hosts, setHosts] = useState<RelayHost[] | null>(null);
   const load = useCallback(() => ownComputers().then(setHosts, () => undefined), []);
   useEffect(() => void load(), [load]);
-  useComputersChanged(useSession().session?.user?.id, load);
+  // The sidebar is on every team page: it reads on a timer rather than opening the relay's socket for pages that do
+  // not use it; My DSH's own pages follow presence.
+  useComputersChanged(undefined, load);
   return (hosts ?? []).map((host) => (
     <SubnavLink
       key={host.id}

@@ -954,6 +954,9 @@ func discovered(w *world) obj {
 // member's other devices, and is closed once too much waits for it.
 func TestSlowPhone(t *testing.T) {
 	each(t, func(t *testing.T, w *world) {
+		// The test relay's ping (200ms) is meant to find dead sockets fast; here
+		// a peer busy writing megabytes, slower still under -race, must not be one.
+		w.r.pingEvery = 5 * time.Second
 		laptop := w.host(w.ada, "slow-client")
 		fast := w.paired(w.adaID, laptop.hostID(), true)
 		other := handset{w.ada, keyB}
@@ -1024,6 +1027,14 @@ func TestPresence(t *testing.T) {
 		phone := w.phone(w.adaPhone)
 		other := w.phone(w.bobPhone)
 		laptop := w.host(w.ada, "presence-client")
+		equal(t, phone.next(is("presence")), obj{"t": "presence", "hostId": laptop.hostID()})
+		// A pairing confirmed at the computer, or revoked from another device, is a change to list too.
+		pairing := w.paired(w.adaID, laptop.hostID(), false)
+		laptop.ask(obj{"t": "decide", "pairingId": pairing, "accept": true})
+		equal(t, phone.next(is("presence")), obj{"t": "presence", "hostId": laptop.hostID()})
+		if status, _ := w.call(w.adaPhone, "DELETE", "/relay/pairings/"+pairing, nil); status != 204 {
+			t.Fatalf("revoke %d", status)
+		}
 		equal(t, phone.next(is("presence")), obj{"t": "presence", "hostId": laptop.hostID()})
 		laptop.c.Close(websocket.StatusNormalClosure, "")
 		equal(t, phone.next(is("presence")), obj{"t": "presence", "hostId": laptop.hostID()})

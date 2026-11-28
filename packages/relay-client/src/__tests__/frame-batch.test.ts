@@ -25,3 +25,24 @@ describe('frameBatch', () => {
     expect(flushed).toEqual([[1, 2, 3], [4]]);
   });
 });
+
+describe('frameBatch in a hidden page', () => {
+  it('hands over on a timer, since a hidden page draws no frames', async () => {
+    const { vi } = await import('vitest');
+    vi.useFakeTimers();
+    vi.stubGlobal('document', { visibilityState: 'hidden' });
+    vi.stubGlobal('requestAnimationFrame', () => { throw new Error('no frames while hidden'); });
+    try {
+      const { HIDDEN_FLUSH_MS } = await import('../frame-batch');
+      const flushed: number[][] = [];
+      const batch = frameBatch<number>((items) => flushed.push(items));
+      batch.push(1);
+      batch.push(2);
+      vi.advanceTimersByTime(HIDDEN_FLUSH_MS);
+      expect(flushed).toEqual([[1, 2]]);
+    } finally {
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
+  });
+});

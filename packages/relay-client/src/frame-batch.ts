@@ -3,10 +3,16 @@
  * session's live output comes as many small events, often several in one task; applying each with its own render
  * costs a layout per delta, while the screen can only show one per frame anyway.
  */
-export function frameBatch<T>(
-  flush: (items: T[]) => void,
-  schedule: (run: () => void) => unknown = (run) => requestAnimationFrame(run),
-) {
+/** How often a page that is not shown hands over what waits: it draws no frames, and a backlog would only grow. */
+export const HIDDEN_FLUSH_MS = 250;
+
+/** The next frame, or, where the page is hidden and draws none, a short while. */
+function nextFrame(run: () => void) {
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return setTimeout(run, HIDDEN_FLUSH_MS);
+  return requestAnimationFrame(run);
+}
+
+export function frameBatch<T>(flush: (items: T[]) => void, schedule: (run: () => void) => unknown = nextFrame) {
   let items: T[] = [];
   let scheduled = false;
   let stopped = false;

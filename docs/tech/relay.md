@@ -230,7 +230,7 @@ team membership then, and closes with 4401 for anyone else.
 | either → relay | `ping` | none | Does this socket still carry frames? Answered at once |
 | relay → either | `pong` | none | The answer to `ping` |
 | relay → phone | `offline`, `detached` | `pairingId` | Host unavailable or another socket took over |
-| relay → phone | `presence` | `hostId` | One of the member's computers connected or left: list them again (`watchComputers`) |
+| relay → phone | `presence` | `hostId`, when one | One of the member's computers connected or left, or a pairing, name or notification of one changed: list them again (`watchComputers`) |
 | relay → plugin | `detach` | `pairingId` | Phone unavailable; close its transport and native streams |
 | relay → either | `revoked` | `pairingId` | Drop the pairing |
 | plugin → relay | `waiting` | none | Generic attention signal; no conversation identifier or question type |
@@ -257,7 +257,9 @@ welcomed within ten seconds is given up the same way. The app and the console
 also ask at once when they come back to the foreground (`checkConnection`).
 A screen listing the member's computers watches them (`watchComputers`)
 instead of asking on a timer: the relay sends every phone and browser socket
-of the member `presence` when one of their computers connects or leaves, the
+of the member `presence` when one of their computers connects or leaves, a
+pairing to one is redeemed, confirmed or revoked, or one is renamed or
+forgotten, the
 client reports a socket that came back from a drop the same way, and it
 keeps the socket open, dialling again after a drop, while anyone watches. The
 phone app and the console list their computers only then (a browser that
@@ -726,10 +728,12 @@ to reach a DSH, beside, in the hosted edition, Cloud DSH.
   the chevron at the entry's end folds them away, remembered in the browser,
   and opening the page unfolds them. `/my-dsh` with no computer in the address
   opens the one this browser opened last, else the first online, else the
-  first. The list is read again when a computer connects or leaves
-  (`useComputersChanged`, the relay's `presence`), as the page reads its own,
-  so a computer coming online or going away moves the page along by itself; a
-  browser that cannot keep a relay key reads it every ten seconds instead. An edition's page reached on several computers folds its
+  first. The list is read again every ten seconds, since the sidebar is on
+  every team page and does not open the relay's socket for itself; the page
+  reads its own when the relay says a computer or a pairing changed
+  (`useComputersChanged`, `presence`), so a computer coming online or going
+  away moves it along by itself, and a browser that cannot keep a relay key
+  reads it every ten seconds instead. An edition's page reached on several computers folds its
   own out the same way (`TeamPage.subnav`).
 - **The column beside the sidebar is the open computer's**: its name,
   online or offline, operating system, whether this browser is paired with it,

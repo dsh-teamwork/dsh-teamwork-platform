@@ -625,7 +625,10 @@ func (d *desktopWeb) dial(ctx context.Context, host *desktopWebHost) (net.Conn, 
 	ctx, cancel := context.WithTimeout(ctx, desktopWebAskTimeout)
 	defer cancel()
 	session, _ := ctx.Value(desktopWebSessionKey{}).(*desktopWebSession)
+	asked := time.Now()
 	taken := func(conn net.Conn) net.Conn {
+		// What the request waited for its tunnel, which the Teamwork bar shows; a spare that was ready waited none.
+		host.lastDial.Store(max(time.Since(asked).Microseconds(), 1))
 		// A tunnel in use: keep the next ones coming before they are needed.
 		go d.refill(host)
 		return &desktopConn{Conn: conn, release: func() { <-host.slots }, session: session}
@@ -724,7 +727,12 @@ func (d *desktopWeb) deliver(id string, conn net.Conn) bool {
 	if asked.spare {
 		host.asking.Add(-1)
 	}
-	host.lastDial.Store(max(time.Since(asked.at).Microseconds(), 1))
+	// A computer whose control socket is gone has nobody to take its tunnels.
+	if host.socket.ctx.Err() != nil {
+		conn.Close()
+		<-host.slots
+		return true
+	}
 	select {
 	case host.tunnels <- spareTunnel{conn: conn, at: time.Now()}:
 	default:
